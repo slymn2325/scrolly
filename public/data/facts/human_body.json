@@ -1,0 +1,442 @@
+[
+  {
+    "id": "human-01",
+    "category": "human_body",
+    "accentColor": "#E11D48",
+    "iconName": "Bone",
+    "emoji": "🦴",
+    "readingTimeSec": 14,
+    "tr": {
+      "slug": "bebekler-yetiskinlerden-yaklasik-100-fazla-kemikle-dogar",
+      "title": "Bebekler Yetişkinlerden Yaklaşık 94 Fazla Kemikle Doğar",
+      "factText": "Yeni doğan bir bebekte yaklaşık 300 kemik (ve kıkırdak yapı) bulunurken, yetişkin bir insanda bu sayı 206'ya düşer.",
+      "deepDiveDetail": "Doğum sırasında kafatası ve uzun kemikler esneklik sağlamak için parçalar halindedir. Büyüme sürecinde bu küçük kemikler ve kıkırdaklar kalsiyumla sertleşerek birbirine kaynar ve 206 yetişkin kemiğini oluşturur.",
+      "sourceHint": "Cleveland Clinic Anatomy",
+      "tag": "İnsan Anatomisi",
+      "quiz": {
+        "question": "Bebeklikteki ~300 kemik sayısının yetişkinlikte 206'ya düşmesinin sebebi nedir?",
+        "options": [
+          "Büyüdükçe küçük kemiklerin birbirine kaynaması",
+          "Fazla kemiklerin vücut tarafından eritilmesi",
+          "Sadece süt dişleriyle birlikte dökülmesi"
+        ],
+        "correctIndex": 0,
+        "explanation": "Kafatası ve eklem bölgelerindeki ayrı kemikler büyüme çağında birleşip tek kemik haline gelir."
+      }
+    },
+    "en": {
+      "slug": "babies-are-born-with-around-300-bones",
+      "title": "Babies Are Born With About 300 Bones, Adults Have 206",
+      "factText": "Newborns start life with roughly 300 separate bones and cartilage segments, which fuse down to 206 by adulthood.",
+      "deepDiveDetail": "Separate bone plates in a baby's skull and limbs allow flexibility during birth and rapid growth. Over childhood, many of these soft bones ossify and merge together into single adult bones.",
+      "sourceHint": "Cleveland Clinic Anatomy",
+      "tag": "Human Anatomy",
+      "quiz": {
+        "question": "Why do adults have 206 bones instead of the ~300 found in newborns?",
+        "options": [
+          "Many smaller bones fuse together as you grow",
+          "Extra bones dissolve completely in puberty",
+          "They are shed like baby teeth"
+        ],
+        "correctIndex": 0,
+        "explanation": "Separate infant bone segments gradually harden and fuse into larger adult bones."
+      }
+    }
+  },
+  {
+    "id": "human-02",
+    "category": "human_body",
+    "accentColor": "#E11D48",
+    "iconName": "Brain",
+    "emoji": "🧠",
+    "readingTimeSec": 15,
+    "tr": {
+      "slug": "insan-beyni-kendi-acisini-hissetmez",
+      "title": "Beynin Kendisi Fiziksel Acı Hissetmez",
+      "factText": "Vücuttaki tüm acı sinyallerini işleyen organ olan beynin kendi dokusunda hiç ağrı reseptörü (nosiseptör) yoktur.",
+      "deepDiveDetail": "Bu sayede beyin cerrahları bazı tümör veya epilepsi ameliyatlarını hasta uyanıkken gerçekleştirebilir. Baş ağrısı yaşadığımızda ise ağrıyan yer beynin kendisi değil; çevresindeki zarlar, kan damarları ve baş kaslarıdır.",
+      "sourceHint": "Johns Hopkins Medicine",
+      "tag": "Nörobilim",
+      "quiz": {
+        "question": "Başımız ağrıdığında acıyı hisseden dokular aslında nerededir?",
+        "options": [
+          "Beyin zarları, kan damarları ve baş kaslarında",
+          "Doğrudan beynin ön lobunun içinde",
+          "Sadece kulak içindeki kemiklerde"
+        ],
+        "correctIndex": 0,
+        "explanation": "Beyin dokusunda ağrı reseptörü bulunmaz; baş ağrısı çevredeki zarlar ve damarlardan kaynaklanır."
+      }
+    },
+    "en": {
+      "slug": "human-brain-cannot-feel-pain",
+      "title": "Your Brain Cannot Feel Pain Itself",
+      "factText": "Although the brain processes every pain signal in your body, brain tissue itself has zero pain receptors.",
+      "deepDiveDetail": "Because the brain lacks nociceptors, neurosurgeons can perform awake brain surgery while talking to a patient. When you get a headache, it is the surrounding membranes, blood vessels, and scalp muscles hurting—not the brain.",
+      "sourceHint": "Johns Hopkins Medicine",
+      "tag": "Neuroscience",
+      "quiz": {
+        "question": "When you experience a headache, where does the pain actually come from?",
+        "options": [
+          "Surrounding membranes, blood vessels, and muscles",
+          "Pain receptors inside the cerebral cortex",
+          "Tiny bones inside the inner ear"
+        ],
+        "correctIndex": 0,
+        "explanation": "Brain tissue has no pain receptors; headaches arise from surrounding tissues and blood vessels."
+      }
+    }
+  },
+  {
+    "id": "human-03",
+    "category": "human_body",
+    "accentColor": "#E11D48",
+    "iconName": "HeartPulse",
+    "emoji": "🩸",
+    "readingTimeSec": 15,
+    "tr": {
+      "slug": "damarlarimizin-toplam-uzunlugu-dunyanin-iki-kati",
+      "title": "Damarlarımız Uç Uca Eklense Dünya'yı İki Kez Sarar",
+      "factText": "Yetişkin bir insanın vücudundaki atardamar, toplardamar ve kılcal damarların toplam uzunluğu yaklaşık 96.000 kilometredir.",
+      "deepDiveDetail": "Dünya'nın ekvator çevresi 40.075 kilometredir. Mikroskobik kılcal damarların muazzam ağı sayesinde tek bir insanın dolaşım sistemi gezegenimizin çevresinin iki katından daha uzun bir mesafeye ulaşır.",
+      "sourceHint": "British Heart Foundation",
+      "tag": "Dolaşım Sistemi",
+      "quiz": {
+        "question": "Yetişkin bir insandaki tüm kan damarlarının toplam uzunluğu yaklaşık ne kadardır?",
+        "options": [
+          "~96.000 km",
+          "~5.000 km",
+          "~12.000 km"
+        ],
+        "correctIndex": 0,
+        "explanation": "Mikroskobik kılcal damarlar eklendiğinde toplam uzunluk yaklaşık 96.000 km'ye (Dünya'nın iki katından fazlasına) ulaşır."
+      }
+    },
+    "en": {
+      "slug": "blood-vessels-circle-earth-twice",
+      "title": "Your Blood Vessels Could Circle Earth More Than Twice",
+      "factText": "Laid end to end, the arteries, veins, and capillaries in an adult human body stretch roughly 96,000 kilometers (60,000 miles).",
+      "deepDiveDetail": "Earth's circumference at the equator is about 40,075 km. Most of that astounding biological highway consists of microscopic capillaries delivering oxygen to trillions of cells.",
+      "sourceHint": "British Heart Foundation",
+      "tag": "Circulatory System",
+      "quiz": {
+        "question": "About how far would all blood vessels in an adult human stretch end to end?",
+        "options": [
+          "~96,000 km (60,000 miles)",
+          "~5,000 km",
+          "~12,000 km"
+        ],
+        "correctIndex": 0,
+        "explanation": "Driven mostly by microscopic capillaries, human blood vessels total roughly 96,000 km."
+      }
+    }
+  },
+  {
+    "id": "human-04",
+    "category": "human_body",
+    "accentColor": "#E11D48",
+    "iconName": "Flame",
+    "emoji": "🫀",
+    "readingTimeSec": 14,
+    "tr": {
+      "slug": "mide-asidi-jileti-eritecek-kadar-gucludur",
+      "title": "Mide Asidimiz Jileti Bile Çözecek Kadar Güçlüdür",
+      "factText": "Midedeki hidroklorik asidin pH seviyesi 1,5 ile 2 arasındadır; bu güçte bir asit ince bir çelik jileti bile aşındırabilir.",
+      "deepDiveDetail": "Peki midemiz neden kendini sindirmez? Mide duvarındaki özel hücreler sürekli olarak bikarbonat içeren kalın bir mukus tabakası salgılar ve mide iç yüzeyi her birkaç günde bir kendini yeniler.",
+      "sourceHint": "National Institute of Diabetes and Digestive Diseases",
+      "tag": "Sindirim Biyolojisi",
+      "quiz": {
+        "question": "Midenin kendi güçlü asidi tarafından sindirilmesini engelleyen temel koruma nedir?",
+        "options": [
+          "Bikarbonatlı kalın mukus tabakası ve hızlı hücre yenilenmesi",
+          "Midenin tamamen kemikle kaplı olması",
+          "Asidin sadece gece salgılanması"
+        ],
+        "correctIndex": 0,
+        "explanation": "Alkalin bikarbonat içeren mukus tabakası asidi nötralize ederek mide duvarını korur."
+      }
+    },
+    "en": {
+      "slug": "stomach-acid-strong-enough-to-dissolve-metal",
+      "title": "Stomach Acid Is Strong Enough to Corrode a Razor Blade",
+      "factText": "With a pH between 1.5 and 2.0, human stomach hydrochloric acid can chemically dissolve thin metal over hours.",
+      "deepDiveDetail": "Your stomach avoids digesting itself thanks to specialized epithelial cells that secrete a bicarbonate-rich mucus shield and renew the stomach lining every few days.",
+      "sourceHint": "NIDDK / Medical Physiology",
+      "tag": "Digestive Biology",
+      "quiz": {
+        "question": "What keeps your stomach from digesting itself in its own strong acid?",
+        "options": [
+          "A bicarbonate-rich mucus lining and rapid cell renewal",
+          "A solid internal layer of bone",
+          "Acid is only released during sleep"
+        ],
+        "correctIndex": 0,
+        "explanation": "Bicarbonate-buffered mucus neutralizes acid right along the stomach wall."
+      }
+    }
+  },
+  {
+    "id": "human-05",
+    "category": "human_body",
+    "accentColor": "#E11D48",
+    "iconName": "Eye",
+    "emoji": "👁️",
+    "readingTimeSec": 14,
+    "tr": {
+      "slug": "korneada-kan-damari-yoktur-oksijeni-havadan-alir",
+      "title": "Göz Korneası Oksijeni Doğrudan Havadan Alır",
+      "factText": "Gözümüzün en önündeki şeffaf kornea tabakasında hiç kan damarı yoktur; ihtiyacı olan oksijeni doğrudan atmosferden emer.",
+      "deepDiveDetail": "Eğer korneada kan damarları olsaydı görüşümüz bulanıklaşırdı. Bu nedenle kornea tamamen saydam kalır ve oksijeni gözyaşı tabakası üzerinden dışarıdaki havadan difüzyonla alır.",
+      "sourceHint": "American Academy of Ophthalmology",
+      "tag": "Görme Bilimi",
+      "quiz": {
+        "question": "Göz korneasının içinde hiç kan damarı olmamasının temel sebebi nedir?",
+        "options": [
+          "Işığın net geçmesi için tamamen saydam kalma zorunluluğu",
+          "Gözlerin oksijene ihtiyaç duymaması",
+          "Kan basıncının gözde sıfır olması"
+        ],
+        "correctIndex": 0,
+        "explanation": "Kan damarları görüşü engelleyeceği için kornea saydam kalır ve oksijeni doğrudan havadan alır."
+      }
+    },
+    "en": {
+      "slug": "cornea-gets-oxygen-directly-from-the-air",
+      "title": "Your Cornea Breathes Oxygen Directly From the Air",
+      "factText": "The transparent cornea at the front of your eye has zero blood vessels—it absorbs oxygen straight from the air through tears.",
+      "deepDiveDetail": "Blood vessels across the front of the eye would scatter light and blur vision. Staying vessel-free keeps the cornea crystal clear while letting oxygen diffuse in directly from the outside.",
+      "sourceHint": "American Academy of Ophthalmology",
+      "tag": "Vision Science",
+      "quiz": {
+        "question": "Why does the human cornea contain no blood vessels?",
+        "options": [
+          "To remain completely transparent for clear vision",
+          "Because eye cells require no oxygen",
+          "Blood cannot flow above the neck"
+        ],
+        "correctIndex": 0,
+        "explanation": "Staying free of blood vessels keeps the cornea transparent while tears absorb oxygen from air."
+      }
+    }
+  },
+  {
+    "id": "human-06",
+    "category": "human_body",
+    "accentColor": "#E11D48",
+    "iconName": "Dna",
+    "emoji": "🧬",
+    "readingTimeSec": 15,
+    "tr": {
+      "slug": "insanlar-ve-muzlar-yuzde-60-dna-paylasir",
+      "title": "İnsanlar ve Muzlar Temel Hücre Genlerinin %60'ını Paylaşır",
+      "factText": "Bir muz ile bir insanın hücre çalışmasını yöneten temel genlerinin yaklaşık %60'ında benzer bir karşılık bulunur.",
+      "deepDiveDetail": "Hem bitkiler hem hayvanlar milyarlarca yıl önce yaşamış ortak tek hücreli atalardan evrildi. DNA kopyalama, enerji üretimi ve hücre bölünmesi gibi temel yaşam makineleri her iki canlıda da benzer genlerle çalışır.",
+      "sourceHint": "National Human Genome Research Institute",
+      "tag": "Genetik",
+      "quiz": {
+        "question": "İnsanlarla muzların pek çok temel geni paylaşmasının nedeni nedir?",
+        "options": [
+          "Hücre bölünmesi ve enerji gibi temel işlevlerin ortak atalardan miras kalması",
+          "Muzların hayvan sınıfında yer alması",
+          "İnsanların muz yiyerek gen alması"
+        ],
+        "correctIndex": 0,
+        "explanation": "Tüm ökaryot canlılar solunum ve hücre bölünmesi gibi temel hücresel genleri ortak atalardan paylaşır."
+      }
+    },
+    "en": {
+      "slug": "humans-and-bananas-share-60-percent-core-genes",
+      "title": "Humans and Bananas Share ~60% of Core Cellular Genes",
+      "factText": "Roughly 60% of the essential genes running basic cell functions in humans have a recognizable counterpart in a banana.",
+      "deepDiveDetail": "Both plants and animals evolved from ancient single-celled ancestors, preserving shared genetic machinery for DNA replication, cellular energy, and cell division.",
+      "sourceHint": "National Human Genome Research Institute",
+      "tag": "Genetics",
+      "quiz": {
+        "question": "Why do humans and bananas share so many core genes?",
+        "options": [
+          "Basic cellular housekeeping genes come from ancient common ancestors",
+          "Bananas belong to the animal kingdom",
+          "Eating fruit transfers plant DNA into ours"
+        ],
+        "correctIndex": 0,
+        "explanation": "Fundamental genes for energy and cell division are conserved across all complex life."
+      }
+    }
+  },
+  {
+    "id": "human-07",
+    "category": "human_body",
+    "accentColor": "#E11D48",
+    "iconName": "Smile",
+    "emoji": "👃",
+    "readingTimeSec": 14,
+    "tr": {
+      "slug": "parmak-izi-gibi-dil-izi-de-benzersizdir",
+      "title": "Tıpkı Parmak İziniz Gibi Dil İziniz de Benzersizdir",
+      "factText": "Her insanın dil yüzeyindeki girinti, çıkıntı ve tat tomurcuğu deseni yalnızca o kişiye özgüdür; tek yumurta ikizlerinde bile farklıdır.",
+      "deepDiveDetail": "Dil yüzeyindeki papilla dokusu anne karnından itibaren geometrik olarak benzersiz bir harita oluşturur. Üstelik ağız içinde korunduğu için dış yaralanmalardan parmak izine göre daha az etkilenir.",
+      "sourceHint": "Journal of Forensic Dental Sciences",
+      "tag": "Biyometri",
+      "quiz": {
+        "question": "İnsan dilinin yüzeyindeki harita tek yumurta ikizlerinde nasıldır?",
+        "options": [
+          "Her bireyde benzersiz ve farklıdır",
+          "İkizlerde tamamen aynıdır",
+          "Her yıl tamamen sıfırlanır"
+        ],
+        "correctIndex": 0,
+        "explanation": "Dil izi (lingual print) parmak izi gibi genetik ve gelişimsel olarak kişiye özeldir."
+      }
+    },
+    "en": {
+      "slug": "your-tongue-print-is-as-unique-as-your-fingerprint",
+      "title": "Your Tongue Print Is Just as Unique as Your Fingerprint",
+      "factText": "Every person's tongue has a one-of-a-kind pattern of ridges and papillae—even between identical twins.",
+      "deepDiveDetail": "Forensic researchers note that tongue geometry forms uniquely during development and sits safely protected inside the mouth, making 'lingual prints' remarkably consistent biometric markers.",
+      "sourceHint": "Journal of Forensic Dental Sciences",
+      "tag": "Biometrics",
+      "quiz": {
+        "question": "How do tongue prints compare between identical twins?",
+        "options": [
+          "Each twin has a distinct, unique tongue print",
+          "They are 100% identical",
+          "Tongue prints vanish in adulthood"
+        ],
+        "correctIndex": 0,
+        "explanation": "Like fingerprints, tongue shapes and papillae patterns are unique to every individual."
+      }
+    }
+  },
+  {
+    "id": "human-08",
+    "category": "human_body",
+    "accentColor": "#E11D48",
+    "iconName": "HeartPulse",
+    "emoji": "🫀",
+    "readingTimeSec": 14,
+    "tr": {
+      "slug": "kalbiniz-bir-omurde-2-5-milyar-kez-atar",
+      "title": "Kalbiniz Ortalama Bir Ömürde 2,5 Milyar Kez Atar",
+      "factText": "Yumruğunuz büyüklüğündeki kalbiniz her gün yaklaşık 100.000 kez atarak günde 7.500 litre civarında kanı vücudunuza pompalar.",
+      "deepDiveDetail": "Kalp kası (miyokard) yorulmak bilmeyen özel liflerden oluşur. Bir insan ömrü boyunca bu minik pompa hiç durmaksızın yaklaşık 2,5 ila 3 milyar vuruş gerçekleştirir.",
+      "sourceHint": "American Heart Association",
+      "tag": "Kardiyoloji",
+      "quiz": {
+        "question": "Sağlıklı bir insanın kalbi günde yaklaşık kaç kez atar?",
+        "options": [
+          "~100.000 kez",
+          "~10.000 kez",
+          "~1.000.000 kez"
+        ],
+        "correctIndex": 0,
+        "explanation": "Dakikada ortalama 70 atışla kalp günde yaklaşık 100.000 kez kan pompalar."
+      }
+    },
+    "en": {
+      "slug": "your-heart-beats-about-2-5-billion-times-in-a-lifetime",
+      "title": "Your Heart Beats Roughly 2.5 Billion Times in a Lifetime",
+      "factText": "About the size of your fist, your heart beats roughly 100,000 times a day, pumping around 7,500 liters of blood daily.",
+      "deepDiveDetail": "Built from specialized fatigue-resistant cardiac muscle fibers, the human heart clocks 2.5 to 3 billion beats over an average lifespan without taking a single vacation.",
+      "sourceHint": "American Heart Association",
+      "tag": "Cardiology",
+      "quiz": {
+        "question": "Roughly how many times does an average human heart beat in a single day?",
+        "options": [
+          "~100,000 times",
+          "~10,000 times",
+          "~1,000,000 times"
+        ],
+        "correctIndex": 0,
+        "explanation": "At ~70 beats per minute, the heart beats roughly 100,000 times every 24 hours."
+      }
+    }
+  },
+  {
+    "id": "human-09",
+    "category": "human_body",
+    "accentColor": "#E11D48",
+    "iconName": "Ear",
+    "emoji": "👂",
+    "readingTimeSec": 14,
+    "tr": {
+      "slug": "vucudumuzdaki-en-kucuk-kemik-kulaktadir",
+      "title": "Vücudumuzdaki En Küçük Kemik Bir Pirinç Tanesinden Bile Küçüktür",
+      "factText": "Orta kulağımızda bulunan 'üzengi' (stapes) kemiği yalnızca yaklaşık 3 milimetre uzunluğundadır.",
+      "deepDiveDetail": "Çekiç, örs ve üzengi kemikleri kulak zarından gelen ses titreşimlerini iç kulağa ileten minik bir kaldıraç sistemi oluşturur. Bu üç minik kemik doğumdan itibaren neredeyse hiç büyümez ve yaşam boyu tam boyutunda kalır.",
+      "sourceHint": "NIH / National Institute on Deafness",
+      "tag": "Duyu Anatomisi",
+      "quiz": {
+        "question": "İnsan vücudundaki en küçük kemik olan 'üzengi' (stapes) nerededir?",
+        "options": [
+          "Orta kulakta",
+          "Serçe parmakta",
+          "Burun ucunda"
+        ],
+        "correctIndex": 0,
+        "explanation": "Orta kulaktaki 3 mm'lik üzengi kemiği ses titreşimlerini iç kulağa iletir."
+      }
+    },
+    "en": {
+      "slug": "smallest-bone-in-the-body-is-in-your-ear",
+      "title": "The Smallest Bone in Your Body Is Smaller Than a Grain of Rice",
+      "factText": "The stapes (stirrup bone) nestled inside your middle ear measures only about 3 millimeters long.",
+      "deepDiveDetail": "Working alongside the malleus and incus, the stapes amplifies sound vibrations from the eardrum into the fluid-filled inner ear—and uniquely, these ear ossicles are nearly full adult size at birth.",
+      "sourceHint": "NIH / NIDCD",
+      "tag": "Sensory Anatomy",
+      "quiz": {
+        "question": "Where is the stapes, the smallest bone in the human body, located?",
+        "options": [
+          "In the middle ear",
+          "In the pinky toe",
+          "At the tip of the nose"
+        ],
+        "correctIndex": 0,
+        "explanation": "The tiny 3-millimeter stapes helps transmit sound vibrations inside the middle ear."
+      }
+    }
+  },
+  {
+    "id": "human-10",
+    "category": "human_body",
+    "accentColor": "#E11D48",
+    "iconName": "Moon",
+    "emoji": "😴",
+    "readingTimeSec": 14,
+    "tr": {
+      "slug": "insanlar-uyurken-koku-alamaz",
+      "title": "Derin Uykudayken Beynimiz Koku Algısını Neredeyse Kapatır",
+      "factText": "Uyurken yüksek sesle veya dokunuşla kolayca uyanabiliriz; ancak koku duyumuz dumanı bile fark edemeyecek kadar pasifleşir.",
+      "deepDiveDetail": "Brown Üniversitesi'ndeki uyku araştırmaları, derin uyku aşamalarında insanların keskin kokularla dahi uyanmadığını göstermiştir. Bu yüzden yangın dumanına karşı evlerde sesli duman dedektörleri hayati önem taşır.",
+      "sourceHint": "Brown University Sleep Lab",
+      "tag": "Uyku Bilimi",
+      "quiz": {
+        "question": "Uyku araştırmalarına göre uyurken bizi uyandırmada en etkisiz kalan duyu hangisidir?",
+        "options": [
+          "Koku alma duyusu",
+          "İşitme duyusu",
+          "Dokunma duyusu"
+        ],
+        "correctIndex": 0,
+        "explanation": "Derin uykuda beyin koku sinyallerine yanıt vermez; bu yüzden duman dedektörleri yüksek sesle çalışır."
+      }
+    },
+    "en": {
+      "slug": "humans-cannot-smell-while-fast-asleep",
+      "title": "Your Sense of Smell Practically Shuts Off While You Sleep",
+      "factText": "Loud noises or light touches wake sleeping humans quickly, yet strong odors—even smoke—rarely wake a person from deep sleep.",
+      "deepDiveDetail": "Sleep studies at Brown University demonstrated that olfactory processing drops dramatically during deep sleep stages, which is exactly why loud audible smoke alarms save lives.",
+      "sourceHint": "Brown University Sleep Lab",
+      "tag": "Sleep Science",
+      "quiz": {
+        "question": "Which sense is least effective at waking a sleeping human?",
+        "options": [
+          "Smell",
+          "Hearing",
+          "Touch"
+        ],
+        "correctIndex": 0,
+        "explanation": "Because smell won't reliably wake sleepers, fire safety relies on loud audible alarms."
+      }
+    }
+  }
+]

@@ -1,0 +1,442 @@
+[
+  {
+    "id": "history-01",
+    "category": "history",
+    "accentColor": "#D97706",
+    "iconName": "Landmark",
+    "emoji": "🏛️",
+    "readingTimeSec": 16,
+    "tr": {
+      "slug": "kleopatra-ay-yolculuguna-piramitlerden-daha-yakindi",
+      "title": "Kleopatra, Ay Yolculuğuna Piramitlerin İnşasından Daha Yakındı",
+      "factText": "Antik Mısır kraliçesi Kleopatra, Büyük Gize Piramidi'nin inşasından ziyade insanlığın Ay'a ayak basmasına tarihsel olarak daha yakın yaşadı.",
+      "deepDiveDetail": "Büyük Piramit M.Ö. 2560 civarında inşa edildi. Kleopatra ise M.Ö. 69-30 yılları arasında yaşadı — yani piramitten yaklaşık 2.500 yıl sonra! Apollo 11'in Ay'a inişi (1969) Kleopatra'dan sadece 1.999 yıl sonraydı.",
+      "sourceHint": "Encyclopaedia Britannica / Chronology",
+      "tag": "Tarihsel Perspektif",
+      "quiz": {
+        "question": "Zaman çizelgesine göre Kleopatra hangisine tarihsel olarak daha yakın bir dönemde yaşadı?",
+        "options": [
+          "1969 Ay'a inişine",
+          "Büyük Piramitlerin inşasına",
+          "İkisine de tam eşit uzaklıkta"
+        ],
+        "correctIndex": 0,
+        "explanation": "Kleopatra piramitlerden ~2.500 yıl sonra, Apollo 11 Ay inişinden ise ~2.000 yıl önce yaşadı."
+      }
+    },
+    "en": {
+      "slug": "cleopatra-lived-closer-to-moon-landing-than-pyramids",
+      "title": "Cleopatra Lived Closer to the Moon Landing Than the Pyramids",
+      "factText": "Queen Cleopatra of Egypt lived closer in time to the 1969 Moon landing than to the construction of the Great Pyramid of Giza.",
+      "deepDiveDetail": "The Great Pyramid was completed around 2560 BCE. Cleopatra reigned until 30 BCE—roughly 2,530 years later—whereas Neil Armstrong walked on the Moon only 1,999 years after Cleopatra.",
+      "sourceHint": "Encyclopaedia Britannica / Chronology",
+      "tag": "Historical Timeline",
+      "quiz": {
+        "question": "In history, Cleopatra lived closer in time to which milestone?",
+        "options": [
+          "The 1969 Moon landing",
+          "The building of the Great Pyramid",
+          "Exactly halfway between both"
+        ],
+        "correctIndex": 0,
+        "explanation": "About 2,530 years separated Cleopatra from the Great Pyramid, compared to ~2,000 years before Apollo 11."
+      }
+    }
+  },
+  {
+    "id": "history-02",
+    "category": "history",
+    "accentColor": "#D97706",
+    "iconName": "GraduationCap",
+    "emoji": "🎓",
+    "readingTimeSec": 15,
+    "tr": {
+      "slug": "oxford-universitesi-aztek-imparatorlugundan-eskidir",
+      "title": "Oxford Üniversitesi Aztek İmparatorluğundan Daha Eskidir",
+      "factText": "İngiltere'deki Oxford Üniversitesi'nde dersler, Meksika'daki Aztek İmparatorluğu kurulmadan yüzlerce yıl önce başlamıştı.",
+      "deepDiveDetail": "Oxford'da bilinen ilk eğitim faaliyetleri MS 1096 yılına dayanır. Aztek İmparatorluğu'nun kalbi olan Tenochtitlan şehri ise MS 1325'te kuruldu ve imparatorluk 1428'de şekillendi.",
+      "sourceHint": "University of Oxford Archives",
+      "tag": "Dünya Tarihi",
+      "quiz": {
+        "question": "Oxford Üniversitesi'ndeki eğitim, Azteklerin başkenti Tenochtitlan'dan yaklaşık kaç yıl önce başladı?",
+        "options": [
+          "200 yılı aşkın bir süre önce",
+          "50 yıl sonra",
+          "Aynı yıl"
+        ],
+        "correctIndex": 0,
+        "explanation": "Oxford'da eğitim 1096'da, Tenochtitlan ise 1325'te kuruldu."
+      }
+    },
+    "en": {
+      "slug": "oxford-university-older-than-aztec-empire",
+      "title": "Oxford University Is Older Than the Aztec Empire",
+      "factText": "Teaching at England's University of Oxford was already underway more than two centuries before the Aztec Empire began.",
+      "deepDiveDetail": "Records confirm teaching at Oxford as early as 1096 CE, whereas the Aztecs founded their capital Tenochtitlan in 1325 CE and formed their formal empire in 1428 CE.",
+      "sourceHint": "University of Oxford Archives",
+      "tag": "World History",
+      "quiz": {
+        "question": "Roughly how much earlier did Oxford start teaching before Tenochtitlan was founded?",
+        "options": [
+          "Over 200 years earlier",
+          "50 years later",
+          "In the exact same decade"
+        ],
+        "correctIndex": 0,
+        "explanation": "Teaching at Oxford dates to 1096 CE, over two centuries before Tenochtitlan's founding in 1325 CE."
+      }
+    }
+  },
+  {
+    "id": "history-03",
+    "category": "history",
+    "accentColor": "#D97706",
+    "iconName": "Scroll",
+    "emoji": "📜",
+    "readingTimeSec": 15,
+    "tr": {
+      "slug": "tarihteki-en-kisa-savas-38-dakika-surdu",
+      "title": "Tarihteki En Kısa Savaş Yalnızca 38 Dakika Sürdü",
+      "factText": "1896'daki İngiltere-Zanzibar Savaşı sabah 09:02'de başladı ve 09:40'ta resmen sona erdi.",
+      "deepDiveDetail": "Zanzibar'daki taht krizi sonrası Britanya donanmasının ültimatomu reddedilince gemiler sarayı bombaladı. Kısa sürede beyaz bayrak çekilmesiyle savaş bir ders süresinden bile az bir zamanda bitti.",
+      "sourceHint": "Guinness World Records / UK National Archives",
+      "tag": "Askeri Tarih",
+      "quiz": {
+        "question": "Tarihteki en kısa kayıtlı savaş olan 1896 İngiltere-Zanzibar Savaşı ne kadar sürdü?",
+        "options": [
+          "38-45 dakika",
+          "6 saat",
+          "3 gün"
+        ],
+        "correctIndex": 0,
+        "explanation": "09:02'de başlayan çatışma yaklaşık 38 dakika sonra ateşkesle sona erdi."
+      }
+    },
+    "en": {
+      "slug": "shortest-war-in-history-lasted-38-minutes",
+      "title": "The Shortest War in History Lasted Just 38 Minutes",
+      "factText": "The Anglo-Zanzibar War of August 27, 1896 began at 9:02 AM and ended in surrender by 9:40 AM.",
+      "deepDiveDetail": "Following a succession dispute, British warships bombarded the Sultan's palace after an ultimatum expired. Zanzibar lowered its flag in under three-quarters of an hour—shorter than a single school class.",
+      "sourceHint": "Guinness World Records / UK National Archives",
+      "tag": "Military History",
+      "quiz": {
+        "question": "About how long did the 1896 Anglo-Zanzibar War last?",
+        "options": [
+          "38 to 45 minutes",
+          "6 hours",
+          "3 days"
+        ],
+        "correctIndex": 0,
+        "explanation": "Fighting started at 9:02 AM and ended around 9:40 AM—about 38 minutes later."
+      }
+    }
+  },
+  {
+    "id": "history-04",
+    "category": "history",
+    "accentColor": "#D97706",
+    "iconName": "Crown",
+    "emoji": "☕",
+    "readingTimeSec": 15,
+    "tr": {
+      "slug": "antik-romada-mor-boya-deniz-salyangozundan-yapilirdi",
+      "title": "Antik Roma'da Kraliyet Moru Binlerce Deniz Salyangozundan Çıkarılırdı",
+      "factText": "Roma imparatorlarının giydiği 'Sur Moru' rengini elde etmek için tek bir pelerin başına yaklaşık 10.000 deniz salyangozu gerekirdi.",
+      "deepDiveDetail": "Akdeniz'deki dikenli deniz salyangozlarının (Bolinus brandaris) minik bir bezinden çıkarılan bu boya güneşte solmak yerine daha da parlıyordu. Ağırlığı altından bile pahalı olduğu için yalnızca imparatorlara ve senatörlere ayrılırdı.",
+      "sourceHint": "Metropolitan Museum of Art",
+      "tag": "Antik Kültür",
+      "quiz": {
+        "question": "Antik dünyada çok değerli olan 'Sur Moru' boyası hangi canlıdan elde ediliyordu?",
+        "options": [
+          "Deniz salyangozlarından",
+          "Lavanta köklerinden",
+          "Ahtapot mürekkebinden"
+        ],
+        "correctIndex": 0,
+        "explanation": "Akdeniz'deki Murex (Bolinus) deniz salyangozlarının bezlerinden çıkan salgı mor boyaya dönüştürülüyordu."
+      }
+    },
+    "en": {
+      "slug": "ancient-tyrian-purple-came-from-sea-snails",
+      "title": "Ancient Royal Purple Was Made From Thousands of Sea Snails",
+      "factText": "Dyeing a single Roman emperor's toga in legendary Tyrian purple required mucus from roughly 10,000 sea snails.",
+      "deepDiveDetail": "Harvested from Mediterranean Murex sea snails, the dye uniquely brightened in sunlight instead of fading. Because it cost more than its weight in gold, purple clothing became a strict symbol of imperial power.",
+      "sourceHint": "Metropolitan Museum of Art",
+      "tag": "Ancient Culture",
+      "quiz": {
+        "question": "Where did ancient Rome's prized Tyrian purple dye come from?",
+        "options": [
+          "Mediterranean sea snails",
+          "Crushed lavender petals",
+          "Squid ink"
+        ],
+        "correctIndex": 0,
+        "explanation": "Murex sea snails secreted the rare pigment used to dye imperial garments."
+      }
+    }
+  },
+  {
+    "id": "history-05",
+    "category": "history",
+    "accentColor": "#D97706",
+    "iconName": "Compass",
+    "emoji": "🦣",
+    "readingTimeSec": 15,
+    "tr": {
+      "slug": "piramitler-yapilirken-yeryuzunde-hala-mamutlar-yasiyordu",
+      "title": "Mısır Piramitleri İnşa Edilirken Yeryüzünde Hâlâ Mamutlar Vardı",
+      "factText": "Büyük Gize Piramidi tamamlandığında, Kuzey Kutbu'ndaki Wrangel Adası'nda küçük bir tüylü mamut popülasyonu hâlâ yaşıyordu.",
+      "deepDiveDetail": "Ana kıtalardaki mamutlar 10.000 yıl önce yok olmuştu; ancak Sibirya açıklarındaki Wrangel Adası'nda izole kalan bir grup yaklaşık M.Ö. 2000-1700 yıllarına, yani piramitlerin inşasından yüzyıllar sonrasına kadar hayatta kaldı.",
+      "sourceHint": "Current Biology / Radiocarbon Dating",
+      "tag": "Prehistorya",
+      "quiz": {
+        "question": "Son tüylü mamutlar Mısır Piramitlerinin inşası sırasında nerede hayatta kalmıştı?",
+        "options": [
+          "Sibirya açıklarındaki Wrangel Adası'nda",
+          "Nil Nehri deltasında",
+          "İngiltere adalarında"
+        ],
+        "correctIndex": 0,
+        "explanation": "Wrangel Adası'ndaki izole mamutlar yaklaşık 4.000 yıl öncesine kadar yaşadı."
+      }
+    },
+    "en": {
+      "slug": "woolly-mammoths-still-lived-when-pyramids-were-built",
+      "title": "Woolly Mammoths Still Walked Earth When the Pyramids Were Built",
+      "factText": "When ancient Egyptians finished the Great Pyramid of Giza, a small population of woolly mammoths was still alive.",
+      "deepDiveDetail": "While mainland mammoths vanished around 10,000 years ago, an isolated herd on Arctic Wrangel Island survived until roughly 2000–1700 BCE—centuries after Giza's pyramids rose.",
+      "sourceHint": "Current Biology / Radiocarbon Dating",
+      "tag": "Prehistory",
+      "quiz": {
+        "question": "Where did the last woolly mammoths survive until around 4,000 years ago?",
+        "options": [
+          "Wrangel Island in the Arctic",
+          "The Nile River delta",
+          "The British Isles"
+        ],
+        "correctIndex": 0,
+        "explanation": "An isolated population on Wrangel Island persisted alongside early Bronze Age civilizations."
+      }
+    }
+  },
+  {
+    "id": "history-06",
+    "category": "history",
+    "accentColor": "#D97706",
+    "iconName": "Utensils",
+    "emoji": "🥐",
+    "readingTimeSec": 14,
+    "tr": {
+      "slug": "antik-romada-fast-food-tezgahlari-vardi",
+      "title": "Antik Roma'da Bugünkü Gibi Sokak Fast-Food Büfeleri Vardı",
+      "factText": "Pompeii ve Roma sokaklarında 'Thermopolium' adı verilen tezgahlarda çalışanlara hızlıca sıcak yemek ve içecek servis edilirdi.",
+      "deepDiveDetail": "Küçük dairelerin çoğunda mutfak bulunmadığı için Romalılar dışarıda yerdi. Tezgahlara gömülü pişmiş toprak küplerin içinde mercimek yahnisi, tuzlu balık ve sıcak şarap müşterilere anında uzatılırdı.",
+      "sourceHint": "Archaeological Park of Pompeii",
+      "tag": "Günlük Yaşam Tarihi",
+      "quiz": {
+        "question": "Pompeii'de sıcak yemek satan antik fast-food dükkanlarına ne ad verilirdi?",
+        "options": [
+          "Thermopolium",
+          "Agora",
+          "Colosseum"
+        ],
+        "correctIndex": 0,
+        "explanation": "'Thermopolium' kelime anlamıyla 'sıcak bir şeylerin satıldığı yer' demektir."
+      }
+    },
+    "en": {
+      "slug": "ancient-rome-had-street-fast-food-counters",
+      "title": "Ancient Romans Bought Street Fast Food at 'Thermopolia'",
+      "factText": "Streets in Pompeii and Rome were lined with 'thermopolia'—walk-up counters serving hot ready-to-eat meals.",
+      "deepDiveDetail": "Because many city apartments lacked kitchens, working Romans grabbed hot lentil stew, salted fish, or spiced wine scooped straight from sunken terracotta jars built into colorful marble counters.",
+      "sourceHint": "Archaeological Park of Pompeii",
+      "tag": "Daily Life History",
+      "quiz": {
+        "question": "What were the ancient Roman street-side hot food counters in Pompeii called?",
+        "options": [
+          "Thermopolia",
+          "Agoras",
+          "Aqueducts"
+        ],
+        "correctIndex": 0,
+        "explanation": "Thermopolium literally translates to 'a place where something hot is sold'."
+      }
+    }
+  },
+  {
+    "id": "history-07",
+    "category": "history",
+    "accentColor": "#D97706",
+    "iconName": "Compass",
+    "emoji": "🧭",
+    "readingTimeSec": 15,
+    "tr": {
+      "slug": "antik-yunanda-oyuncak-buhar-motoru-icadi",
+      "title": "Antik İskenderiye'de 2.000 Yıl Önce Buhar Türbini Yapılmıştı",
+      "factText": "M.S. 1. yüzyılda İskenderiyeli Heron, kaynayan suyun buharıyla dönen dünyanın ilk bilinen buhar motoru 'Aeolipile'i tasarladı.",
+      "deepDiveDetail": "Bakır bir küre ve iki zıt lüleden oluşan bu cihaz, içinden çıkan buhar jetlerinin tepki kuvvetiyle hızla dönüyordu. Ancak o dönemde ucuz iş gücü yaygın olduğu için sanayi devrimi yerine merak uyandıran bir icat olarak kaldı.",
+      "sourceHint": "Science Museum London",
+      "tag": "Antik Mühendislik",
+      "quiz": {
+        "question": "İskenderiyeli Heron'un MS 1. yüzyılda yaptığı dönen buhar küresinin adı neydi?",
+        "options": [
+          "Aeolipile",
+          "Astrolab",
+          "Antikythera"
+        ],
+        "correctIndex": 0,
+        "explanation": "Rüzgar tanrısı Aeolus'un adını taşıyan 'Aeolipile', tarihteki ilk bilinen buhar türbini düzeneğidir."
+      }
+    },
+    "en": {
+      "slug": "ancient-alexandria-built-steam-engine-2000-years-ago",
+      "title": "Ancient Engineers Built a Spinning Steam Turbine 2,000 Years Ago",
+      "factText": "In the 1st century CE, Hero of Alexandria described the 'aeolipile'—a hollow sphere spun rapidly by jets of pressurized steam.",
+      "deepDiveDetail": "Often regarded as the earliest recorded steam reaction turbine, the copper device wasn't scaled to power factories at the time and instead amazed crowds as a mechanical marvel.",
+      "sourceHint": "Science Museum London",
+      "tag": "Ancient Engineering",
+      "quiz": {
+        "question": "What was Hero of Alexandria's 1st-century spinning steam sphere called?",
+        "options": [
+          "Aeolipile",
+          "Astrolabe",
+          "Sextant"
+        ],
+        "correctIndex": 0,
+        "explanation": "Named after Aeolus, god of winds, the aeolipile used steam jets to spin a metal sphere."
+      }
+    }
+  },
+  {
+    "id": "history-08",
+    "category": "history",
+    "accentColor": "#D97706",
+    "iconName": "Clock",
+    "emoji": "⏰",
+    "readingTimeSec": 15,
+    "tr": {
+      "slug": "sanayi-devriminde-insan-calar-saatler-vardi",
+      "title": "Çalar Saatler Ucuzlamadan Önce 'İnsan Uyandırıcılar' Vardı",
+      "factText": "19. yüzyıl İngiltere'sinde ve İrlanda'sında işçileri sabah işe uyandırmak için pencerelere uzun sopalarla vuran profesyonel 'Knocker-upper'lar çalışırdı.",
+      "deepDiveDetail": "Çalar saatlerin pahalı ve güvenilmez olduğu dönemlerde, bu görevliler sabahın köründe sokakları dolaşır, bambu sopalarla veya bezelye üfleme borularıyla üst kat camlarını tıklatarak müşterinin uyandığından emin olmadan gitmezlerdi.",
+      "sourceHint": "BBC History Magazine",
+      "tag": "Unutulmuş Meslekler",
+      "quiz": {
+        "question": "19. yüzyılda fabrika işçilerini camlarına vurarak uyandıran meslek grubuna ne denirdi?",
+        "options": [
+          "Knocker-upper",
+          "Bellman",
+          "Lamper"
+        ],
+        "correctIndex": 0,
+        "explanation": "Knocker-upper'lar uzun sopalarla pencerelere vurarak sabah vardiyacılarını uyandırırdı."
+      }
+    },
+    "en": {
+      "slug": "human-alarm-clocks-called-knocker-uppers",
+      "title": "Before Affordable Alarm Clocks, People Hired Human 'Knocker-Uppers'",
+      "factText": "In 19th-century Britain and Ireland, professional 'knocker-uppers' tapped on bedroom windows with long bamboo poles to wake workers for morning shifts.",
+      "deepDiveDetail": "When mechanical alarm clocks were costly and unreliable, knocker-uppers walked early-morning routes—and wouldn't leave a client's window until the worker came to the glass to prove they were awake.",
+      "sourceHint": "BBC History Magazine",
+      "tag": "Forgotten Jobs",
+      "quiz": {
+        "question": "What were the 19th-century human alarm clocks who tapped on windows called?",
+        "options": [
+          "Knocker-uppers",
+          "Bell-ringers",
+          "Gaslighters"
+        ],
+        "correctIndex": 0,
+        "explanation": "Knocker-uppers used long poles or pea shooters to wake factory workers on time."
+      }
+    }
+  },
+  {
+    "id": "history-09",
+    "category": "history",
+    "accentColor": "#D97706",
+    "iconName": "Crown",
+    "emoji": "🍍",
+    "readingTimeSec": 15,
+    "tr": {
+      "slug": "18-yuzyil-avrupasinda-ananas-kiralanirdi",
+      "title": "18. Yüzyıl Avrupası'nda Zengin Görünmek İçin Ananas Kiralanırdı",
+      "factText": "Ananas Avrupa'da o kadar nadir ve pahalıydı ki, davetlileri etkilemek isteyenler yemek için değil, masada sergilemek için ananas kiralardı.",
+      "deepDiveDetail": "Tropik bölgelerden gemilerle bozulmadan getirilen tek bir ananasın fiyatı bugünün parasıyla binlerce dolara denkti. Çürüyene kadar balo ve partilere kiralanan ananaslar statü sembolü haline gelmişti.",
+      "sourceHint": "Royal Botanic Gardens Kew History",
+      "tag": "Sosyal Tarih",
+      "quiz": {
+        "question": "18. yüzyılda Avrupalı zenginler neden akşam partileri için ananas kiralardı?",
+        "options": [
+          "Servet ve statü sembolü olarak masada sergilemek için",
+          "Oda kokusunu bastırmak için",
+          "Meyve suyu sıkmak için"
+        ],
+        "correctIndex": 0,
+        "explanation": "Aşırı nadir olduğundan ananası yemeden sadece masada sergilemek büyük prestij göstergesiydi."
+      }
+    },
+    "en": {
+      "slug": "people-rented-pineapples-as-status-symbols",
+      "title": "18th-Century Europeans Rented Pineapples Just to Show Off",
+      "factText": "Pineapples were so rare and pricey in 1700s Europe that hosts rented them for dinner parties purely for display—never to eat.",
+      "deepDiveDetail": "Importing a fresh pineapple across oceans cost the modern equivalent of thousands of dollars. Rental shops loaned the same fruit out night after night until it finally spoiled.",
+      "sourceHint": "Royal Botanic Gardens Kew History",
+      "tag": "Social History",
+      "quiz": {
+        "question": "Why did 18th-century elites rent pineapples instead of eating them?",
+        "options": [
+          "To flaunt wealth and prestige at parties",
+          "To use them as natural air fresheners",
+          "Because nobody knew how to peel them"
+        ],
+        "correctIndex": 0,
+        "explanation": "Extreme rarity turned a displayed pineapple into the ultimate luxury status symbol."
+      }
+    }
+  },
+  {
+    "id": "history-10",
+    "category": "history",
+    "accentColor": "#D97706",
+    "iconName": "Map",
+    "emoji": "🗺️",
+    "readingTimeSec": 15,
+    "tr": {
+      "slug": "piri-reis-haritasi-1513-yilinda-cizildi",
+      "title": "Piri Reis 1513 Yılında Amerika Kıyılarını Şaşırtıcı Detayla Çizdi",
+      "factText": "Osmanlı denizcisi Piri Reis, 1513'te ceylan derisi üzerine çizdiği dünya haritasında Amerika'nın doğu kıyılarını olağanüstü bir doğrulukla gösterdi.",
+      "deepDiveDetail": "Topkapı Sarayı'nda korunan bu harita, Kristof Kolomb'un seferlerinden sadece 21 yıl sonra çizilmişti. Piri Reis kenar notlarında Arap, Portekiz, Hint ve Kolomb'un kendi haritaları dahil 20'ye yakın kaynaktan yararlandığını açıkça yazmıştır.",
+      "sourceHint": "Topkapı Sarayı Müzesi Arşivi",
+      "tag": "Denizcilik Tarihi",
+      "quiz": {
+        "question": "Piri Reis'in ünlü 1513 haritası hangi malzemenin üzerine çizilmiştir?",
+        "options": [
+          "Ceylan derisi (parşömen)",
+          "Pişmiş kil tablet",
+          "İpek kumaş"
+        ],
+        "correctIndex": 0,
+        "explanation": "Günümüze kalan kısmı Topkapı Sarayı'nda korunan harita ceylan derisi üzerine çizilmiştir."
+      }
+    },
+    "en": {
+      "slug": "piri-reis-world-map-drawn-in-1513",
+      "title": "Ottoman Admiral Piri Reis Mapped American Coasts in 1513",
+      "factText": "Created just 21 years after Columbus's first voyage, Piri Reis's 1513 map depicted South America's coastline with remarkable accuracy.",
+      "deepDiveDetail": "Preserved at Istanbul's Topkapı Palace, the gazelle-skin map includes detailed margin notes where Piri Reis credits roughly 20 earlier Portuguese, Arabic, and Columbus-era charts.",
+      "sourceHint": "Topkapı Palace Museum Archives",
+      "tag": "Maritime History",
+      "quiz": {
+        "question": "What material was the famous 1513 Piri Reis map drawn upon?",
+        "options": [
+          "Gazelle skin (parchment)",
+          "Baked clay tablet",
+          "Woven silk"
+        ],
+        "correctIndex": 0,
+        "explanation": "The surviving fragment preserved in Topkapı Palace was drawn on gazelle parchment."
+      }
+    }
+  }
+]

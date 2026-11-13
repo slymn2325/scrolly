@@ -1,0 +1,478 @@
+[
+  {
+    "id": "nature-01",
+    "category": "nature",
+    "accentColor": "#0D9488",
+    "iconName": "Waves",
+    "emoji": "🐙",
+    "readingTimeSec": 15,
+    "tr": {
+      "slug": "ahtapotlarin-uc-kalbi-ve-mavi-kani",
+      "title": "Ahtapotların Üç Kalbi ve Mavi Kanı Vardır",
+      "factText": "Bir ahtapotun vücudunda üç kalp, dokuz beyin benzeri sinir düğümü ve bakır bazlı mavi bir kan dolaşır.",
+      "deepDiveDetail": "İki kalp solungaçlara kan pompalar, üçüncü kalp ise organlara gönderir. Ahtapot yüzerken organlara kan pompalayan kalbi durur; bu yüzden yüzmek yerine deniz tabanında yürümeyi tercih ederler. Mavi renk ise demir yerine bakır içeren hemosiyaninden gelir.",
+      "sourceHint": "Smithsonian Ocean Portal",
+      "tag": "Deniz Biyolojisi",
+      "quiz": {
+        "question": "Ahtapotların kanının mavi renkte olmasını sağlayan element hangisidir?",
+        "options": [
+          "Bakır",
+          "Demir",
+          "Magnezyum"
+        ],
+        "correctIndex": 0,
+        "explanation": "İnsan kanında oksijeni demir (hemoglobin), ahtapotlarda ise bakır (hemosiyanin) taşır."
+      },
+      "guessChallenge": {
+        "type": "slider",
+        "prompt": "Sence bir ahtapotun vücudunda kaç kalp bulunur?",
+        "min": 1,
+        "max": 8,
+        "step": 1,
+        "unit": "kalp",
+        "correctValue": 3
+      }
+    },
+    "en": {
+      "slug": "octopuses-have-three-hearts-and-blue-blood",
+      "title": "Octopuses Have Three Hearts and Blue Blood",
+      "factText": "An octopus has three hearts, nine brain-like nerve clusters, and copper-based blue blood.",
+      "deepDiveDetail": "Two hearts pump blood to the gills while the third circulates it to the body—and actually pauses while the octopus swims, which is why they prefer crawling. Their blood is blue because it uses copper-rich hemocyanin instead of iron.",
+      "sourceHint": "Smithsonian Ocean Portal",
+      "tag": "Marine Biology",
+      "quiz": {
+        "question": "Which metal gives octopus blood its distinctive blue color?",
+        "options": [
+          "Copper",
+          "Iron",
+          "Magnesium"
+        ],
+        "correctIndex": 0,
+        "explanation": "Octopuses use copper-based hemocyanin rather than iron-based hemoglobin to carry oxygen."
+      },
+      "guessChallenge": {
+        "type": "slider",
+        "prompt": "How many hearts do you think an octopus has inside its body?",
+        "min": 1,
+        "max": 8,
+        "step": 1,
+        "unit": "hearts",
+        "correctValue": 3
+      }
+    }
+  },
+  {
+    "id": "nature-02",
+    "category": "nature",
+    "accentColor": "#0D9488",
+    "iconName": "Trees",
+    "emoji": "🌳",
+    "readingTimeSec": 16,
+    "tr": {
+      "slug": "agaclar-yeraltinda-mantarlarla-konusur",
+      "title": "Ormandaki Ağaçlar Yer Altından Besin ve Uyarı Paylaşır",
+      "factText": "Ağaçlar köklerini saran mikroskobik mantar ağları aracılığıyla birbirlerine şeker gönderir ve böcek saldırılarını haber verir.",
+      "deepDiveDetail": "Bilim insanlarının 'Wood Wide Web' dediği mikoriza ağı sayesinde yaşlı ve büyük ağaçlar gölgede kalan fidanlara karbon aktarabilir ve bir ağaç zararlı böcek saldırısına uğradığında komşularına kimyasal uyarı sinyali iletebilir.",
+      "sourceHint": "Nature Journal / Suzanne Simard",
+      "tag": "Ekoloji",
+      "quiz": {
+        "question": "Ağaçların yer altında mantar kökleriyle kurduğu iletişim ve besin ağına popüler olarak ne ad verilir?",
+        "options": [
+          "Wood Wide Web",
+          "Kök İnterneti",
+          "Fotosentez Hattı"
+        ],
+        "correctIndex": 0,
+        "explanation": "Mikoriza mantarlarının ağaç köklerini bağladığı bu ağa 'Wood Wide Web' adı verilir."
+      },
+      "guessChallenge": {
+        "type": "binary",
+        "prompt": "Ağaçlar yer altında hangi organizma ağı ile haberleşir?",
+        "options": [
+          "Yer altı Mantarları",
+          "Solucan Tünelleri"
+        ],
+        "correctOptionIndex": 0
+      }
+    },
+    "en": {
+      "slug": "trees-communicate-underground-wood-wide-web",
+      "title": "Forest Trees Share Nutrients and Warnings Underground",
+      "factText": "Trees use microscopic fungal networks around their roots to send sugars to neighbors and warn them of insect attacks.",
+      "deepDiveDetail": "Often called the 'Wood Wide Web,' mycorrhizal fungal threads connect tree roots so older trees can nourish shaded seedlings with carbon and relay chemical defense signals when pests arrive.",
+      "sourceHint": "Nature Journal / Suzanne Simard",
+      "tag": "Forest Ecology",
+      "quiz": {
+        "question": "What nickname did scientists give the underground fungal network linking forest trees?",
+        "options": [
+          "Wood Wide Web",
+          "Root Fiber Net",
+          "Canopy Link"
+        ],
+        "correctIndex": 0,
+        "explanation": "Mycorrhizal networks connecting tree roots are famously known as the 'Wood Wide Web'."
+      },
+      "guessChallenge": {
+        "type": "binary",
+        "prompt": "Which underground network lets forest trees send warnings?",
+        "options": [
+          "Mycorrhizal Fungi",
+          "Earthworm Tunnels"
+        ],
+        "correctOptionIndex": 0
+      }
+    }
+  },
+  {
+    "id": "nature-03",
+    "category": "nature",
+    "accentColor": "#0D9488",
+    "iconName": "Fish",
+    "emoji": "🦈",
+    "readingTimeSec": 15,
+    "tr": {
+      "slug": "kopekbaliklari-agaclardan-ve-saturnun-halkalarindan-eskidir",
+      "title": "Köpekbalıkları Ağaçlardan ve Satürn'ün Halkalarından Eskidir",
+      "factText": "Köpekbalıkları Dünya okyanuslarında yaklaşık 400 milyon yıldır yüzüyor; bu da onları karadaki ilk ağaçlardan bile yaşlı kılıyor.",
+      "deepDiveDetail": "Ağaçlar yaklaşık 350 milyon yıl önce ortaya çıkarken, köpekbalıklarının ataları 400-450 milyon yıl öncesine dayanır. Güncel araştırmalar Satürn'ün buzlu halkalarının da 100-400 milyon yaş arasında olabileceğini gösteriyor.",
+      "sourceHint": "Natural History Museum London",
+      "tag": "Evrim Tarihi",
+      "quiz": {
+        "question": "Köpekbalıkları Dünya okyanuslarında yaklaşık kaç milyon yıldır var?",
+        "options": [
+          "~400 milyon yıl",
+          "~50 milyon yıl",
+          "~120 milyon yıl"
+        ],
+        "correctIndex": 0,
+        "explanation": "Fosil pulları köpekbalıklarının yaklaşık 400 milyon yıldır var olduğunu, yani ağaçlardan daha eski olduğunu gösterir."
+      }
+    },
+    "en": {
+      "slug": "sharks-are-older-than-trees-and-saturns-rings",
+      "title": "Sharks Are Older Than Trees and Saturn's Rings",
+      "factText": "Sharks have been swimming in Earth's oceans for roughly 400 million years—predating both trees and possibly Saturn's rings.",
+      "deepDiveDetail": "The earliest trees appeared around 350 million years ago, while shark fossil scales date back over 400 million years. Recent planetary studies estimate Saturn's icy rings formed 100 to 400 million years ago.",
+      "sourceHint": "Natural History Museum London",
+      "tag": "Evolutionary History",
+      "quiz": {
+        "question": "Roughly how long have sharks existed in Earth's oceans?",
+        "options": [
+          "~400 million years",
+          "~50 million years",
+          "~120 million years"
+        ],
+        "correctIndex": 0,
+        "explanation": "Fossil evidence places early sharks over 400 million years ago, before the first trees."
+      }
+    }
+  },
+  {
+    "id": "nature-04",
+    "category": "nature",
+    "accentColor": "#0D9488",
+    "iconName": "Bug",
+    "emoji": "🐝",
+    "readingTimeSec": 14,
+    "tr": {
+      "slug": "bal-arilari-insan-yuzlerini-taniyabilir",
+      "title": "Bal Arıları İnsan Yüzlerini Tanıyabilir",
+      "factText": "Toplu iğne başı büyüklüğündeki beyinlerine rağmen bal arıları farklı insan yüzlerini ayırt edip hatırlayabilir.",
+      "deepDiveDetail": "Arılar yüzleri bütünsel bir örüntü (göz, burun, ağız düzeni) olarak işler—tıpkı çiçek yapraklarının simetrisini tanımaları gibi. Deneylerde şekerli suyla ödüllendirilen arılar, fotoğrafı gösterilen yüzü doğru seçmiştir.",
+      "sourceHint": "Journal of Experimental Biology",
+      "tag": "Hayvan Zekâsı",
+      "quiz": {
+        "question": "Bal arıları insan yüzlerini nasıl tanır?",
+        "options": [
+          "Göz, burun ve ağzı bütünsel bir örüntü olarak eşleyerek",
+          "İnsanların yaydığı ısı haritasını okuyarak",
+          "Sadece ses tonunu analiz ederek"
+        ],
+        "correctIndex": 0,
+        "explanation": "Arılar tıpkı çiçek şekillerini tanıdıkları gibi yüz özelliklerinin bütünsel yerleşimini (configural processing) öğrenirler."
+      }
+    },
+    "en": {
+      "slug": "honeybees-can-recognize-human-faces",
+      "title": "Honeybees Can Recognize Individual Human Faces",
+      "factText": "Despite having brains smaller than a sesame seed, honeybees can learn and remember human faces.",
+      "deepDiveDetail": "Bees use 'configural processing'—piecing together eyes, nose, and mouth as a recognizable pattern, similar to how they identify flower shapes. In lab tests, bees trained with sugar water reliably picked out learned faces.",
+      "sourceHint": "Journal of Experimental Biology",
+      "tag": "Animal Cognition",
+      "quiz": {
+        "question": "How do honeybees recognize human faces?",
+        "options": [
+          "By combining facial features into a whole pattern",
+          "By scanning infrared body heat",
+          "Only by recognizing vocal pitch"
+        ],
+        "correctIndex": 0,
+        "explanation": "Bees process the spatial arrangement of eyes, nose, and mouth just like flower patterns."
+      }
+    }
+  },
+  {
+    "id": "nature-05",
+    "category": "nature",
+    "accentColor": "#0D9488",
+    "iconName": "Bird",
+    "emoji": "🦩",
+    "readingTimeSec": 14,
+    "tr": {
+      "slug": "flamingolar-pembe-dogmaz",
+      "title": "Flamingolar Aslında Gri Doğar, Yedikleriyle Pembeleşir",
+      "factText": "Flamingo yavruları yumurtadan gri veya beyaz tüylerle çıkar; ikonik pembe renklerini tamamen yedikleri besinlerden alırlar.",
+      "deepDiveDetail": "Flamingoların tükettiği mavi-yeşil algler ve tuzlu su karidesleri 'beta-karoten' pigmenti açısından zengindir. Karaciğerdeki enzimler bu pigmenti parçalayarak zamanla tüylere parlak pembe ve mercan rengini verir.",
+      "sourceHint": "National Audubon Society",
+      "tag": "Ornitoloji",
+      "quiz": {
+        "question": "Flamingolara pembe rengini veren temel madde hangisidir?",
+        "options": [
+          "Besinlerdeki beta-karoten pigmenti",
+          "Güneş ışığının tüyleri yakması",
+          "Kandaki demir oranı"
+        ],
+        "correctIndex": 0,
+        "explanation": "Alg ve karideslerde bulunan karotenoid pigmentler zamanla tüyleri pembeye boyar."
+      }
+    },
+    "en": {
+      "slug": "flamingos-are-born-grey-not-pink",
+      "title": "Flamingos Are Born Grey—Their Diet Turns Them Pink",
+      "factText": "Baby flamingos hatch with soft grey or white feathers and owe their famous pink color entirely to their food.",
+      "deepDiveDetail": "The brine shrimp and blue-green algae flamingos eat are packed with carotenoid pigments like beta-carotene. Digestive enzymes break down these pigments and deposit them into growing feathers.",
+      "sourceHint": "National Audubon Society",
+      "tag": "Ornithology",
+      "quiz": {
+        "question": "What gives flamingos their bright pink plumage?",
+        "options": [
+          "Carotenoid pigments in their diet",
+          "Sunburn on white feathers",
+          "High iron levels in blood"
+        ],
+        "correctIndex": 0,
+        "explanation": "Carotenoids from algae and brine shrimp tint their feathers pink over time."
+      }
+    }
+  },
+  {
+    "id": "nature-06",
+    "category": "nature",
+    "accentColor": "#0D9488",
+    "iconName": "PawPrint",
+    "emoji": "🐨",
+    "readingTimeSec": 14,
+    "tr": {
+      "slug": "koalalarin-parmak-izleri-insanla-ayirt-edilemez",
+      "title": "Koalaların Parmak İzleri İnsanlarınkiyle Neredeyse Aynıdır",
+      "factText": "Bir koalanın parmak izi, elektron mikroskobu altında bile bir insanın parmak iziyle karıştırılabilecek kadar benzerdir.",
+      "deepDiveDetail": "Koalalar ve primatlar milyonlarca yıl önce farklı evrimsel yollara ayrılmış olsa da, ağaç dallarını ve okaliptüs yapraklarını sıkıca kavrama ihtiyacı her iki türde de bağımsız olarak aynı parmak izi kıvrımlarını ortaya çıkarmıştır.",
+      "sourceHint": "University of Adelaide Anatomy Study",
+      "tag": "Yakınsak Evrim",
+      "quiz": {
+        "question": "İnsanlarla çok uzak akraba olmalarına rağmen koalaların benzer parmak izine sahip olması neyle açıklanır?",
+        "options": [
+          "Benzer kavrama ihtiyacının yarattığı yakınsak evrim",
+          "Koalaların yalnızca geceleri uyuması",
+          "Okaliptüs yapraklarının cildi şekillendirmesi"
+        ],
+        "correctIndex": 0,
+        "explanation": "Ağaç dallarını ve yaprakları hassas biçimde kavrama gereksinimi iki farklı türde benzer parmak izi evrimleştirmiştir."
+      }
+    },
+    "en": {
+      "slug": "koala-fingerprints-nearly-identical-to-humans",
+      "title": "Koala Fingerprints Are Nearly Identical to Human Ones",
+      "factText": "Even under a forensic microscope, koala fingerprints closely resemble human fingerprints down to loops and whorls.",
+      "deepDiveDetail": "Although koalas and primates branched apart over 100 million years ago, both evolved fine epidermal ridges independently—an example of convergent evolution driven by grasping branches and leaves.",
+      "sourceHint": "University of Adelaide Anatomy Study",
+      "tag": "Convergent Evolution",
+      "quiz": {
+        "question": "Why do koalas share human-like fingerprints despite distant ancestry?",
+        "options": [
+          "Convergent evolution for grasping branches and leaves",
+          "Eucalyptus oils sculpting their skin",
+          "Sleeping 20 hours a day"
+        ],
+        "correctIndex": 0,
+        "explanation": "Independent adaptation for gripping trees produced nearly identical fingerprint ridges."
+      }
+    }
+  },
+  {
+    "id": "nature-07",
+    "category": "nature",
+    "accentColor": "#0D9488",
+    "iconName": "Waves",
+    "emoji": "🐬",
+    "readingTimeSec": 15,
+    "tr": {
+      "slug": "yunuslar-birbirlerine-isim-takar",
+      "title": "Yunuslar Birbirlerine Özel 'İsim Islıkları' İle Seslenir",
+      "factText": "Şişe burunlu yunuslar kendilerine özgü bir 'imza ıslığı' geliştirir ve diğer yunuslar onları çağırmak için bu ıslığı taklit eder.",
+      "deepDiveDetail": "İskoçya'daki St Andrews Üniversitesi araştırmaları, yunusların kendi imza ıslıklarını duyduklarında tıpkı insanlar gibi dönüp yanıt verdiğini gösterdi. Bu ıslıklar yunus toplumunda bireysel isim görevi görür.",
+      "sourceHint": "PNAS / University of St Andrews",
+      "tag": "Deniz İletişimi",
+      "quiz": {
+        "question": "Yunusların birbirlerini çağırmak için kullandığı benzersiz seslere ne ad verilir?",
+        "options": [
+          "İmza ıslığı (Signature whistle)",
+          "Ultrasonik kod",
+          "Dalga yankısı"
+        ],
+        "correctIndex": 0,
+        "explanation": "Her yunus hayatının başında kendine özgü bir imza ıslığı oluşturur ve bunu isim olarak kullanır."
+      }
+    },
+    "en": {
+      "slug": "dolphins-call-each-other-by-signature-whistles",
+      "title": "Dolphins Call Each Other by Individual 'Names'",
+      "factText": "Bottlenose dolphins invent a unique 'signature whistle' in infancy, and podmates mimic it to call that specific dolphin.",
+      "deepDiveDetail": "Research from the University of St Andrews found that wild dolphins reliably respond when researchers play back their specific signature whistle—functioning much like human names.",
+      "sourceHint": "PNAS / University of St Andrews",
+      "tag": "Marine Communication",
+      "quiz": {
+        "question": "What do biologists call the personal sound dolphins use like names?",
+        "options": [
+          "Signature whistles",
+          "Sonar clicks",
+          "Tidal echoes"
+        ],
+        "correctIndex": 0,
+        "explanation": "Each dolphin develops a distinct signature whistle that other dolphins repeat to address them."
+      }
+    }
+  },
+  {
+    "id": "nature-08",
+    "category": "nature",
+    "accentColor": "#0D9488",
+    "iconName": "Waves",
+    "emoji": "🌊",
+    "readingTimeSec": 14,
+    "tr": {
+      "slug": "su-samurlari-uyurken-el-ele-tutusur",
+      "title": "Su Samurları Uyurken Akıntıya Kapılmamak İçin El Ele Tutuşur",
+      "factText": "Deniz samurları sırt üstü yüzerken akıntının kendilerini birbirinden ayırmasını önlemek için uyku sırasında patilerini kenetler.",
+      "deepDiveDetail": "Bu sevimli davranışa 'rafting' (sal oluşturma) denir. Bazen birkaç düzine su samuru birbirine tutunur ve kendilerini dev su yosunu (kelp) yapraklarına da dolayarak geceyi güvende geçirir.",
+      "sourceHint": "Monterey Bay Aquarium",
+      "tag": "Hayvan Davranışı",
+      "quiz": {
+        "question": "Deniz samurları su üstünde uyurken neden el ele tutuşur?",
+        "options": [
+          "Akıntının kendilerini birbirinden sürüklemesini önlemek için",
+          "Vücut ısılarını yarıya indirmek için",
+          "Avcıları korkutmak için ses çıkarmak amacıyla"
+        ],
+        "correctIndex": 0,
+        "explanation": "Patilerini kenetleyerek veya kelp yosunlarına sarılarak akıntıda dağılmadan uyurlar."
+      }
+    },
+    "en": {
+      "slug": "sea-otters-hold-hands-while-sleeping",
+      "title": "Sea Otters Hold Paws While Sleeping So They Don't Drift Apart",
+      "factText": "Floating on their backs to nap, sea otters often link paws in groups called 'rafts' so ocean currents don't separate them.",
+      "deepDiveDetail": "Besides holding hands, otters also wrap themselves in giant kelp fronds like natural anchors, letting entire groups snooze safely together on gentle waves.",
+      "sourceHint": "Monterey Bay Aquarium",
+      "tag": "Animal Behavior",
+      "quiz": {
+        "question": "Why do sea otters hold paws while napping on the ocean surface?",
+        "options": [
+          "To keep ocean currents from drifting them apart",
+          "To lower their body temperature",
+          "To mimic large sharks"
+        ],
+        "correctIndex": 0,
+        "explanation": "Linking paws (and wrapping in kelp) keeps otters together while they sleep."
+      }
+    }
+  },
+  {
+    "id": "nature-09",
+    "category": "nature",
+    "accentColor": "#0D9488",
+    "iconName": "Sprout",
+    "emoji": "🍄",
+    "readingTimeSec": 15,
+    "tr": {
+      "slug": "dunyanin-en-buyuk-canlisi-bir-mantardir",
+      "title": "Dünya'nın En Büyük Canlısı Bir Balina Değil, Yer Altı Mantarıdır",
+      "factText": "ABD'nin Oregon eyaletindeki bir ormanda yaşayan tek bir bal mantarı organizması tam 9,6 kilometrekarelik bir alana yayılıyor.",
+      "deepDiveDetail": "'Humongous Fungus' (Dev Mantar) olarak bilinen Armillaria ostoyae, yer altındaki miselyum iplikleriyle tek bir genetik birey olarak binlerce yıldır büyüyor ve ağırlığının yüzlerce ton olduğu tahmin ediliyor.",
+      "sourceHint": "USDA Forest Service",
+      "tag": "Biyoloji Rekoru",
+      "quiz": {
+        "question": "Alan bakımından Dünya'nın bilinen en büyük tek canlı organizması nedir?",
+        "options": [
+          "Oregon'daki yer altı bal mantarı ağı",
+          "Büyük Okyanus'taki mavi balina",
+          "Amazon'daki tek bir meşe ağacı"
+        ],
+        "correctIndex": 0,
+        "explanation": "Armillaria ostoyae mantarının yer altı ağı neredeyse 10 km²'lik tek bir genetik organizmadır."
+      }
+    },
+    "en": {
+      "slug": "worlds-largest-living-organism-is-an-underground-fungus",
+      "title": "Earth's Largest Living Organism Is a Giant Underground Fungus",
+      "factText": "Spanning nearly 10 square kilometers beneath an Oregon forest, a single honey fungus is the largest known organism by area.",
+      "deepDiveDetail": "Nicknamed the 'Humongous Fungus,' Armillaria ostoyae spreads via underground thread-like filaments that share identical DNA and has likely been growing for several thousand years.",
+      "sourceHint": "USDA Forest Service",
+      "tag": "Biology Record",
+      "quiz": {
+        "question": "What holds the title for the largest known living organism by area on Earth?",
+        "options": [
+          "An underground honey fungus in Oregon",
+          "A blue whale in the Pacific",
+          "A single giant redwood tree"
+        ],
+        "correctIndex": 0,
+        "explanation": "The Armillaria ostoyae fungus spreads underground across nearly 10 square kilometers."
+      }
+    }
+  },
+  {
+    "id": "nature-10",
+    "category": "nature",
+    "accentColor": "#0D9488",
+    "iconName": "Sun",
+    "emoji": "🌵",
+    "readingTimeSec": 14,
+    "tr": {
+      "slug": "saguaro-kaktusu-yuzlerce-litre-su-depolar",
+      "title": "Dev Bir Saguaro Kaktüsü Tek Başına Binlerce Litre Su Depolayabilir",
+      "factText": "Çölde büyüyen bir Saguaro kaktüsü yağmur yağdığında akordeon gibi genişleyerek gövdesinde 3.000 litreye kadar su depolayabilir.",
+      "deepDiveDetail": "Kaktüsün dikey kıvrımlı gövdesi yağışlı günlerde esneyip genişlemek üzere tasarlanmıştır. Kurak aylarda bu suyu yavaşça kullanarak aylarca yağmursuz hayatta kalır.",
+      "sourceHint": "National Park Service (Saguaro)",
+      "tag": "Çöl Adaptasyonu",
+      "quiz": {
+        "question": "Saguaro kaktüsünün gövdesindeki dikey kıvrımlar (akordeon yapısı) ne işe yarar?",
+        "options": [
+          "Yağmur sonrası büyük miktarda su alınca yırtılmadan genişlemeye",
+          "Kuşların yuva yapmasını engellemeye",
+          "Gece rüzgarında ses çıkarmaya"
+        ],
+        "correctIndex": 0,
+        "explanation": "Kıvrımlı yapı su depolandıkça kaktüsün hacminin güvenle şişmesini sağlar."
+      }
+    },
+    "en": {
+      "slug": "saguaro-cactus-expands-like-accordion-to-store-water",
+      "title": "A Giant Saguaro Cactus Expands Like an Accordion to Store Tons of Water",
+      "factText": "After rare desert storms, a mature saguaro cactus can soak up and hold thousands of liters of water inside its pleated trunk.",
+      "deepDiveDetail": "The vertical pleats along a saguaro's skin unfold as water swells its spongy interior tissue, letting the plant drink deeply during brief downpours and survive months of drought.",
+      "sourceHint": "National Park Service (Saguaro)",
+      "tag": "Desert Adaptation",
+      "quiz": {
+        "question": "What purpose do the accordion-like pleats on a saguaro cactus serve?",
+        "options": [
+          "Allowing the trunk to expand when soaking up heavy rainwater",
+          "Reflecting moonlight to attract bees",
+          "Trapping desert sand for armor"
+        ],
+        "correctIndex": 0,
+        "explanation": "The pleats unfold smoothly so the cactus can swell with stored water without splitting."
+      }
+    }
+  }
+]

@@ -1,0 +1,514 @@
+[
+  {
+    "id": "space-01",
+    "category": "space",
+    "accentColor": "#7C3AED",
+    "iconName": "Orbit",
+    "emoji": "🪐",
+    "readingTimeSec": 18,
+    "tr": {
+      "slug": "venuste-bir-gun-bir-yildan-uzundur",
+      "title": "Venüs'te Bir Gün, Bir Yıldan Daha Uzundur",
+      "factText": "Venüs kendi ekseni etrafında o kadar yavaş döner ki, bir Venüs günü Güneş etrafındaki tam bir turundan (Venüs yılından) daha uzun sürer.",
+      "deepDiveDetail": "Venüs'ün Güneş etrafındaki bir tam dönüşü 225 Dünya günü sürer. Ancak kendi ekseni etrafında ters yönde (saat yönünde) dönmesi tam 243 Dünya günü alır. Bu yüzden Venüs'te Güneş batıdan doğar ve doğudan batar.",
+      "sourceHint": "NASA Planetary Fact Sheet",
+      "tag": "Gezegen Dinamiği",
+      "quiz": {
+        "question": "Venüs'ün kendi ekseni etrafında bir tam tur dönmesi yaklaşık kaç Dünya günü sürer?",
+        "options": [
+          "243 gün",
+          "225 gün",
+          "365 gün"
+        ],
+        "correctIndex": 0,
+        "explanation": "Venüs kendi ekseni etrafında 243 günde, Güneş etrafında ise 225 günde döner."
+      },
+      "guessChallenge": {
+        "type": "slider",
+        "prompt": "Sence 1 Venüs günü yaklaşık kaç Dünya günü sürer?",
+        "min": 50,
+        "max": 400,
+        "step": 1,
+        "unit": "gün",
+        "correctValue": 243
+      }
+    },
+    "en": {
+      "slug": "a-day-on-venus-is-longer-than-a-year",
+      "title": "A Day on Venus Is Longer Than Its Year",
+      "factText": "Venus spins so slowly on its axis that a single Venusian day lasts longer than its entire orbit around the Sun.",
+      "deepDiveDetail": "It takes Venus 225 Earth days to complete one orbit around the Sun, but it takes 243 Earth days to rotate once on its axis—and it spins backward compared to most planets, making the Sun rise in the west.",
+      "sourceHint": "NASA Planetary Fact Sheet",
+      "tag": "Planetary Motion",
+      "quiz": {
+        "question": "Approximately how many Earth days does Venus take to rotate once on its own axis?",
+        "options": [
+          "243 days",
+          "225 days",
+          "365 days"
+        ],
+        "correctIndex": 0,
+        "explanation": "Venus takes 243 Earth days to spin once on its axis and 225 days to orbit the Sun."
+      },
+      "guessChallenge": {
+        "type": "slider",
+        "prompt": "How many Earth days do you think 1 day on Venus lasts?",
+        "min": 50,
+        "max": 400,
+        "step": 1,
+        "unit": "days",
+        "correctValue": 243
+      }
+    }
+  },
+  {
+    "id": "space-02",
+    "category": "space",
+    "accentColor": "#7C3AED",
+    "iconName": "Sparkles",
+    "emoji": "🌟",
+    "readingTimeSec": 15,
+    "tr": {
+      "slug": "notron-yildizindan-bir-cay-kasigi-madde",
+      "title": "Bir Çay Kaşığı Nötron Yıldızı Milyarlarca Ton Ağırlığındadır",
+      "factText": "Bir nötron yıldızından alınan tek bir çay kaşığı madde, Dünya'da yaklaşık 4 milyar ton ağırlığa denk gelir.",
+      "deepDiveDetail": "Dev yıldızlar süpernova olarak patladığında çekirdekleri muazzam bir kütleçekimiyle çöker. Elektronlar ve protonlar birleşip nötronlara dönüşür; böylece Güneş'ten bile ağır bir kütle yaklaşık 20 km çapında bir küreye sıkışır.",
+      "sourceHint": "ESA & Chandra X-Ray Observatory",
+      "tag": "Astrofizik",
+      "quiz": {
+        "question": "Nötron yıldızlarının aşırı yoğun olmasının temel nedeni nedir?",
+        "options": [
+          "Çekirdeğin dev bir kütleçekimiyle ~20 km çapa sıkışması",
+          "Tamamen donmuş demirden oluşmaları",
+          "Işık hızından hızlı dönmeleri"
+        ],
+        "correctIndex": 0,
+        "explanation": "Süpernova sonrası çekirdek o kadar yoğun sıkışır ki bir şehir büyüklüğündeki alana yıldız kütlesi sığar."
+      },
+      "guessChallenge": {
+        "type": "slider",
+        "prompt": "Sence tipik bir nötron yıldızının çapı yaklaşık kaç km'dir?",
+        "min": 5,
+        "max": 200,
+        "step": 5,
+        "unit": "km",
+        "correctValue": 20
+      }
+    },
+    "en": {
+      "slug": "teaspoon-of-neutron-star-weight",
+      "title": "A Teaspoon of Neutron Star Weighs Billions of Tons",
+      "factText": "Just a single teaspoon of neutron star material would weigh roughly 4 billion tons on Earth.",
+      "deepDiveDetail": "When massive stars explode as supernovae, their cores collapse under extreme gravity, crushing protons and electrons into neutrons and packing more mass than our Sun into a sphere only about 20 km wide.",
+      "sourceHint": "ESA & Chandra X-Ray Observatory",
+      "tag": "Astrophysics",
+      "quiz": {
+        "question": "Why are neutron stars extraordinarily dense?",
+        "options": [
+          "A star's mass is crushed into a sphere ~20 km wide",
+          "They are made entirely of solid frozen iron",
+          "They spin faster than the speed of light"
+        ],
+        "correctIndex": 0,
+        "explanation": "Gravitational collapse after a supernova packs solar-scale mass into a city-sized sphere."
+      },
+      "guessChallenge": {
+        "type": "slider",
+        "prompt": "How wide do you think a typical neutron star is in kilometers?",
+        "min": 5,
+        "max": 200,
+        "step": 5,
+        "unit": "km",
+        "correctValue": 20
+      }
+    }
+  },
+  {
+    "id": "space-03",
+    "category": "space",
+    "accentColor": "#7C3AED",
+    "iconName": "Gem",
+    "emoji": "💎",
+    "readingTimeSec": 16,
+    "tr": {
+      "slug": "neptun-ve-uranuste-elmas-yagmuru",
+      "title": "Neptün ve Uranüs'te Elmas Yağmurları Yağar",
+      "factText": "Buz devleri Neptün ve Uranüs'ün derin atmosferlerinde yüksek basınç metan gazını kristalleştirerek gerçek elmas yağmurları oluşturur.",
+      "deepDiveDetail": "Atmosferin derinliklerinde basınç Dünya atmosferinin milyonlarca katına çıkar. Bu aşırı basınç ve sıcaklık metan moleküllerindeki karbonu serbest bırakır ve karbon atomları elmas kristallerine dönüşerek merkeze doğru yağar.",
+      "sourceHint": "SLAC National Accelerator Laboratory",
+      "tag": "Gezegen Kimyası",
+      "quiz": {
+        "question": "Neptün ve Uranüs'teki elmas yağmurları hangi gazın yüksek basınç altında parçalanmasıyla oluşur?",
+        "options": [
+          "Metan",
+          "Oksijen",
+          "Azot"
+        ],
+        "correctIndex": 0,
+        "explanation": "Aşırı basınç metan (CH4) içindeki karbon atomlarını sıkıştırarak elmas kristalleri oluşturur."
+      },
+      "guessChallenge": {
+        "type": "binary",
+        "prompt": "Sence Neptün'deki elmas yağmurları hangi gazdan oluşur?",
+        "options": [
+          "Metan Gazı",
+          "Oksijen Gazı"
+        ],
+        "correctOptionIndex": 0
+      }
+    },
+    "en": {
+      "slug": "diamond-rain-on-neptune-and-uranus",
+      "title": "It Rains Diamonds Inside Neptune and Uranus",
+      "factText": "Deep inside the ice giants Neptune and Uranus, extreme pressure turns methane gas into literal diamond rain.",
+      "deepDiveDetail": "At thousands of kilometers below their cloud tops, immense pressure millions of times greater than Earth's splits carbon from methane molecules, compressing the carbon into solid diamond crystals that sink inward.",
+      "sourceHint": "SLAC National Accelerator Laboratory",
+      "tag": "Planetary Chemistry",
+      "quiz": {
+        "question": "Which gas breaks apart under extreme pressure to form diamonds inside Neptune?",
+        "options": [
+          "Methane",
+          "Oxygen",
+          "Nitrogen"
+        ],
+        "correctIndex": 0,
+        "explanation": "Carbon atoms freed from methane (CH4) compress into solid diamonds under extreme pressure."
+      },
+      "guessChallenge": {
+        "type": "binary",
+        "prompt": "Which gas compresses into falling diamonds inside Neptune?",
+        "options": [
+          "Methane Gas",
+          "Oxygen Gas"
+        ],
+        "correctOptionIndex": 0
+      }
+    }
+  },
+  {
+    "id": "space-04",
+    "category": "space",
+    "accentColor": "#7C3AED",
+    "iconName": "Moon",
+    "emoji": "👩‍🚀",
+    "readingTimeSec": 14,
+    "tr": {
+      "slug": "aydaki-ayak-izleri-milyonlarca-yil-kalir",
+      "title": "Ay'daki Ayak İzleri Milyonlarca Yıl Silinmez",
+      "factText": "Apollo astronotlarının 1969'da Ay yüzeyine bıraktığı ayak izleri bugün hâlâ neredeyse ilk günkü gibi duruyor.",
+      "deepDiveDetail": "Ay'da rüzgâr, yağmur veya akan su gibi erozyon yaratan hava olayları ve atmosfer yoktur. Bu nedenle izler yalnızca çok nadir mikro göktaşı çarpmalarıyla milyonlarca yıl içinde yavaşça aşınır.",
+      "sourceHint": "NASA Apollo Archive",
+      "tag": "Ay Keşfi",
+      "quiz": {
+        "question": "Apollo astronotlarının Ay'daki ayak izlerinin hâlâ silinmemesinin başlıca sebebi nedir?",
+        "options": [
+          "Ay'da rüzgâr ve atmosferik erozyon olmaması",
+          "Ay tozunun suyla karışıp donması",
+          "Astronot botlarının özel yapıştırıcı kullanması"
+        ],
+        "correctIndex": 0,
+        "explanation": "Atmosferi ve hava olayları olmadığı için Ay yüzeyindeki izler milyonlarca yıl bozulmadan kalır."
+      }
+    },
+    "en": {
+      "slug": "footprints-on-the-moon-last-millions-of-years",
+      "title": "Footprints on the Moon Can Last Millions of Years",
+      "factText": "The bootprints left by Apollo astronauts on the Moon in 1969 remain virtually untouched to this day.",
+      "deepDiveDetail": "Because the Moon has no atmosphere, wind, or liquid water to cause weather erosion, footprints stay preserved until very slow micrometeorite impacts gradually wear them down over millions of years.",
+      "sourceHint": "NASA Apollo Archive",
+      "tag": "Lunar Science",
+      "quiz": {
+        "question": "Why have the Apollo astronauts' footprints on the Moon not faded away?",
+        "options": [
+          "The Moon has no wind or atmospheric erosion",
+          "Lunar dust freezes solid when stepped on",
+          "The boots were coated with permanent resin"
+        ],
+        "correctIndex": 0,
+        "explanation": "With no wind or weather on the Moon, surface tracks persist for millions of years."
+      }
+    }
+  },
+  {
+    "id": "space-05",
+    "category": "space",
+    "accentColor": "#7C3AED",
+    "iconName": "Sun",
+    "emoji": "☀️",
+    "readingTimeSec": 15,
+    "tr": {
+      "slug": "gunesin-kutlesi-sistemin-yuzde-99-u",
+      "title": "Güneş Sistemindeki Kütlenin %99,86'sı Güneş'e Aittir",
+      "factText": "Dünya, Jüpiter, Satürn ve tüm asteroitler bir araya gelse bile Güneş Sisteminin toplam kütlesinin yalnızca %0,14'ünü oluşturur.",
+      "deepDiveDetail": "Güneş o kadar devasadır ki içine yaklaşık 1,3 milyon Dünya sığabilir. Geri kalan %0,14'lük kütlenin de büyük çoğunluğu gaz devi Jüpiter'dedir.",
+      "sourceHint": "NASA Solar System Exploration",
+      "tag": "Güneş Sistemi",
+      "quiz": {
+        "question": "Güneş, Güneş Sistemimizdeki toplam kütlenin yaklaşık yüzde kaçını oluşturur?",
+        "options": [
+          "%99,86",
+          "%75,4",
+          "%50,2"
+        ],
+        "correctIndex": 0,
+        "explanation": "Tüm gezegenler, uydular ve asteroitler toplam kütlenin sadece %0,14'ünü oluşturur."
+      },
+      "guessChallenge": {
+        "type": "slider",
+        "prompt": "Güneş, sistemimizdeki toplam kütlenin yüzde kaçını tek başına taşır?",
+        "min": 20,
+        "max": 100,
+        "step": 1,
+        "unit": "%",
+        "correctValue": 99
+      }
+    },
+    "en": {
+      "slug": "sun-holds-99-percent-of-solar-system-mass",
+      "title": "The Sun Holds 99.86% of Our Solar System's Mass",
+      "factText": "Combined together, Earth, Jupiter, Saturn, and every asteroid account for only 0.14% of the Solar System's total mass.",
+      "deepDiveDetail": "Our star is so enormous that roughly 1.3 million Earths could fit inside it. Most of the remaining 0.14% of planetary mass is held by gas giant Jupiter.",
+      "sourceHint": "NASA Solar System Exploration",
+      "tag": "Solar System",
+      "quiz": {
+        "question": "Roughly what percentage of our Solar System's mass belongs to the Sun?",
+        "options": [
+          "99.86%",
+          "75.4%",
+          "50.2%"
+        ],
+        "correctIndex": 0,
+        "explanation": "All planets, moons, and asteroids combined make up just 0.14% of the Solar System's mass."
+      },
+      "guessChallenge": {
+        "type": "slider",
+        "prompt": "What percentage of the Solar System's mass belongs solely to the Sun?",
+        "min": 20,
+        "max": 100,
+        "step": 1,
+        "unit": "%",
+        "correctValue": 99
+      }
+    }
+  },
+  {
+    "id": "space-06",
+    "category": "space",
+    "accentColor": "#7C3AED",
+    "iconName": "Satellite",
+    "emoji": "🛰️",
+    "readingTimeSec": 16,
+    "tr": {
+      "slug": "uzayda-soguk-kaynak-olayı",
+      "title": "İki Metal Uzayda Birbirine Dokununca Kendiliğinden Kaynar",
+      "factText": "Uzay boşluğunda iki temiz metal parçası birbirine temas ettiğinde hiçbir ısı veya lehim olmadan kalıcı olarak birbirine kaynar.",
+      "deepDiveDetail": "'Soğuk kaynak' (cold welding) adı verilen bu olayda, Dünya'da metallerin arasında bulunan ince oksit ve hava tabakası uzayda yoktur. Metal atomları hangi atomun hangi parçaya ait olduğunu 'anlayamaz' ve tek bir parça gibi birleşir.",
+      "sourceHint": "European Space Agency (ESA)",
+      "tag": "Uzay Mühendisliği",
+      "quiz": {
+        "question": "Uzayda iki temiz metalin ısı olmadan birbirine yapışmasına ne ad verilir?",
+        "options": [
+          "Soğuk kaynak (Cold welding)",
+          "Manyetik füzyon",
+          "Vakum erimesi"
+        ],
+        "correctIndex": 0,
+        "explanation": "Araya girecek hava veya oksit tabakası olmadığından atomlar doğrudan bağ kurar; buna soğuk kaynak denir."
+      }
+    },
+    "en": {
+      "slug": "cold-welding-in-outer-space",
+      "title": "Two Clean Metals Automatically Fuse in Space",
+      "factText": "If two pieces of the same bare metal touch in the vacuum of space, they permanently fuse together without heat or glue.",
+      "deepDiveDetail": "Called 'cold welding,' this happens because Earth's oxygen normally forms a thin barrier on metal. Without air or oxidation in space, atoms on both surfaces share electrons and bond into one solid piece.",
+      "sourceHint": "European Space Agency (ESA)",
+      "tag": "Space Engineering",
+      "quiz": {
+        "question": "What is the phenomenon where clean metals bond without heat in a vacuum called?",
+        "options": [
+          "Cold welding",
+          "Magnetic fusion",
+          "Vacuum melting"
+        ],
+        "correctIndex": 0,
+        "explanation": "Without air or an oxide barrier, metal atoms bond directly on contact in a process called cold welding."
+      }
+    }
+  },
+  {
+    "id": "space-07",
+    "category": "space",
+    "accentColor": "#7C3AED",
+    "iconName": "Orbit",
+    "emoji": "🌌",
+    "readingTimeSec": 15,
+    "tr": {
+      "slug": "uzaydaki-toz-bulutu-ahududu-ve-rom-gibi-kokar",
+      "title": "Samanyolu'nun Merkezindeki Bulut Ahududu Gibi Kokabilir",
+      "factText": "Bilim insanları Samanyolu galaksisinin merkezindeki dev toz bulutunda ahududuya kokusunu veren kimyasal molekülü tespit etti.",
+      "deepDiveDetail": "Sagittarius B2 adı verilen yıldız oluşum bulutunda yapılan radyo teleskop ölçümlerinde 'etil format' molekülü bulundu. Etil format, Dünya'da ahududuya karakteristik aromasını veren temel esterdir.",
+      "sourceHint": "Max Planck Institute for Radio Astronomy",
+      "tag": "Astrokimya",
+      "quiz": {
+        "question": "Sagittarius B2 bulutunda keşfedilen etil format molekülü Dünya'da en çok hangi meyvenin aromasında bulunur?",
+        "options": [
+          "Ahududu",
+          "Karpuz",
+          "Limon"
+        ],
+        "correctIndex": 0,
+        "explanation": "Etil format molekülü ahududuya kendine özgü meyvemsi kokusunu verir."
+      }
+    },
+    "en": {
+      "slug": "center-of-milky-way-contains-raspberry-flavor-molecule",
+      "title": "A Giant Space Cloud Contains the Molecule Behind Raspberry Flavor",
+      "factText": "Astronomers detected ethyl formate—the chemical compound giving raspberries their aroma—inside a vast dust cloud near the Milky Way's center.",
+      "deepDiveDetail": "Using radio telescopes aimed at the Sagittarius B2 nebula, researchers identified ethyl formate among dozens of organic molecules formed in deep space chemistry.",
+      "sourceHint": "Max Planck Institute for Radio Astronomy",
+      "tag": "Astrochemistry",
+      "quiz": {
+        "question": "Ethyl formate, found in the Sagittarius B2 space cloud, is famously responsible for which flavor?",
+        "options": [
+          "Raspberry",
+          "Watermelon",
+          "Lemon"
+        ],
+        "correctIndex": 0,
+        "explanation": "Ethyl formate is a primary ester behind the scent and flavor of raspberries."
+      }
+    }
+  },
+  {
+    "id": "space-08",
+    "category": "space",
+    "accentColor": "#7C3AED",
+    "iconName": "Orbit",
+    "emoji": "🪐",
+    "readingTimeSec": 14,
+    "tr": {
+      "slug": "saturn-yuzebilecek-kadar-dusuk-yogunlukludur",
+      "title": "Satürn'ün Ortalama Yoğunluğu Sudan Düşüktür",
+      "factText": "Dev gezegen Satürn Dünya'dan 95 kat daha ağır olmasına rağmen ortalama yoğunluğu suyun yoğunluğundan (0,687 g/cm³) daha azdır.",
+      "deepDiveDetail": "Satürn neredeyse tamamen hafif hidrojen ve helyum gazlarından oluştuğu için dev boyutuna oranla çok hafiftir. Teorik olarak evrende Satürn'ü içine alabilecek dev bir su okyanusu olsaydı, Satürn o okyanusta yüzerdi!",
+      "sourceHint": "NASA Saturn Fact Sheet",
+      "tag": "Gezegen Fiziği",
+      "quiz": {
+        "question": "Satürn'ün ortalama yoğunluğunun sudan bile düşük olmasının nedeni nedir?",
+        "options": [
+          "Büyük oranda hafif hidrojen ve helyum gazlarından oluşması",
+          "İçinin tamamen boş bir kabuk olması",
+          "Buzdan daha hafif katı karbon olması"
+        ],
+        "correctIndex": 0,
+        "explanation": "Gaz devi Satürn'ün büyük kısmı en hafif iki element olan hidrojen ve helyumdan oluşur."
+      }
+    },
+    "en": {
+      "slug": "saturn-is-less-dense-than-water",
+      "title": "Saturn Has a Lower Average Density Than Liquid Water",
+      "factText": "Despite being 95 times Earth's mass, Saturn's average density is just 0.687 g/cm³—meaning it's theoretically light enough to float in water.",
+      "deepDiveDetail": "Because Saturn consists overwhelmingly of hydrogen and helium, the two lightest elements in the universe, its huge volume yields a lower bulk density than liquid water.",
+      "sourceHint": "NASA Saturn Fact Sheet",
+      "tag": "Planetary Physics",
+      "quiz": {
+        "question": "Why is Saturn's average density lower than that of water?",
+        "options": [
+          "It is mostly made of light hydrogen and helium",
+          "It is completely hollow inside",
+          "Its rings lift it upward"
+        ],
+        "correctIndex": 0,
+        "explanation": "Being composed mainly of hydrogen and helium gives Saturn a lower average density than water."
+      }
+    }
+  },
+  {
+    "id": "space-09",
+    "category": "space",
+    "accentColor": "#7C3AED",
+    "iconName": "Telescope",
+    "emoji": "🔭",
+    "readingTimeSec": 15,
+    "tr": {
+      "slug": "mars-gun-batimi-mavi-renklidir",
+      "title": "Mars'ta Gün Batımı Kızıl Değil, Mavi Renklidir",
+      "factText": "Dünya'da gün batımları kızıl ve turuncu görünürken, Kızıl Gezegen Mars'ta Güneş batarken gökyüzü soğuk bir maviye bürünür.",
+      "deepDiveDetail": "Mars atmosferindeki ince toz parçacıkları Güneş'in etrafındaki kırmızı ışığı geniş açıyla dağıtırken mavi ışığın doğrudan gözlemciye geçmesine izin verir; bu yüzden Mars'ta gündüzler kızıl, gün batımları mavidir.",
+      "sourceHint": "NASA Curiosity Rover Observations",
+      "tag": "Mars Atmosferi",
+      "quiz": {
+        "question": "Mars yüzeyinden bakıldığında gün batımı ne renkte görünür?",
+        "options": [
+          "Mavi",
+          "Koyu yeşil",
+          "Parlak mor"
+        ],
+        "correctIndex": 0,
+        "explanation": "Mars'taki ince toz tabakası kırmızı ışığı saçarken mavi ışığı Güneş yönünden geçirir."
+      }
+    },
+    "en": {
+      "slug": "sunsets-on-mars-appear-blue",
+      "title": "Sunsets on Mars Appear Blue, Not Red",
+      "factText": "While Earth has fiery red sunsets, dusk on the Red Planet turns the sky around the setting Sun a cool shade of blue.",
+      "deepDiveDetail": "Fine Martian dust scatters red wavelengths widely across the daytime sky, while allowing blue light to travel more directly forward toward the observer at sunset—the exact opposite of Earth's sky.",
+      "sourceHint": "NASA Curiosity Rover Observations",
+      "tag": "Martian Optics",
+      "quiz": {
+        "question": "What color does the sky around the setting Sun appear from the surface of Mars?",
+        "options": [
+          "Blue",
+          "Deep green",
+          "Bright purple"
+        ],
+        "correctIndex": 0,
+        "explanation": "Fine Martian dust lets blue light penetrate forward at sunset while scattering red away."
+      }
+    }
+  },
+  {
+    "id": "space-10",
+    "category": "space",
+    "accentColor": "#7C3AED",
+    "iconName": "Rocket",
+    "emoji": "🚀",
+    "readingTimeSec": 14,
+    "tr": {
+      "slug": "voyager-1-en-uzak-insan-yapimi-nesne",
+      "title": "Voyager 1, Dünya'dan 24 Milyar Kilometreden Fazla Uzakta Hâlâ Sinyal Gönderiyor",
+      "factText": "1977'de fırlatılan Voyager 1 uzay aracı yıldızlararası uzayda ilerliyor ve gönderdiği radyo sinyalinin Dünya'ya ulaşması 22 saatten uzun sürüyor.",
+      "deepDiveDetail": "Altın Plak'ı taşıyan uzay aracı, neredeyse 50 yıllık plütonyum jeneratörüyle hâlâ bilimsel veri iletiyor. İçindeki bilgisayar belleği ise bugünkü modern akıllı telefonların milyonlarca kat daha küçüğü düzeyinde.",
+      "sourceHint": "NASA Jet Propulsion Laboratory",
+      "tag": "Yıldızlararası Keşif",
+      "quiz": {
+        "question": "1977'de fırlatılan Voyager 1 uzay aracının içindeki insanlık mesajı kaydına ne ad verilir?",
+        "options": [
+          "Altın Plak (Golden Record)",
+          "Uzay Kapsülü",
+          "Ay Diski"
+        ],
+        "correctIndex": 0,
+        "explanation": "Dünya'dan sesler ve müzikler içeren bakır-altın kaplama disk 'Altın Plak' olarak bilinir."
+      }
+    },
+    "en": {
+      "slug": "voyager-1-signals-from-over-24-billion-km-away",
+      "title": "Voyager 1 Still Phones Home From Over 24 Billion Kilometers Away",
+      "factText": "Launched in 1977, Voyager 1 is cruising through interstellar space—so far out that its radio signals take over 22 hours to reach Earth.",
+      "deepDiveDetail": "Carrying the famous Golden Record for any potential extraterrestrial listeners, the probe runs on decaying plutonium batteries and less computer memory than a modern key fob.",
+      "sourceHint": "NASA Jet Propulsion Laboratory",
+      "tag": "Interstellar Exploration",
+      "quiz": {
+        "question": "What is the famous audio-visual message disc carried aboard Voyager 1 called?",
+        "options": [
+          "The Golden Record",
+          "The Silver Capsule",
+          "The Solar Disc"
+        ],
+        "correctIndex": 0,
+        "explanation": "Carl Sagan and his team curated the Golden Record carrying Earth's sounds and greetings."
+      }
+    }
+  }
+]

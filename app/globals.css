@@ -1,0 +1,98 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --bg-cream: #FFFDF9;
+  --text-ink: #1E1B2E;
+}
+
+html,
+body {
+  background-color: #FFFDF9;
+  color: #1E1B2E;
+  overflow-x: hidden;
+  overscroll-behavior: none;
+  -webkit-touch-callout: none;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-font-smoothing: antialiased;
+  transition: background-color 0.25s ease, color 0.25s ease;
+}
+
+.backdrop-saturate-180 {
+  --tw-backdrop-saturate: saturate(1.8);
+  -webkit-backdrop-filter: blur(40px) saturate(1.8);
+  backdrop-filter: blur(40px) saturate(1.8);
+}
+
+input,
+textarea {
+  user-select: text;
+  -webkit-user-select: text;
+}
+
+html.dark,
+html.dark body {
+  background-color: #0F0D1A;
+  color: #F5F3FF;
+}
+
+/* Dark mode card surface overrides for inline pastel backgrounds */
+html.dark [data-fact-surface='true'] {
+  background-color: #1A162B !important;
+  border-color: rgba(167, 139, 250, 0.26) !important;
+  color: #F5F3FF !important;
+}
+
+html.dark [data-fact-surface='true'] h2,
+html.dark [data-fact-surface='true'] h3,
+html.dark [data-fact-surface='true'] p {
+  color: #F5F3FF !important;
+}
+
+/* 3D Card Flip Utilities */
+.perspective-1000 {
+  perspective: 1200px;
+}
+
+.perspective-1400 {
+  perspective: 1400px;
+}
+
+.preserve-3d {
+  transform-style: preserve-3d;
+}
+
+.backface-hidden {
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+.rotate-y-180 {
+  transform: rotateY(180deg);
+}
+
+/* Smooth TikTok / Reels Vertical Snap Utilities */
+.tiktok-feed-scroll,
+.reels-container {
+  scroll-snap-type: y mandatory;
+  overscroll-behavior-y: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.reels-slide {
+  scroll-snap-align: start;
+  scroll-snap-stop: always;
+}
+
+/* Hide scrollbars cleanly for horizontal category pills */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}

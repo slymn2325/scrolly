@@ -1,0 +1,442 @@
+[
+  {
+    "id": "science-01",
+    "category": "science",
+    "accentColor": "#0284C7",
+    "iconName": "Zap",
+    "emoji": "⚡",
+    "readingTimeSec": 15,
+    "tr": {
+      "slug": "su-ayni-anda-hem-donup-hem-kaynayabilir",
+      "title": "Su Aynı Anda Hem Kaynayıp Hem Donabilir",
+      "factText": "'Üçlü nokta' adı verilen özel sıcaklık ve basınçta su aynı anda katı (buz), sıvı ve gaz (buhar) halinde bulunabilir.",
+      "deepDiveDetail": "Su için bu sihirli nokta 0,01 °C sıcaklık ve çok düşük olan 611,65 Pascal basınçtır. Bu dengede su molekülleri aynı anda buz kristaline dönüşür, erir ve fokurdayarak buharlaşır.",
+      "sourceHint": "NIST / Termodinamik Standartları",
+      "tag": "Termodinamik",
+      "quiz": {
+        "question": "Bir maddenin katı, sıvı ve gaz hallerinin aynı anda dengede bulunduğu duruma ne ad verilir?",
+        "options": [
+          "Üçlü nokta (Triple point)",
+          "Kritik eşik",
+          "Mutlak sıfır"
+        ],
+        "correctIndex": 0,
+        "explanation": "Üçlü noktada sıcaklık ve basınç üç fazın aynı anda var olmasını sağlar."
+      }
+    },
+    "en": {
+      "slug": "water-can-boil-and-freeze-at-the-same-time",
+      "title": "Water Can Boil and Freeze at the Exact Same Time",
+      "factText": "At a precise combination of temperature and low pressure known as the 'triple point,' water exists simultaneously as ice, liquid, and vapor.",
+      "deepDiveDetail": "For pure water, the triple point occurs at 0.01 °C and 611.65 pascals of pressure. At this exact equilibrium, ice crystals form while liquid water violently bubbles into vapor right beside them.",
+      "sourceHint": "NIST Thermodynamics Standards",
+      "tag": "Thermodynamics",
+      "quiz": {
+        "question": "What is the state called when solid, liquid, and gas coexist in equilibrium?",
+        "options": [
+          "Triple point",
+          "Absolute zero",
+          "Critical mass"
+        ],
+        "correctIndex": 0,
+        "explanation": "At the triple point, pressure and temperature balance all three phases simultaneously."
+      }
+    }
+  },
+  {
+    "id": "science-02",
+    "category": "science",
+    "accentColor": "#0284C7",
+    "iconName": "Droplets",
+    "emoji": "🍯",
+    "readingTimeSec": 14,
+    "tr": {
+      "slug": "dogal-bal-binlerce-yil-bozulmaz",
+      "title": "Doğal Bal Binlerce Yıl Geçse de Bozulmaz",
+      "factText": "Antik Mısır mezarlarında bulunan 3.000 yıllık mühürlü bal kavanozları bugün bile yenilebilir durumdadır.",
+      "deepDiveDetail": "Balın sırrı üçlü korumadır: çok düşük su içeriği bakterileri susuz bırakır, pH seviyesi asidiktir (~3,9) ve arı enzimlerinin ürettiği az miktardaki hidrojen peroksit mikropların çoğalmasını engeller.",
+      "sourceHint": "Smithsonian Magazine / Food Chemistry",
+      "tag": "Gıda Kimyası",
+      "quiz": {
+        "question": "Doğal balın binlerce yıl bozulmadan kalabilmesini sağlayan üç etkenden biri hangisidir?",
+        "options": [
+          "Çok düşük su oranı ve asidik yapısı",
+          "İçinde yüksek miktarda alkol bulunması",
+          "Sıfırın altında donma noktası"
+        ],
+        "correctIndex": 0,
+        "explanation": "Düşük nem, asidik pH ve doğal hidrojen peroksit bakterilerin yaşamasını imkansız kılar."
+      }
+    },
+    "en": {
+      "slug": "natural-honey-never-spoils",
+      "title": "Pure Honey Practically Never Spoils",
+      "factText": "Sealed jars of 3,000-year-old honey found in ancient Egyptian tombs were still chemically unspoiled.",
+      "deepDiveDetail": "Honey combines three natural defenses: extraordinarily low moisture that dehydrates bacteria, high acidity (pH ~3.9), and trace hydrogen peroxide created by bee enzymes.",
+      "sourceHint": "Smithsonian Magazine / Food Chemistry",
+      "tag": "Food Chemistry",
+      "quiz": {
+        "question": "Which combination helps pure honey resist spoilage for millennia?",
+        "options": [
+          "Very low moisture and natural acidity",
+          "High alcohol concentration",
+          "Sub-zero freezing temperature"
+        ],
+        "correctIndex": 0,
+        "explanation": "Low water content, acidic pH, and trace hydrogen peroxide prevent microbes from surviving."
+      }
+    }
+  },
+  {
+    "id": "science-03",
+    "category": "science",
+    "accentColor": "#0284C7",
+    "iconName": "Clock",
+    "emoji": "⏱️",
+    "readingTimeSec": 15,
+    "tr": {
+      "slug": "yuksek-katta-zaman-daha-hizli-akar",
+      "title": "Bir Gökdelenin Tepesinde Zaman Biraz Daha Hızlı Akar",
+      "factText": "Einstein'ın genel görelilik kuramına göre, Dünya'nın merkezinden uzaklaştıkça yerçekimi azalır ve zaman saniyenin milyarda biri kadar daha hızlı geçer.",
+      "deepDiveDetail": "Kütleçekimsel zaman genişlemesi denen bu etki o kadar gerçektir ki, yörüngedeki GPS uydularının atom saatleri her gün Dünya'dakilerden yaklaşık 38 mikrosaniye öne geçer; bu düzeltilmezse haritalar her gün kilometrelerce sapardı.",
+      "sourceHint": "NIST & General Relativity Experiments",
+      "tag": "Modern Fizik",
+      "quiz": {
+        "question": "GPS uydularının saatleri her gün görelilik düzeltmesine ihtiyaç duymasa ne olurdu?",
+        "options": [
+          "Navigasyon konumları her gün kilometrelerce sapardı",
+          "Sadece telefon pilleri daha hızlı biterdi",
+          "Uydular yörüngeden çıkardı"
+        ],
+        "correctIndex": 0,
+        "explanation": "Zaman farkı hesaba katılmasa GPS konum hesaplaması hızla kilometrelerce hata üretirdi."
+      }
+    },
+    "en": {
+      "slug": "time-runs-slightly-faster-on-a-skyscraper",
+      "title": "Time Actually Runs Slightly Faster at the Top of a Skyscraper",
+      "factText": "According to Einstein's general relativity, weaker gravity at higher altitudes causes clocks to tick faster by billionths of a second.",
+      "deepDiveDetail": "This gravitational time dilation is so real that GPS satellites in orbit gain roughly 38 microseconds per day relative to Earth clocks—without relativistic corrections, GPS maps would drift by kilometers daily.",
+      "sourceHint": "NIST & General Relativity Experiments",
+      "tag": "Modern Physics",
+      "quiz": {
+        "question": "What would happen if GPS satellites did not correct for relativistic time dilation?",
+        "options": [
+          "Location accuracy would drift by kilometers every day",
+          "Phone batteries would drain twice as fast",
+          "Satellites would fall out of orbit"
+        ],
+        "correctIndex": 0,
+        "explanation": "Even microsecond clock drift translates into huge distance errors at the speed of light."
+      }
+    }
+  },
+  {
+    "id": "science-04",
+    "category": "science",
+    "accentColor": "#0284C7",
+    "iconName": "Atom",
+    "emoji": "🍌",
+    "readingTimeSec": 14,
+    "tr": {
+      "slug": "muzlar-dogal-olarak-cok-az-radyoaktiftir",
+      "title": "Muzlar Doğal Olarak Çok Hafif Radyoaktiftir",
+      "factText": "Her muz, içinde doğal olarak bulunan potasyum-40 izotopu nedeniyle ölçülebilir ama tamamen zararsız düzeyde radyasyon yayar.",
+      "deepDiveDetail": "Fizikçiler günlük düşük radyasyon dozlarını anlatmak için 'Muz Eşdeğeri Doz' (BED) birimini bile kullanır. Ancak radyasyon zehirlenmesi yaşamak için tek oturuşta yaklaşık 10 milyon muz yemeniz gerekirdi!",
+      "sourceHint": "Oak Ridge Associated Universities",
+      "tag": "Nükleer Fizik",
+      "quiz": {
+        "question": "Muzlardaki zararsız doğal radyasyondan hangi element sorumludur?",
+        "options": [
+          "Potasyum-40",
+          "Uranyum-235",
+          "Kalsiyum-12"
+        ],
+        "correctIndex": 0,
+        "explanation": "Muzlar potasyum açısından zengindir ve doğadaki potasyumun küçük bir kısmı radyoaktif Potasyum-40'tır."
+      }
+    },
+    "en": {
+      "slug": "bananas-are-naturally-slightly-radioactive",
+      "title": "Bananas Are Naturally (and Harmlessly) Slightly Radioactive",
+      "factText": "Every banana contains trace amounts of potassium-40, giving it a tiny, completely safe dose of natural radioactivity.",
+      "deepDiveDetail": "Health physicists even joke using the 'Banana Equivalent Dose' to put radiation into perspective. You would have to eat roughly 10 million bananas in one sitting to experience radiation sickness.",
+      "sourceHint": "Oak Ridge Associated Universities",
+      "tag": "Nuclear Physics",
+      "quiz": {
+        "question": "Which naturally occurring isotope makes bananas mildly radioactive?",
+        "options": [
+          "Potassium-40",
+          "Uranium-235",
+          "Helium-4"
+        ],
+        "correctIndex": 0,
+        "explanation": "Bananas are rich in potassium, and a tiny fraction of natural potassium is the isotope K-40."
+      }
+    }
+  },
+  {
+    "id": "science-05",
+    "category": "science",
+    "accentColor": "#0284C7",
+    "iconName": "Cloud",
+    "emoji": "☁️",
+    "readingTimeSec": 15,
+    "tr": {
+      "slug": "bir-kumulus-bulutu-500-ton-agirligindadir",
+      "title": "Pamuk Gibi Görünen Bir Bulut 500 Ton Ağırlığındadır",
+      "factText": "Gökyüzünde süzülen orta boy beyaz bir kümülüs bulutu, yaklaşık 100 filin toplam ağırlığına eşit miktarda su taşır.",
+      "deepDiveDetail": "Peki nasıl yere düşmüyor? Bu devasa kütle çok geniş bir alana yayılmış milyonlarca mikroskobik su damlacığından oluşur ve aşağıdan yükselen sıcak hava akımları bu minik damlacıkları havada asılı tutar.",
+      "sourceHint": "USGS Water Science School",
+      "tag": "Meteoroloji",
+      "quiz": {
+        "question": "500 ton su taşıyan bir bulutun gökyüzünde havada kalabilmesinin sırrı nedir?",
+        "options": [
+          "Suyun mikroskobik damlacıklara dağılıp yükselen havayla taşınması",
+          "Bulutların içinde helyum gazı birikmesi",
+          "Su damlalarının yerçekiminden etkilenmemesi"
+        ],
+        "correctIndex": 0,
+        "explanation": "Geniş alana yayılan mikro damlacıklar yükselen hava akımlarının üzerinde kolayca süzülür."
+      }
+    },
+    "en": {
+      "slug": "a-fluffy-cumulus-cloud-weighs-500-tons",
+      "title": "A Fluffy Cumulus Cloud Weighs About 500 Tons",
+      "factText": "An average white cumulus cloud floating overhead holds as much water weight as roughly 100 elephants.",
+      "deepDiveDetail": "It stays aloft because that water is spread across trillions of microscopic droplets spanning a huge volume, gently buoyed by rising currents of warm air beneath the cloud.",
+      "sourceHint": "USGS Water Science School",
+      "tag": "Meteorology",
+      "quiz": {
+        "question": "How does a 500-ton cloud stay floating in the sky?",
+        "options": [
+          "Tiny droplets are spread wide and held up by rising warm air",
+          "Clouds trap helium gas inside",
+          "Water vapor has zero gravity"
+        ],
+        "correctIndex": 0,
+        "explanation": "Microscopic droplets fall so slowly that gentle updrafts keep the cloud suspended."
+      }
+    }
+  },
+  {
+    "id": "science-06",
+    "category": "science",
+    "accentColor": "#0284C7",
+    "iconName": "Volume2",
+    "emoji": "🔊",
+    "readingTimeSec": 14,
+    "tr": {
+      "slug": "ses-suda-havadan-dort-kat-hizli-yayilir",
+      "title": "Ses Suda Havadakinden 4 Kat Daha Hızlı İlerler",
+      "factText": "Ses dalgaları havada saniyede ~343 metre yol alırken, deniz suyunda saniyede ~1.480 metre hıza ulaşır.",
+      "deepDiveDetail": "Ses titreşimlerle yayılan mekanik bir dalgadır. Suyun molekülleri havadakine göre birbirine çok daha sıkı dizildiği için titreşim bir molekülden diğerine dört kat daha hızlı aktarılır. Balinalar bu sayede yüzlerce kilometre öteden haberleşebilir.",
+      "sourceHint": "NOAA Ocean Acoustics",
+      "tag": "Akustik Fizik",
+      "quiz": {
+        "question": "Sesin suda havadan çok daha hızlı ilerlemesinin temel nedeni nedir?",
+        "options": [
+          "Su moleküllerinin birbirine çok daha yakın ve sıkışık olması",
+          "Suyun elektrik akımını daha iyi iletmesi",
+          "Havadaki rüzgarın sesi yavaşlatması"
+        ],
+        "correctIndex": 0,
+        "explanation": "Daha sıkı molekül dizilimi ve yüksek esneklik modülü titreşimi daha hızlı iletir."
+      }
+    },
+    "en": {
+      "slug": "sound-travels-four-times-faster-in-water",
+      "title": "Sound Travels Four Times Faster in Water Than in Air",
+      "factText": "While sound moves at ~343 meters per second in air, it races at roughly 1,480 meters per second through seawater.",
+      "deepDiveDetail": "Sound travels as mechanical vibrations bumping from molecule to molecule. Because liquid water molecules sit packed tightly together, vibrations pass along over four times faster—helping whales communicate across ocean basins.",
+      "sourceHint": "NOAA Ocean Acoustics",
+      "tag": "Acoustics",
+      "quiz": {
+        "question": "Why does sound travel so much faster underwater than through air?",
+        "options": [
+          "Water molecules are packed much closer together",
+          "Water conducts electricity better than air",
+          "Wind slows sound down on land"
+        ],
+        "correctIndex": 0,
+        "explanation": "Closely packed water molecules transfer mechanical vibrations far more rapidly."
+      }
+    }
+  },
+  {
+    "id": "science-07",
+    "category": "science",
+    "accentColor": "#0284C7",
+    "iconName": "Rainbow",
+    "emoji": "🌈",
+    "readingTimeSec": 14,
+    "tr": {
+      "slug": "gokkusaklari-aslında-tam-bir-dairedir",
+      "title": "Gökkuşakları Aslında Yarım Yay Değil, Tam Bir Dairedir",
+      "factText": "Yer yüzeyinden gökkuşağını yarım yay gibi görürüz; ancak bir uçaktan veya yüksek bir dağdan baktığınızda tam 360 derecelik bir çember oluşur.",
+      "deepDiveDetail": "Güneş ışığı yağmur damlacıklarından yaklaşık 42 derecelik bir koni açısıyla gözümüze kırılır. Yerdeyken ufkun altındaki kısmı toprak gizler; gökyüzünde ise tam renk çemberi bütün ihtişamıyla ortaya çıkar.",
+      "sourceHint": "Met Office UK / Atmospheric Optics",
+      "tag": "Optik Fizik",
+      "quiz": {
+        "question": "Bir gökkuşağını tam 360 derecelik bir daire olarak görebilmek için en iyi yer neresidir?",
+        "options": [
+          "Yüksekten, örneğin bir uçak penceresinden",
+          "Deniz seviyesindeki bir kumsaldan",
+          "Sadece gece yarısı"
+        ],
+        "correctIndex": 0,
+        "explanation": "Yüksekte ufuk çizgisi görüşü kesmediği için gökkuşağının alt yarısı da tamamlanır."
+      }
+    },
+    "en": {
+      "slug": "rainbows-are-actually-full-circles",
+      "title": "Rainbows Are Actually Full Circles, Not Half-Arches",
+      "factText": "From the ground, the horizon cuts off half of a rainbow—but viewed from an airplane, a rainbow can form a complete 360-degree circle.",
+      "deepDiveDetail": "Sunlight refracts inside raindrops at roughly a 42-degree cone centered opposite the sun. When you're high enough with rain below you, the entire circular ring becomes visible.",
+      "sourceHint": "Met Office UK / Atmospheric Optics",
+      "tag": "Atmospheric Optics",
+      "quiz": {
+        "question": "Where can you witness a rainbow as a complete 360-degree circle?",
+        "options": [
+          "High up in an airplane looking down through rain",
+          "Standing at sea level on a flat beach",
+          "Only under moonlight"
+        ],
+        "correctIndex": 0,
+        "explanation": "From high altitude, the ground no longer blocks the lower half of the 42-degree light cone."
+      }
+    }
+  },
+  {
+    "id": "science-08",
+    "category": "science",
+    "accentColor": "#0284C7",
+    "iconName": "Trees",
+    "emoji": "🌌",
+    "readingTimeSec": 15,
+    "tr": {
+      "slug": "dunyada-yildizlardan-fazla-agac-var",
+      "title": "Dünya'da Samanyolu'ndaki Yıldızlardan Daha Fazla Ağaç Var",
+      "factText": "Dünya gezegeninde yaklaşık 3 trilyon ağaç yaşıyor; bu sayı Samanyolu galaksimizdeki 100 ila 400 milyar yıldızdan en az 7 kat daha fazla.",
+      "deepDiveDetail": "2015 yılında Yale Üniversitesi liderliğinde uydu görüntüleri ve saha sayımları birleştirilerek yapılan küresel çalışma, Dünya'da kişi başına yaklaşık 400 ağaç düştüğünü ortaya koydu.",
+      "sourceHint": "Nature / Yale Forestry Study",
+      "tag": "Ölçek Bilimi",
+      "quiz": {
+        "question": "Küresel tahminlere göre Dünya'daki ağaç sayısı Samanyolu'ndaki yıldız sayısına göre nasıldır?",
+        "options": [
+          "Dünya'daki ağaçlar (~3 trilyon) çok daha fazladır",
+          "Samanyolu'ndaki yıldızlar 100 kat fazladır",
+          "Yaklaşık olarak eşittirler"
+        ],
+        "correctIndex": 0,
+        "explanation": "Dünya'da ~3 trilyon ağaç varken Samanyolu'nda ~100–400 milyar yıldız bulunur."
+      }
+    },
+    "en": {
+      "slug": "more-trees-on-earth-than-stars-in-milky-way",
+      "title": "There Are More Trees on Earth Than Stars in the Milky Way",
+      "factText": "Planet Earth is home to roughly 3 trillion trees—far outnumbering the 100 to 400 billion stars inside our Milky Way galaxy.",
+      "deepDiveDetail": "A 2015 global survey combining satellite imagery with over 400,000 ground tree-density measurements estimated about 3.04 trillion trees worldwide—over 7 times our galaxy's star count.",
+      "sourceHint": "Nature / Yale Forestry Study",
+      "tag": "Scale of Nature",
+      "quiz": {
+        "question": "How does Earth's tree count (~3 trillion) compare to stars in the Milky Way?",
+        "options": [
+          "Earth has far more trees than the Milky Way has stars",
+          "The Milky Way has 100 times more stars",
+          "They are almost exactly equal"
+        ],
+        "correctIndex": 0,
+        "explanation": "Earth's ~3 trillion trees outnumber the Milky Way's estimated 100–400 billion stars."
+      }
+    }
+  },
+  {
+    "id": "science-09",
+    "category": "science",
+    "accentColor": "#0284C7",
+    "iconName": "Sun",
+    "emoji": "🧲",
+    "readingTimeSec": 15,
+    "tr": {
+      "slug": "gunes-isigi-dunyaya-8-dakikada-ulasir-ama-cekirdekten-yuz-bin-yilda",
+      "title": "Güneş Işığı Uzayı 8 Dakikada Geçer Ama Güneş'ten 100.000 Yılda Çıkar",
+      "factText": "Güneş'in merkezinde üretilen bir foton, Dünya'ya 8 dakikada ulaşmadan önce Güneş'in yoğun çekirdeğinden çıkmak için on binlerce yıl çarpışır.",
+      "deepDiveDetail": "Güneş'in iç katmanları o kadar yoğundur ki, fotonlar milimetreler içinde sürekli atomlar tarafından soğurulup tekrar saçılır ('rastgele yürüyüş'). Ancak yüzeye ulaştığında uzay boşluğundan 8 dakika 20 saniyede Dünya'ya gelir.",
+      "sourceHint": "NASA Sun Science",
+      "tag": "Kuantum & Astrofizik",
+      "quiz": {
+        "question": "Bir foton Güneş'in yüzeyinden Dünya'ya kaç dakikada ulaşır?",
+        "options": [
+          "Yaklaşık 8 dakika 20 saniye",
+          "Yaklaşık 1 saniye",
+          "Yaklaşık 24 saat"
+        ],
+        "correctIndex": 0,
+        "explanation": "Güneş'ten çıktıktan sonra 150 milyon km mesafeyi ışık hızıyla ~8 dakika 20 saniyede kat eder."
+      }
+    },
+    "en": {
+      "slug": "sunlight-takes-8-minutes-to-earth-but-millennia-to-leave-sun",
+      "title": "Sunlight Reaches Earth in 8 Minutes—After Taking Millennia to Escape the Sun",
+      "factText": "A photon created in the Sun's core bounces around for tens of thousands of years before reaching the surface and racing to Earth in 8 minutes.",
+      "deepDiveDetail": "Inside the Sun's ultra-dense plasma, photons constantly scatter off particles in a sluggish 'random walk.' Once free of the solar surface, light crosses the 150-million-km gap to Earth in 8 minutes 20 seconds.",
+      "sourceHint": "NASA Sun Science",
+      "tag": "Solar Physics",
+      "quiz": {
+        "question": "How long does light take to travel from the Sun's surface to Earth?",
+        "options": [
+          "About 8 minutes 20 seconds",
+          "About 1 second",
+          "About 24 hours"
+        ],
+        "correctIndex": 0,
+        "explanation": "After finally escaping the Sun's dense interior, sunlight reaches Earth in ~8 minutes 20 seconds."
+      }
+    }
+  },
+  {
+    "id": "science-10",
+    "category": "science",
+    "accentColor": "#0284C7",
+    "iconName": "FlaskConical",
+    "emoji": "🫧",
+    "readingTimeSec": 14,
+    "tr": {
+      "slug": "cam-aslında-sivi-degil-amorf-katidir",
+      "title": "Eski Kilise Camlarının Altta Kalın Olmasının Sebebi Akması Değildir",
+      "factText": "Orta Çağ pencerelerinin alt kısımlarının daha kalın olması camın yüzyıllar içinde 'akmasından' değil, o dönemki üretim tekniğinden kaynaklanır.",
+      "deepDiveDetail": "Fizikçiler oda sıcaklığında camın akmasının evrenin yaşından bile uzun süreceğini hesaplamıştır. Eski cam ustaları erimiş camı döndürerek disk yaparken kalın kenar kısmını sağlamlık için aşağı yerleştirirlerdi.",
+      "sourceHint": "Journal of Non-Crystalline Solids",
+      "tag": "Malzeme Bilimi",
+      "quiz": {
+        "question": "Eski vitray camların alt kenarlarının daha kalın olmasının gerçek sebebi nedir?",
+        "options": [
+          "Üretimde kalın kenarın denge için alta yerleştirilmesi",
+          "Camın 500 yılda yavaşça aşağı akması",
+          "Yağmur sularının camı eritmesi"
+        ],
+        "correctIndex": 0,
+        "explanation": "Cam amorf bir katıdır; ustalar el yapımı camın kalın tarafını çerçevede alta koyardı."
+      }
+    },
+    "en": {
+      "slug": "old-glass-windows-are-not-flowing-downward",
+      "title": "Medieval Windows Aren't Thicker at the Bottom Because Glass Flows",
+      "factText": "Old cathedral windows are thicker at the base due to medieval glassmaking techniques—not because glass slowly melts downward.",
+      "deepDiveDetail": "Glass is a rigid amorphous solid whose atoms would take longer than the age of the universe to flow measurably at room temperature. Glaziers simply installed hand-spun panes with the heavier edge at the bottom for stability.",
+      "sourceHint": "Journal of Non-Crystalline Solids",
+      "tag": "Materials Science",
+      "quiz": {
+        "question": "Why are antique window panes often thicker along their bottom edge?",
+        "options": [
+          "Craftsmen placed the thicker hand-spun edge down for stability",
+          "Room-temperature glass flows like thick syrup over centuries",
+          "Sunlight slowly melts the top edge"
+        ],
+        "correctIndex": 0,
+        "explanation": "Glass does not flow visibly at room temperature; historical glaziers put the heavy side down."
+      }
+    }
+  }
+]

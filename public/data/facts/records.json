@@ -1,0 +1,442 @@
+[
+  {
+    "id": "weird-01",
+    "category": "records",
+    "accentColor": "#DB2777",
+    "iconName": "Trophy",
+    "emoji": "🏆",
+    "readingTimeSec": 15,
+    "tr": {
+      "slug": "oxford-sozlugunde-en-uzun-teknik-kelime-189-bin-harf",
+      "title": "Dünyanın En Uzun Kimyasal Kelimesinin Okunması 3 Saat Sürüyor",
+      "factText": "İnsan vücudundaki dev 'Titin' proteininin tam kimyasal adı tam 189.819 harften oluşuyor.",
+      "deepDiveDetail": "Titin proteini kaslarımıza esneklik sağlayan bilinen en büyük proteindir. İçindeki tüm amino asitlerin sırayla yazıldığı IUPAC adı, çoğu sözlüğe sığmadığı için kısaca 'Titin' olarak anılır; tamamını sesli okumak yaklaşık 3,5 saat sürer.",
+      "sourceHint": "Guinness World Records / Protein Data Bank",
+      "tag": "Dil & Biyokimya Rekoru",
+      "quiz": {
+        "question": "Tam kimyasal adı 189.819 harf uzunluğunda olan dev proteinin kısa adı nedir?",
+        "options": [
+          "Titin",
+          "Keratin",
+          "İnsülin"
+        ],
+        "correctIndex": 0,
+        "explanation": "Kas esnekliğini sağlayan Titin proteininin tam sistematik adı 189.819 harftir."
+      }
+    },
+    "en": {
+      "slug": "longest-chemical-word-takes-three-hours-to-pronounce",
+      "title": "The Longest Chemical Name Takes Over 3 Hours to Read Aloud",
+      "factText": "The full chemical name of the giant human protein 'Titin' contains an astonishing 189,819 letters.",
+      "deepDiveDetail": "Titin is the largest known protein, acting like a molecular spring in our muscles. Its full systematic IUPAC name lists every chemical group in sequence and takes roughly 3.5 hours to pronounce out loud.",
+      "sourceHint": "Guinness World Records / Protein Data Bank",
+      "tag": "Language & Bio Record",
+      "quiz": {
+        "question": "What is the short name of the protein whose full chemical name has 189,819 letters?",
+        "options": [
+          "Titin",
+          "Keratin",
+          "Insulin"
+        ],
+        "correctIndex": 0,
+        "explanation": "Titin, the massive muscle elasticity protein, holds the 189,819-letter chemical name record."
+      }
+    }
+  },
+  {
+    "id": "weird-02",
+    "category": "records",
+    "accentColor": "#DB2777",
+    "iconName": "Landmark",
+    "emoji": "🍋",
+    "readingTimeSec": 14,
+    "tr": {
+      "slug": "eyfel-kulesi-yazin-15-santimetre-uzar",
+      "title": "Eyfel Kulesi Sıcak Yaz Günlerinde 15 Santimetre Uzar",
+      "factText": "Paris'in simgesi Eyfel Kulesi yaz sıcağında ısıl genleşme nedeniyle kış aylarına göre yaklaşık 15 cm daha uzun ölçülür.",
+      "deepDiveDetail": "Yaklaşık 7.300 ton işlenmiş demirden yapılan kule güneşte ısındıkça demir atomları daha hızlı titreşir ve aralarındaki mesafe artar. Hatta güneşin vurduğu taraf daha çok genleştiği için kule gün içinde hafifçe eğilir.",
+      "sourceHint": "Tour Eiffel Official Engineering Facts",
+      "tag": "Mühendislik Rekoru",
+      "quiz": {
+        "question": "Eyfel Kulesi'nin yazın yaklaşık 15 cm daha uzun olmasının sebebi nedir?",
+        "options": [
+          "Demir yapının sıcak havada ısıl genleşmesi",
+          "Yazın kule tepesindeki bayrağın değiştirilmesi",
+          "Rüzgarın kuleyi yukarı çekmesi"
+        ],
+        "correctIndex": 0,
+        "explanation": "Demir ısındıkça genleşir (thermal expansion), soğuk kış günlerinde ise tekrar büzülür."
+      }
+    },
+    "en": {
+      "slug": "eiffel-tower-grows-15-cm-taller-in-summer",
+      "title": "The Eiffel Tower Grows Up to 15 cm Taller in Summer",
+      "factText": "On hot Parisian summer days, thermal expansion makes the Eiffel Tower roughly 15 centimeters (6 inches) taller than in winter.",
+      "deepDiveDetail": "Built from over 7,300 tons of puddled iron, the structure expands as summer heat excites its metal atoms—and the sunny side can even lean slightly away from the sun during the day.",
+      "sourceHint": "Tour Eiffel Official Engineering Facts",
+      "tag": "Engineering Oddity",
+      "quiz": {
+        "question": "Why is the Eiffel Tower slightly taller in hot summer weather?",
+        "options": [
+          "Thermal expansion of its iron structure",
+          "Summer antenna upgrades",
+          "Upward wind lift"
+        ],
+        "correctIndex": 0,
+        "explanation": "Iron expands when heated and contracts again during cold winter nights."
+      }
+    }
+  },
+  {
+    "id": "weird-03",
+    "category": "records",
+    "accentColor": "#DB2777",
+    "iconName": "Award",
+    "emoji": "🦭",
+    "readingTimeSec": 14,
+    "tr": {
+      "slug": "wombatlarin-diskisi-kup-seklindedir",
+      "title": "Vombatlar Dünyada Küp Şeklinde Dışkılayan Tek Hayvandır",
+      "factText": "Avustralya'da yaşayan keseli memeli vombatlar, yuvarlanıp düşmemesi için kayaların üzerine küp biçiminde dışkı bırakır.",
+      "deepDiveDetail": "Bilim insanları bu sırrı çözmek için vombat bağırsaklarını inceledi ve bağırsak duvarının bazı bölgelerinin esnek, bazı bölgelerinin ise sert olduğunu keşfetti. Bu farklı kasılmalar son kısımda keskin köşeli küpler oluşturuyor.",
+      "sourceHint": "Soft Matter Journal / Ig Nobel Physics",
+      "tag": "Doğa Rekoru",
+      "quiz": {
+        "question": "Vombatların dışkısının küp şeklinde olmasının biyolojik sırrı nedir?",
+        "options": [
+          "Bağırsak duvarının farklı esneklikteki bölgelerinin şekil vermesi",
+          "Yalnızca küp şekilli taşlar yemeleri",
+          "Doğumdan sonra özel bir keseden geçmesi"
+        ],
+        "correctIndex": 0,
+        "explanation": "Bağırsağın sert ve esnek bölümlerindeki ritmik kasılmalar içeriği küp formuna sıkıştırır."
+      }
+    },
+    "en": {
+      "slug": "wombats-produce-cube-shaped-poop",
+      "title": "Wombats Are the Only Animals That Produce Cube-Shaped Poop",
+      "factText": "Australian wombats leave tidy cube-shaped droppings on rocks and logs so they won't roll away while marking territory.",
+      "deepDiveDetail": "Biophysicists discovered the secret in the wombat's intestine: alternating stiff and stretchy bands in the intestinal wall squeeze moisture out and sculpt flat sides and sharp corners near the exit.",
+      "sourceHint": "Soft Matter Journal / Ig Nobel Physics",
+      "tag": "Nature Oddity",
+      "quiz": {
+        "question": "How do wombats manage to shape their droppings into cubes?",
+        "options": [
+          "Alternating stiff and stretchy regions inside their intestines",
+          "Eating square-shaped pebbles",
+          "Shaping them afterward with their paws"
+        ],
+        "correctIndex": 0,
+        "explanation": "Varying stiffness along the intestinal walls molds flat faces and sharp edges."
+      }
+    }
+  },
+  {
+    "id": "weird-04",
+    "category": "records",
+    "accentColor": "#DB2777",
+    "iconName": "Mail",
+    "emoji": "📬",
+    "readingTimeSec": 14,
+    "tr": {
+      "slug": "japonya-okyanus-altinda-bir-posta-kutusu-var",
+      "title": "Japonya'da Deniz Tabanında Aktif Çalışan Bir Posta Kutusu Var",
+      "factText": "Japonya'nın Susami kıyısında, suyun 10 metre altında bulunan bir posta kutusuna her yıl binden fazla su geçirmez kartpostal atılıyor.",
+      "deepDiveDetail": "1999 yılında dalış turizmini canlandırmak için kurulan bu özel posta kutusu Guinness Rekorlar Kitabı'na girmiştir. Dalgıçlar özel plastik kartpostalları suya bırakır ve yerel postane görevlisi dalış yaparak mektupları toplar.",
+      "sourceHint": "Guinness World Records / Susami Tourism",
+      "tag": "Garip Mekan Rekoru",
+      "quiz": {
+        "question": "Japonya'daki dünyanın en derin su altı posta kutusu kaç metre derinliktedir?",
+        "options": [
+          "10 metre",
+          "100 metre",
+          "1 metre"
+        ],
+        "correctIndex": 0,
+        "explanation": "Susami kıyısındaki su altı posta kutusu yaklaşık 10 metre derinliktedir ve düzenli olarak boşaltılır."
+      }
+    },
+    "en": {
+      "slug": "worlds-deepest-underwater-mailbox-in-japan",
+      "title": "Japan Has a Working Underwater Mailbox 10 Meters Deep",
+      "factText": "Off the coast of Susami, Japan, divers post over a thousand waterproof postcards a year into a real mailbox on the seafloor.",
+      "deepDiveDetail": "Installed in 1999 to celebrate a regional expo, this Guinness World Record mailbox sits 10 meters underwater. Local postal staff scuba dive regularly to collect and deliver the plastic-coated mail.",
+      "sourceHint": "Guinness World Records / Susami Tourism",
+      "tag": "Quirky World Record",
+      "quiz": {
+        "question": "How deep underwater is Susami's working Guinness-record mailbox located?",
+        "options": [
+          "10 meters",
+          "100 meters",
+          "1 meter"
+        ],
+        "correctIndex": 0,
+        "explanation": "Divers swim 10 meters down to drop waterproof postcards that staff regularly collect."
+      }
+    }
+  },
+  {
+    "id": "weird-05",
+    "category": "records",
+    "accentColor": "#DB2777",
+    "iconName": "Cat",
+    "emoji": "🐈",
+    "readingTimeSec": 15,
+    "tr": {
+      "slug": "alaskadaki-bir-kasabanin-belediye-baskani-kediydi",
+      "title": "Alaska'daki Bir Kasabanın 20 Yıllık Onursal Belediye Başkanı Bir Kediydi",
+      "factText": "Talkeetna kasabasında 'Stubbs' adlı sarı bir tekir kedi, 1997'den 2017'ye kadar kasabanın onursal belediye başkanı olarak görev yaptı.",
+      "deepDiveDetail": "Yıllar içinde kasaba sakinleri politikacılardan sıkılınca şaka amaçlı bir kampanya başlattı ve Stubbs kasabanın en ünlü yüzüne dönüştü. Resmi 'ofisi' yerel bir marketti ve turistler her gün onu görmeye geliyordu.",
+      "sourceHint": "Alaska Public Media / BBC News",
+      "tag": "Tuhaf Tarih Rekoru",
+      "quiz": {
+        "question": "Alaska'nın Talkeetna kasabasında 20 yıl onursal belediye başkanı olan kedi Stubbs'ın 'ofisi' neredeydi?",
+        "options": [
+          "Yerel bir markette",
+          "Valilik binasında",
+          "Tren garında"
+        ],
+        "correctIndex": 0,
+        "explanation": "Stubbs vaktinin çoğunu Nagley's General Store adlı yerel markette geçirip turistleri karşılıyordu."
+      }
+    },
+    "en": {
+      "slug": "cat-served-as-honorary-mayor-in-alaska",
+      "title": "A Cat Served as Honorary Mayor of an Alaskan Town for 20 Years",
+      "factText": "In Talkeetna, Alaska, an orange tabby cat named Stubbs served as the town's beloved honorary mayor from 1997 to 2017.",
+      "deepDiveDetail": "While Talkeetna had no formal city government, Stubbs won over locals as a charming mascot, held 'office hours' at Nagley's General Store, and turned into a world-famous tourist attraction.",
+      "sourceHint": "Alaska Public Media / BBC News",
+      "tag": "Quirky History Record",
+      "quiz": {
+        "question": "Where did Mayor Stubbs the cat hold his unofficial 'office hours' in Talkeetna?",
+        "options": [
+          "A local general store",
+          "The state capitol",
+          "A train depot"
+        ],
+        "correctIndex": 0,
+        "explanation": "Stubbs greeted visitors daily at Nagley's General Store for two decades."
+      }
+    }
+  },
+  {
+    "id": "weird-06",
+    "category": "records",
+    "accentColor": "#DB2777",
+    "iconName": "Globe",
+    "emoji": "🌊",
+    "readingTimeSec": 15,
+    "tr": {
+      "slug": "kuzey-kore-ve-norvec-arasinda-tek-ulke-vardir",
+      "title": "Norveç ve Kuzey Kore Arasında Sadece Tek Bir Ülke Vardır",
+      "factText": "Haritada dünyanın iki ayrı ucunda gibi görünen Norveç ile Kuzey Kore'yi birbirinden yalnızca tek bir ülke ayırır: Rusya.",
+      "deepDiveDetail": "Rusya dünyanın en geniş yüzölçümüne sahip ülkesi olduğu için bir ucu Kuzey Avrupa'da Norveç'le komşuyken, diğer ucu Uzak Doğu'da Kuzey Kore ile 17 kilometrelik bir kara sınırını paylaşır.",
+      "sourceHint": "World Factbook / Coğrafya Verileri",
+      "tag": "Coğrafya Şaşkınlığı",
+      "quiz": {
+        "question": "Norveç ve Kuzey Kore'nin ikisiyle de kara sınırına sahip olan tek ülke hangisidir?",
+        "options": [
+          "Rusya",
+          "Çin",
+          "Finlandiya"
+        ],
+        "correctIndex": 0,
+        "explanation": "Rusya hem kuzeybatıda Norveç'e hem güneydoğuda Kuzey Kore'ye komşudur."
+      }
+    },
+    "en": {
+      "slug": "only-one-country-separates-norway-and-north-korea",
+      "title": "Only One Country Separates Norway From North Korea",
+      "factText": "Even though Norway and North Korea feel worlds apart, only a single country sits between them: Russia.",
+      "deepDiveDetail": "Stretching across eleven time zones, Russia shares an Arctic land border with Norway in Europe and a 17-kilometer border with North Korea in East Asia.",
+      "sourceHint": "World Factbook / Geography Data",
+      "tag": "Geography Mind-Bender",
+      "quiz": {
+        "question": "Which single country shares land borders with both Norway and North Korea?",
+        "options": [
+          "Russia",
+          "China",
+          "Finland"
+        ],
+        "correctIndex": 0,
+        "explanation": "Russia spans from Scandinavia to the Korean Peninsula, bordering both nations."
+      }
+    }
+  },
+  {
+    "id": "weird-07",
+    "category": "records",
+    "accentColor": "#DB2777",
+    "iconName": "Sparkles",
+    "emoji": "🍍",
+    "readingTimeSec": 15,
+    "tr": {
+      "slug": "ananas-yerken-ananas-da-sizi-yer",
+      "title": "Ananas Yerken Dilinizdeki Karıncalanma Enzim Savaşıdır",
+      "factText": "Taze ananas yediğinizde dilinizin hafifi sızlamasının sebebi, meyvedeki bromelain enziminin ağız içindeki proteinleri parçalamaya başlamasıdır.",
+      "deepDiveDetail": "Bromelain et yumuşatıcı olarak bile kullanılan güçlü bir protein parçalayıcı enzimdir. Tabii tehlikeli değildir: ağzınızdaki tükürük enzimleri etkisiz hale getirir ve mide asidi bromelaini hemen sindirir; ancak o anlık karıncalanma tamamen bu enzimden gelir.",
+      "sourceHint": "University of Melbourne Chemistry",
+      "tag": "İlginç Biyokimya",
+      "quiz": {
+        "question": "Taze ananasın dilde hafif sızlama yapmasına neden olan enzim hangisidir?",
+        "options": [
+          "Bromelain",
+          "Kafein",
+          "Laktaz"
+        ],
+        "correctIndex": 0,
+        "explanation": "Bromelain enzimi proteinleri parçalar; bu yüzden dil yüzeyinde geçici bir karıncalanma yaratır."
+      }
+    },
+    "en": {
+      "slug": "pineapple-enzymes-tingle-your-tongue",
+      "title": "When You Eat Pineapple, Its Enzymes Break Down Proteins on Your Tongue",
+      "factText": "That slight tingling feeling from fresh pineapple happens because an enzyme called bromelain starts digesting proteins on your tongue.",
+      "deepDiveDetail": "Bromelain is so effective at breaking down proteins that it's sold as a meat tenderizer. Your saliva quickly washes it away and stomach acid neutralizes it—leaving no lasting harm, just a tangy tingle.",
+      "sourceHint": "University of Melbourne Chemistry",
+      "tag": "Food Oddity",
+      "quiz": {
+        "question": "Which enzyme in fresh pineapple causes that mild tingling sensation on your tongue?",
+        "options": [
+          "Bromelain",
+          "Amylase",
+          "Lactase"
+        ],
+        "correctIndex": 0,
+        "explanation": "Bromelain breaks down surface proteins until saliva and stomach acid neutralize it."
+      }
+    }
+  },
+  {
+    "id": "weird-08",
+    "category": "records",
+    "accentColor": "#DB2777",
+    "iconName": "Volume2",
+    "emoji": "🦆",
+    "readingTimeSec": 14,
+    "tr": {
+      "slug": "ordek-vaklamasi-yanki-yapar-efsanesi-curutuldu",
+      "title": "Ördek Vaklamasının Yankı Yapmadığı Efsanesi Bir Şehir Efsanesidir",
+      "factText": "Yaygın inanışın aksine ördek vaklaması gayet normal bir şekilde yankılanır; yalnızca sesi insan kulağının ayırt etmesi zordur.",
+      "deepDiveDetail": "Salford Üniversitesi akustik uzmanları bir ördeği yankı odasında ve dışarıda test ederek vaklamanın kesinlikle yankı yaptığını kanıtladı. Yankı asıl sese o kadar yakın ve yumuşak frekansta karışır ki beynimiz ikisini tek ses sanır.",
+      "sourceHint": "University of Salford Acoustics Research",
+      "tag": "Çürütülen Efsaneler",
+      "quiz": {
+        "question": "Ördek vaklamasının yankısını duymanın zor olmasının gerçek sebebi nedir?",
+        "options": [
+          "Yankının asıl sese çok yakın ve benzer tonda karışması",
+          "Ördek sesinin fizik kuralları gereği yansımaması",
+          "Yalnızca suda ses çıkarabilmeleri"
+        ],
+        "correctIndex": 0,
+        "explanation": "Akustik testler ördek vaklamasının yankılandığını, ancak ses profili yüzünden fark edilmesinin zor olduğunu göstermiştir."
+      }
+    },
+    "en": {
+      "slug": "a-ducks-quack-actually-does-echo",
+      "title": "A Duck's Quack Actually Does Echo—It Just Blends Together",
+      "factText": "Contrary to the famous urban myth, acoustic lab tests prove a duck's quack echoes just like any other sound.",
+      "deepDiveDetail": "Acoustics researchers at the University of Salford tested a duck in an echo chamber and outdoors. Because a quack fades gently and smoothly, the returning echo blends seamlessly into the original sound, tricking human ears.",
+      "sourceHint": "University of Salford Acoustics Research",
+      "tag": "Myth Busted",
+      "quiz": {
+        "question": "Why did people mistakenly believe a duck's quack doesn't echo?",
+        "options": [
+          "The soft decay makes the echo blend into the original quack",
+          "Quack frequencies pass straight through solid walls",
+          "Ducks only quack underwater"
+        ],
+        "correctIndex": 0,
+        "explanation": "Controlled acoustics tests confirmed quacks echo normally; they just fade smoothly together."
+      }
+    }
+  },
+  {
+    "id": "weird-09",
+    "category": "records",
+    "accentColor": "#DB2777",
+    "iconName": "Music",
+    "emoji": "🎻",
+    "readingTimeSec": 15,
+    "tr": {
+      "slug": "alman-kilisesinde-639-yil-surecek-org-konseri",
+      "title": "Almanya'da Tam 639 Yıl Sürecek Bir Müzik Eseri Çalınıyor",
+      "factText": "Halberstadt'taki bir kilisede besteci John Cage'in 'ASLSP' (Mümkün Olduğunca Yavaş) adlı eseri 2001'den 2640 yılına kadar sürecek şekilde icra ediliyor.",
+      "deepDiveDetail": "Özel bir borulu orgla çalınan eserde bazen tek bir akor veya nota değişikliği için yıllarca bekleniyor. Nota değişim günlerinde dünyanın dört bir yanından müzikseverler kiliseye akın ediyor.",
+      "sourceHint": "John Cage Organ Project Halberstadt",
+      "tag": "Zaman Rekoru",
+      "quiz": {
+        "question": "Almanya'da 639 yıl sürecek olan John Cage bestesinin performans adı ne anlama gelir?",
+        "options": [
+          "As Slow As Possible (Mümkün Olduğunca Yavaş)",
+          "Endless Symphony (Sonsuz Senfoni)",
+          "Silent Echo (Sessiz Yankı)"
+        ],
+        "correctIndex": 0,
+        "explanation": "ORGAN²/ASLSP adlı eserdeki ASLSP kısaltması 'As Slow As Possible' anlamına gelir."
+      }
+    },
+    "en": {
+      "slug": "639-year-long-organ-concert-in-germany",
+      "title": "A Church in Germany Is Performing a Concert That Lasts 639 Years",
+      "factText": "In Halberstadt, Germany, John Cage's organ piece 'ASLSP' began in 2001 and isn't scheduled to finish until the year 2640.",
+      "deepDiveDetail": "Played on a custom pipe organ held down by weights, individual chords linger for months or years before a scheduled note change draws curious listeners from around the globe.",
+      "sourceHint": "John Cage Organ Project Halberstadt",
+      "tag": "Endurance Record",
+      "quiz": {
+        "question": "What does 'ASLSP' stand for in the 639-year-long musical performance?",
+        "options": [
+          "As Slow As Possible",
+          "All Sounds Last Forever",
+          "Acoustic Space Live Piece"
+        ],
+        "correctIndex": 0,
+        "explanation": "John Cage titled the piece 'ORGAN²/ASLSP (As Slow As Possible)'."
+      }
+    }
+  },
+  {
+    "id": "weird-10",
+    "category": "records",
+    "accentColor": "#DB2777",
+    "iconName": "Award",
+    "emoji": "🧀",
+    "readingTimeSec": 14,
+    "tr": {
+      "slug": "isvicre-peynirindeki-deliklerin-sebebi-saman-tozudur",
+      "title": "İsviçre Peynirindeki Delikleri Küçücük Saman Parçacıkları Oluşturur",
+      "factText": "İsviçre'nin ünlü Emmental peynirindeki deliklerin sırrı sadece bakteriler değil, sağım sırasında süte karışan mikroskobik saman tozlarıdır.",
+      "deepDiveDetail": "İsviçreli bilim insanları modern kapalı sağım sistemlerine geçildikçe peynirdeki deliklerin azaldığını fark etti. Süte mikroskobik saman parçacığı eklendiğinde ise karbondioksit gazı o noktaların etrafında toplanarak klasik delikleri yeniden oluşturdu.",
+      "sourceHint": "Agroscope Switzerland Dairy Study",
+      "tag": "Garip Keşif",
+      "quiz": {
+        "question": "Modern temiz sağım yöntemleri Emmental peynirindeki delikleri nasıl etkiledi?",
+        "options": [
+          "Saman tozu azaldığı için peynirdeki delikler küçülüp azaldı",
+          "Delikler iki katına çıktı",
+          "Peynirin rengi yeşile döndü"
+        ],
+        "correctIndex": 0,
+        "explanation": "Mikroskobik saman parçacıkları gaz kabarcıkları için çekirdek görevi gördüğünden, temiz sağım delikleri azalttı."
+      }
+    },
+    "en": {
+      "slug": "tiny-hay-particles-cause-holes-in-swiss-cheese",
+      "title": "Tiny Bits of Hay Help Create the Holes in Swiss Cheese",
+      "factText": "Swiss dairy scientists solved a century-old mystery: microscopic hay dust falling into milk buckets triggers the iconic holes in Emmental cheese.",
+      "deepDiveDetail": "As modern milking became ultra-clean and sealed, cheese holes started disappearing! Researchers proved tiny hay specks act as nucleation sites where fermentation gas gathers into round eyes.",
+      "sourceHint": "Agroscope Switzerland Dairy Study",
+      "tag": "Quirky Discovery",
+      "quiz": {
+        "question": "What happened to Swiss cheese holes as modern milking became hermetically sealed?",
+        "options": [
+          "The holes shrank and nearly vanished without hay specks",
+          "The holes grew twice as huge",
+          "The cheese turned bright blue"
+        ],
+        "correctIndex": 0,
+        "explanation": "Without microscopic hay particles to seed gas bubbles, fewer eyes formed in the cheese."
+      }
+    }
+  }
+]
