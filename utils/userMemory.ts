@@ -7,6 +7,11 @@ const COOKIE_NAME = 'merak_user_summary';
 
 export type { LeagueTierId };
 
+export interface CategoryAccuracyStat {
+  attempts: number;
+  totalPct: number;
+}
+
 export interface UserMemoryState {
   playerId: string;
   nickname: string;
@@ -24,6 +29,7 @@ export interface UserMemoryState {
   totalSwipes: number;
   favoriteIds: string[];
   categoryWeights: Record<CategoryId, number>;
+  categoryAccuracy?: Record<CategoryId, CategoryAccuracyStat>;
   streakDays: number;
   lastVisitDate: string;
   badges: string[];
@@ -119,6 +125,47 @@ export function createEmptyWeights(): Record<CategoryId, number> {
   };
 }
 
+export function createEmptyCategoryAccuracy(): Record<CategoryId, CategoryAccuracyStat> {
+  return {
+    space: { attempts: 0, totalPct: 0 },
+    nature: { attempts: 0, totalPct: 0 },
+    human_body: { attempts: 0, totalPct: 0 },
+    history: { attempts: 0, totalPct: 0 },
+    science: { attempts: 0, totalPct: 0 },
+    records: { attempts: 0, totalPct: 0 },
+  };
+}
+
+function normalizeCategoryKey(rawCategory?: string): CategoryId | null {
+  const normalized = rawCategory === 'weird_records' ? 'records' : rawCategory;
+  if (
+    normalized === 'space' ||
+    normalized === 'nature' ||
+    normalized === 'human_body' ||
+    normalized === 'history' ||
+    normalized === 'science' ||
+    normalized === 'records'
+  ) {
+    return normalized;
+  }
+  return null;
+}
+
+function appendAccuracySample(
+  map: Record<CategoryId, CategoryAccuracyStat>,
+  rawCategory: string | undefined,
+  accuracyPct: number
+): void {
+  const key = normalizeCategoryKey(rawCategory);
+  if (!key) return;
+  const clamped = Math.max(0, Math.min(100, Math.round(accuracyPct)));
+  const prevStat = map[key] ?? { attempts: 0, totalPct: 0 };
+  map[key] = {
+    attempts: prevStat.attempts + 1,
+    totalPct: prevStat.totalPct + clamped,
+  };
+}
+
 export function detectBrowserLanguage(): Language {
   if (typeof navigator === 'undefined') return 'tr';
   const lang = (navigator.language || 'en').toLowerCase();
@@ -190,6 +237,7 @@ export function getDefaultUserState(): UserMemoryState {
     totalSwipes: 0,
     favoriteIds: [],
     categoryWeights: createEmptyWeights(),
+    categoryAccuracy: createEmptyCategoryAccuracy(),
     streakDays: 1,
     lastVisitDate: getTodayDateString(),
     badges: [],
@@ -212,6 +260,32 @@ function normalizeWeights(rawWeights?: Record<string, number>): Record<CategoryI
   if (typeof rawWeights.weird_records === 'number') {
     base.records += rawWeights.weird_records;
   }
+  return base;
+}
+
+export function normalizeCategoryAccuracy(
+  rawAccuracy?: Partial<Record<string, Partial<CategoryAccuracyStat>>>
+): Record<CategoryId, CategoryAccuracyStat> {
+  const base = createEmptyCategoryAccuracy();
+  if (!rawAccuracy || typeof rawAccuracy !== 'object') return base;
+
+  Object.entries(rawAccuracy).forEach(([rawKey, val]) => {
+    const key = normalizeCategoryKey(rawKey);
+    if (!key || !val || typeof val !== 'object') return;
+    const attempts =
+      typeof val.attempts === 'number' && Number.isFinite(val.attempts) && val.attempts > 0
+        ? Math.floor(val.attempts)
+        : 0;
+    const totalPct =
+      typeof val.totalPct === 'number' && Number.isFinite(val.totalPct) && val.totalPct >= 0
+        ? Math.round(val.totalPct)
+        : 0;
+    base[key] = {
+      attempts: base[key].attempts + attempts,
+      totalPct: base[key].totalPct + totalPct,
+    };
+  });
+
   return base;
 }
 
@@ -297,6 +371,9 @@ export function loadUserMemory(): UserMemoryState {
     totalSwipes: typeof parsed?.totalSwipes === 'number' ? parsed.totalSwipes : 0,
     favoriteIds: Array.isArray(parsed?.favoriteIds) ? parsed.favoriteIds : [],
     categoryWeights: normalizeWeights(parsed?.categoryWeights as Record<string, number> | undefined),
+    categoryAccuracy: normalizeCategoryAccuracy(
+      parsed?.categoryAccuracy as Partial<Record<string, Partial<CategoryAccuracyStat>>> | undefined
+    ),
     streakDays: Math.max(1, streakDays),
     lastVisitDate: today,
     badges: normalizeBadges(parsed?.badges),
@@ -345,6 +422,24 @@ export function addUserXp(state: UserMemoryState, amount: number): UserMemorySta
   const nextState: UserMemoryState = {
     ...state,
     xp: Math.max(0, state.xp + amount),
+  };
+  saveUserMemory(nextState);
+  return nextState;
+}
+
+export function recordCategoryGuessAccuracy(
+  state: UserMemoryState,
+  category: CategoryId,
+  accuracyPct: number,
+  xpAmount: number
+): UserMemoryState {
+  const nextAccuracy = normalizeCategoryAccuracy(state.categoryAccuracy);
+  appendAccuracySample(nextAccuracy, category, accuracyPct);
+
+  const nextState: UserMemoryState = {
+    ...state,
+    xp: Math.max(0, state.xp + xpAmount),
+    categoryAccuracy: nextAccuracy,
   };
   saveUserMemory(nextState);
   return nextState;
@@ -494,12 +589,21 @@ export function completeMemoryQuiz(
   state: UserMemoryState,
   earnedBadgeId: string,
   earnedXp = 0,
-  quizMode: 'memory' | 'daily' | 'weekly' | 'duel' = 'memory'
+  quizMode: 'memory' | 'daily' | 'weekly' | 'duel' = 'memory',
+  results?: boolean[],
+  sourceCategories?: string[]
 ): UserMemoryState {
   const normalizedBadge = earnedBadgeId === 'weird_records' ? 'records' : earnedBadgeId;
   const badges = state.badges.includes(normalizedBadge)
     ? state.badges
     : [...state.badges, normalizedBadge];
+
+  const nextAccuracy = normalizeCategoryAccuracy(state.categoryAccuracy);
+  if (Array.isArray(results) && Array.isArray(sourceCategories)) {
+    results.forEach((isCorrect, idx) => {
+      appendAccuracySample(nextAccuracy, sourceCategories[idx], isCorrect ? 100 : 0);
+    });
+  }
 
   const nextXp = state.xp + earnedXp;
   const nextWeeklyXp = state.weeklyXp + earnedXp;
@@ -520,6 +624,7 @@ export function completeMemoryQuiz(
     lastDailyQuizDate: quizMode === 'daily' ? today : state.lastDailyQuizDate,
     cardsSinceLastQuiz: 0,
     badges,
+    categoryAccuracy: nextAccuracy,
   };
   saveUserMemory(nextState);
   return nextState;

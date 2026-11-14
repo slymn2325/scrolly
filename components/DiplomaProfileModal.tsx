@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import confetti from 'canvas-confetti';
 import { AnimatePresence, motion } from 'framer-motion';
@@ -14,7 +14,7 @@ import {
   Share2,
   X,
 } from 'lucide-react';
-import TopicConstellation from '@/components/TopicConstellation';
+import TopicRadarChart from '@/components/TopicRadarChart';
 import {
   CATEGORIES,
   type CategoryId,
@@ -57,8 +57,21 @@ export default function DiplomaProfileModal({
   const [justReset, setJustReset] = useState(false);
   const [exportingDiploma, setExportingDiploma] = useState(false);
   const [diplomaStatusMsg, setDiplomaStatusMsg] = useState<string | null>(null);
+  const scrollBodyRef = useRef<HTMLDivElement>(null);
   const t = translations[lang];
   const league = getLeagueInfo(memory.xp, lang);
+
+  useEffect(() => {
+    if (!open) return;
+    const resetTop = () => {
+      if (scrollBodyRef.current) {
+        scrollBodyRef.current.scrollTop = 0;
+      }
+    };
+    resetTop();
+    const rafId = requestAnimationFrame(resetTop);
+    return () => cancelAnimationFrame(rafId);
+  }, [open]);
 
   const favoriteFacts = allFacts.filter((f) => memory.favoriteIds.includes(f.id));
   const categoryList = CATEGORIES.filter((c) => c.id !== 'all');
@@ -148,7 +161,7 @@ export default function DiplomaProfileModal({
             className="relative mb-[92px] flex max-h-[82dvh] w-full max-w-[430px] md:max-w-2xl flex-col overflow-hidden rounded-3xl border-2 border-amber-200 bg-[#FFFDF9] shadow-2xl dark:border-violet-700/50 dark:bg-[#171228]"
           >
             {/* Header */}
-            <div className="flex items-center justify-between border-b border-amber-100 px-5 py-4 dark:border-white/10">
+            <div className="flex shrink-0 items-center justify-between border-b border-amber-100 px-5 py-4 dark:border-white/10">
               <div className="flex items-center gap-2.5">
                 <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-violet-100 p-1.5 dark:bg-violet-900/60">
                   <img
@@ -179,7 +192,11 @@ export default function DiplomaProfileModal({
             </div>
 
             {/* Scrollable Body */}
-            <div className="no-scrollbar flex-1 space-y-5 overflow-y-auto px-5 py-4">
+            <div
+              ref={scrollBodyRef}
+              data-testid="diploma-scroll-body"
+              className="no-scrollbar min-h-0 flex-1 space-y-4 overflow-y-auto px-5 pb-5 pt-4"
+            >
               {/* Explorer Nickname */}
               <div>
                 <label
@@ -274,8 +291,8 @@ export default function DiplomaProfileModal({
                 )}
               </div>
 
-              {/* Interactive Topic Constellation */}
-              <TopicConstellation
+              {/* Interactive 6-Axis DataMB Topic Radar */}
+              <TopicRadarChart
                 lang={lang}
                 memory={memory}
                 allFacts={allFacts}
@@ -456,7 +473,7 @@ export default function DiplomaProfileModal({
             </div>
 
             {/* Footer Reset Button */}
-            <div className="border-t border-amber-100 bg-white/80 px-5 py-3 dark:border-white/10 dark:bg-black/20">
+            <div className="shrink-0 border-t border-amber-100 bg-white/80 px-5 py-3 dark:border-white/10 dark:bg-black/20">
               {justReset && (
                 <p className="mb-2 text-center text-xs font-bold text-emerald-600 dark:text-emerald-400">
                   {t.drawerResetConfirm}

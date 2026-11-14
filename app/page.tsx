@@ -68,6 +68,7 @@ import {
   getTopCategory,
   loadUserMemory,
   recordCardRead,
+  recordCategoryGuessAccuracy,
   resetUserMemory,
   saveUserMemory,
   toggleFavoriteFact,
@@ -354,14 +355,23 @@ export default function HomePage() {
   );
 
   const handleGuessReward = useCallback(
-    (xpAmount: number, accurate: boolean) => {
+    (xpAmount: number, accurate: boolean, category?: CategoryId, accuracyPct?: number) => {
       vibrateTap(12);
       if (accurate) {
         playDing(soundEnabled);
       } else {
         playPop(soundEnabled);
       }
-      setMemory((prev) => addUserXp(prev, xpAmount));
+      setMemory((prev) =>
+        category
+          ? recordCategoryGuessAccuracy(
+              prev,
+              category,
+              accuracyPct ?? (accurate ? 100 : 0),
+              xpAmount
+            )
+          : addUserXp(prev, xpAmount)
+      );
     },
     [soundEnabled]
   );
@@ -495,7 +505,14 @@ export default function HomePage() {
 
     const oldTier = getLeagueInfo(memory.xp, lang).id;
     const totalBonusXp = earnedXp + (isDuelWin ? 150 : 0);
-    const updated = completeMemoryQuiz(memory, bestQuizCategory, totalBonusXp, quizMode);
+    const updated = completeMemoryQuiz(
+      memory,
+      bestQuizCategory,
+      totalBonusXp,
+      quizMode,
+      results,
+      sourceCategories
+    );
     const newTier = getLeagueInfo(updated.xp, lang).id;
 
     if (isDuelWin || newTier !== oldTier) {

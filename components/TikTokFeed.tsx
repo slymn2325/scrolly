@@ -4,7 +4,7 @@ import React, { forwardRef, useCallback, useEffect, useImperativeHandle, useMemo
 import { motion } from 'framer-motion';
 import NativeAdSlide from '@/components/NativeAdSlide';
 import TikTokFactSlide from '@/components/TikTokFactSlide';
-import { CATEGORIES, type CategoryFilter, type Language, translations } from '@/i18n/translations';
+import { CATEGORIES, type CategoryFilter, type CategoryId, type Language, translations } from '@/i18n/translations';
 import type { FactCard } from '@/types/fact';
 import { UI_ICON_PATHS } from '@/utils/icons8Assets';
 
@@ -37,7 +37,7 @@ interface TikTokFeedProps {
   onDwellRead: (fact: FactCard) => void;
   onOpenDuelFromCard: (fact: FactCard) => void;
   onOpenStoryShare: (fact: FactCard) => void;
-  onGuessReward: (xp: number, accurate: boolean) => void;
+  onGuessReward: (xp: number, accurate: boolean, category?: CategoryId, accuracyPct?: number) => void;
   onToggleFavorite: (fact: FactCard) => void;
   onButtonPop: () => void;
   onSlideIndexChange?: (slideIndex: number) => void;

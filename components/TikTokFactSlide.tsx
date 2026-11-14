@@ -33,7 +33,7 @@ interface TikTokFactSlideProps {
   onNextSlide: () => void;
   onOpenDuel: (fact: FactCard) => void;
   onOpenStoryShare: (fact: FactCard) => void;
-  onGuessReward: (xp: number, accurate: boolean) => void;
+  onGuessReward: (xp: number, accurate: boolean, category?: CategoryId, accuracyPct?: number) => void;
   onToggleFavorite: (fact: FactCard) => void;
   onButtonPop: () => void;
 }
@@ -408,7 +408,7 @@ export default function TikTokFactSlide({
                   challenge={localized.guessChallenge}
                   lang={lang}
                   onGuessAnswered={(xpAwarded, accurate, details) => {
-                    onGuessReward(xpAwarded, accurate);
+                    onGuessReward(xpAwarded, accurate, fact.category, details.accuracyPct);
                     void trackEvent(factSlug, fact.category, 'quick_guess', {
                       guess: details.userGuess,
                       target: details.correctValue,
