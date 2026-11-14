@@ -527,6 +527,26 @@ export default function DiplomaProfileModal({
                 >
                   {lang === 'tr' ? 'Gizlilik Politikası' : 'Privacy Policy'}
                 </Link>
+                <span className="inline-flex flex-wrap items-center justify-center gap-1">
+                  <Link
+                    href={lang === 'en' ? '/contact?lang=en' : '/contact'}
+                    onClick={() => {
+                      onButtonPop();
+                      onClose();
+                    }}
+                    data-testid="diploma-contact-link"
+                    className="text-[11px] font-bold text-ink/55 underline decoration-ink/25 underline-offset-4 transition hover:text-ink dark:text-violet-200/65 dark:decoration-violet-300/30 dark:hover:text-white"
+                  >
+                    {lang === 'tr' ? 'İletişim' : 'Contact'}
+                  </Link>
+                  <a
+                    href="mailto:contact@scrolly.live"
+                    data-testid="diploma-contact-email"
+                    className="text-[11px] font-extrabold text-violet-700 underline decoration-violet-400/40 underline-offset-4 transition hover:text-violet-900 dark:text-violet-300 dark:hover:text-white"
+                  >
+                    (contact@scrolly.live)
+                  </a>
+                </span>
                 <Link
                   href={lang === 'en' ? '/about?lang=en' : '/about'}
                   onClick={() => {
@@ -546,16 +566,6 @@ export default function DiplomaProfileModal({
                   className="text-[11px] font-bold text-ink/55 underline decoration-ink/25 underline-offset-4 transition hover:text-ink dark:text-violet-200/65 dark:decoration-violet-300/30 dark:hover:text-white"
                 >
                   {lang === 'tr' ? 'Kullanım Koşulları' : 'Terms'}
-                </Link>
-                <Link
-                  href={lang === 'en' ? '/contact?lang=en' : '/contact'}
-                  onClick={() => {
-                    onButtonPop();
-                    onClose();
-                  }}
-                  className="text-[11px] font-bold text-ink/55 underline decoration-ink/25 underline-offset-4 transition hover:text-ink dark:text-violet-200/65 dark:decoration-violet-300/30 dark:hover:text-white"
-                >
-                  {lang === 'tr' ? 'İletişim' : 'Contact'}
                 </Link>
               </div>
             </div>

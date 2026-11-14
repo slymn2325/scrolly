@@ -109,6 +109,10 @@ export default async function TermsPage({ searchParams }: PageProps) {
           heading: '6. Third-Party Links & Advertising',
           body: 'Scrolly links to external verified scientific publishers for citation purposes and uses Google AdSense to keep educational access free. We are not responsible for the content, availability, or privacy practices of external third-party websites.',
         },
+        {
+          heading: '7. Copyright, Content Use & Legal Notices',
+          body: 'For any copyright notices, intellectual property inquiries, content usage permissions, or official legal correspondence regarding Scrolly (scrolly.live), please contact our sole official email channel at contact@scrolly.live.',
+        },
       ]
     : [
         {
@@ -135,6 +139,10 @@ export default async function TermsPage({ searchParams }: PageProps) {
           heading: '6. Üçüncü Taraf Bağlantılar ve Reklamlar',
           body: 'Platformumuz doğrulama amaçlı dış bilimsel kaynaklara bağlantılar içerir ve ücretsiz erişimi sürdürmek için Google AdSense kullanır. Dış bağlantı verilen web sitelerinin içerik veya gizlilik uygulamalarından Scrolly sorumlu değildir.',
         },
+        {
+          heading: '7. Telif, İçerik Kullanımı ve Hukuki Bildirimler',
+          body: 'Telif hakları, içerik kullanımı, fikri mülkiyet bildirimleri ve resmi hukuki yazışmalar için tek yetkili iletişim kanalımız olan contact@scrolly.live adresi üzerinden bizimle iletişime geçebilirsiniz.',
+        },
       ];
 
   return (
@@ -148,7 +156,9 @@ export default async function TermsPage({ searchParams }: PageProps) {
           : 'Kullanım Koşulları ve Sorumluluk Reddi'
       }
       updatedLabel={
-        isEn ? 'Effective: November 2026 • scrolly.live' : 'Yürürlük: Kasım 2026 • scrolly.live'
+        isEn
+          ? 'Effective: November 2026 • scrolly.live • contact@scrolly.live'
+          : 'Yürürlük: Kasım 2026 • scrolly.live • contact@scrolly.live'
       }
       breadcrumbLabel={isEn ? 'Terms of Use' : 'Kullanım Koşulları'}
       jsonLd={jsonLd}
@@ -179,6 +189,12 @@ export default async function TermsPage({ searchParams }: PageProps) {
         >
           {isEn ? 'Contact Scrolly →' : 'İletişime Geç →'}
         </Link>
+        <a
+          href="mailto:contact@scrolly.live"
+          className="text-xs font-extrabold text-emerald-700 underline underline-offset-4 hover:text-emerald-900 dark:text-emerald-300"
+        >
+          contact@scrolly.live
+        </a>
       </div>
     </TrustPageShell>
   );

@@ -37,10 +37,11 @@ const POLICY_COPY = {
         body: 'Kullanıcılar Google Reklam Ayarları (adssettings.google.com) veya Dijital Reklam İttifakı (aboutads.info/choices) üzerinden kişiselleştirilmiş reklam çerezlerini diledikleri zaman devre dışı bırakabilir ya da tarayıcı ayarlarından tüm çerezleri silebilir/engelleyebilir.',
       },
       {
-        heading: '6. İletişim ve Veri Talepleri',
-        body: 'Gizlilik politikamız, çerez kullanımımız veya kaynak düzeltmeleri hakkındaki sorularınız için contact@scrolly.live e-posta adresinden veya İletişim sayfamızdan bize ulaşabilirsiniz.',
+        heading: '6. Veri Sorumlusu İletişim Adresi ve Veri Talepleri',
+        body: 'Çerez kullanımı, Google AdSense (ca-pub-1368005726792126) kişiselleştirilmiş reklam tercihleri, Google Analytics / Tag Manager (GTM-TQ6VVKM7) ölçümleri, gizlilik hakları ve tüm veri talepleri için tek resmi veri sorumlusu iletişim adresimiz olan contact@scrolly.live üzerinden veya İletişim sayfamızdan bize ulaşabilirsiniz.',
       },
     ],
+    controllerLabel: 'Veri Sorumlusu İletişimi:',
     adSettingsLabel: 'Google Reklam Ayarlarını Yönet ↗',
     aboutAdsLabel: 'aboutads.info Tercihleri ↗',
     contactLinkLabel: 'İletişim Sayfası',
@@ -74,10 +75,11 @@ const POLICY_COPY = {
         body: 'Users may opt out of personalized advertising at any time by visiting Google Ad Settings (adssettings.google.com) or the Digital Advertising Alliance opt-out portal (aboutads.info/choices), or control and clear cookies directly through browser privacy settings.',
       },
       {
-        heading: '6. Contact & Privacy Inquiries',
-        body: 'For any questions regarding this Privacy Policy, cookies, or editorial corrections, please reach us at contact@scrolly.live or via our Contact page.',
+        heading: '6. Data Controller Contact & Data Requests',
+        body: 'For any questions regarding cookies, Google AdSense (ca-pub-1368005726792126), Google Analytics / Tag Manager (GTM-TQ6VVKM7) measurements, or data subject inquiries, please contact our sole official data controller address at contact@scrolly.live or via our Contact page.',
       },
     ],
+    controllerLabel: 'Data Controller Contact:',
     adSettingsLabel: 'Manage Google Ad Settings ↗',
     aboutAdsLabel: 'aboutads.info Choices ↗',
     contactLinkLabel: 'Contact Page',
@@ -181,7 +183,20 @@ export default function PrivacyPolicyView() {
               ))}
             </div>
 
-            <div className="mt-8 flex flex-wrap items-center justify-between gap-3 border-t border-amber-100 pt-5 dark:border-white/10">
+            <div className="mt-6 rounded-2xl border border-emerald-200/80 bg-emerald-50/70 px-4 py-3 text-xs dark:border-emerald-700/40 dark:bg-emerald-950/30">
+              <span className="font-bold text-ink/80 dark:text-violet-100">
+                {copy.controllerLabel}{' '}
+              </span>
+              <a
+                href="mailto:contact@scrolly.live"
+                data-testid="privacy-contact-email"
+                className="font-extrabold text-emerald-800 underline underline-offset-4 hover:text-emerald-950 dark:text-emerald-300"
+              >
+                contact@scrolly.live
+              </a>
+            </div>
+
+            <div className="mt-6 flex flex-wrap items-center justify-between gap-3 border-t border-amber-100 pt-5 dark:border-white/10">
               <div className="flex flex-wrap items-center gap-4">
                 <a
                   href="https://adssettings.google.com"

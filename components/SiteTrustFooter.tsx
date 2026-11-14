@@ -62,6 +62,13 @@ export default function SiteTrustFooter({
                 {item.label}
               </Link>
             ))}
+            <a
+              href="mailto:contact@scrolly.live"
+              data-testid="footer-contact-email"
+              className="text-emerald-700 underline underline-offset-4 hover:text-emerald-900 dark:text-emerald-300"
+            >
+              contact@scrolly.live
+            </a>
           </nav>
         </div>
 

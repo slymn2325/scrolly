@@ -67,6 +67,18 @@ export default async function AboutPage({ searchParams }: PageProps) {
           '@type': 'WebSite',
           name: 'Scrolly',
           url: 'https://scrolly.live',
+          publisher: {
+            '@type': 'Organization',
+            name: 'Scrolly',
+            url: 'https://scrolly.live',
+            email: 'contact@scrolly.live',
+            contactPoint: {
+              '@type': 'ContactPoint',
+              email: 'contact@scrolly.live',
+              contactType: 'customer support',
+              availableLanguage: ['English', 'Turkish'],
+            },
+          },
         },
       },
       {
@@ -101,8 +113,8 @@ export default async function AboutPage({ searchParams }: PageProps) {
       }
       updatedLabel={
         isEn
-          ? 'Publisher: Scrolly (scrolly.live) • Updated November 2026'
-          : 'Yayıncı: Scrolly (scrolly.live) • Güncelleme: Kasım 2026'
+          ? 'Publisher: Scrolly (scrolly.live) • Editorial Desk: contact@scrolly.live'
+          : 'Yayıncı: Scrolly (scrolly.live) • Editöryal İletişim: contact@scrolly.live'
       }
       breadcrumbLabel={isEn ? 'About Us' : 'Hakkımızda'}
       jsonLd={jsonLd}
@@ -176,16 +188,22 @@ export default async function AboutPage({ searchParams }: PageProps) {
         </h2>
         <p className="text-sm leading-relaxed text-ink/80 dark:text-violet-100/80">
           {isEn
-            ? 'Scientific consensus evolves as new measurements arrive. If you spot an outdated statistic, broken source URL, or translation nuance on any Scrolly card, please notify us via our Contact page so our editorial pipeline can review and update the database record.'
-            : 'Bilimsel veriler yeni ölçümlerle güncellenebilir. Herhangi bir bilgi kartında güncel olmayan bir istatistik, çalışmayan bir kaynak bağlantısı veya çeviri hatası fark ederseniz İletişim sayfamız üzerinden bize bildirebilirsiniz; editöryal incelemenin ardından kayıt hızla güncellenir.'}
+            ? 'Scientific consensus evolves as new measurements arrive. If you spot an outdated statistic, broken source URL, or translation nuance on any Scrolly card, please contact our editorial verification team exclusively at contact@scrolly.live or via our Contact page so our editorial pipeline can review and update the record.'
+            : 'Bilimsel veriler yeni ölçümlerle güncellenebilir. Herhangi bir bilgi kartında güncel olmayan bir istatistik, çalışmayan kaynak bağlantısı veya çeviri hatası fark ederseniz editöryal ekibimiz ve kaynak doğrulama masamız için tek resmi iletişim adresimiz olan contact@scrolly.live üzerinden ya da İletişim sayfamızdan bize ulaşabilirsiniz.'}
         </p>
-        <div className="pt-2">
+        <div className="flex flex-wrap items-center gap-3 pt-2">
           <Link
             href={isEn ? '/contact?lang=en' : '/contact'}
             className="inline-flex items-center gap-1.5 rounded-full bg-ink px-4 py-2 text-xs font-extrabold text-white transition hover:opacity-90 dark:bg-violet-600"
           >
             <span>{isEn ? 'Report a Source Correction →' : 'Kaynak Düzeltmesi Bildir →'}</span>
           </Link>
+          <a
+            href="mailto:contact@scrolly.live"
+            className="inline-flex items-center gap-1.5 rounded-full border border-violet-200 bg-violet-50 px-4 py-2 text-xs font-extrabold text-violet-800 transition hover:bg-violet-100 dark:border-violet-700/50 dark:bg-violet-950/50 dark:text-violet-200"
+          >
+            contact@scrolly.live
+          </a>
         </div>
       </section>
     </TrustPageShell>

@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { BookCheck, Globe2, Mail, MessageSquareWarning } from 'lucide-react';
+import { Globe2, MessageSquareWarning } from 'lucide-react';
+import ContactInteractiveSection from '@/components/ContactInteractiveSection';
 import TrustPageShell from '@/components/TrustPageShell';
 import type { Language } from '@/i18n/translations';
 
@@ -68,6 +69,12 @@ export default async function ContactPage({ searchParams }: PageProps) {
           name: 'Scrolly',
           url: 'https://scrolly.live',
           email: 'contact@scrolly.live',
+          contactPoint: {
+            '@type': 'ContactPoint',
+            email: 'contact@scrolly.live',
+            contactType: 'customer support',
+            availableLanguage: ['English', 'Turkish'],
+          },
         },
       },
       {
@@ -110,37 +117,7 @@ export default async function ContactPage({ searchParams }: PageProps) {
           : 'Okuyucu geri bildirimlerini, bilimsel kaynak güncellemelerini, çeviri önerilerini, telif bildirimlerini ve gizlilik sorularınızı memnuniyetle karşılıyoruz. Gönderilen her kaynak düzeltmesi birincil literatürle karşılaştırılarak incelenir.'}
       </p>
 
-      <div className="grid gap-4 sm:grid-cols-2">
-        <div className="rounded-2xl border border-violet-200/80 bg-violet-50/70 p-4 dark:border-violet-700/40 dark:bg-violet-950/30">
-          <div className="flex items-center gap-2 text-xs font-extrabold uppercase tracking-wider text-violet-800 dark:text-violet-300">
-            <Mail className="h-4 w-4" />
-            <span>{isEn ? 'Direct Email' : 'Doğrudan E-posta'}</span>
-          </div>
-          <a
-            href="mailto:contact@scrolly.live"
-            className="mt-2 inline-block text-sm font-extrabold text-violet-700 underline underline-offset-4 hover:text-violet-900 dark:text-violet-200"
-          >
-            contact@scrolly.live
-          </a>
-          <p className="mt-1.5 text-xs text-ink/75 dark:text-violet-100/75">
-            {isEn
-              ? 'For editorial feedback, AdSense/advertising compliance, or legal notices.'
-              : 'Editöryal geri bildirim, reklam uyumluluğu ve yasal bildirimler için.'}
-          </p>
-        </div>
-
-        <div className="rounded-2xl border border-amber-200/80 bg-amber-50/70 p-4 dark:border-amber-700/40 dark:bg-amber-950/25">
-          <div className="flex items-center gap-2 text-xs font-extrabold uppercase tracking-wider text-amber-800 dark:text-amber-300">
-            <BookCheck className="h-4 w-4" />
-            <span>{isEn ? 'Source & Citation Review' : 'Kaynak ve Atıf İncelemesi'}</span>
-          </div>
-          <p className="mt-2 text-xs leading-relaxed text-ink/80 dark:text-violet-100/85">
-            {isEn
-              ? 'When reporting a factual issue, please include the card URL (e.g., https://scrolly.live/fact/...) and a link to the updated peer-reviewed paper or official agency source.'
-              : 'Bir bilgi kartında düzeltme önerirken lütfen kart bağlantısını (ör. https://scrolly.live/fact/...) ve güncel akademik veya kurumsal referans bağlantısını paylaşın.'}
-          </p>
-        </div>
-      </div>
+      <ContactInteractiveSection lang={lang} />
 
       <section className="space-y-2">
         <h2 className="flex items-center gap-2 font-display text-base font-bold text-ink dark:text-white sm:text-lg">

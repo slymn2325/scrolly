@@ -238,6 +238,18 @@ export async function ensureSchema(): Promise<void> {
       `);
 
       await pool.query(`
+        CREATE TABLE IF NOT EXISTS contact_messages (
+          id BIGSERIAL PRIMARY KEY,
+          name TEXT NOT NULL,
+          email TEXT NOT NULL,
+          subject TEXT NOT NULL,
+          message TEXT NOT NULL,
+          lang TEXT DEFAULT 'tr',
+          created_at TIMESTAMPTZ DEFAULT NOW()
+        );
+      `);
+
+      await pool.query(`
         CREATE OR REPLACE VIEW fact_engagement_summary AS
         SELECT
           f.id,
