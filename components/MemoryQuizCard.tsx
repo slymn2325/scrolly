@@ -16,6 +16,7 @@ import type { DuelChallengeConfig } from '@/components/DuelModal';
 import { getCategoryMeta, type Language, translations } from '@/i18n/translations';
 import { vibrateSuccess, vibrateTap } from '@/utils/haptics';
 import { prepareQuizOptions, type QuizQuestionItem } from '@/utils/recommendation';
+import { useEscapeClose } from '@/utils/useEscapeClose';
 
 export type ActiveQuizMode = 'memory' | 'daily' | 'weekly' | 'duel';
 
@@ -91,6 +92,8 @@ export default function MemoryQuizCard({
       }
     };
   }, []);
+
+  useEscapeClose(!rewardWatching, onSkip);
 
   // Continuous quiz-wide countdown timer with last-10s red pulse + tick sound
   useEffect(() => {

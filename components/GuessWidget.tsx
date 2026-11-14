@@ -187,6 +187,8 @@ export default function GuessWidget({
                   max={maxVal}
                   step={stepVal}
                   value={sliderValue}
+                  aria-label={copy.guessSliderAriaLabel}
+                  aria-valuetext={sliderValueText}
                   data-testid="guess-slider-input"
                   onClick={stop}
                   onDoubleClick={stop}
@@ -199,7 +201,7 @@ export default function GuessWidget({
                   className="h-3.5 w-full cursor-pointer rounded-full accent-violet-600 dark:accent-violet-400"
                 />
               </div>
-              <div className="flex justify-between text-[10px] font-bold text-ink/65 dark:text-violet-200/75">
+              <div className="flex justify-between text-[10px] font-bold text-ink/75 dark:text-violet-100/85">
                 <span>{minLabelText}</span>
                 <span>{maxLabelText}</span>
               </div>

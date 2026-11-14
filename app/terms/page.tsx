@@ -3,7 +3,7 @@ import Link from 'next/link';
 import TrustPageShell from '@/components/TrustPageShell';
 import type { Language } from '@/i18n/translations';
 
-export const dynamic = 'force-dynamic';
+export const revalidate = 3600;
 
 interface PageProps {
   searchParams: Promise<{ lang?: string }>;

@@ -15,6 +15,7 @@ import { type Language, translations } from '@/i18n/translations';
 import type { FactCard } from '@/types/fact';
 import { encodeDuelPayload } from '@/utils/duelCodec';
 import { STATE_ILLUSTRATION_PATHS } from '@/utils/icons8Assets';
+import { useEscapeClose } from '@/utils/useEscapeClose';
 
 export interface DuelChallengeConfig {
   factIds: string[];
@@ -53,6 +54,8 @@ export default function DuelModal({
       setNickname(defaultNickname);
     }
   }, [open, defaultNickname]);
+
+  useEscapeClose(open, onClose);
 
   // Pack 5 unique cardIds starting with the selected seedFact
   const duelFactIds = useMemo(() => {
@@ -124,7 +127,7 @@ export default function DuelModal({
               onClick={onClose}
               aria-label="Close"
               data-testid="duel-close-btn"
-              className="absolute right-4 top-4 rounded-full bg-slate-100 p-2 text-ink/60 hover:bg-slate-200 dark:bg-white/10 dark:text-violet-200"
+              className="absolute right-3 top-3 flex h-11 w-11 items-center justify-center rounded-full bg-slate-100 text-ink/75 hover:bg-slate-200 dark:bg-white/10 dark:text-violet-100"
             >
               <X className="h-4 w-4" />
             </motion.button>
@@ -142,7 +145,7 @@ export default function DuelModal({
                 <h2 className="font-display text-xl font-bold text-ink dark:text-white">
                   {t.duelTitle}
                 </h2>
-                <p className="text-xs font-semibold text-ink/60 dark:text-violet-200/70 whitespace-normal break-words leading-snug">
+                <p className="text-xs font-semibold text-ink/75 dark:text-violet-100/85 whitespace-normal break-words leading-snug">
                   {seedFact.emoji ?? '⚔️'} {seedFact[lang].title}
                 </p>
               </div>

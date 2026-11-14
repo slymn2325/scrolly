@@ -54,6 +54,7 @@ export default function QuizCtaSlide({
               src={UI_ICON_PATHS.xpSparkles}
               alt=""
               aria-hidden="true"
+              loading="lazy"
               className="h-4 w-4 object-contain"
             />
             <span>+150 Bonus XP</span>
@@ -68,6 +69,7 @@ export default function QuizCtaSlide({
                 src={DOCK_ICON_MAP.quiz}
                 alt=""
                 aria-hidden="true"
+                loading="lazy"
                 className="h-9 w-9 object-contain"
               />
             </div>

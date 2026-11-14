@@ -24,11 +24,14 @@ import {
   getFactPrimarySlug,
 } from '@/utils/factsData';
 
-export const dynamic = 'force-dynamic';
+export const revalidate = 3600;
 
 interface CategoryPageProps {
   params: Promise<{ category: string }>;
-  searchParams: Promise<{ lang?: string }>;
+}
+
+export function generateStaticParams() {
+  return CATEGORY_ROUTE_SLUGS.map((category) => ({ category }));
 }
 
 const CATEGORY_DESCRIPTIONS: Record<CategoryId, Record<Language, string>> = {
@@ -58,18 +61,10 @@ const CATEGORY_DESCRIPTIONS: Record<CategoryId, Record<Language, string>> = {
   },
 };
 
-function resolveLangParam(langParam?: string): { lang: Language; hasExplicitLang: boolean } {
-  if (langParam === 'en') return { lang: 'en', hasExplicitLang: true };
-  if (langParam === 'tr') return { lang: 'tr', hasExplicitLang: true };
-  return { lang: 'tr', hasExplicitLang: false };
-}
-
 export async function generateMetadata({
   params,
-  searchParams,
 }: CategoryPageProps): Promise<Metadata> {
   const { category } = await params;
-  const query = await searchParams;
   const categoryId = categoryRouteSlugToId(category);
 
   if (!categoryId) {
@@ -78,20 +73,21 @@ export async function generateMetadata({
     };
   }
 
-  const { lang } = resolveLangParam(query?.lang);
+  const lang: Language = 'tr';
   const catMeta = getCategoryMeta(categoryId);
   const canonicalSlug = categoryIdToRouteSlug(categoryId);
   const canonicalUrl = `https://scrolly.live/category/${canonicalSlug}`;
+  const enUrl = `https://scrolly.live/en/category/${canonicalSlug}`;
   const description = CATEGORY_DESCRIPTIONS[categoryId][lang];
 
   return {
-    title: `${catMeta.label[lang]} — ${lang === 'tr' ? 'Bilimsel Bilgi Kartları' : 'Verified Fact Cards'} | Scrolly`,
+    title: `${catMeta.label[lang]} — Bilimsel Bilgi Kartları | Scrolly`,
     description,
     alternates: {
       canonical: canonicalUrl,
       languages: {
-        tr: `${canonicalUrl}?lang=tr`,
-        en: `${canonicalUrl}?lang=en`,
+        tr: canonicalUrl,
+        en: enUrl,
         'x-default': canonicalUrl,
       },
     },
@@ -101,7 +97,7 @@ export async function generateMetadata({
       url: canonicalUrl,
       siteName: 'Scrolly',
       type: 'website',
-      locale: lang === 'en' ? 'en_US' : 'tr_TR',
+      locale: 'tr_TR',
     },
     twitter: {
       card: 'summary_large_image',
@@ -111,16 +107,15 @@ export async function generateMetadata({
   };
 }
 
-export default async function CategoryHubPage({ params, searchParams }: CategoryPageProps) {
+export default async function CategoryHubPage({ params }: CategoryPageProps) {
   const { category } = await params;
-  const query = await searchParams;
   const categoryId = categoryRouteSlugToId(category);
 
   if (!categoryId) {
     notFound();
   }
 
-  const { lang } = resolveLangParam(query?.lang);
+  const lang: Language = 'tr';
   const catMeta = getCategoryMeta(categoryId);
   const canonicalSlug = categoryIdToRouteSlug(categoryId);
   const canonicalUrl = `https://scrolly.live/category/${canonicalSlug}`;
@@ -213,9 +208,7 @@ export default async function CategoryHubPage({ params, searchParams }: Category
               </Link>
               <Link
                 href={buildCategoryHref(canonicalSlug, 'en')}
-                className={`rounded-full px-2.5 py-1 text-xs font-extrabold uppercase ${
-                  lang === 'en' ? 'bg-ink text-white' : 'text-ink/60 hover:text-ink'
-                }`}
+                className="rounded-full px-2.5 py-1 text-xs font-extrabold uppercase text-ink/80 hover:text-ink"
               >
                 EN
               </Link>

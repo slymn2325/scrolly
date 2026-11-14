@@ -4,7 +4,7 @@ import { getAllFactsServer } from '@/lib/db';
 import type { FactCard } from '@/types/fact';
 import { categoryIdToRouteSlug, getFactPrimarySlug } from '@/utils/factsData';
 
-export const dynamic = 'force-dynamic';
+export const revalidate = 3600;
 
 function formatGuessAnswer(fact: FactCard, lang: 'tr' | 'en'): string | null {
   const guess = fact[lang].guessChallenge;

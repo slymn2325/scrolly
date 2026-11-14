@@ -86,7 +86,7 @@ export default function IosFloatingIslandDock({
             data-testid={`dock-tab-${tab.id}`}
             aria-label={tab.label}
             aria-current={isActive ? 'page' : undefined}
-            className={`relative flex flex-1 flex-col items-center justify-center gap-0.5 rounded-full py-1.5 transition-colors ${
+            className={`relative flex min-h-[44px] flex-1 flex-col items-center justify-center gap-0.5 rounded-full py-1.5 transition-colors ${
               isActive
                 ? 'text-violet-800 dark:text-violet-100'
                 : 'text-ink/85 hover:text-ink dark:text-white/85 dark:hover:text-white'

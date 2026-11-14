@@ -378,7 +378,7 @@ const TikTokFeed = forwardRef<TikTokFeedHandle, TikTokFeedProps>(function TikTok
               onClick={onToggleDarkMode}
               aria-label={darkMode ? t.lightModeOn : t.darkModeOn}
               data-testid="theme-toggle-btn"
-              className="flex h-8 w-8 items-center justify-center rounded-full border border-slate-200/90 bg-white/95 text-ink shadow-sm dark:border-white/15 dark:bg-slate-900/95 dark:text-amber-300"
+              className="flex h-11 w-11 items-center justify-center rounded-full border border-slate-200/90 bg-white/95 text-ink shadow-sm dark:border-white/15 dark:bg-slate-900/95 dark:text-amber-300"
             >
               <img
                 src={darkMode ? UI_ICON_PATHS.themeSun : UI_ICON_PATHS.themeMoon}
@@ -394,7 +394,7 @@ const TikTokFeed = forwardRef<TikTokFeedHandle, TikTokFeedProps>(function TikTok
               onClick={onToggleSound}
               aria-label={soundEnabled ? t.soundOn : t.soundOff}
               data-testid="sound-toggle-btn"
-              className="flex h-8 w-8 items-center justify-center rounded-full border border-slate-200/90 bg-white/95 text-ink shadow-sm dark:border-white/15 dark:bg-slate-900/95 dark:text-violet-200"
+              className="flex h-11 w-11 items-center justify-center rounded-full border border-slate-200/90 bg-white/95 text-ink shadow-sm dark:border-white/15 dark:bg-slate-900/95 dark:text-violet-200"
             >
               <img
                 src={soundEnabled ? UI_ICON_PATHS.soundOn : UI_ICON_PATHS.soundOff}
@@ -419,10 +419,10 @@ const TikTokFeed = forwardRef<TikTokFeedHandle, TikTokFeedProps>(function TikTok
                 type="button"
                 onClick={() => onChangeLang('tr')}
                 data-testid="lang-btn-tr"
-                className={`rounded-full px-2 py-1 transition-all ${
+                className={`inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-full px-2.5 py-1 transition-all ${
                   lang === 'tr'
                     ? 'bg-ink text-white shadow-sm dark:bg-violet-600'
-                    : 'text-ink/70 dark:text-white/70'
+                    : 'text-ink/80 dark:text-white/85'
                 }`}
               >
                 TR
@@ -431,10 +431,10 @@ const TikTokFeed = forwardRef<TikTokFeedHandle, TikTokFeedProps>(function TikTok
                 type="button"
                 onClick={() => onChangeLang('en')}
                 data-testid="lang-btn-en"
-                className={`rounded-full px-2 py-1 transition-all ${
+                className={`inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-full px-2.5 py-1 transition-all ${
                   lang === 'en'
                     ? 'bg-ink text-white shadow-sm dark:bg-violet-600'
-                    : 'text-ink/70 dark:text-white/70'
+                    : 'text-ink/80 dark:text-white/85'
                 }`}
               >
                 EN
@@ -457,7 +457,7 @@ const TikTokFeed = forwardRef<TikTokFeedHandle, TikTokFeedProps>(function TikTok
               onSelectCategory('all');
             }}
             data-testid="category-pill-all"
-            className={`inline-flex min-h-[34px] shrink-0 items-center gap-1.5 rounded-full px-3 py-1 text-[11px] font-extrabold transition-all ${
+            className={`inline-flex min-h-[44px] shrink-0 items-center gap-1.5 rounded-full px-3.5 py-1.5 text-[11px] font-extrabold transition-all ${
               activeCategory === 'all'
                 ? 'bg-ink text-white shadow-md dark:bg-white dark:text-ink'
                 : 'border border-slate-200/90 bg-white/95 text-ink/85 hover:bg-white dark:border-white/15 dark:bg-slate-900/95 dark:text-white/85'
@@ -481,7 +481,7 @@ const TikTokFeed = forwardRef<TikTokFeedHandle, TikTokFeedProps>(function TikTok
             }}
             aria-expanded={isCategoryDrawerOpen}
             data-testid="choose-category-btn"
-            className={`inline-flex min-h-[34px] shrink-0 items-center gap-1 rounded-full border px-3 py-1 text-[11px] font-extrabold transition-all ${
+            className={`inline-flex min-h-[44px] shrink-0 items-center gap-1 rounded-full border px-3.5 py-1.5 text-[11px] font-extrabold transition-all ${
               isCategoryDrawerOpen
                 ? 'border-violet-500 bg-violet-600 text-white shadow-md'
                 : 'border-slate-200/90 bg-white/95 text-ink hover:bg-white dark:border-white/15 dark:bg-slate-900/95 dark:text-white'

@@ -212,13 +212,61 @@ export async function trackEvent(
   }
 }
 
+export interface PaginatedFactsResult {
+  facts: FactCard[];
+  total: number;
+  offset: number;
+  limit: number;
+  hasMore: boolean;
+}
+
+export async function fetchPaginatedFactsFromApi(options?: {
+  offset?: number;
+  limit?: number;
+  category?: string;
+}): Promise<PaginatedFactsResult | null> {
+  if (typeof window === 'undefined') return null;
+  const offset = Math.max(0, options?.offset ?? 0);
+  const limit = Math.max(1, Math.min(200, options?.limit ?? 25));
+  const category = options?.category;
+
+  const params = new URLSearchParams({
+    offset: String(offset),
+    limit: String(limit),
+  });
+  if (category && category !== 'all' && category !== 'language_lab') {
+    params.set('category', category);
+  }
+
+  try {
+    const res = await fetch(`/api/facts?${params.toString()}`, {
+      method: 'GET',
+    });
+    if (res.ok) {
+      const data = (await res.json()) as Partial<PaginatedFactsResult>;
+      if (Array.isArray(data.facts)) {
+        return {
+          facts: data.facts,
+          total: typeof data.total === 'number' ? data.total : data.facts.length,
+          offset: typeof data.offset === 'number' ? data.offset : offset,
+          limit: typeof data.limit === 'number' ? data.limit : limit,
+          hasMore: Boolean(data.hasMore),
+        };
+      }
+    }
+  } catch {
+    // Fall through to cached offline facts below
+  }
+
+  return null;
+}
+
 export async function fetchFactsFromApiWithCache(): Promise<FactCard[] | null> {
   if (typeof window === 'undefined') return null;
 
   try {
-    const res = await fetch('/api/facts', {
+    const res = await fetch('/api/facts?offset=0&limit=120', {
       method: 'GET',
-      cache: 'no-store',
     });
     if (res.ok) {
       const data = (await res.json()) as { facts?: FactCard[] };

@@ -3,6 +3,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import confetti from 'canvas-confetti';
+import { useEscapeClose } from '@/utils/useEscapeClose';
 import { AnimatePresence, motion } from 'framer-motion';
 import {
   Bell,
@@ -81,6 +82,8 @@ export default function DiplomaProfileModal({
     const rafId = requestAnimationFrame(resetTop);
     return () => cancelAnimationFrame(rafId);
   }, [open]);
+
+  useEscapeClose(open, onClose);
 
   const favoriteFacts = allFacts.filter((f) => memory.favoriteIds.includes(f.id));
   const categoryList = CATEGORIES.filter((c) => c.id !== 'all');
@@ -194,7 +197,7 @@ export default function DiplomaProfileModal({
                 }}
                 aria-label="Close"
                 data-testid="diploma-close-btn"
-                className="rounded-full bg-slate-100 p-2 text-ink/60 hover:bg-slate-200 dark:bg-white/10 dark:text-violet-200"
+                className="flex h-11 w-11 items-center justify-center rounded-full bg-slate-100 text-ink/75 hover:bg-slate-200 dark:bg-white/10 dark:text-violet-100"
               >
                 <X className="h-4 w-4" />
               </motion.button>

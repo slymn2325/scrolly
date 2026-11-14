@@ -23,6 +23,7 @@ import {
 } from '@/i18n/translations';
 import { encodeDuelPayload } from '@/utils/duelCodec';
 import { STATE_ILLUSTRATION_PATHS } from '@/utils/icons8Assets';
+import { useEscapeClose } from '@/utils/useEscapeClose';
 
 interface ShareResultModalProps {
   lang: Language;
@@ -52,6 +53,8 @@ export default function ShareResultModal({
   const [copied, setCopied] = useState(false);
   const [duelCopied, setDuelCopied] = useState(false);
   const t = translations[lang];
+
+  useEscapeClose(true, onClose);
 
   const correctCount = results.filter(Boolean).length;
   const totalCount = results.length;
@@ -141,7 +144,7 @@ export default function ShareResultModal({
             onClose();
           }}
           aria-label="Close modal"
-          className="absolute right-4 top-4 rounded-full bg-slate-100 p-2 text-ink/55 hover:bg-slate-200 dark:bg-white/10 dark:text-violet-200"
+          className="absolute right-3 top-3 flex h-11 w-11 items-center justify-center rounded-full bg-slate-100 text-ink/75 hover:bg-slate-200 dark:bg-white/10 dark:text-violet-100"
         >
           <X className="h-4 w-4" />
         </motion.button>
@@ -157,6 +160,7 @@ export default function ShareResultModal({
               }
               alt=""
               aria-hidden="true"
+              loading="lazy"
               className="h-12 w-12 object-contain drop-shadow-md"
             />
           </div>

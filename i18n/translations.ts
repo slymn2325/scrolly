@@ -158,6 +158,7 @@ export const FEED_EXPERIENCE_COPY = {
     closeSheetLabel: 'Kapat',
     doubleTapLikeHint: 'Beğenmek için çift dokun · Detay için basılı tut',
     languageLabSubtitle: 'İngilizce & Türkçe satırları karşılaştır, kelimelere dokun ve telaffuzu dinle.',
+    guessSliderAriaLabel: 'Tahmin kaydırıcısı',
   },
   en: {
     chooseCategory: 'Choose Category',
@@ -179,6 +180,7 @@ export const FEED_EXPERIENCE_COPY = {
     closeSheetLabel: 'Close',
     doubleTapLikeHint: 'Double-tap to like · Hold for detail',
     languageLabSubtitle: 'Compare English & Turkish side-by-side, tap highlighted words to hear & save them.',
+    guessSliderAriaLabel: 'Estimate range slider',
   },
 } as const;
 

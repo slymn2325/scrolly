@@ -9,35 +9,34 @@ import {
   getRelatedFactsFromPool,
 } from '@/utils/factsData';
 
-export const dynamic = 'force-dynamic';
+export const revalidate = 3600;
 
 interface PageProps {
   params: Promise<{ slug: string }>;
-  searchParams: Promise<{ lang?: string }>;
 }
 
-function resolveLangParam(langParam?: string): { lang: Language; hasExplicitLang: boolean } {
-  if (langParam === 'en') {
-    return { lang: 'en', hasExplicitLang: true };
+export async function generateStaticParams() {
+  const allFacts = await getAllFactsServer();
+  const seen = new Set<string>();
+  const params: Array<{ slug: string }> = [];
+  for (const fact of allFacts) {
+    const primary = getFactPrimarySlug(fact);
+    if (primary && !seen.has(primary)) {
+      seen.add(primary);
+      params.push({ slug: primary });
+    }
   }
-  if (langParam === 'tr') {
-    return { lang: 'tr', hasExplicitLang: true };
-  }
-  return { lang: 'tr', hasExplicitLang: false };
+  return params;
 }
 
-export async function generateMetadata({
-  params,
-  searchParams,
-}: PageProps): Promise<Metadata> {
+export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { slug } = await params;
-  const query = await searchParams;
-  const { lang } = resolveLangParam(query?.lang);
+  const lang: Language = 'tr';
 
   const fact = await getFactBySlugServer(slug);
   if (!fact) {
     return {
-      title: lang === 'en' ? 'Fact Not Found | Scrolly' : 'Bilgi Bulunamadı | Scrolly',
+      title: 'Bilgi Bulunamadı | Scrolly',
     };
   }
 
@@ -48,6 +47,7 @@ export async function generateMetadata({
   const description =
     combinedDesc.length > 160 ? `${combinedDesc.slice(0, 157).trimEnd()}...` : combinedDesc;
   const canonicalUrl = `https://scrolly.live/fact/${primarySlug}`;
+  const enUrl = `https://scrolly.live/en/fact/${primarySlug}`;
   const ogImageUrl = `https://scrolly.live/fact/${primarySlug}/opengraph-image`;
 
   return {
@@ -56,8 +56,8 @@ export async function generateMetadata({
     alternates: {
       canonical: canonicalUrl,
       languages: {
-        tr: `${canonicalUrl}?lang=tr`,
-        en: `${canonicalUrl}?lang=en`,
+        tr: canonicalUrl,
+        en: enUrl,
         'x-default': canonicalUrl,
       },
     },
@@ -67,7 +67,7 @@ export async function generateMetadata({
       url: canonicalUrl,
       siteName: 'Scrolly',
       type: 'article',
-      locale: lang === 'en' ? 'en_US' : 'tr_TR',
+      locale: 'tr_TR',
       section: catMeta.label[lang],
       images: [
         {
@@ -87,10 +87,10 @@ export async function generateMetadata({
   };
 }
 
-export default async function CanonicalFactPage({ params, searchParams }: PageProps) {
+export default async function CanonicalFactPage({ params }: PageProps) {
   const { slug } = await params;
-  const query = await searchParams;
-  const { lang, hasExplicitLang } = resolveLangParam(query?.lang);
+  const lang: Language = 'tr';
+  const hasExplicitLang = false;
 
   const allFacts = await getAllFactsServer();
   const fact =

@@ -74,6 +74,7 @@ export default function CategoryMotionArt({
               src={heroIllustration}
               alt=""
               aria-hidden="true"
+              loading="lazy"
               className="h-11 w-11 object-contain drop-shadow-sm"
             />
           </motion.div>
@@ -81,6 +82,7 @@ export default function CategoryMotionArt({
             src={subIllustration}
             alt=""
             aria-hidden="true"
+            loading="lazy"
             className="h-9 w-9 object-contain opacity-85 drop-shadow-sm"
           />
         </div>

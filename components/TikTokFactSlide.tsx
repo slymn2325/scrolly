@@ -784,9 +784,9 @@ export default function TikTokFactSlide({
                     speakVocabularyText(`${fact.en.title}. ${fact.en.factText}`, 'en-US');
                   }}
                   aria-label={copy.listenEn}
-                  className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-indigo-600 text-white"
+                  className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-indigo-600 text-white"
                 >
-                  <Volume2 className="h-3.5 w-3.5" />
+                  <Volume2 className="h-4 w-4" />
                 </button>
               </div>
             )}
@@ -850,11 +850,11 @@ export default function TikTokFactSlide({
                 }}
                 onDoubleClick={(e) => e.stopPropagation()}
                 onPointerDown={(e) => e.stopPropagation()}
-                className="inline-flex min-h-[36px] items-center gap-1.5 rounded-full border border-slate-200/90 bg-white/95 px-3 py-1.5 text-[11px] font-extrabold text-violet-900 shadow-sm transition hover:bg-white dark:border-white/20 dark:bg-slate-900/95 dark:text-violet-100 dark:hover:bg-slate-800"
+                className="inline-flex min-h-[44px] items-center gap-1.5 rounded-full border border-slate-200/90 bg-white/95 px-3.5 py-2 text-[11px] font-extrabold text-violet-900 shadow-sm transition hover:bg-white dark:border-white/20 dark:bg-slate-900/95 dark:text-violet-100 dark:hover:bg-slate-800"
               >
                 <span>{lang === 'tr' ? 'Detayı / Kaynağı Gör ↻' : 'See Details / Source ↻'}</span>
               </button>
-              <span className="pointer-events-none text-[10px] font-bold text-ink/60 dark:text-violet-200/70">
+              <span className="pointer-events-none text-[10px] font-bold text-ink/80 dark:text-violet-100/85">
                 {copy.doubleTapLikeHint}
               </span>
             </div>
@@ -947,7 +947,7 @@ export default function TikTokFactSlide({
                       <div className="min-w-0 flex-1">
                         <span
                           lang={lang}
-                          className="block text-[10px] font-black uppercase tracking-wider text-ink/55 dark:text-violet-300/80"
+                          className="block text-[10px] font-black uppercase tracking-wider text-ink/80 dark:text-violet-200"
                         >
                           {t.sourceLabel}
                         </span>
@@ -974,7 +974,7 @@ export default function TikTokFactSlide({
                           <ExternalLink className="h-3 w-3 shrink-0" />
                         </a>
                       ) : (
-                        <span className="text-[11px] font-semibold text-ink/55 dark:text-violet-200/70">
+                        <span className="text-[11px] font-semibold text-ink/80 dark:text-violet-100/85">
                           {localized.sourceHint}
                         </span>
                       )}

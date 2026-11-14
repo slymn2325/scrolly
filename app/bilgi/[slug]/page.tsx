@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import SingleFactView from '@/components/SingleFactView';
 import { getCategoryMeta } from '@/i18n/translations';
-import { getAllFacts, getFactBySlug, getRelatedFacts } from '@/utils/factsData';
+import { getAllFacts, getFactBySlug, getRelatedFacts } from '@/utils/factsServerData';
 
 interface PageProps {
   params: Promise<{ slug: string }>;

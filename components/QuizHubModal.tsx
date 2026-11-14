@@ -4,6 +4,7 @@ import React from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Brain, Calendar, CheckCircle2, Flame, Timer, Trophy, X, Zap } from 'lucide-react';
 import { type Language, translations } from '@/i18n/translations';
+import { useEscapeClose } from '@/utils/useEscapeClose';
 
 export type QuizModeChoice = 'daily' | 'weekly' | 'memory';
 
@@ -29,6 +30,8 @@ export default function QuizHubModal({
   onButtonPop,
 }: QuizHubModalProps) {
   const t = translations[lang];
+
+  useEscapeClose(open, onClose);
 
   return (
     <AnimatePresence>
@@ -56,7 +59,7 @@ export default function QuizHubModal({
               }}
               aria-label="Close"
               data-testid="quiz-hub-close-btn"
-              className="absolute right-4 top-4 rounded-full bg-slate-100 p-2 text-ink/60 hover:bg-slate-200 dark:bg-white/10 dark:text-violet-200"
+              className="absolute right-3 top-3 flex h-11 w-11 items-center justify-center rounded-full bg-slate-100 text-ink/75 hover:bg-slate-200 dark:bg-white/10 dark:text-violet-100"
             >
               <X className="h-4 w-4" />
             </motion.button>
@@ -69,7 +72,7 @@ export default function QuizHubModal({
                 <h2 className="font-display text-xl font-bold text-ink dark:text-white">
                   {t.quizHubTitle}
                 </h2>
-                <p className="text-xs font-medium text-ink/65 dark:text-violet-200/75">
+                <p className="text-xs font-medium text-ink/75 dark:text-violet-100/85">
                   {t.quizHubSubtitle}
                 </p>
               </div>

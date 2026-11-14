@@ -34,14 +34,14 @@ export default function OfflineManager({ lang }: OfflineManagerProps) {
     window.addEventListener('online', handleOnline);
     window.addEventListener('offline', handleOffline);
 
-    // Evict stale pre-v1.1.2 offline cache buckets if present & register updated Service Worker
+    // Evict stale pre-v3 offline cache buckets if present & register updated Service Worker
     if ('caches' in window) {
       caches
         .keys()
         .then((keys) =>
           Promise.all(
             keys
-              .filter((k) => k !== 'scrolly-offline-v1.1.2')
+              .filter((k) => k !== 'scrolly-offline-v3')
               .map((oldKey) => caches.delete(oldKey))
           )
         )
@@ -59,8 +59,14 @@ export default function OfflineManager({ lang }: OfflineManagerProps) {
         });
     }
 
-    // Idle-time prefetch of all sharded JSON files for instant offline discovery
+    // Only prefetch JSON fact shards when installed & launched in standalone PWA mode
+    const isStandalonePwa =
+      (typeof window.matchMedia === 'function' &&
+        window.matchMedia('(display-mode: standalone)').matches) ||
+      (window.navigator as { standalone?: boolean }).standalone === true;
+
     const prefetchAll = () => {
+      if (!isStandalonePwa) return;
       PREFETCH_FACT_SHARDS.forEach((url) => {
         fetch(url, { priority: 'low' } as RequestInit).catch(() => {});
       });
@@ -74,10 +80,12 @@ export default function OfflineManager({ lang }: OfflineManagerProps) {
     let idleId: number | undefined;
     let fallbackTimer: ReturnType<typeof setTimeout> | undefined;
 
-    if (typeof winWithIdle.requestIdleCallback === 'function') {
-      idleId = winWithIdle.requestIdleCallback(prefetchAll);
-    } else {
-      fallbackTimer = setTimeout(prefetchAll, 1500);
+    if (isStandalonePwa) {
+      if (typeof winWithIdle.requestIdleCallback === 'function') {
+        idleId = winWithIdle.requestIdleCallback(prefetchAll);
+      } else {
+        fallbackTimer = setTimeout(prefetchAll, 1500);
+      }
     }
 
     return () => {
@@ -107,6 +115,7 @@ export default function OfflineManager({ lang }: OfflineManagerProps) {
                 src={STATE_ILLUSTRATION_PATHS.offlineState}
                 alt=""
                 aria-hidden="true"
+                loading="lazy"
                 className="h-5 w-5 object-contain"
               />
               <span>{t.offlineReadyBanner}</span>

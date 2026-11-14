@@ -1,8 +1,10 @@
+import { cache } from 'react';
 import { Pool } from 'pg';
 import type { Language } from '@/i18n/translations';
 import { formatValueWithUnit } from '@/lib/formatUnit';
 import type { CategoryId, FactCard, FactQuizContent, GuessChallenge } from '@/types/fact';
-import { getAllFacts, getFactPrimarySlug } from '@/utils/factsData';
+import { getFactPrimarySlug } from '@/utils/factsData';
+import { getAllFacts, LEGACY_SLUG_TO_FACT_ID } from '@/utils/factsServerData';
 
 export interface DbFactRow {
   id: number;
@@ -562,75 +564,91 @@ function buildStaticServerEntries(): ServerFactEntry[] {
   }));
 }
 
-export async function getAllFactsWithTimestampsServer(): Promise<ServerFactEntry[]> {
-  const staticEntries = buildStaticServerEntries();
+export const getAllFactsWithTimestampsServer = cache(
+  async (): Promise<ServerFactEntry[]> => {
+    const staticEntries = buildStaticServerEntries();
 
-  if (!hasDatabaseUrl()) {
-    return staticEntries;
-  }
-
-  try {
-    await ensureSchema();
-    const pool = getPool();
-    const result = await pool.query<DbFactRow>(
-      'SELECT * FROM facts ORDER BY created_at DESC, id DESC'
-    );
-
-    if (result.rows.length === 0) {
+    if (!hasDatabaseUrl()) {
       return staticEntries;
     }
 
-    const seenKeys = new Set<string>();
-    const combined: ServerFactEntry[] = [];
+    try {
+      await ensureSchema();
+      const pool = getPool();
+      const result = await pool.query<DbFactRow>(
+        'SELECT * FROM facts ORDER BY created_at DESC, id DESC'
+      );
 
-    for (const row of result.rows) {
-      const card = mapDbRowToFactCard(row);
-      const updatedAt = parseTimestamp(row.created_at ?? card.createdAt);
-      const keys = [
-        row.slug,
-        getFactPrimarySlug(card),
-        card.id,
-        card.en.slug,
-        card.tr.slug,
-      ].filter(Boolean);
-      keys.forEach((k) => seenKeys.add(k));
-      combined.push({ fact: card, updatedAt });
-    }
-
-    for (const entry of staticEntries) {
-      const f = entry.fact;
-      const keys = [getFactPrimarySlug(f), f.id, f.en.slug, f.tr.slug].filter(Boolean);
-      const alreadyPresent = keys.some((k) => seenKeys.has(k));
-      if (!alreadyPresent) {
-        keys.forEach((k) => seenKeys.add(k));
-        combined.push(entry);
+      if (result.rows.length === 0) {
+        return staticEntries;
       }
+
+      const seenKeys = new Set<string>();
+      const combined: ServerFactEntry[] = [];
+
+      for (const row of result.rows) {
+        const card = mapDbRowToFactCard(row);
+        const updatedAt = parseTimestamp(row.created_at ?? card.createdAt);
+        const keys = [
+          row.slug,
+          getFactPrimarySlug(card),
+          card.id,
+          card.en.slug,
+          card.tr.slug,
+        ].filter(Boolean);
+        keys.forEach((k) => seenKeys.add(k));
+        combined.push({ fact: card, updatedAt });
+      }
+
+      for (const entry of staticEntries) {
+        const f = entry.fact;
+        const keys = [getFactPrimarySlug(f), f.id, f.en.slug, f.tr.slug].filter(Boolean);
+        const alreadyPresent = keys.some((k) => seenKeys.has(k));
+        if (!alreadyPresent) {
+          keys.forEach((k) => seenKeys.add(k));
+          combined.push(entry);
+        }
+      }
+
+      return combined;
+    } catch (err) {
+      console.error('[lib/db] getAllFactsWithTimestampsServer fallback to static facts:', err);
+      return staticEntries;
     }
-
-    return combined;
-  } catch (err) {
-    console.error('[lib/db] getAllFactsWithTimestampsServer fallback to static facts:', err);
-    return staticEntries;
   }
-}
+);
 
-export async function getAllFactsServer(): Promise<FactCard[]> {
+export const getAllFactsServer = cache(async (): Promise<FactCard[]> => {
   const entries = await getAllFactsWithTimestampsServer();
   return entries.map((entry) => entry.fact);
-}
+});
 
-export async function getFactBySlugServer(slug: string): Promise<FactCard | undefined> {
-  const normalized = slug.trim();
-  if (!normalized) return undefined;
+export const getFactsByCategoryServer = cache(
+  async (category: CategoryId | 'all'): Promise<FactCard[]> => {
+    const allFacts = await getAllFactsServer();
+    if (category === 'all') return allFacts;
+    return allFacts.filter((item) => item.category === category);
+  }
+);
 
-  const allFacts = await getAllFactsServer();
-  return allFacts.find(
-    (item) =>
-      item.slug === normalized ||
-      getFactPrimarySlug(item) === normalized ||
-      item.en.slug === normalized ||
-      item.tr.slug === normalized ||
-      item.id === normalized
-  );
-}
+export const getFactBySlugServer = cache(
+  async (slug: string): Promise<FactCard | undefined> => {
+    const normalized = slug.trim();
+    if (!normalized) return undefined;
+
+    const allFacts = await getAllFactsServer();
+    const direct = allFacts.find(
+      (item) =>
+        item.slug === normalized ||
+        getFactPrimarySlug(item) === normalized ||
+        item.en.slug === normalized ||
+        item.tr.slug === normalized ||
+        item.id === normalized
+    );
+    if (direct) return direct;
+
+    const legacyId = LEGACY_SLUG_TO_FACT_ID[normalized];
+    return legacyId ? allFacts.find((item) => item.id === legacyId) : undefined;
+  }
+);
 

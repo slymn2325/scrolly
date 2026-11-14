@@ -10,6 +10,7 @@ import {
   type GeneratedCanvasAsset,
   generateStoryCardImage,
 } from '@/utils/storyCanvasGenerator';
+import { useEscapeClose } from '@/utils/useEscapeClose';
 
 interface StoryShareModalProps {
   open: boolean;
@@ -32,6 +33,8 @@ export default function StoryShareModal({
   const [downloadedFeedback, setDownloadedFeedback] = useState(false);
 
   const t = translations[lang];
+
+  useEscapeClose(open, onClose);
 
   useEffect(() => {
     if (!open || !fact) {
@@ -150,7 +153,7 @@ export default function StoryShareModal({
               }}
               aria-label="Close"
               data-testid="story-close-btn"
-              className="absolute right-4 top-4 rounded-full bg-slate-100 p-2 text-ink/60 hover:bg-slate-200 dark:bg-white/10 dark:text-violet-200"
+              className="absolute right-3 top-3 flex h-11 w-11 items-center justify-center rounded-full bg-slate-100 text-ink/75 hover:bg-slate-200 dark:bg-white/10 dark:text-violet-100"
             >
               <X className="h-4 w-4" />
             </motion.button>
@@ -181,6 +184,7 @@ export default function StoryShareModal({
                   <img
                     src={asset.dataUrl}
                     alt={fact[lang].title}
+                    loading="lazy"
                     data-testid="story-preview-img"
                     className="h-full w-full object-cover"
                   />

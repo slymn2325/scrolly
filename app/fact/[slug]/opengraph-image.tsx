@@ -2,7 +2,7 @@ import { ImageResponse } from 'next/og';
 import { getCategoryMeta } from '@/i18n/translations';
 import { getFactBySlugServer } from '@/lib/db';
 
-export const dynamic = 'force-dynamic';
+export const revalidate = 3600;
 export const alt = 'Scrolly — Doğrulanmış Mikro Öğrenme Kartı';
 export const size = {
   width: 1200,

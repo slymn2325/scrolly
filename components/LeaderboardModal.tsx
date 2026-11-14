@@ -5,6 +5,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { ArrowDownRight, ArrowUpRight, Check, Crown, Radio, Swords, X } from 'lucide-react';
 import { type Language, translations } from '@/i18n/translations';
 import { DOCK_ICON_MAP, UI_ICON_PATHS } from '@/utils/icons8Assets';
+import { useEscapeClose } from '@/utils/useEscapeClose';
 import {
   fetchLeaderboardEntries,
   type LeaderboardEntry,
@@ -80,6 +81,8 @@ export default function LeaderboardModal({
     return () => unsub();
   }, [open, loadLeaderboard]);
 
+  useEscapeClose(open, onClose);
+
   const progressPct = useMemo(() => {
     if (!league.nextMinXp) return 100;
     const span = league.nextMinXp - league.minXp;
@@ -110,7 +113,7 @@ export default function LeaderboardModal({
               onClick={onClose}
               aria-label="Close"
               data-testid="leaderboard-close-btn"
-              className="absolute right-4 top-4 rounded-full bg-slate-100 p-2 text-ink/60 hover:bg-slate-200 dark:bg-white/10 dark:text-violet-200"
+              className="absolute right-3 top-3 flex h-11 w-11 items-center justify-center rounded-full bg-slate-100 text-ink/75 hover:bg-slate-200 dark:bg-white/10 dark:text-violet-100"
             >
               <X className="h-4 w-4" />
             </motion.button>
@@ -129,7 +132,7 @@ export default function LeaderboardModal({
                 <h2 className="font-display text-lg font-bold text-ink dark:text-white">
                   {t.leaderboardTitle}
                 </h2>
-                <div className="flex items-center gap-1.5 text-[11px] font-bold text-ink/60 dark:text-violet-200/75">
+                <div className="flex items-center gap-1.5 text-[11px] font-bold text-ink/75 dark:text-violet-100/85">
                   <Radio className={`h-3 w-3 ${isLiveSupabase ? 'text-emerald-500 animate-pulse' : 'text-violet-500'}`} />
                   <span>{isLiveSupabase ? t.lbLiveSupabase : t.lbLocalDynamic}</span>
                 </div>

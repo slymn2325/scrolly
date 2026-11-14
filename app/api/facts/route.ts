@@ -6,10 +6,18 @@ import {
   hasDatabaseUrl,
   mapDbRowToFactCard,
 } from '@/lib/db';
-import type { FactCard } from '@/types/fact';
-import { getAllFacts } from '@/utils/factsData';
+import type { CategoryId, FactCard } from '@/types/fact';
+import { interleaveFactsByCategory } from '@/utils/factsData';
+import { getAllFacts } from '@/utils/factsServerData';
 
-export const dynamic = 'force-dynamic';
+const VALID_CATEGORIES = new Set<CategoryId>([
+  'space',
+  'nature',
+  'human_body',
+  'history',
+  'science',
+  'records',
+]);
 
 function getLocalFallbackFacts(): FactCard[] {
   return getAllFacts().map((fact) => ({
@@ -19,38 +27,76 @@ function getLocalFallbackFacts(): FactCard[] {
   }));
 }
 
-export async function GET() {
-  const noStoreHeaders = {
-    'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0',
+function normalizeCategoryParam(raw: string | null): CategoryId | null {
+  if (!raw) return null;
+  const cleaned = raw.trim().toLowerCase();
+  if (cleaned === 'weird_records') return 'records';
+  if (cleaned === 'human-body') return 'human_body';
+  if (VALID_CATEGORIES.has(cleaned as CategoryId)) {
+    return cleaned as CategoryId;
+  }
+  return null;
+}
+
+export async function GET(request: Request) {
+  const { searchParams } = new URL(request.url);
+  const categoryParam = normalizeCategoryParam(searchParams.get('category'));
+  const rawOffset = Number(searchParams.get('offset') ?? '0');
+  const rawLimitParam = searchParams.get('limit');
+  const offset = Number.isFinite(rawOffset) && rawOffset >= 0 ? Math.floor(rawOffset) : 0;
+  const parsedLimit = rawLimitParam !== null ? Number(rawLimitParam) : NaN;
+  const limit =
+    Number.isFinite(parsedLimit) && parsedLimit > 0
+      ? Math.min(200, Math.floor(parsedLimit))
+      : 200;
+
+  const cacheHeaders = {
+    'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=600',
   };
 
+  let source: 'postgres' | 'local' = 'local';
+  let allFacts: FactCard[] = [];
+
   if (!hasDatabaseUrl()) {
-    return NextResponse.json(
-      { source: 'local', facts: getLocalFallbackFacts() },
-      { status: 200, headers: noStoreHeaders }
-    );
+    allFacts = getLocalFallbackFacts();
+  } else {
+    try {
+      await ensureSchema();
+      const pool = getPool();
+      const result = await pool.query<DbFactRow>(
+        'SELECT * FROM facts ORDER BY created_at DESC, id DESC'
+      );
+      const dbFacts = result.rows.map(mapDbRowToFactCard);
+      if (dbFacts.length > 0) {
+        source = 'postgres';
+        allFacts = dbFacts;
+      } else {
+        allFacts = getLocalFallbackFacts();
+      }
+    } catch (err) {
+      console.error('[GET /api/facts] Falling back to local facts due to error:', err);
+      allFacts = getLocalFallbackFacts();
+    }
   }
 
-  try {
-    await ensureSchema();
-    const pool = getPool();
-    const result = await pool.query<DbFactRow>(
-      'SELECT * FROM facts ORDER BY created_at DESC, id DESC'
-    );
-    const facts = result.rows.map(mapDbRowToFactCard);
+  const ordered =
+    categoryParam !== null
+      ? allFacts.filter((fact) => fact.category === categoryParam)
+      : interleaveFactsByCategory(allFacts);
 
-    return NextResponse.json(
-      {
-        source: 'postgres',
-        facts: facts.length > 0 ? facts : getLocalFallbackFacts(),
-      },
-      { status: 200, headers: noStoreHeaders }
-    );
-  } catch (err) {
-    console.error('[GET /api/facts] Falling back to local facts due to error:', err);
-    return NextResponse.json(
-      { source: 'local', facts: getLocalFallbackFacts() },
-      { status: 200, headers: noStoreHeaders }
-    );
-  }
+  const total = ordered.length;
+  const sliced = ordered.slice(offset, offset + limit);
+  const hasMore = offset + sliced.length < total;
+
+  return NextResponse.json(
+    {
+      source,
+      facts: sliced,
+      total,
+      offset,
+      limit,
+      hasMore,
+    },
+    { status: 200, headers: cacheHeaders }
+  );
 }
