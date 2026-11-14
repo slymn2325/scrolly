@@ -263,6 +263,60 @@ async function ensureSchemaAndSeed(pool) {
   }
 }
 
+export const BANNED_CLICHE_PATTERNS = [
+  // 1. Neutron star teaspoon weight
+  /(teaspoon|tea\s*spoon).{0,40}neutron\s*star/i,
+  /neutron\s*star.{0,40}(teaspoon|tea\s*spoon|billion\s*tons)/i,
+  /bir\s*çay\s*kaşığı.{0,30}nötron\s*yıldız/i,
+  /nötron\s*yıldız.{0,30}çay\s*kaşığı/i,
+  // 2. Diamond rain on Neptune / Uranus
+  /(rains?|raining)\s*diamonds?.{0,35}(neptune|uranus)/i,
+  /(neptune|uranus).{0,35}diamonds?\s*rain/i,
+  /(neptün|uranüs).{0,35}elmas\s*yağmur/i,
+  /elmas\s*yağmur.{0,35}(neptün|uranüs)/i,
+  // 3. Flamingos born grey
+  /flamingos?.{0,35}born\s*(grey|gray|white)/i,
+  /flamingolar?.{0,35}(gri|beyaz).{0,25}doğ/i,
+  // 4. Octopus 3 hearts
+  /octopus(?:es)?\s*(?:have|with)\s*(?:3|three)\s*hearts/i,
+  /ahtapot(?:ların|lar)?\s*(?:3|üç)\s*kal[bp]/i,
+  // 5. Honey never spoils / 3000-year-old Egyptian tomb honey
+  /honey.{0,35}(never\s*spoils|never\s*goes\s*bad|still\s*edible|egyptian\s*tombs?)/i,
+  /(bal.{0,30}(asla\s*bozulmaz|bozulmayan|hala\s*yenebilir)|antik\s*mısır.{0,30}bal)/i,
+  // 6. Eiffel Tower grows in summer
+  /eiffel\s*tower.{0,40}(grows?|taller|expand).{0,30}summer/i,
+  /eyfel\s*kulesi.{0,40}(yaz.{0,20}uzar|uzar.{0,20}yaz|santimetre\s*uzar)/i,
+  // 7. Bananas are berries / strawberries aren't berries / bananas are radioactive
+  /(strawberr(?:y|ies).{0,30}berr(?:y|ies).{0,35}banana|banana.{0,30}is\s*a\s*berry|banana.{0,35}radioactive)/i,
+  /(çilek.{0,30}meyve\s*değil.{0,35}muz|muz.{0,25}üzümsü|muz.{0,35}(radyoaktif|antimadde))/i,
+  // 8. Sharks older than trees
+  /sharks?.{0,35}older\s*than.{0,30}(trees|saturn)/i,
+  /köpekbalık(?:ları|lar)?.{0,35}ağaçlardan.{0,25}yaşlı/i,
+];
+
+export function isBannedCliche(item) {
+  if (!item || typeof item !== 'object') return false;
+  const fieldsToScan = [
+    item.slug,
+    item.title_tr,
+    item.title_en,
+    item.summary_tr,
+    item.summary_en,
+    item.detail_tr,
+    item.detail_en,
+    item.tr?.title,
+    item.tr?.factText,
+    item.tr?.deepDiveDetail,
+    item.en?.title,
+    item.en?.factText,
+    item.en?.deepDiveDetail,
+  ]
+    .filter(Boolean)
+    .join(' ');
+
+  return BANNED_CLICHE_PATTERNS.some((pattern) => pattern.test(fieldsToScan));
+}
+
 function normalizeSlug(rawSlug, titleEn) {
   const base = (rawSlug || titleEn || `fact-${Date.now()}`)
     .toLowerCase()
@@ -305,6 +359,11 @@ function validateGeneratedFact(item, existingSlugs, existingTitlesEn) {
   }
 
   if (existingTitlesEn.has(titleEn.toLowerCase())) {
+    return null;
+  }
+
+  if (isBannedCliche(item)) {
+    console.warn(`[generateFacts] Rejected overused trivia cliché candidate: "${titleEn}"`);
     return null;
   }
 
@@ -368,12 +427,24 @@ async function generateFactsWithGitHubModels(existingSlugs, existingTitlesEn, to
       : 'No prior telemetry events yet—aim for crisp, astonishing, verified scientific hooks.';
 
   const systemPrompt = `You are the chief scientific editor for Scrolly (scrolly.live), a bilingual (Turkish & English) micro-learning discovery feed.
-Generate strictly valid JSON matching the exact schema requested. Every fact MUST be scientifically true, verifiable, fascinating, and cite a REAL, permanent, authoritative institutional or academic URL starting with https:// (such as NASA, ESA, NOAA, NIH/NCBI, Nature, Science, Smithsonian, UNESCO, British Museum, Guinness World Records, Britannica, or peer-reviewed university pages). Never invent fake DOIs or broken placeholder URLs.`;
+Generate strictly valid JSON matching the exact schema requested. Every fact MUST be scientifically true, verifiable, fascinating, and cite a REAL, permanent, authoritative institutional or academic URL starting with https:// (such as NASA, ESA, NOAA, NIH/NCBI, Nature, Science, Smithsonian, UNESCO, British Museum, Guinness World Records, Britannica, or peer-reviewed university pages). Never invent fake DOIs or broken placeholder URLs.
+
+STRICT ANTI-CLICHÉ BAN LIST — NEVER generate or paraphrase these overused internet trivia tropes:
+1. A teaspoon of neutron star weighing billions of tons
+2. Diamond rain on Neptune or Uranus
+3. Flamingos being born grey/white
+4. Octopuses having 3 hearts
+5. Honey never spoiling / 3,000-year-old edible honey from Egyptian tombs
+6. The Eiffel Tower growing taller in summer due to thermal expansion
+7. Bananas being botanical berries / strawberries not being berries / bananas being radioactive
+8. Sharks being older than trees or Saturn's rings
+
+Instead, write fresh, counter-intuitive, peer-reviewed scientific mechanisms and little-known empirical discoveries.`;
 
   const userPrompt = `Create exactly 6 brand-new bilingual (TR & EN) micro-fact cards: ONE for each of these 6 categories in exact order:
 ${CATEGORIES.join(', ')}
 
-Top-performing cards based on real user engagement (use their pacing/wonder style as inspiration, but choose fresh topics):
+Top-performing cards based on real user engagement (use their pacing/wonder style as inspiration, but choose fresh topics — zero clichés from the ban list):
 ${engagementContext}
 
 Forbidden existing topics (DO NOT duplicate or paraphrase these titles):
@@ -591,7 +662,15 @@ async function main() {
   }
 }
 
-main().catch((err) => {
-  console.error('[generateFacts] Fatal error:', err);
-  process.exit(1);
-});
+const isDirectExecution =
+  typeof process !== 'undefined' &&
+  Array.isArray(process.argv) &&
+  process.argv[1] &&
+  path.resolve(process.argv[1]) === __filename;
+
+if (isDirectExecution) {
+  main().catch((err) => {
+    console.error('[generateFacts] Fatal error:', err);
+    process.exit(1);
+  });
+}

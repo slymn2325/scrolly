@@ -15,6 +15,7 @@ interface CategoryMotionArtProps {
   emoji?: string;
   lang?: 'tr' | 'en';
   variant?: 'hero' | 'compact';
+  isFirstCard?: boolean;
   onButtonPop?: () => void;
 }
 
@@ -25,6 +26,7 @@ export default function CategoryMotionArt({
   accentColor,
   lang = 'tr',
   variant = 'hero',
+  isFirstCard = false,
   onButtonPop,
 }: CategoryMotionArtProps) {
   const reduceMotion = useReducedMotion();
@@ -97,6 +99,7 @@ export default function CategoryMotionArt({
         category={category}
         accentColor={accentColor}
         lang={lang}
+        isFirstCard={isFirstCard}
         onButtonPop={onButtonPop}
       />
     </div>

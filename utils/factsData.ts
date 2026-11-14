@@ -61,14 +61,99 @@ const SHARDED_BY_CATEGORY: Record<CategoryId, FactCard[]> = {
   records: (recordsFacts as FactCard[]).map(enrichFactWithGuessChallenge),
 };
 
-const ALL_FACTS: FactCard[] = [
+export const ROUND_ROBIN_CATEGORY_ORDER: CategoryId[] = [
+  'space',
+  'nature',
+  'history',
+  'human_body',
+  'science',
+  'records',
+];
+
+/**
+ * Interleaves facts in strict Round-Robin order across categories
+ * (`space` -> `nature` -> `history` -> `human_body` -> `science` -> `records`)
+ * so consecutive cards never repeat the same category back-to-back while multiple
+ * categories have remaining items.
+ */
+export function interleaveFactsByCategory(facts: FactCard[]): FactCard[] {
+  const buckets = new Map<CategoryId, FactCard[]>();
+  for (const cat of ROUND_ROBIN_CATEGORY_ORDER) {
+    buckets.set(cat, []);
+  }
+  const extra: FactCard[] = [];
+
+  for (const fact of facts) {
+    const bucket = buckets.get(fact.category);
+    if (bucket) {
+      bucket.push(fact);
+    } else {
+      extra.push(fact);
+    }
+  }
+
+  const result: FactCard[] = [];
+  let maxLen = 0;
+  for (const list of buckets.values()) {
+    if (list.length > maxLen) maxLen = list.length;
+  }
+
+  for (let i = 0; i < maxLen; i += 1) {
+    for (const cat of ROUND_ROBIN_CATEGORY_ORDER) {
+      const list = buckets.get(cat);
+      if (list && i < list.length) {
+        result.push(list[i]);
+      }
+    }
+  }
+
+  if (extra.length > 0) {
+    result.push(...extra);
+  }
+  return result;
+}
+
+const LEGACY_SLUG_TO_FACT_ID: Record<string, string> = {
+  'bir-cay-kasigi-notron-yildizi-6-milyar-ton-agirligindadir': 'space-02',
+  'notron-yildizindan-bir-cay-kasigi-madde': 'space-02',
+  'a-teaspoon-of-neutron-star-weighs-6-billion-tons': 'space-02',
+  'teaspoon-of-neutron-star-weight': 'space-02',
+  'uranus-ve-neptunde-gercekten-elmas-yagmuru-yagar': 'space-03',
+  'neptun-ve-uranuste-elmas-yagmuru': 'space-03',
+  'it-literally-rains-diamonds-on-neptune-and-uranus': 'space-03',
+  'diamond-rain-on-neptune-and-uranus': 'space-03',
+  'ahtapotlarin-3-kalbi-ve-mavi-kani-vardir': 'nature-01',
+  'ahtapotlarin-uc-kalbi-ve-mavi-kani': 'nature-01',
+  'octopuses-have-3-hearts-and-blue-blood': 'nature-01',
+  'octopuses-have-three-hearts-and-blue-blood': 'nature-01',
+  'kopekbaliklari-agaclardan-ve-saturnun-halkalarindan-daha-yaslidir': 'nature-03',
+  'kopekbaliklari-agaclardan-ve-saturnun-halkalarindan-eskidir': 'nature-03',
+  'sharks-are-older-than-trees-and-saturns-rings': 'nature-03',
+  'flamingolar-pembe-degil-gri-beyaz-tuylerle-dogar': 'nature-05',
+  'flamingolar-pembe-dogmaz': 'nature-05',
+  'flamingos-are-born-grey-not-pink': 'nature-05',
+  'antik-misir-mezarlarindaki-3-000-yillik-bal-hala-yenebilir-durumdadir': 'science-02',
+  'dogal-bal-binlerce-yil-bozulmaz': 'science-02',
+  '3-000-year-old-honey-from-egyptian-tombs-is-still-edible': 'science-02',
+  'natural-honey-never-spoils': 'science-02',
+  'cilek-botanik-olarak-meyve-degildir-ama-muz-bir-uzumsu-meyvedir': 'science-04',
+  'muzlar-dogal-olarak-cok-az-radyoaktiftir': 'science-04',
+  'strawberries-arent-berries-but-bananas-are': 'science-04',
+  'bananas-are-naturally-slightly-radioactive': 'science-04',
+  'eyfel-kulesi-yaz-aylarinda-15-santimetre-uzar': 'weird-02',
+  'eyfel-kulesi-yazin-15-santimetre-uzar': 'weird-02',
+  'the-eiffel-tower-grows-15-centimeters-taller-in-summer': 'weird-02',
+  'eiffel-tower-grows-15-cm-taller-in-summer': 'weird-02',
+};
+
+const ALL_FACTS: FactCard[] = interleaveFactsByCategory([
   ...SHARDED_BY_CATEGORY.space,
   ...SHARDED_BY_CATEGORY.nature,
-  ...SHARDED_BY_CATEGORY.human_body,
   ...SHARDED_BY_CATEGORY.history,
+  ...SHARDED_BY_CATEGORY.human_body,
   ...SHARDED_BY_CATEGORY.science,
   ...SHARDED_BY_CATEGORY.records,
-];
+]);
 
 export const CATEGORY_ROUTE_SLUGS = [
   'space',
@@ -129,9 +214,12 @@ export function getFactById(id: string): FactCard | undefined {
 }
 
 export function getFactBySlug(slug: string): FactCard | undefined {
-  return ALL_FACTS.find(
+  const direct = ALL_FACTS.find(
     (f) => f.slug === slug || f.tr.slug === slug || f.en.slug === slug || f.id === slug
   );
+  if (direct) return direct;
+  const legacyId = LEGACY_SLUG_TO_FACT_ID[slug];
+  return legacyId ? ALL_FACTS.find((f) => f.id === legacyId) : undefined;
 }
 
 export function getFactUrl(fact: FactCard, lang?: Language): string {

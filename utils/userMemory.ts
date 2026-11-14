@@ -4,6 +4,29 @@ import { LEAGUE_SHIELD_MAP, type LeagueTierId } from '@/utils/icons8Assets';
 
 const LOCAL_STORAGE_KEY = 'merak_user_state_v1';
 const COOKIE_NAME = 'merak_user_summary';
+export const TOTAL_CARDS_VIEWED_STORAGE_KEY = 'scrolly_total_cards_viewed';
+
+export function getTotalCardsViewed(): number {
+  if (typeof window === 'undefined') return 0;
+  try {
+    const raw = window.localStorage.getItem(TOTAL_CARDS_VIEWED_STORAGE_KEY);
+    const parsed = raw ? Number(raw) : 0;
+    return Number.isFinite(parsed) && parsed > 0 ? Math.floor(parsed) : 0;
+  } catch {
+    return 0;
+  }
+}
+
+export function incrementTotalCardsViewed(): number {
+  if (typeof window === 'undefined') return 0;
+  const next = getTotalCardsViewed() + 1;
+  try {
+    window.localStorage.setItem(TOTAL_CARDS_VIEWED_STORAGE_KEY, String(next));
+  } catch {
+    // Ignore storage quota errors
+  }
+  return next;
+}
 
 export type { LeagueTierId };
 
@@ -481,6 +504,7 @@ export function recordCardRead(
   };
 
   saveUserMemory(nextState);
+  incrementTotalCardsViewed();
   return nextState;
 }
 
@@ -634,5 +658,12 @@ export function resetUserMemory(): UserMemoryState {
   const fresh = getDefaultUserState();
   fresh.cookieAccepted = true;
   saveUserMemory(fresh);
+  if (typeof window !== 'undefined') {
+    try {
+      window.localStorage.removeItem(TOTAL_CARDS_VIEWED_STORAGE_KEY);
+    } catch {
+      // Ignore storage removal errors in restricted environments
+    }
+  }
   return fresh;
 }

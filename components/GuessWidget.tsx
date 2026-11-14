@@ -4,6 +4,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
 import { CheckCircle2, HelpCircle, RotateCw, Sparkles, Target } from 'lucide-react';
 import { type Language, translations } from '@/i18n/translations';
+import { formatValueWithUnit } from '@/lib/formatUnit';
 import type { GuessChallenge } from '@/types/fact';
 
 export interface GuessAnswerDetails {
@@ -118,9 +119,11 @@ export default function GuessWidget({
     });
   };
 
-  const formattedUnit = challenge.unit ? ` ${challenge.unit}` : '';
+  const sliderValueText = formatValueWithUnit(sliderValue, challenge.unit, lang);
+  const minLabelText = formatValueWithUnit(minVal, challenge.unit, lang);
+  const maxLabelText = formatValueWithUnit(maxVal, challenge.unit, lang);
   const correctDisplay = isSlider
-    ? `${challenge.correctValue ?? initialSliderValue}${formattedUnit}`
+    ? formatValueWithUnit(challenge.correctValue ?? initialSliderValue, challenge.unit, lang)
     : challenge.options?.[challenge.correctOptionIndex ?? 0] ?? '';
 
   const tierMessage =
@@ -151,9 +154,11 @@ export default function GuessWidget({
           <span>{t.guessBadge}</span>
         </span>
         {isSlider && !submitted && (
-          <span className="rounded-full bg-ink/10 px-2 py-0.5 text-[11px] font-black tabular-nums text-ink dark:bg-white/15 dark:text-white">
-            {sliderValue.toLocaleString(lang === 'tr' ? 'tr-TR' : 'en-US')}
-            {formattedUnit}
+          <span
+            data-testid="guess-live-value"
+            className="rounded-full bg-ink/10 px-2 py-0.5 text-[11px] font-black tabular-nums text-ink dark:bg-white/15 dark:text-white"
+          >
+            {sliderValueText}
           </span>
         )}
       </div>
@@ -184,14 +189,8 @@ export default function GuessWidget({
                 className="h-2 w-full cursor-pointer accent-violet-600 dark:accent-violet-400"
               />
               <div className="mt-0.5 flex justify-between text-[9px] font-bold text-ink/55 dark:text-violet-200/60">
-                <span>
-                  {minVal.toLocaleString(lang === 'tr' ? 'tr-TR' : 'en-US')}
-                  {formattedUnit}
-                </span>
-                <span>
-                  {maxVal.toLocaleString(lang === 'tr' ? 'tr-TR' : 'en-US')}
-                  {formattedUnit}
-                </span>
+                <span>{minLabelText}</span>
+                <span>{maxLabelText}</span>
               </div>
             </div>
 

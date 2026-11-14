@@ -17,8 +17,9 @@ import {
 import CategoryMotionArt from '@/components/CategoryMotionArt';
 import GuessWidget from '@/components/GuessWidget';
 import { getCategoryMeta, type Language, translations } from '@/i18n/translations';
+import { ENABLE_COMPETITIVE_TABS } from '@/lib/featureFlags';
 import { trackEvent } from '@/lib/telemetry';
-import type { CategoryId, FactCard } from '@/types/fact';
+import type { CategoryId, FactCard, GuessChallenge } from '@/types/fact';
 import { cryptoRandomInt } from '@/utils/cryptoRandom';
 import { getFactUrl } from '@/utils/factsData';
 
@@ -26,6 +27,7 @@ interface TikTokFactSlideProps {
   fact: FactCard;
   lang: Language;
   isFavorite: boolean;
+  isFirstCard?: boolean;
   cookieBannerVisible?: boolean;
   onFlip: (fact: FactCard) => void;
   onDoubleTapLike: (fact: FactCard) => void;
@@ -95,10 +97,56 @@ const CATEGORY_MESH_STYLE: Record<
   },
 };
 
+function escapeRegExp(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+function buildSpoilerPattern(challenge: GuessChallenge): RegExp | null {
+  const tokens: string[] = [];
+
+  if (challenge.type === 'slider' && typeof challenge.correctValue === 'number') {
+    const raw = String(challenge.correctValue);
+    const us = challenge.correctValue.toLocaleString('en-US');
+    const tr = challenge.correctValue.toLocaleString('tr-TR');
+    for (const variant of [raw, us, tr]) {
+      if (variant && !tokens.includes(variant)) {
+        tokens.push(variant);
+      }
+    }
+  } else if (
+    challenge.type === 'binary' &&
+    Array.isArray(challenge.options) &&
+    typeof challenge.correctOptionIndex === 'number'
+  ) {
+    const correctOption = challenge.options[challenge.correctOptionIndex]?.trim();
+    if (correctOption) {
+      tokens.push(correctOption);
+      const firstWord = correctOption.split(/\s+/)[0];
+      if (firstWord && firstWord.length >= 3) {
+        tokens.push(firstWord);
+      }
+    }
+  }
+
+  if (tokens.length === 0) return null;
+  const sorted = tokens.sort((a, b) => b.length - a.length).map(escapeRegExp);
+  return new RegExp(`(${sorted.join('|')})`, 'gi');
+}
+
+function maskHeadlineText(title: string, challenge: GuessChallenge, teaserTitle?: string): string {
+  if (teaserTitle?.trim()) return teaserTitle.trim();
+  const pattern = buildSpoilerPattern(challenge);
+  if (pattern && pattern.test(title)) {
+    return title.replace(pattern, '[ ??? ]');
+  }
+  return title;
+}
+
 export default function TikTokFactSlide({
   fact,
   lang,
   isFavorite,
+  isFirstCard = false,
   cookieBannerVisible = false,
   onFlip,
   onDoubleTapLike,
@@ -111,6 +159,7 @@ export default function TikTokFactSlide({
   onButtonPop,
 }: TikTokFactSlideProps) {
   const [isFlipped, setIsFlipped] = useState(false);
+  const [isGuessLocked, setIsGuessLocked] = useState(false);
   const [heartBursts, setHeartBursts] = useState<HeartBurst[]>([]);
 
   const slideRef = useRef<HTMLDivElement>(null);
@@ -140,6 +189,8 @@ export default function TikTokFactSlide({
 
   useEffect(() => {
     setDbLikeDelta(0);
+    setIsFlipped(false);
+    setIsGuessLocked(false);
   }, [fact.id, fact.likesCount]);
 
   const hasDbLikes = typeof fact.likesCount === 'number';
@@ -256,13 +307,13 @@ export default function TikTokFactSlide({
     onFlip(fact);
   };
 
-  // 240 ms smart single-tap vs double-tap disambiguation
+  // 250 ms smart single-tap vs double-tap disambiguation
   const handleSceneClick = (e: React.MouseEvent<HTMLDivElement>) => {
     const now = Date.now();
     const delta = now - lastTapTimeRef.current;
     lastTapTimeRef.current = now;
 
-    if (delta > 0 && delta <= 240) {
+    if (delta > 0 && delta <= 250) {
       if (singleTapTimerRef.current) {
         clearTimeout(singleTapTimerRef.current);
         singleTapTimerRef.current = null;
@@ -279,7 +330,7 @@ export default function TikTokFactSlide({
     singleTapTimerRef.current = setTimeout(() => {
       singleTapTimerRef.current = null;
       executeFlip();
-    }, 240);
+    }, 250);
   };
 
   const handleNativeDoubleClick = (e: React.MouseEvent<HTMLDivElement>) => {
@@ -302,6 +353,66 @@ export default function TikTokFactSlide({
   const resolvedSourceName =
     localized.sourceName || fact.sourceName || localized.sourceHint;
   const resolvedSourceUrl = localized.sourceUrl || fact.sourceUrl;
+
+  const hasChallenge = Boolean(localized.guessChallenge);
+  const shouldMaskSpoiler = hasChallenge && !isGuessLocked && !isFlipped;
+
+  const displayHeadline = useMemo(() => {
+    if (!shouldMaskSpoiler || !localized.guessChallenge) {
+      return localized.title;
+    }
+    return maskHeadlineText(localized.title, localized.guessChallenge, localized.teaserTitle);
+  }, [shouldMaskSpoiler, localized.guessChallenge, localized.title, localized.teaserTitle]);
+
+  const renderedFactBody = useMemo(() => {
+    if (!shouldMaskSpoiler || !localized.guessChallenge) {
+      return localized.factText;
+    }
+    const text = localized.factText;
+    const pattern = buildSpoilerPattern(localized.guessChallenge);
+    if (pattern) {
+      const parts = text.split(pattern);
+      if (parts.length > 1) {
+        return parts.map((part, idx) => {
+          if (idx % 2 === 1) {
+            return (
+              <span key={`sp-${idx}`} className="inline-flex items-center gap-1 align-baseline">
+                <span
+                  data-testid="spoiler-mask"
+                  className="inline-flex items-center rounded bg-ink/10 px-1.5 py-0.2 font-mono text-[11px] font-black tracking-wider text-violet-700 dark:bg-white/15 dark:text-violet-200"
+                >
+                  [ ??? ]
+                </span>
+                <span className="blur-sm select-none opacity-60 transition-all duration-300">
+                  {part}
+                </span>
+              </span>
+            );
+          }
+          return <React.Fragment key={`tx-${idx}`}>{part}</React.Fragment>;
+        });
+      }
+    }
+
+    // Fallback: blur trailing clause while keeping curiosity lead-in visible
+    const splitAt = Math.max(24, Math.floor(text.length * 0.55));
+    const visibleLead = text.slice(0, splitAt);
+    const hiddenTail = text.slice(splitAt);
+    return (
+      <>
+        <span>{visibleLead} </span>
+        <span
+          data-testid="spoiler-mask"
+          className="mr-1 inline-flex items-center rounded bg-ink/10 px-1.5 py-0.2 font-mono text-[11px] font-black tracking-wider text-violet-700 dark:bg-white/15 dark:text-violet-200"
+        >
+          [ ??? ]
+        </span>
+        <span className="blur-sm select-none opacity-60 transition-all duration-300">
+          {hiddenTail}
+        </span>
+      </>
+    );
+  }, [shouldMaskSpoiler, localized.guessChallenge, localized.factText]);
 
   return (
     <div
@@ -368,6 +479,7 @@ export default function TikTokFactSlide({
                 iconName={fact.iconName}
                 emoji={fact.emoji ?? catMeta.emoji}
                 lang={lang}
+                isFirstCard={isFirstCard}
                 onButtonPop={onButtonPop}
               />
             </div>
@@ -388,18 +500,18 @@ export default function TikTokFactSlide({
 
               <h2
                 data-testid="fact-headline"
-                className="font-display text-lg font-bold leading-snug text-ink drop-shadow-sm dark:text-white sm:text-xl lg:text-2xl whitespace-normal break-words"
+                className="font-display text-lg font-bold leading-snug text-ink drop-shadow-sm transition-all duration-300 dark:text-white sm:text-xl lg:text-2xl whitespace-normal break-words"
               >
-                {localized.title}
+                {displayHeadline}
               </h2>
 
               <p
                 data-testid="fact-body"
                 className={`${
                   cookieBannerVisible ? 'line-clamp-2' : 'line-clamp-3'
-                } lg:line-clamp-none text-[12.5px] font-medium leading-snug text-ink/90 dark:text-violet-100/95 sm:text-[13.5px] lg:text-base lg:leading-relaxed whitespace-normal break-words`}
+                } lg:line-clamp-none text-[12.5px] font-medium leading-snug text-ink/90 transition-all duration-300 dark:text-violet-100/95 sm:text-[13.5px] lg:text-base lg:leading-relaxed whitespace-normal break-words`}
               >
-                {localized.factText}
+                {renderedFactBody}
               </p>
 
               {localized.guessChallenge && (
@@ -408,6 +520,7 @@ export default function TikTokFactSlide({
                   challenge={localized.guessChallenge}
                   lang={lang}
                   onGuessAnswered={(xpAwarded, accurate, details) => {
+                    setIsGuessLocked(true);
                     onGuessReward(xpAwarded, accurate, fact.category, details.accuracyPct);
                     void trackEvent(factSlug, fact.category, 'quick_guess', {
                       guess: details.userGuess,
@@ -421,9 +534,25 @@ export default function TikTokFactSlide({
                 />
               )}
 
-              <p className="text-[10.5px] font-bold text-ink/60 dark:text-violet-200/70">
-                {t.tiktokTapHint}
-              </p>
+              <div className="pointer-events-auto mt-1 flex flex-wrap items-center gap-2">
+                <button
+                  type="button"
+                  data-testid="front-see-details-btn"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onButtonPop();
+                    executeFlip();
+                  }}
+                  onDoubleClick={(e) => e.stopPropagation()}
+                  onPointerDown={(e) => e.stopPropagation()}
+                  className="inline-flex items-center gap-1.5 rounded-full border border-white/80 bg-white/85 px-3 py-1.5 text-[11px] font-extrabold text-violet-900 shadow-sm backdrop-blur-md transition hover:bg-white dark:border-white/20 dark:bg-white/15 dark:text-violet-100 dark:hover:bg-white/25"
+                >
+                  <span>{lang === 'tr' ? 'Detayı / Kaynağı Gör ↻' : 'See Details / Source ↻'}</span>
+                </button>
+                <span className="pointer-events-none text-[10px] font-bold text-ink/60 dark:text-violet-200/70">
+                  {t.tiktokTapHint}
+                </span>
+              </div>
             </div>
           </motion.div>
         ) : (
@@ -666,26 +795,28 @@ export default function TikTokFactSlide({
             </span>
           </motion.button>
 
-          {/* 3. 1v1 Duel */}
-          <motion.button
-            type="button"
-            whileTap={{ scale: 0.9 }}
-            onClick={(e) => {
-              e.stopPropagation();
-              void trackEvent(factSlug, fact.category, 'duel');
-              onOpenDuel(fact);
-            }}
-            aria-label={t.dockDuel}
-            data-testid="card-duel-btn"
-            className="flex flex-col items-center gap-0.5"
-          >
-            <span className="flex h-11 w-11 items-center justify-center rounded-full border border-white/70 bg-white/65 text-amber-700 shadow-md backdrop-blur-xl dark:border-white/20 dark:bg-black/40 dark:text-amber-300">
-              <Swords className="h-5 w-5" />
-            </span>
-            <span className="text-[10.5px] font-extrabold text-ink/85 dark:text-white/90">
-              {t.dockDuel}
-            </span>
-          </motion.button>
+          {/* 3. 1v1 Duel (hidden when competitive tabs are disabled) */}
+          {ENABLE_COMPETITIVE_TABS && (
+            <motion.button
+              type="button"
+              whileTap={{ scale: 0.9 }}
+              onClick={(e) => {
+                e.stopPropagation();
+                void trackEvent(factSlug, fact.category, 'duel');
+                onOpenDuel(fact);
+              }}
+              aria-label={t.dockDuel}
+              data-testid="card-duel-btn"
+              className="flex flex-col items-center gap-0.5"
+            >
+              <span className="flex h-11 w-11 items-center justify-center rounded-full border border-white/70 bg-white/65 text-amber-700 shadow-md backdrop-blur-xl dark:border-white/20 dark:bg-black/40 dark:text-amber-300">
+                <Swords className="h-5 w-5" />
+              </span>
+              <span className="text-[10.5px] font-extrabold text-ink/85 dark:text-white/90">
+                {t.dockDuel}
+              </span>
+            </motion.button>
+          )}
 
           {/* 4. Share */}
           <motion.button

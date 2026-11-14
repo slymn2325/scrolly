@@ -72,136 +72,136 @@
     "category": "space",
     "accentColor": "#7C3AED",
     "iconName": "Sparkles",
-    "emoji": "🌟",
-    "readingTimeSec": 15,
+    "emoji": "🧲",
+    "readingTimeSec": 16,
     "tr": {
-      "slug": "notron-yildizindan-bir-cay-kasigi-madde",
-      "title": "Bir Çay Kaşığı Nötron Yıldızı Milyarlarca Ton Ağırlığındadır",
-      "factText": "Bir nötron yıldızından alınan tek bir çay kaşığı madde, Dünya'da yaklaşık 4 milyar ton ağırlığa denk gelir.",
-      "deepDiveDetail": "Dev yıldızlar süpernova olarak patladığında çekirdekleri muazzam bir kütleçekimiyle çöker. Elektronlar ve protonlar birleşip nötronlara dönüşür; böylece Güneş'ten bile ağır bir kütle yaklaşık 20 km çapında bir küreye sıkışır.",
-      "sourceHint": "ESA & Chandra X-Ray Observatory",
+      "slug": "magnetar-manyetik-alani-atomlari-igne-seklinde-uzatir",
+      "title": "Bir Magnetarın Manyetik Alanı 1.000 Kilometre Ötedeki Atomları İğne Şekline Sokar",
+      "factText": "Bir magnetarın akıl almaz manyetik alanı o kadar şiddetlidir ki, 1.000 kilometre yakınına giren atomların küresel elektron bulutlarını iğne gibi ince çubuklara dönüştürür.",
+      "deepDiveDetail": "Dünya'nın manyetik alanı yaklaşık 0,5 Gauss iken bir magnetarın yüzeyi 10 katrilyon Gauss'a ulaşır. Bu dev kuantum mıknatısı sadece kimyasal bağları anında koparmakla kalmaz, çevresindeki vakumu bile çift kırılımlı bir optik merceğe dönüştürür.",
+      "sourceHint": "NASA Goddard Space Flight Center",
       "tag": "Astrofizik",
       "quiz": {
-        "question": "Nötron yıldızlarının aşırı yoğun olmasının temel nedeni nedir?",
+        "question": "Bir magnetarın aşırı güçlü manyetik alanı yakındaki atomların elektron bulutlarına ne yapar?",
         "options": [
-          "Çekirdeğin dev bir kütleçekimiyle ~20 km çapa sıkışması",
-          "Tamamen donmuş demirden oluşmaları",
-          "Işık hızından hızlı dönmeleri"
+          "Onları küresel halden ince iğne şekline uzatarak kimyasal bağları koparır",
+          "Hepsini katı altın çekirdeğine dönüştürür",
+          "Atomları tamamen mutlak sıfırda dondurur"
         ],
         "correctIndex": 0,
-        "explanation": "Süpernova sonrası çekirdek o kadar yoğun sıkışır ki bir şehir büyüklüğündeki alana yıldız kütlesi sığar."
+        "explanation": "Katrilyon Gauss düzeyindeki manyetik alan elektron yörüngelerini iğne şeklinde deforme eder."
       },
       "guessChallenge": {
         "type": "slider",
-        "prompt": "Sence tipik bir nötron yıldızının çapı yaklaşık kaç km'dir?",
-        "min": 5,
-        "max": 200,
-        "step": 5,
+        "prompt": "Bir magnetarın manyetik alanı yaklaşık kaç km ötedeki atomların şeklini bozacak kadar güçlüdür?",
+        "min": 100,
+        "max": 2000,
+        "step": 100,
         "unit": "km",
-        "correctValue": 20
+        "correctValue": 1000
       },
-      "sourceName": "Chandra X-Ray Observatory / ESA",
-      "sourceUrl": "https://chandra.harvard.edu/xray_sources/neutron_stars.html"
+      "sourceName": "NASA Goddard Space Flight Center",
+      "sourceUrl": "https://svs.gsfc.nasa.gov/10232"
     },
     "en": {
-      "slug": "teaspoon-of-neutron-star-weight",
-      "title": "A Teaspoon of Neutron Star Weighs Billions of Tons",
-      "factText": "Just a single teaspoon of neutron star material would weigh roughly 4 billion tons on Earth.",
-      "deepDiveDetail": "When massive stars explode as supernovae, their cores collapse under extreme gravity, crushing protons and electrons into neutrons and packing more mass than our Sun into a sphere only about 20 km wide.",
-      "sourceHint": "ESA & Chandra X-Ray Observatory",
+      "slug": "magnetar-magnetic-field-stretches-atoms-into-needles",
+      "title": "A Magnetar's Magnetic Field Stretches Atoms into Thin Needles from 1,000 Kilometers Away",
+      "factText": "A magnetar's magnetic field is so extreme that even 1,000 kilometers away, spherical electron clouds around atoms are deformed into needle-thin cylinders.",
+      "deepDiveDetail": "While Earth's magnetic field averages ~0.5 Gauss, a magnetar reaches a quadrillion Gauss—strong enough to tear apart all molecular chemistry instantaneously and polarize the quantum vacuum itself.",
+      "sourceHint": "NASA Goddard Space Flight Center",
       "tag": "Astrophysics",
       "quiz": {
-        "question": "Why are neutron stars extraordinarily dense?",
+        "question": "How does a magnetar's field affect nearby atoms from roughly 1,000 km away?",
         "options": [
-          "A star's mass is crushed into a sphere ~20 km wide",
-          "They are made entirely of solid frozen iron",
-          "They spin faster than the speed of light"
+          "It stretches spherical electron clouds into thin needles, breaking chemical bonds",
+          "It freezes every electron into solid ice",
+          "It converts hydrogen atoms directly into lead"
         ],
         "correctIndex": 0,
-        "explanation": "Gravitational collapse after a supernova packs solar-scale mass into a city-sized sphere."
+        "explanation": "Fields on the order of 10¹⁵ Gauss distort atomic electron orbitals into ultra-thin needles."
       },
       "guessChallenge": {
         "type": "slider",
-        "prompt": "How wide do you think a typical neutron star is in kilometers?",
-        "min": 5,
-        "max": 200,
-        "step": 5,
+        "prompt": "Roughly how many kilometers away can a magnetar's magnetic field warp atoms into thin needles?",
+        "min": 100,
+        "max": 2000,
+        "step": 100,
         "unit": "km",
-        "correctValue": 20
+        "correctValue": 1000
       },
-      "sourceName": "Chandra X-Ray Observatory / ESA",
-      "sourceUrl": "https://chandra.harvard.edu/xray_sources/neutron_stars.html"
+      "sourceName": "NASA Goddard Space Flight Center",
+      "sourceUrl": "https://svs.gsfc.nasa.gov/10232"
     },
-    "sourceName": "Chandra X-Ray Observatory / ESA",
-    "sourceUrl": "https://chandra.harvard.edu/xray_sources/neutron_stars.html"
+    "sourceName": "NASA Goddard Space Flight Center",
+    "sourceUrl": "https://svs.gsfc.nasa.gov/10232"
   },
   {
     "id": "space-03",
     "category": "space",
     "accentColor": "#7C3AED",
-    "iconName": "Gem",
-    "emoji": "💎",
+    "iconName": "CloudRain",
+    "emoji": "🌧️",
     "readingTimeSec": 16,
     "tr": {
-      "slug": "neptun-ve-uranuste-elmas-yagmuru",
-      "title": "Neptün ve Uranüs'te Elmas Yağmurları Yağar",
-      "factText": "Buz devleri Neptün ve Uranüs'ün derin atmosferlerinde yüksek basınç metan gazını kristalleştirerek gerçek elmas yağmurları oluşturur.",
-      "deepDiveDetail": "Atmosferin derinliklerinde basınç Dünya atmosferinin milyonlarca katına çıkar. Bu aşırı basınç ve sıcaklık metan moleküllerindeki karbonu serbest bırakır ve karbon atomları elmas kristallerine dönüşerek merkeze doğru yağar.",
-      "sourceHint": "SLAC National Accelerator Laboratory",
-      "tag": "Gezegen Kimyası",
+      "slug": "saturn-uydusu-titanda-yagmur-damlalari-6-kat-yavas-duser",
+      "title": "Satürn'ün Uydusu Titan'da Yağmur Damlaları Dünya'dakinden 6 Kat Yavaş, Kar Tanesi Gibi Süzülerek Düşer",
+      "factText": "Titan'ın yoğun azot atmosferi ve Dünya'nın yedide biri kadar olan kütleçekimi yüzünden sıvı metan yağmur damlaları neredeyse kar tanesi hızıyla süzülür.",
+      "deepDiveDetail": "Titan yüzeyindeki hava basıncı Dünya'nın 1,45 katıdır; ancak yerçekimi yalnızca %14 düzeyindedir. Bu iki etken birleşince 9,5 mm çapa ulaşabilen dev sıvı metan damlaları yaklaşık 1,6 m/sn terminal hızla (Dünya'daki yağmurdan ~6 kat yavaş) yere iner.",
+      "sourceHint": "NASA Solar System Exploration",
+      "tag": "Gezegen Bilimi",
       "quiz": {
-        "question": "Neptün ve Uranüs'teki elmas yağmurları hangi gazın yüksek basınç altında parçalanmasıyla oluşur?",
+        "question": "Titan'daki sıvı metan yağmur damlaları neden Dünya'dakinden yaklaşık 6 kat yavaş düşer?",
         "options": [
-          "Metan",
-          "Oksijen",
-          "Azot"
+          "Düşük kütleçekimi ile yoğun kalın atmosferin sürtünme etkisi birleştiği için",
+          "Yağmur damlaları buzdan değil gazdan oluştuğu için",
+          "Titan hiç kendi ekseninde dönmediği için"
         ],
         "correctIndex": 0,
-        "explanation": "Aşırı basınç metan (CH4) içindeki karbon atomlarını sıkıştırarak elmas kristalleri oluşturur."
+        "explanation": "Dünya'nın %14'ü kadar yerçekimi ve 1,45 atm yüzey basıncı yağmur damlalarının terminal hızını sert şekilde düşürür."
       },
       "guessChallenge": {
-        "type": "binary",
-        "prompt": "Sence Neptün'deki elmas yağmurları hangi gazdan oluşur?",
-        "options": [
-          "Metan Gazı",
-          "Oksijen Gazı"
-        ],
-        "correctOptionIndex": 0
+        "type": "slider",
+        "prompt": "Titan'daki metan yağmur damlaları Dünya'daki sağanağa göre yaklaşık kaç kat daha yavaş düşer?",
+        "min": 1,
+        "max": 12,
+        "step": 1,
+        "unit": "kat",
+        "correctValue": 6
       },
-      "sourceName": "SLAC National Accelerator Laboratory",
-      "sourceUrl": "https://www6.slac.stanford.edu/"
+      "sourceName": "NASA Solar System Exploration",
+      "sourceUrl": "https://science.nasa.gov/saturn/moons/titan/"
     },
     "en": {
-      "slug": "diamond-rain-on-neptune-and-uranus",
-      "title": "It Rains Diamonds Inside Neptune and Uranus",
-      "factText": "Deep inside the ice giants Neptune and Uranus, extreme pressure turns methane gas into literal diamond rain.",
-      "deepDiveDetail": "At thousands of kilometers below their cloud tops, immense pressure millions of times greater than Earth's splits carbon from methane molecules, compressing the carbon into solid diamond crystals that sink inward.",
-      "sourceHint": "SLAC National Accelerator Laboratory",
-      "tag": "Planetary Chemistry",
+      "slug": "raindrops-on-saturns-moon-titan-fall-6-times-slower",
+      "title": "Raindrops on Saturn's Moon Titan Fall 6 Times Slower Than on Earth, Drifting Like Snowflakes",
+      "factText": "Because Titan has thicker nitrogen air and just 14% of Earth's gravity, giant liquid methane raindrops drift gently downward about 6 times slower than Earth rain.",
+      "deepDiveDetail": "With surface pressure 1.45 times Earth's but low gravity, raindrops on Titan can grow over 9 mm wide yet reach a terminal velocity of only ~1.6 m/s—nearly the gentle falling speed of Earth snowflakes.",
+      "sourceHint": "NASA Solar System Exploration",
+      "tag": "Planetary Science",
       "quiz": {
-        "question": "Which gas breaks apart under extreme pressure to form diamonds inside Neptune?",
+        "question": "Why does liquid methane rain drift downward ~6 times slower on Titan than rain on Earth?",
         "options": [
-          "Methane",
-          "Oxygen",
-          "Nitrogen"
+          "Titan combines thick surface air drag with only ~14% of Earth's gravity",
+          "Methane droplets float magnetically above the clouds",
+          "Titan orbits inside Saturn's icy rings"
         ],
         "correctIndex": 0,
-        "explanation": "Carbon atoms freed from methane (CH4) compress into solid diamonds under extreme pressure."
+        "explanation": "Weak gravitational pull paired with dense nitrogen atmosphere slashes droplet terminal velocity."
       },
       "guessChallenge": {
-        "type": "binary",
-        "prompt": "Which gas compresses into falling diamonds inside Neptune?",
-        "options": [
-          "Methane Gas",
-          "Oxygen Gas"
-        ],
-        "correctOptionIndex": 0
+        "type": "slider",
+        "prompt": "Roughly how many times slower do methane raindrops fall on Titan compared to Earth?",
+        "min": 1,
+        "max": 12,
+        "step": 1,
+        "unit": "times",
+        "correctValue": 6
       },
-      "sourceName": "SLAC National Accelerator Laboratory",
-      "sourceUrl": "https://www6.slac.stanford.edu/"
+      "sourceName": "NASA Solar System Exploration",
+      "sourceUrl": "https://science.nasa.gov/saturn/moons/titan/"
     },
-    "sourceName": "SLAC National Accelerator Laboratory",
-    "sourceUrl": "https://www6.slac.stanford.edu/"
+    "sourceName": "NASA Solar System Exploration",
+    "sourceUrl": "https://science.nasa.gov/saturn/moons/titan/"
   },
   {
     "id": "space-04",

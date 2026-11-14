@@ -10,7 +10,7 @@ import type { FactCard } from '@/types/fact';
 import { UI_ICON_PATHS } from '@/utils/icons8Assets';
 
 export type FeedSlideItem =
-  | { type: 'fact'; key: string; fact: FactCard }
+  | { type: 'fact'; key: string; fact: FactCard; factIndex: number }
   | { type: 'quizCta'; key: string; ctaIndex: number }
   | { type: 'ad'; key: string; adIndex: number };
 
@@ -29,6 +29,7 @@ interface TikTokFeedProps {
   streakDays: number;
   xp: number;
   cardsSinceLastQuiz: number;
+  totalCardsViewed?: number;
   cookieBannerVisible?: boolean;
   onSelectCategory: (cat: CategoryFilter) => void;
   onChangeLang: (lang: Language) => void;
@@ -57,6 +58,7 @@ const TikTokFeed = forwardRef<TikTokFeedHandle, TikTokFeedProps>(function TikTok
     streakDays,
     xp,
     cardsSinceLastQuiz,
+    totalCardsViewed = 0,
     cookieBannerVisible = false,
     onSelectCategory,
     onChangeLang,
@@ -78,22 +80,22 @@ const TikTokFeed = forwardRef<TikTokFeedHandle, TikTokFeedProps>(function TikTok
   const scrollRef = useRef<HTMLDivElement>(null);
   const t = translations[lang];
 
-  // Build slide stream: insert QuizCtaSlide every 6 fact cards, and NativeAdSlide offset by 3 cards so they are never adjacent
+  // Build slide stream: insert QuizCtaSlide every 13 fact cards, and NativeAdSlide offset at 7 + 13k so they are never adjacent
   const slides: FeedSlideItem[] = useMemo(() => {
     const items: FeedSlideItem[] = [];
     let adCount = 0;
     let ctaCount = 0;
 
     deckFacts.forEach((fact, idx) => {
-      items.push({ type: 'fact', key: `fact-${fact.id}-${idx}`, fact });
+      items.push({ type: 'fact', key: `fact-${fact.id}-${idx}`, fact, factIndex: idx });
       const position = idx + 1;
       const hasMoreFacts = idx < deckFacts.length - 1;
       if (!hasMoreFacts) return;
 
-      if (position % 6 === 0) {
+      if (position % 13 === 0) {
         items.push({ type: 'quizCta', key: `quiz-cta-${ctaCount}-${idx}`, ctaIndex: ctaCount });
         ctaCount += 1;
-      } else if (position >= 9 && (position - 9) % 12 === 0) {
+      } else if (position >= 7 && (position - 7) % 13 === 0) {
         items.push({ type: 'ad', key: `ad-${adCount}-${idx}`, adIndex: adCount });
         adCount += 1;
       }
@@ -324,6 +326,7 @@ const TikTokFeed = forwardRef<TikTokFeedHandle, TikTokFeedProps>(function TikTok
               fact={slide.fact}
               lang={lang}
               isFavorite={favoriteIds.includes(slide.fact.id)}
+              isFirstCard={slide.factIndex === 0}
               cookieBannerVisible={cookieBannerVisible}
               onFlip={onFlipCard}
               onDoubleTapLike={onDoubleTapLike}
@@ -352,6 +355,7 @@ const TikTokFeed = forwardRef<TikTokFeedHandle, TikTokFeedProps>(function TikTok
               key={slide.key}
               lang={lang}
               adIndex={slide.adIndex}
+              totalCardsViewed={totalCardsViewed}
               cookieBannerVisible={cookieBannerVisible}
               onSkip={() => {
                 onButtonPop();

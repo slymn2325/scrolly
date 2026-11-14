@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useId, useRef, useState } from 'react';
+import React, { useEffect, useId, useRef, useState } from 'react';
 import { motion, useInView, useReducedMotion } from 'framer-motion';
 import { Hand, Sparkles } from 'lucide-react';
 import type { CategoryId } from '@/types/fact';
@@ -8,12 +8,15 @@ import { SpaceNatureSketch } from './sketch/SpaceNatureSketches';
 import { BodyHistorySketch } from './sketch/BodyHistorySketches';
 import { ScienceWeirdSketch } from './sketch/ScienceWeirdSketches';
 
+export const DIAGRAM_INTERACTED_STORAGE_KEY = 'scrolly_diagram_interacted';
+
 interface InteractiveSketchArtProps {
   factId?: string;
   sketchType?: string;
   category: CategoryId;
   accentColor: string;
   lang: 'tr' | 'en';
+  isFirstCard?: boolean;
   onButtonPop?: () => void;
 }
 
@@ -165,15 +168,30 @@ export default function InteractiveSketchArt({
   category,
   accentColor,
   lang,
+  isFirstCard = false,
   onButtonPop,
 }: InteractiveSketchArtProps) {
   const [active, setActive] = useState(false);
+  const [hasInteractedEver, setHasInteractedEver] = useState(true);
   const reduceMotion = useReducedMotion();
   const containerRef = useRef<HTMLDivElement>(null);
   const isInView = useInView(containerRef, { amount: 0.25 });
   const shouldAnimate = !reduceMotion && isInView;
   const uid = useId().replace(/:/g, '');
   const gridPatternId = `sketch-grid-${uid}`;
+
+  useEffect(() => {
+    try {
+      const interacted = window.localStorage.getItem(DIAGRAM_INTERACTED_STORAGE_KEY) === 'true';
+      setHasInteractedEver(interacted);
+    } catch {
+      setHasInteractedEver(false);
+    }
+
+    const onSync = () => setHasInteractedEver(true);
+    window.addEventListener('scrolly-diagram-interacted', onSync);
+    return () => window.removeEventListener('scrolly-diagram-interacted', onSync);
+  }, []);
 
   const resolvedId = resolveSketchId(factId, sketchType, category);
   const isSpaceOrNature =
@@ -184,8 +202,19 @@ export default function InteractiveSketchArt({
   const handleInteract = (e: React.SyntheticEvent) => {
     e.stopPropagation();
     onButtonPop?.();
+    if (!hasInteractedEver) {
+      setHasInteractedEver(true);
+      try {
+        window.localStorage.setItem(DIAGRAM_INTERACTED_STORAGE_KEY, 'true');
+        window.dispatchEvent(new Event('scrolly-diagram-interacted'));
+      } catch {
+        // Ignore storage restrictions in private mode
+      }
+    }
     setActive((prev) => !prev);
   };
+
+  const showOnboardingHint = isFirstCard && !hasInteractedEver && !active;
 
   const hintLabel =
     lang === 'tr'
@@ -208,6 +237,8 @@ export default function InteractiveSketchArt({
       data-sketch-active={active ? 'true' : 'false'}
       onClick={handleInteract}
       onDoubleClick={(e) => e.stopPropagation()}
+      onPointerDown={(e) => e.stopPropagation()}
+      onTouchStart={(e) => e.stopPropagation()}
       className="pointer-events-auto relative mx-auto flex h-full w-full max-w-[348px] lg:max-w-[460px] cursor-pointer items-center justify-center overflow-hidden rounded-2xl border border-ink/15 bg-white/55 shadow-[0_8px_24px_rgba(15,23,42,0.08)] backdrop-blur-md transition-colors hover:bg-white/70 dark:border-violet-300/20 dark:bg-[#120F24]/65 dark:hover:bg-[#181430]/75 select-none"
     >
       {/* Top-Left Notebook Sketch Index Badge */}
@@ -219,6 +250,7 @@ export default function InteractiveSketchArt({
       <button
         type="button"
         onClick={handleInteract}
+        onDoubleClick={(e) => e.stopPropagation()}
         data-testid="sketch-interact-btn"
         aria-pressed={active}
         className={`absolute right-2 top-2 z-10 inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[9.5px] font-extrabold transition-all ${
@@ -230,6 +262,22 @@ export default function InteractiveSketchArt({
         {active ? <Sparkles className="h-2.5 w-2.5" /> : <Hand className="h-2.5 w-2.5" />}
         <span>{hintLabel}</span>
       </button>
+
+      {/* First-Time Onboarding Pulsing Ring + Compact Badge */}
+      {showOnboardingHint && (
+        <div
+          data-testid="diagram-onboarding-hint"
+          className="pointer-events-none absolute bottom-2.5 left-1/2 z-20 flex -translate-x-1/2 items-center gap-2 rounded-full border border-violet-300 bg-violet-950/90 px-3 py-1 text-[10.5px] font-black text-white shadow-lg backdrop-blur-md dark:border-amber-300/50 dark:bg-violet-600/95"
+        >
+          <span className="relative flex h-2.5 w-2.5">
+            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-amber-400 opacity-90" />
+            <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-amber-300" />
+          </span>
+          <span className="whitespace-nowrap">
+            {lang === 'tr' ? 'Dokun & Keşfet' : 'Tap Diagram'}
+          </span>
+        </div>
+      )}
 
       {/* Hand-Drawn Sketch & Blueprint SVG Canvas */}
       <svg

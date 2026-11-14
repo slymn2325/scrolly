@@ -33,6 +33,7 @@ import {
   getAllFacts,
   getFactById,
   getFactPrimarySlug,
+  interleaveFactsByCategory,
 } from '@/utils/factsData';
 import { decodeDuelPayload } from '@/utils/duelCodec';
 import { cryptoRandomFloat } from '@/utils/cryptoRandom';
@@ -71,6 +72,7 @@ import {
   getLeagueInfo,
   getTodayDateString,
   getTopCategory,
+  getTotalCardsViewed,
   loadUserMemory,
   recordCardRead,
   recordCategoryGuessAccuracy,
@@ -125,7 +127,16 @@ function buildPersonalizedDeck(
     : seen;
 
   const combined = [...orderedUnseen, ...orderedSeen];
-  return combined.length > 0 ? combined : allFacts;
+  if (combined.length === 0) return allFacts;
+
+  if (category === 'all') {
+    // Guarantee first 12 cards are strictly interleaved in Round-Robin order across all categories
+    const openingInterleaved = interleaveFactsByCategory(combined).slice(0, 12);
+    const openingIds = new Set(openingInterleaved.map((f) => f.id));
+    return [...openingInterleaved, ...combined.filter((f) => !openingIds.has(f.id))];
+  }
+
+  return combined;
 }
 
 function promoteFactToFront(
@@ -663,6 +674,7 @@ export default function HomePage() {
           streakDays={memory.streakDays}
           xp={memory.xp}
           cardsSinceLastQuiz={memory.cardsSinceLastQuiz}
+          totalCardsViewed={Math.max(memory.totalSwipes, getTotalCardsViewed())}
           cookieBannerVisible={cookieBannerVisible}
           onSelectCategory={handleSelectCategory}
           onChangeLang={handleChangeLang}

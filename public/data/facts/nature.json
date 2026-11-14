@@ -4,68 +4,68 @@
     "category": "nature",
     "accentColor": "#0D9488",
     "iconName": "Waves",
-    "emoji": "🐙",
+    "emoji": "🧊",
     "readingTimeSec": 15,
     "tr": {
-      "slug": "ahtapotlarin-uc-kalbi-ve-mavi-kani",
-      "title": "Ahtapotların Üç Kalbi ve Mavi Kanı Vardır",
-      "factText": "Bir ahtapotun vücudunda üç kalp, dokuz beyin benzeri sinir düğümü ve bakır bazlı mavi bir kan dolaşır.",
-      "deepDiveDetail": "İki kalp solungaçlara kan pompalar, üçüncü kalp ise organlara gönderir. Ahtapot yüzerken organlara kan pompalayan kalbi durur; bu yüzden yüzmek yerine deniz tabanında yürümeyi tercih ederler. Mavi renk ise demir yerine bakır içeren hemosiyaninden gelir.",
-      "sourceHint": "Smithsonian Ocean Portal",
+      "slug": "antarktika-buzbaligi-hemoglobinsiz-seffaf-kan-pompalar",
+      "title": "Antarktika Buzbalığı, Kanında Hemoglobin Olmayan ve Şeffaf Kan Pompalayan Tek Omurgalıdır",
+      "factText": "Sıfırın altındaki Antarktika sularında yaşayan buzbalığının dev tek kalbi, kırmızı kan hücresi ve hemoglobin olmadan oksijeni doğrudan şeffaf plazmada çözer.",
+      "deepDiveDetail": "Soğuk su sıcak suya göre çok daha fazla oksijen tuttuğundan buzbalığı hemoglobin genlerini kaybetti. Kanın akışkan kalması için gelişen dev tek kalp dakikada akranlarına kıyasla dört kat daha fazla plazma pompalar.",
+      "sourceHint": "Nature Ecology & Evolution",
       "tag": "Deniz Biyolojisi",
       "quiz": {
-        "question": "Ahtapotların kanının mavi renkte olmasını sağlayan element hangisidir?",
+        "question": "Antarktika buzbalığı alyuvar ve hemoglobin olmadan dokularına nasıl oksijen taşır?",
         "options": [
-          "Bakır",
-          "Demir",
-          "Magnezyum"
+          "Buzlu suda bol bulunan oksijeni doğrudan şeffaf kan plazmasında çözerek",
+          "Dış derisinden azot soluyarak",
+          "Yüzgeçlerinde klorofil üreterek"
         ],
         "correctIndex": 0,
-        "explanation": "İnsan kanında oksijeni demir (hemoglobin), ahtapotlarda ise bakır (hemosiyanin) taşır."
+        "explanation": "Sıfırın altındaki deniz suyu yüksek çözünmüş oksijen taşır; dev tek kalp bu plazmayı hızlıca dolaştırır."
       },
       "guessChallenge": {
         "type": "slider",
-        "prompt": "Sence bir ahtapotun vücudunda kaç kalp bulunur?",
+        "prompt": "Antarktika buzbalığının şeffaf beyaz kanını pompalayan dev kalbi kaç adettir?",
         "min": 1,
-        "max": 8,
+        "max": 6,
         "step": 1,
         "unit": "kalp",
-        "correctValue": 3
+        "correctValue": 1
       },
-      "sourceName": "Smithsonian Ocean Portal",
-      "sourceUrl": "https://ocean.si.edu/ocean-life/invertebrates/octopus"
+      "sourceName": "Nature Ecology & Evolution",
+      "sourceUrl": "https://www.nature.com/articles/s41559-019-0812-7"
     },
     "en": {
-      "slug": "octopuses-have-three-hearts-and-blue-blood",
-      "title": "Octopuses Have Three Hearts and Blue Blood",
-      "factText": "An octopus has three hearts, nine brain-like nerve clusters, and copper-based blue blood.",
-      "deepDiveDetail": "Two hearts pump blood to the gills while the third circulates it to the body—and actually pauses while the octopus swims, which is why they prefer crawling. Their blood is blue because it uses copper-rich hemocyanin instead of iron.",
-      "sourceHint": "Smithsonian Ocean Portal",
+      "slug": "antarctic-icefish-has-transparent-blood-zero-hemoglobin",
+      "title": "The Antarctic Icefish Is the Only Known Vertebrate with Transparent White Blood and Zero Hemoglobin",
+      "factText": "Living in sub-zero Antarctic seas, the icefish uses 1 oversized heart to circulate completely clear blood with no hemoglobin or red blood cells.",
+      "deepDiveDetail": "Frigid polar seawater dissolves far more oxygen than warm water, allowing the blackfin icefish to discard hemoglobin genes. To compensate, its single heart is ~4 times larger than normal and pumps clear plasma through wide vessels.",
+      "sourceHint": "Nature Ecology & Evolution",
       "tag": "Marine Biology",
       "quiz": {
-        "question": "Which metal gives octopus blood its distinctive blue color?",
+        "question": "How does the Antarctic icefish survive without red blood cells or hemoglobin?",
         "options": [
-          "Copper",
-          "Iron",
-          "Magnesium"
+          "Cold water holds ample dissolved oxygen carried directly in clear blood plasma",
+          "It stores gaseous oxygen inside hollow bones",
+          "It performs photosynthesis through transparent scales"
         ],
         "correctIndex": 0,
-        "explanation": "Octopuses use copper-based hemocyanin rather than iron-based hemoglobin to carry oxygen."
+        "explanation": "High dissolved oxygen in freezing Antarctic seas plus an enlarged single heart keeps tissues oxygenated."
       },
       "guessChallenge": {
         "type": "slider",
-        "prompt": "How many hearts do you think an octopus has inside its body?",
+        "prompt": "How many oversized hearts pump transparent, hemoglobin-free blood inside an Antarctic icefish?",
         "min": 1,
-        "max": 8,
+        "max": 6,
         "step": 1,
-        "unit": "hearts",
-        "correctValue": 3
+        "unit": "heart",
+        "correctValue": 1
       },
-      "sourceName": "Smithsonian Ocean Portal",
-      "sourceUrl": "https://ocean.si.edu/ocean-life/invertebrates/octopus"
+      "sourceName": "Nature Ecology & Evolution",
+      "sourceUrl": "https://www.nature.com/articles/s41559-019-0812-7"
     },
-    "sourceName": "Smithsonian Ocean Portal",
-    "sourceUrl": "https://ocean.si.edu/ocean-life/invertebrates/octopus"
+    "sourceName": "Nature Ecology & Evolution",
+    "sourceUrl": "https://www.nature.com/articles/s41559-019-0812-7"
   },
   {
     "id": "nature-02",
@@ -140,50 +140,68 @@
     "category": "nature",
     "accentColor": "#0D9488",
     "iconName": "Fish",
-    "emoji": "🦈",
+    "emoji": "🧊",
     "readingTimeSec": 15,
     "tr": {
-      "slug": "kopekbaliklari-agaclardan-ve-saturnun-halkalarindan-eskidir",
-      "title": "Köpekbalıkları Ağaçlardan ve Satürn'ün Halkalarından Eskidir",
-      "factText": "Köpekbalıkları Dünya okyanuslarında yaklaşık 400 milyon yıldır yüzüyor; bu da onları karadaki ilk ağaçlardan bile yaşlı kılıyor.",
-      "deepDiveDetail": "Ağaçlar yaklaşık 350 milyon yıl önce ortaya çıkarken, köpekbalıklarının ataları 400-450 milyon yıl öncesine dayanır. Güncel araştırmalar Satürn'ün buzlu halkalarının da 100-400 milyon yaş arasında olabileceğini gösteriyor.",
-      "sourceHint": "Natural History Museum London",
-      "tag": "Evrim Tarihi",
+      "slug": "gronland-kopekbaligi-goz-mercegi-400-yil-radyokarbon",
+      "title": "Grönland Köpekbalığının Göz Merceği Doğduğundan Beri Yenilenmez; Yaşı Radyokarbonla 400 Yıl Ölçülür",
+      "factText": "Arktik derinliklerde yaşayan bu köpekbalığının göz merceğindeki kristalin proteinleri doğumda mühürlenir ve soğuk savaş nükleer testlerinin karbon izini taşır.",
+      "deepDiveDetail": "Bilim insanları köpekbalıklarının kemik halkaları olmadığı için yaşlarını ölçemiyordu. Göz merceğinin merkezindeki proteinleri radyokarbonla tarihlendirerek 392 ± 120 yıllık ömürle Dünya'nın en uzun ömürlü omurgalısı olduğunu kanıtladılar.",
+      "sourceHint": "Science (AAAS)",
+      "tag": "Deniz Biyolojisi",
       "quiz": {
-        "question": "Köpekbalıkları Dünya okyanuslarında yaklaşık kaç milyon yıldır var?",
+        "question": "Bilim insanları Grönland köpekbalığının ~400 yıllık yaşını hangi dokusunu analiz ederek ölçebildi?",
         "options": [
-          "~400 milyon yıl",
-          "~50 milyon yıl",
-          "~120 milyon yıl"
+          "Doğumdan beri hiç yenilenmeyen göz merceği çekirdeğindeki proteinleri",
+          "Sırt yüzgecindeki ağaç halkalarına benzer yıllık çizgileri",
+          "Diş minelerindeki tuz kristal katmanlarını"
         ],
         "correctIndex": 0,
-        "explanation": "Fosil pulları köpekbalıklarının yaklaşık 400 milyon yıldır var olduğunu, yani ağaçlardan daha eski olduğunu gösterir."
+        "explanation": "Göz merceği merkezindeki kristalin dokusu metabolik olarak ölü olduğu için doğum yılının karbon-14 oranını korur."
       },
-      "sourceName": "Natural History Museum London",
-      "sourceUrl": "https://www.nhm.ac.uk/discover/shark-evolution-a-450-million-year-timeline.html"
+      "guessChallenge": {
+        "type": "slider",
+        "prompt": "Radyokarbon göz merceği analizi Grönland köpekbalıklarının yaklaşık kaç yıl yaşayabildiğini gösterdi?",
+        "min": 50,
+        "max": 500,
+        "step": 10,
+        "unit": "yıl",
+        "correctValue": 400
+      },
+      "sourceName": "Science (AAAS)",
+      "sourceUrl": "https://www.science.org/doi/10.1126/science.aaf1703"
     },
     "en": {
-      "slug": "sharks-are-older-than-trees-and-saturns-rings",
-      "title": "Sharks Are Older Than Trees and Saturn's Rings",
-      "factText": "Sharks have been swimming in Earth's oceans for roughly 400 million years—predating both trees and possibly Saturn's rings.",
-      "deepDiveDetail": "The earliest trees appeared around 350 million years ago, while shark fossil scales date back over 400 million years. Recent planetary studies estimate Saturn's icy rings formed 100 to 400 million years ago.",
-      "sourceHint": "Natural History Museum London",
-      "tag": "Evolutionary History",
+      "slug": "greenland-shark-eye-lens-radiocarbon-400-years",
+      "title": "A Greenland Shark's Eye Lens Never Renews After Birth, Allowing Scientists to Carbon-Date It to 400 Years",
+      "factText": "Living in frigid Arctic waters, this shark's central eye lens locks in embryonic proteins at birth—preserving Cold War nuclear bomb carbon signatures.",
+      "deepDiveDetail": "Because sharks lack calcified bones, researchers long struggled to age them. Radiocarbon dating inert proteins at the eye lens core revealed a lifespan near 400 years—making it the longest-lived vertebrate on Earth.",
+      "sourceHint": "Science (AAAS)",
+      "tag": "Marine Biology",
       "quiz": {
-        "question": "Roughly how long have sharks existed in Earth's oceans?",
+        "question": "Which part of a Greenland shark preserves its birth-year radiocarbon signature for ~400 years?",
         "options": [
-          "~400 million years",
-          "~50 million years",
-          "~120 million years"
+          "The metabolically inert core of its eye lens",
+          "Mineral rings along its cartilage jaws",
+          "Enamel bands inside replacement teeth"
         ],
         "correctIndex": 0,
-        "explanation": "Fossil evidence places early sharks over 400 million years ago, before the first trees."
+        "explanation": "Eye lens nucleus proteins never regenerate, acting as an unaltered carbon-14 timestamp from birth."
       },
-      "sourceName": "Natural History Museum London",
-      "sourceUrl": "https://www.nhm.ac.uk/discover/shark-evolution-a-450-million-year-timeline.html"
+      "guessChallenge": {
+        "type": "slider",
+        "prompt": "Roughly how many years can a Greenland shark live according to eye-lens radiocarbon dating?",
+        "min": 50,
+        "max": 500,
+        "step": 10,
+        "unit": "years",
+        "correctValue": 400
+      },
+      "sourceName": "Science (AAAS)",
+      "sourceUrl": "https://www.science.org/doi/10.1126/science.aaf1703"
     },
-    "sourceName": "Natural History Museum London",
-    "sourceUrl": "https://www.nhm.ac.uk/discover/shark-evolution-a-450-million-year-timeline.html"
+    "sourceName": "Science (AAAS)",
+    "sourceUrl": "https://www.science.org/doi/10.1126/science.aaf1703"
   },
   {
     "id": "nature-04",
@@ -240,50 +258,68 @@
     "category": "nature",
     "accentColor": "#0D9488",
     "iconName": "Bird",
-    "emoji": "🦩",
-    "readingTimeSec": 14,
+    "emoji": "🐦",
+    "readingTimeSec": 15,
     "tr": {
-      "slug": "flamingolar-pembe-dogmaz",
-      "title": "Flamingolar Aslında Gri Doğar, Yedikleriyle Pembeleşir",
-      "factText": "Flamingo yavruları yumurtadan gri veya beyaz tüylerle çıkar; ikonik pembe renklerini tamamen yedikleri besinlerden alırlar.",
-      "deepDiveDetail": "Flamingoların tükettiği mavi-yeşil algler ve tuzlu su karidesleri 'beta-karoten' pigmenti açısından zengindir. Karaciğerdeki enzimler bu pigmenti parçalayarak zamanla tüylere parlak pembe ve mercan rengini verir.",
-      "sourceHint": "National Audubon Society",
+      "slug": "ak-karinli-ebabil-yere-hic-konmadan-200-gun-ucar",
+      "title": "Ak Karınlı Ebabil Kuşu Yere Hiç Konmadan 200 Gün Boyunca Havada Uyuyup Beslenerek Uçabilir",
+      "factText": "İsviçre Ornitoloji Enstitüsü vericileriyle takip edilen ak karınlı ebabil kuşlarının göç sırasında tek bir kez bile yere konmadan 200 gün aralıksız uçtuğu kanıtlandı.",
+      "deepDiveDetail": "Kuşların sırtına takılan mikro ivmeölçerler, ebabillerin Sahra'yı aşarken böcekleri havada avladığını ve beyninin bir yarımküresiyle uyurken uçuşunu sürdürdüğünü ortaya koydu.",
+      "sourceHint": "Nature Communications",
       "tag": "Ornitoloji",
       "quiz": {
-        "question": "Flamingolara pembe rengini veren temel madde hangisidir?",
+        "question": "Ak karınlı ebabil kuşları yere hiç konmadan yaklaşık kaç gün aralıksız havada kalabilir?",
         "options": [
-          "Besinlerdeki beta-karoten pigmenti",
-          "Güneş ışığının tüyleri yakması",
-          "Kandaki demir oranı"
+          "200 gün",
+          "14 gün",
+          "45 gün"
         ],
         "correctIndex": 0,
-        "explanation": "Alg ve karideslerde bulunan karotenoid pigmentler zamanla tüyleri pembeye boyar."
+        "explanation": "Mikro veri kaydediciler ebabillerin 6 ayı aşan göç döneminde yere dokunmadan ~200 gün uçabildiğini ölçtü."
       },
-      "sourceName": "National Audubon Society",
-      "sourceUrl": "https://www.audubon.org/"
+      "guessChallenge": {
+        "type": "slider",
+        "prompt": "Ak karınlı ebabil kuşu yere hiç inmeden yaklaşık kaç gün aralıksız uçabilir?",
+        "min": 10,
+        "max": 250,
+        "step": 10,
+        "unit": "gün",
+        "correctValue": 200
+      },
+      "sourceName": "Nature Communications",
+      "sourceUrl": "https://www.nature.com/articles/ncomms3543"
     },
     "en": {
-      "slug": "flamingos-are-born-grey-not-pink",
-      "title": "Flamingos Are Born Grey—Their Diet Turns Them Pink",
-      "factText": "Baby flamingos hatch with soft grey or white feathers and owe their famous pink color entirely to their food.",
-      "deepDiveDetail": "The brine shrimp and blue-green algae flamingos eat are packed with carotenoid pigments like beta-carotene. Digestive enzymes break down these pigments and deposit them into growing feathers.",
-      "sourceHint": "National Audubon Society",
+      "slug": "alpine-swift-flies-nonstop-for-200-days-without-landing",
+      "title": "The Alpine Swift Can Fly Non-Stop for 200 Days Without Ever Touching the Ground",
+      "factText": "Tiny Swiss telemetry tags proved migrating Alpine swifts stay airborne continuously for 200 days—feeding, gliding, and sleeping mid-flight.",
+      "deepDiveDetail": "Micro-accelerometers logged wingbeat pauses only during gliding thermal ascents, showing these birds spend over six consecutive months completely airborne above the Sahara.",
+      "sourceHint": "Nature Communications",
       "tag": "Ornithology",
       "quiz": {
-        "question": "What gives flamingos their bright pink plumage?",
+        "question": "Roughly how long can an Alpine swift remain continuously airborne without landing once?",
         "options": [
-          "Carotenoid pigments in their diet",
-          "Sunburn on white feathers",
-          "High iron levels in blood"
+          "~200 days",
+          "~14 days",
+          "~45 days"
         ],
         "correctIndex": 0,
-        "explanation": "Carotenoids from algae and brine shrimp tint their feathers pink over time."
+        "explanation": "Backpack loggers recorded uninterrupted flight exceeding 200 days across their migration."
       },
-      "sourceName": "National Audubon Society",
-      "sourceUrl": "https://www.audubon.org/"
+      "guessChallenge": {
+        "type": "slider",
+        "prompt": "For roughly how many days can an Alpine swift stay airborne without landing?",
+        "min": 10,
+        "max": 250,
+        "step": 10,
+        "unit": "days",
+        "correctValue": 200
+      },
+      "sourceName": "Nature Communications",
+      "sourceUrl": "https://www.nature.com/articles/ncomms3543"
     },
-    "sourceName": "National Audubon Society",
-    "sourceUrl": "https://www.audubon.org/"
+    "sourceName": "Nature Communications",
+    "sourceUrl": "https://www.nature.com/articles/ncomms3543"
   },
   {
     "id": "nature-06",

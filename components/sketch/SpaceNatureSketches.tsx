@@ -84,55 +84,60 @@ export function SpaceNatureSketch({
       );
 
     case 'space-02':
-      // Neutron star teaspoon balance scale
+      // Magnetar magnetic field elongating atoms at 1,000 km
       return (
         <g>
-          {/* Fulcrum & Beam */}
-          <polygon points="160,126 146,154 174,154" fill="none" stroke="currentColor" strokeWidth="2" />
-          <motion.g
-            animate={{ rotate: active ? -16 : -6 }}
-            transition={{ type: 'spring', stiffness: 180, damping: 14 }}
-            style={{ originX: '160px', originY: '124px' }}
-          >
-            <line x1="64" y1="124" x2="256" y2="124" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" />
-            {/* Left Pan: Neutron Teaspoon */}
-            <line x1="68" y1="124" x2="68" y2="146" stroke="currentColor" strokeWidth="1.4" />
-            <path d="M 48 146 L 88 146 L 80 154 L 56 154 Z" fill={accentColor} fillOpacity="0.22" stroke={accentColor} strokeWidth="1.6" />
-            {/* Spoon sketch */}
-            <path d="M 54 114 Q 64 118 76 113 L 94 106" stroke={accentColor} strokeWidth="2.2" fill="none" strokeLinecap="round" />
-            <motion.circle
-              cx="63"
-              cy="111"
-              r={active ? 6.5 : 4.5}
-              fill={accentColor}
-              animate={shouldAnimate ? { scale: [1, 1.25, 1] } : undefined}
-              transition={{ duration: 1.5, repeat: Infinity }}
-              style={{ originX: '63px', originY: '111px' }}
-            />
-            {/* Right Pan: Everest mountain */}
-            <line x1="252" y1="124" x2="252" y2="142" stroke="currentColor" strokeWidth="1.4" />
-            <path d="M 226 142 L 246 106 L 258 122 L 266 112 L 280 142 Z" fill="none" stroke="currentColor" strokeWidth="1.8" />
-          </motion.g>
-          <text x="64" y="42" textAnchor="middle" fontSize="9.5" fontWeight="800" fill={accentColor}>
-            {isTr ? '1 ÇAY KAŞIĞI' : '1 TEASPOON'}
+          {/* Magnetar core & twisted dipole loops */}
+          <circle cx="96" cy="86" r="18" fill={accentColor} fillOpacity="0.28" stroke={accentColor} strokeWidth="2.2" />
+          <motion.ellipse
+            cx="96"
+            cy="86"
+            rx="44"
+            ry="22"
+            fill="none"
+            stroke={accentColor}
+            strokeDasharray="4 3"
+            strokeWidth="1.6"
+            animate={shouldAnimate ? { scale: active ? [1, 1.12, 1] : [1, 1.05, 1] } : undefined}
+            transition={{ duration: 1.6, repeat: Infinity }}
+          />
+          <text x="96" y="89" textAnchor="middle" fontSize="8" fontWeight="900" fill="currentColor">
+            10¹⁵ G
           </text>
-          <text x="64" y="54" textAnchor="middle" fontSize="8.5" fontWeight="700" fill="currentColor">
-            {active ? '≈ 4×10⁹ TON!' : '10¹⁵ g/cm³'}
-          </text>
+          {/* Distorted needle-shaped atom cloud at 1,000 km */}
+          <motion.ellipse
+            cx="236"
+            cy="86"
+            rx={active ? 32 : 16}
+            ry={active ? 4.5 : 14}
+            fill="#F43F5E"
+            fillOpacity="0.25"
+            stroke="#F43F5E"
+            strokeWidth="2"
+            transition={{ type: 'spring', stiffness: 180 }}
+          />
+          <DimLine
+            x1="96"
+            y1="146"
+            x2="236"
+            y2="146"
+            label={active ? (isTr ? 'ATOM → İĞNE FORMU' : 'ATOM → NEEDLE') : '1,000 KM'}
+            color={accentColor}
+          />
           <HotspotPin
-            cx="250"
-            cy="88"
-            accentColor="#F59E0B"
+            cx="236"
+            cy="64"
+            accentColor="#F43F5E"
             active={active}
             shouldAnimate={shouldAnimate}
-            label={isTr ? 'EVEREST ×1000' : 'MT EVEREST ×1000'}
+            label={active ? (isTr ? 'BAĞLAR KOPAR' : 'BONDS BREAK') : 'ATOM ORBITAL'}
             align="left"
           />
         </g>
       );
 
     case 'space-03':
-      // Neptune & Uranus diamond rain chamber
+      // Titan slow-motion methane raindrops (6x slower than Earth)
       return (
         <g>
           <InkPath
@@ -142,30 +147,36 @@ export function SpaceNatureSketch({
             shouldAnimate={shouldAnimate}
           />
           <text x="160" y="58" textAnchor="middle" fontSize="9" fontWeight="800" fill="currentColor">
-            CH₄ + H₂ ({active ? '200+ GPa' : isTr ? 'YÜKSEK BASINÇ' : 'EXTREME PRESSURE'})
+            TITAN CH₄ ({active ? '1.45 atm • 0.14 g' : isTr ? 'YOĞUN HAVA + AZ YERÇEKİMİ' : 'THICK AIR + LOW g'})
           </text>
           {[
             { x: 96, y: 102, d: 0 },
-            { x: 140, y: 118, d: 0.4 },
-            { x: 184, y: 100, d: 0.8 },
-            { x: 224, y: 120, d: 0.2 },
+            { x: 140, y: 112, d: 0.5 },
+            { x: 184, y: 100, d: 1.0 },
+            { x: 224, y: 114, d: 0.3 },
           ].map((dm, idx) => (
             <motion.g
               key={idx}
-              animate={shouldAnimate ? { y: active ? [0, 32, 0] : [0, 14, 0], opacity: [0.6, 1, 0.6] } : undefined}
-              transition={{ duration: active ? 1.5 : 2.6, repeat: Infinity, delay: dm.d }}
+              animate={shouldAnimate ? { y: active ? [0, 22, 0] : [0, 12, 0] } : undefined}
+              transition={{ duration: active ? 4.2 : 3.2, repeat: Infinity, delay: dm.d, ease: 'easeInOut' }}
             >
-              <polygon
-                points={`${dm.x},${dm.y - 11} ${dm.x + 9},${dm.y - 3} ${dm.x},${dm.y + 11} ${dm.x - 9},${dm.y - 3}`}
+              <path
+                d={`M ${dm.x} ${dm.y - 11} C ${dm.x + 8} ${dm.y - 1} ${dm.x + 8} ${dm.y + 9} ${dm.x} ${dm.y + 9} C ${dm.x - 8} ${dm.y + 9} ${dm.x - 8} ${dm.y - 1} ${dm.x} ${dm.y - 11} Z`}
                 fill="#38BDF8"
-                fillOpacity="0.28"
+                fillOpacity="0.32"
                 stroke={accentColor}
                 strokeWidth="1.7"
               />
-              <line x1={dm.x - 9} y1={dm.y - 3} x2={dm.x + 9} y2={dm.y - 3} stroke={accentColor} strokeWidth="1.1" />
             </motion.g>
           ))}
-          <DimLine x1="72" y1="156" x2="248" y2="156" label={active ? 'C → ELMAS / DIAMOND' : '~5000 K MANTLE'} color={accentColor} />
+          <DimLine
+            x1="68"
+            y1="156"
+            x2="252"
+            y2="156"
+            label={active ? (isTr ? '≈ 1.6 m/s (6× YAVAŞ SÜZÜLME)' : '≈ 1.6 m/s (6× SLOWER DRIFT)') : (isTr ? 'KAR TANESİ HIZI' : 'SNOWFLAKE SPEED')}
+            color={accentColor}
+          />
         </g>
       );
 
@@ -412,42 +423,49 @@ export function SpaceNatureSketch({
       );
 
     case 'nature-01':
-      // Octopus: 3 hearts + Cu blue blood
+      // Antarctic Icefish: 1 oversized heart pumping transparent, hemoglobin-free blood
       return (
         <g>
+          {/* Translucent icefish body silhouette */}
           <InkPath
-            d="M 118 76 C 114 42 152 34 152 64 C 152 78 134 84 128 84 M 118 82 Q 86 108 66 132 Q 74 142 94 120 M 126 86 Q 112 122 104 146 M 136 86 Q 154 122 162 146 M 144 82 Q 178 106 196 130"
+            d="M 66 88 Q 112 58 172 68 L 204 52 L 194 74 L 222 86 L 194 98 L 204 120 L 172 104 Q 112 114 66 88 Z"
             stroke="currentColor"
-            fill={accentColor}
+            fill="#E0F2FE"
+            fillOpacity={0.35}
             shouldAnimate={shouldAnimate}
           />
-          {/* 3 pulsating hearts */}
-          {[
-            { cx: 128, cy: 56, main: true },
-            { cx: 118, cy: 70, main: false },
-            { cx: 140, cy: 70, main: false },
-          ].map((h, i) => (
-            <motion.circle
-              key={i}
-              cx={h.cx}
-              cy={h.cy}
-              r={h.main ? 6 : 4.5}
-              fill="#0284C7"
-              stroke="#FFFFFF"
-              strokeWidth="1.2"
-              animate={shouldAnimate ? { scale: active ? [1, 1.4, 1] : [1, 1.2, 1] } : undefined}
-              transition={{ duration: 0.9, repeat: Infinity, delay: i * 0.2 }}
-              style={{ originX: `${h.cx}px`, originY: `${h.cy}px` }}
-            />
-          ))}
+          {/* 1 Oversized pulsating heart + clear plasma vessel */}
+          <motion.circle
+            cx="116"
+            cy="88"
+            r={active ? 13 : 10}
+            fill="#0EA5E9"
+            fillOpacity="0.45"
+            stroke="#0284C7"
+            strokeWidth="2"
+            animate={shouldAnimate ? { scale: active ? [1, 1.25, 1] : [1, 1.12, 1] } : undefined}
+            transition={{ duration: 0.9, repeat: Infinity }}
+            style={{ originX: '116px', originY: '88px' }}
+          />
+          <text x="116" y="91" textAnchor="middle" fontSize="8" fontWeight="900" fill="currentColor">
+            1×♥
+          </text>
           <HotspotPin
             cx="210"
-            cy="68"
+            cy="64"
             accentColor="#0284C7"
             active={active}
             shouldAnimate={shouldAnimate}
-            label={active ? (isTr ? '3 KALP • Cu MAVİ KAN' : '3 HEARTS • Cu BLOOD') : '3× ♥ + Hemosiyanin'}
+            label={active ? (isTr ? '0 HEMOGLOBİN • ŞEFFAF KAN' : '0 HEMOGLOBIN • CLEAR BLOOD') : '1× ♥ OVERSIZED'}
             align="left"
+          />
+          <DimLine
+            x1="66"
+            y1="146"
+            x2="236"
+            y2="146"
+            label={isTr ? 'ANTARKTİKA (-1.8°C PLAZMA O₂)' : 'ANTARCTIC (-1.8°C PLASMA O₂)'}
+            color="#0284C7"
           />
         </g>
       );
@@ -489,18 +507,40 @@ export function SpaceNatureSketch({
       );
 
     case 'nature-03':
-      // Sharks (400M yrs) vs Trees (350M) vs Saturn Rings (100M)
+      // Greenland shark eye lens radiocarbon age (~400 years)
       return (
         <g>
-          {/* Shark dorsal sketch */}
-          <InkPath
-            d="M 52 72 Q 108 46 164 68 L 182 44 L 194 70 Q 238 72 264 60 L 248 80 L 266 96 Q 218 88 164 92 Q 106 94 52 72 Z"
-            stroke="currentColor"
+          {/* Shark eye orbital lens cross-section */}
+          <ellipse cx="146" cy="86" rx="46" ry="26" fill="none" stroke="currentColor" strokeWidth="2.2" />
+          <motion.circle
+            cx="146"
+            cy="86"
+            r={active ? 17 : 13}
             fill={accentColor}
-            shouldAnimate={shouldAnimate}
+            fillOpacity="0.28"
+            stroke={accentColor}
+            strokeWidth="2"
+            animate={shouldAnimate ? { scale: active ? [1, 1.12, 1] : [1, 1.04, 1] } : undefined}
+            transition={{ duration: 1.5, repeat: Infinity }}
           />
-          <DimLine x1="48" y1="122" x2="272" y2="122" label={active ? '400M+ YIL (SHARKS)' : 'DEVONIAN (~400M YIL)'} color={accentColor} />
-          <DimLine x1="100" y1="146" x2="272" y2="146" label={active ? (isTr ? 'AĞAÇLAR: 350M • SATÜRN: ~100M' : 'TREES: 350M • RINGS: ~100M') : 'TIMELINE CALIPER'} color="currentColor" />
+          <circle cx="146" cy="86" r="5" fill="#F59E0B" />
+          <HotspotPin
+            cx="210"
+            cy="68"
+            accentColor="#F59E0B"
+            active={active}
+            shouldAnimate={shouldAnimate}
+            label={active ? (isTr ? '¹⁴C ÇEKİRDEK • ≈400 YIL' : '¹⁴C LENS CORE • ≈400 YRS') : 'INERT PROTEIN'}
+            align="left"
+          />
+          <DimLine
+            x1="76"
+            y1="146"
+            x2="244"
+            y2="146"
+            label={active ? (isTr ? 'DOĞUMDAN BERİ YENİLENMEZ' : 'UNCHANGED SINCE BIRTH') : '392 ± 120 YEARS'}
+            color={accentColor}
+          />
         </g>
       );
 
@@ -534,26 +574,41 @@ export function SpaceNatureSketch({
       );
 
     case 'nature-05':
-      // Flamingo grey -> pink via beta-carotene
+      // Alpine swift 200-day non-stop aerial migration flight
       return (
         <g>
-          <InkPath
-            d="M 118 148 L 118 106 M 118 112 Q 148 112 152 94 Q 152 72 130 74 Q 112 76 112 52 Q 114 34 128 38 Q 138 40 144 48 L 136 52"
-            stroke="currentColor"
-            fill={active ? '#F43F5E' : '#94A3B8'}
-            fillOpacity={0.35}
-            shouldAnimate={shouldAnimate}
-          />
+          {/* Sweeping wing silhouette gliding continuously */}
+          <motion.g
+            animate={shouldAnimate ? { y: active ? [0, -8, 0] : [0, -4, 0] } : undefined}
+            transition={{ duration: 1.8, repeat: Infinity, ease: 'easeInOut' }}
+          >
+            <InkPath
+              d="M 52 94 Q 112 52 160 80 Q 208 52 268 94 Q 214 78 160 92 Q 106 78 52 94 Z"
+              stroke="currentColor"
+              fill={accentColor}
+              fillOpacity={0.3}
+              shouldAnimate={shouldAnimate}
+            />
+          </motion.g>
+          {/* Ground line with "0 landings" gap */}
+          <line x1="40" y1="134" x2="280" y2="134" stroke="currentColor" strokeOpacity="0.35" strokeDasharray="4 4" />
           <HotspotPin
-            cx="190"
-            cy="72"
-            accentColor={active ? '#F43F5E' : '#64748B'}
+            cx="210"
+            cy="64"
+            accentColor={accentColor}
             active={active}
             shouldAnimate={shouldAnimate}
-            label={active ? (isTr ? 'BETA-KAROTEN → PEMBE' : 'BETA-CAROTENE → PINK') : (isTr ? 'DOĞUŞTA GRİ' : 'BORN GREY')}
+            label={active ? (isTr ? '0 İNİŞ • 200 GÜN UÇUŞ' : '0 LANDINGS • 200 DAYS') : 'NON-STOP FLIGHT'}
             align="left"
           />
-          <DimLine x1="76" y1="158" x2="244" y2="158" label="PIGMENT FILTER" color={accentColor} />
+          <DimLine
+            x1="64"
+            y1="154"
+            x2="256"
+            y2="154"
+            label={active ? (isTr ? 'HAVADA UYUR & AVLANIR' : 'SLEEPS & HUNTS MID-AIR') : 'ALPINE SWIFT'}
+            color={accentColor}
+          />
         </g>
       );
 

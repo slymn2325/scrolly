@@ -49,19 +49,36 @@ export function ScienceWeirdSketch({
       );
 
     case 'science-02':
-      // Eternal honey jar (low Aw + H2O2 + pH 3.9)
+      // Superfluid Helium-4 climbing glass beaker walls below 2.17 K
       return (
         <g>
-          <rect x="120" y="54" width="80" height="84" rx="14" fill="#FBBF24" fillOpacity="0.28" stroke="currentColor" strokeWidth="2.2" />
-          <rect x="128" y="42" width="64" height="12" rx="4" fill="#D97706" fillOpacity="0.4" stroke="currentColor" strokeWidth="1.8" />
-          <path d="M 136 86 L 152 76 L 168 86 L 168 104 L 152 114 L 136 104 Z" fill="none" stroke="#B45309" strokeWidth="1.8" />
+          <path d="M 118 46 L 118 136 Q 118 144 128 144 L 192 144 Q 202 144 202 136 L 202 46" fill="none" stroke="currentColor" strokeWidth="2.2" />
+          <rect x="120" y="96" width="80" height="46" rx="4" fill="#38BDF8" fillOpacity="0.22" />
+          {/* Rollin film creeping up and outside the glass wall */}
+          <motion.path
+            d="M 122 100 L 122 44 Q 116 40 112 48 L 112 134"
+            fill="none"
+            stroke="#0284C7"
+            strokeWidth="2.5"
+            strokeDasharray="6 3"
+            animate={shouldAnimate ? { strokeDashoffset: active ? [18, 0] : [9, 0] } : undefined}
+            transition={{ duration: 1.2, repeat: Infinity, ease: 'linear' }}
+          />
+          <motion.circle
+            cx="112"
+            cy="146"
+            r="4"
+            fill="#38BDF8"
+            animate={shouldAnimate ? { y: active ? [0, 12] : [0, 6], opacity: [0.3, 1, 0.3] } : undefined}
+            transition={{ duration: 1.4, repeat: Infinity }}
+          />
           <HotspotPin
             cx="202"
             cy="78"
-            accentColor="#D97706"
+            accentColor="#0284C7"
             active={active}
             shouldAnimate={shouldAnimate}
-            label={active ? 'pH 3.9 + H₂O₂ = 0 BAKTERİ' : '3,000+ YIL'}
+            label={active ? (isTr ? '0 VİSKOZİTE • ROLLIN FİLM' : '0 VISCOSITY • ROLLIN FILM') : 'He-4 (< 2.17 K)'}
             align="left"
           />
         </g>
@@ -112,37 +129,52 @@ export function ScienceWeirdSketch({
       );
 
     case 'science-04':
-      // Bananas radioactive K-40 BED dose
+      // Sonoluminescence: sound waves crushing a bubble into 5,000 K flash
       return (
         <g>
-          <InkPath
-            d="M 88 106 Q 146 124 218 68 Q 204 114 148 128 Q 108 134 88 106 Z"
-            stroke="currentColor"
-            fill="#FBBF24"
-            fillOpacity={0.35}
-            shouldAnimate={shouldAnimate}
-          />
-          {[0, 1, 2].map((w) => (
-            <motion.circle
+          {/* Sound wavefront arcs */}
+          {[0, 1].map((w) => (
+            <motion.path
               key={w}
-              cx="166"
-              cy="90"
-              r={18 + w * 14}
+              d={`M ${88 + w * 14} 58 Q ${72 + w * 14} 88 ${88 + w * 14} 118`}
               fill="none"
-              stroke={accentColor}
-              strokeDasharray="4 4"
-              strokeWidth="1.5"
-              animate={shouldAnimate ? { opacity: active ? [0.8, 0.2, 0.8] : [0.4, 0.15, 0.4] } : undefined}
-              transition={{ duration: 1.6, repeat: Infinity, delay: w * 0.25 }}
+              stroke="#0284C7"
+              strokeWidth="2"
+              animate={shouldAnimate ? { x: active ? [0, 26, 0] : [0, 12, 0] } : undefined}
+              transition={{ duration: 1.2, repeat: Infinity }}
             />
           ))}
+          {[0, 1].map((w) => (
+            <motion.path
+              key={`r-${w}`}
+              d={`M ${232 - w * 14} 58 Q ${248 - w * 14} 88 ${232 - w * 14} 118`}
+              fill="none"
+              stroke="#0284C7"
+              strokeWidth="2"
+              animate={shouldAnimate ? { x: active ? [0, -26, 0] : [0, -12, 0] } : undefined}
+              transition={{ duration: 1.2, repeat: Infinity }}
+            />
+          ))}
+          {/* Imploding bubble & pinpoint star flash */}
+          <motion.circle
+            cx="160"
+            cy="88"
+            r={active ? 9 : 22}
+            fill="#FBBF24"
+            fillOpacity={active ? 0.85 : 0.25}
+            stroke={accentColor}
+            strokeWidth="2"
+            animate={shouldAnimate ? { scale: active ? [1, 1.35, 0.7] : [1, 0.9, 1] } : undefined}
+            transition={{ duration: 1.0, repeat: Infinity }}
+            style={{ originX: '160px', originY: '88px' }}
+          />
           <HotspotPin
-            cx="218"
-            cy="68"
-            accentColor={accentColor}
+            cx="210"
+            cy="60"
+            accentColor="#F59E0B"
             active={active}
             shouldAnimate={shouldAnimate}
-            label={active ? 'K-40 ≈ 0.1 µSv (GÜVENLİ)' : 'BED = 0.1 µSv'}
+            label={active ? (isTr ? '≈ 5.000 K PLAZMA IŞIĞI!' : '≈ 5,000 K PLASMA FLASH!') : 'SONOLUMINESCENCE'}
             align="left"
           />
         </g>
@@ -304,26 +336,37 @@ export function ScienceWeirdSketch({
       );
 
     case 'weird-02':
-      // Eiffel Tower thermal expansion +15cm
+      // Pitch Drop Experiment (9 drops since 1927, 230 billion x water viscosity)
       return (
         <g>
-          <motion.g
-            animate={{ scaleY: active ? 1.09 : 1 }}
-            transition={{ type: 'spring', stiffness: 180 }}
-            style={{ originX: '160px', originY: '144px' }}
-          >
-            <path d="M 122 144 L 152 44 L 168 44 L 198 144 M 136 108 L 184 108 M 146 78 L 174 78" fill="none" stroke="currentColor" strokeWidth="2.2" />
-          </motion.g>
+          {/* Sealed glass funnel neck */}
+          <path d="M 122 40 L 198 40 L 172 90 L 172 106 L 148 106 L 148 90 Z" fill="#1E293B" fillOpacity="0.28" stroke="currentColor" strokeWidth="2.2" />
+          {/* Stretching slow-viscosity pitch droplet */}
+          <motion.path
+            d={active ? 'M 154 106 Q 160 132 160 138 Q 168 148 160 148 Q 152 148 160 138' : 'M 154 106 Q 160 120 160 125 Q 166 132 160 132 Q 154 132 160 125'}
+            fill="#1E293B"
+            stroke="currentColor"
+            strokeWidth="1.8"
+            animate={shouldAnimate ? { y: active ? [0, 8, 0] : [0, 2, 0] } : undefined}
+            transition={{ duration: 2.2, repeat: Infinity }}
+          />
           <HotspotPin
-            cx="196"
-            cy="52"
+            cx="204"
+            cy="64"
             accentColor="#F43F5E"
             active={active}
             shouldAnimate={shouldAnimate}
-            label={active ? '40°C YAZ: +15 CM!' : 'ΔL = α · L · ΔT'}
+            label={active ? (isTr ? '1927→2024: SADECE 9 DAMLA' : 'SINCE 1927: ONLY 9 DROPS') : '230×10⁹ η (WATER)'}
             align="left"
           />
-          <DimLine x1="120" y1="156" x2="200" y2="156" label={isTr ? 'PUDEL DEMİR GENLEŞMESİ' : 'THERMAL EXPANSION'} color="#F43F5E" />
+          <DimLine
+            x1="108"
+            y1="158"
+            x2="212"
+            y2="158"
+            label={isTr ? 'ZİFT DAMLASI DENEYİ' : 'PITCH DROP FUNNEL'}
+            color="#F43F5E"
+          />
         </g>
       );
 

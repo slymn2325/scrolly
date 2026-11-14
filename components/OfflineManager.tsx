@@ -34,14 +34,14 @@ export default function OfflineManager({ lang }: OfflineManagerProps) {
     window.addEventListener('online', handleOnline);
     window.addEventListener('offline', handleOffline);
 
-    // Evict stale pre-v1.1.0 offline cache buckets if present & register updated Service Worker
+    // Evict stale pre-v1.1.1 offline cache buckets if present & register updated Service Worker
     if ('caches' in window) {
       caches
         .keys()
         .then((keys) =>
           Promise.all(
             keys
-              .filter((k) => k !== 'scrolly-offline-v1.1.0')
+              .filter((k) => k !== 'scrolly-offline-v1.1.1')
               .map((oldKey) => caches.delete(oldKey))
           )
         )

@@ -1,4 +1,6 @@
 import { Pool } from 'pg';
+import type { Language } from '@/i18n/translations';
+import { formatValueWithUnit } from '@/lib/formatUnit';
 import type { CategoryId, FactCard, FactQuizContent, GuessChallenge } from '@/types/fact';
 import { getAllFacts, getFactPrimarySlug } from '@/utils/factsData';
 
@@ -325,9 +327,8 @@ function computeSliderStep(minVal: number, maxVal: number, answerVal: number): n
   return Math.max(1, Math.round(span / 100));
 }
 
-function formatNumericValue(value: number, unit: string): string {
-  const rounded = Number.isInteger(value) ? String(value) : String(Number(value.toFixed(2)));
-  return unit ? `${rounded} ${unit}` : rounded;
+function formatNumericValue(value: number, unit: string, lang: Language = 'en'): string {
+  return formatValueWithUnit(value, unit, lang);
 }
 
 function buildSynthesizedQuiz(
@@ -337,7 +338,8 @@ function buildSynthesizedQuiz(
   answerVal: number,
   unit: string,
   explanation: string,
-  seedStr: string
+  seedStr: string,
+  lang: Language = 'en'
 ): FactQuizContent {
   const span = Math.max(2, Math.abs(maxVal - minVal));
   const deltaLow = Math.max(1, Math.round(span * 0.28));
@@ -353,9 +355,13 @@ function buildSynthesizedQuiz(
   }
 
   const formatDist = (n: number) =>
-    formatNumericValue(Number.isInteger(answerVal) ? Math.round(n) : Number(n.toFixed(1)), unit);
+    formatNumericValue(
+      Number.isInteger(answerVal) ? Math.round(n) : Number(n.toFixed(1)),
+      unit,
+      lang
+    );
 
-  const correctStr = formatNumericValue(answerVal, unit);
+  const correctStr = formatNumericValue(answerVal, unit, lang);
   let d1 = formatDist(lowVal);
   let d2 = formatDist(highVal);
   if (d1 === correctStr) d1 = formatDist(answerVal + Math.max(1, deltaLow));
@@ -497,7 +503,8 @@ export function mapDbRowToFactCard(row: DbFactRow): FactCard {
         answerVal,
         unitTr,
         detailTr,
-        `${row.slug}-tr`
+        `${row.slug}-tr`,
+        'tr'
       ),
       guessChallenge: guessTr,
     },
@@ -517,7 +524,8 @@ export function mapDbRowToFactCard(row: DbFactRow): FactCard {
         answerVal,
         unitEn,
         detailEn,
-        `${row.slug}-en`
+        `${row.slug}-en`,
+        'en'
       ),
       guessChallenge: guessEn,
     },

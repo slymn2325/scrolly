@@ -54,50 +54,68 @@
     "category": "records",
     "accentColor": "#DB2777",
     "iconName": "Landmark",
-    "emoji": "🍋",
-    "readingTimeSec": 14,
+    "emoji": "⏳",
+    "readingTimeSec": 15,
     "tr": {
-      "slug": "eyfel-kulesi-yazin-15-santimetre-uzar",
-      "title": "Eyfel Kulesi Sıcak Yaz Günlerinde 15 Santimetre Uzar",
-      "factText": "Paris'in simgesi Eyfel Kulesi yaz sıcağında ısıl genleşme nedeniyle kış aylarına göre yaklaşık 15 cm daha uzun ölçülür.",
-      "deepDiveDetail": "Yaklaşık 7.300 ton işlenmiş demirden yapılan kule güneşte ısındıkça demir atomları daha hızlı titreşir ve aralarındaki mesafe artar. Hatta güneşin vurduğu taraf daha çok genleştiği için kule gün içinde hafifçe eğilir.",
-      "sourceHint": "Tour Eiffel Official Engineering Facts",
-      "tag": "Mühendislik Rekoru",
+      "slug": "dunyanin-en-uzun-deneyi-zift-damlasi-97-yilda-9-damla",
+      "title": "1927'den Beri Süren Zift Damlası Deneyinde Katı Görünümlü Zift Şimdiye Dek Sadece 9 Damla Akıttı",
+      "factText": "Çekiçle vurulduğunda cam gibi kırılan zift aslında sudan 230 milyar kat yoğun bir akışkandır; Queensland Üniversitesi'ndeki huniden neredeyse her 10 yılda 1 damla düşer.",
+      "deepDiveDetail": "Profesör Thomas Parnell 1927'de katı görünümlü zifti mühürlü bir huniye döktü ve 1930'da huninin ucunu kesti. O günden beri yalnızca 9 damla düştü; hiç kimse bir damlanın kopuş anını canlı göremedi.",
+      "sourceHint": "University of Queensland Physics Museum",
+      "tag": "Bilim Rekoru",
       "quiz": {
-        "question": "Eyfel Kulesi'nin yazın yaklaşık 15 cm daha uzun olmasının sebebi nedir?",
+        "question": "1927'de başlatılan ünlü Zift Damlası (Pitch Drop) deneyinde huniden bugüne kadar toplam kaç damla düştü?",
         "options": [
-          "Demir yapının sıcak havada ısıl genleşmesi",
-          "Yazın kule tepesindeki bayrağın değiştirilmesi",
-          "Rüzgarın kuleyi yukarı çekmesi"
+          "9 damla",
+          "140 damla",
+          "600 damla"
         ],
         "correctIndex": 0,
-        "explanation": "Demir ısındıkça genleşir (thermal expansion), soğuk kış günlerinde ise tekrar büzülür."
+        "explanation": "Ziftin viskozitesi o kadar yüksektir ki her damlanın kopması 8 ila 13 yıl sürer; 9. damla 2014'te düşmüştür."
       },
-      "sourceName": "Tour Eiffel Official Engineering Facts",
-      "sourceUrl": "https://www.toureiffel.paris/en/the-monument/key-figures"
+      "guessChallenge": {
+        "type": "slider",
+        "prompt": "1927'de başlayan Zift Damlası deneyinde şu ana kadar toplam kaç damla düşmüştür?",
+        "min": 1,
+        "max": 25,
+        "step": 1,
+        "unit": "damla",
+        "correctValue": 9
+      },
+      "sourceName": "University of Queensland Physics Museum",
+      "sourceUrl": "https://smp.uq.edu.au/pitch-drop-experiment"
     },
     "en": {
-      "slug": "eiffel-tower-grows-15-cm-taller-in-summer",
-      "title": "The Eiffel Tower Grows Up to 15 cm Taller in Summer",
-      "factText": "On hot Parisian summer days, thermal expansion makes the Eiffel Tower roughly 15 centimeters (6 inches) taller than in winter.",
-      "deepDiveDetail": "Built from over 7,300 tons of puddled iron, the structure expands as summer heat excites its metal atoms—and the sunny side can even lean slightly away from the sun during the day.",
-      "sourceHint": "Tour Eiffel Official Engineering Facts",
-      "tag": "Engineering Oddity",
+      "slug": "pitch-drop-experiment-only-9-drops-since-1927",
+      "title": "Running Since 1927, the World's Longest Lab Experiment Has Dropped Only 9 Drops of Solid-Looking Pitch",
+      "factText": "Pitch shatters like glass under a hammer, yet it is a fluid 230 billion times more viscous than water—dripping only 9 times inside its University of Queensland funnel.",
+      "deepDiveDetail": "Professor Thomas Parnell poured heated pitch into a sealed funnel in 1927 and cut the stem in 1930. Each droplet forms over roughly a decade; remarkably, no person has ever witnessed a drop actually falling live.",
+      "sourceHint": "University of Queensland Physics Museum",
+      "tag": "Lab Record",
       "quiz": {
-        "question": "Why is the Eiffel Tower slightly taller in hot summer weather?",
+        "question": "How many drops have fallen so far in the famous University of Queensland Pitch Drop Experiment started in 1927?",
         "options": [
-          "Thermal expansion of its iron structure",
-          "Summer antenna upgrades",
-          "Upward wind lift"
+          "9 drops",
+          "140 drops",
+          "600 drops"
         ],
         "correctIndex": 0,
-        "explanation": "Iron expands when heated and contracts again during cold winter nights."
+        "explanation": "Because pitch has ultra-high viscosity, only 9 drops have dripped since 1930 (the 9th fell in 2014)."
       },
-      "sourceName": "Tour Eiffel Official Engineering Facts",
-      "sourceUrl": "https://www.toureiffel.paris/en/the-monument/key-figures"
+      "guessChallenge": {
+        "type": "slider",
+        "prompt": "How many drops of pitch do you think have fallen since the experiment began in 1927?",
+        "min": 1,
+        "max": 25,
+        "step": 1,
+        "unit": "drops",
+        "correctValue": 9
+      },
+      "sourceName": "University of Queensland Physics Museum",
+      "sourceUrl": "https://smp.uq.edu.au/pitch-drop-experiment"
     },
-    "sourceName": "Tour Eiffel Official Engineering Facts",
-    "sourceUrl": "https://www.toureiffel.paris/en/the-monument/key-figures"
+    "sourceName": "University of Queensland Physics Museum",
+    "sourceUrl": "https://smp.uq.edu.au/pitch-drop-experiment"
   },
   {
     "id": "weird-03",

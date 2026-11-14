@@ -28,6 +28,7 @@ export interface FactQuizContent {
 export interface LocalizedContent {
   slug: string;
   title: string;
+  teaserTitle?: string;
   factText: string;
   deepDiveDetail: string;
   sourceHint: string;

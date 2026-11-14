@@ -72,136 +72,136 @@
     "category": "space",
     "accentColor": "#7C3AED",
     "iconName": "Sparkles",
-    "emoji": "🌟",
-    "readingTimeSec": 15,
+    "emoji": "🧲",
+    "readingTimeSec": 16,
     "tr": {
-      "slug": "notron-yildizindan-bir-cay-kasigi-madde",
-      "title": "Bir Çay Kaşığı Nötron Yıldızı Milyarlarca Ton Ağırlığındadır",
-      "factText": "Bir nötron yıldızından alınan tek bir çay kaşığı madde, Dünya'da yaklaşık 4 milyar ton ağırlığa denk gelir.",
-      "deepDiveDetail": "Dev yıldızlar süpernova olarak patladığında çekirdekleri muazzam bir kütleçekimiyle çöker. Elektronlar ve protonlar birleşip nötronlara dönüşür; böylece Güneş'ten bile ağır bir kütle yaklaşık 20 km çapında bir küreye sıkışır.",
-      "sourceHint": "ESA & Chandra X-Ray Observatory",
+      "slug": "magnetar-manyetik-alani-atomlari-igne-seklinde-uzatir",
+      "title": "Bir Magnetarın Manyetik Alanı 1.000 Kilometre Ötedeki Atomları İğne Şekline Sokar",
+      "factText": "Bir magnetarın akıl almaz manyetik alanı o kadar şiddetlidir ki, 1.000 kilometre yakınına giren atomların küresel elektron bulutlarını iğne gibi ince çubuklara dönüştürür.",
+      "deepDiveDetail": "Dünya'nın manyetik alanı yaklaşık 0,5 Gauss iken bir magnetarın yüzeyi 10 katrilyon Gauss'a ulaşır. Bu dev kuantum mıknatısı sadece kimyasal bağları anında koparmakla kalmaz, çevresindeki vakumu bile çift kırılımlı bir optik merceğe dönüştürür.",
+      "sourceHint": "NASA Goddard Space Flight Center",
       "tag": "Astrofizik",
       "quiz": {
-        "question": "Nötron yıldızlarının aşırı yoğun olmasının temel nedeni nedir?",
+        "question": "Bir magnetarın aşırı güçlü manyetik alanı yakındaki atomların elektron bulutlarına ne yapar?",
         "options": [
-          "Çekirdeğin dev bir kütleçekimiyle ~20 km çapa sıkışması",
-          "Tamamen donmuş demirden oluşmaları",
-          "Işık hızından hızlı dönmeleri"
+          "Onları küresel halden ince iğne şekline uzatarak kimyasal bağları koparır",
+          "Hepsini katı altın çekirdeğine dönüştürür",
+          "Atomları tamamen mutlak sıfırda dondurur"
         ],
         "correctIndex": 0,
-        "explanation": "Süpernova sonrası çekirdek o kadar yoğun sıkışır ki bir şehir büyüklüğündeki alana yıldız kütlesi sığar."
+        "explanation": "Katrilyon Gauss düzeyindeki manyetik alan elektron yörüngelerini iğne şeklinde deforme eder."
       },
       "guessChallenge": {
         "type": "slider",
-        "prompt": "Sence tipik bir nötron yıldızının çapı yaklaşık kaç km'dir?",
-        "min": 5,
-        "max": 200,
-        "step": 5,
+        "prompt": "Bir magnetarın manyetik alanı yaklaşık kaç km ötedeki atomların şeklini bozacak kadar güçlüdür?",
+        "min": 100,
+        "max": 2000,
+        "step": 100,
         "unit": "km",
-        "correctValue": 20
+        "correctValue": 1000
       },
-      "sourceName": "Chandra X-Ray Observatory / ESA",
-      "sourceUrl": "https://chandra.harvard.edu/xray_sources/neutron_stars.html"
+      "sourceName": "NASA Goddard Space Flight Center",
+      "sourceUrl": "https://svs.gsfc.nasa.gov/10232"
     },
     "en": {
-      "slug": "teaspoon-of-neutron-star-weight",
-      "title": "A Teaspoon of Neutron Star Weighs Billions of Tons",
-      "factText": "Just a single teaspoon of neutron star material would weigh roughly 4 billion tons on Earth.",
-      "deepDiveDetail": "When massive stars explode as supernovae, their cores collapse under extreme gravity, crushing protons and electrons into neutrons and packing more mass than our Sun into a sphere only about 20 km wide.",
-      "sourceHint": "ESA & Chandra X-Ray Observatory",
+      "slug": "magnetar-magnetic-field-stretches-atoms-into-needles",
+      "title": "A Magnetar's Magnetic Field Stretches Atoms into Thin Needles from 1,000 Kilometers Away",
+      "factText": "A magnetar's magnetic field is so extreme that even 1,000 kilometers away, spherical electron clouds around atoms are deformed into needle-thin cylinders.",
+      "deepDiveDetail": "While Earth's magnetic field averages ~0.5 Gauss, a magnetar reaches a quadrillion Gauss—strong enough to tear apart all molecular chemistry instantaneously and polarize the quantum vacuum itself.",
+      "sourceHint": "NASA Goddard Space Flight Center",
       "tag": "Astrophysics",
       "quiz": {
-        "question": "Why are neutron stars extraordinarily dense?",
+        "question": "How does a magnetar's field affect nearby atoms from roughly 1,000 km away?",
         "options": [
-          "A star's mass is crushed into a sphere ~20 km wide",
-          "They are made entirely of solid frozen iron",
-          "They spin faster than the speed of light"
+          "It stretches spherical electron clouds into thin needles, breaking chemical bonds",
+          "It freezes every electron into solid ice",
+          "It converts hydrogen atoms directly into lead"
         ],
         "correctIndex": 0,
-        "explanation": "Gravitational collapse after a supernova packs solar-scale mass into a city-sized sphere."
+        "explanation": "Fields on the order of 10¹⁵ Gauss distort atomic electron orbitals into ultra-thin needles."
       },
       "guessChallenge": {
         "type": "slider",
-        "prompt": "How wide do you think a typical neutron star is in kilometers?",
-        "min": 5,
-        "max": 200,
-        "step": 5,
+        "prompt": "Roughly how many kilometers away can a magnetar's magnetic field warp atoms into thin needles?",
+        "min": 100,
+        "max": 2000,
+        "step": 100,
         "unit": "km",
-        "correctValue": 20
+        "correctValue": 1000
       },
-      "sourceName": "Chandra X-Ray Observatory / ESA",
-      "sourceUrl": "https://chandra.harvard.edu/xray_sources/neutron_stars.html"
+      "sourceName": "NASA Goddard Space Flight Center",
+      "sourceUrl": "https://svs.gsfc.nasa.gov/10232"
     },
-    "sourceName": "Chandra X-Ray Observatory / ESA",
-    "sourceUrl": "https://chandra.harvard.edu/xray_sources/neutron_stars.html"
+    "sourceName": "NASA Goddard Space Flight Center",
+    "sourceUrl": "https://svs.gsfc.nasa.gov/10232"
   },
   {
     "id": "space-03",
     "category": "space",
     "accentColor": "#7C3AED",
-    "iconName": "Gem",
-    "emoji": "💎",
+    "iconName": "CloudRain",
+    "emoji": "🌧️",
     "readingTimeSec": 16,
     "tr": {
-      "slug": "neptun-ve-uranuste-elmas-yagmuru",
-      "title": "Neptün ve Uranüs'te Elmas Yağmurları Yağar",
-      "factText": "Buz devleri Neptün ve Uranüs'ün derin atmosferlerinde yüksek basınç metan gazını kristalleştirerek gerçek elmas yağmurları oluşturur.",
-      "deepDiveDetail": "Atmosferin derinliklerinde basınç Dünya atmosferinin milyonlarca katına çıkar. Bu aşırı basınç ve sıcaklık metan moleküllerindeki karbonu serbest bırakır ve karbon atomları elmas kristallerine dönüşerek merkeze doğru yağar.",
-      "sourceHint": "SLAC National Accelerator Laboratory",
-      "tag": "Gezegen Kimyası",
+      "slug": "saturn-uydusu-titanda-yagmur-damlalari-6-kat-yavas-duser",
+      "title": "Satürn'ün Uydusu Titan'da Yağmur Damlaları Dünya'dakinden 6 Kat Yavaş, Kar Tanesi Gibi Süzülerek Düşer",
+      "factText": "Titan'ın yoğun azot atmosferi ve Dünya'nın yedide biri kadar olan kütleçekimi yüzünden sıvı metan yağmur damlaları neredeyse kar tanesi hızıyla süzülür.",
+      "deepDiveDetail": "Titan yüzeyindeki hava basıncı Dünya'nın 1,45 katıdır; ancak yerçekimi yalnızca %14 düzeyindedir. Bu iki etken birleşince 9,5 mm çapa ulaşabilen dev sıvı metan damlaları yaklaşık 1,6 m/sn terminal hızla (Dünya'daki yağmurdan ~6 kat yavaş) yere iner.",
+      "sourceHint": "NASA Solar System Exploration",
+      "tag": "Gezegen Bilimi",
       "quiz": {
-        "question": "Neptün ve Uranüs'teki elmas yağmurları hangi gazın yüksek basınç altında parçalanmasıyla oluşur?",
+        "question": "Titan'daki sıvı metan yağmur damlaları neden Dünya'dakinden yaklaşık 6 kat yavaş düşer?",
         "options": [
-          "Metan",
-          "Oksijen",
-          "Azot"
+          "Düşük kütleçekimi ile yoğun kalın atmosferin sürtünme etkisi birleştiği için",
+          "Yağmur damlaları buzdan değil gazdan oluştuğu için",
+          "Titan hiç kendi ekseninde dönmediği için"
         ],
         "correctIndex": 0,
-        "explanation": "Aşırı basınç metan (CH4) içindeki karbon atomlarını sıkıştırarak elmas kristalleri oluşturur."
+        "explanation": "Dünya'nın %14'ü kadar yerçekimi ve 1,45 atm yüzey basıncı yağmur damlalarının terminal hızını sert şekilde düşürür."
       },
       "guessChallenge": {
-        "type": "binary",
-        "prompt": "Sence Neptün'deki elmas yağmurları hangi gazdan oluşur?",
-        "options": [
-          "Metan Gazı",
-          "Oksijen Gazı"
-        ],
-        "correctOptionIndex": 0
+        "type": "slider",
+        "prompt": "Titan'daki metan yağmur damlaları Dünya'daki sağanağa göre yaklaşık kaç kat daha yavaş düşer?",
+        "min": 1,
+        "max": 12,
+        "step": 1,
+        "unit": "kat",
+        "correctValue": 6
       },
-      "sourceName": "SLAC National Accelerator Laboratory",
-      "sourceUrl": "https://www6.slac.stanford.edu/"
+      "sourceName": "NASA Solar System Exploration",
+      "sourceUrl": "https://science.nasa.gov/saturn/moons/titan/"
     },
     "en": {
-      "slug": "diamond-rain-on-neptune-and-uranus",
-      "title": "It Rains Diamonds Inside Neptune and Uranus",
-      "factText": "Deep inside the ice giants Neptune and Uranus, extreme pressure turns methane gas into literal diamond rain.",
-      "deepDiveDetail": "At thousands of kilometers below their cloud tops, immense pressure millions of times greater than Earth's splits carbon from methane molecules, compressing the carbon into solid diamond crystals that sink inward.",
-      "sourceHint": "SLAC National Accelerator Laboratory",
-      "tag": "Planetary Chemistry",
+      "slug": "raindrops-on-saturns-moon-titan-fall-6-times-slower",
+      "title": "Raindrops on Saturn's Moon Titan Fall 6 Times Slower Than on Earth, Drifting Like Snowflakes",
+      "factText": "Because Titan has thicker nitrogen air and just 14% of Earth's gravity, giant liquid methane raindrops drift gently downward about 6 times slower than Earth rain.",
+      "deepDiveDetail": "With surface pressure 1.45 times Earth's but low gravity, raindrops on Titan can grow over 9 mm wide yet reach a terminal velocity of only ~1.6 m/s—nearly the gentle falling speed of Earth snowflakes.",
+      "sourceHint": "NASA Solar System Exploration",
+      "tag": "Planetary Science",
       "quiz": {
-        "question": "Which gas breaks apart under extreme pressure to form diamonds inside Neptune?",
+        "question": "Why does liquid methane rain drift downward ~6 times slower on Titan than rain on Earth?",
         "options": [
-          "Methane",
-          "Oxygen",
-          "Nitrogen"
+          "Titan combines thick surface air drag with only ~14% of Earth's gravity",
+          "Methane droplets float magnetically above the clouds",
+          "Titan orbits inside Saturn's icy rings"
         ],
         "correctIndex": 0,
-        "explanation": "Carbon atoms freed from methane (CH4) compress into solid diamonds under extreme pressure."
+        "explanation": "Weak gravitational pull paired with dense nitrogen atmosphere slashes droplet terminal velocity."
       },
       "guessChallenge": {
-        "type": "binary",
-        "prompt": "Which gas compresses into falling diamonds inside Neptune?",
-        "options": [
-          "Methane Gas",
-          "Oxygen Gas"
-        ],
-        "correctOptionIndex": 0
+        "type": "slider",
+        "prompt": "Roughly how many times slower do methane raindrops fall on Titan compared to Earth?",
+        "min": 1,
+        "max": 12,
+        "step": 1,
+        "unit": "times",
+        "correctValue": 6
       },
-      "sourceName": "SLAC National Accelerator Laboratory",
-      "sourceUrl": "https://www6.slac.stanford.edu/"
+      "sourceName": "NASA Solar System Exploration",
+      "sourceUrl": "https://science.nasa.gov/saturn/moons/titan/"
     },
-    "sourceName": "SLAC National Accelerator Laboratory",
-    "sourceUrl": "https://www6.slac.stanford.edu/"
+    "sourceName": "NASA Solar System Exploration",
+    "sourceUrl": "https://science.nasa.gov/saturn/moons/titan/"
   },
   {
     "id": "space-04",
@@ -576,68 +576,68 @@
     "category": "nature",
     "accentColor": "#0D9488",
     "iconName": "Waves",
-    "emoji": "🐙",
+    "emoji": "🧊",
     "readingTimeSec": 15,
     "tr": {
-      "slug": "ahtapotlarin-uc-kalbi-ve-mavi-kani",
-      "title": "Ahtapotların Üç Kalbi ve Mavi Kanı Vardır",
-      "factText": "Bir ahtapotun vücudunda üç kalp, dokuz beyin benzeri sinir düğümü ve bakır bazlı mavi bir kan dolaşır.",
-      "deepDiveDetail": "İki kalp solungaçlara kan pompalar, üçüncü kalp ise organlara gönderir. Ahtapot yüzerken organlara kan pompalayan kalbi durur; bu yüzden yüzmek yerine deniz tabanında yürümeyi tercih ederler. Mavi renk ise demir yerine bakır içeren hemosiyaninden gelir.",
-      "sourceHint": "Smithsonian Ocean Portal",
+      "slug": "antarktika-buzbaligi-hemoglobinsiz-seffaf-kan-pompalar",
+      "title": "Antarktika Buzbalığı, Kanında Hemoglobin Olmayan ve Şeffaf Kan Pompalayan Tek Omurgalıdır",
+      "factText": "Sıfırın altındaki Antarktika sularında yaşayan buzbalığının dev tek kalbi, kırmızı kan hücresi ve hemoglobin olmadan oksijeni doğrudan şeffaf plazmada çözer.",
+      "deepDiveDetail": "Soğuk su sıcak suya göre çok daha fazla oksijen tuttuğundan buzbalığı hemoglobin genlerini kaybetti. Kanın akışkan kalması için gelişen dev tek kalp dakikada akranlarına kıyasla dört kat daha fazla plazma pompalar.",
+      "sourceHint": "Nature Ecology & Evolution",
       "tag": "Deniz Biyolojisi",
       "quiz": {
-        "question": "Ahtapotların kanının mavi renkte olmasını sağlayan element hangisidir?",
+        "question": "Antarktika buzbalığı alyuvar ve hemoglobin olmadan dokularına nasıl oksijen taşır?",
         "options": [
-          "Bakır",
-          "Demir",
-          "Magnezyum"
+          "Buzlu suda bol bulunan oksijeni doğrudan şeffaf kan plazmasında çözerek",
+          "Dış derisinden azot soluyarak",
+          "Yüzgeçlerinde klorofil üreterek"
         ],
         "correctIndex": 0,
-        "explanation": "İnsan kanında oksijeni demir (hemoglobin), ahtapotlarda ise bakır (hemosiyanin) taşır."
+        "explanation": "Sıfırın altındaki deniz suyu yüksek çözünmüş oksijen taşır; dev tek kalp bu plazmayı hızlıca dolaştırır."
       },
       "guessChallenge": {
         "type": "slider",
-        "prompt": "Sence bir ahtapotun vücudunda kaç kalp bulunur?",
+        "prompt": "Antarktika buzbalığının şeffaf beyaz kanını pompalayan dev kalbi kaç adettir?",
         "min": 1,
-        "max": 8,
+        "max": 6,
         "step": 1,
         "unit": "kalp",
-        "correctValue": 3
+        "correctValue": 1
       },
-      "sourceName": "Smithsonian Ocean Portal",
-      "sourceUrl": "https://ocean.si.edu/ocean-life/invertebrates/octopus"
+      "sourceName": "Nature Ecology & Evolution",
+      "sourceUrl": "https://www.nature.com/articles/s41559-019-0812-7"
     },
     "en": {
-      "slug": "octopuses-have-three-hearts-and-blue-blood",
-      "title": "Octopuses Have Three Hearts and Blue Blood",
-      "factText": "An octopus has three hearts, nine brain-like nerve clusters, and copper-based blue blood.",
-      "deepDiveDetail": "Two hearts pump blood to the gills while the third circulates it to the body—and actually pauses while the octopus swims, which is why they prefer crawling. Their blood is blue because it uses copper-rich hemocyanin instead of iron.",
-      "sourceHint": "Smithsonian Ocean Portal",
+      "slug": "antarctic-icefish-has-transparent-blood-zero-hemoglobin",
+      "title": "The Antarctic Icefish Is the Only Known Vertebrate with Transparent White Blood and Zero Hemoglobin",
+      "factText": "Living in sub-zero Antarctic seas, the icefish uses 1 oversized heart to circulate completely clear blood with no hemoglobin or red blood cells.",
+      "deepDiveDetail": "Frigid polar seawater dissolves far more oxygen than warm water, allowing the blackfin icefish to discard hemoglobin genes. To compensate, its single heart is ~4 times larger than normal and pumps clear plasma through wide vessels.",
+      "sourceHint": "Nature Ecology & Evolution",
       "tag": "Marine Biology",
       "quiz": {
-        "question": "Which metal gives octopus blood its distinctive blue color?",
+        "question": "How does the Antarctic icefish survive without red blood cells or hemoglobin?",
         "options": [
-          "Copper",
-          "Iron",
-          "Magnesium"
+          "Cold water holds ample dissolved oxygen carried directly in clear blood plasma",
+          "It stores gaseous oxygen inside hollow bones",
+          "It performs photosynthesis through transparent scales"
         ],
         "correctIndex": 0,
-        "explanation": "Octopuses use copper-based hemocyanin rather than iron-based hemoglobin to carry oxygen."
+        "explanation": "High dissolved oxygen in freezing Antarctic seas plus an enlarged single heart keeps tissues oxygenated."
       },
       "guessChallenge": {
         "type": "slider",
-        "prompt": "How many hearts do you think an octopus has inside its body?",
+        "prompt": "How many oversized hearts pump transparent, hemoglobin-free blood inside an Antarctic icefish?",
         "min": 1,
-        "max": 8,
+        "max": 6,
         "step": 1,
-        "unit": "hearts",
-        "correctValue": 3
+        "unit": "heart",
+        "correctValue": 1
       },
-      "sourceName": "Smithsonian Ocean Portal",
-      "sourceUrl": "https://ocean.si.edu/ocean-life/invertebrates/octopus"
+      "sourceName": "Nature Ecology & Evolution",
+      "sourceUrl": "https://www.nature.com/articles/s41559-019-0812-7"
     },
-    "sourceName": "Smithsonian Ocean Portal",
-    "sourceUrl": "https://ocean.si.edu/ocean-life/invertebrates/octopus"
+    "sourceName": "Nature Ecology & Evolution",
+    "sourceUrl": "https://www.nature.com/articles/s41559-019-0812-7"
   },
   {
     "id": "nature-02",
@@ -712,50 +712,68 @@
     "category": "nature",
     "accentColor": "#0D9488",
     "iconName": "Fish",
-    "emoji": "🦈",
+    "emoji": "🧊",
     "readingTimeSec": 15,
     "tr": {
-      "slug": "kopekbaliklari-agaclardan-ve-saturnun-halkalarindan-eskidir",
-      "title": "Köpekbalıkları Ağaçlardan ve Satürn'ün Halkalarından Eskidir",
-      "factText": "Köpekbalıkları Dünya okyanuslarında yaklaşık 400 milyon yıldır yüzüyor; bu da onları karadaki ilk ağaçlardan bile yaşlı kılıyor.",
-      "deepDiveDetail": "Ağaçlar yaklaşık 350 milyon yıl önce ortaya çıkarken, köpekbalıklarının ataları 400-450 milyon yıl öncesine dayanır. Güncel araştırmalar Satürn'ün buzlu halkalarının da 100-400 milyon yaş arasında olabileceğini gösteriyor.",
-      "sourceHint": "Natural History Museum London",
-      "tag": "Evrim Tarihi",
+      "slug": "gronland-kopekbaligi-goz-mercegi-400-yil-radyokarbon",
+      "title": "Grönland Köpekbalığının Göz Merceği Doğduğundan Beri Yenilenmez; Yaşı Radyokarbonla 400 Yıl Ölçülür",
+      "factText": "Arktik derinliklerde yaşayan bu köpekbalığının göz merceğindeki kristalin proteinleri doğumda mühürlenir ve soğuk savaş nükleer testlerinin karbon izini taşır.",
+      "deepDiveDetail": "Bilim insanları köpekbalıklarının kemik halkaları olmadığı için yaşlarını ölçemiyordu. Göz merceğinin merkezindeki proteinleri radyokarbonla tarihlendirerek 392 ± 120 yıllık ömürle Dünya'nın en uzun ömürlü omurgalısı olduğunu kanıtladılar.",
+      "sourceHint": "Science (AAAS)",
+      "tag": "Deniz Biyolojisi",
       "quiz": {
-        "question": "Köpekbalıkları Dünya okyanuslarında yaklaşık kaç milyon yıldır var?",
+        "question": "Bilim insanları Grönland köpekbalığının ~400 yıllık yaşını hangi dokusunu analiz ederek ölçebildi?",
         "options": [
-          "~400 milyon yıl",
-          "~50 milyon yıl",
-          "~120 milyon yıl"
+          "Doğumdan beri hiç yenilenmeyen göz merceği çekirdeğindeki proteinleri",
+          "Sırt yüzgecindeki ağaç halkalarına benzer yıllık çizgileri",
+          "Diş minelerindeki tuz kristal katmanlarını"
         ],
         "correctIndex": 0,
-        "explanation": "Fosil pulları köpekbalıklarının yaklaşık 400 milyon yıldır var olduğunu, yani ağaçlardan daha eski olduğunu gösterir."
+        "explanation": "Göz merceği merkezindeki kristalin dokusu metabolik olarak ölü olduğu için doğum yılının karbon-14 oranını korur."
       },
-      "sourceName": "Natural History Museum London",
-      "sourceUrl": "https://www.nhm.ac.uk/discover/shark-evolution-a-450-million-year-timeline.html"
+      "guessChallenge": {
+        "type": "slider",
+        "prompt": "Radyokarbon göz merceği analizi Grönland köpekbalıklarının yaklaşık kaç yıl yaşayabildiğini gösterdi?",
+        "min": 50,
+        "max": 500,
+        "step": 10,
+        "unit": "yıl",
+        "correctValue": 400
+      },
+      "sourceName": "Science (AAAS)",
+      "sourceUrl": "https://www.science.org/doi/10.1126/science.aaf1703"
     },
     "en": {
-      "slug": "sharks-are-older-than-trees-and-saturns-rings",
-      "title": "Sharks Are Older Than Trees and Saturn's Rings",
-      "factText": "Sharks have been swimming in Earth's oceans for roughly 400 million years—predating both trees and possibly Saturn's rings.",
-      "deepDiveDetail": "The earliest trees appeared around 350 million years ago, while shark fossil scales date back over 400 million years. Recent planetary studies estimate Saturn's icy rings formed 100 to 400 million years ago.",
-      "sourceHint": "Natural History Museum London",
-      "tag": "Evolutionary History",
+      "slug": "greenland-shark-eye-lens-radiocarbon-400-years",
+      "title": "A Greenland Shark's Eye Lens Never Renews After Birth, Allowing Scientists to Carbon-Date It to 400 Years",
+      "factText": "Living in frigid Arctic waters, this shark's central eye lens locks in embryonic proteins at birth—preserving Cold War nuclear bomb carbon signatures.",
+      "deepDiveDetail": "Because sharks lack calcified bones, researchers long struggled to age them. Radiocarbon dating inert proteins at the eye lens core revealed a lifespan near 400 years—making it the longest-lived vertebrate on Earth.",
+      "sourceHint": "Science (AAAS)",
+      "tag": "Marine Biology",
       "quiz": {
-        "question": "Roughly how long have sharks existed in Earth's oceans?",
+        "question": "Which part of a Greenland shark preserves its birth-year radiocarbon signature for ~400 years?",
         "options": [
-          "~400 million years",
-          "~50 million years",
-          "~120 million years"
+          "The metabolically inert core of its eye lens",
+          "Mineral rings along its cartilage jaws",
+          "Enamel bands inside replacement teeth"
         ],
         "correctIndex": 0,
-        "explanation": "Fossil evidence places early sharks over 400 million years ago, before the first trees."
+        "explanation": "Eye lens nucleus proteins never regenerate, acting as an unaltered carbon-14 timestamp from birth."
       },
-      "sourceName": "Natural History Museum London",
-      "sourceUrl": "https://www.nhm.ac.uk/discover/shark-evolution-a-450-million-year-timeline.html"
+      "guessChallenge": {
+        "type": "slider",
+        "prompt": "Roughly how many years can a Greenland shark live according to eye-lens radiocarbon dating?",
+        "min": 50,
+        "max": 500,
+        "step": 10,
+        "unit": "years",
+        "correctValue": 400
+      },
+      "sourceName": "Science (AAAS)",
+      "sourceUrl": "https://www.science.org/doi/10.1126/science.aaf1703"
     },
-    "sourceName": "Natural History Museum London",
-    "sourceUrl": "https://www.nhm.ac.uk/discover/shark-evolution-a-450-million-year-timeline.html"
+    "sourceName": "Science (AAAS)",
+    "sourceUrl": "https://www.science.org/doi/10.1126/science.aaf1703"
   },
   {
     "id": "nature-04",
@@ -812,50 +830,68 @@
     "category": "nature",
     "accentColor": "#0D9488",
     "iconName": "Bird",
-    "emoji": "🦩",
-    "readingTimeSec": 14,
+    "emoji": "🐦",
+    "readingTimeSec": 15,
     "tr": {
-      "slug": "flamingolar-pembe-dogmaz",
-      "title": "Flamingolar Aslında Gri Doğar, Yedikleriyle Pembeleşir",
-      "factText": "Flamingo yavruları yumurtadan gri veya beyaz tüylerle çıkar; ikonik pembe renklerini tamamen yedikleri besinlerden alırlar.",
-      "deepDiveDetail": "Flamingoların tükettiği mavi-yeşil algler ve tuzlu su karidesleri 'beta-karoten' pigmenti açısından zengindir. Karaciğerdeki enzimler bu pigmenti parçalayarak zamanla tüylere parlak pembe ve mercan rengini verir.",
-      "sourceHint": "National Audubon Society",
+      "slug": "ak-karinli-ebabil-yere-hic-konmadan-200-gun-ucar",
+      "title": "Ak Karınlı Ebabil Kuşu Yere Hiç Konmadan 200 Gün Boyunca Havada Uyuyup Beslenerek Uçabilir",
+      "factText": "İsviçre Ornitoloji Enstitüsü vericileriyle takip edilen ak karınlı ebabil kuşlarının göç sırasında tek bir kez bile yere konmadan 200 gün aralıksız uçtuğu kanıtlandı.",
+      "deepDiveDetail": "Kuşların sırtına takılan mikro ivmeölçerler, ebabillerin Sahra'yı aşarken böcekleri havada avladığını ve beyninin bir yarımküresiyle uyurken uçuşunu sürdürdüğünü ortaya koydu.",
+      "sourceHint": "Nature Communications",
       "tag": "Ornitoloji",
       "quiz": {
-        "question": "Flamingolara pembe rengini veren temel madde hangisidir?",
+        "question": "Ak karınlı ebabil kuşları yere hiç konmadan yaklaşık kaç gün aralıksız havada kalabilir?",
         "options": [
-          "Besinlerdeki beta-karoten pigmenti",
-          "Güneş ışığının tüyleri yakması",
-          "Kandaki demir oranı"
+          "200 gün",
+          "14 gün",
+          "45 gün"
         ],
         "correctIndex": 0,
-        "explanation": "Alg ve karideslerde bulunan karotenoid pigmentler zamanla tüyleri pembeye boyar."
+        "explanation": "Mikro veri kaydediciler ebabillerin 6 ayı aşan göç döneminde yere dokunmadan ~200 gün uçabildiğini ölçtü."
       },
-      "sourceName": "National Audubon Society",
-      "sourceUrl": "https://www.audubon.org/"
+      "guessChallenge": {
+        "type": "slider",
+        "prompt": "Ak karınlı ebabil kuşu yere hiç inmeden yaklaşık kaç gün aralıksız uçabilir?",
+        "min": 10,
+        "max": 250,
+        "step": 10,
+        "unit": "gün",
+        "correctValue": 200
+      },
+      "sourceName": "Nature Communications",
+      "sourceUrl": "https://www.nature.com/articles/ncomms3543"
     },
     "en": {
-      "slug": "flamingos-are-born-grey-not-pink",
-      "title": "Flamingos Are Born Grey—Their Diet Turns Them Pink",
-      "factText": "Baby flamingos hatch with soft grey or white feathers and owe their famous pink color entirely to their food.",
-      "deepDiveDetail": "The brine shrimp and blue-green algae flamingos eat are packed with carotenoid pigments like beta-carotene. Digestive enzymes break down these pigments and deposit them into growing feathers.",
-      "sourceHint": "National Audubon Society",
+      "slug": "alpine-swift-flies-nonstop-for-200-days-without-landing",
+      "title": "The Alpine Swift Can Fly Non-Stop for 200 Days Without Ever Touching the Ground",
+      "factText": "Tiny Swiss telemetry tags proved migrating Alpine swifts stay airborne continuously for 200 days—feeding, gliding, and sleeping mid-flight.",
+      "deepDiveDetail": "Micro-accelerometers logged wingbeat pauses only during gliding thermal ascents, showing these birds spend over six consecutive months completely airborne above the Sahara.",
+      "sourceHint": "Nature Communications",
       "tag": "Ornithology",
       "quiz": {
-        "question": "What gives flamingos their bright pink plumage?",
+        "question": "Roughly how long can an Alpine swift remain continuously airborne without landing once?",
         "options": [
-          "Carotenoid pigments in their diet",
-          "Sunburn on white feathers",
-          "High iron levels in blood"
+          "~200 days",
+          "~14 days",
+          "~45 days"
         ],
         "correctIndex": 0,
-        "explanation": "Carotenoids from algae and brine shrimp tint their feathers pink over time."
+        "explanation": "Backpack loggers recorded uninterrupted flight exceeding 200 days across their migration."
       },
-      "sourceName": "National Audubon Society",
-      "sourceUrl": "https://www.audubon.org/"
+      "guessChallenge": {
+        "type": "slider",
+        "prompt": "For roughly how many days can an Alpine swift stay airborne without landing?",
+        "min": 10,
+        "max": 250,
+        "step": 10,
+        "unit": "days",
+        "correctValue": 200
+      },
+      "sourceName": "Nature Communications",
+      "sourceUrl": "https://www.nature.com/articles/ncomms3543"
     },
-    "sourceName": "National Audubon Society",
-    "sourceUrl": "https://www.audubon.org/"
+    "sourceName": "Nature Communications",
+    "sourceUrl": "https://www.nature.com/articles/ncomms3543"
   },
   {
     "id": "nature-06",
@@ -2162,50 +2198,68 @@
     "category": "science",
     "accentColor": "#0284C7",
     "iconName": "Droplets",
-    "emoji": "🍯",
-    "readingTimeSec": 14,
+    "emoji": "❄️",
+    "readingTimeSec": 15,
     "tr": {
-      "slug": "dogal-bal-binlerce-yil-bozulmaz",
-      "title": "Doğal Bal Binlerce Yıl Geçse de Bozulmaz",
-      "factText": "Antik Mısır mezarlarında bulunan 3.000 yıllık mühürlü bal kavanozları bugün bile yenilebilir durumdadır.",
-      "deepDiveDetail": "Balın sırrı üçlü korumadır: çok düşük su içeriği bakterileri susuz bırakır, pH seviyesi asidiktir (~3,9) ve arı enzimlerinin ürettiği az miktardaki hidrojen peroksit mikropların çoğalmasını engeller.",
-      "sourceHint": "Smithsonian Magazine / Food Chemistry",
-      "tag": "Gıda Kimyası",
+      "slug": "superakiskan-helyum-4-yercekimine-karsi-duvara-tirmanir",
+      "title": "Mutlak Sıfıra Yakın Soğutulan Sıvı Helyum-4, Yerçekimine Karşı Kabın Duvarından Yukarı Tırmanır",
+      "factText": "2,17 Kelvin sıcaklığın altında sıvı helyum-4 sıfır viskoziteli bir süperakışkana dönüşür ve Rollin filmi oluşturarak cam behere tırmanıp dışarı taşar.",
+      "deepDiveDetail": "Atomların tamamı aynı Bose-Einstein kuantum temel durumuna çökünce iç sürtünme tamamen yok olur. Sıvı, molekül kalınlığında bir tabaka halinde kap duvarı boyunca yukarı süzülerek sifon etkisiyle yerçekimine meydan okur.",
+      "sourceHint": "APS Physics / Physical Review",
+      "tag": "Kuantum Fiziği",
       "quiz": {
-        "question": "Doğal balın binlerce yıl bozulmadan kalabilmesini sağlayan üç etkenden biri hangisidir?",
+        "question": "2,17 Kelvin altındaki süperakışkan helyum-4 neden kabın duvarlarından yukarı tırmanabilir?",
         "options": [
-          "Çok düşük su oranı ve asidik yapısı",
-          "İçinde yüksek miktarda alkol bulunması",
-          "Sıfırın altında donma noktası"
+          "Sıfır viskoziteye geçip sürtünmesiz kuantum filmi oluşturduğu için",
+          "Helyum manyetik bir metal olduğu için",
+          "Kap içinde kaynayarak buhar itkisi ürettiği için"
         ],
         "correctIndex": 0,
-        "explanation": "Düşük nem, asidik pH ve doğal hidrojen peroksit bakterilerin yaşamasını imkansız kılar."
+        "explanation": "Lambda noktasının altında sıfır viskoziteli Rollin filmi van der Waals kuvvetiyle duvarı sürtünmesiz tırmanır."
       },
-      "sourceName": "Smithsonian Magazine / Food Chemistry",
-      "sourceUrl": "https://www.smithsonianmag.com/science-nature/the-science-behind-honeys-eternal-shelf-life-1218690/"
+      "guessChallenge": {
+        "type": "slider",
+        "prompt": "Helyum-4 yaklaşık kaç Kelvin sıcaklığın altına soğutulduğunda süperakışkana dönüşür?",
+        "min": 1,
+        "max": 10,
+        "step": 1,
+        "unit": "K",
+        "correctValue": 2
+      },
+      "sourceName": "APS Physics / Physical Review",
+      "sourceUrl": "https://journals.aps.org/pr/abstract/10.1103/PhysRev.54.843"
     },
     "en": {
-      "slug": "natural-honey-never-spoils",
-      "title": "Pure Honey Practically Never Spoils",
-      "factText": "Sealed jars of 3,000-year-old honey found in ancient Egyptian tombs were still chemically unspoiled.",
-      "deepDiveDetail": "Honey combines three natural defenses: extraordinarily low moisture that dehydrates bacteria, high acidity (pH ~3.9), and trace hydrogen peroxide created by bee enzymes.",
-      "sourceHint": "Smithsonian Magazine / Food Chemistry",
-      "tag": "Food Chemistry",
+      "slug": "superfluid-helium-4-climbs-container-walls-zero-viscosity",
+      "title": "Cooled Near Absolute Zero, Superfluid Helium-4 Defies Gravity and Climbs Up Container Walls",
+      "factText": "Below 2.17 Kelvin, liquid helium-4 enters a zero-viscosity quantum phase and forms a microscopic Rollin film that creeps upward over beaker walls.",
+      "deepDiveDetail": "When cooled past its Lambda point, helium-4 atoms lock into a coherent quantum state with zero internal friction. Driven by surface attraction, a microscopic film climbs vertical glass walls and drips off the bottom.",
+      "sourceHint": "APS Physics / Physical Review",
+      "tag": "Quantum Physics",
       "quiz": {
-        "question": "Which combination helps pure honey resist spoilage for millennia?",
+        "question": "Why can superfluid helium-4 below 2.17 K creep up and over glass container walls?",
         "options": [
-          "Very low moisture and natural acidity",
-          "High alcohol concentration",
-          "Sub-zero freezing temperature"
+          "It loses all viscosity and flows frictionlessly as a quantum Rollin film",
+          "Liquid helium becomes ferromagnetic below 4 K",
+          "Microscopic bubbles push it upward"
         ],
         "correctIndex": 0,
-        "explanation": "Low water content, acidic pH, and trace hydrogen peroxide prevent microbes from surviving."
+        "explanation": "Below the Lambda point, zero viscosity lets capillary forces draw the fluid right up and over walls."
       },
-      "sourceName": "Smithsonian Magazine / Food Chemistry",
-      "sourceUrl": "https://www.smithsonianmag.com/science-nature/the-science-behind-honeys-eternal-shelf-life-1218690/"
+      "guessChallenge": {
+        "type": "slider",
+        "prompt": "Near roughly how many Kelvin does liquid helium-4 transition into a zero-viscosity superfluid?",
+        "min": 1,
+        "max": 10,
+        "step": 1,
+        "unit": "K",
+        "correctValue": 2
+      },
+      "sourceName": "APS Physics / Physical Review",
+      "sourceUrl": "https://journals.aps.org/pr/abstract/10.1103/PhysRev.54.843"
     },
-    "sourceName": "Smithsonian Magazine / Food Chemistry",
-    "sourceUrl": "https://www.smithsonianmag.com/science-nature/the-science-behind-honeys-eternal-shelf-life-1218690/"
+    "sourceName": "APS Physics / Physical Review",
+    "sourceUrl": "https://journals.aps.org/pr/abstract/10.1103/PhysRev.54.843"
   },
   {
     "id": "science-03",
@@ -2262,50 +2316,68 @@
     "category": "science",
     "accentColor": "#0284C7",
     "iconName": "Atom",
-    "emoji": "🍌",
-    "readingTimeSec": 14,
+    "emoji": "🫧",
+    "readingTimeSec": 15,
     "tr": {
-      "slug": "muzlar-dogal-olarak-cok-az-radyoaktiftir",
-      "title": "Muzlar Doğal Olarak Çok Hafif Radyoaktiftir",
-      "factText": "Her muz, içinde doğal olarak bulunan potasyum-40 izotopu nedeniyle ölçülebilir ama tamamen zararsız düzeyde radyasyon yayar.",
-      "deepDiveDetail": "Fizikçiler günlük düşük radyasyon dozlarını anlatmak için 'Muz Eşdeğeri Doz' (BED) birimini bile kullanır. Ancak radyasyon zehirlenmesi yaşamak için tek oturuşta yaklaşık 10 milyon muz yemeniz gerekirdi!",
-      "sourceHint": "Oak Ridge Associated Universities",
-      "tag": "Nükleer Fizik",
+      "slug": "sonoluminesans-su-kabarcigini-5000-kelvin-isiga-cevirir",
+      "title": "Suyun İçindeki Bir Hava Kabarcığına Ses Dalgası Verildiğinde 5.000 Kelvin Sıcaklıkta Işık Parlaması Üretir",
+      "factText": "Sonolüminesans denen bu olayda, ses basıncıyla ani çöken mikroskobik su kabarcığı saniyenin trilyonda birinde Güneş yüzeyi kadar ısınır.",
+      "deepDiveDetail": "Akustik kavitasyon altında kabarcık önce genişler, ardından sesüstü hızla içeri çöker. Sıkışan gaz yaklaşık 5.000 K (bazı deneylerde daha da sıcak) bir plazma parlaması yayar; bilim buna 'kavanozdaki yıldız' adını verir.",
+      "sourceHint": "Reviews of Modern Physics",
+      "tag": "Akustik Fizik",
       "quiz": {
-        "question": "Muzlardaki zararsız doğal radyasyondan hangi element sorumludur?",
+        "question": "Sonolüminesans deneyinde su içindeki bir gaz kabarcığının mikroskobik ışık patlaması üretmesinin sebebi nedir?",
         "options": [
-          "Potasyum-40",
-          "Uranyum-235",
-          "Kalsiyum-12"
+          "Ultrasonik ses dalgasının kabarcığı sesüstü hızla çöktürüp gazı aşırı ısıtması",
+          "Suya karıştırılan fosfor tozunun parlaması",
+          "Kabarcığın içindeki suyun elektrolizle yanması"
         ],
         "correctIndex": 0,
-        "explanation": "Muzlar potasyum açısından zengindir ve doğadaki potasyumun küçük bir kısmı radyoaktif Potasyum-40'tır."
+        "explanation": "Akustik dalgayla sıkışan gaz birkaç pikosaniye içinde Güneş yüzeyi sıcaklığında plazma ışığı yayar."
       },
-      "sourceName": "US EPA / Oak Ridge Associated Universities",
-      "sourceUrl": "https://www.epa.gov/radtown/natural-radioactivity-food"
+      "guessChallenge": {
+        "type": "slider",
+        "prompt": "Sonolüminesans sırasında çöken mikro kabarcığın iç sıcaklığı yaklaşık kaç Kelvin'e ulaşır?",
+        "min": 500,
+        "max": 6000,
+        "step": 500,
+        "unit": "K",
+        "correctValue": 5000
+      },
+      "sourceName": "Reviews of Modern Physics",
+      "sourceUrl": "https://journals.aps.org/rmp/abstract/10.1103/RevModPhys.74.425"
     },
     "en": {
-      "slug": "bananas-are-naturally-slightly-radioactive",
-      "title": "Bananas Are Naturally (and Harmlessly) Slightly Radioactive",
-      "factText": "Every banana contains trace amounts of potassium-40, giving it a tiny, completely safe dose of natural radioactivity.",
-      "deepDiveDetail": "Health physicists even joke using the 'Banana Equivalent Dose' to put radiation into perspective. You would have to eat roughly 10 million bananas in one sitting to experience radiation sickness.",
-      "sourceHint": "Oak Ridge Associated Universities",
-      "tag": "Nuclear Physics",
+      "slug": "sonoluminescence-sound-waves-turn-water-bubble-into-star-hot-light",
+      "title": "Blasting a Tiny Water Bubble with Sound Waves Collapses It into a 5,000-Kelvin Flash of Star-Hot Light",
+      "factText": "In sonoluminescence, intense acoustic waves crush a microscopic water bubble so fast that trapped gas briefly flashes at over 5,000 Kelvin—as hot as the Sun's surface.",
+      "deepDiveDetail": "During ultrasonic cavitation, the bubble expands and violently implodes within picoseconds, ionizing internal gas into a pinpoint flash of light physicists call a 'star in a jar.'",
+      "sourceHint": "Reviews of Modern Physics",
+      "tag": "Acoustic Physics",
       "quiz": {
-        "question": "Which naturally occurring isotope makes bananas mildly radioactive?",
+        "question": "What causes a tiny suspended bubble to emit an ultraviolet-bright flash during sonoluminescence?",
         "options": [
-          "Potassium-40",
-          "Uranium-235",
-          "Helium-4"
+          "Violent acoustic collapse compressing internal gas to star-like temperatures",
+          "Chemical bioluminescence from dissolved algae",
+          "Static electricity rubbed off the glass tank"
         ],
         "correctIndex": 0,
-        "explanation": "Bananas are rich in potassium, and a tiny fraction of natural potassium is the isotope K-40."
+        "explanation": "Adiabatic implosion crushes the bubble's core in picoseconds, heating trapped gas into a brief glowing plasma."
       },
-      "sourceName": "US EPA / Oak Ridge Associated Universities",
-      "sourceUrl": "https://www.epa.gov/radtown/natural-radioactivity-food"
+      "guessChallenge": {
+        "type": "slider",
+        "prompt": "Roughly how hot (in Kelvin) does a collapsing bubble get during single-bubble sonoluminescence?",
+        "min": 500,
+        "max": 6000,
+        "step": 500,
+        "unit": "K",
+        "correctValue": 5000
+      },
+      "sourceName": "Reviews of Modern Physics",
+      "sourceUrl": "https://journals.aps.org/rmp/abstract/10.1103/RevModPhys.74.425"
     },
-    "sourceName": "US EPA / Oak Ridge Associated Universities",
-    "sourceUrl": "https://www.epa.gov/radtown/natural-radioactivity-food"
+    "sourceName": "Reviews of Modern Physics",
+    "sourceUrl": "https://journals.aps.org/rmp/abstract/10.1103/RevModPhys.74.425"
   },
   {
     "id": "science-05",
@@ -2662,50 +2734,68 @@
     "category": "records",
     "accentColor": "#DB2777",
     "iconName": "Landmark",
-    "emoji": "🍋",
-    "readingTimeSec": 14,
+    "emoji": "⏳",
+    "readingTimeSec": 15,
     "tr": {
-      "slug": "eyfel-kulesi-yazin-15-santimetre-uzar",
-      "title": "Eyfel Kulesi Sıcak Yaz Günlerinde 15 Santimetre Uzar",
-      "factText": "Paris'in simgesi Eyfel Kulesi yaz sıcağında ısıl genleşme nedeniyle kış aylarına göre yaklaşık 15 cm daha uzun ölçülür.",
-      "deepDiveDetail": "Yaklaşık 7.300 ton işlenmiş demirden yapılan kule güneşte ısındıkça demir atomları daha hızlı titreşir ve aralarındaki mesafe artar. Hatta güneşin vurduğu taraf daha çok genleştiği için kule gün içinde hafifçe eğilir.",
-      "sourceHint": "Tour Eiffel Official Engineering Facts",
-      "tag": "Mühendislik Rekoru",
+      "slug": "dunyanin-en-uzun-deneyi-zift-damlasi-97-yilda-9-damla",
+      "title": "1927'den Beri Süren Zift Damlası Deneyinde Katı Görünümlü Zift Şimdiye Dek Sadece 9 Damla Akıttı",
+      "factText": "Çekiçle vurulduğunda cam gibi kırılan zift aslında sudan 230 milyar kat yoğun bir akışkandır; Queensland Üniversitesi'ndeki huniden neredeyse her 10 yılda 1 damla düşer.",
+      "deepDiveDetail": "Profesör Thomas Parnell 1927'de katı görünümlü zifti mühürlü bir huniye döktü ve 1930'da huninin ucunu kesti. O günden beri yalnızca 9 damla düştü; hiç kimse bir damlanın kopuş anını canlı göremedi.",
+      "sourceHint": "University of Queensland Physics Museum",
+      "tag": "Bilim Rekoru",
       "quiz": {
-        "question": "Eyfel Kulesi'nin yazın yaklaşık 15 cm daha uzun olmasının sebebi nedir?",
+        "question": "1927'de başlatılan ünlü Zift Damlası (Pitch Drop) deneyinde huniden bugüne kadar toplam kaç damla düştü?",
         "options": [
-          "Demir yapının sıcak havada ısıl genleşmesi",
-          "Yazın kule tepesindeki bayrağın değiştirilmesi",
-          "Rüzgarın kuleyi yukarı çekmesi"
+          "9 damla",
+          "140 damla",
+          "600 damla"
         ],
         "correctIndex": 0,
-        "explanation": "Demir ısındıkça genleşir (thermal expansion), soğuk kış günlerinde ise tekrar büzülür."
+        "explanation": "Ziftin viskozitesi o kadar yüksektir ki her damlanın kopması 8 ila 13 yıl sürer; 9. damla 2014'te düşmüştür."
       },
-      "sourceName": "Tour Eiffel Official Engineering Facts",
-      "sourceUrl": "https://www.toureiffel.paris/en/the-monument/key-figures"
+      "guessChallenge": {
+        "type": "slider",
+        "prompt": "1927'de başlayan Zift Damlası deneyinde şu ana kadar toplam kaç damla düşmüştür?",
+        "min": 1,
+        "max": 25,
+        "step": 1,
+        "unit": "damla",
+        "correctValue": 9
+      },
+      "sourceName": "University of Queensland Physics Museum",
+      "sourceUrl": "https://smp.uq.edu.au/pitch-drop-experiment"
     },
     "en": {
-      "slug": "eiffel-tower-grows-15-cm-taller-in-summer",
-      "title": "The Eiffel Tower Grows Up to 15 cm Taller in Summer",
-      "factText": "On hot Parisian summer days, thermal expansion makes the Eiffel Tower roughly 15 centimeters (6 inches) taller than in winter.",
-      "deepDiveDetail": "Built from over 7,300 tons of puddled iron, the structure expands as summer heat excites its metal atoms—and the sunny side can even lean slightly away from the sun during the day.",
-      "sourceHint": "Tour Eiffel Official Engineering Facts",
-      "tag": "Engineering Oddity",
+      "slug": "pitch-drop-experiment-only-9-drops-since-1927",
+      "title": "Running Since 1927, the World's Longest Lab Experiment Has Dropped Only 9 Drops of Solid-Looking Pitch",
+      "factText": "Pitch shatters like glass under a hammer, yet it is a fluid 230 billion times more viscous than water—dripping only 9 times inside its University of Queensland funnel.",
+      "deepDiveDetail": "Professor Thomas Parnell poured heated pitch into a sealed funnel in 1927 and cut the stem in 1930. Each droplet forms over roughly a decade; remarkably, no person has ever witnessed a drop actually falling live.",
+      "sourceHint": "University of Queensland Physics Museum",
+      "tag": "Lab Record",
       "quiz": {
-        "question": "Why is the Eiffel Tower slightly taller in hot summer weather?",
+        "question": "How many drops have fallen so far in the famous University of Queensland Pitch Drop Experiment started in 1927?",
         "options": [
-          "Thermal expansion of its iron structure",
-          "Summer antenna upgrades",
-          "Upward wind lift"
+          "9 drops",
+          "140 drops",
+          "600 drops"
         ],
         "correctIndex": 0,
-        "explanation": "Iron expands when heated and contracts again during cold winter nights."
+        "explanation": "Because pitch has ultra-high viscosity, only 9 drops have dripped since 1930 (the 9th fell in 2014)."
       },
-      "sourceName": "Tour Eiffel Official Engineering Facts",
-      "sourceUrl": "https://www.toureiffel.paris/en/the-monument/key-figures"
+      "guessChallenge": {
+        "type": "slider",
+        "prompt": "How many drops of pitch do you think have fallen since the experiment began in 1927?",
+        "min": 1,
+        "max": 25,
+        "step": 1,
+        "unit": "drops",
+        "correctValue": 9
+      },
+      "sourceName": "University of Queensland Physics Museum",
+      "sourceUrl": "https://smp.uq.edu.au/pitch-drop-experiment"
     },
-    "sourceName": "Tour Eiffel Official Engineering Facts",
-    "sourceUrl": "https://www.toureiffel.paris/en/the-monument/key-figures"
+    "sourceName": "University of Queensland Physics Museum",
+    "sourceUrl": "https://smp.uq.edu.au/pitch-drop-experiment"
   },
   {
     "id": "weird-03",

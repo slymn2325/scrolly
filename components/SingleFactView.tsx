@@ -9,15 +9,19 @@ import {
   ArrowRight,
   BookOpen,
   Brain,
+  Check,
   CheckCircle2,
   ChevronRight,
   Clock,
+  Copy,
   ExternalLink,
   Heart,
   HelpCircle,
   Home,
+  MessageCircle,
   Microscope,
   Play,
+  Share2,
   ShieldCheck,
   Sparkles,
   Volume2,
@@ -30,6 +34,7 @@ import FloatingBackground from '@/components/FloatingBackground';
 import SiteTrustFooter from '@/components/SiteTrustFooter';
 import StickyAdBanner from '@/components/StickyAdBanner';
 import { getCategoryMeta, type Language, translations } from '@/i18n/translations';
+import { formatValueWithUnit } from '@/lib/formatUnit';
 import {
   categoryIdToRouteSlug,
   type FactCard,
@@ -65,6 +70,7 @@ export default function SingleFactView({
   const [isFavorite, setIsFavorite] = useState(false);
   const [selectedOption, setSelectedOption] = useState<number | null>(null);
   const [adDismissed, setAdDismissed] = useState(false);
+  const [copiedLink, setCopiedLink] = useState(false);
 
   const primarySlug = getFactPrimarySlug(fact);
   const categorySlug = categoryIdToRouteSlug(fact.category);
@@ -105,10 +111,11 @@ export default function SingleFactView({
     const gc = content.guessChallenge;
     if (!gc) return null;
     if (gc.type === 'slider' && typeof gc.correctValue === 'number') {
-      const unit = gc.unit ? ` ${gc.unit}` : '';
       return {
         prompt: gc.prompt,
-        answer: `${gc.correctValue}${unit}`,
+        answer: gc.unit
+          ? formatValueWithUnit(gc.correctValue, gc.unit, lang)
+          : String(gc.correctValue),
       };
     }
     if (gc.type === 'binary' && gc.options && typeof gc.correctOptionIndex === 'number') {
@@ -118,7 +125,7 @@ export default function SingleFactView({
       };
     }
     return null;
-  }, [content.guessChallenge]);
+  }, [content.guessChallenge, lang]);
 
   const handleLangSwitch = (targetLang: Language) => {
     vibrateTap(12);
@@ -416,6 +423,68 @@ export default function SingleFactView({
                   : `All ${catMeta.label.en} Facts`}
               </span>
             </Link>
+          </div>
+        </div>
+
+        {/* Social Share Buttons Bar (WhatsApp, X, Copy Link) */}
+        <div
+          data-testid="single-fact-share-bar"
+          className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-ink/10 bg-white/85 px-4 py-3 shadow-sm backdrop-blur-sm"
+        >
+          <div className="flex items-center gap-2 text-xs font-extrabold uppercase tracking-wider text-ink/60">
+            <Share2 className="h-3.5 w-3.5 text-violet-600" />
+            <span>{lang === 'tr' ? 'Bu Bilgiyi Paylaş' : 'Share This Fact'}</span>
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            <a
+              href={`https://wa.me/?text=${encodeURIComponent(
+                `${content.title} — https://scrolly.live/fact/${primarySlug}`
+              )}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              data-testid="share-whatsapp-btn"
+              className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/10 px-3.5 py-2 text-xs font-bold text-emerald-700 transition-colors hover:bg-emerald-500/20"
+            >
+              <MessageCircle className="h-3.5 w-3.5" />
+              <span>WhatsApp</span>
+            </a>
+            <a
+              href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(
+                content.title
+              )}&url=${encodeURIComponent(`https://scrolly.live/fact/${primarySlug}`)}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              data-testid="share-x-btn"
+              className="inline-flex items-center gap-1.5 rounded-full bg-slate-900/5 px-3.5 py-2 text-xs font-bold text-ink transition-colors hover:bg-slate-900/10"
+            >
+              <span className="font-mono text-xs font-black leading-none">𝕏</span>
+              <span>{lang === 'tr' ? "X'te Paylaş" : 'Post on X'}</span>
+            </a>
+            <button
+              type="button"
+              data-testid="share-copy-link-btn"
+              onClick={() => {
+                const url = `https://scrolly.live/fact/${primarySlug}`;
+                if (typeof navigator !== 'undefined' && navigator.clipboard?.writeText) {
+                  navigator.clipboard.writeText(url).catch(() => {});
+                }
+                setCopiedLink(true);
+                window.setTimeout(() => setCopiedLink(false), 2000);
+              }}
+              className="inline-flex items-center gap-1.5 rounded-full border border-violet-200 bg-violet-50 px-3.5 py-2 text-xs font-bold text-violet-800 transition-colors hover:bg-violet-100"
+            >
+              {copiedLink ? (
+                <>
+                  <Check className="h-3.5 w-3.5 text-emerald-600" />
+                  <span>{lang === 'tr' ? 'Kopyalandı!' : 'Copied!'}</span>
+                </>
+              ) : (
+                <>
+                  <Copy className="h-3.5 w-3.5" />
+                  <span>{lang === 'tr' ? 'Bağlantıyı Kopyala' : 'Copy Link'}</span>
+                </>
+              )}
+            </button>
           </div>
         </div>
 

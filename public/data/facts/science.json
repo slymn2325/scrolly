@@ -54,50 +54,68 @@
     "category": "science",
     "accentColor": "#0284C7",
     "iconName": "Droplets",
-    "emoji": "🍯",
-    "readingTimeSec": 14,
+    "emoji": "❄️",
+    "readingTimeSec": 15,
     "tr": {
-      "slug": "dogal-bal-binlerce-yil-bozulmaz",
-      "title": "Doğal Bal Binlerce Yıl Geçse de Bozulmaz",
-      "factText": "Antik Mısır mezarlarında bulunan 3.000 yıllık mühürlü bal kavanozları bugün bile yenilebilir durumdadır.",
-      "deepDiveDetail": "Balın sırrı üçlü korumadır: çok düşük su içeriği bakterileri susuz bırakır, pH seviyesi asidiktir (~3,9) ve arı enzimlerinin ürettiği az miktardaki hidrojen peroksit mikropların çoğalmasını engeller.",
-      "sourceHint": "Smithsonian Magazine / Food Chemistry",
-      "tag": "Gıda Kimyası",
+      "slug": "superakiskan-helyum-4-yercekimine-karsi-duvara-tirmanir",
+      "title": "Mutlak Sıfıra Yakın Soğutulan Sıvı Helyum-4, Yerçekimine Karşı Kabın Duvarından Yukarı Tırmanır",
+      "factText": "2,17 Kelvin sıcaklığın altında sıvı helyum-4 sıfır viskoziteli bir süperakışkana dönüşür ve Rollin filmi oluşturarak cam behere tırmanıp dışarı taşar.",
+      "deepDiveDetail": "Atomların tamamı aynı Bose-Einstein kuantum temel durumuna çökünce iç sürtünme tamamen yok olur. Sıvı, molekül kalınlığında bir tabaka halinde kap duvarı boyunca yukarı süzülerek sifon etkisiyle yerçekimine meydan okur.",
+      "sourceHint": "APS Physics / Physical Review",
+      "tag": "Kuantum Fiziği",
       "quiz": {
-        "question": "Doğal balın binlerce yıl bozulmadan kalabilmesini sağlayan üç etkenden biri hangisidir?",
+        "question": "2,17 Kelvin altındaki süperakışkan helyum-4 neden kabın duvarlarından yukarı tırmanabilir?",
         "options": [
-          "Çok düşük su oranı ve asidik yapısı",
-          "İçinde yüksek miktarda alkol bulunması",
-          "Sıfırın altında donma noktası"
+          "Sıfır viskoziteye geçip sürtünmesiz kuantum filmi oluşturduğu için",
+          "Helyum manyetik bir metal olduğu için",
+          "Kap içinde kaynayarak buhar itkisi ürettiği için"
         ],
         "correctIndex": 0,
-        "explanation": "Düşük nem, asidik pH ve doğal hidrojen peroksit bakterilerin yaşamasını imkansız kılar."
+        "explanation": "Lambda noktasının altında sıfır viskoziteli Rollin filmi van der Waals kuvvetiyle duvarı sürtünmesiz tırmanır."
       },
-      "sourceName": "Smithsonian Magazine / Food Chemistry",
-      "sourceUrl": "https://www.smithsonianmag.com/science-nature/the-science-behind-honeys-eternal-shelf-life-1218690/"
+      "guessChallenge": {
+        "type": "slider",
+        "prompt": "Helyum-4 yaklaşık kaç Kelvin sıcaklığın altına soğutulduğunda süperakışkana dönüşür?",
+        "min": 1,
+        "max": 10,
+        "step": 1,
+        "unit": "K",
+        "correctValue": 2
+      },
+      "sourceName": "APS Physics / Physical Review",
+      "sourceUrl": "https://journals.aps.org/pr/abstract/10.1103/PhysRev.54.843"
     },
     "en": {
-      "slug": "natural-honey-never-spoils",
-      "title": "Pure Honey Practically Never Spoils",
-      "factText": "Sealed jars of 3,000-year-old honey found in ancient Egyptian tombs were still chemically unspoiled.",
-      "deepDiveDetail": "Honey combines three natural defenses: extraordinarily low moisture that dehydrates bacteria, high acidity (pH ~3.9), and trace hydrogen peroxide created by bee enzymes.",
-      "sourceHint": "Smithsonian Magazine / Food Chemistry",
-      "tag": "Food Chemistry",
+      "slug": "superfluid-helium-4-climbs-container-walls-zero-viscosity",
+      "title": "Cooled Near Absolute Zero, Superfluid Helium-4 Defies Gravity and Climbs Up Container Walls",
+      "factText": "Below 2.17 Kelvin, liquid helium-4 enters a zero-viscosity quantum phase and forms a microscopic Rollin film that creeps upward over beaker walls.",
+      "deepDiveDetail": "When cooled past its Lambda point, helium-4 atoms lock into a coherent quantum state with zero internal friction. Driven by surface attraction, a microscopic film climbs vertical glass walls and drips off the bottom.",
+      "sourceHint": "APS Physics / Physical Review",
+      "tag": "Quantum Physics",
       "quiz": {
-        "question": "Which combination helps pure honey resist spoilage for millennia?",
+        "question": "Why can superfluid helium-4 below 2.17 K creep up and over glass container walls?",
         "options": [
-          "Very low moisture and natural acidity",
-          "High alcohol concentration",
-          "Sub-zero freezing temperature"
+          "It loses all viscosity and flows frictionlessly as a quantum Rollin film",
+          "Liquid helium becomes ferromagnetic below 4 K",
+          "Microscopic bubbles push it upward"
         ],
         "correctIndex": 0,
-        "explanation": "Low water content, acidic pH, and trace hydrogen peroxide prevent microbes from surviving."
+        "explanation": "Below the Lambda point, zero viscosity lets capillary forces draw the fluid right up and over walls."
       },
-      "sourceName": "Smithsonian Magazine / Food Chemistry",
-      "sourceUrl": "https://www.smithsonianmag.com/science-nature/the-science-behind-honeys-eternal-shelf-life-1218690/"
+      "guessChallenge": {
+        "type": "slider",
+        "prompt": "Near roughly how many Kelvin does liquid helium-4 transition into a zero-viscosity superfluid?",
+        "min": 1,
+        "max": 10,
+        "step": 1,
+        "unit": "K",
+        "correctValue": 2
+      },
+      "sourceName": "APS Physics / Physical Review",
+      "sourceUrl": "https://journals.aps.org/pr/abstract/10.1103/PhysRev.54.843"
     },
-    "sourceName": "Smithsonian Magazine / Food Chemistry",
-    "sourceUrl": "https://www.smithsonianmag.com/science-nature/the-science-behind-honeys-eternal-shelf-life-1218690/"
+    "sourceName": "APS Physics / Physical Review",
+    "sourceUrl": "https://journals.aps.org/pr/abstract/10.1103/PhysRev.54.843"
   },
   {
     "id": "science-03",
@@ -154,50 +172,68 @@
     "category": "science",
     "accentColor": "#0284C7",
     "iconName": "Atom",
-    "emoji": "🍌",
-    "readingTimeSec": 14,
+    "emoji": "🫧",
+    "readingTimeSec": 15,
     "tr": {
-      "slug": "muzlar-dogal-olarak-cok-az-radyoaktiftir",
-      "title": "Muzlar Doğal Olarak Çok Hafif Radyoaktiftir",
-      "factText": "Her muz, içinde doğal olarak bulunan potasyum-40 izotopu nedeniyle ölçülebilir ama tamamen zararsız düzeyde radyasyon yayar.",
-      "deepDiveDetail": "Fizikçiler günlük düşük radyasyon dozlarını anlatmak için 'Muz Eşdeğeri Doz' (BED) birimini bile kullanır. Ancak radyasyon zehirlenmesi yaşamak için tek oturuşta yaklaşık 10 milyon muz yemeniz gerekirdi!",
-      "sourceHint": "Oak Ridge Associated Universities",
-      "tag": "Nükleer Fizik",
+      "slug": "sonoluminesans-su-kabarcigini-5000-kelvin-isiga-cevirir",
+      "title": "Suyun İçindeki Bir Hava Kabarcığına Ses Dalgası Verildiğinde 5.000 Kelvin Sıcaklıkta Işık Parlaması Üretir",
+      "factText": "Sonolüminesans denen bu olayda, ses basıncıyla ani çöken mikroskobik su kabarcığı saniyenin trilyonda birinde Güneş yüzeyi kadar ısınır.",
+      "deepDiveDetail": "Akustik kavitasyon altında kabarcık önce genişler, ardından sesüstü hızla içeri çöker. Sıkışan gaz yaklaşık 5.000 K (bazı deneylerde daha da sıcak) bir plazma parlaması yayar; bilim buna 'kavanozdaki yıldız' adını verir.",
+      "sourceHint": "Reviews of Modern Physics",
+      "tag": "Akustik Fizik",
       "quiz": {
-        "question": "Muzlardaki zararsız doğal radyasyondan hangi element sorumludur?",
+        "question": "Sonolüminesans deneyinde su içindeki bir gaz kabarcığının mikroskobik ışık patlaması üretmesinin sebebi nedir?",
         "options": [
-          "Potasyum-40",
-          "Uranyum-235",
-          "Kalsiyum-12"
+          "Ultrasonik ses dalgasının kabarcığı sesüstü hızla çöktürüp gazı aşırı ısıtması",
+          "Suya karıştırılan fosfor tozunun parlaması",
+          "Kabarcığın içindeki suyun elektrolizle yanması"
         ],
         "correctIndex": 0,
-        "explanation": "Muzlar potasyum açısından zengindir ve doğadaki potasyumun küçük bir kısmı radyoaktif Potasyum-40'tır."
+        "explanation": "Akustik dalgayla sıkışan gaz birkaç pikosaniye içinde Güneş yüzeyi sıcaklığında plazma ışığı yayar."
       },
-      "sourceName": "US EPA / Oak Ridge Associated Universities",
-      "sourceUrl": "https://www.epa.gov/radtown/natural-radioactivity-food"
+      "guessChallenge": {
+        "type": "slider",
+        "prompt": "Sonolüminesans sırasında çöken mikro kabarcığın iç sıcaklığı yaklaşık kaç Kelvin'e ulaşır?",
+        "min": 500,
+        "max": 6000,
+        "step": 500,
+        "unit": "K",
+        "correctValue": 5000
+      },
+      "sourceName": "Reviews of Modern Physics",
+      "sourceUrl": "https://journals.aps.org/rmp/abstract/10.1103/RevModPhys.74.425"
     },
     "en": {
-      "slug": "bananas-are-naturally-slightly-radioactive",
-      "title": "Bananas Are Naturally (and Harmlessly) Slightly Radioactive",
-      "factText": "Every banana contains trace amounts of potassium-40, giving it a tiny, completely safe dose of natural radioactivity.",
-      "deepDiveDetail": "Health physicists even joke using the 'Banana Equivalent Dose' to put radiation into perspective. You would have to eat roughly 10 million bananas in one sitting to experience radiation sickness.",
-      "sourceHint": "Oak Ridge Associated Universities",
-      "tag": "Nuclear Physics",
+      "slug": "sonoluminescence-sound-waves-turn-water-bubble-into-star-hot-light",
+      "title": "Blasting a Tiny Water Bubble with Sound Waves Collapses It into a 5,000-Kelvin Flash of Star-Hot Light",
+      "factText": "In sonoluminescence, intense acoustic waves crush a microscopic water bubble so fast that trapped gas briefly flashes at over 5,000 Kelvin—as hot as the Sun's surface.",
+      "deepDiveDetail": "During ultrasonic cavitation, the bubble expands and violently implodes within picoseconds, ionizing internal gas into a pinpoint flash of light physicists call a 'star in a jar.'",
+      "sourceHint": "Reviews of Modern Physics",
+      "tag": "Acoustic Physics",
       "quiz": {
-        "question": "Which naturally occurring isotope makes bananas mildly radioactive?",
+        "question": "What causes a tiny suspended bubble to emit an ultraviolet-bright flash during sonoluminescence?",
         "options": [
-          "Potassium-40",
-          "Uranium-235",
-          "Helium-4"
+          "Violent acoustic collapse compressing internal gas to star-like temperatures",
+          "Chemical bioluminescence from dissolved algae",
+          "Static electricity rubbed off the glass tank"
         ],
         "correctIndex": 0,
-        "explanation": "Bananas are rich in potassium, and a tiny fraction of natural potassium is the isotope K-40."
+        "explanation": "Adiabatic implosion crushes the bubble's core in picoseconds, heating trapped gas into a brief glowing plasma."
       },
-      "sourceName": "US EPA / Oak Ridge Associated Universities",
-      "sourceUrl": "https://www.epa.gov/radtown/natural-radioactivity-food"
+      "guessChallenge": {
+        "type": "slider",
+        "prompt": "Roughly how hot (in Kelvin) does a collapsing bubble get during single-bubble sonoluminescence?",
+        "min": 500,
+        "max": 6000,
+        "step": 500,
+        "unit": "K",
+        "correctValue": 5000
+      },
+      "sourceName": "Reviews of Modern Physics",
+      "sourceUrl": "https://journals.aps.org/rmp/abstract/10.1103/RevModPhys.74.425"
     },
-    "sourceName": "US EPA / Oak Ridge Associated Universities",
-    "sourceUrl": "https://www.epa.gov/radtown/natural-radioactivity-food"
+    "sourceName": "Reviews of Modern Physics",
+    "sourceUrl": "https://journals.aps.org/rmp/abstract/10.1103/RevModPhys.74.425"
   },
   {
     "id": "science-05",

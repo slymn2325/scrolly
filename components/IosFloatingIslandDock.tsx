@@ -3,6 +3,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { type Language, translations } from '@/i18n/translations';
+import { ENABLE_COMPETITIVE_TABS } from '@/lib/featureFlags';
 import { DOCK_ICON_MAP, type DockTabId } from '@/utils/icons8Assets';
 
 export type { DockTabId };
@@ -22,8 +23,8 @@ export default function IosFloatingIslandDock({
 }: IosFloatingIslandDockProps) {
   const t = translations[lang];
 
-  // Exact left-to-right 5-item order required: Leaderboard | Quiz | Keşfet | Düello | Diploma
-  const tabs: Array<{
+  // When ENABLE_COMPETITIVE_TABS is false, keep only the 3 core tabs: Explore | Quiz | Profile & Streak
+  const allTabs: Array<{
     id: DockTabId;
     label: string;
     iconSrc: string;
@@ -55,11 +56,15 @@ export default function IosFloatingIslandDock({
     },
     {
       id: 'diploma',
-      label: t.dockDiploma,
+      label: lang === 'tr' ? 'Profil & Seri' : 'Profile & Streak',
       iconSrc: DOCK_ICON_MAP.diploma,
       legacyTestId: 'profile-drawer-btn',
     },
   ];
+
+  const tabs = ENABLE_COMPETITIVE_TABS
+    ? allTabs
+    : [allTabs[2], allTabs[1], allTabs[4]];
 
   return (
     <div className="pointer-events-none fixed inset-x-0 bottom-[calc(0.75rem+env(safe-area-inset-bottom))] z-50 mx-auto w-full max-w-[430px] px-3 md:bottom-[calc(2dvh+0.75rem+env(safe-area-inset-bottom))]">
