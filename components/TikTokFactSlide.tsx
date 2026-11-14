@@ -16,6 +16,7 @@ import {
 import CategoryMotionArt from '@/components/CategoryMotionArt';
 import GuessWidget from '@/components/GuessWidget';
 import { getCategoryMeta, type Language, translations } from '@/i18n/translations';
+import { trackEvent } from '@/lib/telemetry';
 import type { CategoryId, FactCard } from '@/types/fact';
 import { getFactUrl } from '@/utils/factsData';
 
@@ -115,13 +116,16 @@ export default function TikTokFactSlide({
   const lastTapTimeRef = useRef<number>(0);
   const lastBurstTimeRef = useRef<number>(0);
   const hasCountedDwellRef = useRef<boolean>(false);
+  const visibleEnterTimeRef = useRef<number | null>(null);
+  const hasSentDwellEventRef = useRef<boolean>(false);
 
   const t = translations[lang];
   const localized = fact[lang];
   const catMeta = getCategoryMeta(fact.category);
   const factUrl = getFactUrl(fact, lang);
+  const factSlug = fact.slug || fact.en.slug || fact.tr.slug || fact.id;
 
-  // Deterministic pseudo base likes count + user favorite state
+  // Deterministic fallback likes when running completely offline without DB counts
   const baseLikesCount = useMemo(() => {
     let sum = 120;
     for (let i = 0; i < fact.id.length; i += 1) {
@@ -129,18 +133,48 @@ export default function TikTokFactSlide({
     }
     return 400 + (sum % 890);
   }, [fact.id]);
-  const displayLikes = isFavorite ? baseLikesCount + 1 : baseLikesCount;
 
-  // Dwell-Time 1.5s read detection using IntersectionObserver
+  const [dbLikeDelta, setDbLikeDelta] = useState<number>(0);
+
+  useEffect(() => {
+    setDbLikeDelta(0);
+  }, [fact.id, fact.likesCount]);
+
+  const hasDbLikes = typeof fact.likesCount === 'number';
+  const displayLikes = hasDbLikes
+    ? Math.max(0, (fact.likesCount ?? 0) + dbLikeDelta)
+    : isFavorite
+      ? baseLikesCount + 1
+      : baseLikesCount;
+
+  // Dwell-Time 1.5s read counter + >3s telemetry duration event on slide leave/unmount
   useEffect(() => {
     const el = slideRef.current;
     if (!el) return;
+
+    const flushDwellDuration = () => {
+      if (visibleEnterTimeRef.current !== null && !hasSentDwellEventRef.current) {
+        const dwellSec = (Date.now() - visibleEnterTimeRef.current) / 1000;
+        visibleEnterTimeRef.current = null;
+        if (dwellSec > 3) {
+          hasSentDwellEventRef.current = true;
+          void trackEvent(factSlug, fact.category, 'card_dwell', {
+            dwell_sec: Number(dwellSec.toFixed(1)),
+          });
+        }
+      } else {
+        visibleEnterTimeRef.current = null;
+      }
+    };
 
     let dwellTimer: ReturnType<typeof setTimeout> | null = null;
     const observer = new IntersectionObserver(
       (entries) => {
         const entry = entries[0];
         if (entry?.isIntersecting && entry.intersectionRatio >= 0.65) {
+          if (visibleEnterTimeRef.current === null) {
+            visibleEnterTimeRef.current = Date.now();
+          }
           if (!hasCountedDwellRef.current && !dwellTimer) {
             dwellTimer = setTimeout(() => {
               if (!hasCountedDwellRef.current) {
@@ -149,9 +183,12 @@ export default function TikTokFactSlide({
               }
             }, 1500);
           }
-        } else if (dwellTimer) {
-          clearTimeout(dwellTimer);
-          dwellTimer = null;
+        } else {
+          if (dwellTimer) {
+            clearTimeout(dwellTimer);
+            dwellTimer = null;
+          }
+          flushDwellDuration();
         }
       },
       { threshold: [0.65] }
@@ -161,8 +198,9 @@ export default function TikTokFactSlide({
     return () => {
       observer.disconnect();
       if (dwellTimer) clearTimeout(dwellTimer);
+      flushDwellDuration();
     };
-  }, [fact, onDwellRead]);
+  }, [fact, factSlug, onDwellRead]);
 
   useEffect(() => {
     return () => {
@@ -196,11 +234,23 @@ export default function TikTokFactSlide({
       setHeartBursts((prev) => prev.filter((item) => item.id !== burstId));
     }, 900);
 
+    if (!isFavorite) {
+      setDbLikeDelta((prev) => prev + 1);
+      void trackEvent(factSlug, fact.category, 'like', { trigger: 'double_tap' });
+    }
     onDoubleTapLike(fact);
   };
 
   const executeFlip = () => {
-    setIsFlipped((prev) => !prev);
+    setIsFlipped((prev) => {
+      const next = !prev;
+      if (next) {
+        void trackEvent(factSlug, fact.category, 'detail_open', {
+          source: resolvedSourceName,
+        });
+      }
+      return next;
+    });
     onFlip(fact);
   };
 
@@ -241,6 +291,7 @@ export default function TikTokFactSlide({
   const handleShareClick = (e: React.MouseEvent) => {
     e.stopPropagation();
     onButtonPop();
+    void trackEvent(factSlug, fact.category, 'share');
     onOpenStoryShare(fact);
   };
 
@@ -307,6 +358,7 @@ export default function TikTokFactSlide({
             <CategoryMotionArt
               variant="hero"
               factId={fact.id}
+              sketchType={fact.sketchType}
               category={fact.category}
               accentColor={fact.accentColor}
               iconName={fact.iconName}
@@ -351,7 +403,15 @@ export default function TikTokFactSlide({
                 factId={fact.id}
                 challenge={localized.guessChallenge}
                 lang={lang}
-                onGuessAnswered={onGuessReward}
+                onGuessAnswered={(xpAwarded, accurate, details) => {
+                  onGuessReward(xpAwarded, accurate);
+                  void trackEvent(factSlug, fact.category, 'quick_guess', {
+                    guess: details.userGuess,
+                    target: details.correctValue,
+                    accuracy: details.accuracyPct,
+                    xp_awarded: xpAwarded,
+                  });
+                }}
                 onRequestFlip={() => executeFlip()}
                 onButtonPop={onButtonPop}
               />
@@ -378,6 +438,13 @@ export default function TikTokFactSlide({
               whileTap={{ scale: 0.9 }}
               onClick={(e) => {
                 e.stopPropagation();
+                if (isFavorite) {
+                  setDbLikeDelta((prev) => prev - 1);
+                  void trackEvent(factSlug, fact.category, 'unlike', { trigger: 'heart_btn' });
+                } else {
+                  setDbLikeDelta((prev) => prev + 1);
+                  void trackEvent(factSlug, fact.category, 'like', { trigger: 'heart_btn' });
+                }
                 onToggleFavorite(fact);
               }}
               aria-label={t.favorite}
@@ -424,6 +491,7 @@ export default function TikTokFactSlide({
               whileTap={{ scale: 0.9 }}
               onClick={(e) => {
                 e.stopPropagation();
+                void trackEvent(factSlug, fact.category, 'duel');
                 onOpenDuel(fact);
               }}
               aria-label={t.dockDuel}

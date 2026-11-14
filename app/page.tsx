@@ -20,6 +20,11 @@ import {
   type Language,
 } from '@/i18n/translations';
 import {
+  fetchFactsFromApiWithCache,
+  initTelemetrySync,
+  trackEvent,
+} from '@/lib/telemetry';
+import {
   type FactCard as FactCardType,
   getAllFacts,
   getFactById,
@@ -117,13 +122,16 @@ function buildPersonalizedDeck(
 }
 
 export default function HomePage() {
-  const allFacts = useMemo(() => getAllFacts(), []);
+  const staticAllFacts = useMemo(() => getAllFacts(), []);
+  const [allFacts, setAllFacts] = useState<FactCardType[]>(staticAllFacts);
   const feedRef = useRef<TikTokFeedHandle>(null);
+  const activeCategoryRef = useRef<CategoryFilter>('all');
+  const hasHydratedRef = useRef(false);
 
   const [memory, setMemory] = useState<UserMemoryState>(() => getDefaultUserState());
   const [activeCategory, setActiveCategory] = useState<CategoryFilter>('all');
-  const [deckFacts, setDeckFacts] = useState<FactCardType[]>(() => allFacts);
-  const [seedFact, setSeedFact] = useState<FactCardType>(allFacts[0]);
+  const [deckFacts, setDeckFacts] = useState<FactCardType[]>(() => staticAllFacts);
+  const [seedFact, setSeedFact] = useState<FactCardType>(staticAllFacts[0]);
 
   const [activeTab, setActiveTab] = useState<DockTabId>('explore');
   const [activeModal, setActiveModal] = useState<ActiveOverlayModal>('none');
@@ -140,14 +148,17 @@ export default function HomePage() {
     duelConfig?: DuelChallengeConfig | null;
   } | null>(null);
 
-  // Hydrate memory, Night Mode, personalized deck, and parse ?duel= / ?openQuiz=daily URL params
+  // Hydrate memory, Night Mode, personalized deck, offline telemetry queue, live API facts, and URL params
   useEffect(() => {
     const loaded = loadUserMemory();
     setMemory(loaded);
+    hasHydratedRef.current = true;
     document.documentElement.classList.toggle('dark', loaded.darkMode);
 
+    initTelemetrySync();
+
     const initialDeck = buildPersonalizedDeck(
-      allFacts,
+      staticAllFacts,
       'all',
       loaded.seenIds,
       loaded.categoryWeights,
@@ -155,6 +166,22 @@ export default function HomePage() {
     );
     setDeckFacts(initialDeck);
     if (initialDeck[0]) setSeedFact(initialDeck[0]);
+
+    let cancelled = false;
+    void fetchFactsFromApiWithCache().then((liveFacts) => {
+      if (cancelled || !liveFacts || liveFacts.length === 0) return;
+      setAllFacts(liveFacts);
+      const currentMem = loadUserMemory();
+      const updatedDeck = buildPersonalizedDeck(
+        liveFacts,
+        activeCategoryRef.current,
+        currentMem.seenIds,
+        currentMem.categoryWeights,
+        false
+      );
+      setDeckFacts(updatedDeck);
+      if (updatedDeck[0]) setSeedFact(updatedDeck[0]);
+    });
 
     if (typeof window !== 'undefined') {
       const params = new URLSearchParams(window.location.search);
@@ -168,7 +195,7 @@ export default function HomePage() {
             .map((id) => getFactById(id))
             .filter((f): f is FactCardType => Boolean(f));
           const pool = [...matched];
-          for (const candidate of allFacts) {
+          for (const candidate of staticAllFacts) {
             if (!pool.some((f) => f.id === candidate.id)) pool.push(candidate);
             if (pool.length >= 5) break;
           }
@@ -186,7 +213,7 @@ export default function HomePage() {
           setActiveTab('quiz');
         }
       } else if (openQuizParam === 'daily') {
-        const dailyFacts = pickSeededFacts(allFacts, 5, getDailySeedKey());
+        const dailyFacts = pickSeededFacts(staticAllFacts, 5, getDailySeedKey());
         setActiveQuiz({
           key: `daily-url-${Date.now()}`,
           mode: 'daily',
@@ -195,7 +222,26 @@ export default function HomePage() {
         setActiveTab('quiz');
       }
     }
-  }, [allFacts]);
+
+    return () => {
+      cancelled = true;
+    };
+  }, [staticAllFacts]);
+
+  // Synchronize user profile XP, streak, and nickname to Postgres when updated
+  useEffect(() => {
+    if (!hasHydratedRef.current) return;
+    if (memory.xp === 0 && memory.streakDays === 0) return;
+
+    const activeSlug = seedFact?.slug || seedFact?.en.slug || seedFact?.tr.slug || seedFact?.id || 'profile';
+    void trackEvent(
+      activeSlug,
+      seedFact?.category || 'general',
+      'profile_sync',
+      { xp: memory.xp, streak: memory.streakDays },
+      { xp: memory.xp, streak: memory.streakDays, username: memory.nickname }
+    );
+  }, [memory.xp, memory.streakDays, memory.nickname, seedFact]);
 
   // Keep <html> .dark class synchronized
   useEffect(() => {
@@ -245,6 +291,7 @@ export default function HomePage() {
   const handleSelectCategory = (cat: CategoryFilter) => {
     vibrateTap(12);
     playPop(soundEnabled);
+    activeCategoryRef.current = cat;
     setActiveCategory(cat);
 
     setMemory((prev) => {
@@ -396,7 +443,11 @@ export default function HomePage() {
   const handleStartDuel = (config: DuelChallengeConfig) => {
     vibrateTap(12);
     const duelFacts = config.factIds
-      .map((id) => getFactById(id))
+      .map(
+        (id) =>
+          allFacts.find((f) => f.id === id || f.slug === id || f.en.slug === id) ??
+          getFactById(id)
+      )
       .filter((f): f is FactCardType => Boolean(f));
     const pool = [...duelFacts];
     for (const candidate of allFacts) {
@@ -528,6 +579,7 @@ export default function HomePage() {
   const handleResetMemory = () => {
     const fresh = resetUserMemory();
     setMemory(fresh);
+    activeCategoryRef.current = 'all';
     setActiveCategory('all');
     const cleanDeck = buildPersonalizedDeck(allFacts, 'all', [], fresh.categoryWeights, false);
     setDeckFacts(cleanDeck);

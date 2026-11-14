@@ -40,10 +40,14 @@ export interface LocalizedContent {
 
 export interface FactCard {
   id: string;
+  slug?: string;
   category: CategoryId;
   accentColor: string;
   iconName: string;
   emoji?: string;
+  sketchType?: string;
+  likesCount?: number;
+  createdAt?: string;
   readingTimeSec?: number;
   sourceName?: string;
   sourceUrl?: string;

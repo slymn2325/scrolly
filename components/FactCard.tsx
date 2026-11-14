@@ -378,6 +378,7 @@ export default function FactCard({
               <div className="mt-3">
                 <CategoryMotionArt
                   factId={fact.id}
+                  sketchType={fact.sketchType}
                   category={fact.category}
                   accentColor={fact.accentColor}
                   iconName={fact.iconName}

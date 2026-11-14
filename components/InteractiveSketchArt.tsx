@@ -10,6 +10,7 @@ import { ScienceWeirdSketch } from './sketch/ScienceWeirdSketches';
 
 interface InteractiveSketchArtProps {
   factId?: string;
+  sketchType?: string;
   category: CategoryId;
   accentColor: string;
   lang: 'tr' | 'en';
@@ -25,8 +26,142 @@ const FALLBACK_FACT_BY_CATEGORY: Record<CategoryId, string> = {
   records: 'weird-01',
 };
 
+const SKETCH_ID_PATTERN = /^(space|nature|human|history|science|weird)-\d{2}$/;
+
+const SKETCH_KEYWORD_MAP: Record<string, string> = {
+  orbit: 'space-01',
+  planet: 'space-01',
+  neutron: 'space-02',
+  star: 'space-02',
+  diamond_rain: 'space-03',
+  footprint: 'space-04',
+  moon: 'space-04',
+  galaxy: 'space-05',
+  voyager: 'space-06',
+  sunset: 'space-07',
+  mars: 'space-07',
+  black_hole: 'space-08',
+  olympus_mons: 'space-09',
+  iss: 'space-10',
+  station: 'space-10',
+  octopus: 'nature-01',
+  tree: 'nature-02',
+  forest: 'nature-02',
+  immortal_jellyfish: 'nature-03',
+  tardigrade: 'nature-04',
+  shark: 'nature-05',
+  honeybee: 'nature-06',
+  bee: 'nature-06',
+  flamingo: 'nature-07',
+  fungi: 'nature-08',
+  mycelium: 'nature-08',
+  sloth: 'nature-09',
+  whale: 'nature-10',
+  bones: 'human-01',
+  skeleton: 'human-01',
+  brain: 'human-02',
+  neurons: 'human-02',
+  vessels: 'human-03',
+  circulation: 'human-03',
+  stomach: 'human-04',
+  acid: 'human-04',
+  dna: 'human-05',
+  helix: 'human-05',
+  eye: 'human-06',
+  vision: 'human-06',
+  heart: 'human-07',
+  pulse: 'human-07',
+  sweat: 'human-08',
+  skin: 'human-08',
+  liver: 'human-09',
+  fingerprint: 'human-10',
+  gobeklitepe: 'history-01',
+  monolith: 'history-01',
+  pyramid: 'history-01',
+  war: 'history-02',
+  hourglass: 'history-02',
+  oxford: 'history-03',
+  aztec: 'history-03',
+  cleopatra: 'history-04',
+  timeline: 'history-04',
+  printing: 'history-05',
+  scroll: 'history-05',
+  olympics: 'history-06',
+  napoleon: 'history-07',
+  viking: 'history-08',
+  kadesh: 'history-09',
+  treaty: 'history-09',
+  map: 'history-10',
+  compass: 'history-10',
+  water: 'science-01',
+  triple_point: 'science-01',
+  banana: 'science-02',
+  radiation: 'science-02',
+  lightning: 'science-03',
+  plasma: 'science-03',
+  atom: 'science-04',
+  quantum: 'science-04',
+  light: 'science-05',
+  photon: 'science-05',
+  gold: 'science-06',
+  supernova: 'science-06',
+  helium: 'science-07',
+  superfluid: 'science-07',
+  entanglement: 'science-08',
+  sun_photon: 'science-09',
+  glass: 'science-10',
+  amorphous: 'science-10',
+  protein: 'weird-01',
+  word: 'weird-01',
+  eiffel: 'weird-02',
+  thermal: 'weird-02',
+  cloud: 'weird-03',
+  weight: 'weird-03',
+  chess: 'weird-04',
+  honey: 'weird-05',
+  jar: 'weird-05',
+  wombat: 'weird-06',
+  cube: 'weird-06',
+  antarctica: 'weird-07',
+  desert: 'weird-07',
+  shuffling: 'weird-08',
+  cards: 'weird-08',
+  saturn: 'weird-09',
+  density: 'weird-09',
+  sound: 'weird-10',
+  decibel: 'weird-10',
+};
+
+export function resolveSketchId(
+  factId?: string,
+  sketchType?: string,
+  category: CategoryId = 'space'
+): string {
+  if (factId && SKETCH_ID_PATTERN.test(factId)) {
+    return factId;
+  }
+
+  if (sketchType) {
+    const normalized = sketchType.trim().toLowerCase();
+    if (SKETCH_ID_PATTERN.test(normalized)) {
+      return normalized;
+    }
+    if (SKETCH_KEYWORD_MAP[normalized]) {
+      return SKETCH_KEYWORD_MAP[normalized];
+    }
+    for (const [keyword, mappedId] of Object.entries(SKETCH_KEYWORD_MAP)) {
+      if (normalized.includes(keyword)) {
+        return mappedId;
+      }
+    }
+  }
+
+  return FALLBACK_FACT_BY_CATEGORY[category];
+}
+
 export default function InteractiveSketchArt({
   factId,
+  sketchType,
   category,
   accentColor,
   lang,
@@ -40,7 +175,7 @@ export default function InteractiveSketchArt({
   const uid = useId().replace(/:/g, '');
   const gridPatternId = `sketch-grid-${uid}`;
 
-  const resolvedId = factId || FALLBACK_FACT_BY_CATEGORY[category];
+  const resolvedId = resolveSketchId(factId, sketchType, category);
   const isSpaceOrNature =
     resolvedId.startsWith('space-') || resolvedId.startsWith('nature-');
   const isBodyOrHistory =

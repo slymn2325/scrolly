@@ -1,4 +1,4 @@
-const CACHE_VERSION = 'v1.0.2';
+const CACHE_VERSION = 'v1.0.3';
 const CACHE_NAME = `scrolly-offline-${CACHE_VERSION}`;
 
 const PRECACHE_URLS = [
@@ -91,9 +91,14 @@ self.addEventListener('activate', (event) => {
 });
 
 self.addEventListener('fetch', (event) => {
-  if (event.request.method !== 'GET') return;
-
   const url = new URL(event.request.url);
+
+  // NetworkOnly bypass for live API routes (database facts, likes, telemetry events)
+  if (url.pathname.startsWith('/api/')) {
+    return;
+  }
+
+  if (event.request.method !== 'GET') return;
 
   // Never intercept or alter ads.txt (must always be served directly as plain text)
   if (url.pathname === '/ads.txt') return;

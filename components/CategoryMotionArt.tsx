@@ -8,6 +8,7 @@ import { CATEGORY_ILLUSTRATION_MAP, CATEGORY_SUB_ICON_MAP } from '@/utils/icons8
 
 interface CategoryMotionArtProps {
   factId?: string;
+  sketchType?: string;
   category: CategoryId;
   accentColor: string;
   iconName: string;
@@ -19,6 +20,7 @@ interface CategoryMotionArtProps {
 
 export default function CategoryMotionArt({
   factId,
+  sketchType,
   category,
   accentColor,
   lang = 'tr',
@@ -92,6 +94,7 @@ export default function CategoryMotionArt({
     >
       <InteractiveSketchArt
         factId={factId}
+        sketchType={sketchType}
         category={category}
         accentColor={accentColor}
         lang={lang}

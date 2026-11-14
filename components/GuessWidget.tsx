@@ -6,11 +6,21 @@ import { CheckCircle2, HelpCircle, RotateCw, Sparkles, Target } from 'lucide-rea
 import { type Language, translations } from '@/i18n/translations';
 import type { GuessChallenge } from '@/types/fact';
 
+export interface GuessAnswerDetails {
+  userGuess: number | string;
+  correctValue: number | string;
+  accuracyPct: number;
+}
+
 interface GuessWidgetProps {
   factId: string;
   challenge: GuessChallenge;
   lang: Language;
-  onGuessAnswered: (xpAwarded: number, isAccurate: boolean) => void;
+  onGuessAnswered: (
+    xpAwarded: number,
+    isAccurate: boolean,
+    details: GuessAnswerDetails
+  ) => void;
   onRequestFlip: () => void;
   onButtonPop: () => void;
 }
@@ -76,10 +86,16 @@ export default function GuessWidget({
       isAccurate = true;
     }
 
+    const accuracyPct = Math.max(0, Math.min(100, Math.round((1 - diff / span) * 100)));
+
     setTier(nextTier);
     setEarnedXp(xpAwarded);
     setSubmitted(true);
-    onGuessAnswered(xpAwarded, isAccurate);
+    onGuessAnswered(xpAwarded, isAccurate, {
+      userGuess: sliderValue,
+      correctValue: target,
+      accuracyPct,
+    });
   };
 
   const handleBinaryPick = (e: React.MouseEvent, idx: number) => {
@@ -95,7 +111,11 @@ export default function GuessWidget({
     setTier(nextTier);
     setEarnedXp(xpAwarded);
     setSubmitted(true);
-    onGuessAnswered(xpAwarded, isCorrect);
+    onGuessAnswered(xpAwarded, isCorrect, {
+      userGuess: challenge.options?.[idx] ?? idx,
+      correctValue: challenge.options?.[correctIdx] ?? correctIdx,
+      accuracyPct: isCorrect ? 100 : 0,
+    });
   };
 
   const formattedUnit = challenge.unit ? ` ${challenge.unit}` : '';
