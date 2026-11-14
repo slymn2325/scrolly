@@ -1,6 +1,5 @@
 /**
  * Feature flags for Scrolly.
- * Competitive modules (Leaderboard & 1v1 Duel) are intentionally disabled by default
- * to keep the core learning experience focused on discovery, quizzes, and streaks.
+ * Leaderboard & 1v1 Duel are part of the core dock / desktop nav again.
  */
-export const ENABLE_COMPETITIVE_TABS = false;
+export const ENABLE_COMPETITIVE_TABS = true;

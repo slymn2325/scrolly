@@ -839,7 +839,7 @@ export default function TikTokFactSlide({
                       setDetailDragY(0);
                     }}
                     onWheel={(e) => e.stopPropagation()}
-                    className="pointer-events-auto relative z-[60] flex h-[100dvh] w-full max-w-[430px] touch-none flex-col overflow-hidden bg-[#111115] text-white md:h-[min(100dvh-1.25rem,960px)] md:max-w-[min(520px,46vw)] md:rounded-[28px] md:border md:border-white/10 md:shadow-2xl"
+                    className="pointer-events-auto relative z-[60] flex h-[100dvh] w-full max-w-[430px] touch-none flex-col overflow-hidden bg-[#111115] text-white md:max-w-[520px] lg:h-[calc(100dvh-3.5rem-1rem)] lg:max-w-[min(680px,52vw)] lg:rounded-[28px] lg:border lg:border-white/10 lg:shadow-2xl"
                   >
                     <div className="no-scrollbar flex h-full w-full flex-col overflow-y-auto px-5 pt-[104px] pb-[104px] touch-pan-y">
                       <div className="mx-auto mb-2 h-1.5 w-12 shrink-0 rounded-full bg-white/25" data-testid="detail-drag-handle" />

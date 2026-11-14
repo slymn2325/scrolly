@@ -742,49 +742,70 @@ export default function HomeClient({ initialFacts }: HomeClientProps) {
   return (
     <div
       data-testid="reels-desktop-shell"
-      className="relative flex h-[100dvh] w-screen items-stretch justify-center overflow-hidden bg-[#07070C] select-none md:items-center md:gap-8 md:px-6 lg:gap-12 lg:px-10"
+      className="relative flex h-[100dvh] w-screen flex-col overflow-hidden bg-[#07070C] text-white select-none"
     >
-      {/* Full-bleed ambient: designed stage wash, not empty void */}
-      <div aria-hidden="true" className="pointer-events-none absolute inset-0 hidden md:block">
+      {/* Desktop ambient wash — full app chrome, not phone-in-void */}
+      <div aria-hidden="true" className="pointer-events-none absolute inset-0 hidden lg:block">
         <div
-          className="absolute inset-0 opacity-90 transition-[background] duration-700"
+          className="absolute inset-0 transition-[background] duration-700"
           style={{
-            background: `radial-gradient(ellipse 55% 70% at 50% 45%, ${ambientAccent}55 0%, ${ambientAccent}22 42%, #07070C 72%)`,
+            background: `radial-gradient(ellipse 70% 80% at 50% 40%, ${ambientAccent}40 0%, ${ambientAccent}14 45%, #07070C 78%)`,
           }}
         />
-        <div
-          className="absolute inset-y-[8%] left-[4%] w-[18%] rounded-[32px] opacity-70 blur-2xl"
-          style={{ background: `linear-gradient(180deg, ${ambientAccent}40, transparent)` }}
-        />
-        <div
-          className="absolute inset-y-[8%] right-[4%] w-[18%] rounded-[32px] opacity-70 blur-2xl"
-          style={{ background: `linear-gradient(180deg, ${ambientAccent}40, transparent)` }}
-        />
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_40%,#07070C_88%)]" />
+        <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(7,7,12,0.55)_0%,transparent_22%,transparent_78%,rgba(7,7,12,0.55)_100%)]" />
       </div>
 
-      {/* Left brand rail — fills desktop margin intentionally */}
-      <aside
-        data-testid="desktop-left-rail"
-        className="relative z-10 hidden w-[160px] shrink-0 flex-col justify-center gap-4 text-white/80 lg:flex xl:w-[200px]"
+      {/* Real desktop top app bar (lg+) — brand + competitive entry points */}
+      <header
+        data-testid="desktop-app-bar"
+        className="relative z-20 hidden h-14 w-full shrink-0 items-center justify-between border-b border-white/10 bg-[#0B0B10]/80 px-6 backdrop-blur-md lg:flex"
       >
-        <div className="space-y-2">
-          <p className="font-display text-3xl font-black tracking-tight text-white">Scrolly</p>
-          <p className="text-sm font-semibold leading-snug text-white/70">
-            {lang === 'tr' ? 'Kaydır. Öğren. Şaşır.' : 'Scroll. Learn. Wonder.'}
-          </p>
+        <div className="flex items-center gap-3">
+          <span className="font-display text-xl font-black tracking-tight text-white">Scrolly</span>
+          <span className="hidden text-xs font-semibold text-white/55 xl:inline">
+            {lang === 'tr' ? 'Kaydır · Öğren · Şaşır' : 'Scroll · Learn · Wonder'}
+          </span>
         </div>
-        <div className="rounded-2xl border border-white/15 bg-white/5 px-3 py-3 text-[11px] font-bold leading-relaxed text-white/75 backdrop-blur-md">
-          {lang === 'tr'
-            ? '↑↓ ile kartlar arasında kaydır. Detay için basılı tut veya Detay’a dokun.'
-            : '↑↓ to move between cards. Hold or tap Detail for the deep dive.'}
+        <div className="flex items-center gap-2">
+          <div className="mr-2 hidden items-center gap-2 rounded-full border border-white/15 bg-white/5 px-3 py-1.5 text-[11px] font-extrabold text-white/85 xl:flex">
+            <span className="text-amber-300">{memory.streakDays}🔥</span>
+            <span className="text-white/30">|</span>
+            <span className="text-violet-200">{memory.xp} XP</span>
+          </div>
+          <button
+            type="button"
+            data-testid="desktop-nav-leaderboard"
+            onClick={() => {
+              vibrateTap(12);
+              playPop(soundEnabled);
+              setActiveTab('leaderboard');
+              setActiveModal('leaderboard');
+            }}
+            className="inline-flex h-9 items-center gap-1.5 rounded-full border border-white/15 bg-white/10 px-3.5 text-xs font-extrabold text-white hover:bg-white/15"
+          >
+            {lang === 'tr' ? 'Liderlik' : 'Leaderboard'}
+          </button>
+          <button
+            type="button"
+            data-testid="desktop-nav-duel"
+            onClick={() => {
+              vibrateTap(12);
+              playPop(soundEnabled);
+              setActiveTab('duel');
+              setActiveModal('duel');
+            }}
+            className="inline-flex h-9 items-center gap-1.5 rounded-full bg-white px-3.5 text-xs font-extrabold text-[#09090B] hover:bg-white/90"
+          >
+            {lang === 'tr' ? '1v1 Düello' : '1v1 Duel'}
+          </button>
         </div>
-      </aside>
+      </header>
 
-      {/* Centered cinematic stage — larger on desktop, still 9:16 feel */}
+      {/* Stage row: wide centered Reels column uses remaining viewport */}
+      <div className="relative z-10 flex min-h-0 flex-1 items-stretch justify-center lg:px-8 lg:pb-4 lg:pt-3">
       <div
         data-testid="reels-phone-frame"
-        className="dark relative z-10 mx-auto flex h-[100dvh] w-full max-w-[430px] flex-col overflow-hidden bg-[#09090B] text-white md:h-[min(100dvh-1.25rem,960px)] md:max-w-[min(520px,46vw)] md:rounded-[28px] md:border md:border-white/15 md:shadow-[0_30px_100px_-16px_rgba(0,0,0,0.95),0_0_60px_-12px_rgba(255,255,255,0.08)]"
+        className="dark relative mx-auto flex h-full w-full max-w-[430px] flex-col overflow-hidden bg-[#09090B] text-white md:max-w-[520px] lg:max-w-[min(680px,52vw)] lg:rounded-[28px] lg:border lg:border-white/15 lg:shadow-[0_30px_100px_-16px_rgba(0,0,0,0.95),0_0_60px_-12px_rgba(255,255,255,0.08)]"
       >
         <OfflineManager lang={lang} />
 
@@ -979,27 +1000,7 @@ export default function HomeClient({ initialFacts }: HomeClientProps) {
           chromeBlocked={chromeBlocked}
         />
       </div>
-
-      {/* Right session rail */}
-      <aside
-        data-testid="desktop-right-rail"
-        className="relative z-10 hidden w-[160px] shrink-0 flex-col justify-center gap-3 text-white/80 lg:flex xl:w-[200px]"
-      >
-        <div className="rounded-2xl border border-white/15 bg-white/5 px-3 py-3 backdrop-blur-md">
-          <p className="text-[10px] font-black uppercase tracking-wider text-white/50">
-            {lang === 'tr' ? 'Oturum' : 'Session'}
-          </p>
-          <p className="mt-1 text-2xl font-black text-white">{memory.xp} XP</p>
-          <p className="mt-1 text-[11px] font-semibold text-white/65">
-            {lang === 'tr' ? `${memory.streakDays} gün seri` : `${memory.streakDays} day streak`}
-          </p>
-        </div>
-        <div className="rounded-2xl border border-white/15 bg-white/5 px-3 py-3 text-[11px] font-bold leading-relaxed text-white/70 backdrop-blur-md">
-          {lang === 'tr'
-            ? 'Her kartın arka planı konuya özel ipucu verir — rastgele GIF değil.'
-            : 'Each card’s backdrop is a topic hint — not a random GIF.'}
-        </div>
-      </aside>
+      </div>
     </div>
   );
 }
