@@ -70,6 +70,15 @@ const STORY_PALETTE: Record<
     badgeBg: 'rgba(244, 114, 182, 0.24)',
     badgeText: '#FCE7F3',
   },
+  statistics: {
+    top: '#171C54',
+    mid: '#312E81',
+    bottom: '#0C0F32',
+    orb1: 'rgba(99, 102, 241, 0.36)',
+    orb2: 'rgba(34, 211, 238, 0.26)',
+    badgeBg: 'rgba(99, 102, 241, 0.26)',
+    badgeText: '#E0E7FF',
+  },
 };
 
 function drawRoundedRect(

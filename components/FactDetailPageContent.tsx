@@ -11,6 +11,7 @@ import {
   getFactPrimarySlug,
   getRelatedFactsFromPool,
 } from '@/utils/factsData';
+import { buildFactDetailArticle } from '@/utils/topicMotif';
 
 async function resolveFactFromServer(slug: string): Promise<{
   fact: FactCard | null;
@@ -48,10 +49,14 @@ export async function buildFactMetadata(slug: string, lang: Language): Promise<M
   const ogImageUrl = `https://scrolly.live/fact/${primarySlug}/opengraph-image`;
   const title = fact[lang].title;
   const description = fact[lang].factText;
+  const catMeta = getCategoryMeta(fact.category);
 
   return {
     title: `${title} — Scrolly`,
     description,
+    keywords: [catMeta.label[lang], fact[lang].tag, 'Scrolly', 'Scrolla'].filter(
+      (item): item is string => Boolean(item)
+    ),
     alternates: {
       canonical: canonicalUrl,
       languages: {
@@ -116,6 +121,16 @@ export default async function FactDetailPageContent({
   const categoryUrl = `https://scrolly.live${buildCategoryHref(categoryRouteSlug, lang)}`;
   const ogImageUrl = `https://scrolly.live/fact/${primarySlug}/opengraph-image`;
   const publishedIso = fact.createdAt || '2026-01-01T00:00:00.000Z';
+  const enrichedArticle = buildFactDetailArticle(
+    {
+      factText: content.factText,
+      deepDiveDetail: content.deepDiveDetail,
+      tag: content.tag,
+      sourceHint: content.sourceHint,
+      quiz: content.quiz,
+    },
+    lang
+  );
 
   const correctQuizAnswer =
     content.quiz.options[content.quiz.correctIndex] ?? content.quiz.options[0];
@@ -166,7 +181,7 @@ export default async function FactDetailPageContent({
         '@id': `${canonicalUrl}#article`,
         headline: content.title,
         description: content.factText,
-        articleBody: `${content.factText}\n\n${content.deepDiveDetail}`,
+        articleBody: `${content.factText}\n\n${enrichedArticle.article}`,
         inLanguage: lang,
         educationalLevel: 'Beginner to Intermediate',
         learningResourceType: 'Micro-learning Fact Card',

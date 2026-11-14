@@ -145,6 +145,7 @@ export function createEmptyWeights(): Record<CategoryId, number> {
     history: 0,
     science: 0,
     records: 0,
+    statistics: 0,
   };
 }
 
@@ -156,18 +157,25 @@ export function createEmptyCategoryAccuracy(): Record<CategoryId, CategoryAccura
     history: { attempts: 0, totalPct: 0 },
     science: { attempts: 0, totalPct: 0 },
     records: { attempts: 0, totalPct: 0 },
+    statistics: { attempts: 0, totalPct: 0 },
   };
 }
 
 function normalizeCategoryKey(rawCategory?: string): CategoryId | null {
-  const normalized = rawCategory === 'weird_records' ? 'records' : rawCategory;
+  const normalized =
+    rawCategory === 'weird_records'
+      ? 'records'
+      : rawCategory === 'istatistik'
+        ? 'statistics'
+        : rawCategory;
   if (
     normalized === 'space' ||
     normalized === 'nature' ||
     normalized === 'human_body' ||
     normalized === 'history' ||
     normalized === 'science' ||
-    normalized === 'records'
+    normalized === 'records' ||
+    normalized === 'statistics'
   ) {
     return normalized;
   }
@@ -451,6 +459,7 @@ export function addUserXp(state: UserMemoryState, amount: number): UserMemorySta
   const nextState: UserMemoryState = {
     ...state,
     xp: Math.max(0, state.xp + amount),
+    weeklyXp: Math.max(0, state.weeklyXp + amount),
   };
   saveUserMemory(nextState);
   return nextState;
@@ -468,6 +477,7 @@ export function recordCategoryGuessAccuracy(
   const nextState: UserMemoryState = {
     ...state,
     xp: Math.max(0, state.xp + xpAmount),
+    weeklyXp: Math.max(0, state.weeklyXp + xpAmount),
     categoryAccuracy: nextAccuracy,
   };
   saveUserMemory(nextState);
@@ -650,7 +660,11 @@ export function completeMemoryQuiz(
     weeklyXp: nextWeeklyXp,
     highestLeagueId,
     dailyBestScore:
-      quizMode === 'daily' ? Math.max(state.dailyBestScore, earnedXp) : state.dailyBestScore,
+      quizMode === 'daily'
+        ? state.lastDailyQuizDate === today
+          ? Math.max(state.dailyBestScore, earnedXp)
+          : earnedXp
+        : state.dailyBestScore,
     lastDailyQuizDate: quizMode === 'daily' ? today : state.lastDailyQuizDate,
     cardsSinceLastQuiz: 0,
     badges,
@@ -676,4 +690,109 @@ export function resetUserMemory(): UserMemoryState {
     }
   }
   return fresh;
+}
+
+export interface RemoteProfileMergeInput {
+  username?: string;
+  xp?: number;
+  weeklyXp?: number;
+  dailyBestScore?: number;
+  lastDailyQuizDate?: string;
+  streak?: number;
+  lastVisitDate?: string;
+  seenIds?: string[];
+  favoriteIds?: string[];
+  categoryWeights?: Record<string, number>;
+  categoryAccuracy?: Record<string, { attempts: number; totalPct: number }>;
+  badges?: string[];
+}
+
+export function isGenericDefaultNickname(name: string | undefined | null): boolean {
+  const trimmed = (name || '').trim();
+  if (!trimmed) return true;
+  if (/^(Merak Kaşifi|Merak Kâşifi|Meraklı Kaşif|Meraklı Kâşif|Curiosity Explorer)(\s*#\d+)?$/i.test(trimmed)) {
+    return true;
+  }
+  return /^(Kaşif|Kâşif|Explorer)(\s*#\d+)?$/i.test(trimmed);
+}
+
+export function mergeRemoteProfileIntoMemory(
+  local: UserMemoryState,
+  remote: RemoteProfileMergeInput | null
+): UserMemoryState {
+  if (!remote) return local;
+
+  const mergedXp = Math.max(local.xp, typeof remote.xp === 'number' ? remote.xp : 0);
+  const mergedWeeklyXp = Math.max(
+    local.weeklyXp,
+    typeof remote.weeklyXp === 'number' ? remote.weeklyXp : 0
+  );
+  const mergedDailyBest = Math.max(
+    local.dailyBestScore,
+    typeof remote.dailyBestScore === 'number' ? remote.dailyBestScore : 0
+  );
+  const mergedStreak = Math.max(
+    local.streakDays,
+    typeof remote.streak === 'number' ? remote.streak : 1
+  );
+
+  const remoteWeights = normalizeWeights(remote.categoryWeights);
+  const mergedWeights = createEmptyWeights();
+  (Object.keys(mergedWeights) as CategoryId[]).forEach((k) => {
+    mergedWeights[k] = Math.max(local.categoryWeights[k] ?? 0, remoteWeights[k] ?? 0);
+  });
+
+  const localAccuracy = normalizeCategoryAccuracy(local.categoryAccuracy);
+  const remoteAccuracy = normalizeCategoryAccuracy(remote.categoryAccuracy);
+  const mergedAccuracy = createEmptyCategoryAccuracy();
+  (Object.keys(mergedAccuracy) as CategoryId[]).forEach((k) => {
+    mergedAccuracy[k] =
+      remoteAccuracy[k].attempts > localAccuracy[k].attempts
+        ? remoteAccuracy[k]
+        : localAccuracy[k];
+  });
+
+  const remoteNick = typeof remote.username === 'string' ? remote.username.trim().slice(0, 24) : '';
+  const nickname =
+    remoteNick && (!isGenericDefaultNickname(remoteNick) || isGenericDefaultNickname(local.nickname))
+      ? remoteNick
+      : local.nickname;
+
+  const currentTier = getLeagueInfo(mergedXp, local.lang).id;
+  const highestLeagueId =
+    LEAGUE_ORDER[currentTier] > LEAGUE_ORDER[local.highestLeagueId]
+      ? currentTier
+      : local.highestLeagueId;
+
+  const seenIds = Array.from(
+    new Set([...(Array.isArray(remote.seenIds) ? remote.seenIds : []), ...local.seenIds])
+  );
+  const favoriteIds = Array.from(
+    new Set([...(Array.isArray(remote.favoriteIds) ? remote.favoriteIds : []), ...local.favoriteIds])
+  );
+  const badges = normalizeBadges([
+    ...(Array.isArray(remote.badges) ? remote.badges : []),
+    ...local.badges,
+  ]);
+
+  const nextState: UserMemoryState = {
+    ...local,
+    nickname,
+    xp: mergedXp,
+    weeklyXp: mergedWeeklyXp,
+    dailyBestScore: mergedDailyBest,
+    lastDailyQuizDate: remote.lastDailyQuizDate || local.lastDailyQuizDate,
+    highestLeagueId,
+    seenIds,
+    favoriteIds,
+    categoryWeights: mergedWeights,
+    categoryAccuracy: mergedAccuracy,
+    streakDays: mergedStreak,
+    lastVisitDate: local.lastVisitDate || remote.lastVisitDate || getTodayDateString(),
+    badges,
+    isReturningUser: local.isReturningUser || seenIds.length > 0,
+  };
+
+  saveUserMemory(nextState);
+  return nextState;
 }

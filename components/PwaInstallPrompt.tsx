@@ -201,7 +201,7 @@ export default function PwaInstallPrompt({
                 WebkitBackdropFilter: 'blur(36px) saturate(180%)',
                 backdropFilter: 'blur(36px) saturate(180%)',
               }}
-              className="pointer-events-auto relative w-full max-w-[430px] rounded-3xl border border-white/55 bg-white/95 p-3 shadow-[0_16px_40px_rgba(15,23,42,0.28)] dark:border-white/20 dark:bg-[#130F24]/96 lg:max-w-[min(620px,50vw)]"
+              className="pointer-events-auto relative w-full max-w-[430px] rounded-3xl border border-white/55 bg-white/95 p-3 shadow-[0_16px_40px_rgba(15,23,42,0.28)] dark:border-white/20 dark:bg-[#130F24]/[0.96] lg:max-w-[min(620px,50vw)]"
             >
               <div className="flex items-start justify-between gap-2.5">
                 <div className="flex min-w-0 items-start gap-2.5">

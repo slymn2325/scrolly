@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
 import confetti from 'canvas-confetti';
 import {
@@ -21,7 +21,8 @@ import {
   type Language,
   translations,
 } from '@/i18n/translations';
-import { encodeDuelPayload } from '@/utils/duelCodec';
+import { isShortRoomCode } from '@/lib/duelStore';
+import { createScrollaRoom, getOrCreateScrollaPlayerId } from '@/utils/duelLobby';
 import { STATE_ILLUSTRATION_PATHS } from '@/utils/icons8Assets';
 import { useEscapeClose } from '@/utils/useEscapeClose';
 
@@ -52,6 +53,10 @@ export default function ShareResultModal({
 }: ShareResultModalProps) {
   const [copied, setCopied] = useState(false);
   const [duelCopied, setDuelCopied] = useState(false);
+  const [createdRoomCode, setCreatedRoomCode] = useState<string | null>(() =>
+    duelConfig?.duelId && isShortRoomCode(duelConfig.duelId) ? duelConfig.duelId : null
+  );
+  const pendingRoomRef = useRef<Promise<string | null> | null>(null);
   const t = translations[lang];
 
   useEscapeClose(true, onClose);
@@ -70,18 +75,61 @@ export default function ShareResultModal({
   const shareSummaryLine = `🧠 ${t.brandName}: ${earnedXp} ${scoreWord} • ${wordleGrid} • ${catMeta.emoji} ${badgeLabel}`;
   const siteUrl =
     typeof window !== 'undefined' ? window.location.origin : 'https://scrolly.live';
-  const fullShareText = `${shareSummaryLine}\n${t.shareChallengeText}\n${siteUrl}`;
 
   const duelShareUrl = useMemo(() => {
-    const code = encodeDuelPayload({
-      cardIds: questionIds.slice(0, 5),
-      score: earnedXp,
-      timeSec: elapsedSec,
-      name: challengerNickname,
-      mode: 'duel',
-    });
-    return `${siteUrl}/?duel=${code}`;
-  }, [questionIds, earnedXp, elapsedSec, challengerNickname, siteUrl]);
+    if (createdRoomCode) {
+      return `${siteUrl}/?duel=${createdRoomCode}`;
+    }
+    return siteUrl;
+  }, [createdRoomCode, siteUrl]);
+
+  const fullShareText = useMemo(() => {
+    if (createdRoomCode) {
+      const codeLine =
+        lang === 'tr'
+          ? `🎮 Scrolla 1v1 Oda Kodu: ${createdRoomCode}`
+          : `🎮 Scrolla 1v1 Room Code: ${createdRoomCode}`;
+      return `${shareSummaryLine}\n${t.shareChallengeText}\n${codeLine}\n${duelShareUrl}`;
+    }
+    return `${shareSummaryLine}\n${t.shareChallengeText}\n${siteUrl}`;
+  }, [createdRoomCode, duelShareUrl, lang, shareSummaryLine, siteUrl, t.shareChallengeText]);
+
+  const ensureScrollaRoomCode = useMemo(() => {
+    return async (): Promise<string | null> => {
+      if (createdRoomCode) return createdRoomCode;
+      if (questionIds.length === 0) return null;
+      if (pendingRoomRef.current) return pendingRoomRef.current;
+
+      const hostId = getOrCreateScrollaPlayerId();
+      const promise = createScrollaRoom({
+        hostId,
+        hostName: challengerNickname,
+        category: badgeCategory,
+        questionCount: [3, 5, 7, 10].includes(questionIds.length) ? questionIds.length : 5,
+        cardIds: questionIds.slice(0, 10),
+      })
+        .then((res) => {
+          if (res.ok && res.room?.code) {
+            setCreatedRoomCode(res.room.code);
+            return res.room.code;
+          }
+          return null;
+        })
+        .catch(() => null)
+        .finally(() => {
+          pendingRoomRef.current = null;
+        });
+
+      pendingRoomRef.current = promise;
+      return promise;
+    };
+  }, [badgeCategory, challengerNickname, createdRoomCode, questionIds]);
+
+  // Pre-provision 6-char Scrolla room code on open so Copy & WhatsApp share include ?duel=XXXXXX immediately
+  useEffect(() => {
+    if (createdRoomCode || questionIds.length === 0) return;
+    void ensureScrollaRoomCode();
+  }, [createdRoomCode, ensureScrollaRoomCode, questionIds.length]);
 
   useEffect(() => {
     try {
@@ -109,8 +157,15 @@ export default function ShareResultModal({
 
   const handleCopyDuelFromResult = async () => {
     onButtonPop();
+    let shareUrl = duelShareUrl;
+    if (!createdRoomCode && questionIds.length > 0) {
+      const code = await ensureScrollaRoomCode();
+      if (code) {
+        shareUrl = `${siteUrl}/?duel=${code}`;
+      }
+    }
     try {
-      await navigator.clipboard.writeText(duelShareUrl);
+      await navigator.clipboard.writeText(shareUrl);
     } catch {
       // Ignore clipboard error
     }

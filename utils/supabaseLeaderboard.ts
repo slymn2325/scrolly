@@ -1,66 +1,7 @@
-import type { Language } from '@/i18n/translations';
 import { LEAGUE_SHIELD_MAP, type LeagueTierId } from '@/utils/icons8Assets';
+import { getOrCreateDeviceId } from '@/lib/telemetry';
 
 export type LeaderboardTab = 'daily' | 'weekly' | 'alltime';
-export type { LeagueTierId };
-
-export interface WeeklyLeagueTierMeta {
-  id: LeagueTierId;
-  emoji: string;
-  shieldIcon: string;
-  minXp: number;
-  maxXp: number | null;
-  label: Record<Language, string>;
-  badgeGradient: string;
-}
-
-export const WEEKLY_LEAGUE_TIERS: WeeklyLeagueTierMeta[] = [
-  {
-    id: 'bronze',
-    emoji: '🥉',
-    shieldIcon: LEAGUE_SHIELD_MAP.bronze,
-    minXp: 0,
-    maxXp: 399,
-    label: { tr: 'Bronz Kaşif', en: 'Bronze Explorer' },
-    badgeGradient: 'from-orange-200 to-amber-100 text-orange-950 border-orange-300',
-  },
-  {
-    id: 'silver',
-    emoji: '🥈',
-    shieldIcon: LEAGUE_SHIELD_MAP.silver,
-    minXp: 400,
-    maxXp: 999,
-    label: { tr: 'Gümüş Meraklı', en: 'Silver Curious' },
-    badgeGradient: 'from-slate-200 to-zinc-100 text-slate-900 border-slate-300',
-  },
-  {
-    id: 'gold',
-    emoji: '🥇',
-    shieldIcon: LEAGUE_SHIELD_MAP.gold,
-    minXp: 1000,
-    maxXp: 1799,
-    label: { tr: 'Altın Bilgin', en: 'Gold Scholar' },
-    badgeGradient: 'from-amber-200 to-yellow-100 text-amber-950 border-amber-300',
-  },
-  {
-    id: 'platinum',
-    emoji: '💠',
-    shieldIcon: LEAGUE_SHIELD_MAP.platinum,
-    minXp: 1800,
-    maxXp: 2799,
-    label: { tr: 'Platin Deha', en: 'Platinum Genius' },
-    badgeGradient: 'from-cyan-200 to-teal-100 text-cyan-950 border-cyan-300',
-  },
-  {
-    id: 'diamond',
-    emoji: '💎',
-    shieldIcon: LEAGUE_SHIELD_MAP.diamond,
-    minXp: 2800,
-    maxXp: null,
-    label: { tr: 'Elmas Üstat', en: 'Diamond Grandmaster' },
-    badgeGradient: 'from-violet-200 to-sky-100 text-violet-950 border-violet-300',
-  },
-];
 
 export interface LeaderboardEntry {
   id: string;
@@ -70,42 +11,81 @@ export interface LeaderboardEntry {
   score: number;
   streak: number;
   isUser: boolean;
-  zone: 'promotion' | 'safe' | 'relegation';
+  zone: 'promotion' | 'neutral' | 'relegation';
+  leagueId?: LeagueTierId;
 }
 
-const LOCAL_PEERS: Array<{
-  id: string;
-  name: string;
-  avatar: string;
-  baseAll: number;
-  baseWeekly: number;
-  baseDaily: number;
-  streak: number;
-}> = [];
+export interface LeaderboardFetchResult {
+  entries: LeaderboardEntry[];
+  isLiveSupabase: boolean;
+  isLiveBackend: boolean;
+}
+
+export interface WeeklyLeagueTierMeta {
+  id: LeagueTierId;
+  minXp: number;
+  shieldIcon: string;
+  label: { tr: string; en: string };
+}
+
+export const WEEKLY_LEAGUE_TIERS: WeeklyLeagueTierMeta[] = [
+  {
+    id: 'bronze',
+    minXp: 0,
+    shieldIcon: LEAGUE_SHIELD_MAP.bronze,
+    label: { tr: 'Bronz Kaşif', en: 'Bronze Explorer' },
+  },
+  {
+    id: 'silver',
+    minXp: 400,
+    shieldIcon: LEAGUE_SHIELD_MAP.silver,
+    label: { tr: 'Gümüş Meraklı', en: 'Silver Curious' },
+  },
+  {
+    id: 'gold',
+    minXp: 1000,
+    shieldIcon: LEAGUE_SHIELD_MAP.gold,
+    label: { tr: 'Altın Bilgin', en: 'Gold Scholar' },
+  },
+  {
+    id: 'platinum',
+    minXp: 1800,
+    shieldIcon: LEAGUE_SHIELD_MAP.platinum,
+    label: { tr: 'Platin Deha', en: 'Platinum Genius' },
+  },
+  {
+    id: 'diamond',
+    minXp: 2800,
+    shieldIcon: LEAGUE_SHIELD_MAP.diamond,
+    label: { tr: 'Elmas Üstat', en: 'Diamond Grandmaster' },
+  },
+];
 
 export function isSupabaseConfigured(): boolean {
-  return Boolean(
-    typeof process !== 'undefined' &&
-      process.env?.NEXT_PUBLIC_SUPABASE_URL &&
-      process.env?.NEXT_PUBLIC_SUPABASE_ANON_KEY
-  );
+  return true;
 }
 
-function assignZones(
-  rows: Array<Omit<LeaderboardEntry, 'rank' | 'zone'>>
-): LeaderboardEntry[] {
-  const sorted = [...rows].sort((a, b) => b.score - a.score);
+function avatarForScore(xp: number, streak: number): string {
+  if (xp >= 2800) return '💎';
+  if (xp >= 1800) return '💠';
+  if (xp >= 1000) return '🥇';
+  if (streak >= 5) return '🔥';
+  return '🧠';
+}
+
+function assignRanksAndZones(rows: Omit<LeaderboardEntry, 'rank' | 'zone'>[]): LeaderboardEntry[] {
+  const sorted = [...rows].sort((a, b) => b.score - a.score || b.streak - a.streak);
   const total = sorted.length;
-  return sorted.map((row, idx) => {
+  return sorted.map((entry, idx) => {
     const rank = idx + 1;
-    let zone: LeaderboardEntry['zone'] = 'safe';
+    let zone: LeaderboardEntry['zone'] = 'neutral';
     if (rank <= 10) {
       zone = 'promotion';
-    } else if (total > 10 && rank > total - 5) {
+    } else if (total >= 15 && rank > total - 5) {
       zone = 'relegation';
     }
     return {
-      ...row,
+      ...entry,
       rank,
       zone,
     };
@@ -114,141 +94,145 @@ function assignZones(
 
 export async function fetchLeaderboardEntries(
   tab: LeaderboardTab,
-  userNickname: string,
-  userTotalXp: number,
-  userWeeklyXp: number,
-  userDailyScore: number,
+  nickname: string,
+  userXp: number,
+  weeklyXp: number,
+  dailyBestScore: number,
   streakDays: number
-): Promise<{ entries: LeaderboardEntry[]; isLiveSupabase: boolean }> {
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+): Promise<LeaderboardFetchResult> {
+  const myDeviceId = typeof window !== 'undefined' ? getOrCreateDeviceId() : 'local-device';
+  const myScore =
+    tab === 'daily'
+      ? dailyBestScore
+      : tab === 'weekly'
+        ? Math.max(weeklyXp, userXp)
+        : userXp;
 
-  if (supabaseUrl && supabaseKey) {
-    try {
-      const orderColumn =
-        tab === 'daily'
-          ? 'daily_sprint_score'
-          : tab === 'weekly'
-          ? 'weekly_xp'
-          : 'xp';
-      const resp = await fetch(
-        `${supabaseUrl}/rest/v1/players?select=id,nickname,xp,weekly_xp,daily_sprint_score,streak_days&order=${orderColumn}.desc&limit=25`,
-        {
-          headers: {
-            apikey: supabaseKey,
-            Authorization: `Bearer ${supabaseKey}`,
-          },
-        }
-      );
-
-      if (resp.ok) {
-        const data = (await resp.json()) as Array<{
-          id: string;
-          nickname: string;
-          xp: number;
-          weekly_xp: number;
-          daily_sprint_score: number;
-          streak_days: number;
-        }>;
-
-        if (Array.isArray(data) && data.length > 0) {
-          const mapped = data.map((row) => ({
-            id: row.id,
-            name: row.nickname,
-            avatar: '⚡',
-            score:
-              tab === 'daily'
-                ? row.daily_sprint_score
-                : tab === 'weekly'
-                ? row.weekly_xp
-                : row.xp,
-            streak: row.streak_days,
-            isUser: row.nickname === userNickname,
-          }));
-
-          return {
-            entries: assignZones(mapped),
-            isLiveSupabase: true,
-          };
-        }
-      }
-    } catch {
-      // Fall back gracefully to local dynamic leaderboard
-    }
-  }
-
-  const userScore =
-    tab === 'daily' ? userDailyScore : tab === 'weekly' ? userWeeklyXp : userTotalXp;
-
-  const userRow: Omit<LeaderboardEntry, 'rank' | 'zone'> = {
-    id: 'current-user',
-    name: userNickname,
-    avatar: '🧠',
-    score: userScore,
-    streak: streakDays,
+  const myFallbackRow: Omit<LeaderboardEntry, 'rank' | 'zone'> = {
+    id: myDeviceId,
+    name: (nickname || 'Merak Kâşifi').trim(),
+    avatar: avatarForScore(userXp, streakDays),
+    score: Math.max(0, Math.floor(myScore)),
+    streak: Math.max(1, Math.floor(streakDays)),
     isUser: true,
   };
 
-  const peers: Array<Omit<LeaderboardEntry, 'rank' | 'zone'>> = LOCAL_PEERS.map((p) => ({
-    id: p.id,
-    name: p.name,
-    avatar: p.avatar,
-    score: tab === 'daily' ? p.baseDaily : tab === 'weekly' ? p.baseWeekly : p.baseAll,
-    streak: p.streak,
-    isUser: false,
-  }));
+  if (typeof window === 'undefined') {
+    return {
+      entries: assignRanksAndZones([myFallbackRow]),
+      isLiveSupabase: false,
+      isLiveBackend: false,
+    };
+  }
 
-  return {
-    entries: assignZones([...peers, userRow]),
-    isLiveSupabase: false,
-  };
+  try {
+    const res = await fetch(
+      `/api/leaderboard?tab=${encodeURIComponent(tab)}&deviceId=${encodeURIComponent(myDeviceId)}`,
+      { cache: 'no-store' }
+    );
+
+    if (!res.ok) {
+      return {
+        entries: assignRanksAndZones([myFallbackRow]),
+        isLiveSupabase: false,
+        isLiveBackend: false,
+      };
+    }
+
+    const json = (await res.json()) as {
+      ok?: boolean;
+      source?: 'postgres' | 'local';
+      entries?: Array<{
+        deviceId: string;
+        username: string;
+        score: number;
+        xp: number;
+        weeklyXp: number;
+        streak: number;
+      }>;
+    };
+
+    const serverRows = Array.isArray(json.entries) ? json.entries : [];
+    const isPostgresLive = json.source === 'postgres';
+
+    if (serverRows.length === 0) {
+      return {
+        entries: assignRanksAndZones([myFallbackRow]),
+        isLiveSupabase: isPostgresLive,
+        isLiveBackend: isPostgresLive,
+      };
+    }
+
+    const mapped: Omit<LeaderboardEntry, 'rank' | 'zone'>[] = serverRows.map((row) => {
+      const isMe = row.deviceId === myDeviceId;
+      const rowXp = Number(row.xp || row.score || 0);
+      const rowStreak = Math.max(1, Number(row.streak || 1));
+      return {
+        id: row.deviceId,
+        name: isMe ? myFallbackRow.name : (row.username || 'Kâşif').trim(),
+        avatar: avatarForScore(isMe ? userXp : rowXp, rowStreak),
+        score: isMe ? Math.max(myFallbackRow.score, Number(row.score || 0)) : Math.max(0, Number(row.score || 0)),
+        streak: isMe ? Math.max(myFallbackRow.streak, rowStreak) : rowStreak,
+        isUser: isMe,
+      };
+    });
+
+    if (!mapped.some((e) => e.isUser)) {
+      mapped.push(myFallbackRow);
+    }
+
+    return {
+      entries: assignRanksAndZones(mapped),
+      isLiveSupabase: isPostgresLive,
+      isLiveBackend: isPostgresLive,
+    };
+  } catch {
+    return {
+      entries: assignRanksAndZones([myFallbackRow]),
+      isLiveSupabase: false,
+      isLiveBackend: false,
+    };
+  }
 }
 
 export async function submitQuizScoreToLeaderboard(params: {
-  playerId: string;
-  nickname: string;
-  quizMode: 'daily' | 'weekly' | 'memory' | 'duel';
+  playerId?: string;
+  nickname?: string;
+  username?: string;
+  quizMode?: 'daily' | 'weekly' | 'memory' | 'duel';
+  mode?: 'daily' | 'weekly' | 'memory' | 'duel';
   score: number;
-  durationSec: number;
+  durationSec?: number;
   correctCount: number;
-  questionCount: number;
-}): Promise<boolean> {
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-  if (!supabaseUrl || !supabaseKey) return false;
-
+  questionCount?: number;
+  totalQuestions?: number;
+}): Promise<void> {
+  if (typeof window === 'undefined') return;
   try {
-    const resp = await fetch(`${supabaseUrl}/rest/v1/rpc/submit_quiz_score`, {
+    const deviceId = getOrCreateDeviceId();
+    await fetch('/api/leaderboard', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        apikey: supabaseKey,
-        Authorization: `Bearer ${supabaseKey}`,
-      },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        p_player_id: params.playerId,
-        p_nickname: params.nickname,
-        p_quiz_mode: params.quizMode,
-        p_score: params.score,
-        p_duration_sec: Math.max(2, params.durationSec),
-        p_correct_count: params.correctCount,
-        p_question_count: params.questionCount,
+        deviceId,
+        username: (params.username || params.nickname || 'Merak Kâşifi').trim(),
+        mode: params.mode || params.quizMode || 'daily',
+        score: params.score,
+        correctCount: params.correctCount,
+        totalQuestions: params.totalQuestions || params.questionCount || 1,
       }),
     });
-    return resp.ok;
   } catch {
-    return false;
+    // Non-blocking telemetry failure; local memory persists anyway
   }
 }
 
 export function subscribeLeaderboardRealtime(onUpdate: () => void): () => void {
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-  if (!supabaseUrl || !supabaseKey || typeof window === 'undefined') {
+  if (typeof window === 'undefined') {
     return () => {};
   }
-
-  // Lightweight polling / focus refresh when Supabase REST is enabled without full SDK overhead
-  const interval = window.setInterval(onUpdate, 15000);
-  return () => window.clearInterval(interval);
+  const timer = window.setInterval(onUpdate, 12_000);
+  return () => {
+    window.clearInterval(timer);
+  };
 }

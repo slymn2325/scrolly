@@ -16,7 +16,7 @@ export const revalidate = 3600;
 
 export default async function HomePage() {
   const allFacts = await getAllFactsServer();
-  const initialFacts = interleaveFactsByCategory(allFacts).slice(0, 5);
+  const initialFacts = interleaveFactsByCategory(allFacts).slice(0, 14);
 
   return (
     <>

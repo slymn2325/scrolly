@@ -14,11 +14,11 @@ interface DesktopLeftNavProps {
   onSelectTab: (tab: DockTabId) => void;
 }
 
-const NAV_ITEMS: Array<{ id: DockTabId; tr: string; en: string; icon: keyof typeof DOCK_ICON_MAP }> = [
+const NAV_ITEMS: Array<{ id: DockTabId; tr: string; en: string; icon: keyof typeof DOCK_ICON_MAP; badge?: string }> = [
   { id: 'explore', tr: 'Keşfet', en: 'For You', icon: 'explore' },
   { id: 'quiz', tr: 'Quiz', en: 'Quiz', icon: 'quiz' },
   { id: 'leaderboard', tr: 'Liderlik', en: 'Leaderboard', icon: 'leaderboard' },
-  { id: 'duel', tr: 'Düello', en: 'Duel', icon: 'duel' },
+  { id: 'duel', tr: 'Scrolla', en: 'Scrolla', icon: 'duel', badge: '1v1' },
   { id: 'diploma', tr: 'Profil', en: 'Profile', icon: 'diploma' },
 ];
 
@@ -53,20 +53,29 @@ export default function DesktopLeftNav({
       <nav className="flex flex-1 flex-col gap-1" aria-label="Desktop main">
         {NAV_ITEMS.map((item) => {
           const active = activeTab === item.id;
+          const isDuel = item.id === 'duel';
           return (
             <button
               key={item.id}
               type="button"
               data-testid={`desktop-nav-${item.id}`}
               onClick={() => onSelectTab(item.id)}
-              className={`relative flex h-12 items-center gap-3 rounded-xl px-3 text-sm font-extrabold transition ${
+              className={`relative flex h-12 items-center gap-3 rounded-xl border px-3 text-sm font-extrabold transition ${
                 active
-                  ? darkMode
-                    ? 'bg-white/10 text-white'
-                    : 'bg-[#1E1B2E]/8 text-[#1E1B2E]'
-                  : darkMode
-                    ? 'text-white/70 hover:bg-white/5 hover:text-white'
-                    : 'text-[#1E1B2E]/70 hover:bg-[#1E1B2E]/5 hover:text-[#1E1B2E]'
+                  ? isDuel
+                    ? darkMode
+                      ? 'border-violet-400/40 bg-violet-500/20 text-white shadow-sm shadow-violet-500/20'
+                      : 'border-violet-300/70 bg-violet-50 text-violet-950 shadow-sm'
+                    : darkMode
+                      ? 'border-white/10 bg-white/10 text-white'
+                      : 'border-[#1E1B2E]/10 bg-[#1E1B2E]/[0.08] text-[#1E1B2E]'
+                  : isDuel
+                    ? darkMode
+                      ? 'border-violet-500/20 bg-violet-500/[0.06] text-white/85 hover:border-violet-400/40 hover:bg-violet-500/15 hover:text-white'
+                      : 'border-violet-200/70 bg-violet-50/50 text-[#1E1B2E]/85 hover:border-violet-300 hover:bg-violet-50 hover:text-[#1E1B2E]'
+                    : darkMode
+                      ? 'border-transparent text-white/70 hover:bg-white/5 hover:text-white'
+                      : 'border-transparent text-[#1E1B2E]/70 hover:bg-[#1E1B2E]/[0.05] hover:text-[#1E1B2E]'
               }`}
             >
               <span className="relative flex h-7 w-7 items-center justify-center">
@@ -85,6 +94,11 @@ export default function DesktopLeftNav({
                 )}
               </span>
               <span>{lang === 'tr' ? item.tr : item.en}</span>
+              {item.badge && (
+                <span className="ml-auto rounded-full bg-gradient-to-r from-violet-500 to-fuchsia-500 px-2 py-0.5 text-[10px] font-black uppercase tracking-wider text-white shadow-sm">
+                  {item.badge}
+                </span>
+              )}
             </button>
           );
         })}

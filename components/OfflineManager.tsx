@@ -16,6 +16,7 @@ const PREFETCH_FACT_SHARDS = [
   '/data/facts/history.json',
   '/data/facts/science.json',
   '/data/facts/records.json',
+  '/data/facts/statistics.json',
   '/data/facts/facts.json',
 ];
 

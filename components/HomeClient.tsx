@@ -4,6 +4,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { AnimatePresence } from 'framer-motion';
 import CookieBanner from '@/components/CookieBanner';
 import DiplomaProfileModal from '@/components/DiplomaProfileModal';
+import ErrorBoundary from '@/components/ErrorBoundary';
 import { applyGoogleConsentChoice } from '@/utils/consent';
 import DuelModal, { type DuelChallengeConfig } from '@/components/DuelModal';
 import DesktopFeedSideRail from '@/components/DesktopFeedSideRail';
@@ -20,16 +21,19 @@ import PwaInstallPrompt from '@/components/PwaInstallPrompt';
 import QuizHubModal, { type QuizModeChoice } from '@/components/QuizHubModal';
 import ShareResultModal from '@/components/ShareResultModal';
 import StoryShareModal from '@/components/StoryShareModal';
-import TikTokFeed, { type TikTokFeedHandle } from '@/components/TikTokFeed';
+import TikTokFeed, { type FeedSlideItem, type TikTokFeedHandle } from '@/components/TikTokFeed';
 import {
   type CategoryFilter,
   type CategoryId,
   type Language,
 } from '@/i18n/translations';
+import { isShortRoomCode, normalizeRoomCode } from '@/lib/duelStore';
 import {
   fetchFactsFromApiWithCache,
   fetchPaginatedFactsFromApi,
+  fetchProfileFromApi,
   initTelemetrySync,
+  syncProfileToApi,
   trackEvent,
 } from '@/lib/telemetry';
 import {
@@ -37,7 +41,8 @@ import {
   interleaveFactsByCategory,
 } from '@/utils/factsData';
 import { decodeDuelPayload, type DuelPayload } from '@/utils/duelCodec';
-import { resolveFactsByIds } from '@/utils/duelLobby';
+import { completeScrollaRoom, resolveFactsByIds } from '@/utils/duelLobby';
+import { isFactLiked } from '@/utils/likedFacts';
 import { cryptoRandomFloat } from '@/utils/cryptoRandom';
 import {
   vibrateDoubleTap,
@@ -76,6 +81,7 @@ import {
   getTopCategory,
   getTotalCardsViewed,
   loadUserMemory,
+  mergeRemoteProfileIntoMemory,
   recordCardRead,
   recordCategoryGuessAccuracy,
   resetUserMemory,
@@ -147,16 +153,21 @@ function buildPersonalizedDeck(
     ? [...seen].sort((a, b) => scoreRank(b) - scoreRank(a))
     : seen;
 
-  const combined = [...orderedUnseen, ...orderedSeen];
-  if (combined.length === 0) return allFacts;
+  // Never repeat already-seen cards ahead of unseen cards; only cycle seen cards after all unseen are exhausted.
+  const primaryPool = orderedUnseen.length > 0 ? orderedUnseen : orderedSeen;
+  if (primaryPool.length === 0) return allFacts;
 
   if (isAllPool) {
-    const openingInterleaved = interleaveFactsByCategory(combined).slice(0, 12);
-    const openingIds = new Set(openingInterleaved.map((f) => f.id));
-    return [...openingInterleaved, ...combined.filter((f) => !openingIds.has(f.id))];
+    const interleavedPrimary = interleaveFactsByCategory(primaryPool);
+    if (orderedUnseen.length > 0 && orderedSeen.length > 0) {
+      return [...interleavedPrimary, ...interleaveFactsByCategory(orderedSeen)];
+    }
+    return interleavedPrimary;
   }
 
-  return combined;
+  return orderedUnseen.length > 0 && orderedSeen.length > 0
+    ? [...orderedUnseen, ...orderedSeen]
+    : primaryPool;
 }
 
 function promoteFactToFront(
@@ -179,16 +190,25 @@ export default function HomeClient({ initialFacts }: HomeClientProps) {
   const activeCategoryRef = useRef<CategoryFilter>('all');
   const requestedFactSlugRef = useRef<string | null>(null);
   const hasHydratedRef = useRef(false);
+  const profileHydratedRef = useRef(false);
 
   const [memory, setMemory] = useState<UserMemoryState>(() => getDefaultUserState('tr'));
+  const memoryRef = useRef<UserMemoryState>(memory);
+  memoryRef.current = memory;
+  const activeSlideIndexRef = useRef(0);
   const [activeCategory, setActiveCategory] = useState<CategoryFilter>('all');
   const [deckFacts, setDeckFacts] = useState<FactCardType[]>(() => initialFacts);
   const [seedFact, setSeedFact] = useState<FactCardType>(initialFacts[0]);
+  const [activeFact, setActiveFact] = useState<FactCardType | null>(initialFacts[0] ?? null);
+  const [activeSlide, setActiveSlide] = useState<FeedSlideItem | null>(null);
+  const [usingLocalFallback, setUsingLocalFallback] = useState(false);
+  const [likedRevision, setLikedRevision] = useState(0);
 
   const [activeTab, setActiveTab] = useState<DockTabId>('explore');
   const [chromeBlocked, setChromeBlocked] = useState(false);
   const [activeQuiz, setActiveQuiz] = useState<ActiveQuizSession | null>(null);
   const [incomingDuel, setIncomingDuel] = useState<DuelPayload | null>(null);
+  const [incomingRoomCode, setIncomingRoomCode] = useState<string | null>(null);
   const [storyShareFact, setStoryShareFact] = useState<FactCardType | null>(null);
   const [maxSwipedCards, setMaxSwipedCards] = useState(0);
   const [manualPwaOpen, setManualPwaOpen] = useState(false);
@@ -257,6 +277,30 @@ export default function HomeClient({ initialFacts }: HomeClientProps) {
       setAllFacts(merged);
 
       const currentMem = loadUserMemory();
+      const targetSlug =
+        activeCategoryRef.current === 'all' ? requestedFactSlugRef.current : null;
+
+      if (activeSlideIndexRef.current > 0 && !targetSlug) {
+        // User has already swiped down — preserve their current card positions and append unseen arrivals
+        setDeckFacts((prevDeck) => {
+          const existingIds = new Set(prevDeck.map((f) => f.id));
+          const category = activeCategoryRef.current;
+          const extras = incoming.filter(
+            (f) => !existingIds.has(f.id) && (category === 'all' || f.category === category)
+          );
+          if (extras.length === 0) return prevDeck;
+          const orderedExtras = buildPersonalizedDeck(
+            extras,
+            category,
+            currentMem.seenIds,
+            currentMem.categoryWeights,
+            false
+          );
+          return [...prevDeck, ...orderedExtras];
+        });
+        return merged;
+      }
+
       const baseLiveDeck = buildPersonalizedDeck(
         merged,
         activeCategoryRef.current,
@@ -264,8 +308,6 @@ export default function HomeClient({ initialFacts }: HomeClientProps) {
         currentMem.categoryWeights,
         false
       );
-      const targetSlug =
-        activeCategoryRef.current === 'all' ? requestedFactSlugRef.current : null;
       const updatedDeck = promoteFactToFront(baseLiveDeck, merged, targetSlug);
       setDeckFacts(updatedDeck);
       if (updatedDeck[0]) setSeedFact(updatedDeck[0]);
@@ -276,13 +318,14 @@ export default function HomeClient({ initialFacts }: HomeClientProps) {
     };
 
     const hydratePaginatedFeed = async () => {
-      const page1 = await fetchPaginatedFactsFromApi({ offset: 0, limit: 25 });
+      const page1 = await fetchPaginatedFactsFromApi({ offset: 0, limit: 80 });
       let workingPool: FactCardType[] | undefined;
 
       if (page1 && page1.facts.length > 0) {
+        setUsingLocalFallback(false);
         workingPool = applyFactBatch(page1.facts);
         if (page1.hasMore && !cancelled) {
-          const page2 = await fetchPaginatedFactsFromApi({ offset: 25, limit: 120 });
+          const page2 = await fetchPaginatedFactsFromApi({ offset: 80, limit: 120 });
           if (page2 && page2.facts.length > 0) {
             workingPool = applyFactBatch(page2.facts) ?? workingPool;
           }
@@ -291,6 +334,18 @@ export default function HomeClient({ initialFacts }: HomeClientProps) {
         const offlineOrCached = await fetchFactsFromApiWithCache();
         if (offlineOrCached && offlineOrCached.length > 0) {
           workingPool = applyFactBatch(offlineOrCached);
+        } else {
+          // Local bundled fallback pool on API outage or rate limit
+          try {
+            const { getAllFacts } = await import('@/utils/factsServerData');
+            const localFacts = getAllFacts();
+            if (!cancelled && localFacts.length > 0) {
+              setUsingLocalFallback(true);
+              workingPool = applyFactBatch(localFacts);
+            }
+          } catch {
+            // Retain SSR initialFacts gracefully
+          }
         }
       }
 
@@ -298,19 +353,27 @@ export default function HomeClient({ initialFacts }: HomeClientProps) {
       const activePool = workingPool ?? allFactsRef.current;
 
       if (duelParam) {
-        const decoded = decodeDuelPayload(duelParam);
-        if (decoded && decoded.cardIds.length > 0) {
-          // Open duel lobby page with shared pack — do not auto-start until all ready
-          const resolved = resolveFactsByIds(activePool, decoded.cardIds);
-          const cardIds =
-            resolved.length > 0 ? resolved.map((f) => f.id) : decoded.cardIds;
-          setIncomingDuel({
-            ...decoded,
-            cardIds,
-          });
+        if (isShortRoomCode(duelParam)) {
+          setIncomingRoomCode(normalizeRoomCode(duelParam));
+          setIncomingDuel(null);
           setActiveQuiz(null);
           setActiveTab('duel');
           setShowWelcome(false);
+        } else {
+          const decoded = decodeDuelPayload(duelParam);
+          if (decoded && decoded.cardIds.length > 0) {
+            // Legacy base64 duel URL fallback — still opens lobby without auto-starting
+            const resolved = resolveFactsByIds(activePool, decoded.cardIds);
+            const cardIds =
+              resolved.length > 0 ? resolved.map((f) => f.id) : decoded.cardIds;
+            setIncomingDuel({
+              ...decoded,
+              cardIds,
+            });
+            setActiveQuiz(null);
+            setActiveTab('duel');
+            setShowWelcome(false);
+          }
         }
       } else if (openQuizParam === 'daily') {
         const dailyFacts = pickSeededFacts(activePool, 5, getDailySeedKey());
@@ -323,7 +386,38 @@ export default function HomeClient({ initialFacts }: HomeClientProps) {
       }
     };
 
+    const hydrateRemoteProfile = async () => {
+      try {
+        const remote = await fetchProfileFromApi();
+        if (cancelled) return;
+        if (remote) {
+          setMemory((prev) => mergeRemoteProfileIntoMemory(prev, remote));
+        } else {
+          const cur = loadUserMemory();
+          void syncProfileToApi({
+            username: cur.nickname,
+            xp: cur.xp,
+            weeklyXp: cur.weeklyXp,
+            dailyBestScore: cur.dailyBestScore,
+            lastDailyQuizDate: cur.lastDailyQuizDate,
+            streak: cur.streakDays,
+            lastVisitDate: cur.lastVisitDate,
+            seenIds: cur.seenIds,
+            favoriteIds: cur.favoriteIds,
+            categoryWeights: cur.categoryWeights,
+            categoryAccuracy: cur.categoryAccuracy,
+            badges: cur.badges,
+          });
+        }
+      } finally {
+        if (!cancelled) {
+          profileHydratedRef.current = true;
+        }
+      }
+    };
+
     void hydratePaginatedFeed();
+    void hydrateRemoteProfile();
 
     return () => {
       cancelled = true;
@@ -331,8 +425,13 @@ export default function HomeClient({ initialFacts }: HomeClientProps) {
   }, [initialFacts]);
 
   useEffect(() => {
-    if (!hasHydratedRef.current) return;
-    if (memory.xp === 0 && memory.streakDays === 0) return;
+    const bumpLikes = () => setLikedRevision((prev) => prev + 1);
+    window.addEventListener('scrolly-liked-facts-updated', bumpLikes);
+    return () => window.removeEventListener('scrolly-liked-facts-updated', bumpLikes);
+  }, []);
+
+  useEffect(() => {
+    if (!hasHydratedRef.current || !profileHydratedRef.current) return;
 
     const activeSlug = seedFact?.slug || seedFact?.en.slug || seedFact?.tr.slug || seedFact?.id || 'profile';
     const syncTimer = setTimeout(() => {
@@ -343,10 +442,38 @@ export default function HomeClient({ initialFacts }: HomeClientProps) {
         { xp: memory.xp, streak: memory.streakDays },
         { xp: memory.xp, streak: memory.streakDays, username: memory.nickname }
       );
-    }, 150);
+      void syncProfileToApi({
+        username: memory.nickname,
+        xp: memory.xp,
+        weeklyXp: memory.weeklyXp,
+        dailyBestScore: memory.dailyBestScore,
+        lastDailyQuizDate: memory.lastDailyQuizDate,
+        streak: memory.streakDays,
+        lastVisitDate: memory.lastVisitDate,
+        seenIds: memory.seenIds,
+        favoriteIds: memory.favoriteIds,
+        categoryWeights: memory.categoryWeights,
+        categoryAccuracy: memory.categoryAccuracy,
+        badges: memory.badges,
+      });
+    }, 450);
 
     return () => clearTimeout(syncTimer);
-  }, [memory.xp, memory.streakDays, memory.nickname, seedFact]);
+  }, [
+    memory.xp,
+    memory.weeklyXp,
+    memory.dailyBestScore,
+    memory.lastDailyQuizDate,
+    memory.streakDays,
+    memory.lastVisitDate,
+    memory.nickname,
+    memory.seenIds,
+    memory.favoriteIds,
+    memory.categoryWeights,
+    memory.categoryAccuracy,
+    memory.badges,
+    seedFact,
+  ]);
 
   useEffect(() => {
     if (typeof document !== 'undefined') {
@@ -397,24 +524,27 @@ export default function HomeClient({ initialFacts }: HomeClientProps) {
     vibrateTap(12);
     playPop(soundEnabled);
     activeCategoryRef.current = cat;
+    activeSlideIndexRef.current = 0;
     setActiveCategory(cat);
 
-    setMemory((prev) => {
-      const next =
-        cat !== 'all' && cat !== 'vocabulary'
-          ? boostCategoryWeight(prev, cat, 1)
-          : prev;
-      const newDeck = buildPersonalizedDeck(
-        allFactsRef.current,
-        cat,
-        next.seenIds,
-        next.categoryWeights,
-        false
-      );
-      setDeckFacts(newDeck);
-      if (newDeck[0]) setSeedFact(newDeck[0]);
-      return next;
-    });
+    const prevMem = memoryRef.current;
+    const nextMem =
+      cat !== 'all' && cat !== 'vocabulary'
+        ? boostCategoryWeight(prevMem, cat, 1)
+        : prevMem;
+    if (nextMem !== prevMem) {
+      setMemory(nextMem);
+    }
+
+    const newDeck = buildPersonalizedDeck(
+      allFactsRef.current,
+      cat,
+      nextMem.seenIds,
+      nextMem.categoryWeights,
+      false
+    );
+    setDeckFacts(newDeck);
+    if (newDeck[0]) setSeedFact(newDeck[0]);
 
     feedRef.current?.scrollToTop();
 
@@ -524,6 +654,7 @@ export default function HomeClient({ initialFacts }: HomeClientProps) {
       vibrateSheet(12);
       playPop(soundEnabled);
       setIncomingDuel(null);
+      setIncomingRoomCode(null);
       setActiveTab('duel');
     },
     [soundEnabled]
@@ -644,6 +775,10 @@ export default function HomeClient({ initialFacts }: HomeClientProps) {
       questionCount: results.length,
     });
 
+    if (duelConfig?.duelId && isShortRoomCode(duelConfig.duelId)) {
+      void completeScrollaRoom(duelConfig.duelId, updated.playerId, totalBonusXp);
+    }
+
     setActiveQuiz(null);
     setShareModalData({
       results,
@@ -655,6 +790,20 @@ export default function HomeClient({ initialFacts }: HomeClientProps) {
     });
   };
 
+  const refreshExploreDeck = useCallback((shuffle = false) => {
+    const refreshed = buildPersonalizedDeck(
+      allFactsRef.current,
+      activeCategoryRef.current,
+      memoryRef.current.seenIds,
+      memoryRef.current.categoryWeights,
+      shuffle
+    );
+    setDeckFacts(refreshed);
+    if (refreshed[0]) setSeedFact(refreshed[0]);
+    activeSlideIndexRef.current = 0;
+    requestAnimationFrame(() => feedRef.current?.scrollToTop());
+  }, []);
+
   const handleDockSelectTab = (tab: DockTabId) => {
     vibrateTap(12);
     playPop(soundEnabled);
@@ -664,19 +813,7 @@ export default function HomeClient({ initialFacts }: HomeClientProps) {
       setActiveQuiz(null);
       setIncomingDuel(null);
       setActiveTab('explore');
-
-      if (alreadyExploring) {
-        const refreshed = buildPersonalizedDeck(
-          allFactsRef.current,
-          activeCategory,
-          memory.seenIds,
-          memory.categoryWeights,
-          true
-        );
-        setDeckFacts(refreshed);
-        if (refreshed[0]) setSeedFact(refreshed[0]);
-      }
-      feedRef.current?.scrollToTop();
+      refreshExploreDeck(alreadyExploring);
       return;
     }
 
@@ -690,8 +827,10 @@ export default function HomeClient({ initialFacts }: HomeClientProps) {
     vibrateTap(12);
     playPop(soundEnabled);
     setIncomingDuel(null);
+    setIncomingRoomCode(null);
     setActiveQuiz(null);
     setActiveTab('explore');
+    refreshExploreDeck(false);
   };
 
   const handleToggleNotifications = async () => {
@@ -712,8 +851,12 @@ export default function HomeClient({ initialFacts }: HomeClientProps) {
     setActiveCategory('all');
     const cleanDeck = buildPersonalizedDeck(allFactsRef.current, 'all', [], fresh.categoryWeights, false);
     setDeckFacts(cleanDeck);
-    if (cleanDeck[0]) setSeedFact(cleanDeck[0]);
+    if (cleanDeck[0]) {
+      setSeedFact(cleanDeck[0]);
+      setActiveFact(cleanDeck[0]);
+    }
     feedRef.current?.scrollToTop();
+    void syncProfileToApi({ reset: true, username: fresh.nickname });
   };
 
   const cookieBannerVisible =
@@ -730,25 +873,47 @@ export default function HomeClient({ initialFacts }: HomeClientProps) {
   }, []);
 
   const isDark = memory.darkMode;
+  const activeFactLiked = activeFact ? (likedRevision >= 0 && isFactLiked(activeFact.id)) : false;
+  const activeFactLikesCount = activeFact
+    ? typeof activeFact.likesCount === 'number'
+      ? Math.max(0, activeFact.likesCount) + (activeFactLiked ? 1 : 0)
+      : (() => {
+          let sum = 120;
+          for (let i = 0; i < activeFact.id.length; i += 1) {
+            sum += activeFact.id.charCodeAt(i) * 19;
+          }
+          return 400 + (sum % 890) + (activeFactLiked ? 1 : 0);
+        })()
+    : 0;
 
   return (
-    <div
-      data-testid="reels-desktop-shell"
-      data-theme={isDark ? 'dark' : 'light'}
-      className={`relative flex h-[100dvh] w-screen overflow-hidden select-none ${
-        isDark ? 'bg-black text-white' : 'bg-[#E8E6F0] text-[#1E1B2E]'
-      }`}
+    <ErrorBoundary
+      fallbackTitle={
+        lang === 'tr' ? 'Keşif akışı geçici olarak yenilendi' : 'Discovery feed temporarily reset'
+      }
+      onReset={() => refreshExploreDeck(false)}
     >
-      <WelcomeExploreModal
-        open={showWelcome}
-        lang={lang}
-        onStart={() => {
-          persistWelcomeDismissed();
-          setShowWelcome(false);
-          vibrateTap(12);
-          playPop(soundEnabled);
-        }}
-      />
+      <div
+        data-testid="reels-desktop-shell"
+        data-theme={isDark ? 'dark' : 'light'}
+        className={`relative flex h-[100dvh] w-screen overflow-hidden select-none ${
+          isDark ? 'bg-black text-white' : 'bg-[#E8E6F0] text-[#1E1B2E]'
+        }`}
+      >
+        <WelcomeExploreModal
+          open={showWelcome}
+          lang={lang}
+          initialNickname={memory.nickname}
+          onStart={(chosenNickname) => {
+            persistWelcomeDismissed();
+            if (chosenNickname && chosenNickname.trim()) {
+              setMemory((prev) => updateUserNickname(prev, chosenNickname));
+            }
+            setShowWelcome(false);
+            vibrateTap(12);
+            playPop(soundEnabled);
+          }}
+        />
 
       {/* TikTok-style left rail (desktop only) */}
       <DesktopLeftNav
@@ -769,7 +934,7 @@ export default function HomeClient({ initialFacts }: HomeClientProps) {
         {/* Blurred ambient card-color fill (letterbox feel, not empty void) */}
         <div
           aria-hidden="true"
-          className="pointer-events-none absolute inset-0 hidden lg:block"
+          className="pointer-events-none absolute inset-0 hidden transition-[background] duration-500 lg:block"
           style={{
             background: isDark
               ? `radial-gradient(ellipse 70% 95% at 48% 50%, ${ambientAccent}66 0%, ${ambientAccent}22 38%, #000 72%)`
@@ -778,21 +943,25 @@ export default function HomeClient({ initialFacts }: HomeClientProps) {
         />
         <div
           aria-hidden="true"
-          className="pointer-events-none absolute inset-0 hidden lg:block opacity-50 blur-3xl"
+          className="pointer-events-none absolute inset-0 hidden opacity-50 blur-3xl transition-[background] duration-500 lg:block"
           style={{
             background: `linear-gradient(180deg, ${ambientAccent}40 0%, transparent 45%, ${ambientAccent}28 100%)`,
           }}
         />
 
-        {/* Stage + attached desktop up/down rail (TikTok pattern) */}
+        {/* Stage + attached desktop vertical actions + up/down rail + xl info panel */}
         <div
           data-testid="reels-stage-row"
-          className="relative z-10 flex h-full w-full max-w-none items-stretch justify-center lg:w-auto lg:max-w-[min(720px,58vw)] lg:gap-2"
+          className="relative z-10 flex h-full w-full max-w-none items-stretch justify-center lg:h-[100dvh] lg:w-auto lg:max-w-none lg:items-center lg:gap-5"
         >
-        {/* Immersive vertical stage: full-bleed on mobile/tablet; tall center column on desktop */}
+        {/* Immersive vertical stage: full-bleed on mobile/tablet; proportional 88dvh showcase on desktop */}
         <div
           data-testid="reels-phone-frame"
-          className={`relative z-10 mx-auto flex h-full w-full min-w-0 flex-1 flex-col overflow-hidden lg:mx-0 lg:w-[min(620px,50vw)] lg:max-w-[min(620px,50vw)] lg:flex-none lg:shadow-[0_0_100px_-18px_rgba(0,0,0,0.55)] ${
+          className={`relative z-10 mx-auto flex h-full w-full min-w-0 flex-1 flex-col overflow-hidden lg:mx-0 lg:my-auto lg:h-[88dvh] lg:flex-none lg:rounded-[28px] lg:border lg:border-white/15 lg:shadow-[0_24px_90px_-12px_rgba(0,0,0,0.72)] ${
+            showExploreFeed
+              ? 'lg:w-[min(480px,46vw)] lg:max-w-[500px] xl:w-[min(500px,38vw)] xl:max-w-[520px]'
+              : 'lg:w-[min(600px,54vw)] lg:max-w-[620px]'
+          } ${
             isDark ? 'bg-[#09090B] text-white' : 'bg-[#F7F5FB] text-[#1E1B2E]'
           }`}
         >
@@ -835,7 +1004,12 @@ export default function HomeClient({ initialFacts }: HomeClientProps) {
             onToggleFavorite={handleToggleFavorite}
             onOpenQuizHub={handleOpenQuizHub}
             onButtonPop={() => playPop(soundEnabled)}
-            onSlideIndexChange={(idx) => setMaxSwipedCards((prev) => Math.max(prev, idx))}
+            onSlideIndexChange={(idx) => {
+              activeSlideIndexRef.current = idx;
+              setMaxSwipedCards((prev) => Math.max(prev, idx));
+            }}
+            onActiveFactChange={setActiveFact}
+            onActiveSlideChange={setActiveSlide}
             onEarnXp={(xpAmount) => {
               setMemory((prev) => addUserXp(prev, xpAmount));
             }}
@@ -906,6 +1080,14 @@ export default function HomeClient({ initialFacts }: HomeClientProps) {
           onSelectMode={handleStartQuizMode}
           onClose={closeOverlayToExplore}
           onButtonPop={() => playPop(soundEnabled)}
+          onOpenScrolla={() => {
+            vibrateTap(12);
+            playPop(soundEnabled);
+            setActiveQuiz(null);
+            setIncomingDuel(null);
+            setIncomingRoomCode(null);
+            setActiveTab('duel');
+          }}
         />
 
         <DuelModal
@@ -913,9 +1095,12 @@ export default function HomeClient({ initialFacts }: HomeClientProps) {
           presentation="page"
           lang={lang}
           defaultNickname={memory.nickname}
+          playerId={memory.playerId}
           seedFact={seedFact}
           allFacts={allFacts}
           incomingDuel={incomingDuel}
+          initialRoomCode={incomingRoomCode}
+          onClearRoomCode={() => setIncomingRoomCode(null)}
           onStartDuel={handleStartDuel}
           onClose={closeOverlayToExplore}
           onButtonPop={() => playPop(soundEnabled)}
@@ -962,6 +1147,7 @@ export default function HomeClient({ initialFacts }: HomeClientProps) {
             onClose={() => {
               setShareModalData(null);
               setActiveTab('explore');
+              refreshExploreDeck(false);
             }}
           />
         )}
@@ -991,6 +1177,19 @@ export default function HomeClient({ initialFacts }: HomeClientProps) {
           }}
         />
 
+        {showExploreFeed && usingLocalFallback && (
+          <div
+            data-testid="local-fallback-notice"
+            className="pointer-events-none absolute inset-x-0 top-[92px] z-20 flex justify-center px-4"
+          >
+            <span className="rounded-full border border-white/15 bg-black/55 px-3 py-1 text-[10px] font-bold text-white/85 backdrop-blur-md">
+              {lang === 'tr'
+                ? 'Çevrimdışı kart havuzu devrede'
+                : 'Offline card pool active'}
+            </span>
+          </div>
+        )}
+
         {/* Bottom dock: mobile + tablet only (desktop uses left nav) */}
         <div className="lg:hidden">
           <IosFloatingIslandDock
@@ -1008,6 +1207,56 @@ export default function HomeClient({ initialFacts }: HomeClientProps) {
           <DesktopFeedSideRail
             lang={lang}
             darkMode={isDark}
+            activeFact={activeFact}
+            activeSlide={activeSlide}
+            isLiked={activeFactLiked}
+            isSaved={activeFact ? memory.favoriteIds.includes(activeFact.id) : false}
+            likesCount={activeFactLikesCount}
+            onLike={() => {
+              if (!activeFact) return;
+              window.dispatchEvent(
+                new CustomEvent('scrolly-card-action', {
+                  detail: { factId: activeFact.id, action: 'like' },
+                })
+              );
+            }}
+            onSave={() => {
+              if (!activeFact) return;
+              window.dispatchEvent(
+                new CustomEvent('scrolly-card-action', {
+                  detail: { factId: activeFact.id, action: 'save' },
+                })
+              );
+            }}
+            onDetail={() => {
+              if (!activeFact) return;
+              window.dispatchEvent(
+                new CustomEvent('scrolly-card-action', {
+                  detail: { factId: activeFact.id, action: 'detail' },
+                })
+              );
+            }}
+            onDuel={() => {
+              if (activeFact) {
+                window.dispatchEvent(
+                  new CustomEvent('scrolly-card-action', {
+                    detail: { factId: activeFact.id, action: 'duel' },
+                  })
+                );
+                return;
+              }
+              if (seedFact) {
+                handleOpenDuelFromCard(seedFact);
+              }
+            }}
+            onShare={() => {
+              if (!activeFact) return;
+              window.dispatchEvent(
+                new CustomEvent('scrolly-card-action', {
+                  detail: { factId: activeFact.id, action: 'share' },
+                })
+              );
+            }}
             onPrev={() => {
               vibrateTap(10);
               feedRef.current?.scrollToPrev();
@@ -1021,5 +1270,6 @@ export default function HomeClient({ initialFacts }: HomeClientProps) {
         </div>
       </div>
     </div>
+    </ErrorBoundary>
   );
 }

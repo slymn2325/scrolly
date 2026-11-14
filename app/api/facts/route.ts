@@ -1,14 +1,7 @@
 import { NextResponse } from 'next/server';
-import {
-  type DbFactRow,
-  ensureSchema,
-  getPool,
-  hasDatabaseUrl,
-  mapDbRowToFactCard,
-} from '@/lib/db';
-import type { CategoryId, FactCard } from '@/types/fact';
+import { fetchFactsWithSourceServer } from '@/lib/db';
+import type { CategoryId } from '@/types/fact';
 import { interleaveFactsByCategory } from '@/utils/factsData';
-import { getAllFacts } from '@/utils/factsServerData';
 
 const VALID_CATEGORIES = new Set<CategoryId>([
   'space',
@@ -17,21 +10,15 @@ const VALID_CATEGORIES = new Set<CategoryId>([
   'history',
   'science',
   'records',
+  'statistics',
 ]);
-
-function getLocalFallbackFacts(): FactCard[] {
-  return getAllFacts().map((fact) => ({
-    ...fact,
-    slug: fact.slug || fact.en.slug || fact.tr.slug || fact.id,
-    sketchType: fact.sketchType || fact.id,
-  }));
-}
 
 function normalizeCategoryParam(raw: string | null): CategoryId | null {
   if (!raw) return null;
   const cleaned = raw.trim().toLowerCase();
   if (cleaned === 'weird_records') return 'records';
   if (cleaned === 'human-body') return 'human_body';
+  if (cleaned === 'istatistik') return 'statistics';
   if (VALID_CATEGORIES.has(cleaned as CategoryId)) {
     return cleaned as CategoryId;
   }
@@ -54,30 +41,8 @@ export async function GET(request: Request) {
     'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=600',
   };
 
-  let source: 'postgres' | 'local' = 'local';
-  let allFacts: FactCard[];
-
-  if (!hasDatabaseUrl()) {
-    allFacts = getLocalFallbackFacts();
-  } else {
-    try {
-      await ensureSchema();
-      const pool = getPool();
-      const result = await pool.query<DbFactRow>(
-        'SELECT * FROM facts ORDER BY created_at DESC, id DESC'
-      );
-      const dbFacts = result.rows.map(mapDbRowToFactCard);
-      if (dbFacts.length > 0) {
-        source = 'postgres';
-        allFacts = dbFacts;
-      } else {
-        allFacts = getLocalFallbackFacts();
-      }
-    } catch (err) {
-      console.error('[GET /api/facts] Falling back to local facts due to error:', err);
-      allFacts = getLocalFallbackFacts();
-    }
-  }
+  const { source, entries } = await fetchFactsWithSourceServer();
+  const allFacts = entries.map((entry) => entry.fact);
 
   const ordered =
     categoryParam !== null

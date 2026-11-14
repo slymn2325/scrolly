@@ -841,11 +841,15 @@ export default function FullBleedReelsCanvas({
         case 'typographic':
           drawTypographic(w, h, t, speed);
           break;
+        case 'statistics':
+          drawStatisticsCanvas(ctx, w, h, t, speed, rgb);
+          break;
         default:
           if (category === 'space') drawPlanet(w, h, t, speed);
           else if (category === 'nature') drawForest(w, h, t, speed);
           else if (category === 'human_body') drawAnatomy(w, h, t, speed);
           else if (category === 'history') drawAstrolabe(w, h, t, speed);
+          else if (category === 'statistics') drawStatisticsCanvas(ctx, w, h, t, speed, rgb);
           else drawMolecule(w, h, t, speed);
       }
     };
@@ -951,4 +955,103 @@ function roundRect(
   ctx.arcTo(x, y + h, x, y, radius);
   ctx.arcTo(x, y, x + w, y, radius);
   ctx.closePath();
+}
+
+function drawStatisticsCanvas(
+  ctx: CanvasRenderingContext2D,
+  w: number,
+  h: number,
+  t: number,
+  speed: number,
+  rgb: { r: number; g: number; b: number }
+) {
+  ctx.save();
+  const cx = w * 0.5;
+  const cy = h * 0.42;
+
+  // Subtle coordinate grid
+  ctx.strokeStyle = 'rgba(129, 140, 248, 0.14)';
+  ctx.lineWidth = 1;
+  const step = Math.max(36, Math.round(w / 10));
+  for (let gx = (w % step) * 0.5; gx < w; gx += step) {
+    ctx.beginPath();
+    ctx.moveTo(gx, h * 0.14);
+    ctx.lineTo(gx, h * 0.72);
+    ctx.stroke();
+  }
+  for (let gy = h * 0.18; gy <= h * 0.68; gy += step) {
+    ctx.beginPath();
+    ctx.moveTo(w * 0.08, gy);
+    ctx.lineTo(w * 0.92, gy);
+    ctx.stroke();
+  }
+
+  // Animated bell curve (Gaussian distribution)
+  const curveWidth = Math.min(w * 0.82, 420);
+  const curveLeft = cx - curveWidth * 0.5;
+  const baseY = h * 0.56;
+  const peakH = Math.min(h * 0.24, 175) * (0.94 + Math.sin(t * 1.4 * speed) * 0.06);
+
+  ctx.beginPath();
+  ctx.moveTo(curveLeft, baseY);
+  const samples = 56;
+  for (let i = 0; i <= samples; i++) {
+    const p = i / samples;
+    const z = (p - 0.5) * 5.2;
+    const yVal = Math.exp(-0.5 * z * z) * peakH;
+    ctx.lineTo(curveLeft + p * curveWidth, baseY - yVal);
+  }
+  ctx.lineTo(curveLeft + curveWidth, baseY);
+  ctx.closePath();
+  const areaGrad = ctx.createLinearGradient(0, baseY - peakH, 0, baseY);
+  areaGrad.addColorStop(0, `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.42)`);
+  areaGrad.addColorStop(1, 'rgba(34, 211, 238, 0.04)');
+  ctx.fillStyle = areaGrad;
+  ctx.fill();
+
+  ctx.beginPath();
+  for (let i = 0; i <= samples; i++) {
+    const p = i / samples;
+    const z = (p - 0.5) * 5.2;
+    const yVal = Math.exp(-0.5 * z * z) * peakH;
+    const px = curveLeft + p * curveWidth;
+    const py = baseY - yVal;
+    if (i === 0) ctx.moveTo(px, py);
+    else ctx.lineTo(px, py);
+  }
+  ctx.strokeStyle = 'rgba(103, 232, 249, 0.9)';
+  ctx.lineWidth = 2.6;
+  ctx.stroke();
+
+  // Animated probability histogram bars
+  const barCount = 9;
+  const totalBarsW = curveWidth * 0.84;
+  const barGap = 8;
+  const barW = Math.max(8, (totalBarsW - barGap * (barCount - 1)) / barCount);
+  const barsLeft = cx - totalBarsW * 0.5;
+  for (let i = 0; i < barCount; i++) {
+    const u = i / (barCount - 1) - 0.5;
+    const gauss = Math.exp(-8 * u * u);
+    const wave = 0.86 + 0.18 * Math.sin(t * 2.1 * speed + i * 0.75);
+    const bh = Math.max(18, gauss * peakH * 0.88 * wave);
+    const bx = barsLeft + i * (barW + barGap);
+    const by = baseY - bh;
+    roundRect(ctx, bx, by, barW, bh, 5);
+    ctx.fillStyle =
+      i === 4
+        ? 'rgba(250, 204, 21, 0.72)'
+        : i % 2 === 0
+          ? 'rgba(129, 140, 248, 0.45)'
+          : 'rgba(34, 211, 238, 0.42)';
+    ctx.fill();
+  }
+
+  // Drifting sigma orbit ring
+  const pulseR = 14 + Math.sin(t * 2 * speed) * 4;
+  ctx.beginPath();
+  ctx.arc(cx, cy - h * 0.08, pulseR, 0, Math.PI * 2);
+  ctx.strokeStyle = 'rgba(250, 204, 21, 0.65)';
+  ctx.lineWidth = 1.8;
+  ctx.stroke();
+  ctx.restore();
 }

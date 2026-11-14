@@ -16,11 +16,11 @@
       "quiz": {
         "question": "Bir maddenin katı, sıvı ve gaz hallerinin aynı anda dengede bulunduğu duruma ne ad verilir?",
         "options": [
-          "Üçlü nokta (Triple point)",
           "Kritik eşik",
+          "Üçlü nokta (Triple point)",
           "Mutlak sıfır"
         ],
-        "correctIndex": 0,
+        "correctIndex": 1,
         "explanation": "Üçlü noktada sıcaklık ve basınç üç fazın aynı anda var olmasını sağlar."
       },
       "sourceName": "NIST Thermodynamics Standards",
@@ -36,18 +36,19 @@
       "quiz": {
         "question": "What is the state called when solid, liquid, and gas coexist in equilibrium?",
         "options": [
-          "Triple point",
           "Absolute zero",
-          "Critical mass"
+          "Critical mass",
+          "Triple point"
         ],
-        "correctIndex": 0,
+        "correctIndex": 2,
         "explanation": "At the triple point, pressure and temperature balance all three phases simultaneously."
       },
       "sourceName": "NIST Thermodynamics Standards",
       "sourceUrl": "https://www.nist.gov/si-redefinition/kelvin-introduction"
     },
     "sourceName": "NIST Thermodynamics Standards",
-    "sourceUrl": "https://www.nist.gov/si-redefinition/kelvin-introduction"
+    "sourceUrl": "https://www.nist.gov/si-redefinition/kelvin-introduction",
+    "visualQuery": "boiling ice water"
   },
   {
     "id": "science-02",
@@ -66,11 +67,11 @@
       "quiz": {
         "question": "2,17 Kelvin altındaki süperakışkan helyum-4 neden kabın duvarlarından yukarı tırmanabilir?",
         "options": [
-          "Sıfır viskoziteye geçip sürtünmesiz kuantum filmi oluşturduğu için",
           "Helyum manyetik bir metal olduğu için",
-          "Kap içinde kaynayarak buhar itkisi ürettiği için"
+          "Kap içinde kaynayarak buhar itkisi ürettiği için",
+          "Sıfır viskoziteye geçip sürtünmesiz kuantum filmi oluşturduğu için"
         ],
-        "correctIndex": 0,
+        "correctIndex": 2,
         "explanation": "Lambda noktasının altında sıfır viskoziteli Rollin filmi van der Waals kuvvetiyle duvarı sürtünmesiz tırmanır."
       },
       "guessChallenge": {
@@ -115,7 +116,8 @@
       "sourceUrl": "https://en.wikipedia.org/wiki/Superfluidity"
     },
     "sourceName": "APS Physics / Physical Review",
-    "sourceUrl": "https://en.wikipedia.org/wiki/Superfluidity"
+    "sourceUrl": "https://en.wikipedia.org/wiki/Superfluidity",
+    "visualQuery": "liquid nitrogen laboratory"
   },
   {
     "id": "science-03",
@@ -154,18 +156,19 @@
       "quiz": {
         "question": "What would happen if GPS satellites did not correct for relativistic time dilation?",
         "options": [
-          "Location accuracy would drift by kilometers every day",
           "Phone batteries would drain twice as fast",
+          "Location accuracy would drift by kilometers every day",
           "Satellites would fall out of orbit"
         ],
-        "correctIndex": 0,
+        "correctIndex": 1,
         "explanation": "Even microsecond clock drift translates into huge distance errors at the speed of light."
       },
       "sourceName": "NIST Atomic Clocks & Relativity",
       "sourceUrl": "https://www.nist.gov/news-events/news/2010/09/nist-pair-aluminum-atomic-clocks-reveal-einsteins-relativity-personal-scale"
     },
     "sourceName": "NIST Atomic Clocks & Relativity",
-    "sourceUrl": "https://www.nist.gov/news-events/news/2010/09/nist-pair-aluminum-atomic-clocks-reveal-einsteins-relativity-personal-scale"
+    "sourceUrl": "https://www.nist.gov/news-events/news/2010/09/nist-pair-aluminum-atomic-clocks-reveal-einsteins-relativity-personal-scale",
+    "visualQuery": "skyscraper city skyline"
   },
   {
     "id": "science-04",
@@ -184,11 +187,11 @@
       "quiz": {
         "question": "Sonolüminesans deneyinde su içindeki bir gaz kabarcığının mikroskobik ışık patlaması üretmesinin sebebi nedir?",
         "options": [
-          "Ultrasonik ses dalgasının kabarcığı sesüstü hızla çöktürüp gazı aşırı ısıtması",
           "Suya karıştırılan fosfor tozunun parlaması",
+          "Ultrasonik ses dalgasının kabarcığı sesüstü hızla çöktürüp gazı aşırı ısıtması",
           "Kabarcığın içindeki suyun elektrolizle yanması"
         ],
-        "correctIndex": 0,
+        "correctIndex": 1,
         "explanation": "Akustik dalgayla sıkışan gaz birkaç pikosaniye içinde Güneş yüzeyi sıcaklığında plazma ışığı yayar."
       },
       "guessChallenge": {
@@ -213,11 +216,11 @@
       "quiz": {
         "question": "What causes a tiny suspended bubble to emit an ultraviolet-bright flash during sonoluminescence?",
         "options": [
-          "Violent acoustic collapse compressing internal gas to star-like temperatures",
           "Chemical bioluminescence from dissolved algae",
-          "Static electricity rubbed off the glass tank"
+          "Static electricity rubbed off the glass tank",
+          "Violent acoustic collapse compressing internal gas to star-like temperatures"
         ],
-        "correctIndex": 0,
+        "correctIndex": 2,
         "explanation": "Adiabatic implosion crushes the bubble's core in picoseconds, heating trapped gas into a brief glowing plasma."
       },
       "guessChallenge": {
@@ -233,7 +236,8 @@
       "sourceUrl": "https://journals.aps.org/rmp/abstract/10.1103/RevModPhys.74.425"
     },
     "sourceName": "Reviews of Modern Physics",
-    "sourceUrl": "https://journals.aps.org/rmp/abstract/10.1103/RevModPhys.74.425"
+    "sourceUrl": "https://journals.aps.org/rmp/abstract/10.1103/RevModPhys.74.425",
+    "visualQuery": "glowing water bubble"
   },
   {
     "id": "science-05",
@@ -252,11 +256,11 @@
       "quiz": {
         "question": "500 ton su taşıyan bir bulutun gökyüzünde havada kalabilmesinin sırrı nedir?",
         "options": [
-          "Suyun mikroskobik damlacıklara dağılıp yükselen havayla taşınması",
           "Bulutların içinde helyum gazı birikmesi",
-          "Su damlalarının yerçekiminden etkilenmemesi"
+          "Su damlalarının yerçekiminden etkilenmemesi",
+          "Suyun mikroskobik damlacıklara dağılıp yükselen havayla taşınması"
         ],
-        "correctIndex": 0,
+        "correctIndex": 2,
         "explanation": "Geniş alana yayılan mikro damlacıklar yükselen hava akımlarının üzerinde kolayca süzülür."
       },
       "sourceName": "USGS Water Science School",
@@ -283,7 +287,8 @@
       "sourceUrl": "https://www.usgs.gov/water-science-school/science/how-much-does-a-cloud-weigh"
     },
     "sourceName": "USGS Water Science School",
-    "sourceUrl": "https://www.usgs.gov/water-science-school/science/how-much-does-a-cloud-weigh"
+    "sourceUrl": "https://www.usgs.gov/water-science-school/science/how-much-does-a-cloud-weigh",
+    "visualQuery": "fluffy cumulus clouds"
   },
   {
     "id": "science-06",
@@ -322,18 +327,19 @@
       "quiz": {
         "question": "Why does sound travel so much faster underwater than through air?",
         "options": [
-          "Water molecules are packed much closer together",
           "Water conducts electricity better than air",
+          "Water molecules are packed much closer together",
           "Wind slows sound down on land"
         ],
-        "correctIndex": 0,
+        "correctIndex": 1,
         "explanation": "Closely packed water molecules transfer mechanical vibrations far more rapidly."
       },
       "sourceName": "NOAA Ocean Acoustics",
       "sourceUrl": "https://oceanservice.noaa.gov/facts/sound.html"
     },
     "sourceName": "NOAA Ocean Acoustics",
-    "sourceUrl": "https://oceanservice.noaa.gov/facts/sound.html"
+    "sourceUrl": "https://oceanservice.noaa.gov/facts/sound.html",
+    "visualQuery": "underwater ocean ripples"
   },
   {
     "id": "science-07",
@@ -343,7 +349,7 @@
     "emoji": "🌈",
     "readingTimeSec": 14,
     "tr": {
-      "slug": "gokkusaklari-aslında-tam-bir-dairedir",
+      "slug": "gokkusaklari-aslinda-tam-bir-dairedir",
       "title": "Gökkuşakları Aslında Yarım Yay Değil, Tam Bir Dairedir",
       "factText": "Yer yüzeyinden gökkuşağını yarım yay gibi görürüz; ancak bir uçaktan veya yüksek bir dağdan baktığınızda tam 360 derecelik bir çember oluşur.",
       "deepDiveDetail": "Güneş ışığı yağmur damlacıklarından yaklaşık 42 derecelik bir koni açısıyla gözümüze kırılır. Yerdeyken ufkun altındaki kısmı toprak gizler; gökyüzünde ise tam renk çemberi bütün ihtişamıyla ortaya çıkar.",
@@ -352,11 +358,11 @@
       "quiz": {
         "question": "Bir gökkuşağını tam 360 derecelik bir daire olarak görebilmek için en iyi yer neresidir?",
         "options": [
-          "Yüksekten, örneğin bir uçak penceresinden",
           "Deniz seviyesindeki bir kumsaldan",
+          "Yüksekten, örneğin bir uçak penceresinden",
           "Sadece gece yarısı"
         ],
-        "correctIndex": 0,
+        "correctIndex": 1,
         "explanation": "Yüksekte ufuk çizgisi görüşü kesmediği için gökkuşağının alt yarısı da tamamlanır."
       },
       "sourceName": "Met Office UK / Atmospheric Optics",
@@ -372,18 +378,19 @@
       "quiz": {
         "question": "Where can you witness a rainbow as a complete 360-degree circle?",
         "options": [
-          "High up in an airplane looking down through rain",
           "Standing at sea level on a flat beach",
-          "Only under moonlight"
+          "Only under moonlight",
+          "High up in an airplane looking down through rain"
         ],
-        "correctIndex": 0,
+        "correctIndex": 2,
         "explanation": "From high altitude, the ground no longer blocks the lower half of the 42-degree light cone."
       },
       "sourceName": "Met Office UK / Atmospheric Optics",
       "sourceUrl": "https://weather.metoffice.gov.uk/learn-about/weather/optical-effects/rainbows"
     },
     "sourceName": "Met Office UK / Atmospheric Optics",
-    "sourceUrl": "https://weather.metoffice.gov.uk/learn-about/weather/optical-effects/rainbows"
+    "sourceUrl": "https://weather.metoffice.gov.uk/learn-about/weather/optical-effects/rainbows",
+    "visualQuery": "rainbow storm sky"
   },
   {
     "id": "science-08",
@@ -402,11 +409,11 @@
       "quiz": {
         "question": "Küresel tahminlere göre Dünya'daki ağaç sayısı Samanyolu'ndaki yıldız sayısına göre nasıldır?",
         "options": [
-          "Dünya'daki ağaçlar (~3 trilyon) çok daha fazladır",
           "Samanyolu'ndaki yıldızlar 100 kat fazladır",
-          "Yaklaşık olarak eşittirler"
+          "Yaklaşık olarak eşittirler",
+          "Dünya'daki ağaçlar (~3 trilyon) çok daha fazladır"
         ],
-        "correctIndex": 0,
+        "correctIndex": 2,
         "explanation": "Dünya'da ~3 trilyon ağaç varken Samanyolu'nda ~100–400 milyar yıldız bulunur."
       },
       "sourceName": "Nature / Yale Forestry Study",
@@ -433,7 +440,8 @@
       "sourceUrl": "https://www.nature.com/articles/nature14967"
     },
     "sourceName": "Nature / Yale Forestry Study",
-    "sourceUrl": "https://www.nature.com/articles/nature14967"
+    "sourceUrl": "https://www.nature.com/articles/nature14967",
+    "visualQuery": "aerial green forest"
   },
   {
     "id": "science-09",
@@ -450,14 +458,14 @@
       "sourceHint": "NASA Sun Science",
       "tag": "Kuantum & Astrofizik",
       "quiz": {
-        "question": "Bir foton Güneş'in yüzeyinden Dünya'ya kaç dakikada ulaşır?",
+        "question": "Güneş ışığı Dünya'ya 8 dakikada gelmesine rağmen, aynı fotonun Güneş çekirdeğinden yüzeye çıkması neden on binlerce yıl sürer?",
         "options": [
-          "Yaklaşık 8 dakika 20 saniye",
-          "Yaklaşık 1 saniye",
-          "Yaklaşık 24 saat"
+          "Aşırı yoğun plazmada sürekli atomlara çarpıp zikzak çizerek (rastgele yürüyüş) ilerlemesi yüzünden",
+          "Güneş çekirdeğinde yerçekiminin ışığı dondurması yüzünden",
+          "Fotonların ancak güneş tutulması anlarında hareket edebilmesi yüzünden"
         ],
         "correctIndex": 0,
-        "explanation": "Güneş'ten çıktıktan sonra 150 milyon km mesafeyi ışık hızıyla ~8 dakika 20 saniyede kat eder."
+        "explanation": "Çekirdekteki plazma o kadar yoğundur ki bir foton milimetre yol almadan emilip rastgele bir yöne yeniden saçılır."
       },
       "sourceName": "NASA Sun Science",
       "sourceUrl": "https://science.nasa.gov/sun/"
@@ -470,20 +478,21 @@
       "sourceHint": "NASA Sun Science",
       "tag": "Solar Physics",
       "quiz": {
-        "question": "How long does light take to travel from the Sun's surface to Earth?",
+        "question": "Even though sunlight takes ~8 minutes from the Sun's surface to Earth, why can a photon spend tens of millennia escaping the solar core?",
         "options": [
-          "About 8 minutes 20 seconds",
-          "About 1 second",
-          "About 24 hours"
+          "Gravity freezes photons until a solar flare melts them",
+          "Dense solar plasma bounces the photon in trillions of random zigzag collisions",
+          "Photons orbit Jupiter once before heading to Earth"
         ],
-        "correctIndex": 0,
-        "explanation": "After finally escaping the Sun's dense interior, sunlight reaches Earth in ~8 minutes 20 seconds."
+        "correctIndex": 1,
+        "explanation": "Through the sun's scorching radiative zone, photons undergo a slow random walk, scattering endlessly before reaching open space."
       },
       "sourceName": "NASA Sun Science",
       "sourceUrl": "https://science.nasa.gov/sun/"
     },
     "sourceName": "NASA Sun Science",
-    "sourceUrl": "https://science.nasa.gov/sun/"
+    "sourceUrl": "https://science.nasa.gov/sun/",
+    "visualQuery": "sunlight rays clouds"
   },
   {
     "id": "science-10",
@@ -493,7 +502,7 @@
     "emoji": "🫧",
     "readingTimeSec": 14,
     "tr": {
-      "slug": "cam-aslında-sivi-degil-amorf-katidir",
+      "slug": "cam-aslinda-sivi-degil-amorf-katidir",
       "title": "Eski Kilise Camlarının Altta Kalın Olmasının Sebebi Akması Değildir",
       "factText": "Orta Çağ pencerelerinin alt kısımlarının daha kalın olması camın yüzyıllar içinde 'akmasından' değil, o dönemki üretim tekniğinden kaynaklanır.",
       "deepDiveDetail": "Fizikçiler oda sıcaklığında camın akmasının evrenin yaşından bile uzun süreceğini hesaplamıştır. Eski cam ustaları erimiş camı döndürerek disk yaparken kalın kenar kısmını sağlamlık için aşağı yerleştirirlerdi.",
@@ -502,11 +511,11 @@
       "quiz": {
         "question": "Eski vitray camların alt kenarlarının daha kalın olmasının gerçek sebebi nedir?",
         "options": [
-          "Üretimde kalın kenarın denge için alta yerleştirilmesi",
           "Camın 500 yılda yavaşça aşağı akması",
+          "Üretimde kalın kenarın denge için alta yerleştirilmesi",
           "Yağmur sularının camı eritmesi"
         ],
-        "correctIndex": 0,
+        "correctIndex": 1,
         "explanation": "Cam amorf bir katıdır; ustalar el yapımı camın kalın tarafını çerçevede alta koyardı."
       },
       "sourceName": "Corning Museum of Glass",
@@ -522,17 +531,18 @@
       "quiz": {
         "question": "Why are antique window panes often thicker along their bottom edge?",
         "options": [
-          "Craftsmen placed the thicker hand-spun edge down for stability",
           "Room-temperature glass flows like thick syrup over centuries",
-          "Sunlight slowly melts the top edge"
+          "Sunlight slowly melts the top edge",
+          "Craftsmen placed the thicker hand-spun edge down for stability"
         ],
-        "correctIndex": 0,
+        "correctIndex": 2,
         "explanation": "Glass does not flow visibly at room temperature; historical glaziers put the heavy side down."
       },
       "sourceName": "Corning Museum of Glass",
       "sourceUrl": "https://math.ucr.edu/home/baez/physics/General/Glass/glass.html"
     },
     "sourceName": "Corning Museum of Glass",
-    "sourceUrl": "https://math.ucr.edu/home/baez/physics/General/Glass/glass.html"
+    "sourceUrl": "https://math.ucr.edu/home/baez/physics/General/Glass/glass.html",
+    "visualQuery": "stained glass window"
   }
 ]

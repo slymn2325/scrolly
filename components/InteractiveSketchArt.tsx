@@ -126,6 +126,13 @@ const SKETCH_KEYWORD_MAP: Record<string, string> = {
   decibel: 'sketch-decibel',
   cards: 'sketch-cards',
   chess: 'sketch-chess',
+  probability: 'neutral-statistics',
+  statistics: 'neutral-statistics',
+  bayes: 'neutral-statistics',
+  bell_curve: 'neutral-statistics',
+  distribution: 'neutral-statistics',
+  median: 'neutral-statistics',
+  dice: 'neutral-statistics',
 };
 
 const SPACE_NATURE_SKETCH_IDS = new Set([
@@ -155,6 +162,7 @@ const BODY_HISTORY_SKETCH_IDS = new Set([
 
 function normalizeNeutralCategory(category: CategoryId | string): string {
   if (category === 'weird_records' || category === 'records') return 'neutral-records';
+  if (category === 'statistics' || category === 'istatistik') return 'neutral-statistics';
   if (
     category === 'space' ||
     category === 'nature' ||
@@ -362,7 +370,60 @@ export default function InteractiveSketchArt({
         />
 
         {/* Topic-Specific Interactive Sketch Diagram */}
-        {isSpaceOrNature ? (
+        {resolvedId === 'neutral-statistics' ? (
+          <g>
+            <line
+              x1="62"
+              y1="128"
+              x2="258"
+              y2="128"
+              stroke="currentColor"
+              strokeOpacity="0.45"
+              strokeWidth="1.6"
+            />
+            {[20, 38, 62, 76, 56, 32, 18].map((hVal, idx) => {
+              const bx = 82 + idx * 24;
+              return (
+                <motion.rect
+                  key={bx}
+                  x={bx}
+                  y={128 - hVal}
+                  width="15"
+                  rx="3"
+                  height={hVal}
+                  fill={accentColor}
+                  fillOpacity={idx === 3 ? 0.65 : 0.28}
+                  stroke={accentColor}
+                  strokeWidth="1.2"
+                  animate={
+                    shouldAnimate
+                      ? { scaleY: active ? [1, 1.12, 0.94, 1] : [1, 1.04, 1] }
+                      : undefined
+                  }
+                  style={{ originX: `${bx + 7.5}px`, originY: '128px' }}
+                  transition={{ duration: 1.8, delay: idx * 0.1, repeat: Infinity }}
+                />
+              );
+            })}
+            <path
+              d="M 68 126 C 110 126, 128 42, 160 42 C 192 42, 210 126, 252 126"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.2"
+              strokeLinecap="round"
+            />
+            <text
+              x="160"
+              y="150"
+              textAnchor="middle"
+              fontSize="9"
+              fontWeight="700"
+              fill={accentColor}
+            >
+              {lang === 'tr' ? 'OLASILIK & VERİ DAĞILIMI' : 'PROBABILITY & DISTRIBUTION'}
+            </text>
+          </g>
+        ) : isSpaceOrNature ? (
           <SpaceNatureSketch
             factId={resolvedId}
             lang={lang}

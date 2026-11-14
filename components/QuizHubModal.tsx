@@ -2,8 +2,20 @@
 
 import React from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { Brain, Calendar, CheckCircle2, Flame, Timer, Trophy, X, Zap } from 'lucide-react';
-import { type Language, translations } from '@/i18n/translations';
+import {
+  Brain,
+  Calendar,
+  CheckCircle2,
+  Flame,
+  Sparkles,
+  Swords,
+  Timer,
+  Trophy,
+  X,
+  Zap,
+} from 'lucide-react';
+import { CATEGORIES, type Language, translations } from '@/i18n/translations';
+import { STATE_ILLUSTRATION_PATHS, UI_ICON_PATHS } from '@/utils/icons8Assets';
 import { useEscapeClose } from '@/utils/useEscapeClose';
 
 export type QuizModeChoice = 'daily' | 'weekly' | 'memory';
@@ -18,6 +30,7 @@ interface QuizHubModalProps {
   onSelectMode: (mode: QuizModeChoice) => void;
   onClose: () => void;
   onButtonPop: () => void;
+  onOpenScrolla?: () => void;
 }
 
 export default function QuizHubModal({
@@ -30,9 +43,12 @@ export default function QuizHubModal({
   onSelectMode,
   onClose,
   onButtonPop,
+  onOpenScrolla,
 }: QuizHubModalProps) {
   const t = translations[lang];
   const isPage = presentation === 'page';
+  const topicDomains = CATEGORIES.filter((c) => c.id !== 'all');
+  const clampedRecent = Math.min(5, Math.max(0, recentCount));
 
   useEscapeClose(open && !isPage, onClose);
 
@@ -78,21 +94,48 @@ export default function QuizHubModal({
               </motion.button>
             )}
 
-            <div className="flex items-center gap-3">
-              <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-violet-500 to-fuchsia-500 text-white shadow-md">
-                <Zap className="h-5 w-5" />
-              </div>
-              <div>
-                <h2 className="font-display text-xl font-bold text-ink dark:text-white">
-                  {t.quizHubTitle}
-                </h2>
-                <p className="text-xs font-medium text-ink/75 dark:text-violet-100/85">
-                  {t.quizHubSubtitle}
-                </p>
+            {/* Header Hero */}
+            <div className="flex items-center justify-between gap-3 rounded-2xl border border-violet-200/70 bg-gradient-to-br from-pastel-lavender/75 via-white to-amber-50/75 p-3.5 dark:border-violet-600/40 dark:from-violet-950/70 dark:via-[#1D1635] dark:to-amber-950/35">
+              <div className="flex items-center gap-3">
+                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-violet-500 to-fuchsia-500 p-1.5 text-white shadow-md">
+                  <img
+                    src={STATE_ILLUSTRATION_PATHS.quizCelebration}
+                    alt=""
+                    aria-hidden="true"
+                    className="h-9 w-9 object-contain"
+                  />
+                </div>
+                <div>
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    <h2 className="font-display text-xl font-bold text-ink dark:text-white">
+                      {t.quizHubTitle}
+                    </h2>
+                    <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-black text-amber-800 dark:bg-amber-900/50 dark:text-amber-200">
+                      <Flame className="h-3 w-3 fill-current" />
+                      {lang === 'tr' ? 'Kombo 2.0x' : 'Combo 2.0x'}
+                    </span>
+                  </div>
+                  <p className="mt-0.5 text-xs font-medium text-ink/75 dark:text-violet-100/85">
+                    {t.quizHubSubtitle}
+                  </p>
+                </div>
               </div>
             </div>
 
-            <div className="mt-5 flex flex-col gap-3">
+            {/* 7-Domain Topic Coverage Strip (includes Statistics) */}
+            <div className="mt-3 flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-1">
+              {topicDomains.map((cat) => (
+                <span
+                  key={cat.id}
+                  className={`inline-flex shrink-0 items-center gap-1 rounded-full border ${cat.borderClass} ${cat.bgClass} px-2.5 py-1 text-[10px] font-extrabold ${cat.accentText} dark:border-white/15 dark:bg-white/5 dark:text-violet-100`}
+                >
+                  <span>{cat.emoji}</span>
+                  <span>{cat.label[lang]}</span>
+                </span>
+              ))}
+            </div>
+
+            <div className="mt-4 flex flex-col gap-3">
               {/* 1. Daily Sprint (5 Q / 60s) */}
               <motion.button
                 type="button"
@@ -109,14 +152,18 @@ export default function QuizHubModal({
                     <Calendar className="h-5 w-5" />
                   </div>
                   <div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex flex-wrap items-center gap-1.5">
                       <span className="font-display text-base font-bold text-ink dark:text-white">
                         {t.dailySprintTitle}
+                      </span>
+                      <span className="inline-flex items-center gap-0.5 rounded-full bg-amber-500/15 px-2 py-0.5 text-[10px] font-black text-amber-800 dark:text-amber-200">
+                        <Sparkles className="h-2.5 w-2.5" />
+                        {lang === 'tr' ? 'Hız Bonusu' : 'Speed Bonus'}
                       </span>
                       {dailyCompleted && (
                         <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/15 px-2 py-0.5 text-[10px] font-extrabold text-emerald-700 dark:text-emerald-300">
                           <CheckCircle2 className="h-3 w-3" />
-                          {dailyBestScore > 0 ? `${dailyBestScore}` : t.dailySprintDoneBadge}
+                          {dailyBestScore > 0 ? `${dailyBestScore} XP` : t.dailySprintDoneBadge}
                         </span>
                       )}
                     </div>
@@ -144,7 +191,7 @@ export default function QuizHubModal({
                     <Trophy className="h-5 w-5" />
                   </div>
                   <div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex flex-wrap items-center gap-1.5">
                       <span className="font-display text-base font-bold text-ink dark:text-white">
                         {t.weeklyMarathonTitle}
                       </span>
@@ -177,21 +224,74 @@ export default function QuizHubModal({
                     <Brain className="h-5 w-5" />
                   </div>
                   <div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex flex-wrap items-center gap-2">
                       <span className="font-display text-base font-bold text-ink dark:text-white">
                         {t.memoryQuizTitle}
                       </span>
                       <span className="rounded-full bg-teal-600/15 px-2 py-0.5 text-[10px] font-extrabold text-teal-800 dark:text-teal-300">
-                        {Math.min(5, recentCount)}/5
+                        {clampedRecent}/5
                       </span>
                     </div>
                     <p className="mt-0.5 text-xs font-medium text-ink/70 dark:text-violet-200/75">
                       {t.memoryQuizDesc}
                     </p>
+                    {/* 5-card memory readiness meter */}
+                    <div className="mt-2 flex items-center gap-1">
+                      {[0, 1, 2, 3, 4].map((slot) => (
+                        <span
+                          key={slot}
+                          className={`h-1.5 w-5 rounded-full transition-colors ${
+                            slot < clampedRecent
+                              ? 'bg-teal-500 dark:bg-teal-400'
+                              : 'bg-teal-200/70 dark:bg-white/15'
+                          }`}
+                        />
+                      ))}
+                    </div>
                   </div>
                 </div>
                 <Brain className="h-5 w-5 shrink-0 text-teal-600 dark:text-teal-300" />
               </motion.button>
+            </div>
+
+            {/* Combo Bonus & Scrolla 1v1 Footer Card */}
+            <div className="mt-4 rounded-2xl border border-fuchsia-200/80 bg-gradient-to-r from-fuchsia-50/75 via-violet-50/75 to-white p-3.5 dark:border-fuchsia-600/35 dark:from-fuchsia-950/35 dark:via-violet-950/35 dark:to-white/5">
+              <div className="flex items-center justify-between gap-2">
+                <div className="flex items-center gap-2.5">
+                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-violet-600 to-fuchsia-600 text-white shadow-sm">
+                    <Swords className="h-4 w-4" />
+                  </div>
+                  <div>
+                    <p className="text-xs font-extrabold text-ink dark:text-white">
+                      {lang === 'tr' ? 'Scrolla 1v1 Arena' : 'Scrolla 1v1 Arena'}
+                    </p>
+                    <p className="text-[11px] font-medium text-ink/70 dark:text-violet-200/75">
+                      {lang === 'tr'
+                        ? 'Aynı sorularla gerçek zamanlı yarışmak için Scrolla sekmesine geç!'
+                        : 'Switch to the Scrolla tab to race a friend live on the same questions!'}
+                    </p>
+                  </div>
+                </div>
+                {onOpenScrolla ? (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      onButtonPop();
+                      onOpenScrolla();
+                    }}
+                    className="shrink-0 rounded-full bg-gradient-to-r from-violet-600 to-fuchsia-600 px-3 py-1.5 text-[11px] font-black text-white shadow-sm"
+                  >
+                    Scrolla →
+                  </button>
+                ) : (
+                  <img
+                    src={UI_ICON_PATHS.xpSparkles}
+                    alt=""
+                    aria-hidden="true"
+                    className="h-6 w-6 shrink-0 object-contain opacity-90"
+                  />
+                )}
+              </div>
             </div>
           </motion.div>
         </div>

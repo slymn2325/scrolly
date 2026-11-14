@@ -16,11 +16,11 @@
       "quiz": {
         "question": "Antarktika buzbalığı alyuvar ve hemoglobin olmadan dokularına nasıl oksijen taşır?",
         "options": [
-          "Buzlu suda bol bulunan oksijeni doğrudan şeffaf kan plazmasında çözerek",
           "Dış derisinden azot soluyarak",
+          "Buzlu suda bol bulunan oksijeni doğrudan şeffaf kan plazmasında çözerek",
           "Yüzgeçlerinde klorofil üreterek"
         ],
-        "correctIndex": 0,
+        "correctIndex": 1,
         "explanation": "Sıfırın altındaki deniz suyu yüksek çözünmüş oksijen taşır; dev tek kalp bu plazmayı hızlıca dolaştırır."
       },
       "guessChallenge": {
@@ -45,11 +45,11 @@
       "quiz": {
         "question": "How does the Antarctic icefish survive without red blood cells or hemoglobin?",
         "options": [
-          "Cold water holds ample dissolved oxygen carried directly in clear blood plasma",
           "It stores gaseous oxygen inside hollow bones",
-          "It performs photosynthesis through transparent scales"
+          "It performs photosynthesis through transparent scales",
+          "Cold water holds ample dissolved oxygen carried directly in clear blood plasma"
         ],
-        "correctIndex": 0,
+        "correctIndex": 2,
         "explanation": "High dissolved oxygen in freezing Antarctic seas plus an enlarged single heart keeps tissues oxygenated."
       },
       "guessChallenge": {
@@ -65,7 +65,8 @@
       "sourceUrl": "https://www.nature.com/articles/s41559-019-0812-7"
     },
     "sourceName": "Nature Ecology & Evolution",
-    "sourceUrl": "https://www.nature.com/articles/s41559-019-0812-7"
+    "sourceUrl": "https://www.nature.com/articles/s41559-019-0812-7",
+    "visualQuery": "antarctic ocean ice"
   },
   {
     "id": "nature-02",
@@ -82,14 +83,14 @@
       "sourceHint": "Nature Journal / Suzanne Simard",
       "tag": "Ekoloji",
       "quiz": {
-        "question": "Ağaçların yer altında mantar kökleriyle kurduğu iletişim ve besin ağına popüler olarak ne ad verilir?",
+        "question": "Ormandaki yaşlı ağaçlar gölgede kalan fidanların hayatta kalmasına yer altından nasıl destek olur?",
         "options": [
-          "Wood Wide Web",
-          "Kök İnterneti",
-          "Fotosentez Hattı"
+          "Kökleriyle yer altı sularını fidanların yapraklarına doğru fışkırtarak",
+          "Yapraklarını erken döküp gölgedeki toprağı ısıtarak",
+          "Kökleri saran mikoriza mantar iplikçikleri üzerinden fidanlara fazla karbon şekerleri aktararak"
         ],
-        "correctIndex": 0,
-        "explanation": "Mikoriza mantarlarının ağaç köklerini bağladığı bu ağa 'Wood Wide Web' adı verilir."
+        "correctIndex": 2,
+        "explanation": "Yaşlı ağaçlar güneşten ürettikleri karbonun bir kısmını 'Wood Wide Web' adı verilen mikoriza mantar ağıyla genç fidanlara besin olarak iletir."
       },
       "guessChallenge": {
         "type": "binary",
@@ -111,14 +112,14 @@
       "sourceHint": "Nature Journal / Suzanne Simard",
       "tag": "Forest Ecology",
       "quiz": {
-        "question": "What nickname did scientists give the underground fungal network linking forest trees?",
+        "question": "How do mature canopy trees support shaded seedlings through the underground 'Wood Wide Web'?",
         "options": [
-          "Wood Wide Web",
-          "Root Fiber Net",
-          "Canopy Link"
+          "They route surplus carbon sugars through mycorrhizal fungal threads to seedling roots",
+          "They vibrate low-frequency sound pulses through bedrock to wake roots",
+          "They shed bark early to reflect extra sunlight beneath the canopy"
         ],
         "correctIndex": 0,
-        "explanation": "Mycorrhizal networks connecting tree roots are famously known as the 'Wood Wide Web'."
+        "explanation": "Connected by symbiotic mycorrhizal fungi, tall sunlit trees transfer carbon nutrients and chemical pest alerts to struggling neighbors."
       },
       "guessChallenge": {
         "type": "binary",
@@ -133,7 +134,8 @@
       "sourceUrl": "https://www.nature.com/articles/41557"
     },
     "sourceName": "Nature Journal / Suzanne Simard",
-    "sourceUrl": "https://www.nature.com/articles/41557"
+    "sourceUrl": "https://www.nature.com/articles/41557",
+    "visualQuery": "sunlit green forest"
   },
   {
     "id": "nature-03",
@@ -181,11 +183,11 @@
       "quiz": {
         "question": "Which part of a Greenland shark preserves its birth-year radiocarbon signature for ~400 years?",
         "options": [
-          "The metabolically inert core of its eye lens",
           "Mineral rings along its cartilage jaws",
+          "The metabolically inert core of its eye lens",
           "Enamel bands inside replacement teeth"
         ],
-        "correctIndex": 0,
+        "correctIndex": 1,
         "explanation": "Eye lens nucleus proteins never regenerate, acting as an unaltered carbon-14 timestamp from birth."
       },
       "guessChallenge": {
@@ -201,7 +203,8 @@
       "sourceUrl": "https://pubmed.ncbi.nlm.nih.gov/27516602/"
     },
     "sourceName": "Science (AAAS)",
-    "sourceUrl": "https://pubmed.ncbi.nlm.nih.gov/27516602/"
+    "sourceUrl": "https://pubmed.ncbi.nlm.nih.gov/27516602/",
+    "visualQuery": "shark deep ocean"
   },
   {
     "id": "nature-04",
@@ -220,11 +223,11 @@
       "quiz": {
         "question": "Bal arıları insan yüzlerini nasıl tanır?",
         "options": [
-          "Göz, burun ve ağzı bütünsel bir örüntü olarak eşleyerek",
           "İnsanların yaydığı ısı haritasını okuyarak",
+          "Göz, burun ve ağzı bütünsel bir örüntü olarak eşleyerek",
           "Sadece ses tonunu analiz ederek"
         ],
-        "correctIndex": 0,
+        "correctIndex": 1,
         "explanation": "Arılar tıpkı çiçek şekillerini tanıdıkları gibi yüz özelliklerinin bütünsel yerleşimini (configural processing) öğrenirler."
       },
       "sourceName": "Journal of Experimental Biology",
@@ -240,18 +243,19 @@
       "quiz": {
         "question": "How do honeybees recognize human faces?",
         "options": [
-          "By combining facial features into a whole pattern",
           "By scanning infrared body heat",
-          "Only by recognizing vocal pitch"
+          "Only by recognizing vocal pitch",
+          "By combining facial features into a whole pattern"
         ],
-        "correctIndex": 0,
+        "correctIndex": 2,
         "explanation": "Bees process the spatial arrangement of eyes, nose, and mouth just like flower patterns."
       },
       "sourceName": "Journal of Experimental Biology",
       "sourceUrl": "https://pubmed.ncbi.nlm.nih.gov/16326952/"
     },
     "sourceName": "Journal of Experimental Biology",
-    "sourceUrl": "https://pubmed.ncbi.nlm.nih.gov/16326952/"
+    "sourceUrl": "https://pubmed.ncbi.nlm.nih.gov/16326952/",
+    "visualQuery": "honeybee pollen flower"
   },
   {
     "id": "nature-05",
@@ -268,14 +272,14 @@
       "sourceHint": "Nature Communications",
       "tag": "Ornitoloji",
       "quiz": {
-        "question": "Ak karınlı ebabil kuşları yere hiç konmadan yaklaşık kaç gün aralıksız havada kalabilir?",
+        "question": "Ak karınlı ebabiller 200 gün boyunca hiç yere konmadan nasıl hayatta kalıp uyuyabilir?",
         "options": [
-          "200 gün",
-          "14 gün",
-          "45 gün"
+          "Okyanus dalgalarının üzerinde yüzerek dinlendikleri için",
+          "Kış uykusuna yatıp metabolizmalarını tamamen durdurdukları için",
+          "Uçarken süzülme sırasında beyinlerinin bir yarısını dinlendirip havadaki böcekleri avlayarak"
         ],
-        "correctIndex": 0,
-        "explanation": "Mikro veri kaydediciler ebabillerin 6 ayı aşan göç döneminde yere dokunmadan ~200 gün uçabildiğini ölçtü."
+        "correctIndex": 2,
+        "explanation": "İsviçre Ornitoloji Enstitüsü, ebabillerin göç ve kışlama boyunca uyku dahil tüm hayati faaliyetleri süzülürken sürdürdüğünü kanıtladı."
       },
       "guessChallenge": {
         "type": "slider",
@@ -297,14 +301,14 @@
       "sourceHint": "Nature Communications",
       "tag": "Ornithology",
       "quiz": {
-        "question": "Roughly how long can an Alpine swift remain continuously airborne without landing once?",
+        "question": "How do Alpine Swifts eat and rest during a 200-day flight without touching land once?",
         "options": [
-          "~200 days",
-          "~14 days",
-          "~45 days"
+          "By snapping airborne insects and resting via high-altitude thermal gliding",
+          "By sleeping floating upside down on ocean waves",
+          "By storing three months of compressed fat inside their wings"
         ],
         "correctIndex": 0,
-        "explanation": "Backpack loggers recorded uninterrupted flight exceeding 200 days across their migration."
+        "explanation": "Biologgers revealed Alpine Swifts hunt aerial plankton and even micro-sleep while gliding on high air currents."
       },
       "guessChallenge": {
         "type": "slider",
@@ -319,7 +323,8 @@
       "sourceUrl": "https://www.nature.com/articles/ncomms3543"
     },
     "sourceName": "Nature Communications",
-    "sourceUrl": "https://www.nature.com/articles/ncomms3543"
+    "sourceUrl": "https://www.nature.com/articles/ncomms3543",
+    "visualQuery": "bird flying sky"
   },
   {
     "id": "nature-06",
@@ -358,18 +363,19 @@
       "quiz": {
         "question": "Why do koalas share human-like fingerprints despite distant ancestry?",
         "options": [
-          "Convergent evolution for grasping branches and leaves",
           "Eucalyptus oils sculpting their skin",
+          "Convergent evolution for grasping branches and leaves",
           "Sleeping 20 hours a day"
         ],
-        "correctIndex": 0,
+        "correctIndex": 1,
         "explanation": "Independent adaptation for gripping trees produced nearly identical fingerprint ridges."
       },
       "sourceName": "University of Adelaide Anatomy Study",
       "sourceUrl": "https://www.snopes.com/fact-check/koala-fingerprints-crime-scene/"
     },
     "sourceName": "University of Adelaide Anatomy Study",
-    "sourceUrl": "https://www.snopes.com/fact-check/koala-fingerprints-crime-scene/"
+    "sourceUrl": "https://www.snopes.com/fact-check/koala-fingerprints-crime-scene/",
+    "visualQuery": "koala eucalyptus tree"
   },
   {
     "id": "nature-07",
@@ -386,14 +392,14 @@
       "sourceHint": "PNAS / University of St Andrews",
       "tag": "Deniz İletişimi",
       "quiz": {
-        "question": "Yunusların birbirlerini çağırmak için kullandığı benzersiz seslere ne ad verilir?",
+        "question": "Araştırmacılar okyanusta bir yunusun kendi 'imza ıslığını' hoparlörden geri çaldığında nasıl bir tepki gözlemledi?",
         "options": [
-          "İmza ıslığı (Signature whistle)",
-          "Ultrasonik kod",
-          "Dalga yankısı"
+          "Sürüdeki tüm yunuslar panikleyip derin sulara daldı",
+          "Sadece o spesifik yunus ıslığı tanıyıp sesin geldiği yöne dönerek karşılık verdi",
+          "Yunuslar yalnızca gece karanlığında ıslığa yanıt verdi"
         ],
-        "correctIndex": 0,
-        "explanation": "Her yunus hayatının başında kendine özgü bir imza ıslığı oluşturur ve bunu isim olarak kullanır."
+        "correctIndex": 1,
+        "explanation": "St Andrews Üniversitesi deneyleri, yunusların kendi imza ıslıklarını duyunca tıpkı adı çağrılan bir insan gibi bireysel olarak karşılık verdiğini kanıtladı."
       },
       "sourceName": "PNAS / University of St Andrews",
       "sourceUrl": "https://pubmed.ncbi.nlm.nih.gov/23878217/"
@@ -406,20 +412,21 @@
       "sourceHint": "PNAS / University of St Andrews",
       "tag": "Marine Communication",
       "quiz": {
-        "question": "What do biologists call the personal sound dolphins use like names?",
+        "question": "What happened when biologists played back a recording of an individual dolphin's signature whistle?",
         "options": [
-          "Signature whistles",
-          "Sonar clicks",
-          "Tidal echoes"
+          "The entire pod scattered in alarm as if hearing a shark",
+          "Only calves under one year old reacted to the sound",
+          "That specific dolphin recognized its 'name' and whistled back in response"
         ],
-        "correctIndex": 0,
-        "explanation": "Each dolphin develops a distinct signature whistle that other dolphins repeat to address them."
+        "correctIndex": 2,
+        "explanation": "Wild bottlenose dolphins answer their own unique signature whistle selectively, confirming these calls function like personal names."
       },
       "sourceName": "PNAS / University of St Andrews",
       "sourceUrl": "https://pubmed.ncbi.nlm.nih.gov/23878217/"
     },
     "sourceName": "PNAS / University of St Andrews",
-    "sourceUrl": "https://pubmed.ncbi.nlm.nih.gov/23878217/"
+    "sourceUrl": "https://pubmed.ncbi.nlm.nih.gov/23878217/",
+    "visualQuery": "dolphins jumping ocean"
   },
   {
     "id": "nature-08",
@@ -438,11 +445,11 @@
       "quiz": {
         "question": "Deniz samurları su üstünde uyurken neden el ele tutuşur?",
         "options": [
-          "Akıntının kendilerini birbirinden sürüklemesini önlemek için",
           "Vücut ısılarını yarıya indirmek için",
-          "Avcıları korkutmak için ses çıkarmak amacıyla"
+          "Avcıları korkutmak için ses çıkarmak amacıyla",
+          "Akıntının kendilerini birbirinden sürüklemesini önlemek için"
         ],
-        "correctIndex": 0,
+        "correctIndex": 2,
         "explanation": "Patilerini kenetleyerek veya kelp yosunlarına sarılarak akıntıda dağılmadan uyurlar."
       },
       "sourceName": "Monterey Bay Aquarium",
@@ -469,7 +476,8 @@
       "sourceUrl": "https://www.montereybayaquarium.org/animals/animals-a-to-z/sea-otter"
     },
     "sourceName": "Monterey Bay Aquarium",
-    "sourceUrl": "https://www.montereybayaquarium.org/animals/animals-a-to-z/sea-otter"
+    "sourceUrl": "https://www.montereybayaquarium.org/animals/animals-a-to-z/sea-otter",
+    "visualQuery": "sea otter water"
   },
   {
     "id": "nature-09",
@@ -508,18 +516,19 @@
       "quiz": {
         "question": "What holds the title for the largest known living organism by area on Earth?",
         "options": [
-          "An underground honey fungus in Oregon",
           "A blue whale in the Pacific",
+          "An underground honey fungus in Oregon",
           "A single giant redwood tree"
         ],
-        "correctIndex": 0,
+        "correctIndex": 1,
         "explanation": "The Armillaria ostoyae fungus spreads underground across nearly 10 square kilometers."
       },
       "sourceName": "USDA Forest Service",
       "sourceUrl": "https://www.scientificamerican.com/article/strange-but-true-largest-organism-is-fungus/"
     },
     "sourceName": "USDA Forest Service",
-    "sourceUrl": "https://www.scientificamerican.com/article/strange-but-true-largest-organism-is-fungus/"
+    "sourceUrl": "https://www.scientificamerican.com/article/strange-but-true-largest-organism-is-fungus/",
+    "visualQuery": "forest moss mushrooms"
   },
   {
     "id": "nature-10",
@@ -538,11 +547,11 @@
       "quiz": {
         "question": "Saguaro kaktüsünün gövdesindeki dikey kıvrımlar (akordeon yapısı) ne işe yarar?",
         "options": [
-          "Yağmur sonrası büyük miktarda su alınca yırtılmadan genişlemeye",
           "Kuşların yuva yapmasını engellemeye",
+          "Yağmur sonrası büyük miktarda su alınca yırtılmadan genişlemeye",
           "Gece rüzgarında ses çıkarmaya"
         ],
-        "correctIndex": 0,
+        "correctIndex": 1,
         "explanation": "Kıvrımlı yapı su depolandıkça kaktüsün hacminin güvenle şişmesini sağlar."
       },
       "sourceName": "National Park Service (Saguaro)",
@@ -558,17 +567,18 @@
       "quiz": {
         "question": "What purpose do the accordion-like pleats on a saguaro cactus serve?",
         "options": [
-          "Allowing the trunk to expand when soaking up heavy rainwater",
           "Reflecting moonlight to attract bees",
-          "Trapping desert sand for armor"
+          "Trapping desert sand for armor",
+          "Allowing the trunk to expand when soaking up heavy rainwater"
         ],
-        "correctIndex": 0,
+        "correctIndex": 2,
         "explanation": "The pleats unfold smoothly so the cactus can swell with stored water without splitting."
       },
       "sourceName": "National Park Service (Saguaro)",
       "sourceUrl": "https://www.nps.gov/sagu/learn/nature/saguaro.htm"
     },
     "sourceName": "National Park Service (Saguaro)",
-    "sourceUrl": "https://www.nps.gov/sagu/learn/nature/saguaro.htm"
+    "sourceUrl": "https://www.nps.gov/sagu/learn/nature/saguaro.htm",
+    "visualQuery": "saguaro cactus desert"
   }
 ]

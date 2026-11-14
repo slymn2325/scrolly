@@ -332,7 +332,7 @@ export default function DiplomaProfileModal({
                 )}
               </div>
 
-              {/* Interactive 6-Axis DataMB Topic Radar */}
+              {/* Interactive 7-Axis DataMB Topic Radar */}
               <TopicRadarChart
                 lang={lang}
                 memory={memory}
@@ -565,25 +565,24 @@ export default function DiplomaProfileModal({
                     : t.diplomaNotificationsOff}
                 </span>
               </motion.button>
-            </div>
 
-            {/* Footer Reset Button */}
-            <div className="shrink-0 border-t border-amber-100 bg-white/80 px-5 py-3 dark:border-white/10 dark:bg-black/20">
-              {justReset && (
-                <p className="mb-2 text-center text-xs font-bold text-emerald-600 dark:text-emerald-400">
-                  {t.drawerResetConfirm}
-                </p>
-              )}
-              <motion.button
-                type="button"
-                whileTap={{ scale: 0.94 }}
-                onClick={() => {
-                  onButtonPop();
-                  onResetMemory();
-                  setJustReset(true);
-                  setTimeout(() => setJustReset(false), 3000);
-                }}
-                data-testid="diploma-reset-btn"
+              {/* Scroll-bottom Profile Reset & Trust Links (visible when scrolled to bottom) */}
+              <div className="mt-6 rounded-2xl border border-amber-200/80 bg-white/80 px-4 py-3.5 dark:border-white/10 dark:bg-white/[0.03]">
+                {justReset && (
+                  <p className="mb-2 text-center text-xs font-bold text-emerald-600 dark:text-emerald-400">
+                    {t.drawerResetConfirm}
+                  </p>
+                )}
+                <motion.button
+                  type="button"
+                  whileTap={{ scale: 0.94 }}
+                  onClick={() => {
+                    onButtonPop();
+                    onResetMemory();
+                    setJustReset(true);
+                    setTimeout(() => setJustReset(false), 3000);
+                  }}
+                  data-testid="diploma-reset-btn"
                 className="flex w-full min-h-[48px] items-center justify-center gap-2 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-2.5 text-xs font-extrabold text-rose-700 hover:bg-rose-100 dark:border-rose-700/50 dark:bg-rose-950/40 dark:text-rose-300 whitespace-normal break-words leading-snug"
               >
                 <RotateCcw className="h-3.5 w-3.5" />
@@ -658,6 +657,7 @@ export default function DiplomaProfileModal({
                   {lang === 'tr' ? 'Kullanım Koşulları' : 'Terms'}
                 </Link>
               </div>
+            </div>
             </div>
           </motion.div>
         </div>

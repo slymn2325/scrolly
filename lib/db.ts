@@ -24,6 +24,10 @@ export interface DbFactRow {
   max_val: string | number | null;
   answer_val: string | number | null;
   sketch_type: string | null;
+  visual_query?: string | null;
+  gif_url?: string | null;
+  quiz_tr?: FactQuizContent | null;
+  quiz_en?: FactQuizContent | null;
   source_name: string | null;
   source_url: string | null;
   likes_count: number | null;
@@ -37,6 +41,7 @@ const VALID_CATEGORIES = new Set<CategoryId>([
   'history',
   'science',
   'records',
+  'statistics',
 ]);
 
 const CATEGORY_VISUAL_DEFAULTS: Record<
@@ -85,6 +90,13 @@ const CATEGORY_VISUAL_DEFAULTS: Record<
     tagTr: 'İlginç Rekor',
     tagEn: 'Odd Record',
   },
+  statistics: {
+    accentColor: '#6366F1',
+    iconName: 'BarChart3',
+    emoji: '📊',
+    tagTr: 'İstatistik & Olasılık',
+    tagEn: 'Statistics & Odds',
+  },
 };
 
 declare global {
@@ -96,35 +108,80 @@ export function hasDatabaseUrl(): boolean {
   return Boolean(process.env.DATABASE_URL && process.env.DATABASE_URL.trim().length > 0);
 }
 
+function resolveSslConfig(connectionString: string) {
+  if (process.env.DATABASE_CA_CERT) {
+    return { rejectUnauthorized: true, ca: process.env.DATABASE_CA_CERT };
+  }
+  const lower = connectionString.toLowerCase();
+  const isLocalHost =
+    lower.includes('@localhost:') ||
+    lower.includes('@localhost/') ||
+    lower.includes('@127.0.0.1:') ||
+    lower.includes('@127.0.0.1/');
+  if (lower.includes('sslmode=disable') || (isLocalHost && !lower.includes('sslmode=require'))) {
+    return false;
+  }
+  return { rejectUnauthorized: false };
+}
+
 export function getPool(): Pool {
   if (!hasDatabaseUrl()) {
     throw new Error('DATABASE_URL environment variable is not configured.');
   }
 
   if (!global.__scrollyPgPool) {
-    const sslConfig = process.env.DATABASE_CA_CERT
-      ? { rejectUnauthorized: true, ca: process.env.DATABASE_CA_CERT }
-      : { rejectUnauthorized: false };
-
-    global.__scrollyPgPool = new Pool({
-      connectionString: process.env.DATABASE_URL,
-      ssl: sslConfig,
+    const connectionString = process.env.DATABASE_URL!.trim();
+    const pool = new Pool({
+      connectionString,
+      ssl: resolveSslConfig(connectionString),
       max: 10,
       idleTimeoutMillis: 30000,
+      connectionTimeoutMillis: 5000,
     });
+    pool.on('error', (err) => {
+      console.error('[lib/db] Unexpected pg pool error:', err);
+    });
+    global.__scrollyPgPool = pool;
   }
 
   return global.__scrollyPgPool;
 }
 
 async function seedInitialFactsIfEmpty(pool: Pool): Promise<void> {
-  const countRes = await pool.query<{ count: number }>(
-    'SELECT COUNT(*)::INT AS count FROM facts'
-  );
-  const existingCount = countRes.rows[0]?.count ?? 0;
-  if (existingCount > 0) return;
-
   const initialFacts = getAllFacts();
+  const initialSlugs = initialFacts.map((fact) => getFactPrimarySlug(fact));
+  const checkRes = await pool.query<{
+    total: number;
+    stats_count: number;
+    seeded_static_count: number;
+    missing_static_fields: number;
+  }>(
+    `SELECT
+       COUNT(*)::INT AS total,
+       COUNT(*) FILTER (WHERE category = 'statistics')::INT AS stats_count,
+       COUNT(*) FILTER (WHERE slug = ANY($1::text[]))::INT AS seeded_static_count,
+       COUNT(*) FILTER (
+         WHERE slug = ANY($1::text[])
+           AND (visual_query IS NULL OR quiz_tr IS NULL OR quiz_en IS NULL)
+       )::INT AS missing_static_fields
+     FROM facts`,
+    [initialSlugs]
+  );
+  const {
+    total = 0,
+    stats_count = 0,
+    seeded_static_count = 0,
+    missing_static_fields = 0,
+  } = checkRes.rows[0] ?? {};
+  if (
+    total > 0 &&
+    stats_count > 0 &&
+    seeded_static_count >= initialSlugs.length &&
+    missing_static_fields === 0
+  ) {
+    return;
+  }
+
   for (let idx = 0; idx < initialFacts.length; idx += 1) {
     const fact = initialFacts[idx];
     const slug = getFactPrimarySlug(fact);
@@ -144,14 +201,20 @@ async function seedInitialFactsIfEmpty(pool: Pool): Promise<void> {
         slug, category, title_tr, title_en, summary_tr, summary_en,
         detail_tr, detail_en, question_tr, question_en,
         unit_tr, unit_en, min_val, max_val, answer_val,
-        sketch_type, source_name, source_url, likes_count, created_at
+        sketch_type, visual_query, quiz_tr, quiz_en,
+        source_name, source_url, likes_count, created_at
       ) VALUES (
         $1, $2, $3, $4, $5, $6,
         $7, $8, $9, $10,
         $11, $12, $13, $14, $15,
-        $16, $17, $18, 0, NOW() - ($19 * INTERVAL '1 second')
+        $16, $17, $18::jsonb, $19::jsonb,
+        $20, $21, 0, NOW() - ($22 * INTERVAL '1 second')
       )
-      ON CONFLICT (slug) DO NOTHING`,
+      ON CONFLICT (slug) DO UPDATE SET
+        category = EXCLUDED.category,
+        visual_query = COALESCE(facts.visual_query, EXCLUDED.visual_query),
+        quiz_tr = COALESCE(EXCLUDED.quiz_tr, facts.quiz_tr),
+        quiz_en = COALESCE(EXCLUDED.quiz_en, facts.quiz_en)`,
       [
         slug,
         fact.category,
@@ -169,6 +232,9 @@ async function seedInitialFactsIfEmpty(pool: Pool): Promise<void> {
         maxVal,
         answerVal,
         fact.id,
+        fact.visualQuery || null,
+        JSON.stringify(fact.tr.quiz),
+        JSON.stringify(fact.en.quiz),
         fact.en.sourceName || fact.sourceName || fact.en.sourceHint,
         fact.en.sourceUrl || fact.sourceUrl || '',
         idx + 1,
@@ -203,12 +269,21 @@ export async function ensureSchema(): Promise<void> {
           max_val NUMERIC,
           answer_val NUMERIC,
           sketch_type TEXT,
+          visual_query TEXT,
+          gif_url TEXT,
+          quiz_tr JSONB,
+          quiz_en JSONB,
           source_name TEXT,
           source_url TEXT,
           likes_count INT DEFAULT 0,
           created_at TIMESTAMPTZ DEFAULT NOW()
         );
       `);
+
+      await pool.query(`ALTER TABLE facts ADD COLUMN IF NOT EXISTS visual_query TEXT;`);
+      await pool.query(`ALTER TABLE facts ADD COLUMN IF NOT EXISTS gif_url TEXT;`);
+      await pool.query(`ALTER TABLE facts ADD COLUMN IF NOT EXISTS quiz_tr JSONB;`);
+      await pool.query(`ALTER TABLE facts ADD COLUMN IF NOT EXISTS quiz_en JSONB;`);
 
       await pool.query(`
         CREATE TABLE IF NOT EXISTS fact_events (
@@ -235,13 +310,117 @@ export async function ensureSchema(): Promise<void> {
       await pool.query(`
         CREATE TABLE IF NOT EXISTS profiles (
           device_id TEXT PRIMARY KEY,
-          username TEXT,
+          username TEXT DEFAULT 'Kâşif',
+          handle TEXT DEFAULT '',
           xp INT DEFAULT 0,
-          streak INT DEFAULT 0,
+          weekly_xp INT DEFAULT 0,
+          daily_best_score INT DEFAULT 0,
+          last_daily_quiz_date TEXT DEFAULT '',
+          last_visit_date TEXT DEFAULT '',
+          streak INT DEFAULT 1,
           last_active_date DATE,
+          seen_ids JSONB DEFAULT '[]'::jsonb,
+          favorite_ids JSONB DEFAULT '[]'::jsonb,
+          category_weights JSONB DEFAULT '{}'::jsonb,
+          category_accuracy JSONB DEFAULT '{}'::jsonb,
+          badges JSONB DEFAULT '[]'::jsonb,
           updated_at TIMESTAMPTZ DEFAULT NOW()
         );
       `);
+
+      await pool.query(`ALTER TABLE profiles ADD COLUMN IF NOT EXISTS handle TEXT DEFAULT '';`);
+      await pool.query(`ALTER TABLE profiles ADD COLUMN IF NOT EXISTS weekly_xp INT DEFAULT 0;`);
+      await pool.query(`ALTER TABLE profiles ADD COLUMN IF NOT EXISTS daily_best_score INT DEFAULT 0;`);
+      await pool.query(`ALTER TABLE profiles ADD COLUMN IF NOT EXISTS last_daily_quiz_date TEXT DEFAULT '';`);
+      await pool.query(`ALTER TABLE profiles ADD COLUMN IF NOT EXISTS last_visit_date TEXT DEFAULT '';`);
+      await pool.query(`ALTER TABLE profiles ADD COLUMN IF NOT EXISTS seen_ids JSONB DEFAULT '[]'::jsonb;`);
+      await pool.query(`ALTER TABLE profiles ADD COLUMN IF NOT EXISTS favorite_ids JSONB DEFAULT '[]'::jsonb;`);
+      await pool.query(`ALTER TABLE profiles ADD COLUMN IF NOT EXISTS category_weights JSONB DEFAULT '{}'::jsonb;`);
+      await pool.query(`ALTER TABLE profiles ADD COLUMN IF NOT EXISTS category_accuracy JSONB DEFAULT '{}'::jsonb;`);
+      await pool.query(`ALTER TABLE profiles ADD COLUMN IF NOT EXISTS badges JSONB DEFAULT '[]'::jsonb;`);
+
+      await pool.query(`
+        CREATE TABLE IF NOT EXISTS quiz_submissions (
+          id BIGSERIAL PRIMARY KEY,
+          device_id TEXT NOT NULL,
+          username TEXT NOT NULL,
+          mode TEXT NOT NULL DEFAULT 'daily',
+          score INT NOT NULL DEFAULT 0,
+          correct_count INT NOT NULL DEFAULT 0,
+          total_questions INT NOT NULL DEFAULT 0,
+          quiz_date TEXT NOT NULL DEFAULT '',
+          created_at TIMESTAMPTZ DEFAULT NOW()
+        );
+      `);
+
+      await pool.query(`ALTER TABLE quiz_submissions ADD COLUMN IF NOT EXISTS device_id TEXT DEFAULT '';`);
+      await pool.query(`ALTER TABLE quiz_submissions ADD COLUMN IF NOT EXISTS username TEXT DEFAULT 'Kâşif';`);
+      await pool.query(`ALTER TABLE quiz_submissions ADD COLUMN IF NOT EXISTS mode TEXT DEFAULT 'daily';`);
+      await pool.query(`ALTER TABLE quiz_submissions ADD COLUMN IF NOT EXISTS correct_count INT DEFAULT 0;`);
+      await pool.query(`ALTER TABLE quiz_submissions ADD COLUMN IF NOT EXISTS total_questions INT DEFAULT 1;`);
+      await pool.query(`ALTER TABLE quiz_submissions ADD COLUMN IF NOT EXISTS quiz_date TEXT DEFAULT '';`);
+      await pool.query(`
+        DO $$
+        BEGIN
+          ALTER TABLE quiz_submissions ALTER COLUMN player_id DROP NOT NULL;
+        EXCEPTION
+          WHEN undefined_column THEN NULL;
+          WHEN others THEN NULL;
+        END $$;
+      `);
+      await pool.query(`
+        DO $$
+        BEGIN
+          ALTER TABLE quiz_submissions ALTER COLUMN quiz_mode DROP NOT NULL;
+        EXCEPTION
+          WHEN undefined_column THEN NULL;
+          WHEN others THEN NULL;
+        END $$;
+      `);
+      await pool.query(`
+        DO $$
+        BEGIN
+          ALTER TABLE quiz_submissions ALTER COLUMN duration_sec DROP NOT NULL;
+        EXCEPTION
+          WHEN undefined_column THEN NULL;
+          WHEN others THEN NULL;
+        END $$;
+      `);
+      await pool.query(`
+        DO $$
+        BEGIN
+          ALTER TABLE quiz_submissions ALTER COLUMN question_count DROP NOT NULL;
+        EXCEPTION
+          WHEN undefined_column THEN NULL;
+          WHEN others THEN NULL;
+        END $$;
+      `);
+
+      await pool.query(`
+        CREATE INDEX IF NOT EXISTS idx_quiz_submissions_mode_date
+          ON quiz_submissions (mode, quiz_date, score DESC);
+      `);
+
+      await pool.query(`
+        CREATE TABLE IF NOT EXISTS duel_rooms (
+          code TEXT PRIMARY KEY,
+          mode TEXT NOT NULL DEFAULT 'duel',
+          category TEXT NOT NULL DEFAULT 'all',
+          question_count INT NOT NULL DEFAULT 5,
+          card_ids JSONB NOT NULL DEFAULT '[]'::jsonb,
+          host_id TEXT NOT NULL,
+          players JSONB NOT NULL DEFAULT '[]'::jsonb,
+          kicked_ids JSONB NOT NULL DEFAULT '[]'::jsonb,
+          status TEXT NOT NULL DEFAULT 'lobby',
+          starts_at TIMESTAMPTZ,
+          created_at TIMESTAMPTZ DEFAULT NOW(),
+          updated_at TIMESTAMPTZ DEFAULT NOW()
+        );
+      `);
+
+      await pool.query(`ALTER TABLE duel_rooms ADD COLUMN IF NOT EXISTS kicked_ids JSONB DEFAULT '[]'::jsonb;`);
+      await pool.query(`ALTER TABLE duel_rooms ADD COLUMN IF NOT EXISTS starts_at TIMESTAMPTZ;`);
+      await pool.query(`ALTER TABLE duel_rooms ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT NOW();`);
 
       await pool.query(`
         CREATE TABLE IF NOT EXISTS contact_messages (
@@ -345,29 +524,252 @@ function formatNumericValue(value: number, unit: string, lang: Language = 'en'):
   return formatValueWithUnit(value, unit, lang);
 }
 
-function buildSynthesizedQuiz(
-  question: string,
-  minVal: number,
-  maxVal: number,
-  answerVal: number,
-  unit: string,
-  explanation: string,
-  seedStr: string,
-  lang: Language = 'en'
-): FactQuizContent {
-  const span = Math.max(2, Math.abs(maxVal - minVal));
-  const deltaLow = Math.max(1, Math.round(span * 0.28));
-  const deltaHigh = Math.max(1, Math.round(span * 0.34));
-
-  let lowVal = answerVal - deltaLow;
-  if (lowVal < minVal || lowVal === answerVal) {
-    lowVal = answerVal + Math.max(1, Math.round(span * 0.18));
+function parseStoredQuiz(raw: unknown): FactQuizContent | null {
+  let candidate = raw;
+  if (typeof raw === 'string') {
+    const trimmed = raw.trim();
+    if (!trimmed.startsWith('{')) return null;
+    try {
+      candidate = JSON.parse(trimmed);
+    } catch {
+      return null;
+    }
   }
-  let highVal = answerVal + deltaHigh;
-  if (highVal > maxVal || highVal === answerVal || highVal === lowVal) {
-    highVal = Math.max(minVal, answerVal - Math.max(2, Math.round(span * 0.42)));
+  if (!candidate || typeof candidate !== 'object') return null;
+  const obj = candidate as Partial<FactQuizContent>;
+  if (
+    typeof obj.question === 'string' &&
+    obj.question.trim().length > 6 &&
+    Array.isArray(obj.options) &&
+    obj.options.length === 3 &&
+    obj.options.every((opt) => typeof opt === 'string' && opt.trim().length > 0) &&
+    (obj.correctIndex === 0 || obj.correctIndex === 1 || obj.correctIndex === 2)
+  ) {
+    return {
+      question: obj.question.trim(),
+      options: [obj.options[0].trim(), obj.options[1].trim(), obj.options[2].trim()],
+      correctIndex: obj.correctIndex,
+      explanation: typeof obj.explanation === 'string' ? obj.explanation.trim() : '',
+    };
+  }
+  return null;
+}
+
+const CONCEPT_DECOYS_TR: Record<CategoryId, [string, string, string, string]> = {
+  space: [
+    'Güneş rüzgârı ve radyasyon basıncı Ay yörüngesinin ötesinde tamamen sıfırlanır.',
+    'Karman çizgisinin hemen üzerinde yer çekimi kuvveti tamamen yok olur.',
+    'Ötegezegenler yıldızlar gibi çekirdek füzyonuyla kendi görünür ışıklarını üretir.',
+    'Derin uzaydaki cisimlerin yörüngesi her yüzyılda kendiliğinden tersine döner.',
+  ],
+  nature: [
+    'Bu olgu yalnızca kutup kışlarında sıfırın altındaki sularda görülen geçici bir durumdur.',
+    'Canlılar arasındaki bu özellik sadece tozlaşmayı çekmek için sonradan gelişmiştir.',
+    'Bu ekolojik süreç kıyıdan uzaklaştıkça bütün biyomlarda aynı sabit hızda işler.',
+    'Söz konusu adaptasyon yalnızca yapay akvaryum koşullarında ortaya çıkar.',
+  ],
+  human_body: [
+    'Bu biyolojik tepki beyin sapı sinyali olmadan yalnızca omurilik tarafından yönetilir.',
+    'İlgili doku yalnızca bebeklik döneminde yenilenir ve yetişkinlikte tamamen durur.',
+    'Bu işlev yalnızca kemik iliğindeki kırmızı kan hücrelerinin bölünmesiyle sağlanır.',
+    'REM uykusu sırasında vücuttaki bu mekanizma birkaç saatliğine tamamen kapanır.',
+  ],
+  history: [
+    'Bu uygulama yalnızca 19. yüzyıl Sanayi Devrimi sonrasında Avrupa saraylarında başlamıştır.',
+    'İlgili buluntuların tamamı 1990 sonrası uydu taramalarına kadar tamamen uydurma sanılıyordu.',
+    'Bu gelenek yazılı kayıtlar başlamadan önce küresel ölçekte yasaklanarak terk edilmiştir.',
+    'Tarihsel kayıtlara göre bu yöntem yalnızca buharlı matbaanın icadından sonra ortaya çıktı.',
+  ],
+  science: [
+    'Bu etki kapalı vakum odalarında enerjinin korunumu yasasını geçici olarak ihlal eder.',
+    'Söz konusu olay yalnızca mutlak sıfıra yakın süperiletken bobinlerde gözlemlenebilir.',
+    'Bu mekanizma atom yapısından ziyade yalnızca radyoaktif bozunma hızına bağlıdır.',
+    'Bu süreç bugüne dek hiçbir deneyde doğrudan ölçülmemiş, yalnızca kâğıt üzerinde kalmıştır.',
+  ],
+  records: [
+    'Bu rekor doğal fiziksel koşullardan değil, laboratuvar katalizörlerinden kaynaklanır.',
+    'Söz konusu rekor yalnızca üç saniyeden kısa sürdükten sonra tamamen dağılmıştır.',
+    'Bu değer yalnızca deniz seviyesindeki standart atmosfer basıncında elde edilebilir.',
+    'Ölçülen bu ekstrem durum on yıl içinde küresel ölçekte tamamen tersine dönmüştür.',
+  ],
+  statistics: [
+    'Bu oran nüfus ağırlıklandırması yapılmadan tek bir şehirdeki örneklemden çıkarılmıştır.',
+    'Veriler çok yıllık eğilimleri değil, yalnızca birkaç haftalık mevsimsel dalgalanmayı yansıtır.',
+    'Hesaplama tüm alt grupların her yıl birebir aynı doğrusal hızla büyüdüğünü varsayar.',
+    'Karşılaştırma 2020 öncesi tüm tarihsel baz ölçümleri bilerek veri setinden çıkarır.',
+  ],
+};
+
+const CONCEPT_DECOYS_EN: Record<CategoryId, [string, string, string, string]> = {
+  space: [
+    'Solar radiation pressure drops completely to zero beyond Earth’s orbital path.',
+    'Gravity vanishes entirely once an object crosses the Karman boundary.',
+    'Rocky exoplanets emit their own visible starlight through internal nuclear fusion.',
+    'Deep-space orbits naturally reverse direction roughly once every century.',
+  ],
+  nature: [
+    'This phenomenon occurs exclusively in sub-zero polar waters during winter.',
+    'The trait evolved solely for seasonal coloration rather than ecosystem survival.',
+    'The same biological pace remains identical across every terrestrial biome.',
+    'This adaptation appears only inside controlled artificial enclosures.',
+  ],
+  human_body: [
+    'This response runs solely through conscious cortical planning without reflex pathways.',
+    'The tissue stops regenerating completely shortly after early infancy.',
+    'This function depends entirely on red blood cell division inside long bones.',
+    'The entire mechanism shuts down completely during deep REM sleep cycles.',
+  ],
+  history: [
+    'This practice originated exclusively in 19th-century European industrial courts.',
+    'Archaeologists dismissed every surviving trace as fiction until satellite scans in 1995.',
+    'The custom was formally abolished worldwide centuries before written alphabets existed.',
+    'Historical records confirm it emerged only after steam-powered printing arrived.',
+  ],
+  science: [
+    'This effect briefly violates conservation of energy inside sealed vacuum chambers.',
+    'The behavior emerges only inside superconducting coils cooled near absolute zero.',
+    'The underlying mechanism relies on nuclear decay rather than molecular bonding.',
+    'It remains purely mathematical and has never been observed in physical experiments.',
+  ],
+  records: [
+    'This extreme milestone was produced using synthetic lab catalysts rather than nature.',
+    'The recorded peak lasted under three seconds before collapsing back to baseline.',
+    'Such measurements are only physically possible at standard sea-level pressure.',
+    'Subsequent global shifts permanently erased this benchmark within a single decade.',
+  ],
+  statistics: [
+    'The figure reflects an unweighted sample taken from a single metropolitan district.',
+    'This trend captures short-term seasonal noise rather than multi-year measurements.',
+    'The model assumes every demographic subgroup shifts at an identical linear rate.',
+    'All baseline records prior to 2020 were excluded from the longitudinal series.',
+  ],
+};
+
+function compactInsightSentence(text: string, maxLen = 112): string {
+  const cleaned = text.replace(/\s+/g, ' ').trim();
+  if (!cleaned) return '';
+  const sentences = cleaned
+    .split(/(?<=[.!?])\s+/)
+    .map((s) => s.trim())
+    .filter((s) => s.length >= 22);
+  const picked =
+    sentences.find((s) => s.length <= maxLen) ||
+    sentences[0] ||
+    cleaned;
+  if (picked.length <= maxLen) return picked;
+  return `${picked.slice(0, maxLen - 3).trimEnd()}...`;
+}
+
+function deriveFallbackVisualQuery(row: DbFactRow): string | undefined {
+  if (row.visual_query && row.visual_query.trim().length >= 2) {
+    return row.visual_query.trim();
+  }
+  const stopWords = new Set([
+    'the', 'and', 'for', 'with', 'from', 'that', 'this', 'into', 'over', 'most',
+    'more', 'than', 'every', 'about', 'what', 'when', 'where', 'which', 'only',
+    'tr', 'en', 'fact', 'record', 'average', 'daily', 'global', 'world',
+  ]);
+  const baseText = (row.title_en || row.slug || '').toLowerCase();
+  const words = baseText
+    .replace(/[^a-z0-9\s-]/g, ' ')
+    .split(/[\s-]+/)
+    .filter((w) => w.length >= 3 && !stopWords.has(w) && !/^\d+$/.test(w));
+  const unique = Array.from(new Set(words)).slice(0, 3);
+  if (unique.length >= 2) {
+    return unique.join(' ');
+  }
+  const catFallback: Record<string, string> = {
+    space: 'deep space galaxy',
+    nature: 'wildlife ocean forest',
+    human_body: 'human brain heartbeat',
+    history: 'ancient monument artifacts',
+    science: 'physics laboratory atom',
+    records: 'extreme earth lightning',
+    statistics: 'global population city',
+  };
+  return catFallback[row.category] || 'science discovery';
+}
+
+interface SynthesizedQuizInput {
+  category: CategoryId;
+  question: string;
+  minVal: number;
+  maxVal: number;
+  answerVal: number;
+  unit: string;
+  summary: string;
+  detail: string;
+  seedStr: string;
+  lang: Language;
+  title: string;
+  sourceName: string;
+}
+
+function buildSynthesizedQuiz(input: SynthesizedQuizInput): FactQuizContent {
+  const {
+    category,
+    question,
+    minVal,
+    maxVal,
+    answerVal,
+    unit,
+    summary,
+    detail,
+    seedStr,
+    lang,
+    title,
+    sourceName,
+  } = input;
+
+  let hash = 0;
+  for (let i = 0; i < seedStr.length; i += 1) {
+    hash = (hash * 31 + seedStr.charCodeAt(i)) >>> 0;
+  }
+  const correctIndex = (hash % 3) as 0 | 1 | 2;
+
+  const insightSource = detail.trim().length >= 28 ? detail : summary;
+  const compactRight = compactInsightSentence(insightSource, 112);
+
+  // Always prefer an engaging, topic-relevant conceptual quiz when descriptive text exists
+  if (compactRight.length >= 22 && title.trim().length >= 4) {
+    const decoyPool = lang === 'tr' ? CONCEPT_DECOYS_TR[category] : CONCEPT_DECOYS_EN[category];
+    const idxA = hash % decoyPool.length;
+    const idxB = (idxA + 1 + (hash % (decoyPool.length - 1))) % decoyPool.length;
+    const decoyA = decoyPool[idxA];
+    const decoyB = decoyPool[idxB];
+
+    const shortTitle = title.length > 64 ? `${title.slice(0, 61).trimEnd()}...` : title;
+    const promptVariant = hash % 3;
+    const qPrompt =
+      lang === 'tr'
+        ? promptVariant === 0
+          ? `"${shortTitle}" olgusunu en doğru açıklayan ifade hangisidir?`
+          : promptVariant === 1
+            ? `"${shortTitle}" hakkında bilimsel veya tarihsel bulgular neyi gösterir?`
+            : `Aşağıdakilerden hangisi "${shortTitle}" ile doğrudan açıklanan bir gerçektir?`
+        : promptVariant === 0
+          ? `Which statement best explains "${shortTitle}"?`
+          : promptVariant === 1
+            ? `What do verified findings reveal about "${shortTitle}"?`
+            : `Which fact directly characterizes "${shortTitle}"?`;
+
+    const options: [string, string, string] =
+      correctIndex === 0
+        ? [compactRight, decoyA, decoyB]
+        : correctIndex === 1
+          ? [decoyA, compactRight, decoyB]
+          : [decoyA, decoyB, compactRight];
+
+    const fullExplanation = detail.trim() || summary.trim() || compactRight;
+    return {
+      question: qPrompt,
+      options,
+      correctIndex,
+      explanation: `${fullExplanation}${sourceName ? ` (${sourceName})` : ''}`,
+    };
   }
 
+  // Last-resort numeric fallback with non-trivial order-of-magnitude distractors (never +/-30% slider echo)
   const formatDist = (n: number) =>
     formatNumericValue(
       Number.isInteger(answerVal) ? Math.round(n) : Number(n.toFixed(1)),
@@ -375,17 +777,23 @@ function buildSynthesizedQuiz(
       lang
     );
 
-  const correctStr = formatNumericValue(answerVal, unit, lang);
-  let d1 = formatDist(lowVal);
-  let d2 = formatDist(highVal);
-  if (d1 === correctStr) d1 = formatDist(answerVal + Math.max(1, deltaLow));
-  if (d2 === correctStr || d2 === d1) d2 = formatDist(answerVal + Math.max(2, deltaHigh * 2));
+  const safeBase = Math.abs(answerVal) >= 1 ? answerVal : 10;
+  const span = Math.max(4, Math.abs(maxVal - minVal));
+  const cand1 =
+    answerVal > 0 && answerVal * 3.5 <= maxVal * 2
+      ? answerVal * 3.5
+      : answerVal - span * 0.45;
+  const cand2 =
+    answerVal > 4
+      ? Math.max(minVal, answerVal / 4)
+      : safeBase + span * 0.65;
 
-  let hash = 0;
-  for (let i = 0; i < seedStr.length; i += 1) {
-    hash += seedStr.charCodeAt(i);
-  }
-  const correctIndex = (hash % 3) as 0 | 1 | 2;
+  const correctStr = formatNumericValue(answerVal, unit, lang);
+  let d1 = formatDist(cand1);
+  let d2 = formatDist(cand2);
+  if (d1 === correctStr) d1 = formatDist(answerVal + Math.max(2, span * 0.5));
+  if (d2 === correctStr || d2 === d1) d2 = formatDist(answerVal - Math.max(3, span * 0.6));
+
   const options: [string, string, string] =
     correctIndex === 0
       ? [correctStr, d1, d2]
@@ -397,7 +805,7 @@ function buildSynthesizedQuiz(
     question,
     options,
     correctIndex,
-    explanation,
+    explanation: detail || summary || `${correctStr}${sourceName ? ` (${sourceName})` : ''}`,
   };
 }
 
@@ -426,17 +834,21 @@ export function mapDbRowToFactCard(row: DbFactRow): FactCard {
       ...staticMatch,
       slug: row.slug,
       sketchType: row.sketch_type || staticMatch.id,
+      visualQuery: row.visual_query?.trim() || staticMatch.visualQuery,
+      gifUrl: row.gif_url?.trim() || staticMatch.gifUrl,
       likesCount,
       createdAt,
       sourceName: safeSourceName || staticMatch.sourceName,
       sourceUrl: safeSourceUrl || staticMatch.sourceUrl,
       tr: {
         ...staticMatch.tr,
+        quiz: parseStoredQuiz(row.quiz_tr) || staticMatch.tr.quiz,
         sourceName: safeSourceName || staticMatch.tr.sourceName,
         sourceUrl: safeSourceUrl || staticMatch.tr.sourceUrl,
       },
       en: {
         ...staticMatch.en,
+        quiz: parseStoredQuiz(row.quiz_en) || staticMatch.en.quiz,
         sourceName: safeSourceName || staticMatch.en.sourceName,
         sourceUrl: safeSourceUrl || staticMatch.en.sourceUrl,
       },
@@ -496,6 +908,8 @@ export function mapDbRowToFactCard(row: DbFactRow): FactCard {
     iconName: visual.iconName,
     emoji: visual.emoji,
     sketchType: row.sketch_type || undefined,
+    visualQuery: deriveFallbackVisualQuery(row),
+    gifUrl: row.gif_url?.trim() || undefined,
     likesCount,
     createdAt,
     readingTimeSec: 20,
@@ -510,16 +924,22 @@ export function mapDbRowToFactCard(row: DbFactRow): FactCard {
       sourceName: resolvedSourceName,
       sourceUrl: safeSourceUrl,
       tag: visual.tagTr,
-      quiz: buildSynthesizedQuiz(
-        questionTr,
-        minVal,
-        maxVal,
-        answerVal,
-        unitTr,
-        detailTr,
-        `${row.slug}-tr`,
-        'tr'
-      ),
+      quiz:
+        parseStoredQuiz(row.quiz_tr) ||
+        buildSynthesizedQuiz({
+          category,
+          question: questionTr,
+          minVal,
+          maxVal,
+          answerVal,
+          unit: unitTr,
+          summary: summaryTr,
+          detail: detailTr,
+          seedStr: `${row.slug}-tr`,
+          lang: 'tr',
+          title: titleTr,
+          sourceName: resolvedSourceName,
+        }),
       guessChallenge: guessTr,
     },
     en: {
@@ -531,16 +951,22 @@ export function mapDbRowToFactCard(row: DbFactRow): FactCard {
       sourceName: resolvedSourceName,
       sourceUrl: safeSourceUrl,
       tag: visual.tagEn,
-      quiz: buildSynthesizedQuiz(
-        questionEn,
-        minVal,
-        maxVal,
-        answerVal,
-        unitEn,
-        detailEn,
-        `${row.slug}-en`,
-        'en'
-      ),
+      quiz:
+        parseStoredQuiz(row.quiz_en) ||
+        buildSynthesizedQuiz({
+          category,
+          question: questionEn,
+          minVal,
+          maxVal,
+          answerVal,
+          unit: unitEn,
+          summary: summaryEn,
+          detail: detailEn,
+          seedStr: `${row.slug}-en`,
+          lang: 'en',
+          title: titleEn,
+          sourceName: resolvedSourceName,
+        }),
       guessChallenge: guessEn,
     },
   };
@@ -549,6 +975,11 @@ export function mapDbRowToFactCard(row: DbFactRow): FactCard {
 export interface ServerFactEntry {
   fact: FactCard;
   updatedAt: Date;
+}
+
+export interface ServerFactsFetchResult {
+  source: 'postgres' | 'local';
+  entries: ServerFactEntry[];
 }
 
 function parseTimestamp(value?: string | Date | null, fallback = new Date()): Date {
@@ -576,12 +1007,12 @@ function buildStaticServerEntries(): ServerFactEntry[] {
   }));
 }
 
-export const getAllFactsWithTimestampsServer = cache(
-  async (): Promise<ServerFactEntry[]> => {
+export const fetchFactsWithSourceServer = cache(
+  async (): Promise<ServerFactsFetchResult> => {
     const staticEntries = buildStaticServerEntries();
 
     if (!hasDatabaseUrl()) {
-      return staticEntries;
+      return { source: 'local', entries: staticEntries };
     }
 
     try {
@@ -592,7 +1023,7 @@ export const getAllFactsWithTimestampsServer = cache(
       );
 
       if (result.rows.length === 0) {
-        return staticEntries;
+        return { source: 'postgres', entries: staticEntries };
       }
 
       const seenKeys = new Set<string>();
@@ -622,11 +1053,18 @@ export const getAllFactsWithTimestampsServer = cache(
         }
       }
 
-      return combined;
+      return { source: 'postgres', entries: combined };
     } catch (err) {
-      console.error('[lib/db] getAllFactsWithTimestampsServer fallback to static facts:', err);
-      return staticEntries;
+      console.error('[lib/db] fetchFactsWithSourceServer fallback to static facts:', err);
+      return { source: 'local', entries: staticEntries };
     }
+  }
+);
+
+export const getAllFactsWithTimestampsServer = cache(
+  async (): Promise<ServerFactEntry[]> => {
+    const result = await fetchFactsWithSourceServer();
+    return result.entries;
   }
 );
 

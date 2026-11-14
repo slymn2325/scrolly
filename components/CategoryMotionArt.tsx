@@ -20,6 +20,7 @@ interface CategoryMotionArtProps {
   onButtonPop?: () => void;
   topicText?: string;
   tag?: string;
+  gifUrl?: string | null;
 }
 
 export default function CategoryMotionArt({
@@ -32,6 +33,7 @@ export default function CategoryMotionArt({
   sketchType,
   topicText,
   tag,
+  gifUrl,
 }: CategoryMotionArtProps) {
   const reduceMotion = useReducedMotion();
   const containerRef = useRef<HTMLDivElement>(null);
@@ -92,14 +94,36 @@ export default function CategoryMotionArt({
     );
   }
 
-  // Hero = full-bleed cinematic canvas (no white FIG boxes)
+  // Hero = full-bleed cinematic canvas with instant CSS category wash backdrop
   return (
     <div
       ref={containerRef}
       data-testid="category-motion-art"
       data-category={category}
-      className="absolute inset-0 z-0"
+      style={{
+        background: `radial-gradient(circle at 50% 34%, ${accentColor}38 0%, #0D0D14 58%, #07070A 100%)`,
+      }}
+      className="absolute inset-0 z-0 overflow-hidden"
     >
+      {category === 'statistics' && (
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-0 opacity-20"
+          style={{
+            backgroundImage:
+              'linear-gradient(to right, rgba(129,140,248,0.22) 1px, transparent 1px), linear-gradient(to bottom, rgba(34,211,238,0.18) 1px, transparent 1px)',
+            backgroundSize: '36px 36px',
+          }}
+        />
+      )}
+      {gifUrl && (
+        <img
+          src={gifUrl}
+          alt=""
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-0 h-full w-full object-cover opacity-55"
+        />
+      )}
       <FullBleedReelsCanvas
         category={category}
         accentColor={accentColor}

@@ -36,18 +36,19 @@
       "quiz": {
         "question": "In history, Cleopatra lived closer in time to which milestone?",
         "options": [
-          "The 1969 Moon landing",
           "The building of the Great Pyramid",
+          "The 1969 Moon landing",
           "Exactly halfway between both"
         ],
-        "correctIndex": 0,
+        "correctIndex": 1,
         "explanation": "About 2,530 years separated Cleopatra from the Great Pyramid, compared to ~2,000 years before Apollo 11."
       },
       "sourceName": "Encyclopaedia Britannica",
       "sourceUrl": "https://www.britannica.com/biography/Cleopatra-queen-of-Egypt"
     },
     "sourceName": "Encyclopaedia Britannica",
-    "sourceUrl": "https://www.britannica.com/biography/Cleopatra-queen-of-Egypt"
+    "sourceUrl": "https://www.britannica.com/biography/Cleopatra-queen-of-Egypt",
+    "visualQuery": "giza pyramids egypt"
   },
   {
     "id": "history-02",
@@ -64,14 +65,14 @@
       "sourceHint": "University of Oxford Archives",
       "tag": "Dünya Tarihi",
       "quiz": {
-        "question": "Oxford Üniversitesi'ndeki eğitim, Azteklerin başkenti Tenochtitlan'dan yaklaşık kaç yıl önce başladı?",
+        "question": "Tarihte Oxford Üniversitesi ile Aztek başkenti Tenochtitlan'ın kronolojik ilişkisi neden insanları şaşırtır?",
         "options": [
-          "200 yılı aşkın bir süre önce",
-          "50 yıl sonra",
-          "Aynı yıl"
+          "Aztekler Oxford kütüphanesinin ilk binalarını inşa etmişti",
+          "Oxford'da dersler başladığında Aztek İmparatorluğu henüz kurulmamıştı bile (200+ yıl fark)",
+          "İkisi de tam olarak aynı yıl kuruldu"
         ],
-        "correctIndex": 0,
-        "explanation": "Oxford'da eğitim 1096'da, Tenochtitlan ise 1325'te kuruldu."
+        "correctIndex": 1,
+        "explanation": "Oxford 1096 civarında öğretime başlarken Tenochtitlan 1325 yılında kuruldu—yani üniversite Azteklerden iki yüzyıl eskidir."
       },
       "sourceName": "University of Oxford Archives",
       "sourceUrl": "https://www.ox.ac.uk/about/organisation/history"
@@ -84,20 +85,21 @@
       "sourceHint": "University of Oxford Archives",
       "tag": "World History",
       "quiz": {
-        "question": "Roughly how much earlier did Oxford start teaching before Tenochtitlan was founded?",
+        "question": "Why does comparing Oxford University and the Aztec Empire break people's mental timeline?",
         "options": [
-          "Over 200 years earlier",
-          "50 years later",
-          "In the exact same decade"
+          "Aztec architects designed Oxford's earliest stone domes",
+          "Both institutions opened within the same decade",
+          "Oxford held lectures over two centuries before Tenochtitlan was founded in 1325"
         ],
-        "correctIndex": 0,
-        "explanation": "Teaching at Oxford dates to 1096 CE, over two centuries before Tenochtitlan's founding in 1325 CE."
+        "correctIndex": 2,
+        "explanation": "Teaching existed at Oxford by ~1096, making it more than 200 years older than the Aztec capital."
       },
       "sourceName": "University of Oxford Archives",
       "sourceUrl": "https://www.ox.ac.uk/about/organisation/history"
     },
     "sourceName": "University of Oxford Archives",
-    "sourceUrl": "https://www.ox.ac.uk/about/organisation/history"
+    "sourceUrl": "https://www.ox.ac.uk/about/organisation/history",
+    "visualQuery": "historic oxford library"
   },
   {
     "id": "history-03",
@@ -114,14 +116,14 @@
       "sourceHint": "Guinness World Records / UK National Archives",
       "tag": "Askeri Tarih",
       "quiz": {
-        "question": "Tarihteki en kısa kayıtlı savaş olan 1896 İngiltere-Zanzibar Savaşı ne kadar sürdü?",
+        "question": "1896 İngiltere-Zanzibar Savaşı nasıl sadece 38 dakikada sonuçlanarak tarihe geçti?",
         "options": [
-          "38-45 dakika",
-          "6 saat",
-          "3 gün"
+          "İki ordunun satranç maçı yapıp berabere kalmasıyla",
+          "Fırtına yüzünden kimsenin silah ateşleyememesiyle",
+          "İngiliz donanmasının sarayı bombalaması üzerine yeni sultanın hemen teslim olmasıyla"
         ],
-        "correctIndex": 0,
-        "explanation": "09:02'de başlayan çatışma yaklaşık 38 dakika sonra ateşkesle sona erdi."
+        "correctIndex": 2,
+        "explanation": "Saat 09:02'de başlayan deniz bombardımanı sarayı kullanılamaz hale getirince bayrak 09:40'ta indirildi."
       },
       "sourceName": "Guinness World Records / UK Archives",
       "sourceUrl": "https://www.guinnessworldrecords.com/world-records/shortest-war"
@@ -134,20 +136,21 @@
       "sourceHint": "Guinness World Records / UK National Archives",
       "tag": "Military History",
       "quiz": {
-        "question": "About how long did the 1896 Anglo-Zanzibar War last?",
+        "question": "How did the 1896 Anglo-Zanzibar War end in an astonishing 38 minutes?",
         "options": [
-          "38 to 45 minutes",
-          "6 hours",
-          "3 days"
+          "British warships shelled the palace until Sultan Khalid's flag fell at 09:40",
+          "Both commanders agreed to settle the dispute via coin toss",
+          "Heavy monsoon rain flooded every gunpowder store"
         ],
         "correctIndex": 0,
-        "explanation": "Fighting started at 9:02 AM and ended around 9:40 AM—about 38 minutes later."
+        "explanation": "Modern naval artillery overwhelmed the palace defenses within 38 minutes of the opening salvo."
       },
       "sourceName": "Guinness World Records / UK Archives",
       "sourceUrl": "https://www.guinnessworldrecords.com/world-records/shortest-war"
     },
     "sourceName": "Guinness World Records / UK Archives",
-    "sourceUrl": "https://www.guinnessworldrecords.com/world-records/shortest-war"
+    "sourceUrl": "https://www.guinnessworldrecords.com/world-records/shortest-war",
+    "visualQuery": "vintage naval warship"
   },
   {
     "id": "history-04",
@@ -186,18 +189,19 @@
       "quiz": {
         "question": "Where did ancient Rome's prized Tyrian purple dye come from?",
         "options": [
-          "Mediterranean sea snails",
           "Crushed lavender petals",
+          "Mediterranean sea snails",
           "Squid ink"
         ],
-        "correctIndex": 0,
+        "correctIndex": 1,
         "explanation": "Murex sea snails secreted the rare pigment used to dye imperial garments."
       },
       "sourceName": "Metropolitan Museum of Art",
       "sourceUrl": "https://en.wikipedia.org/wiki/Tyrian_purple"
     },
     "sourceName": "Metropolitan Museum of Art",
-    "sourceUrl": "https://en.wikipedia.org/wiki/Tyrian_purple"
+    "sourceUrl": "https://en.wikipedia.org/wiki/Tyrian_purple",
+    "visualQuery": "royal purple silk"
   },
   {
     "id": "history-05",
@@ -216,11 +220,11 @@
       "quiz": {
         "question": "Son tüylü mamutlar Mısır Piramitlerinin inşası sırasında nerede hayatta kalmıştı?",
         "options": [
-          "Sibirya açıklarındaki Wrangel Adası'nda",
           "Nil Nehri deltasında",
+          "Sibirya açıklarındaki Wrangel Adası'nda",
           "İngiltere adalarında"
         ],
-        "correctIndex": 0,
+        "correctIndex": 1,
         "explanation": "Wrangel Adası'ndaki izole mamutlar yaklaşık 4.000 yıl öncesine kadar yaşadı."
       },
       "sourceName": "Current Biology / Radiocarbon Study",
@@ -236,18 +240,19 @@
       "quiz": {
         "question": "Where did the last woolly mammoths survive until around 4,000 years ago?",
         "options": [
-          "Wrangel Island in the Arctic",
           "The Nile River delta",
-          "The British Isles"
+          "The British Isles",
+          "Wrangel Island in the Arctic"
         ],
-        "correctIndex": 0,
+        "correctIndex": 2,
         "explanation": "An isolated population on Wrangel Island persisted alongside early Bronze Age civilizations."
       },
       "sourceName": "Current Biology / Radiocarbon Study",
       "sourceUrl": "https://pubmed.ncbi.nlm.nih.gov/25913407/"
     },
     "sourceName": "Current Biology / Radiocarbon Study",
-    "sourceUrl": "https://pubmed.ncbi.nlm.nih.gov/25913407/"
+    "sourceUrl": "https://pubmed.ncbi.nlm.nih.gov/25913407/",
+    "visualQuery": "arctic snowy tundra"
   },
   {
     "id": "history-06",
@@ -264,14 +269,14 @@
       "sourceHint": "Archaeological Park of Pompeii",
       "tag": "Günlük Yaşam Tarihi",
       "quiz": {
-        "question": "Pompeii'de sıcak yemek satan antik fast-food dükkanlarına ne ad verilirdi?",
+        "question": "Pompeii ve Antik Roma'da halkın büyük bölümünün evde yemek pişirmek yerine sokaktaki 'thermopolium' büfelerini tercih etmesinin temel nedeni neydi?",
         "options": [
-          "Thermopolium",
-          "Agora",
-          "Colosseum"
+          "Roma yasalarının evlerde ateş yakmayı tamamen yasaklaması",
+          "Sokak büfelerinin imparatorluk tarafından ücretsiz dağıtılması",
+          "Kalabalık şehir apartmanlarının çoğunda mutfak ve güvenli ocak bulunmaması"
         ],
-        "correctIndex": 0,
-        "explanation": "'Thermopolium' kelime anlamıyla 'sıcak bir şeylerin satıldığı yer' demektir."
+        "correctIndex": 2,
+        "explanation": "Antik Roma'nın 'insula' adlı çok katlı apartmanlarında mutfak ve baca olmadığından, çalışan halk sıcak yemek ihtiyacını hızlı sokak büfelerinden karşılardı."
       },
       "sourceName": "Archaeological Park of Pompeii",
       "sourceUrl": "https://pompeiisites.org/en/comunicati/the-ancient-snack-bar-of-regio-v-resurfaces-in-its-entirety-with-scenes-of-still-life-food-residues-animal-bones-and-victims-of-the-eruption/"
@@ -284,20 +289,21 @@
       "sourceHint": "Archaeological Park of Pompeii",
       "tag": "Daily Life History",
       "quiz": {
-        "question": "What were the ancient Roman street-side hot food counters in Pompeii called?",
+        "question": "Why did everyday citizens in Pompeii and Rome rely so heavily on street-side thermopolia instead of home cooking?",
         "options": [
-          "Thermopolia",
-          "Agoras",
-          "Aqueducts"
+          "Most cramped urban apartments lacked private kitchens or safe indoor hearths",
+          "Roman law strictly banned citizens from owning clay pots at home",
+          "Thermopolia gave away free grain rations funded by the Senate daily"
         ],
         "correctIndex": 0,
-        "explanation": "Thermopolium literally translates to 'a place where something hot is sold'."
+        "explanation": "Dense Roman apartment blocks rarely had kitchens or chimneys, making walk-up thermopolia essential neighborhood fast-food hubs."
       },
       "sourceName": "Archaeological Park of Pompeii",
       "sourceUrl": "https://pompeiisites.org/en/comunicati/the-ancient-snack-bar-of-regio-v-resurfaces-in-its-entirety-with-scenes-of-still-life-food-residues-animal-bones-and-victims-of-the-eruption/"
     },
     "sourceName": "Archaeological Park of Pompeii",
-    "sourceUrl": "https://pompeiisites.org/en/comunicati/the-ancient-snack-bar-of-regio-v-resurfaces-in-its-entirety-with-scenes-of-still-life-food-residues-animal-bones-and-victims-of-the-eruption/"
+    "sourceUrl": "https://pompeiisites.org/en/comunicati/the-ancient-snack-bar-of-regio-v-resurfaces-in-its-entirety-with-scenes-of-still-life-food-residues-animal-bones-and-victims-of-the-eruption/",
+    "visualQuery": "pompeii roman ruins"
   },
   {
     "id": "history-07",
@@ -314,14 +320,14 @@
       "sourceHint": "Science Museum London",
       "tag": "Antik Mühendislik",
       "quiz": {
-        "question": "İskenderiyeli Heron'un MS 1. yüzyılda yaptığı dönen buhar küresinin adı neydi?",
+        "question": "İskenderiyeli Heron'un MS 1. yüzyılda çalışan bir buhar türbini yapmasına rağmen bunun Antik Çağ'da Sanayi Devrimi'ni başlatamamasının başlıca nedeni neydi?",
         "options": [
-          "Aeolipile",
-          "Astrolab",
-          "Antikythera"
+          "Ucuz insan ve köle emeğinin yaygınlığı nedeniyle icadın tapınak harikası olarak kalması",
+          "Antik dünyada bakır ve bronz madenlerinin henüz keşfedilmemiş olması",
+          "Cihazın yalnızca kış aylarında kar suyunda çalışabilmesi"
         ],
         "correctIndex": 0,
-        "explanation": "Rüzgar tanrısı Aeolus'un adını taşıyan 'Aeolipile', tarihteki ilk bilinen buhar türbini düzeneğidir."
+        "explanation": "Aeolipile buhar tepkisiyle dönme ilkesini kanıtlasa da ucuz iş gücü bolluğu ve düşük verimli metalürji yüzünden endüstriyel makineye dönüştürülmedi."
       },
       "sourceName": "Science Museum London",
       "sourceUrl": "https://en.wikipedia.org/wiki/Aeolipile"
@@ -334,20 +340,21 @@
       "sourceHint": "Science Museum London",
       "tag": "Ancient Engineering",
       "quiz": {
-        "question": "What was Hero of Alexandria's 1st-century spinning steam sphere called?",
+        "question": "Hero of Alexandria built a working steam turbine in the 1st century CE—why didn't it spark an ancient Industrial Revolution?",
         "options": [
-          "Aeolipile",
-          "Astrolabe",
-          "Sextant"
+          "Ancient Mediterranean civilizations had not yet learned how to boil water",
+          "Abundant slave/manual labor and low-torque design kept it a temple novelty",
+          "Copper spheres shattered immediately whenever heated above 40 °C"
         ],
-        "correctIndex": 0,
-        "explanation": "Named after Aeolus, god of winds, the aeolipile used steam jets to spin a metal sphere."
+        "correctIndex": 1,
+        "explanation": "Without cheap high-pressure metallurgy or an economic shortage of manual labor, the aeolipile remained a curiosity rather than an industrial engine."
       },
       "sourceName": "Science Museum London",
       "sourceUrl": "https://en.wikipedia.org/wiki/Aeolipile"
     },
     "sourceName": "Science Museum London",
-    "sourceUrl": "https://en.wikipedia.org/wiki/Aeolipile"
+    "sourceUrl": "https://en.wikipedia.org/wiki/Aeolipile",
+    "visualQuery": "spinning steam turbine"
   },
   {
     "id": "history-08",
@@ -364,14 +371,14 @@
       "sourceHint": "BBC History Magazine",
       "tag": "Unutulmuş Meslekler",
       "quiz": {
-        "question": "19. yüzyılda fabrika işçilerini camlarına vurarak uyandıran meslek grubuna ne denirdi?",
+        "question": "19. yüzyıl İngiltere'sinde profesyonel 'knocker-upper'lar müşterinin penceresine vurduktan sonra neden hemen diğer sokağa geçmezdi?",
         "options": [
-          "Knocker-upper",
-          "Bellman",
-          "Lamper"
+          "Sabah vardiyasının ücretini her gün nakit olarak pencereden topladıklarından",
+          "İşçinin gerçekten uyandığından emin olmak için pencereye gelip işaret vermesini beklediklerinden",
+          "Belediye saat kulesinden onay düdüğü gelmesini beklediklerinden"
         ],
-        "correctIndex": 0,
-        "explanation": "Knocker-upper'lar uzun sopalarla pencerelere vurarak sabah vardiyacılarını uyandırırdı."
+        "correctIndex": 1,
+        "explanation": "İyi bir knocker-upper'ın itibarı müşterisini işe geç bırakmamasına bağlıydı; perde aralanıp uyanıldığı görülene kadar cama tıklatmaya devam ederlerdi."
       },
       "sourceName": "BBC History Archives",
       "sourceUrl": "https://www.atlasobscura.com/articles/what-did-people-use-before-alarm-clocks"
@@ -384,20 +391,21 @@
       "sourceHint": "BBC History Magazine",
       "tag": "Forgotten Jobs",
       "quiz": {
-        "question": "What were the 19th-century human alarm clocks who tapped on windows called?",
+        "question": "Why did dedicated 19th-century 'knocker-uppers' refuse to walk away right after tapping on a worker's window?",
         "options": [
-          "Knocker-uppers",
-          "Bell-ringers",
-          "Gaslighters"
+          "They had to collect a fresh coin through the window every single morning",
+          "City law required them to sing the weather forecast at each doorway",
+          "They waited until the sleeper came to the glass to prove they were truly awake"
         ],
-        "correctIndex": 0,
-        "explanation": "Knocker-uppers used long poles or pea shooters to wake factory workers on time."
+        "correctIndex": 2,
+        "explanation": "A knocker-upper's reputation depended on reliability—so they kept tapping with bamboo poles or pea shooters until the client appeared at the window."
       },
       "sourceName": "BBC History Archives",
       "sourceUrl": "https://www.atlasobscura.com/articles/what-did-people-use-before-alarm-clocks"
     },
     "sourceName": "BBC History Archives",
-    "sourceUrl": "https://www.atlasobscura.com/articles/what-did-people-use-before-alarm-clocks"
+    "sourceUrl": "https://www.atlasobscura.com/articles/what-did-people-use-before-alarm-clocks",
+    "visualQuery": "foggy vintage london"
   },
   {
     "id": "history-09",
@@ -416,11 +424,11 @@
       "quiz": {
         "question": "18. yüzyılda Avrupalı zenginler neden akşam partileri için ananas kiralardı?",
         "options": [
-          "Servet ve statü sembolü olarak masada sergilemek için",
           "Oda kokusunu bastırmak için",
-          "Meyve suyu sıkmak için"
+          "Meyve suyu sıkmak için",
+          "Servet ve statü sembolü olarak masada sergilemek için"
         ],
-        "correctIndex": 0,
+        "correctIndex": 2,
         "explanation": "Aşırı nadir olduğundan ananası yemeden sadece masada sergilemek büyük prestij göstergesiydi."
       },
       "sourceName": "Royal Botanic Gardens, Kew",
@@ -447,7 +455,8 @@
       "sourceUrl": "https://en.wikipedia.org/wiki/Pineapple"
     },
     "sourceName": "Royal Botanic Gardens, Kew",
-    "sourceUrl": "https://en.wikipedia.org/wiki/Pineapple"
+    "sourceUrl": "https://en.wikipedia.org/wiki/Pineapple",
+    "visualQuery": "golden pineapple table"
   },
   {
     "id": "history-10",
@@ -486,17 +495,18 @@
       "quiz": {
         "question": "What material was the famous 1513 Piri Reis map drawn upon?",
         "options": [
-          "Gazelle skin (parchment)",
           "Baked clay tablet",
+          "Gazelle skin (parchment)",
           "Woven silk"
         ],
-        "correctIndex": 0,
+        "correctIndex": 1,
         "explanation": "The surviving fragment preserved in Topkapı Palace was drawn on gazelle parchment."
       },
       "sourceName": "UNESCO / Topkapı Palace Archives",
       "sourceUrl": "https://www.unesco.org/en/memory-world/piri-reis-world-map-1513"
     },
     "sourceName": "UNESCO / Topkapı Palace Archives",
-    "sourceUrl": "https://www.unesco.org/en/memory-world/piri-reis-world-map-1513"
+    "sourceUrl": "https://www.unesco.org/en/memory-world/piri-reis-world-map-1513",
+    "visualQuery": "antique nautical compass"
   }
 ]

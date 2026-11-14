@@ -1,137 +1,188 @@
--- MerakKutusu / CuriosityBox Supabase Schema & Anti-Cheat RPC
+-- Scrolla / MerakKutusu Authoritative Postgres Schema (Heroku Postgres & Supabase compatible)
+-- Mirrors runtime DDL in lib/db.ts cleanly and idempotently.
 
-create extension if not exists "pgcrypto";
-
-create table if not exists public.players (
-  id uuid primary key,
-  nickname text not null default 'Merak Kaşifi',
-  xp integer not null default 0 check (xp >= 0),
-  weekly_xp integer not null default 0 check (weekly_xp >= 0),
-  daily_sprint_score integer not null default 0 check (daily_sprint_score >= 0),
-  league_tier text not null default 'bronze' check (league_tier in ('bronze', 'silver', 'gold', 'platinum', 'diamond')),
-  streak_days integer not null default 1 check (streak_days >= 1),
-  updated_at timestamptz not null default now()
+create table if not exists public.facts (
+  id serial primary key,
+  slug text unique not null,
+  category text not null,
+  title_tr text,
+  title_en text,
+  summary_tr text,
+  summary_en text,
+  detail_tr text,
+  detail_en text,
+  question_tr text,
+  question_en text,
+  unit_tr text,
+  unit_en text,
+  min_val numeric,
+  max_val numeric,
+  answer_val numeric,
+  sketch_type text,
+  visual_query text,
+  gif_url text,
+  quiz_tr jsonb,
+  quiz_en jsonb,
+  source_name text,
+  source_url text,
+  likes_count int default 0,
+  created_at timestamptz default now()
 );
 
-create table if not exists public.quiz_submissions (
-  id uuid primary key default gen_random_uuid(),
-  player_id uuid not null references public.players(id) on delete cascade,
-  quiz_mode text not null check (quiz_mode in ('daily', 'weekly', 'memory', 'duel')),
-  score integer not null check (score >= 0),
-  duration_sec integer not null check (duration_sec >= 1),
-  correct_count integer not null check (correct_count >= 0),
-  question_count integer not null check (question_count >= 1),
-  created_at timestamptz not null default now()
+alter table public.facts add column if not exists visual_query text;
+alter table public.facts add column if not exists gif_url text;
+alter table public.facts add column if not exists quiz_tr jsonb;
+alter table public.facts add column if not exists quiz_en jsonb;
+
+create index if not exists idx_facts_category on public.facts (category);
+
+create table if not exists public.fact_events (
+  id bigserial primary key,
+  device_id text not null,
+  fact_slug text not null,
+  category text not null,
+  event_type text not null,
+  meta jsonb default '{}'::jsonb,
+  created_at timestamptz default now()
 );
 
-create index if not exists idx_players_weekly_xp on public.players (weekly_xp desc);
-create index if not exists idx_players_daily_score on public.players (daily_sprint_score desc);
-create index if not exists idx_players_xp on public.players (xp desc);
-
-alter table public.players enable row level security;
-alter table public.quiz_submissions enable row level security;
-
-drop policy if exists "Players readable by everyone" on public.players;
-create policy "Players readable by everyone"
-  on public.players for select
-  using (true);
-
-drop policy if exists "Submissions readable by everyone" on public.quiz_submissions;
-create policy "Submissions readable by everyone"
-  on public.quiz_submissions for select
-  using (true);
-
--- Anti-cheat verified score submission RPC
-create or replace function public.submit_quiz_score(
-  p_player_id uuid,
-  p_nickname text,
-  p_quiz_mode text,
-  p_score integer,
-  p_duration_sec integer,
-  p_correct_count integer,
-  p_question_count integer
-)
-returns jsonb
-language plpgsql
-security definer
-as $$
-declare
-  v_max_possible integer;
-  v_safe_score integer;
-  v_safe_nick text;
-  v_new_xp integer;
-  v_tier text;
-begin
-  if p_duration_sec < 2 then
-    raise exception 'Submission rejected: unrealistic completion time';
-  end if;
-
-  if p_correct_count > p_question_count then
-    raise exception 'Submission rejected: invalid correct count';
-  end if;
-
-  -- Max theoretical score: +100 base + +25*streak + remaining seconds * 5
-  v_max_possible := (p_question_count * 350) + 450;
-  v_safe_score := greatest(0, least(p_score, v_max_possible));
-  v_safe_nick := left(coalesce(nullif(trim(p_nickname), ''), 'Merak Kaşifi'), 24);
-
-  insert into public.players (id, nickname, xp, weekly_xp, daily_sprint_score, updated_at)
-  values (
-    p_player_id,
-    v_safe_nick,
-    v_safe_score,
-    v_safe_score,
-    case when p_quiz_mode = 'daily' then v_safe_score else 0 end,
-    now()
-  )
-  on conflict (id) do update
-  set
-    nickname = excluded.nickname,
-    xp = public.players.xp + v_safe_score,
-    weekly_xp = public.players.weekly_xp + v_safe_score,
-    daily_sprint_score = case
-      when p_quiz_mode = 'daily' then greatest(public.players.daily_sprint_score, v_safe_score)
-      else public.players.daily_sprint_score
-    end,
-    updated_at = now()
-  returning xp into v_new_xp;
-
-  v_tier := case
-    when v_new_xp >= 2800 then 'diamond'
-    when v_new_xp >= 1800 then 'platinum'
-    when v_new_xp >= 1000 then 'gold'
-    when v_new_xp >= 400 then 'silver'
-    else 'bronze'
-  end;
-
-  update public.players set league_tier = v_tier where id = p_player_id;
-
-  insert into public.quiz_submissions (
-    player_id, quiz_mode, score, duration_sec, correct_count, question_count
-  ) values (
-    p_player_id, p_quiz_mode, v_safe_score, p_duration_sec, p_correct_count, p_question_count
-  );
-
-  return jsonb_build_object(
-    'accepted', true,
-    'verified_score', v_safe_score,
-    'total_xp', v_new_xp,
-    'league_tier', v_tier
-  );
-end;
-$$;
+create index if not exists idx_fact_events_slug_type on public.fact_events (fact_slug, event_type);
+create index if not exists idx_fact_events_device on public.fact_events (device_id, created_at desc);
 
 create table if not exists public.fact_likes (
   id bigserial primary key,
   fact_slug text not null,
   device_id text not null,
-  created_at timestamptz not null default now(),
+  created_at timestamptz default now(),
   unique (fact_slug, device_id)
 );
 
-alter table public.fact_likes enable row level security;
+create table if not exists public.profiles (
+  device_id text primary key,
+  username text default 'Kâşif',
+  handle text default '',
+  xp int default 0,
+  weekly_xp int default 0,
+  daily_best_score int default 0,
+  last_daily_quiz_date text default '',
+  last_visit_date text default '',
+  streak int default 1,
+  last_active_date date,
+  seen_ids jsonb default '[]'::jsonb,
+  favorite_ids jsonb default '[]'::jsonb,
+  category_weights jsonb default '{}'::jsonb,
+  category_accuracy jsonb default '{}'::jsonb,
+  badges jsonb default '[]'::jsonb,
+  updated_at timestamptz default now()
+);
 
-drop policy if exists "Fact likes readable by everyone" on public.fact_likes;
-create policy "Fact likes readable by everyone"
-  on public.fact_likes for select
-  using (true);
+alter table public.profiles add column if not exists handle text default '';
+alter table public.profiles add column if not exists weekly_xp int default 0;
+alter table public.profiles add column if not exists daily_best_score int default 0;
+alter table public.profiles add column if not exists last_daily_quiz_date text default '';
+alter table public.profiles add column if not exists last_visit_date text default '';
+alter table public.profiles add column if not exists seen_ids jsonb default '[]'::jsonb;
+alter table public.profiles add column if not exists favorite_ids jsonb default '[]'::jsonb;
+alter table public.profiles add column if not exists category_weights jsonb default '{}'::jsonb;
+alter table public.profiles add column if not exists category_accuracy jsonb default '{}'::jsonb;
+alter table public.profiles add column if not exists badges jsonb default '[]'::jsonb;
+
+create index if not exists idx_profiles_xp on public.profiles (xp desc);
+create index if not exists idx_profiles_weekly_xp on public.profiles (weekly_xp desc);
+create index if not exists idx_profiles_daily_score on public.profiles (last_daily_quiz_date, daily_best_score desc);
+
+create table if not exists public.quiz_submissions (
+  id bigserial primary key,
+  device_id text not null,
+  username text not null default 'Kâşif',
+  mode text not null default 'daily',
+  score int not null default 0,
+  correct_count int not null default 0,
+  total_questions int not null default 1,
+  quiz_date text not null default '',
+  created_at timestamptz default now()
+);
+
+alter table public.quiz_submissions add column if not exists device_id text default '';
+alter table public.quiz_submissions add column if not exists username text default 'Kâşif';
+alter table public.quiz_submissions add column if not exists mode text default 'daily';
+alter table public.quiz_submissions add column if not exists correct_count int default 0;
+alter table public.quiz_submissions add column if not exists total_questions int default 1;
+alter table public.quiz_submissions add column if not exists quiz_date text default '';
+
+create index if not exists idx_quiz_submissions_mode_date
+  on public.quiz_submissions (mode, quiz_date, score desc);
+
+create table if not exists public.duel_rooms (
+  code text primary key,
+  mode text not null default 'duel',
+  category text not null default 'all',
+  question_count int not null default 5,
+  card_ids jsonb not null default '[]'::jsonb,
+  host_id text not null,
+  players jsonb not null default '[]'::jsonb,
+  kicked_ids jsonb not null default '[]'::jsonb,
+  status text not null default 'lobby',
+  starts_at timestamptz,
+  created_at timestamptz default now(),
+  updated_at timestamptz default now()
+);
+
+alter table public.duel_rooms add column if not exists kicked_ids jsonb default '[]'::jsonb;
+alter table public.duel_rooms add column if not exists starts_at timestamptz;
+alter table public.duel_rooms add column if not exists updated_at timestamptz default now();
+
+create table if not exists public.contact_messages (
+  id bigserial primary key,
+  name text not null,
+  email text not null,
+  subject text not null,
+  message text not null,
+  lang text default 'tr',
+  created_at timestamptz default now()
+);
+
+create or replace view public.fact_engagement_summary as
+select
+  f.id,
+  f.slug,
+  f.category,
+  f.title_tr,
+  f.title_en,
+  coalesce(f.likes_count, 0) as likes_count,
+  count(e.id) filter (where e.event_type = 'detail_open')::int as detail_opens,
+  count(e.id) filter (where e.event_type = 'quick_guess')::int as guess_attempts,
+  coalesce(
+    round(
+      avg((e.meta->>'accuracy')::numeric) filter (
+        where e.event_type = 'quick_guess'
+          and (e.meta ? 'accuracy')
+          and (e.meta->>'accuracy') ~ '^[0-9]+(\\.[0-9]+)?$'
+      ),
+      2
+    ),
+    0
+  ) as avg_accuracy,
+  coalesce(
+    round(
+      avg((e.meta->>'dwell_sec')::numeric) filter (
+        where e.event_type = 'card_dwell'
+          and (e.meta ? 'dwell_sec')
+          and (e.meta->>'dwell_sec') ~ '^[0-9]+(\\.[0-9]+)?$'
+      ),
+      2
+    ),
+    0
+  ) as avg_dwell_sec,
+  count(e.id) filter (where e.event_type = 'share')::int as shares_count,
+  f.created_at
+from public.facts f
+left join public.fact_events e on e.fact_slug = f.slug
+group by
+  f.id,
+  f.slug,
+  f.category,
+  f.title_tr,
+  f.title_en,
+  f.likes_count,
+  f.created_at;

@@ -61,6 +61,8 @@ interface TikTokFeedProps {
   onButtonPop: () => void;
   onSlideIndexChange?: (slideIndex: number) => void;
   onEarnXp?: (xp: number, source?: string) => void;
+  onActiveFactChange?: (fact: FactCard | null) => void;
+  onActiveSlideChange?: (slide: FeedSlideItem | null) => void;
   onSuccessSound?: () => void;
   onWrongSound?: () => void;
   vocabularyCards?: VocabularyCard[];
@@ -94,6 +96,8 @@ const TikTokFeed = forwardRef<TikTokFeedHandle, TikTokFeedProps>(function TikTok
     onButtonPop,
     onSlideIndexChange,
     onEarnXp,
+    onActiveFactChange,
+    onActiveSlideChange,
     onSuccessSound,
     onWrongSound,
     vocabularyCards,
@@ -103,9 +107,15 @@ const TikTokFeed = forwardRef<TikTokFeedHandle, TikTokFeedProps>(function TikTok
   const scrollRef = useRef<HTMLDivElement>(null);
   const settleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const activeIndexRef = useRef<number>(0);
+  const lastProgrammaticStepRef = useRef<{ index: number; at: number } | null>(null);
+  const prevCategoryRef = useRef<CategoryFilter>(activeCategory);
   const wheelCooldownRef = useRef<number>(0);
   const onSlideIndexChangeRef = useRef(onSlideIndexChange);
   onSlideIndexChangeRef.current = onSlideIndexChange;
+  const onActiveFactChangeRef = useRef(onActiveFactChange);
+  onActiveFactChangeRef.current = onActiveFactChange;
+  const onActiveSlideChangeRef = useRef(onActiveSlideChange);
+  onActiveSlideChangeRef.current = onActiveSlideChange;
   const [activeIndex, setActiveIndex] = useState<number>(0);
   const [isCategoryDrawerOpen, setIsCategoryDrawerOpen] = useState<boolean>(false);
   const [chromeBlocked, setChromeBlocked] = useState<boolean>(false);
@@ -166,13 +176,27 @@ const TikTokFeed = forwardRef<TikTokFeedHandle, TikTokFeedProps>(function TikTok
   }, [deckFacts, activeCategory, vocabPool]);
 
   useEffect(() => {
-    activeIndexRef.current = 0;
-    setActiveIndex(0);
-    const container = scrollRef.current;
-    if (container) {
-      container.scrollTo({ top: 0, behavior: 'auto' });
+    const categoryChanged = prevCategoryRef.current !== activeCategory;
+    prevCategoryRef.current = activeCategory;
+
+    if (categoryChanged) {
+      activeIndexRef.current = 0;
+      lastProgrammaticStepRef.current = null;
+      setActiveIndex(0);
+      const container = scrollRef.current;
+      if (container) {
+        container.scrollTo({ top: 0, behavior: 'auto' });
+      }
+      return;
     }
-  }, [deckFacts, activeCategory]);
+
+    // Clamp active index cleanly if deck shrinks without interrupting active swipe position
+    if (slides.length > 0 && activeIndexRef.current >= slides.length) {
+      const clamped = slides.length - 1;
+      activeIndexRef.current = clamped;
+      setActiveIndex(clamped);
+    }
+  }, [activeCategory, slides.length]);
 
   // Detect active card with IntersectionObserver (threshold: 0.65) and debounce telemetry callback by 150ms
   useEffect(() => {
@@ -251,19 +275,35 @@ const TikTokFeed = forwardRef<TikTokFeedHandle, TikTokFeedProps>(function TikTok
     };
   }, [slides, lang]);
 
-  const scrollToSlide = useCallback((targetIndex: number) => {
-    const container = scrollRef.current;
-    if (!container) return;
-    const clamped = Math.max(0, Math.min(targetIndex, slides.length - 1));
-    const slideHeight = container.clientHeight || window.innerHeight;
-    container.scrollTo({ top: clamped * slideHeight, behavior: 'smooth' });
-  }, [slides.length]);
+  const getStepAnchorIndex = useCallback(() => {
+    const recent = lastProgrammaticStepRef.current;
+    if (recent && Date.now() - recent.at < 450) {
+      return recent.index;
+    }
+    return activeIndexRef.current;
+  }, []);
+
+  const scrollToSlide = useCallback(
+    (targetIndex: number) => {
+      const container = scrollRef.current;
+      if (!container || slides.length === 0) return;
+      const clamped = Math.max(0, Math.min(targetIndex, slides.length - 1));
+      const targetNode = container.querySelector<HTMLElement>(`[data-slide-index="${clamped}"]`);
+      const slideHeight = container.clientHeight || window.innerHeight;
+      const targetTop = targetNode ? targetNode.offsetTop : clamped * slideHeight;
+      activeIndexRef.current = clamped;
+      lastProgrammaticStepRef.current = { index: clamped, at: Date.now() };
+      container.scrollTo({ top: targetTop, behavior: 'smooth' });
+    },
+    [slides.length]
+  );
 
   useImperativeHandle(
     ref,
     () => ({
       scrollToTop: () => {
         activeIndexRef.current = 0;
+        lastProgrammaticStepRef.current = { index: 0, at: Date.now() };
         setActiveIndex(0);
         const container = scrollRef.current;
         if (container) {
@@ -271,36 +311,58 @@ const TikTokFeed = forwardRef<TikTokFeedHandle, TikTokFeedProps>(function TikTok
         }
       },
       scrollToNext: (fromSlideIdx?: number) => {
-        const current = typeof fromSlideIdx === 'number' ? fromSlideIdx : activeIndexRef.current;
+        const current = typeof fromSlideIdx === 'number' ? fromSlideIdx : getStepAnchorIndex();
         scrollToSlide(current + 1);
       },
       scrollToPrev: (fromSlideIdx?: number) => {
-        const current = typeof fromSlideIdx === 'number' ? fromSlideIdx : activeIndexRef.current;
+        const current = typeof fromSlideIdx === 'number' ? fromSlideIdx : getStepAnchorIndex();
         scrollToSlide(current - 1);
       },
     }),
-    [scrollToSlide]
+    [getStepAnchorIndex, scrollToSlide]
   );
 
-  // Desktop keyboard navigation (ArrowUp / ArrowDown) between slides
+  // Desktop keyboard navigation (ArrowUp / ArrowDown to step, Space to flip/close active card detail)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key !== 'ArrowDown' && e.key !== 'ArrowUp') return;
       const target = e.target as HTMLElement | null;
-      if (target && ['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName)) return;
+      if (target && (['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName) || target.isContentEditable)) {
+        return;
+      }
+
+      if (e.code === 'Space' || e.key === ' ') {
+        if (
+          typeof document !== 'undefined' &&
+          document.querySelector('[aria-modal="true"]:not([data-testid="fact-card-back"])')
+        ) {
+          return;
+        }
+        if (target && target.closest('button, a, [role="button"], input[type="range"]')) return;
+        const currentSlide = slides[activeIndexRef.current];
+        if (currentSlide?.type === 'fact') {
+          e.preventDefault();
+          window.dispatchEvent(
+            new CustomEvent('scrolly-card-action', {
+              detail: { factId: currentSlide.fact.id, action: 'flip' },
+            })
+          );
+        }
+        return;
+      }
+
       if (typeof document !== 'undefined' && document.querySelector('[aria-modal="true"]')) return;
+      if (e.key !== 'ArrowDown' && e.key !== 'ArrowUp') return;
 
       const container = scrollRef.current;
       if (!container) return;
       e.preventDefault();
-      const h = container.clientHeight || window.innerHeight || 1;
-      const current = Math.round(container.scrollTop / h);
+      const current = getStepAnchorIndex();
       scrollToSlide(e.key === 'ArrowDown' ? current + 1 : current - 1);
     };
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [scrollToSlide]);
+  }, [getStepAnchorIndex, scrollToSlide, slides]);
 
   // Single-card wheel stepping on desktop without fighting inner sheet scrolling
   useEffect(() => {
@@ -322,12 +384,12 @@ const TikTokFeed = forwardRef<TikTokFeedHandle, TikTokFeedProps>(function TikTok
       }
       wheelCooldownRef.current = now;
       const direction = e.deltaY > 0 ? 1 : -1;
-      scrollToSlide(activeIndexRef.current + direction);
+      scrollToSlide(getStepAnchorIndex() + direction);
     };
 
     container.addEventListener('wheel', handleWheel, { passive: false });
     return () => container.removeEventListener('wheel', handleWheel);
-  }, [scrollToSlide]);
+  }, [getStepAnchorIndex, scrollToSlide]);
 
   // Close Category Drawer on Escape key
   useEffect(() => {
@@ -351,13 +413,16 @@ const TikTokFeed = forwardRef<TikTokFeedHandle, TikTokFeedProps>(function TikTok
     return () => window.removeEventListener('scrolly-chrome-block', onChromeBlock as EventListener);
   }, []);
 
-  // Ambient accent for desktop side wash (HomeClient listens)
+  // Ambient accent + active fact/slide notification for desktop stage & side panel
   useEffect(() => {
-    const slide = slides[activeIndex];
+    const slide = slides[activeIndex] ?? null;
+    onActiveFactChangeRef.current?.(slide?.type === 'fact' ? slide.fact : null);
+    onActiveSlideChangeRef.current?.(slide);
     let accent = '#818CF8';
     if (slide?.type === 'fact') accent = slide.fact.accentColor || accent;
     else if (slide?.type === 'vocabulary') accent = '#818CF8';
     else if (slide?.type === 'quizCta') accent = '#F59E0B';
+    else if (slide?.type === 'ad') accent = '#0EA5E9';
     window.dispatchEvent(
       new CustomEvent('scrolly-ambient-accent', { detail: { accent } })
     );
@@ -424,7 +489,7 @@ const TikTokFeed = forwardRef<TikTokFeedHandle, TikTokFeedProps>(function TikTok
               className={`flex h-9 w-9 items-center justify-center rounded-full border backdrop-blur-md ${
                 darkMode
                   ? 'border-white/15 bg-white/10 text-amber-200'
-                  : 'border-[#1E1B2E]/12 bg-white/85 text-amber-700 shadow-sm'
+                  : 'border-[#1E1B2E]/[0.12] bg-white/85 text-amber-700 shadow-sm'
               }`}
             >
               <img
@@ -444,7 +509,7 @@ const TikTokFeed = forwardRef<TikTokFeedHandle, TikTokFeedProps>(function TikTok
               className={`flex h-9 w-9 items-center justify-center rounded-full border backdrop-blur-md ${
                 darkMode
                   ? 'border-white/15 bg-white/10 text-violet-200'
-                  : 'border-[#1E1B2E]/12 bg-white/85 text-violet-700 shadow-sm'
+                  : 'border-[#1E1B2E]/[0.12] bg-white/85 text-violet-700 shadow-sm'
               }`}
             >
               <img
@@ -461,7 +526,7 @@ const TikTokFeed = forwardRef<TikTokFeedHandle, TikTokFeedProps>(function TikTok
               className={`flex items-center gap-0.5 rounded-full border p-0.5 text-[10px] font-black backdrop-blur-md ${
                 darkMode
                   ? 'border-white/15 bg-white/10 text-white'
-                  : 'border-[#1E1B2E]/12 bg-white/85 text-[#1E1B2E] shadow-sm'
+                  : 'border-[#1E1B2E]/[0.12] bg-white/85 text-[#1E1B2E] shadow-sm'
               }`}
             >
               <img
@@ -645,7 +710,23 @@ const TikTokFeed = forwardRef<TikTokFeedHandle, TikTokFeedProps>(function TikTok
         data-active-index={activeIndex}
         className="tiktok-feed-scroll no-scrollbar h-full w-full overflow-y-scroll snap-y snap-mandatory scroll-smooth"
       >
-        {slides.map((slide, slideIdx) => {
+        {slides.length === 0 ? (
+          <div className="flex h-full w-full flex-col items-center justify-center gap-3 px-6 text-center">
+            <p className="text-sm font-bold text-white/80">
+              {lang === 'tr'
+                ? 'Bu kategoride henüz gösterilecek kart bulunamadı.'
+                : 'No cards found in this category yet.'}
+            </p>
+            <button
+              type="button"
+              onClick={() => onSelectCategory('all')}
+              className="rounded-full bg-white px-4 py-2 text-xs font-black text-[#09090B]"
+            >
+              {lang === 'tr' ? 'Tüm Kategorileri Aç' : 'Show All Categories'}
+            </button>
+          </div>
+        ) : (
+          slides.map((slide, slideIdx) => {
           const isWithinWindow = Math.abs(slideIdx - activeIndex) <= 2;
           const isSlideActive = slideIdx === activeIndex;
 
@@ -715,7 +796,8 @@ const TikTokFeed = forwardRef<TikTokFeedHandle, TikTokFeedProps>(function TikTok
               )}
             </div>
           );
-        })}
+          })
+        )}
       </div>
     </div>
   );

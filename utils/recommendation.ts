@@ -11,36 +11,64 @@ export interface PreparedQuizOptions {
   correctIndex: number;
 }
 
+function hashSeed(seed: string): number {
+  let hash = 0;
+  for (let i = 0; i < seed.length; i += 1) {
+    hash = (hash * 31 + seed.charCodeAt(i)) >>> 0;
+  }
+  return hash || 1;
+}
+
+function fisherYatesShuffle<T>(items: T[], seed?: string): T[] {
+  const copy = [...items];
+  let state = seed ? hashSeed(seed) : 0;
+  for (let i = copy.length - 1; i > 0; i -= 1) {
+    let j: number;
+    if (seed) {
+      state = (state * 1664525 + 1013904223) >>> 0;
+      j = state % (i + 1);
+    } else {
+      j = Math.floor(cryptoRandomFloat() * (i + 1));
+    }
+    const tmp = copy[i];
+    copy[i] = copy[j];
+    copy[j] = tmp;
+  }
+  return copy;
+}
+
+function hasPlayableQuiz(fact: FactCardData): boolean {
+  const trOk = Boolean(fact.tr?.quiz?.question && fact.tr.quiz.options?.length >= 2);
+  const enOk = Boolean(fact.en?.quiz?.question && fact.en.quiz.options?.length >= 2);
+  return trOk || enOk;
+}
+
 /**
  * Deterministically permutes quiz options based on a seed string (such as fact.id)
  * so correct answers are evenly distributed across positions 0, 1, 2 without
  * causing React SSR/client hydration mismatches.
  */
 export function prepareQuizOptions(quiz: FactQuizItem, seed: string): PreparedQuizOptions {
-  const indexed = quiz.options.map((text, idx) => ({
-    text,
-    isCorrect: idx === quiz.correctIndex,
-  }));
+  const seenOption = new Set<string>();
+  const indexed = quiz.options
+    .map((text, idx) => ({
+      text: (text ?? '').trim(),
+      isCorrect: idx === quiz.correctIndex,
+    }))
+    .filter((entry) => {
+      if (!entry.text) return false;
+      const key = entry.text.toLowerCase();
+      if (seenOption.has(key) && !entry.isCorrect) return false;
+      seenOption.add(key);
+      return true;
+    });
 
-  let hash = 0;
-  for (let i = 0; i < seed.length; i += 1) {
-    hash = (hash * 31 + seed.charCodeAt(i)) >>> 0;
-  }
-
-  // Fisher-Yates using deterministic LCG from seed hash
-  const copy = [...indexed];
-  let state = hash || 1;
-  for (let i = copy.length - 1; i > 0; i -= 1) {
-    state = (state * 1664525 + 1013904223) >>> 0;
-    const j = state % (i + 1);
-    const tmp = copy[i];
-    copy[i] = copy[j];
-    copy[j] = tmp;
-  }
+  const copy = fisherYatesShuffle(indexed, seed);
+  const resolvedCorrectIndex = Math.max(0, copy.findIndex((o) => o.isCorrect));
 
   return {
     options: copy.map((o) => o.text),
-    correctIndex: copy.findIndex((o) => o.isCorrect),
+    correctIndex: resolvedCorrectIndex,
   };
 }
 
@@ -107,36 +135,102 @@ export function selectNextFactCard(
 }
 
 /**
- * Generates a 3-question Memory Quiz built strictly from the user's
- * last 5 read fact cards (recentFiveIds). If fewer than 3 cards were read
- * (e.g. user clicks "Mini Quiz" immediately), pads from the active card / unread fallback.
+ * Generates a 3-question Memory Quiz built from the user's last read fact cards,
+ * smartly padding with playable topic-matched questions when fewer than 3 were read.
  */
 export function generateMemoryQuizFromRecent(
   recentFiveIds: string[],
   allFacts: FactCardData[],
-  currentCard?: FactCardData
+  currentCard?: FactCardData,
+  activeCategory?: CategoryFilter
 ): QuizQuestionItem[] {
   const recentFacts = recentFiveIds
     .map((id) => allFacts.find((f) => f.id === id))
-    .filter((f): f is FactCardData => Boolean(f));
+    .filter((f): f is FactCardData => Boolean(f) && hasPlayableQuiz(f!));
 
-  const pool: FactCardData[] = [...recentFacts];
+  const pool: FactCardData[] = [];
+  const addedIds = new Set<string>();
+  const pushUnique = (fact: FactCardData | undefined) => {
+    if (!fact || addedIds.has(fact.id) || !hasPlayableQuiz(fact)) return;
+    addedIds.add(fact.id);
+    pool.push(fact);
+  };
 
-  if (currentCard && !pool.some((f) => f.id === currentCard.id)) {
-    pool.push(currentCard);
-  }
+  for (const fact of recentFacts) pushUnique(fact);
+  pushUnique(currentCard);
 
-  // Only pad if user clicked "Mini Quiz" before reading 3 cards
   if (pool.length < 3) {
-    for (const candidate of allFacts) {
-      if (!pool.some((f) => f.id === candidate.id)) {
-        pool.push(candidate);
-      }
+    const preferredCategory: CategoryId | undefined =
+      activeCategory && activeCategory !== 'all' && activeCategory !== 'vocabulary'
+        ? activeCategory
+        : currentCard?.category;
+
+    const playable = fisherYatesShuffle(allFacts.filter(hasPlayableQuiz));
+    const sameCategory = preferredCategory
+      ? playable.filter((f) => f.category === preferredCategory)
+      : [];
+
+    for (const candidate of [...sameCategory, ...playable]) {
+      pushUnique(candidate);
       if (pool.length >= 3) break;
     }
   }
 
-  // Shuffle the last up to 5 read cards and select 3 questions
-  const shuffled = [...pool].sort(() => cryptoRandomFloat() - 0.5);
-  return shuffled.slice(0, 3).map((fact) => ({ fact }));
+  return fisherYatesShuffle(pool).slice(0, 3).map((fact) => ({ fact }));
+}
+
+/**
+ * Builds an engaging topic-focused (or cross-topic balanced) quiz set of `count`
+ * playable cards, prioritizing unseen cards and avoiding consecutive duplicate tags.
+ */
+export function buildTopicQuizQuestions(
+  allFacts: FactCardData[],
+  category: CategoryFilter = 'all',
+  count = 5,
+  seenIds: string[] = [],
+  seed?: string
+): QuizQuestionItem[] {
+  const seenSet = new Set(seenIds);
+  const playable = allFacts.filter(hasPlayableQuiz);
+  const scoped =
+    category === 'all' || category === 'vocabulary'
+      ? playable
+      : playable.filter((f) => f.category === category);
+
+  const unseen = fisherYatesShuffle(
+    scoped.filter((f) => !seenSet.has(f.id)),
+    seed ? `${seed}:unseen` : undefined
+  );
+  const seen = fisherYatesShuffle(
+    scoped.filter((f) => seenSet.has(f.id)),
+    seed ? `${seed}:seen` : undefined
+  );
+
+  const orderedPool = [...unseen, ...seen];
+  const fallbackPool = orderedPool.length >= count ? orderedPool : fisherYatesShuffle(playable, seed);
+
+  const chosen: FactCardData[] = [];
+  const chosenIds = new Set<string>();
+  const usedTags = new Set<string>();
+
+  for (const candidate of fallbackPool) {
+    if (chosen.length >= count) break;
+    if (chosenIds.has(candidate.id)) continue;
+    const tagKey = (candidate.tr?.tag || candidate.en?.tag || '').trim().toLowerCase();
+    if (tagKey && usedTags.has(tagKey) && fallbackPool.length > count * 2) continue;
+    chosenIds.add(candidate.id);
+    if (tagKey) usedTags.add(tagKey);
+    chosen.push(candidate);
+  }
+
+  if (chosen.length < count) {
+    for (const candidate of fallbackPool) {
+      if (chosen.length >= count) break;
+      if (chosenIds.has(candidate.id)) continue;
+      chosenIds.add(candidate.id);
+      chosen.push(candidate);
+    }
+  }
+
+  return chosen.map((fact) => ({ fact }));
 }

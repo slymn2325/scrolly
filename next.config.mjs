@@ -163,6 +163,26 @@ const nextConfig = {
         destination: '/en/category/human-body',
         statusCode: 301,
       },
+      {
+        source: '/category/weird_records',
+        destination: '/category/records',
+        statusCode: 301,
+      },
+      {
+        source: '/en/category/weird_records',
+        destination: '/en/category/records',
+        statusCode: 301,
+      },
+      {
+        source: '/category/istatistik',
+        destination: '/category/statistics',
+        statusCode: 301,
+      },
+      {
+        source: '/en/category/istatistik',
+        destination: '/en/category/statistics',
+        statusCode: 301,
+      },
       ...legacyFactRedirects,
     ];
   },

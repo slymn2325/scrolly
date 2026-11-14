@@ -4,7 +4,8 @@ export type CategoryId =
   | 'human_body'
   | 'history'
   | 'science'
-  | 'records';
+  | 'records'
+  | 'statistics';
 
 export interface GuessChallenge {
   type: 'slider' | 'binary';
@@ -47,6 +48,8 @@ export interface FactCard {
   iconName: string;
   emoji?: string;
   sketchType?: string;
+  visualQuery?: string;
+  gifUrl?: string;
   likesCount?: number;
   createdAt?: string;
   readingTimeSec?: number;

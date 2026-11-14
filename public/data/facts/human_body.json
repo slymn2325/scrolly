@@ -16,11 +16,11 @@
       "quiz": {
         "question": "Bebeklikteki ~300 kemik sayısının yetişkinlikte 206'ya düşmesinin sebebi nedir?",
         "options": [
-          "Büyüdükçe küçük kemiklerin birbirine kaynaması",
           "Fazla kemiklerin vücut tarafından eritilmesi",
-          "Sadece süt dişleriyle birlikte dökülmesi"
+          "Sadece süt dişleriyle birlikte dökülmesi",
+          "Büyüdükçe küçük kemiklerin birbirine kaynaması"
         ],
-        "correctIndex": 0,
+        "correctIndex": 2,
         "explanation": "Kafatası ve eklem bölgelerindeki ayrı kemikler büyüme çağında birleşip tek kemik haline gelir."
       },
       "sourceName": "Cleveland Clinic Anatomy",
@@ -47,7 +47,8 @@
       "sourceUrl": "https://my.clevelandclinic.org/health/body/21048-skeletal-system"
     },
     "sourceName": "Cleveland Clinic Anatomy",
-    "sourceUrl": "https://my.clevelandclinic.org/health/body/21048-skeletal-system"
+    "sourceUrl": "https://my.clevelandclinic.org/health/body/21048-skeletal-system",
+    "visualQuery": "human skeleton bones"
   },
   {
     "id": "human-02",
@@ -86,18 +87,19 @@
       "quiz": {
         "question": "When you experience a headache, where does the pain actually come from?",
         "options": [
-          "Surrounding membranes, blood vessels, and muscles",
           "Pain receptors inside the cerebral cortex",
+          "Surrounding membranes, blood vessels, and muscles",
           "Tiny bones inside the inner ear"
         ],
-        "correctIndex": 0,
+        "correctIndex": 1,
         "explanation": "Brain tissue has no pain receptors; headaches arise from surrounding tissues and blood vessels."
       },
       "sourceName": "Johns Hopkins Medicine",
       "sourceUrl": "https://www.hopkinsmedicine.org/health/conditions-and-diseases/anatomy-of-the-brain"
     },
     "sourceName": "Johns Hopkins Medicine",
-    "sourceUrl": "https://www.hopkinsmedicine.org/health/conditions-and-diseases/anatomy-of-the-brain"
+    "sourceUrl": "https://www.hopkinsmedicine.org/health/conditions-and-diseases/anatomy-of-the-brain",
+    "visualQuery": "human brain neurons"
   },
   {
     "id": "human-03",
@@ -114,14 +116,14 @@
       "sourceHint": "British Heart Foundation",
       "tag": "Dolaşım Sistemi",
       "quiz": {
-        "question": "Yetişkin bir insandaki tüm kan damarlarının toplam uzunluğu yaklaşık ne kadardır?",
+        "question": "Vücudumuzdaki 100.000 km'lik damar ağının ezici çoğunluğunu (~%80) hangi damar tipi oluşturur?",
         "options": [
-          "~96.000 km",
-          "~5.000 km",
-          "~12.000 km"
+          "Kalbimizden çıkan kalın aort atardamarları",
+          "Hücrelere kadar ulaşan mikroskobik kılcal damarlar (kapiller)",
+          "Yalnızca bacaklarımızdaki ana toplardamarlar"
         ],
-        "correctIndex": 0,
-        "explanation": "Mikroskobik kılcal damarlar eklendiğinde toplam uzunluk yaklaşık 96.000 km'ye (Dünya'nın iki katından fazlasına) ulaşır."
+        "correctIndex": 1,
+        "explanation": "Tek bir kırmızı kan hücresinin zor sığdığı milyarlarca mikroskobik kılcal damar uç uca eklendiğinde Dünya'yı iki kez sarar."
       },
       "sourceName": "British Heart Foundation",
       "sourceUrl": "https://pmc.ncbi.nlm.nih.gov/articles/PMC4355271/"
@@ -134,20 +136,21 @@
       "sourceHint": "British Heart Foundation",
       "tag": "Circulatory System",
       "quiz": {
-        "question": "About how far would all blood vessels in an adult human stretch end to end?",
+        "question": "Which microscopic vessel type accounts for most of our ~100,000 km blood vessel network?",
         "options": [
-          "~96,000 km (60,000 miles)",
-          "~5,000 km",
-          "~12,000 km"
+          "Thick arterial trunks near the ribcage",
+          "Leg veins returning blood upward",
+          "Hair-thin capillaries weaving around nearly every living cell"
         ],
-        "correctIndex": 0,
-        "explanation": "Driven mostly by microscopic capillaries, human blood vessels total roughly 96,000 km."
+        "correctIndex": 2,
+        "explanation": "Billions of tiny capillaries branch throughout tissues, creating astonishing total length when laid end-to-end."
       },
       "sourceName": "British Heart Foundation",
       "sourceUrl": "https://pmc.ncbi.nlm.nih.gov/articles/PMC4355271/"
     },
     "sourceName": "British Heart Foundation",
-    "sourceUrl": "https://pmc.ncbi.nlm.nih.gov/articles/PMC4355271/"
+    "sourceUrl": "https://pmc.ncbi.nlm.nih.gov/articles/PMC4355271/",
+    "visualQuery": "red blood cells"
   },
   {
     "id": "human-04",
@@ -166,11 +169,11 @@
       "quiz": {
         "question": "Midenin kendi güçlü asidi tarafından sindirilmesini engelleyen temel koruma nedir?",
         "options": [
-          "Bikarbonatlı kalın mukus tabakası ve hızlı hücre yenilenmesi",
           "Midenin tamamen kemikle kaplı olması",
-          "Asidin sadece gece salgılanması"
+          "Asidin sadece gece salgılanması",
+          "Bikarbonatlı kalın mukus tabakası ve hızlı hücre yenilenmesi"
         ],
-        "correctIndex": 0,
+        "correctIndex": 2,
         "explanation": "Alkalin bikarbonat içeren mukus tabakası asidi nötralize ederek mide duvarını korur."
       },
       "sourceName": "NIH / NIDDK Digestive Health",
@@ -197,7 +200,8 @@
       "sourceUrl": "https://www.niddk.nih.gov/health-information/digestive-diseases/digestive-system-how-it-works"
     },
     "sourceName": "NIH / NIDDK Digestive Health",
-    "sourceUrl": "https://www.niddk.nih.gov/health-information/digestive-diseases/digestive-system-how-it-works"
+    "sourceUrl": "https://www.niddk.nih.gov/health-information/digestive-diseases/digestive-system-how-it-works",
+    "visualQuery": "acid chemistry beaker"
   },
   {
     "id": "human-05",
@@ -236,18 +240,19 @@
       "quiz": {
         "question": "Why does the human cornea contain no blood vessels?",
         "options": [
-          "To remain completely transparent for clear vision",
           "Because eye cells require no oxygen",
+          "To remain completely transparent for clear vision",
           "Blood cannot flow above the neck"
         ],
-        "correctIndex": 0,
+        "correctIndex": 1,
         "explanation": "Staying free of blood vessels keeps the cornea transparent while tears absorb oxygen from air."
       },
       "sourceName": "American Academy of Ophthalmology",
       "sourceUrl": "https://www.aao.org/eye-health/anatomy/parts-of-eye"
     },
     "sourceName": "American Academy of Ophthalmology",
-    "sourceUrl": "https://www.aao.org/eye-health/anatomy/parts-of-eye"
+    "sourceUrl": "https://www.aao.org/eye-health/anatomy/parts-of-eye",
+    "visualQuery": "human eye iris"
   },
   {
     "id": "human-06",
@@ -266,11 +271,11 @@
       "quiz": {
         "question": "İnsanlarla muzların pek çok temel geni paylaşmasının nedeni nedir?",
         "options": [
-          "Hücre bölünmesi ve enerji gibi temel işlevlerin ortak atalardan miras kalması",
           "Muzların hayvan sınıfında yer alması",
+          "Hücre bölünmesi ve enerji gibi temel işlevlerin ortak atalardan miras kalması",
           "İnsanların muz yiyerek gen alması"
         ],
-        "correctIndex": 0,
+        "correctIndex": 1,
         "explanation": "Tüm ökaryot canlılar solunum ve hücre bölünmesi gibi temel hücresel genleri ortak atalardan paylaşır."
       },
       "sourceName": "National Human Genome Research Institute",
@@ -286,18 +291,19 @@
       "quiz": {
         "question": "Why do humans and bananas share so many core genes?",
         "options": [
-          "Basic cellular housekeeping genes come from ancient common ancestors",
           "Bananas belong to the animal kingdom",
-          "Eating fruit transfers plant DNA into ours"
+          "Eating fruit transfers plant DNA into ours",
+          "Basic cellular housekeeping genes come from ancient common ancestors"
         ],
-        "correctIndex": 0,
+        "correctIndex": 2,
         "explanation": "Fundamental genes for energy and cell division are conserved across all complex life."
       },
       "sourceName": "National Human Genome Research Institute",
       "sourceUrl": "https://www.genome.gov/about-genomics/fact-sheets/Comparative-Genomics-Fact-Sheet"
     },
     "sourceName": "National Human Genome Research Institute",
-    "sourceUrl": "https://www.genome.gov/about-genomics/fact-sheets/Comparative-Genomics-Fact-Sheet"
+    "sourceUrl": "https://www.genome.gov/about-genomics/fact-sheets/Comparative-Genomics-Fact-Sheet",
+    "visualQuery": "dna double helix"
   },
   {
     "id": "human-07",
@@ -316,11 +322,11 @@
       "quiz": {
         "question": "İnsan dilinin yüzeyindeki harita tek yumurta ikizlerinde nasıldır?",
         "options": [
-          "Her bireyde benzersiz ve farklıdır",
           "İkizlerde tamamen aynıdır",
-          "Her yıl tamamen sıfırlanır"
+          "Her yıl tamamen sıfırlanır",
+          "Her bireyde benzersiz ve farklıdır"
         ],
-        "correctIndex": 0,
+        "correctIndex": 2,
         "explanation": "Dil izi (lingual print) parmak izi gibi genetik ve gelişimsel olarak kişiye özeldir."
       },
       "sourceName": "National Library of Medicine (PubMed)",
@@ -347,7 +353,8 @@
       "sourceUrl": "https://pubmed.ncbi.nlm.nih.gov/28123263/"
     },
     "sourceName": "National Library of Medicine (PubMed)",
-    "sourceUrl": "https://pubmed.ncbi.nlm.nih.gov/28123263/"
+    "sourceUrl": "https://pubmed.ncbi.nlm.nih.gov/28123263/",
+    "visualQuery": "macro fingerprint scan"
   },
   {
     "id": "human-08",
@@ -364,14 +371,14 @@
       "sourceHint": "American Heart Association",
       "tag": "Kardiyoloji",
       "quiz": {
-        "question": "Sağlıklı bir insanın kalbi günde yaklaşık kaç kez atar?",
+        "question": "Kalbiniz yaşam boyu 2,5 milyar kez atarken ortalama olarak günde yaklaşık ne kadar kan pompalar?",
         "options": [
-          "~100.000 kez",
-          "~10.000 kez",
-          "~1.000.000 kez"
+          "Yaklaşık 7.000 litre (küçük bir tanker kadar)",
+          "Sadece 50 litre (bir damacananın iki katı)",
+          "Yaklaşık 200.000 litre (olimpik havuzun yarısı)"
         ],
         "correctIndex": 0,
-        "explanation": "Dakikada ortalama 70 atışla kalp günde yaklaşık 100.000 kez kan pompalar."
+        "explanation": "Kalp dakikada ~5 litre kanı tüm vücuda gönderir; bu da 24 saatte 7.000 litreyi aşan dev bir hacme ulaşır."
       },
       "sourceName": "American Heart Association",
       "sourceUrl": "https://www.nhlbi.nih.gov/health/heart"
@@ -384,20 +391,21 @@
       "sourceHint": "American Heart Association",
       "tag": "Cardiology",
       "quiz": {
-        "question": "Roughly how many times does an average human heart beat in a single day?",
+        "question": "Across roughly 100,000 daily beats, how much blood does your heart pump every 24 hours?",
         "options": [
-          "~100,000 times",
-          "~10,000 times",
-          "~1,000,000 times"
+          "Only around 50 liters",
+          "Over 7,000 liters — enough to fill a small tanker truck",
+          "Roughly 500,000 liters"
         ],
-        "correctIndex": 0,
-        "explanation": "At ~70 beats per minute, the heart beats roughly 100,000 times every 24 hours."
+        "correctIndex": 1,
+        "explanation": "Pumping ~5 liters per minute adds up to more than 7,000 liters circulated every single day."
       },
       "sourceName": "American Heart Association",
       "sourceUrl": "https://www.nhlbi.nih.gov/health/heart"
     },
     "sourceName": "American Heart Association",
-    "sourceUrl": "https://www.nhlbi.nih.gov/health/heart"
+    "sourceUrl": "https://www.nhlbi.nih.gov/health/heart",
+    "visualQuery": "beating human heart"
   },
   {
     "id": "human-09",
@@ -414,14 +422,14 @@
       "sourceHint": "NIH / National Institute on Deafness",
       "tag": "Duyu Anatomisi",
       "quiz": {
-        "question": "İnsan vücudundaki en küçük kemik olan 'üzengi' (stapes) nerededir?",
+        "question": "3 mm'lik üzengi kemiği ve orta kulak kemikçiklerini vücudumuzdaki diğer kemiklerin neredeyse tamamından ayıran şaşırtıcı özellik nedir?",
         "options": [
-          "Orta kulakta",
-          "Serçe parmakta",
-          "Burun ucunda"
+          "Her beş yılda bir kıkırdağa dönüşüp yenilenmeleri",
+          "Doğumda neredeyse tam yetişkin boyutunda olmaları ve yaşam boyu neredeyse hiç büyümemeleri",
+          "İçlerinin tamamen sıvı cıva ile dolu olması"
         ],
-        "correctIndex": 0,
-        "explanation": "Orta kulaktaki 3 mm'lik üzengi kemiği ses titreşimlerini iç kulağa iletir."
+        "correctIndex": 1,
+        "explanation": "İnsan iskeletindeki kemikler çocukluk boyunca uzarken, işitmenin hassas kalibrasyonu için orta kulak kemikçikleri doğumda zaten yetişkin boyutuna yakındır."
       },
       "sourceName": "NIH / NIDCD Hearing Research",
       "sourceUrl": "https://www.nidcd.nih.gov/health/how-do-we-hear"
@@ -434,20 +442,21 @@
       "sourceHint": "NIH / NIDCD",
       "tag": "Sensory Anatomy",
       "quiz": {
-        "question": "Where is the stapes, the smallest bone in the human body, located?",
+        "question": "What unusual developmental trait sets the 3-mm stapes and ear ossicles apart from almost every other bone in your skeleton?",
         "options": [
-          "In the middle ear",
-          "In the pinky toe",
-          "At the tip of the nose"
+          "They dissolve and regrow fresh cartilage every seven years",
+          "They are the only bones formed purely out of solid keratin",
+          "They are already near full adult size at birth and barely grow afterward"
         ],
-        "correctIndex": 0,
-        "explanation": "The tiny 3-millimeter stapes helps transmit sound vibrations inside the middle ear."
+        "correctIndex": 2,
+        "explanation": "Unlike limb bones that lengthen throughout childhood, the tiny middle-ear ossicles are born nearly full-sized so hearing geometry stays precisely tuned."
       },
       "sourceName": "NIH / NIDCD Hearing Research",
       "sourceUrl": "https://www.nidcd.nih.gov/health/how-do-we-hear"
     },
     "sourceName": "NIH / NIDCD Hearing Research",
-    "sourceUrl": "https://www.nidcd.nih.gov/health/how-do-we-hear"
+    "sourceUrl": "https://www.nidcd.nih.gov/health/how-do-we-hear",
+    "visualQuery": "sound wave ear"
   },
   {
     "id": "human-10",
@@ -464,14 +473,14 @@
       "sourceHint": "Brown University Sleep Lab",
       "tag": "Uyku Bilimi",
       "quiz": {
-        "question": "Uyku araştırmalarına göre uyurken bizi uyandırmada en etkisiz kalan duyu hangisidir?",
+        "question": "Derin uykuda beyin koku sinyallerine neredeyse hiç tepki vermediği için evlerde yangın güvenliği açısından ne kritik önem taşır?",
         "options": [
-          "Koku alma duyusu",
-          "İşitme duyusu",
-          "Dokunma duyusu"
+          "Yatak odalarında uyku öncesi keskin nane kokusu yakmak",
+          "Pencereleri gece boyunca tamamen kapalı tutmak",
+          "Duman kokusuna güvenmek yerine yüksek sesli duman alarmları kullanmak"
         ],
-        "correctIndex": 0,
-        "explanation": "Derin uykuda beyin koku sinyallerine yanıt vermez; bu yüzden duman dedektörleri yüksek sesle çalışır."
+        "correctIndex": 2,
+        "explanation": "Brown Üniversitesi deneyleri en keskin kokuların bile derin uyuyan insanları uyandırmadığını kanıtladı; işitme sistemi ise gece de alarm halindedir."
       },
       "sourceName": "Brown University Sleep Research",
       "sourceUrl": "https://pubmed.ncbi.nlm.nih.gov/15164891/"
@@ -484,19 +493,20 @@
       "sourceHint": "Brown University Sleep Lab",
       "tag": "Sleep Science",
       "quiz": {
-        "question": "Which sense is least effective at waking a sleeping human?",
+        "question": "Because deep sleep nearly shuts down smell alerts, what makes audible smoke alarms essential in bedrooms?",
         "options": [
-          "Smell",
-          "Hearing",
-          "Touch"
+          "Hearing stays alert while sleeping, whereas smoke odors alone rarely wake sleepers",
+          "Smell receptors turn off permanently after age 25",
+          "Smoke molecules are heavier than air and never reach pillow height"
         ],
         "correctIndex": 0,
-        "explanation": "Because smell won't reliably wake sleepers, fire safety relies on loud audible alarms."
+        "explanation": "Brown University sleep trials proved even acrid smoke smells fail to rouse people from deep sleep, while auditory alarms reliably wake the brain."
       },
       "sourceName": "Brown University Sleep Research",
       "sourceUrl": "https://pubmed.ncbi.nlm.nih.gov/15164891/"
     },
     "sourceName": "Brown University Sleep Research",
-    "sourceUrl": "https://pubmed.ncbi.nlm.nih.gov/15164891/"
+    "sourceUrl": "https://pubmed.ncbi.nlm.nih.gov/15164891/",
+    "visualQuery": "sleeping night bedroom"
   }
 ]

@@ -11,6 +11,7 @@ const CATEGORY_ACCENT_HEX: Record<CategoryId, string> = {
   history: '#F59E0B',
   science: '#0EA5E9',
   records: '#EC4899',
+  statistics: '#6366F1',
 };
 
 function drawRoundedRect(
@@ -275,7 +276,7 @@ export async function generateDiplomaCertificateImage(
   ctx.textAlign = 'right';
   ctx.fillStyle = '#4338CA';
   ctx.font = '800 24px system-ui, -apple-system, Segoe UI, sans-serif';
-  ctx.fillText(`scrolly.live  •  ${t.drawerBadges}: ${memory.badges.length}/6`, WIDTH - 110, 998);
+  ctx.fillText(`scrolly.live  •  ${t.drawerBadges}: ${memory.badges.length}/${categoryList.length}`, WIDTH - 110, 998);
 
   const blob = await new Promise<Blob>((resolve, reject) => {
     canvas.toBlob((out) => {

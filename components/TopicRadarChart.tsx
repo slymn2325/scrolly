@@ -29,6 +29,7 @@ const RADAR_AXES: CategoryId[] = [
   'space',
   'nature',
   'science',
+  'statistics',
   'history',
   'records',
   'human_body',
@@ -38,6 +39,7 @@ const SHORT_TABLE_LABELS: Record<CategoryId, Record<Language, string>> = {
   space: { tr: 'Uzay', en: 'Space' },
   nature: { tr: 'Doğa', en: 'Nature' },
   science: { tr: 'Bilim', en: 'Sci' },
+  statistics: { tr: 'İstat.', en: 'Stats' },
   history: { tr: 'Tarih', en: 'Hist' },
   records: { tr: 'Rekor', en: 'Recs' },
   human_body: { tr: 'Vücut', en: 'Body' },
@@ -47,15 +49,16 @@ const COMMUNITY_TARGET_ACCURACY: Record<CategoryId, number> = {
   space: 68,
   nature: 74,
   science: 64,
+  statistics: 62,
   history: 70,
   records: 66,
   human_body: 72,
 };
 
 const SVG_WIDTH = 380;
-const SVG_HEIGHT = 264;
+const SVG_HEIGHT = 276;
 const CENTER_X = 190;
-const CENTER_Y = 132;
+const CENTER_Y = 138;
 const RADAR_RADIUS = 68;
 const GRID_LEVELS = [20, 40, 60, 80, 100] as const;
 
@@ -67,32 +70,37 @@ interface LabelPlacement {
 const AXIS_LABEL_PLACEMENTS: Record<CategoryId, LabelPlacement> = {
   space: {
     className: '-translate-x-1/2 -translate-y-1/2 justify-center',
-    style: { left: '50%', top: '10%' },
+    style: { left: '50%', top: '9%' },
   },
   nature: {
     className: '-translate-y-1/2 justify-start',
-    style: { left: '69%', top: '34%' },
+    style: { left: '68%', top: '28%' },
   },
   science: {
     className: '-translate-y-1/2 justify-start',
-    style: { left: '69%', top: '67%' },
+    style: { left: '70%', top: '57%' },
+  },
+  statistics: {
+    className: '-translate-y-1/2 justify-start',
+    style: { left: '57%', top: '87%' },
   },
   history: {
-    className: '-translate-x-1/2 -translate-y-1/2 justify-center',
-    style: { left: '50%', top: '91%' },
+    className: '-translate-y-1/2 justify-end',
+    style: { right: '57%', top: '87%' },
   },
   records: {
     className: '-translate-y-1/2 justify-end',
-    style: { right: '69%', top: '67%' },
+    style: { right: '70%', top: '57%' },
   },
   human_body: {
     className: '-translate-y-1/2 justify-end',
-    style: { right: '69%', top: '34%' },
+    style: { right: '68%', top: '28%' },
   },
 };
 
 function getAxisPoint(index: number, pct: number): { x: number; y: number } {
-  const angleDeg = -90 + index * 60;
+  const angleStep = 360 / RADAR_AXES.length;
+  const angleDeg = -90 + index * angleStep;
   const angleRad = (angleDeg * Math.PI) / 180;
   const normalizedRadius = Math.max(0.05, Math.min(1, pct / 100)) * RADAR_RADIUS;
   return {
@@ -102,7 +110,8 @@ function getAxisPoint(index: number, pct: number): { x: number; y: number } {
 }
 
 function getRingPoint(index: number, levelPct: number): { x: number; y: number } {
-  const angleDeg = -90 + index * 60;
+  const angleStep = 360 / RADAR_AXES.length;
+  const angleDeg = -90 + index * angleStep;
   const angleRad = (angleDeg * Math.PI) / 180;
   const r = (levelPct / 100) * RADAR_RADIUS;
   return {
@@ -236,14 +245,14 @@ export default function TopicRadarChart({
         </p>
       </div>
 
-      {/* DataMB Style Card: Percentile Comparison Header + 6-Axis Radar SVG */}
+      {/* DataMB Style Card: Percentile Comparison Header + 7-Axis Radar SVG */}
       <div className="overflow-hidden rounded-3xl border border-slate-200/90 bg-white p-3 shadow-sm dark:border-white/10 dark:bg-[#1E1932]">
         {/* 1. Compact DataMB Comparison Row */}
         <div
           data-testid="radar-percentile-table"
           className="rounded-2xl border border-slate-200/80 bg-slate-50/75 px-1.5 py-2 sm:px-2.5 dark:border-white/10 dark:bg-white/[0.04]"
         >
-          <div className="grid grid-cols-[minmax(62px,1.05fr)_repeat(6,minmax(0,1fr))_minmax(28px,0.72fr)] items-center gap-1 sm:gap-1.5 text-center">
+          <div className="grid grid-cols-[minmax(54px,1fr)_repeat(7,minmax(0,1fr))_minmax(26px,0.7fr)] items-center gap-0.5 sm:gap-1 text-center">
             {/* Header Row */}
             <div className="pl-1 text-left text-[8.5px] sm:text-[9px] font-extrabold uppercase tracking-wider text-slate-400 dark:text-violet-300/60">
               {hasAnyPersonalAccuracy ? 'LIVE' : 'DATA'}
@@ -300,7 +309,7 @@ export default function TopicRadarChart({
                   onClick={() => handleSelectAxis(catId)}
                   className={`mt-1.5 rounded-md px-0.5 py-1 text-[9px] sm:text-[10.5px] font-black tabular-nums tracking-tighter sm:tracking-normal transition-colors ${
                     isSelected
-                      ? 'bg-blue-500/12 text-blue-700 dark:bg-blue-500/20 dark:text-blue-300'
+                      ? 'bg-blue-500/[0.12] text-blue-700 dark:bg-blue-500/20 dark:text-blue-300'
                       : 'text-slate-800 hover:bg-slate-200/50 dark:text-white dark:hover:bg-white/10'
                   }`}
                 >
@@ -332,7 +341,7 @@ export default function TopicRadarChart({
                   onClick={() => handleSelectAxis(catId)}
                   className={`mt-1 rounded-md px-0.5 py-1 text-[9px] sm:text-[10.5px] font-bold tabular-nums tracking-tighter sm:tracking-normal transition-colors ${
                     isSelected
-                      ? 'bg-pink-500/12 text-pink-700 dark:bg-pink-500/20 dark:text-pink-300'
+                      ? 'bg-pink-500/[0.12] text-pink-700 dark:bg-pink-500/20 dark:text-pink-300'
                       : stat.hasPersonalAccuracy
                         ? 'text-pink-600 hover:bg-pink-500/10 dark:text-pink-300 dark:hover:bg-white/10'
                         : 'text-slate-500 hover:bg-slate-200/50 dark:text-violet-300/70 dark:hover:bg-white/10'
@@ -348,10 +357,10 @@ export default function TopicRadarChart({
           </div>
         </div>
 
-        {/* 2. Interactive 6-Axis Hexagon SVG Radar */}
+        {/* 2. Interactive 7-Axis Heptagon SVG Radar */}
         <div
           data-testid="topic-radar-svg-wrap"
-          className="relative mx-auto mt-2 aspect-[380/264] w-full max-w-[440px]"
+          className="relative mx-auto mt-2 aspect-[380/276] w-full max-w-[440px]"
         >
           <svg
             viewBox={`0 0 ${SVG_WIDTH} ${SVG_HEIGHT}`}
@@ -360,7 +369,7 @@ export default function TopicRadarChart({
             aria-label={t.constellationTitle}
           >
             <g transform={`translate(${CENTER_X}, ${CENTER_Y})`}>
-              {/* 5 Concentric Hexagonal Rings (20%, 40%, 60%, 80%, 100%) */}
+              {/* 5 Concentric Heptagonal Rings (20%, 40%, 60%, 80%, 100%) */}
               {GRID_LEVELS.map((level) => {
                 const ringPts = RADAR_AXES.map((_, idx) => getRingPoint(idx, level))
                   .map((p) => `${p.x},${p.y}`)
@@ -376,7 +385,7 @@ export default function TopicRadarChart({
                 );
               })}
 
-              {/* 6 Radial Axis Lines */}
+              {/* 7 Radial Axis Lines */}
               {RADAR_AXES.map((catId, idx) => {
                 const end = getRingPoint(idx, 100);
                 const isSelected = selectedId === catId;
@@ -500,7 +509,7 @@ export default function TopicRadarChart({
             </g>
           </svg>
 
-          {/* 6 Interactive Vertex Category Pills */}
+          {/* 7 Interactive Vertex Category Pills */}
           {RADAR_AXES.map((catId) => {
             const meta = getCategoryMeta(catId);
             const placement = AXIS_LABEL_PLACEMENTS[catId];

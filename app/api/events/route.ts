@@ -57,7 +57,7 @@ function sanitizeEventMeta(raw: unknown): string {
 
 export async function POST(request: Request) {
   const clientIp = extractClientIp(request);
-  const limitResult = checkRateLimit(`events:${clientIp}`, 40, 60_000);
+  const limitResult = checkRateLimit(`events:${clientIp}`, 120, 60_000);
   if (!limitResult.allowed) {
     return NextResponse.json(
       { ok: false, error: 'Too many event requests. Please slow down.' },
@@ -163,12 +163,14 @@ export async function POST(request: Request) {
             const res = await pool.query<{ slug: string; likes_count: number }>(
               `UPDATE facts
                SET likes_count = COALESCE(likes_count, 0) + 1
-               WHERE slug = $1
+               WHERE slug = $1 OR sketch_type = $1
                RETURNING slug, likes_count`,
               [ev.fact_slug]
             );
             if (res.rows[0]) {
-              likesMap[res.rows[0].slug] = Number(res.rows[0].likes_count ?? 0);
+              const count = Number(res.rows[0].likes_count ?? 0);
+              likesMap[ev.fact_slug] = count;
+              likesMap[res.rows[0].slug] = count;
             }
           }
         } else if (ev.event_type === 'unlike') {
@@ -183,12 +185,14 @@ export async function POST(request: Request) {
             const res = await pool.query<{ slug: string; likes_count: number }>(
               `UPDATE facts
                SET likes_count = GREATEST(COALESCE(likes_count, 0) - 1, 0)
-               WHERE slug = $1
+               WHERE slug = $1 OR sketch_type = $1
                RETURNING slug, likes_count`,
               [ev.fact_slug]
             );
             if (res.rows[0]) {
-              likesMap[res.rows[0].slug] = Number(res.rows[0].likes_count ?? 0);
+              const count = Number(res.rows[0].likes_count ?? 0);
+              likesMap[ev.fact_slug] = count;
+              likesMap[res.rows[0].slug] = count;
             }
           }
         } else {
@@ -204,15 +208,16 @@ export async function POST(request: Request) {
       (boundedXpDelta > 0 || typeof latestStreak === 'number' || Boolean(latestUsername))
     ) {
       await pool.query(
-        `INSERT INTO profiles (device_id, username, xp, streak, last_active_date, updated_at)
-         VALUES ($1, $2, $3, $4, CURRENT_DATE, NOW())
+        `INSERT INTO profiles (device_id, username, xp, weekly_xp, streak, last_active_date, updated_at)
+         VALUES ($1, COALESCE($2, 'Merak Kâşifi'), $3, $3, GREATEST($4, 1), CURRENT_DATE, NOW())
          ON CONFLICT (device_id) DO UPDATE SET
-           username = COALESCE(EXCLUDED.username, profiles.username),
+           username = COALESCE($2, NULLIF(TRIM(profiles.username), ''), 'Merak Kâşifi'),
            xp = COALESCE(profiles.xp, 0) + $3,
-           streak = GREATEST(COALESCE(profiles.streak, 0), EXCLUDED.streak),
+           weekly_xp = COALESCE(profiles.weekly_xp, 0) + $3,
+           streak = GREATEST(COALESCE(profiles.streak, 1), $4, 1),
            last_active_date = CURRENT_DATE,
            updated_at = NOW()`,
-        [latestDeviceId, latestUsername || null, boundedXpDelta, latestStreak ?? 0]
+        [latestDeviceId, latestUsername || null, boundedXpDelta, latestStreak ?? 1]
       );
     }
 

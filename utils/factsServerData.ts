@@ -4,6 +4,7 @@ import humanBodyFacts from '@/public/data/facts/human_body.json';
 import historyFacts from '@/public/data/facts/history.json';
 import scienceFacts from '@/public/data/facts/science.json';
 import recordsFacts from '@/public/data/facts/records.json';
+import statisticsFacts from '@/public/data/facts/statistics.json';
 import type { CategoryId, FactCard } from '@/types/fact';
 import {
   enrichFactWithGuessChallenge,
@@ -17,6 +18,7 @@ const SHARDED_BY_CATEGORY: Record<CategoryId, FactCard[]> = {
   history: (historyFacts as FactCard[]).map(enrichFactWithGuessChallenge),
   science: (scienceFacts as FactCard[]).map(enrichFactWithGuessChallenge),
   records: (recordsFacts as FactCard[]).map(enrichFactWithGuessChallenge),
+  statistics: (statisticsFacts as FactCard[]).map(enrichFactWithGuessChallenge),
 };
 
 export const LEGACY_SLUG_TO_FACT_ID: Record<string, string> = {
@@ -59,6 +61,7 @@ const ALL_FACTS: FactCard[] = interleaveFactsByCategory([
   ...SHARDED_BY_CATEGORY.human_body,
   ...SHARDED_BY_CATEGORY.science,
   ...SHARDED_BY_CATEGORY.records,
+  ...SHARDED_BY_CATEGORY.statistics,
 ]);
 
 export function getAllFacts(): FactCard[] {

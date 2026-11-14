@@ -297,3 +297,99 @@ export async function fetchFactsFromApiWithCache(): Promise<FactCard[] | null> {
 
   return null;
 }
+
+export interface RemoteProfileSnapshot {
+  deviceId: string;
+  username: string;
+  handle?: string;
+  xp: number;
+  weeklyXp: number;
+  dailyBestScore: number;
+  lastDailyQuizDate: string;
+  streak: number;
+  lastVisitDate: string;
+  seenIds: string[];
+  favoriteIds: string[];
+  categoryWeights: Record<string, number>;
+  categoryAccuracy: Record<string, { attempts: number; totalPct: number }>;
+  badges: string[];
+  updatedAt: string;
+}
+
+export async function fetchProfileFromApi(): Promise<RemoteProfileSnapshot | null> {
+  if (typeof window === 'undefined') return null;
+  try {
+    const deviceId = getOrCreateDeviceId();
+    const res = await fetch(`/api/profile?deviceId=${encodeURIComponent(deviceId)}`, {
+      cache: 'no-store',
+    });
+    if (!res.ok) return null;
+    const json = (await res.json()) as {
+      ok?: boolean;
+      persisted?: boolean;
+      profile?: RemoteProfileSnapshot | null;
+    };
+    return json.ok ? (json.profile ?? null) : null;
+  } catch {
+    return null;
+  }
+}
+
+export async function syncProfileToApi(payload: {
+  username?: string;
+  handle?: string;
+  xp?: number;
+  weeklyXp?: number;
+  dailyBestScore?: number;
+  lastDailyQuizDate?: string;
+  streak?: number;
+  lastVisitDate?: string;
+  seenIds?: string[];
+  favoriteIds?: string[];
+  categoryWeights?: Record<string, number>;
+  categoryAccuracy?: Record<string, { attempts: number; totalPct: number }>;
+  badges?: string[];
+  reset?: boolean;
+}): Promise<RemoteProfileSnapshot | null> {
+  if (typeof window === 'undefined') return null;
+  try {
+    const deviceId = getOrCreateDeviceId();
+    const body = JSON.stringify({
+      deviceId,
+      ...payload,
+    });
+    const res = await fetch('/api/profile', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body,
+      keepalive: body.length < 48_000,
+    });
+    if (!res.ok) return null;
+    const json = (await res.json()) as {
+      ok?: boolean;
+      profile?: RemoteProfileSnapshot | null;
+    };
+    return json.profile ?? null;
+  } catch {
+    return null;
+  }
+}
+
+export async function fetchTopicGifFromApi(
+  visualQuery: string,
+  slug?: string
+): Promise<string | null> {
+  if (typeof window === 'undefined' || !visualQuery.trim()) return null;
+  try {
+    const params = new URLSearchParams({ query: visualQuery.trim() });
+    if (slug) params.set('slug', slug.trim());
+    const res = await fetch(`/api/gif?${params.toString()}`);
+    if (!res.ok) return null;
+    const json = (await res.json()) as { ok?: boolean; gifUrl?: string | null };
+    return typeof json.gifUrl === 'string' && json.gifUrl.startsWith('https://')
+      ? json.gifUrl
+      : null;
+  } catch {
+    return null;
+  }
+}

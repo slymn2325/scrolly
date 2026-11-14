@@ -14,14 +14,14 @@
       "sourceHint": "NASA Planetary Fact Sheet",
       "tag": "Gezegen Dinamiği",
       "quiz": {
-        "question": "Venüs'ün kendi ekseni etrafında bir tam tur dönmesi yaklaşık kaç Dünya günü sürer?",
+        "question": "Venüs'te Güneş'in Dünya'dakinin aksine batıdan doğmasının asıl sebebi nedir?",
         "options": [
-          "243 gün",
-          "225 gün",
-          "365 gün"
+          "Venüs'ün kendi ekseni etrafında çoğu gezegene ters yönde dönmesi",
+          "Venüs'ün yörüngesinin Güneş'in içinden geçmesi",
+          "Venüs atmosferinin ışığı ayna gibi yansıtması"
         ],
         "correctIndex": 0,
-        "explanation": "Venüs kendi ekseni etrafında 243 günde, Güneş etrafında ise 225 günde döner."
+        "explanation": "Venüs saat yönünde (retrograd) döndüğü için gezegen yüzeyinden bakıldığında Güneş batı ufkundan doğar."
       },
       "guessChallenge": {
         "type": "slider",
@@ -43,14 +43,14 @@
       "sourceHint": "NASA Planetary Fact Sheet",
       "tag": "Planetary Motion",
       "quiz": {
-        "question": "Approximately how many Earth days does Venus take to rotate once on its own axis?",
+        "question": "Why does the Sun rise in the west and set in the east on Venus?",
         "options": [
-          "243 days",
-          "225 days",
-          "365 days"
+          "Venus orbits the Sun inside a figure-eight loop",
+          "Venus spins backward on its axis compared to most planets",
+          "Its sulfuric clouds reflect sunlight upside down"
         ],
-        "correctIndex": 0,
-        "explanation": "Venus takes 243 Earth days to spin once on its axis and 225 days to orbit the Sun."
+        "correctIndex": 1,
+        "explanation": "Venus has retrograde rotation—spinning clockwise—reversing sunrise and sunset."
       },
       "guessChallenge": {
         "type": "slider",
@@ -65,7 +65,8 @@
       "sourceUrl": "https://science.nasa.gov/venus/facts/"
     },
     "sourceName": "NASA Planetary Fact Sheet",
-    "sourceUrl": "https://science.nasa.gov/venus/facts/"
+    "sourceUrl": "https://science.nasa.gov/venus/facts/",
+    "visualQuery": "venus planet space"
   },
   {
     "id": "space-02",
@@ -84,11 +85,11 @@
       "quiz": {
         "question": "Bir magnetarın aşırı güçlü manyetik alanı yakındaki atomların elektron bulutlarına ne yapar?",
         "options": [
-          "Onları küresel halden ince iğne şekline uzatarak kimyasal bağları koparır",
           "Hepsini katı altın çekirdeğine dönüştürür",
+          "Onları küresel halden ince iğne şekline uzatarak kimyasal bağları koparır",
           "Atomları tamamen mutlak sıfırda dondurur"
         ],
-        "correctIndex": 0,
+        "correctIndex": 1,
         "explanation": "Katrilyon Gauss düzeyindeki manyetik alan elektron yörüngelerini iğne şeklinde deforme eder."
       },
       "guessChallenge": {
@@ -113,11 +114,11 @@
       "quiz": {
         "question": "How does a magnetar's field affect nearby atoms from roughly 1,000 km away?",
         "options": [
-          "It stretches spherical electron clouds into thin needles, breaking chemical bonds",
           "It freezes every electron into solid ice",
-          "It converts hydrogen atoms directly into lead"
+          "It converts hydrogen atoms directly into lead",
+          "It stretches spherical electron clouds into thin needles, breaking chemical bonds"
         ],
-        "correctIndex": 0,
+        "correctIndex": 2,
         "explanation": "Fields on the order of 10¹⁵ Gauss distort atomic electron orbitals into ultra-thin needles."
       },
       "guessChallenge": {
@@ -133,7 +134,8 @@
       "sourceUrl": "https://svs.gsfc.nasa.gov/10232"
     },
     "sourceName": "NASA Goddard Space Flight Center",
-    "sourceUrl": "https://svs.gsfc.nasa.gov/10232"
+    "sourceUrl": "https://svs.gsfc.nasa.gov/10232",
+    "visualQuery": "neutron star magnetic"
   },
   {
     "id": "space-03",
@@ -152,11 +154,11 @@
       "quiz": {
         "question": "Titan'daki sıvı metan yağmur damlaları neden Dünya'dakinden yaklaşık 6 kat yavaş düşer?",
         "options": [
-          "Düşük kütleçekimi ile yoğun kalın atmosferin sürtünme etkisi birleştiği için",
           "Yağmur damlaları buzdan değil gazdan oluştuğu için",
-          "Titan hiç kendi ekseninde dönmediği için"
+          "Titan hiç kendi ekseninde dönmediği için",
+          "Düşük kütleçekimi ile yoğun kalın atmosferin sürtünme etkisi birleştiği için"
         ],
-        "correctIndex": 0,
+        "correctIndex": 2,
         "explanation": "Dünya'nın %14'ü kadar yerçekimi ve 1,45 atm yüzey basıncı yağmur damlalarının terminal hızını sert şekilde düşürür."
       },
       "guessChallenge": {
@@ -201,7 +203,8 @@
       "sourceUrl": "https://science.nasa.gov/saturn/moons/titan/"
     },
     "sourceName": "NASA Solar System Exploration",
-    "sourceUrl": "https://science.nasa.gov/saturn/moons/titan/"
+    "sourceUrl": "https://science.nasa.gov/saturn/moons/titan/",
+    "visualQuery": "saturn moon titan"
   },
   {
     "id": "space-04",
@@ -240,18 +243,19 @@
       "quiz": {
         "question": "Why have the Apollo astronauts' footprints on the Moon not faded away?",
         "options": [
-          "The Moon has no wind or atmospheric erosion",
           "Lunar dust freezes solid when stepped on",
+          "The Moon has no wind or atmospheric erosion",
           "The boots were coated with permanent resin"
         ],
-        "correctIndex": 0,
+        "correctIndex": 1,
         "explanation": "With no wind or weather on the Moon, surface tracks persist for millions of years."
       },
       "sourceName": "NASA Apollo Archive",
       "sourceUrl": "https://starchild.gsfc.nasa.gov/docs/StarChild/space_level2/apollo11.html"
     },
     "sourceName": "NASA Apollo Archive",
-    "sourceUrl": "https://starchild.gsfc.nasa.gov/docs/StarChild/space_level2/apollo11.html"
+    "sourceUrl": "https://starchild.gsfc.nasa.gov/docs/StarChild/space_level2/apollo11.html",
+    "visualQuery": "astronaut moon footprint"
   },
   {
     "id": "space-05",
@@ -268,14 +272,14 @@
       "sourceHint": "NASA Solar System Exploration",
       "tag": "Güneş Sistemi",
       "quiz": {
-        "question": "Güneş, Güneş Sistemimizdeki toplam kütlenin yaklaşık yüzde kaçını oluşturur?",
+        "question": "Güneş Sistemimizin toplam kütlesinin dışında kalan %0,14'lük payın aslan payını ne oluşturur?",
         "options": [
-          "%99,86",
-          "%75,4",
-          "%50,2"
+          "Sadece Dünya ve Mars'ın demir çekirdeği",
+          "Jüpiter başta olmak üzere dev gezegenler",
+          "Ay ve Asteroit Kuşağı taşları"
         ],
-        "correctIndex": 0,
-        "explanation": "Tüm gezegenler, uydular ve asteroitler toplam kütlenin sadece %0,14'ünü oluşturur."
+        "correctIndex": 1,
+        "explanation": "Tek başına Jüpiter, diğer tüm gezegenlerin toplamından iki kat fazla kütleye sahip olarak kalan payı domine eder."
       },
       "guessChallenge": {
         "type": "slider",
@@ -297,14 +301,14 @@
       "sourceHint": "NASA Solar System Exploration",
       "tag": "Solar System",
       "quiz": {
-        "question": "Roughly what percentage of our Solar System's mass belongs to the Sun?",
+        "question": "What holds the lion's share of the remaining 0.14% mass outside our Sun?",
         "options": [
-          "99.86%",
-          "75.4%",
-          "50.2%"
+          "Earth and the Moon combined",
+          "Rocky pebbles in the Asteroid Belt",
+          "Giant planets led by Jupiter"
         ],
-        "correctIndex": 0,
-        "explanation": "All planets, moons, and asteroids combined make up just 0.14% of the Solar System's mass."
+        "correctIndex": 2,
+        "explanation": "Jupiter alone outweighs all other planets combined, absorbing most of that tiny 0.14% slice."
       },
       "guessChallenge": {
         "type": "slider",
@@ -319,7 +323,8 @@
       "sourceUrl": "https://science.nasa.gov/sun/facts/"
     },
     "sourceName": "NASA Solar System Exploration",
-    "sourceUrl": "https://science.nasa.gov/sun/facts/"
+    "sourceUrl": "https://science.nasa.gov/sun/facts/",
+    "visualQuery": "solar flare sun"
   },
   {
     "id": "space-06",
@@ -329,21 +334,21 @@
     "emoji": "🛰️",
     "readingTimeSec": 16,
     "tr": {
-      "slug": "uzayda-soguk-kaynak-olayı",
+      "slug": "uzayda-soguk-kaynak-olayi",
       "title": "İki Metal Uzayda Birbirine Dokununca Kendiliğinden Kaynar",
       "factText": "Uzay boşluğunda iki temiz metal parçası birbirine temas ettiğinde hiçbir ısı veya lehim olmadan kalıcı olarak birbirine kaynar.",
       "deepDiveDetail": "'Soğuk kaynak' (cold welding) adı verilen bu olayda, Dünya'da metallerin arasında bulunan ince oksit ve hava tabakası uzayda yoktur. Metal atomları hangi atomun hangi parçaya ait olduğunu 'anlayamaz' ve tek bir parça gibi birleşir.",
       "sourceHint": "European Space Agency (ESA)",
       "tag": "Uzay Mühendisliği",
       "quiz": {
-        "question": "Uzayda iki temiz metalin ısı olmadan birbirine yapışmasına ne ad verilir?",
+        "question": "Dünya'daki iki temiz çelik çubuk birbirine değdiğinde neden uzaydaki gibi kendiliğinden kaynamaz?",
         "options": [
-          "Soğuk kaynak (Cold welding)",
-          "Manyetik füzyon",
-          "Vakum erimesi"
+          "Dünya'nın yerçekimi metal atomlarının elektron paylaşmasını engeller",
+          "Oda sıcaklığındaki hava metalleri mutlak sıfırın üzerinde tutar",
+          "Atmosferdeki oksijen metallerin üzerinde atomik teması kesen ince bir oksit tabakası oluşturur"
         ],
-        "correctIndex": 0,
-        "explanation": "Araya girecek hava veya oksit tabakası olmadığından atomlar doğrudan bağ kurar; buna soğuk kaynak denir."
+        "correctIndex": 2,
+        "explanation": "Dünya'da oksijen metallerin yüzeyinde koruyucu oksit filmi oluşturur; uzay boşluğunda bu bariyer olmadığı için aynı metal atomları doğrudan bağ kurar."
       },
       "sourceName": "European Space Agency (ESA)",
       "sourceUrl": "https://en.wikipedia.org/wiki/Cold_welding"
@@ -356,20 +361,21 @@
       "sourceHint": "European Space Agency (ESA)",
       "tag": "Space Engineering",
       "quiz": {
-        "question": "What is the phenomenon where clean metals bond without heat in a vacuum called?",
+        "question": "Why don't two clean steel beams weld together on Earth the way they do in the vacuum of space?",
         "options": [
-          "Cold welding",
-          "Magnetic fusion",
-          "Vacuum melting"
+          "Earth's oxygen forms a thin oxide and air barrier that keeps metal atoms apart",
+          "Gravity pulls electron clouds downward so surfaces never touch",
+          "Room temperature keeps steel above its magnetic threshold"
         ],
         "correctIndex": 0,
-        "explanation": "Without air or an oxide barrier, metal atoms bond directly on contact in a process called cold welding."
+        "explanation": "Atmospheric oxygen instantly coats bare metals with an oxide shield; without air in space, identical metal surfaces fuse on contact."
       },
       "sourceName": "European Space Agency (ESA)",
       "sourceUrl": "https://en.wikipedia.org/wiki/Cold_welding"
     },
     "sourceName": "European Space Agency (ESA)",
-    "sourceUrl": "https://en.wikipedia.org/wiki/Cold_welding"
+    "sourceUrl": "https://en.wikipedia.org/wiki/Cold_welding",
+    "visualQuery": "spacecraft satellite orbit"
   },
   {
     "id": "space-07",
@@ -386,14 +392,14 @@
       "sourceHint": "Max Planck Institute for Radio Astronomy",
       "tag": "Astrokimya",
       "quiz": {
-        "question": "Sagittarius B2 bulutunda keşfedilen etil format molekülü Dünya'da en çok hangi meyvenin aromasında bulunur?",
+        "question": "Gökbilimciler 26.000 ışık yılı ötedeki Sagittarius B2 bulutunda ahududu aromalı etil format molekülünü nasıl tespit etti?",
         "options": [
-          "Ahududu",
-          "Karpuz",
-          "Limon"
+          "Radyo teleskoplarıyla moleküllerin dönerken yaydığı benzersiz mikrodalga frekanslarını ölçerek",
+          "Voyager sondasının bulutun içinden numune toplayıp Dünya'ya göndermesiyle",
+          "Bulutun kızılötesi görüntüsünün parlak kırmızı renk vermesiyle"
         ],
         "correctIndex": 0,
-        "explanation": "Etil format molekülü ahududuya kendine özgü meyvemsi kokusunu verir."
+        "explanation": "Her kimyasal molekül uzayda dönerken kendine özgü bir radyo/mikrodalga spektrum imzası yayar; astronomlar 30 metrelik IRAM radyo teleskobuyla bu imzayı yakaladı."
       },
       "sourceName": "Max Planck Institute for Radio Astronomy",
       "sourceUrl": "https://en.wikipedia.org/wiki/Ethyl_formate"
@@ -406,20 +412,21 @@
       "sourceHint": "Max Planck Institute for Radio Astronomy",
       "tag": "Astrochemistry",
       "quiz": {
-        "question": "Ethyl formate, found in the Sagittarius B2 space cloud, is famously responsible for which flavor?",
+        "question": "How did astronomers identify the raspberry-scented molecule ethyl formate 26,000 light-years away?",
         "options": [
-          "Raspberry",
-          "Watermelon",
-          "Lemon"
+          "By analyzing gas samples scooped up and returned by Voyager 1",
+          "By detecting unique microwave spectral fingerprints emitted as molecules spin in space",
+          "By matching the pinkish-red color of the nebula in visible light"
         ],
-        "correctIndex": 0,
-        "explanation": "Ethyl formate is a primary ester behind the scent and flavor of raspberries."
+        "correctIndex": 1,
+        "explanation": "Every molecule radiates distinct radio frequencies as it rotates; astronomers matched ethyl formate's exact spectral barcode using the IRAM radio telescope."
       },
       "sourceName": "Max Planck Institute for Radio Astronomy",
       "sourceUrl": "https://en.wikipedia.org/wiki/Ethyl_formate"
     },
     "sourceName": "Max Planck Institute for Radio Astronomy",
-    "sourceUrl": "https://en.wikipedia.org/wiki/Ethyl_formate"
+    "sourceUrl": "https://en.wikipedia.org/wiki/Ethyl_formate",
+    "visualQuery": "colorful space nebula"
   },
   {
     "id": "space-08",
@@ -438,11 +445,11 @@
       "quiz": {
         "question": "Satürn'ün ortalama yoğunluğunun sudan bile düşük olmasının nedeni nedir?",
         "options": [
-          "Büyük oranda hafif hidrojen ve helyum gazlarından oluşması",
           "İçinin tamamen boş bir kabuk olması",
+          "Büyük oranda hafif hidrojen ve helyum gazlarından oluşması",
           "Buzdan daha hafif katı karbon olması"
         ],
-        "correctIndex": 0,
+        "correctIndex": 1,
         "explanation": "Gaz devi Satürn'ün büyük kısmı en hafif iki element olan hidrojen ve helyumdan oluşur."
       },
       "sourceName": "NASA Saturn Fact Sheet",
@@ -458,18 +465,19 @@
       "quiz": {
         "question": "Why is Saturn's average density lower than that of water?",
         "options": [
-          "It is mostly made of light hydrogen and helium",
           "It is completely hollow inside",
-          "Its rings lift it upward"
+          "Its rings lift it upward",
+          "It is mostly made of light hydrogen and helium"
         ],
-        "correctIndex": 0,
+        "correctIndex": 2,
         "explanation": "Being composed mainly of hydrogen and helium gives Saturn a lower average density than water."
       },
       "sourceName": "NASA Saturn Fact Sheet",
       "sourceUrl": "https://science.nasa.gov/saturn/facts/"
     },
     "sourceName": "NASA Saturn Fact Sheet",
-    "sourceUrl": "https://science.nasa.gov/saturn/facts/"
+    "sourceUrl": "https://science.nasa.gov/saturn/facts/",
+    "visualQuery": "saturn planet rings"
   },
   {
     "id": "space-09",
@@ -486,14 +494,14 @@
       "sourceHint": "NASA Curiosity Rover Observations",
       "tag": "Mars Atmosferi",
       "quiz": {
-        "question": "Mars yüzeyinden bakıldığında gün batımı ne renkte görünür?",
+        "question": "Mars atmosferi neden gün batımında kızıl yerine mavi bir hale oluşturur?",
         "options": [
-          "Mavi",
-          "Koyu yeşil",
-          "Parlak mor"
+          "Mars'ta okyanus buharının gökyüzünü boyaması",
+          "Kutup buzullarının mavi lazer yansıması vermesi",
+          "İnce kızıl toz parçacıklarının mavi ışığı Güneş doğrultusunda ileri saçması"
         ],
-        "correctIndex": 0,
-        "explanation": "Mars'taki ince toz tabakası kırmızı ışığı saçarken mavi ışığı Güneş yönünden geçirir."
+        "correctIndex": 2,
+        "explanation": "Dünya'nın aksine Mars'taki mikroskobik toz, kırmızı ışığı çevreye dağıtırken mavi ışığı Güneş çevresinde toplar."
       },
       "sourceName": "NASA Mars Curiosity Observations",
       "sourceUrl": "https://science.nasa.gov/image-article/apod-2015-may-12-two-worlds-one-sun/"
@@ -506,20 +514,21 @@
       "sourceHint": "NASA Curiosity Rover Observations",
       "tag": "Martian Optics",
       "quiz": {
-        "question": "What color does the sky around the setting Sun appear from the surface of Mars?",
+        "question": "Why does Mars glow blue around the setting Sun while turning the daytime sky butterscotch-red?",
         "options": [
-          "Blue",
-          "Deep green",
-          "Bright purple"
+          "Fine Martian dust scatters blue light forward right near the Sun's path",
+          "Vaporized ocean mist freezes blue at twilight",
+          "Dry ice volcanoes reflect blue spectrum only at dusk"
         ],
         "correctIndex": 0,
-        "explanation": "Fine Martian dust lets blue light penetrate forward at sunset while scattering red away."
+        "explanation": "Mie scattering off fine iron-oxide dust passes blue wavelengths straight toward observers near the horizon."
       },
       "sourceName": "NASA Mars Curiosity Observations",
       "sourceUrl": "https://science.nasa.gov/image-article/apod-2015-may-12-two-worlds-one-sun/"
     },
     "sourceName": "NASA Mars Curiosity Observations",
-    "sourceUrl": "https://science.nasa.gov/image-article/apod-2015-may-12-two-worlds-one-sun/"
+    "sourceUrl": "https://science.nasa.gov/image-article/apod-2015-may-12-two-worlds-one-sun/",
+    "visualQuery": "mars sunset horizon"
   },
   {
     "id": "space-10",
@@ -536,14 +545,14 @@
       "sourceHint": "NASA Jet Propulsion Laboratory",
       "tag": "Yıldızlararası Keşif",
       "quiz": {
-        "question": "1977'de fırlatılan Voyager 1 uzay aracının içindeki insanlık mesajı kaydına ne ad verilir?",
+        "question": "Işık hızında ilerlemesine rağmen Voyager 1'in Dünya'ya gönderdiği radyo sinyallerinin ulaşması neden 22 saatten uzun sürer?",
         "options": [
-          "Altın Plak (Golden Record)",
-          "Uzay Kapsülü",
-          "Ay Diski"
+          "Araç Güneş'in etki sınırını geçip Dünya'dan 24 milyar km'den fazla uzaklaştığı için",
+          "Yıldızlararası uzaydaki karanlık maddenin radyo dalgalarını yavaşlatması yüzünden",
+          "1977 yapımı vericinin sinyali şifreleyip sırayla göndermesi yüzünden"
         ],
         "correctIndex": 0,
-        "explanation": "Dünya'dan sesler ve müzikler içeren bakır-altın kaplama disk 'Altın Plak' olarak bilinir."
+        "explanation": "Radyo dalgaları boşlukta saniyede ~300.000 km hızla gitse de 24 milyar kilometreyi aşan yıldızlararası mesafe tek yönlü iletişimi 22 saatin üzerine çıkarır."
       },
       "sourceName": "NASA Jet Propulsion Laboratory",
       "sourceUrl": "https://science.nasa.gov/mission/voyager/where-are-voyager-1-and-voyager-2-now/"
@@ -556,20 +565,21 @@
       "sourceHint": "NASA Jet Propulsion Laboratory",
       "tag": "Interstellar Exploration",
       "quiz": {
-        "question": "What is the famous audio-visual message disc carried aboard Voyager 1 called?",
+        "question": "Even at the speed of light, why do Voyager 1's radio signals take over 22 hours to reach Earth?",
         "options": [
-          "The Golden Record",
-          "The Silver Capsule",
-          "The Solar Disc"
+          "Because interstellar dust slows radio waves down to sound speed",
+          "Because the probe is over 24 billion km away beyond the Sun's heliosphere",
+          "Because its 1977 computer compresses messages overnight before transmitting"
         ],
-        "correctIndex": 0,
-        "explanation": "Carl Sagan and his team curated the Golden Record carrying Earth's sounds and greetings."
+        "correctIndex": 1,
+        "explanation": "Even moving at ~300,000 km/s, radio signals need more than 22 hours one-way to cross 24+ billion km of interstellar space."
       },
       "sourceName": "NASA Jet Propulsion Laboratory",
       "sourceUrl": "https://science.nasa.gov/mission/voyager/where-are-voyager-1-and-voyager-2-now/"
     },
     "sourceName": "NASA Jet Propulsion Laboratory",
-    "sourceUrl": "https://science.nasa.gov/mission/voyager/where-are-voyager-1-and-voyager-2-now/"
+    "sourceUrl": "https://science.nasa.gov/mission/voyager/where-are-voyager-1-and-voyager-2-now/",
+    "visualQuery": "voyager space probe"
   },
   {
     "id": "nature-01",
@@ -588,11 +598,11 @@
       "quiz": {
         "question": "Antarktika buzbalığı alyuvar ve hemoglobin olmadan dokularına nasıl oksijen taşır?",
         "options": [
-          "Buzlu suda bol bulunan oksijeni doğrudan şeffaf kan plazmasında çözerek",
           "Dış derisinden azot soluyarak",
+          "Buzlu suda bol bulunan oksijeni doğrudan şeffaf kan plazmasında çözerek",
           "Yüzgeçlerinde klorofil üreterek"
         ],
-        "correctIndex": 0,
+        "correctIndex": 1,
         "explanation": "Sıfırın altındaki deniz suyu yüksek çözünmüş oksijen taşır; dev tek kalp bu plazmayı hızlıca dolaştırır."
       },
       "guessChallenge": {
@@ -617,11 +627,11 @@
       "quiz": {
         "question": "How does the Antarctic icefish survive without red blood cells or hemoglobin?",
         "options": [
-          "Cold water holds ample dissolved oxygen carried directly in clear blood plasma",
           "It stores gaseous oxygen inside hollow bones",
-          "It performs photosynthesis through transparent scales"
+          "It performs photosynthesis through transparent scales",
+          "Cold water holds ample dissolved oxygen carried directly in clear blood plasma"
         ],
-        "correctIndex": 0,
+        "correctIndex": 2,
         "explanation": "High dissolved oxygen in freezing Antarctic seas plus an enlarged single heart keeps tissues oxygenated."
       },
       "guessChallenge": {
@@ -637,7 +647,8 @@
       "sourceUrl": "https://www.nature.com/articles/s41559-019-0812-7"
     },
     "sourceName": "Nature Ecology & Evolution",
-    "sourceUrl": "https://www.nature.com/articles/s41559-019-0812-7"
+    "sourceUrl": "https://www.nature.com/articles/s41559-019-0812-7",
+    "visualQuery": "antarctic ocean ice"
   },
   {
     "id": "nature-02",
@@ -654,14 +665,14 @@
       "sourceHint": "Nature Journal / Suzanne Simard",
       "tag": "Ekoloji",
       "quiz": {
-        "question": "Ağaçların yer altında mantar kökleriyle kurduğu iletişim ve besin ağına popüler olarak ne ad verilir?",
+        "question": "Ormandaki yaşlı ağaçlar gölgede kalan fidanların hayatta kalmasına yer altından nasıl destek olur?",
         "options": [
-          "Wood Wide Web",
-          "Kök İnterneti",
-          "Fotosentez Hattı"
+          "Kökleriyle yer altı sularını fidanların yapraklarına doğru fışkırtarak",
+          "Yapraklarını erken döküp gölgedeki toprağı ısıtarak",
+          "Kökleri saran mikoriza mantar iplikçikleri üzerinden fidanlara fazla karbon şekerleri aktararak"
         ],
-        "correctIndex": 0,
-        "explanation": "Mikoriza mantarlarının ağaç köklerini bağladığı bu ağa 'Wood Wide Web' adı verilir."
+        "correctIndex": 2,
+        "explanation": "Yaşlı ağaçlar güneşten ürettikleri karbonun bir kısmını 'Wood Wide Web' adı verilen mikoriza mantar ağıyla genç fidanlara besin olarak iletir."
       },
       "guessChallenge": {
         "type": "binary",
@@ -683,14 +694,14 @@
       "sourceHint": "Nature Journal / Suzanne Simard",
       "tag": "Forest Ecology",
       "quiz": {
-        "question": "What nickname did scientists give the underground fungal network linking forest trees?",
+        "question": "How do mature canopy trees support shaded seedlings through the underground 'Wood Wide Web'?",
         "options": [
-          "Wood Wide Web",
-          "Root Fiber Net",
-          "Canopy Link"
+          "They route surplus carbon sugars through mycorrhizal fungal threads to seedling roots",
+          "They vibrate low-frequency sound pulses through bedrock to wake roots",
+          "They shed bark early to reflect extra sunlight beneath the canopy"
         ],
         "correctIndex": 0,
-        "explanation": "Mycorrhizal networks connecting tree roots are famously known as the 'Wood Wide Web'."
+        "explanation": "Connected by symbiotic mycorrhizal fungi, tall sunlit trees transfer carbon nutrients and chemical pest alerts to struggling neighbors."
       },
       "guessChallenge": {
         "type": "binary",
@@ -705,7 +716,8 @@
       "sourceUrl": "https://www.nature.com/articles/41557"
     },
     "sourceName": "Nature Journal / Suzanne Simard",
-    "sourceUrl": "https://www.nature.com/articles/41557"
+    "sourceUrl": "https://www.nature.com/articles/41557",
+    "visualQuery": "sunlit green forest"
   },
   {
     "id": "nature-03",
@@ -753,11 +765,11 @@
       "quiz": {
         "question": "Which part of a Greenland shark preserves its birth-year radiocarbon signature for ~400 years?",
         "options": [
-          "The metabolically inert core of its eye lens",
           "Mineral rings along its cartilage jaws",
+          "The metabolically inert core of its eye lens",
           "Enamel bands inside replacement teeth"
         ],
-        "correctIndex": 0,
+        "correctIndex": 1,
         "explanation": "Eye lens nucleus proteins never regenerate, acting as an unaltered carbon-14 timestamp from birth."
       },
       "guessChallenge": {
@@ -773,7 +785,8 @@
       "sourceUrl": "https://pubmed.ncbi.nlm.nih.gov/27516602/"
     },
     "sourceName": "Science (AAAS)",
-    "sourceUrl": "https://pubmed.ncbi.nlm.nih.gov/27516602/"
+    "sourceUrl": "https://pubmed.ncbi.nlm.nih.gov/27516602/",
+    "visualQuery": "shark deep ocean"
   },
   {
     "id": "nature-04",
@@ -792,11 +805,11 @@
       "quiz": {
         "question": "Bal arıları insan yüzlerini nasıl tanır?",
         "options": [
-          "Göz, burun ve ağzı bütünsel bir örüntü olarak eşleyerek",
           "İnsanların yaydığı ısı haritasını okuyarak",
+          "Göz, burun ve ağzı bütünsel bir örüntü olarak eşleyerek",
           "Sadece ses tonunu analiz ederek"
         ],
-        "correctIndex": 0,
+        "correctIndex": 1,
         "explanation": "Arılar tıpkı çiçek şekillerini tanıdıkları gibi yüz özelliklerinin bütünsel yerleşimini (configural processing) öğrenirler."
       },
       "sourceName": "Journal of Experimental Biology",
@@ -812,18 +825,19 @@
       "quiz": {
         "question": "How do honeybees recognize human faces?",
         "options": [
-          "By combining facial features into a whole pattern",
           "By scanning infrared body heat",
-          "Only by recognizing vocal pitch"
+          "Only by recognizing vocal pitch",
+          "By combining facial features into a whole pattern"
         ],
-        "correctIndex": 0,
+        "correctIndex": 2,
         "explanation": "Bees process the spatial arrangement of eyes, nose, and mouth just like flower patterns."
       },
       "sourceName": "Journal of Experimental Biology",
       "sourceUrl": "https://pubmed.ncbi.nlm.nih.gov/16326952/"
     },
     "sourceName": "Journal of Experimental Biology",
-    "sourceUrl": "https://pubmed.ncbi.nlm.nih.gov/16326952/"
+    "sourceUrl": "https://pubmed.ncbi.nlm.nih.gov/16326952/",
+    "visualQuery": "honeybee pollen flower"
   },
   {
     "id": "nature-05",
@@ -840,14 +854,14 @@
       "sourceHint": "Nature Communications",
       "tag": "Ornitoloji",
       "quiz": {
-        "question": "Ak karınlı ebabil kuşları yere hiç konmadan yaklaşık kaç gün aralıksız havada kalabilir?",
+        "question": "Ak karınlı ebabiller 200 gün boyunca hiç yere konmadan nasıl hayatta kalıp uyuyabilir?",
         "options": [
-          "200 gün",
-          "14 gün",
-          "45 gün"
+          "Okyanus dalgalarının üzerinde yüzerek dinlendikleri için",
+          "Kış uykusuna yatıp metabolizmalarını tamamen durdurdukları için",
+          "Uçarken süzülme sırasında beyinlerinin bir yarısını dinlendirip havadaki böcekleri avlayarak"
         ],
-        "correctIndex": 0,
-        "explanation": "Mikro veri kaydediciler ebabillerin 6 ayı aşan göç döneminde yere dokunmadan ~200 gün uçabildiğini ölçtü."
+        "correctIndex": 2,
+        "explanation": "İsviçre Ornitoloji Enstitüsü, ebabillerin göç ve kışlama boyunca uyku dahil tüm hayati faaliyetleri süzülürken sürdürdüğünü kanıtladı."
       },
       "guessChallenge": {
         "type": "slider",
@@ -869,14 +883,14 @@
       "sourceHint": "Nature Communications",
       "tag": "Ornithology",
       "quiz": {
-        "question": "Roughly how long can an Alpine swift remain continuously airborne without landing once?",
+        "question": "How do Alpine Swifts eat and rest during a 200-day flight without touching land once?",
         "options": [
-          "~200 days",
-          "~14 days",
-          "~45 days"
+          "By snapping airborne insects and resting via high-altitude thermal gliding",
+          "By sleeping floating upside down on ocean waves",
+          "By storing three months of compressed fat inside their wings"
         ],
         "correctIndex": 0,
-        "explanation": "Backpack loggers recorded uninterrupted flight exceeding 200 days across their migration."
+        "explanation": "Biologgers revealed Alpine Swifts hunt aerial plankton and even micro-sleep while gliding on high air currents."
       },
       "guessChallenge": {
         "type": "slider",
@@ -891,7 +905,8 @@
       "sourceUrl": "https://www.nature.com/articles/ncomms3543"
     },
     "sourceName": "Nature Communications",
-    "sourceUrl": "https://www.nature.com/articles/ncomms3543"
+    "sourceUrl": "https://www.nature.com/articles/ncomms3543",
+    "visualQuery": "bird flying sky"
   },
   {
     "id": "nature-06",
@@ -930,18 +945,19 @@
       "quiz": {
         "question": "Why do koalas share human-like fingerprints despite distant ancestry?",
         "options": [
-          "Convergent evolution for grasping branches and leaves",
           "Eucalyptus oils sculpting their skin",
+          "Convergent evolution for grasping branches and leaves",
           "Sleeping 20 hours a day"
         ],
-        "correctIndex": 0,
+        "correctIndex": 1,
         "explanation": "Independent adaptation for gripping trees produced nearly identical fingerprint ridges."
       },
       "sourceName": "University of Adelaide Anatomy Study",
       "sourceUrl": "https://www.snopes.com/fact-check/koala-fingerprints-crime-scene/"
     },
     "sourceName": "University of Adelaide Anatomy Study",
-    "sourceUrl": "https://www.snopes.com/fact-check/koala-fingerprints-crime-scene/"
+    "sourceUrl": "https://www.snopes.com/fact-check/koala-fingerprints-crime-scene/",
+    "visualQuery": "koala eucalyptus tree"
   },
   {
     "id": "nature-07",
@@ -958,14 +974,14 @@
       "sourceHint": "PNAS / University of St Andrews",
       "tag": "Deniz İletişimi",
       "quiz": {
-        "question": "Yunusların birbirlerini çağırmak için kullandığı benzersiz seslere ne ad verilir?",
+        "question": "Araştırmacılar okyanusta bir yunusun kendi 'imza ıslığını' hoparlörden geri çaldığında nasıl bir tepki gözlemledi?",
         "options": [
-          "İmza ıslığı (Signature whistle)",
-          "Ultrasonik kod",
-          "Dalga yankısı"
+          "Sürüdeki tüm yunuslar panikleyip derin sulara daldı",
+          "Sadece o spesifik yunus ıslığı tanıyıp sesin geldiği yöne dönerek karşılık verdi",
+          "Yunuslar yalnızca gece karanlığında ıslığa yanıt verdi"
         ],
-        "correctIndex": 0,
-        "explanation": "Her yunus hayatının başında kendine özgü bir imza ıslığı oluşturur ve bunu isim olarak kullanır."
+        "correctIndex": 1,
+        "explanation": "St Andrews Üniversitesi deneyleri, yunusların kendi imza ıslıklarını duyunca tıpkı adı çağrılan bir insan gibi bireysel olarak karşılık verdiğini kanıtladı."
       },
       "sourceName": "PNAS / University of St Andrews",
       "sourceUrl": "https://pubmed.ncbi.nlm.nih.gov/23878217/"
@@ -978,20 +994,21 @@
       "sourceHint": "PNAS / University of St Andrews",
       "tag": "Marine Communication",
       "quiz": {
-        "question": "What do biologists call the personal sound dolphins use like names?",
+        "question": "What happened when biologists played back a recording of an individual dolphin's signature whistle?",
         "options": [
-          "Signature whistles",
-          "Sonar clicks",
-          "Tidal echoes"
+          "The entire pod scattered in alarm as if hearing a shark",
+          "Only calves under one year old reacted to the sound",
+          "That specific dolphin recognized its 'name' and whistled back in response"
         ],
-        "correctIndex": 0,
-        "explanation": "Each dolphin develops a distinct signature whistle that other dolphins repeat to address them."
+        "correctIndex": 2,
+        "explanation": "Wild bottlenose dolphins answer their own unique signature whistle selectively, confirming these calls function like personal names."
       },
       "sourceName": "PNAS / University of St Andrews",
       "sourceUrl": "https://pubmed.ncbi.nlm.nih.gov/23878217/"
     },
     "sourceName": "PNAS / University of St Andrews",
-    "sourceUrl": "https://pubmed.ncbi.nlm.nih.gov/23878217/"
+    "sourceUrl": "https://pubmed.ncbi.nlm.nih.gov/23878217/",
+    "visualQuery": "dolphins jumping ocean"
   },
   {
     "id": "nature-08",
@@ -1010,11 +1027,11 @@
       "quiz": {
         "question": "Deniz samurları su üstünde uyurken neden el ele tutuşur?",
         "options": [
-          "Akıntının kendilerini birbirinden sürüklemesini önlemek için",
           "Vücut ısılarını yarıya indirmek için",
-          "Avcıları korkutmak için ses çıkarmak amacıyla"
+          "Avcıları korkutmak için ses çıkarmak amacıyla",
+          "Akıntının kendilerini birbirinden sürüklemesini önlemek için"
         ],
-        "correctIndex": 0,
+        "correctIndex": 2,
         "explanation": "Patilerini kenetleyerek veya kelp yosunlarına sarılarak akıntıda dağılmadan uyurlar."
       },
       "sourceName": "Monterey Bay Aquarium",
@@ -1041,7 +1058,8 @@
       "sourceUrl": "https://www.montereybayaquarium.org/animals/animals-a-to-z/sea-otter"
     },
     "sourceName": "Monterey Bay Aquarium",
-    "sourceUrl": "https://www.montereybayaquarium.org/animals/animals-a-to-z/sea-otter"
+    "sourceUrl": "https://www.montereybayaquarium.org/animals/animals-a-to-z/sea-otter",
+    "visualQuery": "sea otter water"
   },
   {
     "id": "nature-09",
@@ -1080,18 +1098,19 @@
       "quiz": {
         "question": "What holds the title for the largest known living organism by area on Earth?",
         "options": [
-          "An underground honey fungus in Oregon",
           "A blue whale in the Pacific",
+          "An underground honey fungus in Oregon",
           "A single giant redwood tree"
         ],
-        "correctIndex": 0,
+        "correctIndex": 1,
         "explanation": "The Armillaria ostoyae fungus spreads underground across nearly 10 square kilometers."
       },
       "sourceName": "USDA Forest Service",
       "sourceUrl": "https://www.scientificamerican.com/article/strange-but-true-largest-organism-is-fungus/"
     },
     "sourceName": "USDA Forest Service",
-    "sourceUrl": "https://www.scientificamerican.com/article/strange-but-true-largest-organism-is-fungus/"
+    "sourceUrl": "https://www.scientificamerican.com/article/strange-but-true-largest-organism-is-fungus/",
+    "visualQuery": "forest moss mushrooms"
   },
   {
     "id": "nature-10",
@@ -1110,11 +1129,11 @@
       "quiz": {
         "question": "Saguaro kaktüsünün gövdesindeki dikey kıvrımlar (akordeon yapısı) ne işe yarar?",
         "options": [
-          "Yağmur sonrası büyük miktarda su alınca yırtılmadan genişlemeye",
           "Kuşların yuva yapmasını engellemeye",
+          "Yağmur sonrası büyük miktarda su alınca yırtılmadan genişlemeye",
           "Gece rüzgarında ses çıkarmaya"
         ],
-        "correctIndex": 0,
+        "correctIndex": 1,
         "explanation": "Kıvrımlı yapı su depolandıkça kaktüsün hacminin güvenle şişmesini sağlar."
       },
       "sourceName": "National Park Service (Saguaro)",
@@ -1130,18 +1149,19 @@
       "quiz": {
         "question": "What purpose do the accordion-like pleats on a saguaro cactus serve?",
         "options": [
-          "Allowing the trunk to expand when soaking up heavy rainwater",
           "Reflecting moonlight to attract bees",
-          "Trapping desert sand for armor"
+          "Trapping desert sand for armor",
+          "Allowing the trunk to expand when soaking up heavy rainwater"
         ],
-        "correctIndex": 0,
+        "correctIndex": 2,
         "explanation": "The pleats unfold smoothly so the cactus can swell with stored water without splitting."
       },
       "sourceName": "National Park Service (Saguaro)",
       "sourceUrl": "https://www.nps.gov/sagu/learn/nature/saguaro.htm"
     },
     "sourceName": "National Park Service (Saguaro)",
-    "sourceUrl": "https://www.nps.gov/sagu/learn/nature/saguaro.htm"
+    "sourceUrl": "https://www.nps.gov/sagu/learn/nature/saguaro.htm",
+    "visualQuery": "saguaro cactus desert"
   },
   {
     "id": "human-01",
@@ -1160,11 +1180,11 @@
       "quiz": {
         "question": "Bebeklikteki ~300 kemik sayısının yetişkinlikte 206'ya düşmesinin sebebi nedir?",
         "options": [
-          "Büyüdükçe küçük kemiklerin birbirine kaynaması",
           "Fazla kemiklerin vücut tarafından eritilmesi",
-          "Sadece süt dişleriyle birlikte dökülmesi"
+          "Sadece süt dişleriyle birlikte dökülmesi",
+          "Büyüdükçe küçük kemiklerin birbirine kaynaması"
         ],
-        "correctIndex": 0,
+        "correctIndex": 2,
         "explanation": "Kafatası ve eklem bölgelerindeki ayrı kemikler büyüme çağında birleşip tek kemik haline gelir."
       },
       "sourceName": "Cleveland Clinic Anatomy",
@@ -1191,7 +1211,8 @@
       "sourceUrl": "https://my.clevelandclinic.org/health/body/21048-skeletal-system"
     },
     "sourceName": "Cleveland Clinic Anatomy",
-    "sourceUrl": "https://my.clevelandclinic.org/health/body/21048-skeletal-system"
+    "sourceUrl": "https://my.clevelandclinic.org/health/body/21048-skeletal-system",
+    "visualQuery": "human skeleton bones"
   },
   {
     "id": "human-02",
@@ -1230,18 +1251,19 @@
       "quiz": {
         "question": "When you experience a headache, where does the pain actually come from?",
         "options": [
-          "Surrounding membranes, blood vessels, and muscles",
           "Pain receptors inside the cerebral cortex",
+          "Surrounding membranes, blood vessels, and muscles",
           "Tiny bones inside the inner ear"
         ],
-        "correctIndex": 0,
+        "correctIndex": 1,
         "explanation": "Brain tissue has no pain receptors; headaches arise from surrounding tissues and blood vessels."
       },
       "sourceName": "Johns Hopkins Medicine",
       "sourceUrl": "https://www.hopkinsmedicine.org/health/conditions-and-diseases/anatomy-of-the-brain"
     },
     "sourceName": "Johns Hopkins Medicine",
-    "sourceUrl": "https://www.hopkinsmedicine.org/health/conditions-and-diseases/anatomy-of-the-brain"
+    "sourceUrl": "https://www.hopkinsmedicine.org/health/conditions-and-diseases/anatomy-of-the-brain",
+    "visualQuery": "human brain neurons"
   },
   {
     "id": "human-03",
@@ -1258,14 +1280,14 @@
       "sourceHint": "British Heart Foundation",
       "tag": "Dolaşım Sistemi",
       "quiz": {
-        "question": "Yetişkin bir insandaki tüm kan damarlarının toplam uzunluğu yaklaşık ne kadardır?",
+        "question": "Vücudumuzdaki 100.000 km'lik damar ağının ezici çoğunluğunu (~%80) hangi damar tipi oluşturur?",
         "options": [
-          "~96.000 km",
-          "~5.000 km",
-          "~12.000 km"
+          "Kalbimizden çıkan kalın aort atardamarları",
+          "Hücrelere kadar ulaşan mikroskobik kılcal damarlar (kapiller)",
+          "Yalnızca bacaklarımızdaki ana toplardamarlar"
         ],
-        "correctIndex": 0,
-        "explanation": "Mikroskobik kılcal damarlar eklendiğinde toplam uzunluk yaklaşık 96.000 km'ye (Dünya'nın iki katından fazlasına) ulaşır."
+        "correctIndex": 1,
+        "explanation": "Tek bir kırmızı kan hücresinin zor sığdığı milyarlarca mikroskobik kılcal damar uç uca eklendiğinde Dünya'yı iki kez sarar."
       },
       "sourceName": "British Heart Foundation",
       "sourceUrl": "https://pmc.ncbi.nlm.nih.gov/articles/PMC4355271/"
@@ -1278,20 +1300,21 @@
       "sourceHint": "British Heart Foundation",
       "tag": "Circulatory System",
       "quiz": {
-        "question": "About how far would all blood vessels in an adult human stretch end to end?",
+        "question": "Which microscopic vessel type accounts for most of our ~100,000 km blood vessel network?",
         "options": [
-          "~96,000 km (60,000 miles)",
-          "~5,000 km",
-          "~12,000 km"
+          "Thick arterial trunks near the ribcage",
+          "Leg veins returning blood upward",
+          "Hair-thin capillaries weaving around nearly every living cell"
         ],
-        "correctIndex": 0,
-        "explanation": "Driven mostly by microscopic capillaries, human blood vessels total roughly 96,000 km."
+        "correctIndex": 2,
+        "explanation": "Billions of tiny capillaries branch throughout tissues, creating astonishing total length when laid end-to-end."
       },
       "sourceName": "British Heart Foundation",
       "sourceUrl": "https://pmc.ncbi.nlm.nih.gov/articles/PMC4355271/"
     },
     "sourceName": "British Heart Foundation",
-    "sourceUrl": "https://pmc.ncbi.nlm.nih.gov/articles/PMC4355271/"
+    "sourceUrl": "https://pmc.ncbi.nlm.nih.gov/articles/PMC4355271/",
+    "visualQuery": "red blood cells"
   },
   {
     "id": "human-04",
@@ -1310,11 +1333,11 @@
       "quiz": {
         "question": "Midenin kendi güçlü asidi tarafından sindirilmesini engelleyen temel koruma nedir?",
         "options": [
-          "Bikarbonatlı kalın mukus tabakası ve hızlı hücre yenilenmesi",
           "Midenin tamamen kemikle kaplı olması",
-          "Asidin sadece gece salgılanması"
+          "Asidin sadece gece salgılanması",
+          "Bikarbonatlı kalın mukus tabakası ve hızlı hücre yenilenmesi"
         ],
-        "correctIndex": 0,
+        "correctIndex": 2,
         "explanation": "Alkalin bikarbonat içeren mukus tabakası asidi nötralize ederek mide duvarını korur."
       },
       "sourceName": "NIH / NIDDK Digestive Health",
@@ -1341,7 +1364,8 @@
       "sourceUrl": "https://www.niddk.nih.gov/health-information/digestive-diseases/digestive-system-how-it-works"
     },
     "sourceName": "NIH / NIDDK Digestive Health",
-    "sourceUrl": "https://www.niddk.nih.gov/health-information/digestive-diseases/digestive-system-how-it-works"
+    "sourceUrl": "https://www.niddk.nih.gov/health-information/digestive-diseases/digestive-system-how-it-works",
+    "visualQuery": "acid chemistry beaker"
   },
   {
     "id": "human-05",
@@ -1380,18 +1404,19 @@
       "quiz": {
         "question": "Why does the human cornea contain no blood vessels?",
         "options": [
-          "To remain completely transparent for clear vision",
           "Because eye cells require no oxygen",
+          "To remain completely transparent for clear vision",
           "Blood cannot flow above the neck"
         ],
-        "correctIndex": 0,
+        "correctIndex": 1,
         "explanation": "Staying free of blood vessels keeps the cornea transparent while tears absorb oxygen from air."
       },
       "sourceName": "American Academy of Ophthalmology",
       "sourceUrl": "https://www.aao.org/eye-health/anatomy/parts-of-eye"
     },
     "sourceName": "American Academy of Ophthalmology",
-    "sourceUrl": "https://www.aao.org/eye-health/anatomy/parts-of-eye"
+    "sourceUrl": "https://www.aao.org/eye-health/anatomy/parts-of-eye",
+    "visualQuery": "human eye iris"
   },
   {
     "id": "human-06",
@@ -1410,11 +1435,11 @@
       "quiz": {
         "question": "İnsanlarla muzların pek çok temel geni paylaşmasının nedeni nedir?",
         "options": [
-          "Hücre bölünmesi ve enerji gibi temel işlevlerin ortak atalardan miras kalması",
           "Muzların hayvan sınıfında yer alması",
+          "Hücre bölünmesi ve enerji gibi temel işlevlerin ortak atalardan miras kalması",
           "İnsanların muz yiyerek gen alması"
         ],
-        "correctIndex": 0,
+        "correctIndex": 1,
         "explanation": "Tüm ökaryot canlılar solunum ve hücre bölünmesi gibi temel hücresel genleri ortak atalardan paylaşır."
       },
       "sourceName": "National Human Genome Research Institute",
@@ -1430,18 +1455,19 @@
       "quiz": {
         "question": "Why do humans and bananas share so many core genes?",
         "options": [
-          "Basic cellular housekeeping genes come from ancient common ancestors",
           "Bananas belong to the animal kingdom",
-          "Eating fruit transfers plant DNA into ours"
+          "Eating fruit transfers plant DNA into ours",
+          "Basic cellular housekeeping genes come from ancient common ancestors"
         ],
-        "correctIndex": 0,
+        "correctIndex": 2,
         "explanation": "Fundamental genes for energy and cell division are conserved across all complex life."
       },
       "sourceName": "National Human Genome Research Institute",
       "sourceUrl": "https://www.genome.gov/about-genomics/fact-sheets/Comparative-Genomics-Fact-Sheet"
     },
     "sourceName": "National Human Genome Research Institute",
-    "sourceUrl": "https://www.genome.gov/about-genomics/fact-sheets/Comparative-Genomics-Fact-Sheet"
+    "sourceUrl": "https://www.genome.gov/about-genomics/fact-sheets/Comparative-Genomics-Fact-Sheet",
+    "visualQuery": "dna double helix"
   },
   {
     "id": "human-07",
@@ -1460,11 +1486,11 @@
       "quiz": {
         "question": "İnsan dilinin yüzeyindeki harita tek yumurta ikizlerinde nasıldır?",
         "options": [
-          "Her bireyde benzersiz ve farklıdır",
           "İkizlerde tamamen aynıdır",
-          "Her yıl tamamen sıfırlanır"
+          "Her yıl tamamen sıfırlanır",
+          "Her bireyde benzersiz ve farklıdır"
         ],
-        "correctIndex": 0,
+        "correctIndex": 2,
         "explanation": "Dil izi (lingual print) parmak izi gibi genetik ve gelişimsel olarak kişiye özeldir."
       },
       "sourceName": "National Library of Medicine (PubMed)",
@@ -1491,7 +1517,8 @@
       "sourceUrl": "https://pubmed.ncbi.nlm.nih.gov/28123263/"
     },
     "sourceName": "National Library of Medicine (PubMed)",
-    "sourceUrl": "https://pubmed.ncbi.nlm.nih.gov/28123263/"
+    "sourceUrl": "https://pubmed.ncbi.nlm.nih.gov/28123263/",
+    "visualQuery": "macro fingerprint scan"
   },
   {
     "id": "human-08",
@@ -1508,14 +1535,14 @@
       "sourceHint": "American Heart Association",
       "tag": "Kardiyoloji",
       "quiz": {
-        "question": "Sağlıklı bir insanın kalbi günde yaklaşık kaç kez atar?",
+        "question": "Kalbiniz yaşam boyu 2,5 milyar kez atarken ortalama olarak günde yaklaşık ne kadar kan pompalar?",
         "options": [
-          "~100.000 kez",
-          "~10.000 kez",
-          "~1.000.000 kez"
+          "Yaklaşık 7.000 litre (küçük bir tanker kadar)",
+          "Sadece 50 litre (bir damacananın iki katı)",
+          "Yaklaşık 200.000 litre (olimpik havuzun yarısı)"
         ],
         "correctIndex": 0,
-        "explanation": "Dakikada ortalama 70 atışla kalp günde yaklaşık 100.000 kez kan pompalar."
+        "explanation": "Kalp dakikada ~5 litre kanı tüm vücuda gönderir; bu da 24 saatte 7.000 litreyi aşan dev bir hacme ulaşır."
       },
       "sourceName": "American Heart Association",
       "sourceUrl": "https://www.nhlbi.nih.gov/health/heart"
@@ -1528,20 +1555,21 @@
       "sourceHint": "American Heart Association",
       "tag": "Cardiology",
       "quiz": {
-        "question": "Roughly how many times does an average human heart beat in a single day?",
+        "question": "Across roughly 100,000 daily beats, how much blood does your heart pump every 24 hours?",
         "options": [
-          "~100,000 times",
-          "~10,000 times",
-          "~1,000,000 times"
+          "Only around 50 liters",
+          "Over 7,000 liters — enough to fill a small tanker truck",
+          "Roughly 500,000 liters"
         ],
-        "correctIndex": 0,
-        "explanation": "At ~70 beats per minute, the heart beats roughly 100,000 times every 24 hours."
+        "correctIndex": 1,
+        "explanation": "Pumping ~5 liters per minute adds up to more than 7,000 liters circulated every single day."
       },
       "sourceName": "American Heart Association",
       "sourceUrl": "https://www.nhlbi.nih.gov/health/heart"
     },
     "sourceName": "American Heart Association",
-    "sourceUrl": "https://www.nhlbi.nih.gov/health/heart"
+    "sourceUrl": "https://www.nhlbi.nih.gov/health/heart",
+    "visualQuery": "beating human heart"
   },
   {
     "id": "human-09",
@@ -1558,14 +1586,14 @@
       "sourceHint": "NIH / National Institute on Deafness",
       "tag": "Duyu Anatomisi",
       "quiz": {
-        "question": "İnsan vücudundaki en küçük kemik olan 'üzengi' (stapes) nerededir?",
+        "question": "3 mm'lik üzengi kemiği ve orta kulak kemikçiklerini vücudumuzdaki diğer kemiklerin neredeyse tamamından ayıran şaşırtıcı özellik nedir?",
         "options": [
-          "Orta kulakta",
-          "Serçe parmakta",
-          "Burun ucunda"
+          "Her beş yılda bir kıkırdağa dönüşüp yenilenmeleri",
+          "Doğumda neredeyse tam yetişkin boyutunda olmaları ve yaşam boyu neredeyse hiç büyümemeleri",
+          "İçlerinin tamamen sıvı cıva ile dolu olması"
         ],
-        "correctIndex": 0,
-        "explanation": "Orta kulaktaki 3 mm'lik üzengi kemiği ses titreşimlerini iç kulağa iletir."
+        "correctIndex": 1,
+        "explanation": "İnsan iskeletindeki kemikler çocukluk boyunca uzarken, işitmenin hassas kalibrasyonu için orta kulak kemikçikleri doğumda zaten yetişkin boyutuna yakındır."
       },
       "sourceName": "NIH / NIDCD Hearing Research",
       "sourceUrl": "https://www.nidcd.nih.gov/health/how-do-we-hear"
@@ -1578,20 +1606,21 @@
       "sourceHint": "NIH / NIDCD",
       "tag": "Sensory Anatomy",
       "quiz": {
-        "question": "Where is the stapes, the smallest bone in the human body, located?",
+        "question": "What unusual developmental trait sets the 3-mm stapes and ear ossicles apart from almost every other bone in your skeleton?",
         "options": [
-          "In the middle ear",
-          "In the pinky toe",
-          "At the tip of the nose"
+          "They dissolve and regrow fresh cartilage every seven years",
+          "They are the only bones formed purely out of solid keratin",
+          "They are already near full adult size at birth and barely grow afterward"
         ],
-        "correctIndex": 0,
-        "explanation": "The tiny 3-millimeter stapes helps transmit sound vibrations inside the middle ear."
+        "correctIndex": 2,
+        "explanation": "Unlike limb bones that lengthen throughout childhood, the tiny middle-ear ossicles are born nearly full-sized so hearing geometry stays precisely tuned."
       },
       "sourceName": "NIH / NIDCD Hearing Research",
       "sourceUrl": "https://www.nidcd.nih.gov/health/how-do-we-hear"
     },
     "sourceName": "NIH / NIDCD Hearing Research",
-    "sourceUrl": "https://www.nidcd.nih.gov/health/how-do-we-hear"
+    "sourceUrl": "https://www.nidcd.nih.gov/health/how-do-we-hear",
+    "visualQuery": "sound wave ear"
   },
   {
     "id": "human-10",
@@ -1608,14 +1637,14 @@
       "sourceHint": "Brown University Sleep Lab",
       "tag": "Uyku Bilimi",
       "quiz": {
-        "question": "Uyku araştırmalarına göre uyurken bizi uyandırmada en etkisiz kalan duyu hangisidir?",
+        "question": "Derin uykuda beyin koku sinyallerine neredeyse hiç tepki vermediği için evlerde yangın güvenliği açısından ne kritik önem taşır?",
         "options": [
-          "Koku alma duyusu",
-          "İşitme duyusu",
-          "Dokunma duyusu"
+          "Yatak odalarında uyku öncesi keskin nane kokusu yakmak",
+          "Pencereleri gece boyunca tamamen kapalı tutmak",
+          "Duman kokusuna güvenmek yerine yüksek sesli duman alarmları kullanmak"
         ],
-        "correctIndex": 0,
-        "explanation": "Derin uykuda beyin koku sinyallerine yanıt vermez; bu yüzden duman dedektörleri yüksek sesle çalışır."
+        "correctIndex": 2,
+        "explanation": "Brown Üniversitesi deneyleri en keskin kokuların bile derin uyuyan insanları uyandırmadığını kanıtladı; işitme sistemi ise gece de alarm halindedir."
       },
       "sourceName": "Brown University Sleep Research",
       "sourceUrl": "https://pubmed.ncbi.nlm.nih.gov/15164891/"
@@ -1628,20 +1657,21 @@
       "sourceHint": "Brown University Sleep Lab",
       "tag": "Sleep Science",
       "quiz": {
-        "question": "Which sense is least effective at waking a sleeping human?",
+        "question": "Because deep sleep nearly shuts down smell alerts, what makes audible smoke alarms essential in bedrooms?",
         "options": [
-          "Smell",
-          "Hearing",
-          "Touch"
+          "Hearing stays alert while sleeping, whereas smoke odors alone rarely wake sleepers",
+          "Smell receptors turn off permanently after age 25",
+          "Smoke molecules are heavier than air and never reach pillow height"
         ],
         "correctIndex": 0,
-        "explanation": "Because smell won't reliably wake sleepers, fire safety relies on loud audible alarms."
+        "explanation": "Brown University sleep trials proved even acrid smoke smells fail to rouse people from deep sleep, while auditory alarms reliably wake the brain."
       },
       "sourceName": "Brown University Sleep Research",
       "sourceUrl": "https://pubmed.ncbi.nlm.nih.gov/15164891/"
     },
     "sourceName": "Brown University Sleep Research",
-    "sourceUrl": "https://pubmed.ncbi.nlm.nih.gov/15164891/"
+    "sourceUrl": "https://pubmed.ncbi.nlm.nih.gov/15164891/",
+    "visualQuery": "sleeping night bedroom"
   },
   {
     "id": "history-01",
@@ -1680,18 +1710,19 @@
       "quiz": {
         "question": "In history, Cleopatra lived closer in time to which milestone?",
         "options": [
-          "The 1969 Moon landing",
           "The building of the Great Pyramid",
+          "The 1969 Moon landing",
           "Exactly halfway between both"
         ],
-        "correctIndex": 0,
+        "correctIndex": 1,
         "explanation": "About 2,530 years separated Cleopatra from the Great Pyramid, compared to ~2,000 years before Apollo 11."
       },
       "sourceName": "Encyclopaedia Britannica",
       "sourceUrl": "https://www.britannica.com/biography/Cleopatra-queen-of-Egypt"
     },
     "sourceName": "Encyclopaedia Britannica",
-    "sourceUrl": "https://www.britannica.com/biography/Cleopatra-queen-of-Egypt"
+    "sourceUrl": "https://www.britannica.com/biography/Cleopatra-queen-of-Egypt",
+    "visualQuery": "giza pyramids egypt"
   },
   {
     "id": "history-02",
@@ -1708,14 +1739,14 @@
       "sourceHint": "University of Oxford Archives",
       "tag": "Dünya Tarihi",
       "quiz": {
-        "question": "Oxford Üniversitesi'ndeki eğitim, Azteklerin başkenti Tenochtitlan'dan yaklaşık kaç yıl önce başladı?",
+        "question": "Tarihte Oxford Üniversitesi ile Aztek başkenti Tenochtitlan'ın kronolojik ilişkisi neden insanları şaşırtır?",
         "options": [
-          "200 yılı aşkın bir süre önce",
-          "50 yıl sonra",
-          "Aynı yıl"
+          "Aztekler Oxford kütüphanesinin ilk binalarını inşa etmişti",
+          "Oxford'da dersler başladığında Aztek İmparatorluğu henüz kurulmamıştı bile (200+ yıl fark)",
+          "İkisi de tam olarak aynı yıl kuruldu"
         ],
-        "correctIndex": 0,
-        "explanation": "Oxford'da eğitim 1096'da, Tenochtitlan ise 1325'te kuruldu."
+        "correctIndex": 1,
+        "explanation": "Oxford 1096 civarında öğretime başlarken Tenochtitlan 1325 yılında kuruldu—yani üniversite Azteklerden iki yüzyıl eskidir."
       },
       "sourceName": "University of Oxford Archives",
       "sourceUrl": "https://www.ox.ac.uk/about/organisation/history"
@@ -1728,20 +1759,21 @@
       "sourceHint": "University of Oxford Archives",
       "tag": "World History",
       "quiz": {
-        "question": "Roughly how much earlier did Oxford start teaching before Tenochtitlan was founded?",
+        "question": "Why does comparing Oxford University and the Aztec Empire break people's mental timeline?",
         "options": [
-          "Over 200 years earlier",
-          "50 years later",
-          "In the exact same decade"
+          "Aztec architects designed Oxford's earliest stone domes",
+          "Both institutions opened within the same decade",
+          "Oxford held lectures over two centuries before Tenochtitlan was founded in 1325"
         ],
-        "correctIndex": 0,
-        "explanation": "Teaching at Oxford dates to 1096 CE, over two centuries before Tenochtitlan's founding in 1325 CE."
+        "correctIndex": 2,
+        "explanation": "Teaching existed at Oxford by ~1096, making it more than 200 years older than the Aztec capital."
       },
       "sourceName": "University of Oxford Archives",
       "sourceUrl": "https://www.ox.ac.uk/about/organisation/history"
     },
     "sourceName": "University of Oxford Archives",
-    "sourceUrl": "https://www.ox.ac.uk/about/organisation/history"
+    "sourceUrl": "https://www.ox.ac.uk/about/organisation/history",
+    "visualQuery": "historic oxford library"
   },
   {
     "id": "history-03",
@@ -1758,14 +1790,14 @@
       "sourceHint": "Guinness World Records / UK National Archives",
       "tag": "Askeri Tarih",
       "quiz": {
-        "question": "Tarihteki en kısa kayıtlı savaş olan 1896 İngiltere-Zanzibar Savaşı ne kadar sürdü?",
+        "question": "1896 İngiltere-Zanzibar Savaşı nasıl sadece 38 dakikada sonuçlanarak tarihe geçti?",
         "options": [
-          "38-45 dakika",
-          "6 saat",
-          "3 gün"
+          "İki ordunun satranç maçı yapıp berabere kalmasıyla",
+          "Fırtına yüzünden kimsenin silah ateşleyememesiyle",
+          "İngiliz donanmasının sarayı bombalaması üzerine yeni sultanın hemen teslim olmasıyla"
         ],
-        "correctIndex": 0,
-        "explanation": "09:02'de başlayan çatışma yaklaşık 38 dakika sonra ateşkesle sona erdi."
+        "correctIndex": 2,
+        "explanation": "Saat 09:02'de başlayan deniz bombardımanı sarayı kullanılamaz hale getirince bayrak 09:40'ta indirildi."
       },
       "sourceName": "Guinness World Records / UK Archives",
       "sourceUrl": "https://www.guinnessworldrecords.com/world-records/shortest-war"
@@ -1778,20 +1810,21 @@
       "sourceHint": "Guinness World Records / UK National Archives",
       "tag": "Military History",
       "quiz": {
-        "question": "About how long did the 1896 Anglo-Zanzibar War last?",
+        "question": "How did the 1896 Anglo-Zanzibar War end in an astonishing 38 minutes?",
         "options": [
-          "38 to 45 minutes",
-          "6 hours",
-          "3 days"
+          "British warships shelled the palace until Sultan Khalid's flag fell at 09:40",
+          "Both commanders agreed to settle the dispute via coin toss",
+          "Heavy monsoon rain flooded every gunpowder store"
         ],
         "correctIndex": 0,
-        "explanation": "Fighting started at 9:02 AM and ended around 9:40 AM—about 38 minutes later."
+        "explanation": "Modern naval artillery overwhelmed the palace defenses within 38 minutes of the opening salvo."
       },
       "sourceName": "Guinness World Records / UK Archives",
       "sourceUrl": "https://www.guinnessworldrecords.com/world-records/shortest-war"
     },
     "sourceName": "Guinness World Records / UK Archives",
-    "sourceUrl": "https://www.guinnessworldrecords.com/world-records/shortest-war"
+    "sourceUrl": "https://www.guinnessworldrecords.com/world-records/shortest-war",
+    "visualQuery": "vintage naval warship"
   },
   {
     "id": "history-04",
@@ -1830,18 +1863,19 @@
       "quiz": {
         "question": "Where did ancient Rome's prized Tyrian purple dye come from?",
         "options": [
-          "Mediterranean sea snails",
           "Crushed lavender petals",
+          "Mediterranean sea snails",
           "Squid ink"
         ],
-        "correctIndex": 0,
+        "correctIndex": 1,
         "explanation": "Murex sea snails secreted the rare pigment used to dye imperial garments."
       },
       "sourceName": "Metropolitan Museum of Art",
       "sourceUrl": "https://en.wikipedia.org/wiki/Tyrian_purple"
     },
     "sourceName": "Metropolitan Museum of Art",
-    "sourceUrl": "https://en.wikipedia.org/wiki/Tyrian_purple"
+    "sourceUrl": "https://en.wikipedia.org/wiki/Tyrian_purple",
+    "visualQuery": "royal purple silk"
   },
   {
     "id": "history-05",
@@ -1860,11 +1894,11 @@
       "quiz": {
         "question": "Son tüylü mamutlar Mısır Piramitlerinin inşası sırasında nerede hayatta kalmıştı?",
         "options": [
-          "Sibirya açıklarındaki Wrangel Adası'nda",
           "Nil Nehri deltasında",
+          "Sibirya açıklarındaki Wrangel Adası'nda",
           "İngiltere adalarında"
         ],
-        "correctIndex": 0,
+        "correctIndex": 1,
         "explanation": "Wrangel Adası'ndaki izole mamutlar yaklaşık 4.000 yıl öncesine kadar yaşadı."
       },
       "sourceName": "Current Biology / Radiocarbon Study",
@@ -1880,18 +1914,19 @@
       "quiz": {
         "question": "Where did the last woolly mammoths survive until around 4,000 years ago?",
         "options": [
-          "Wrangel Island in the Arctic",
           "The Nile River delta",
-          "The British Isles"
+          "The British Isles",
+          "Wrangel Island in the Arctic"
         ],
-        "correctIndex": 0,
+        "correctIndex": 2,
         "explanation": "An isolated population on Wrangel Island persisted alongside early Bronze Age civilizations."
       },
       "sourceName": "Current Biology / Radiocarbon Study",
       "sourceUrl": "https://pubmed.ncbi.nlm.nih.gov/25913407/"
     },
     "sourceName": "Current Biology / Radiocarbon Study",
-    "sourceUrl": "https://pubmed.ncbi.nlm.nih.gov/25913407/"
+    "sourceUrl": "https://pubmed.ncbi.nlm.nih.gov/25913407/",
+    "visualQuery": "arctic snowy tundra"
   },
   {
     "id": "history-06",
@@ -1908,14 +1943,14 @@
       "sourceHint": "Archaeological Park of Pompeii",
       "tag": "Günlük Yaşam Tarihi",
       "quiz": {
-        "question": "Pompeii'de sıcak yemek satan antik fast-food dükkanlarına ne ad verilirdi?",
+        "question": "Pompeii ve Antik Roma'da halkın büyük bölümünün evde yemek pişirmek yerine sokaktaki 'thermopolium' büfelerini tercih etmesinin temel nedeni neydi?",
         "options": [
-          "Thermopolium",
-          "Agora",
-          "Colosseum"
+          "Roma yasalarının evlerde ateş yakmayı tamamen yasaklaması",
+          "Sokak büfelerinin imparatorluk tarafından ücretsiz dağıtılması",
+          "Kalabalık şehir apartmanlarının çoğunda mutfak ve güvenli ocak bulunmaması"
         ],
-        "correctIndex": 0,
-        "explanation": "'Thermopolium' kelime anlamıyla 'sıcak bir şeylerin satıldığı yer' demektir."
+        "correctIndex": 2,
+        "explanation": "Antik Roma'nın 'insula' adlı çok katlı apartmanlarında mutfak ve baca olmadığından, çalışan halk sıcak yemek ihtiyacını hızlı sokak büfelerinden karşılardı."
       },
       "sourceName": "Archaeological Park of Pompeii",
       "sourceUrl": "https://pompeiisites.org/en/comunicati/the-ancient-snack-bar-of-regio-v-resurfaces-in-its-entirety-with-scenes-of-still-life-food-residues-animal-bones-and-victims-of-the-eruption/"
@@ -1928,20 +1963,21 @@
       "sourceHint": "Archaeological Park of Pompeii",
       "tag": "Daily Life History",
       "quiz": {
-        "question": "What were the ancient Roman street-side hot food counters in Pompeii called?",
+        "question": "Why did everyday citizens in Pompeii and Rome rely so heavily on street-side thermopolia instead of home cooking?",
         "options": [
-          "Thermopolia",
-          "Agoras",
-          "Aqueducts"
+          "Most cramped urban apartments lacked private kitchens or safe indoor hearths",
+          "Roman law strictly banned citizens from owning clay pots at home",
+          "Thermopolia gave away free grain rations funded by the Senate daily"
         ],
         "correctIndex": 0,
-        "explanation": "Thermopolium literally translates to 'a place where something hot is sold'."
+        "explanation": "Dense Roman apartment blocks rarely had kitchens or chimneys, making walk-up thermopolia essential neighborhood fast-food hubs."
       },
       "sourceName": "Archaeological Park of Pompeii",
       "sourceUrl": "https://pompeiisites.org/en/comunicati/the-ancient-snack-bar-of-regio-v-resurfaces-in-its-entirety-with-scenes-of-still-life-food-residues-animal-bones-and-victims-of-the-eruption/"
     },
     "sourceName": "Archaeological Park of Pompeii",
-    "sourceUrl": "https://pompeiisites.org/en/comunicati/the-ancient-snack-bar-of-regio-v-resurfaces-in-its-entirety-with-scenes-of-still-life-food-residues-animal-bones-and-victims-of-the-eruption/"
+    "sourceUrl": "https://pompeiisites.org/en/comunicati/the-ancient-snack-bar-of-regio-v-resurfaces-in-its-entirety-with-scenes-of-still-life-food-residues-animal-bones-and-victims-of-the-eruption/",
+    "visualQuery": "pompeii roman ruins"
   },
   {
     "id": "history-07",
@@ -1958,14 +1994,14 @@
       "sourceHint": "Science Museum London",
       "tag": "Antik Mühendislik",
       "quiz": {
-        "question": "İskenderiyeli Heron'un MS 1. yüzyılda yaptığı dönen buhar küresinin adı neydi?",
+        "question": "İskenderiyeli Heron'un MS 1. yüzyılda çalışan bir buhar türbini yapmasına rağmen bunun Antik Çağ'da Sanayi Devrimi'ni başlatamamasının başlıca nedeni neydi?",
         "options": [
-          "Aeolipile",
-          "Astrolab",
-          "Antikythera"
+          "Ucuz insan ve köle emeğinin yaygınlığı nedeniyle icadın tapınak harikası olarak kalması",
+          "Antik dünyada bakır ve bronz madenlerinin henüz keşfedilmemiş olması",
+          "Cihazın yalnızca kış aylarında kar suyunda çalışabilmesi"
         ],
         "correctIndex": 0,
-        "explanation": "Rüzgar tanrısı Aeolus'un adını taşıyan 'Aeolipile', tarihteki ilk bilinen buhar türbini düzeneğidir."
+        "explanation": "Aeolipile buhar tepkisiyle dönme ilkesini kanıtlasa da ucuz iş gücü bolluğu ve düşük verimli metalürji yüzünden endüstriyel makineye dönüştürülmedi."
       },
       "sourceName": "Science Museum London",
       "sourceUrl": "https://en.wikipedia.org/wiki/Aeolipile"
@@ -1978,20 +2014,21 @@
       "sourceHint": "Science Museum London",
       "tag": "Ancient Engineering",
       "quiz": {
-        "question": "What was Hero of Alexandria's 1st-century spinning steam sphere called?",
+        "question": "Hero of Alexandria built a working steam turbine in the 1st century CE—why didn't it spark an ancient Industrial Revolution?",
         "options": [
-          "Aeolipile",
-          "Astrolabe",
-          "Sextant"
+          "Ancient Mediterranean civilizations had not yet learned how to boil water",
+          "Abundant slave/manual labor and low-torque design kept it a temple novelty",
+          "Copper spheres shattered immediately whenever heated above 40 °C"
         ],
-        "correctIndex": 0,
-        "explanation": "Named after Aeolus, god of winds, the aeolipile used steam jets to spin a metal sphere."
+        "correctIndex": 1,
+        "explanation": "Without cheap high-pressure metallurgy or an economic shortage of manual labor, the aeolipile remained a curiosity rather than an industrial engine."
       },
       "sourceName": "Science Museum London",
       "sourceUrl": "https://en.wikipedia.org/wiki/Aeolipile"
     },
     "sourceName": "Science Museum London",
-    "sourceUrl": "https://en.wikipedia.org/wiki/Aeolipile"
+    "sourceUrl": "https://en.wikipedia.org/wiki/Aeolipile",
+    "visualQuery": "spinning steam turbine"
   },
   {
     "id": "history-08",
@@ -2008,14 +2045,14 @@
       "sourceHint": "BBC History Magazine",
       "tag": "Unutulmuş Meslekler",
       "quiz": {
-        "question": "19. yüzyılda fabrika işçilerini camlarına vurarak uyandıran meslek grubuna ne denirdi?",
+        "question": "19. yüzyıl İngiltere'sinde profesyonel 'knocker-upper'lar müşterinin penceresine vurduktan sonra neden hemen diğer sokağa geçmezdi?",
         "options": [
-          "Knocker-upper",
-          "Bellman",
-          "Lamper"
+          "Sabah vardiyasının ücretini her gün nakit olarak pencereden topladıklarından",
+          "İşçinin gerçekten uyandığından emin olmak için pencereye gelip işaret vermesini beklediklerinden",
+          "Belediye saat kulesinden onay düdüğü gelmesini beklediklerinden"
         ],
-        "correctIndex": 0,
-        "explanation": "Knocker-upper'lar uzun sopalarla pencerelere vurarak sabah vardiyacılarını uyandırırdı."
+        "correctIndex": 1,
+        "explanation": "İyi bir knocker-upper'ın itibarı müşterisini işe geç bırakmamasına bağlıydı; perde aralanıp uyanıldığı görülene kadar cama tıklatmaya devam ederlerdi."
       },
       "sourceName": "BBC History Archives",
       "sourceUrl": "https://www.atlasobscura.com/articles/what-did-people-use-before-alarm-clocks"
@@ -2028,20 +2065,21 @@
       "sourceHint": "BBC History Magazine",
       "tag": "Forgotten Jobs",
       "quiz": {
-        "question": "What were the 19th-century human alarm clocks who tapped on windows called?",
+        "question": "Why did dedicated 19th-century 'knocker-uppers' refuse to walk away right after tapping on a worker's window?",
         "options": [
-          "Knocker-uppers",
-          "Bell-ringers",
-          "Gaslighters"
+          "They had to collect a fresh coin through the window every single morning",
+          "City law required them to sing the weather forecast at each doorway",
+          "They waited until the sleeper came to the glass to prove they were truly awake"
         ],
-        "correctIndex": 0,
-        "explanation": "Knocker-uppers used long poles or pea shooters to wake factory workers on time."
+        "correctIndex": 2,
+        "explanation": "A knocker-upper's reputation depended on reliability—so they kept tapping with bamboo poles or pea shooters until the client appeared at the window."
       },
       "sourceName": "BBC History Archives",
       "sourceUrl": "https://www.atlasobscura.com/articles/what-did-people-use-before-alarm-clocks"
     },
     "sourceName": "BBC History Archives",
-    "sourceUrl": "https://www.atlasobscura.com/articles/what-did-people-use-before-alarm-clocks"
+    "sourceUrl": "https://www.atlasobscura.com/articles/what-did-people-use-before-alarm-clocks",
+    "visualQuery": "foggy vintage london"
   },
   {
     "id": "history-09",
@@ -2060,11 +2098,11 @@
       "quiz": {
         "question": "18. yüzyılda Avrupalı zenginler neden akşam partileri için ananas kiralardı?",
         "options": [
-          "Servet ve statü sembolü olarak masada sergilemek için",
           "Oda kokusunu bastırmak için",
-          "Meyve suyu sıkmak için"
+          "Meyve suyu sıkmak için",
+          "Servet ve statü sembolü olarak masada sergilemek için"
         ],
-        "correctIndex": 0,
+        "correctIndex": 2,
         "explanation": "Aşırı nadir olduğundan ananası yemeden sadece masada sergilemek büyük prestij göstergesiydi."
       },
       "sourceName": "Royal Botanic Gardens, Kew",
@@ -2091,7 +2129,8 @@
       "sourceUrl": "https://en.wikipedia.org/wiki/Pineapple"
     },
     "sourceName": "Royal Botanic Gardens, Kew",
-    "sourceUrl": "https://en.wikipedia.org/wiki/Pineapple"
+    "sourceUrl": "https://en.wikipedia.org/wiki/Pineapple",
+    "visualQuery": "golden pineapple table"
   },
   {
     "id": "history-10",
@@ -2130,18 +2169,19 @@
       "quiz": {
         "question": "What material was the famous 1513 Piri Reis map drawn upon?",
         "options": [
-          "Gazelle skin (parchment)",
           "Baked clay tablet",
+          "Gazelle skin (parchment)",
           "Woven silk"
         ],
-        "correctIndex": 0,
+        "correctIndex": 1,
         "explanation": "The surviving fragment preserved in Topkapı Palace was drawn on gazelle parchment."
       },
       "sourceName": "UNESCO / Topkapı Palace Archives",
       "sourceUrl": "https://www.unesco.org/en/memory-world/piri-reis-world-map-1513"
     },
     "sourceName": "UNESCO / Topkapı Palace Archives",
-    "sourceUrl": "https://www.unesco.org/en/memory-world/piri-reis-world-map-1513"
+    "sourceUrl": "https://www.unesco.org/en/memory-world/piri-reis-world-map-1513",
+    "visualQuery": "antique nautical compass"
   },
   {
     "id": "science-01",
@@ -2160,11 +2200,11 @@
       "quiz": {
         "question": "Bir maddenin katı, sıvı ve gaz hallerinin aynı anda dengede bulunduğu duruma ne ad verilir?",
         "options": [
-          "Üçlü nokta (Triple point)",
           "Kritik eşik",
+          "Üçlü nokta (Triple point)",
           "Mutlak sıfır"
         ],
-        "correctIndex": 0,
+        "correctIndex": 1,
         "explanation": "Üçlü noktada sıcaklık ve basınç üç fazın aynı anda var olmasını sağlar."
       },
       "sourceName": "NIST Thermodynamics Standards",
@@ -2180,18 +2220,19 @@
       "quiz": {
         "question": "What is the state called when solid, liquid, and gas coexist in equilibrium?",
         "options": [
-          "Triple point",
           "Absolute zero",
-          "Critical mass"
+          "Critical mass",
+          "Triple point"
         ],
-        "correctIndex": 0,
+        "correctIndex": 2,
         "explanation": "At the triple point, pressure and temperature balance all three phases simultaneously."
       },
       "sourceName": "NIST Thermodynamics Standards",
       "sourceUrl": "https://www.nist.gov/si-redefinition/kelvin-introduction"
     },
     "sourceName": "NIST Thermodynamics Standards",
-    "sourceUrl": "https://www.nist.gov/si-redefinition/kelvin-introduction"
+    "sourceUrl": "https://www.nist.gov/si-redefinition/kelvin-introduction",
+    "visualQuery": "boiling ice water"
   },
   {
     "id": "science-02",
@@ -2210,11 +2251,11 @@
       "quiz": {
         "question": "2,17 Kelvin altındaki süperakışkan helyum-4 neden kabın duvarlarından yukarı tırmanabilir?",
         "options": [
-          "Sıfır viskoziteye geçip sürtünmesiz kuantum filmi oluşturduğu için",
           "Helyum manyetik bir metal olduğu için",
-          "Kap içinde kaynayarak buhar itkisi ürettiği için"
+          "Kap içinde kaynayarak buhar itkisi ürettiği için",
+          "Sıfır viskoziteye geçip sürtünmesiz kuantum filmi oluşturduğu için"
         ],
-        "correctIndex": 0,
+        "correctIndex": 2,
         "explanation": "Lambda noktasının altında sıfır viskoziteli Rollin filmi van der Waals kuvvetiyle duvarı sürtünmesiz tırmanır."
       },
       "guessChallenge": {
@@ -2259,7 +2300,8 @@
       "sourceUrl": "https://en.wikipedia.org/wiki/Superfluidity"
     },
     "sourceName": "APS Physics / Physical Review",
-    "sourceUrl": "https://en.wikipedia.org/wiki/Superfluidity"
+    "sourceUrl": "https://en.wikipedia.org/wiki/Superfluidity",
+    "visualQuery": "liquid nitrogen laboratory"
   },
   {
     "id": "science-03",
@@ -2298,18 +2340,19 @@
       "quiz": {
         "question": "What would happen if GPS satellites did not correct for relativistic time dilation?",
         "options": [
-          "Location accuracy would drift by kilometers every day",
           "Phone batteries would drain twice as fast",
+          "Location accuracy would drift by kilometers every day",
           "Satellites would fall out of orbit"
         ],
-        "correctIndex": 0,
+        "correctIndex": 1,
         "explanation": "Even microsecond clock drift translates into huge distance errors at the speed of light."
       },
       "sourceName": "NIST Atomic Clocks & Relativity",
       "sourceUrl": "https://www.nist.gov/news-events/news/2010/09/nist-pair-aluminum-atomic-clocks-reveal-einsteins-relativity-personal-scale"
     },
     "sourceName": "NIST Atomic Clocks & Relativity",
-    "sourceUrl": "https://www.nist.gov/news-events/news/2010/09/nist-pair-aluminum-atomic-clocks-reveal-einsteins-relativity-personal-scale"
+    "sourceUrl": "https://www.nist.gov/news-events/news/2010/09/nist-pair-aluminum-atomic-clocks-reveal-einsteins-relativity-personal-scale",
+    "visualQuery": "skyscraper city skyline"
   },
   {
     "id": "science-04",
@@ -2328,11 +2371,11 @@
       "quiz": {
         "question": "Sonolüminesans deneyinde su içindeki bir gaz kabarcığının mikroskobik ışık patlaması üretmesinin sebebi nedir?",
         "options": [
-          "Ultrasonik ses dalgasının kabarcığı sesüstü hızla çöktürüp gazı aşırı ısıtması",
           "Suya karıştırılan fosfor tozunun parlaması",
+          "Ultrasonik ses dalgasının kabarcığı sesüstü hızla çöktürüp gazı aşırı ısıtması",
           "Kabarcığın içindeki suyun elektrolizle yanması"
         ],
-        "correctIndex": 0,
+        "correctIndex": 1,
         "explanation": "Akustik dalgayla sıkışan gaz birkaç pikosaniye içinde Güneş yüzeyi sıcaklığında plazma ışığı yayar."
       },
       "guessChallenge": {
@@ -2357,11 +2400,11 @@
       "quiz": {
         "question": "What causes a tiny suspended bubble to emit an ultraviolet-bright flash during sonoluminescence?",
         "options": [
-          "Violent acoustic collapse compressing internal gas to star-like temperatures",
           "Chemical bioluminescence from dissolved algae",
-          "Static electricity rubbed off the glass tank"
+          "Static electricity rubbed off the glass tank",
+          "Violent acoustic collapse compressing internal gas to star-like temperatures"
         ],
-        "correctIndex": 0,
+        "correctIndex": 2,
         "explanation": "Adiabatic implosion crushes the bubble's core in picoseconds, heating trapped gas into a brief glowing plasma."
       },
       "guessChallenge": {
@@ -2377,7 +2420,8 @@
       "sourceUrl": "https://journals.aps.org/rmp/abstract/10.1103/RevModPhys.74.425"
     },
     "sourceName": "Reviews of Modern Physics",
-    "sourceUrl": "https://journals.aps.org/rmp/abstract/10.1103/RevModPhys.74.425"
+    "sourceUrl": "https://journals.aps.org/rmp/abstract/10.1103/RevModPhys.74.425",
+    "visualQuery": "glowing water bubble"
   },
   {
     "id": "science-05",
@@ -2396,11 +2440,11 @@
       "quiz": {
         "question": "500 ton su taşıyan bir bulutun gökyüzünde havada kalabilmesinin sırrı nedir?",
         "options": [
-          "Suyun mikroskobik damlacıklara dağılıp yükselen havayla taşınması",
           "Bulutların içinde helyum gazı birikmesi",
-          "Su damlalarının yerçekiminden etkilenmemesi"
+          "Su damlalarının yerçekiminden etkilenmemesi",
+          "Suyun mikroskobik damlacıklara dağılıp yükselen havayla taşınması"
         ],
-        "correctIndex": 0,
+        "correctIndex": 2,
         "explanation": "Geniş alana yayılan mikro damlacıklar yükselen hava akımlarının üzerinde kolayca süzülür."
       },
       "sourceName": "USGS Water Science School",
@@ -2427,7 +2471,8 @@
       "sourceUrl": "https://www.usgs.gov/water-science-school/science/how-much-does-a-cloud-weigh"
     },
     "sourceName": "USGS Water Science School",
-    "sourceUrl": "https://www.usgs.gov/water-science-school/science/how-much-does-a-cloud-weigh"
+    "sourceUrl": "https://www.usgs.gov/water-science-school/science/how-much-does-a-cloud-weigh",
+    "visualQuery": "fluffy cumulus clouds"
   },
   {
     "id": "science-06",
@@ -2466,18 +2511,19 @@
       "quiz": {
         "question": "Why does sound travel so much faster underwater than through air?",
         "options": [
-          "Water molecules are packed much closer together",
           "Water conducts electricity better than air",
+          "Water molecules are packed much closer together",
           "Wind slows sound down on land"
         ],
-        "correctIndex": 0,
+        "correctIndex": 1,
         "explanation": "Closely packed water molecules transfer mechanical vibrations far more rapidly."
       },
       "sourceName": "NOAA Ocean Acoustics",
       "sourceUrl": "https://oceanservice.noaa.gov/facts/sound.html"
     },
     "sourceName": "NOAA Ocean Acoustics",
-    "sourceUrl": "https://oceanservice.noaa.gov/facts/sound.html"
+    "sourceUrl": "https://oceanservice.noaa.gov/facts/sound.html",
+    "visualQuery": "underwater ocean ripples"
   },
   {
     "id": "science-07",
@@ -2487,7 +2533,7 @@
     "emoji": "🌈",
     "readingTimeSec": 14,
     "tr": {
-      "slug": "gokkusaklari-aslında-tam-bir-dairedir",
+      "slug": "gokkusaklari-aslinda-tam-bir-dairedir",
       "title": "Gökkuşakları Aslında Yarım Yay Değil, Tam Bir Dairedir",
       "factText": "Yer yüzeyinden gökkuşağını yarım yay gibi görürüz; ancak bir uçaktan veya yüksek bir dağdan baktığınızda tam 360 derecelik bir çember oluşur.",
       "deepDiveDetail": "Güneş ışığı yağmur damlacıklarından yaklaşık 42 derecelik bir koni açısıyla gözümüze kırılır. Yerdeyken ufkun altındaki kısmı toprak gizler; gökyüzünde ise tam renk çemberi bütün ihtişamıyla ortaya çıkar.",
@@ -2496,11 +2542,11 @@
       "quiz": {
         "question": "Bir gökkuşağını tam 360 derecelik bir daire olarak görebilmek için en iyi yer neresidir?",
         "options": [
-          "Yüksekten, örneğin bir uçak penceresinden",
           "Deniz seviyesindeki bir kumsaldan",
+          "Yüksekten, örneğin bir uçak penceresinden",
           "Sadece gece yarısı"
         ],
-        "correctIndex": 0,
+        "correctIndex": 1,
         "explanation": "Yüksekte ufuk çizgisi görüşü kesmediği için gökkuşağının alt yarısı da tamamlanır."
       },
       "sourceName": "Met Office UK / Atmospheric Optics",
@@ -2516,18 +2562,19 @@
       "quiz": {
         "question": "Where can you witness a rainbow as a complete 360-degree circle?",
         "options": [
-          "High up in an airplane looking down through rain",
           "Standing at sea level on a flat beach",
-          "Only under moonlight"
+          "Only under moonlight",
+          "High up in an airplane looking down through rain"
         ],
-        "correctIndex": 0,
+        "correctIndex": 2,
         "explanation": "From high altitude, the ground no longer blocks the lower half of the 42-degree light cone."
       },
       "sourceName": "Met Office UK / Atmospheric Optics",
       "sourceUrl": "https://weather.metoffice.gov.uk/learn-about/weather/optical-effects/rainbows"
     },
     "sourceName": "Met Office UK / Atmospheric Optics",
-    "sourceUrl": "https://weather.metoffice.gov.uk/learn-about/weather/optical-effects/rainbows"
+    "sourceUrl": "https://weather.metoffice.gov.uk/learn-about/weather/optical-effects/rainbows",
+    "visualQuery": "rainbow storm sky"
   },
   {
     "id": "science-08",
@@ -2546,11 +2593,11 @@
       "quiz": {
         "question": "Küresel tahminlere göre Dünya'daki ağaç sayısı Samanyolu'ndaki yıldız sayısına göre nasıldır?",
         "options": [
-          "Dünya'daki ağaçlar (~3 trilyon) çok daha fazladır",
           "Samanyolu'ndaki yıldızlar 100 kat fazladır",
-          "Yaklaşık olarak eşittirler"
+          "Yaklaşık olarak eşittirler",
+          "Dünya'daki ağaçlar (~3 trilyon) çok daha fazladır"
         ],
-        "correctIndex": 0,
+        "correctIndex": 2,
         "explanation": "Dünya'da ~3 trilyon ağaç varken Samanyolu'nda ~100–400 milyar yıldız bulunur."
       },
       "sourceName": "Nature / Yale Forestry Study",
@@ -2577,7 +2624,8 @@
       "sourceUrl": "https://www.nature.com/articles/nature14967"
     },
     "sourceName": "Nature / Yale Forestry Study",
-    "sourceUrl": "https://www.nature.com/articles/nature14967"
+    "sourceUrl": "https://www.nature.com/articles/nature14967",
+    "visualQuery": "aerial green forest"
   },
   {
     "id": "science-09",
@@ -2594,14 +2642,14 @@
       "sourceHint": "NASA Sun Science",
       "tag": "Kuantum & Astrofizik",
       "quiz": {
-        "question": "Bir foton Güneş'in yüzeyinden Dünya'ya kaç dakikada ulaşır?",
+        "question": "Güneş ışığı Dünya'ya 8 dakikada gelmesine rağmen, aynı fotonun Güneş çekirdeğinden yüzeye çıkması neden on binlerce yıl sürer?",
         "options": [
-          "Yaklaşık 8 dakika 20 saniye",
-          "Yaklaşık 1 saniye",
-          "Yaklaşık 24 saat"
+          "Aşırı yoğun plazmada sürekli atomlara çarpıp zikzak çizerek (rastgele yürüyüş) ilerlemesi yüzünden",
+          "Güneş çekirdeğinde yerçekiminin ışığı dondurması yüzünden",
+          "Fotonların ancak güneş tutulması anlarında hareket edebilmesi yüzünden"
         ],
         "correctIndex": 0,
-        "explanation": "Güneş'ten çıktıktan sonra 150 milyon km mesafeyi ışık hızıyla ~8 dakika 20 saniyede kat eder."
+        "explanation": "Çekirdekteki plazma o kadar yoğundur ki bir foton milimetre yol almadan emilip rastgele bir yöne yeniden saçılır."
       },
       "sourceName": "NASA Sun Science",
       "sourceUrl": "https://science.nasa.gov/sun/"
@@ -2614,20 +2662,21 @@
       "sourceHint": "NASA Sun Science",
       "tag": "Solar Physics",
       "quiz": {
-        "question": "How long does light take to travel from the Sun's surface to Earth?",
+        "question": "Even though sunlight takes ~8 minutes from the Sun's surface to Earth, why can a photon spend tens of millennia escaping the solar core?",
         "options": [
-          "About 8 minutes 20 seconds",
-          "About 1 second",
-          "About 24 hours"
+          "Gravity freezes photons until a solar flare melts them",
+          "Dense solar plasma bounces the photon in trillions of random zigzag collisions",
+          "Photons orbit Jupiter once before heading to Earth"
         ],
-        "correctIndex": 0,
-        "explanation": "After finally escaping the Sun's dense interior, sunlight reaches Earth in ~8 minutes 20 seconds."
+        "correctIndex": 1,
+        "explanation": "Through the sun's scorching radiative zone, photons undergo a slow random walk, scattering endlessly before reaching open space."
       },
       "sourceName": "NASA Sun Science",
       "sourceUrl": "https://science.nasa.gov/sun/"
     },
     "sourceName": "NASA Sun Science",
-    "sourceUrl": "https://science.nasa.gov/sun/"
+    "sourceUrl": "https://science.nasa.gov/sun/",
+    "visualQuery": "sunlight rays clouds"
   },
   {
     "id": "science-10",
@@ -2637,7 +2686,7 @@
     "emoji": "🫧",
     "readingTimeSec": 14,
     "tr": {
-      "slug": "cam-aslında-sivi-degil-amorf-katidir",
+      "slug": "cam-aslinda-sivi-degil-amorf-katidir",
       "title": "Eski Kilise Camlarının Altta Kalın Olmasının Sebebi Akması Değildir",
       "factText": "Orta Çağ pencerelerinin alt kısımlarının daha kalın olması camın yüzyıllar içinde 'akmasından' değil, o dönemki üretim tekniğinden kaynaklanır.",
       "deepDiveDetail": "Fizikçiler oda sıcaklığında camın akmasının evrenin yaşından bile uzun süreceğini hesaplamıştır. Eski cam ustaları erimiş camı döndürerek disk yaparken kalın kenar kısmını sağlamlık için aşağı yerleştirirlerdi.",
@@ -2646,11 +2695,11 @@
       "quiz": {
         "question": "Eski vitray camların alt kenarlarının daha kalın olmasının gerçek sebebi nedir?",
         "options": [
-          "Üretimde kalın kenarın denge için alta yerleştirilmesi",
           "Camın 500 yılda yavaşça aşağı akması",
+          "Üretimde kalın kenarın denge için alta yerleştirilmesi",
           "Yağmur sularının camı eritmesi"
         ],
-        "correctIndex": 0,
+        "correctIndex": 1,
         "explanation": "Cam amorf bir katıdır; ustalar el yapımı camın kalın tarafını çerçevede alta koyardı."
       },
       "sourceName": "Corning Museum of Glass",
@@ -2666,18 +2715,19 @@
       "quiz": {
         "question": "Why are antique window panes often thicker along their bottom edge?",
         "options": [
-          "Craftsmen placed the thicker hand-spun edge down for stability",
           "Room-temperature glass flows like thick syrup over centuries",
-          "Sunlight slowly melts the top edge"
+          "Sunlight slowly melts the top edge",
+          "Craftsmen placed the thicker hand-spun edge down for stability"
         ],
-        "correctIndex": 0,
+        "correctIndex": 2,
         "explanation": "Glass does not flow visibly at room temperature; historical glaziers put the heavy side down."
       },
       "sourceName": "Corning Museum of Glass",
       "sourceUrl": "https://math.ucr.edu/home/baez/physics/General/Glass/glass.html"
     },
     "sourceName": "Corning Museum of Glass",
-    "sourceUrl": "https://math.ucr.edu/home/baez/physics/General/Glass/glass.html"
+    "sourceUrl": "https://math.ucr.edu/home/baez/physics/General/Glass/glass.html",
+    "visualQuery": "stained glass window"
   },
   {
     "id": "weird-01",
@@ -2694,14 +2744,14 @@
       "sourceHint": "Guinness World Records / Protein Data Bank",
       "tag": "Dil & Biyokimya Rekoru",
       "quiz": {
-        "question": "Tam kimyasal adı 189.819 harf uzunluğunda olan dev proteinin kısa adı nedir?",
+        "question": "Tam adı 189.819 harf tutan dev Titin proteini insan kaslarının içinde hangi hayati görevi üstlenir?",
         "options": [
-          "Titin",
-          "Keratin",
-          "İnsülin"
+          "Kaslardaki laktik asidi oksijene çevirerek kalbe geri pompalar",
+          "Sadece tırnak ve saç tellerinin sertleşmesini sağlar",
+          "Moleküler bir yay gibi davranarak kas liflerine esneklik kazandırıp aşırı gerilmeyi önler"
         ],
-        "correctIndex": 0,
-        "explanation": "Kas esnekliğini sağlayan Titin proteininin tam sistematik adı 189.819 harftir."
+        "correctIndex": 2,
+        "explanation": "Kas sarkomerlerindeki en uzun protein zinciri olan Titin, kas kasılması sırasında yay gibi geri toplanarak dokunun bütünlüğünü ve esnekliğini korur."
       },
       "sourceName": "RCSB Protein Data Bank / Guinness",
       "sourceUrl": "https://pdb101.rcsb.org/motm/185"
@@ -2714,20 +2764,21 @@
       "sourceHint": "Guinness World Records / Protein Data Bank",
       "tag": "Language & Bio Record",
       "quiz": {
-        "question": "What is the short name of the protein whose full chemical name has 189,819 letters?",
+        "question": "What essential mechanical job does the giant 189,819-letter protein Titin perform inside your muscles?",
         "options": [
-          "Titin",
-          "Keratin",
-          "Insulin"
+          "It acts as a molecular spring giving muscle fibers elasticity and preventing tears",
+          "It converts lactic acid directly into oxygen inside red blood cells",
+          "It hardens fingernails and outer hair cuticles"
         ],
         "correctIndex": 0,
-        "explanation": "Titin, the massive muscle elasticity protein, holds the 189,819-letter chemical name record."
+        "explanation": "Spanning muscle sarcomeres like an elastic bungee cord, Titin provides passive tension and snaps stretched muscle fibers safely back into alignment."
       },
       "sourceName": "RCSB Protein Data Bank / Guinness",
       "sourceUrl": "https://pdb101.rcsb.org/motm/185"
     },
     "sourceName": "RCSB Protein Data Bank / Guinness",
-    "sourceUrl": "https://pdb101.rcsb.org/motm/185"
+    "sourceUrl": "https://pdb101.rcsb.org/motm/185",
+    "visualQuery": "protein molecule model"
   },
   {
     "id": "weird-02",
@@ -2744,14 +2795,14 @@
       "sourceHint": "University of Queensland Physics Museum",
       "tag": "Bilim Rekoru",
       "quiz": {
-        "question": "1927'de başlatılan ünlü Zift Damlası (Pitch Drop) deneyinde huniden bugüne kadar toplam kaç damla düştü?",
+        "question": "1927'den beri süren Zift Damlası deneyindeki zift çekiçle kırılabilecek kadar katı görünürken nasıl damlar?",
         "options": [
-          "9 damla",
-          "140 damla",
-          "600 damla"
+          "Oda sıcaklığında sudan yüz milyarlarca kat daha yoğun viskoziteye sahip aşırı yavaş bir sıvı olduğu için",
+          "İçindeki gizli asidin cam huniyi eritmesi yüzünden",
+          "Sadece gece sıcaklık sıfırın altına düştüğünde eridiği için"
         ],
         "correctIndex": 0,
-        "explanation": "Ziftin viskozitesi o kadar yüksektir ki her damlanın kopması 8 ila 13 yıl sürer; 9. damla 2014'te düşmüştür."
+        "explanation": "Zift aslında katı değil, viskozitesi sudan ~230 milyar kat yüksek olan amorf bir sıvıdır; bir damlasının oluşması yaklaşık 8-12 yıl sürer."
       },
       "guessChallenge": {
         "type": "slider",
@@ -2773,14 +2824,14 @@
       "sourceHint": "University of Queensland Physics Museum",
       "tag": "Lab Record",
       "quiz": {
-        "question": "How many drops have fallen so far in the famous University of Queensland Pitch Drop Experiment started in 1927?",
+        "question": "How can room-temperature pitch smash like brittle glass with a hammer yet slowly drip through a funnel?",
         "options": [
-          "9 drops",
-          "140 drops",
-          "600 drops"
+          "Electric currents melt one drop every ten years",
+          "It is an ultra-viscous liquid flowing roughly 230 billion times more slowly than water",
+          "Air humidity dissolves pitch particles overnight"
         ],
-        "correctIndex": 0,
-        "explanation": "Because pitch has ultra-high viscosity, only 9 drops have dripped since 1930 (the 9th fell in 2014)."
+        "correctIndex": 1,
+        "explanation": "Pitch exhibits brittle fracture under sudden shock yet behaves as a slow-moving fluid over decades."
       },
       "guessChallenge": {
         "type": "slider",
@@ -2795,7 +2846,8 @@
       "sourceUrl": "https://smp.uq.edu.au/pitch-drop-experiment"
     },
     "sourceName": "University of Queensland Physics Museum",
-    "sourceUrl": "https://smp.uq.edu.au/pitch-drop-experiment"
+    "sourceUrl": "https://smp.uq.edu.au/pitch-drop-experiment",
+    "visualQuery": "glass laboratory funnel"
   },
   {
     "id": "weird-03",
@@ -2814,11 +2866,11 @@
       "quiz": {
         "question": "Vombatların dışkısının küp şeklinde olmasının biyolojik sırrı nedir?",
         "options": [
-          "Bağırsak duvarının farklı esneklikteki bölgelerinin şekil vermesi",
           "Yalnızca küp şekilli taşlar yemeleri",
+          "Bağırsak duvarının farklı esneklikteki bölgelerinin şekil vermesi",
           "Doğumdan sonra özel bir keseden geçmesi"
         ],
-        "correctIndex": 0,
+        "correctIndex": 1,
         "explanation": "Bağırsağın sert ve esnek bölümlerindeki ritmik kasılmalar içeriği küp formuna sıkıştırır."
       },
       "sourceName": "National Geographic / Soft Matter Study",
@@ -2834,18 +2886,19 @@
       "quiz": {
         "question": "How do wombats manage to shape their droppings into cubes?",
         "options": [
-          "Alternating stiff and stretchy regions inside their intestines",
           "Eating square-shaped pebbles",
-          "Shaping them afterward with their paws"
+          "Shaping them afterward with their paws",
+          "Alternating stiff and stretchy regions inside their intestines"
         ],
-        "correctIndex": 0,
+        "correctIndex": 2,
         "explanation": "Varying stiffness along the intestinal walls molds flat faces and sharp edges."
       },
       "sourceName": "National Geographic / Soft Matter Study",
       "sourceUrl": "https://pubmed.ncbi.nlm.nih.gov/33289747/"
     },
     "sourceName": "National Geographic / Soft Matter Study",
-    "sourceUrl": "https://pubmed.ncbi.nlm.nih.gov/33289747/"
+    "sourceUrl": "https://pubmed.ncbi.nlm.nih.gov/33289747/",
+    "visualQuery": "australian wombat wildlife"
   },
   {
     "id": "weird-04",
@@ -2862,14 +2915,14 @@
       "sourceHint": "Guinness World Records / Susami Tourism",
       "tag": "Garip Mekan Rekoru",
       "quiz": {
-        "question": "Japonya'daki dünyanın en derin su altı posta kutusu kaç metre derinliktedir?",
+        "question": "Japonya'daki 10 metre su altındaki posta kutusuna atılan kartpostallar okyanusta nasıl bozulmadan alıcıya ulaşır?",
         "options": [
-          "10 metre",
-          "100 metre",
-          "1 metre"
+          "Deniz kaplumbağalarının postayı kıyıya taşımasıyla",
+          "Kutunun içinde yüksek basınçlı kurutma fırını olmasıyla",
+          "Suya dayanıklı plastik kartpostallar kullanılıp dalgıçlar tarafından her gün su geçirmez kutuda çıkarılmasıyla"
         ],
-        "correctIndex": 0,
-        "explanation": "Susami kıyısındaki su altı posta kutusu yaklaşık 10 metre derinliktedir ve düzenli olarak boşaltılır."
+        "correctIndex": 2,
+        "explanation": "Susami kasabasındaki gerçek resmi PTT kutusu, su geçirmez kartpostallar için dalgıçlar tarafından düzenli olarak boşaltılır."
       },
       "sourceName": "Guinness World Records / Susami Tourism",
       "sourceUrl": "https://www.guinnessworldrecords.com/world-records/69839-deepest-underwater-postbox"
@@ -2882,20 +2935,21 @@
       "sourceHint": "Guinness World Records / Susami Tourism",
       "tag": "Quirky World Record",
       "quiz": {
-        "question": "How deep underwater is Susami's working Guinness-record mailbox located?",
+        "question": "How do postcards mailed at Japan's 10-meter-deep underwater mailbox survive to reach recipients?",
         "options": [
-          "10 meters",
-          "100 meters",
-          "1 meter"
+          "Divers use waterproof plastic postcards and oil-based markers collected daily",
+          "Pressurized submarine tubes fire them straight to Tokyo",
+          "They are sealed inside glass bottles washed ashore"
         ],
         "correctIndex": 0,
-        "explanation": "Divers swim 10 meters down to drop waterproof postcards that staff regularly collect."
+        "explanation": "Local dive shop staff collect water-resistant plastic postcards daily and hand them over to Japan Post."
       },
       "sourceName": "Guinness World Records / Susami Tourism",
       "sourceUrl": "https://www.guinnessworldrecords.com/world-records/69839-deepest-underwater-postbox"
     },
     "sourceName": "Guinness World Records / Susami Tourism",
-    "sourceUrl": "https://www.guinnessworldrecords.com/world-records/69839-deepest-underwater-postbox"
+    "sourceUrl": "https://www.guinnessworldrecords.com/world-records/69839-deepest-underwater-postbox",
+    "visualQuery": "scuba diver ocean"
   },
   {
     "id": "weird-05",
@@ -2912,14 +2966,14 @@
       "sourceHint": "Alaska Public Media / BBC News",
       "tag": "Tuhaf Tarih Rekoru",
       "quiz": {
-        "question": "Alaska'nın Talkeetna kasabasında 20 yıl onursal belediye başkanı olan kedi Stubbs'ın 'ofisi' neredeydi?",
+        "question": "Talkeetna kasabasındaki sarı tekir kedi Stubbs nasıl oldu da 20 yıl boyunca onursal belediye başkanı olarak kaldı?",
         "options": [
-          "Yerel bir markette",
-          "Valilik binasında",
-          "Tren garında"
+          "Kasabanın resmi belediye meclisi olmadığı için halkın sevimli bir simge olarak Stubbs'ı benimsemesiyle",
+          "Alaska eyalet anayasasında hayvanlara yasal oy hakkı tanınmasıyla",
+          "Bölgedeki somon balığı vergilerini tek başına yönettiği için"
         ],
         "correctIndex": 0,
-        "explanation": "Stubbs vaktinin çoğunu Nagley's General Store adlı yerel markette geçirip turistleri karşılıyordu."
+        "explanation": "Talkeetna yerel yönetimi bulunmayan bir bölgeydi; 1997'de şaka olarak aday gösterilen Stubbs turistlerin ve yerlilerin sevgisiyle 20 yıl Nagley's marketinden kasabayı temsil etti."
       },
       "sourceName": "BBC News / Alaska Public Media",
       "sourceUrl": "https://www.smithsonianmag.com/smart-news/beloved-alaskan-cat-mayor-dies-180964188/"
@@ -2932,20 +2986,21 @@
       "sourceHint": "Alaska Public Media / BBC News",
       "tag": "Quirky History Record",
       "quiz": {
-        "question": "Where did Mayor Stubbs the cat hold his unofficial 'office hours' in Talkeetna?",
+        "question": "How did an orange tabby cat named Stubbs end up serving 20 years as Talkeetna's honorary mayor?",
         "options": [
-          "A local general store",
-          "The state capitol",
-          "A train depot"
+          "Alaska state law legally allows pets to cast tie-breaking council votes",
+          "Talkeetna had no formal city government, so locals embraced Stubbs as a beloved mascot",
+          "He won a dog-sledding championship that awarded lifelong political office"
         ],
-        "correctIndex": 0,
-        "explanation": "Stubbs greeted visitors daily at Nagley's General Store for two decades."
+        "correctIndex": 1,
+        "explanation": "Because Talkeetna was an unincorporated town without a human mayor, residents rallied around Stubbs as a charming civic ambassador at Nagley's General Store."
       },
       "sourceName": "BBC News / Alaska Public Media",
       "sourceUrl": "https://www.smithsonianmag.com/smart-news/beloved-alaskan-cat-mayor-dies-180964188/"
     },
     "sourceName": "BBC News / Alaska Public Media",
-    "sourceUrl": "https://www.smithsonianmag.com/smart-news/beloved-alaskan-cat-mayor-dies-180964188/"
+    "sourceUrl": "https://www.smithsonianmag.com/smart-news/beloved-alaskan-cat-mayor-dies-180964188/",
+    "visualQuery": "ginger tabby cat"
   },
   {
     "id": "weird-06",
@@ -2962,14 +3017,14 @@
       "sourceHint": "World Factbook / Coğrafya Verileri",
       "tag": "Coğrafya Şaşkınlığı",
       "quiz": {
-        "question": "Norveç ve Kuzey Kore'nin ikisiyle de kara sınırına sahip olan tek ülke hangisidir?",
+        "question": "Avrupa'daki Norveç ile Uzak Doğu'daki Kuzey Kore'yi birbirinden tek bir ülkenin ayırması Dünya coğrafyası hakkında ne gösterir?",
         "options": [
-          "Rusya",
-          "Çin",
-          "Finlandiya"
+          "Norveç ile Kuzey Kore'nin aynı okyanus adası üzerinde yer aldığını",
+          "Rusya'nın 11 saat dilimine yayılarak hem Kuzey Avrupa'ya hem Doğu Asya'ya sınır komşusu olduğunu",
+          "Arktik buzulların iki ülkeyi kara köprüsüyle doğrudan bağladığını"
         ],
-        "correctIndex": 0,
-        "explanation": "Rusya hem kuzeybatıda Norveç'e hem güneydoğuda Kuzey Kore'ye komşudur."
+        "correctIndex": 1,
+        "explanation": "Rusya kuzeybatıda Norveç'le ~196 km, güneydoğuda ise Tumen Nehri üzerinden Kuzey Kore ile ~17 km kara sınırı paylaşır."
       },
       "sourceName": "The World Factbook",
       "sourceUrl": "https://en.wikipedia.org/wiki/Norway%E2%80%93Russia_border"
@@ -2982,20 +3037,21 @@
       "sourceHint": "World Factbook / Geography Data",
       "tag": "Geography Mind-Bender",
       "quiz": {
-        "question": "Which single country shares land borders with both Norway and North Korea?",
+        "question": "What remarkable geographical scale does the single-country link between Norway and North Korea reveal?",
         "options": [
-          "Russia",
-          "China",
-          "Finland"
+          "Norway owns a Pacific island chain adjacent to the Korean Peninsula",
+          "Arctic sea ice creates a year-round highway linking both nations directly",
+          "Russia spans 11 time zones—bordering Scandinavia in the west and Korea in the east"
         ],
-        "correctIndex": 0,
-        "explanation": "Russia spans from Scandinavia to the Korean Peninsula, bordering both nations."
+        "correctIndex": 2,
+        "explanation": "Stretching across Eurasia, Russia shares a 196-km Arctic border with Norway and a 17-km border with North Korea along the Tumen River."
       },
       "sourceName": "The World Factbook",
       "sourceUrl": "https://en.wikipedia.org/wiki/Norway%E2%80%93Russia_border"
     },
     "sourceName": "The World Factbook",
-    "sourceUrl": "https://en.wikipedia.org/wiki/Norway%E2%80%93Russia_border"
+    "sourceUrl": "https://en.wikipedia.org/wiki/Norway%E2%80%93Russia_border",
+    "visualQuery": "northern lights mountains"
   },
   {
     "id": "weird-07",
@@ -3007,19 +3063,19 @@
     "tr": {
       "slug": "ananas-yerken-ananas-da-sizi-yer",
       "title": "Ananas Yerken Dilinizdeki Karıncalanma Enzim Savaşıdır",
-      "factText": "Taze ananas yediğinizde dilinizin hafifi sızlamasının sebebi, meyvedeki bromelain enziminin ağız içindeki proteinleri parçalamaya başlamasıdır.",
+      "factText": "Taze ananas yediğinizde dilinizin hafif sızlamasının sebebi, meyvedeki bromelain enziminin ağız içindeki proteinleri parçalamaya başlamasıdır.",
       "deepDiveDetail": "Bromelain et yumuşatıcı olarak bile kullanılan güçlü bir protein parçalayıcı enzimdir. Tabii tehlikeli değildir: ağzınızdaki tükürük enzimleri etkisiz hale getirir ve mide asidi bromelaini hemen sindirir; ancak o anlık karıncalanma tamamen bu enzimden gelir.",
       "sourceHint": "University of Melbourne Chemistry",
       "tag": "İlginç Biyokimya",
       "quiz": {
-        "question": "Taze ananasın dilde hafif sızlama yapmasına neden olan enzim hangisidir?",
+        "question": "Taze ananas yerken bromelain enzimi dil yüzeyindeki proteinleri parçaladığı halde neden ağzımızda kalıcı bir hasar oluşmaz?",
         "options": [
-          "Bromelain",
-          "Kafein",
-          "Laktaz"
+          "Dil hücreleri birkaç saniyede kendiliğinden metalik bir kalkan salgılar",
+          "Bromelain yalnızca ölü hücrelere tepki verip ısıyı sıfırlar",
+          "Tükürük enzimi hızla seyreltip temizler, mide asidi ise bromelaini hemen etkisiz hale getirir"
         ],
-        "correctIndex": 0,
-        "explanation": "Bromelain enzimi proteinleri parçalar; bu yüzden dil yüzeyinde geçici bir karıncalanma yaratır."
+        "correctIndex": 2,
+        "explanation": "Ananasın içindeki protein parçalayıcı bromelain yalnızca yüzeyde geçici bir karıncalanma yapar; yutulduğunda tükürük ve mide asidi tarafından anında sindirilir."
       },
       "sourceName": "University of Melbourne Chemistry",
       "sourceUrl": "https://pubmed.ncbi.nlm.nih.gov/34559534/"
@@ -3032,20 +3088,21 @@
       "sourceHint": "University of Melbourne Chemistry",
       "tag": "Food Oddity",
       "quiz": {
-        "question": "Which enzyme in fresh pineapple causes that mild tingling sensation on your tongue?",
+        "question": "If bromelain enzymes in fresh pineapple start breaking down tongue proteins, why doesn't eating it injure your mouth?",
         "options": [
-          "Bromelain",
-          "Amylase",
-          "Lactase"
+          "Saliva quickly dilutes it and harsh stomach acid neutralizes the enzyme immediately",
+          "Human taste buds coat themselves in waterproof wax while chewing fruit",
+          "Bromelain dissolves automatically when exposed to oxygen in the air"
         ],
         "correctIndex": 0,
-        "explanation": "Bromelain breaks down surface proteins until saliva and stomach acid neutralize it."
+        "explanation": "Saliva washes the enzyme away and your tongue's surface cells regenerate rapidly, while stomach acid denatures bromelain on arrival."
       },
       "sourceName": "University of Melbourne Chemistry",
       "sourceUrl": "https://pubmed.ncbi.nlm.nih.gov/34559534/"
     },
     "sourceName": "University of Melbourne Chemistry",
-    "sourceUrl": "https://pubmed.ncbi.nlm.nih.gov/34559534/"
+    "sourceUrl": "https://pubmed.ncbi.nlm.nih.gov/34559534/",
+    "visualQuery": "sliced yellow pineapple"
   },
   {
     "id": "weird-08",
@@ -3084,18 +3141,19 @@
       "quiz": {
         "question": "Why did people mistakenly believe a duck's quack doesn't echo?",
         "options": [
-          "The soft decay makes the echo blend into the original quack",
           "Quack frequencies pass straight through solid walls",
+          "The soft decay makes the echo blend into the original quack",
           "Ducks only quack underwater"
         ],
-        "correctIndex": 0,
+        "correctIndex": 1,
         "explanation": "Controlled acoustics tests confirmed quacks echo normally; they just fade smoothly together."
       },
       "sourceName": "University of Salford Acoustics",
       "sourceUrl": "https://www.cnn.com/2003/TECH/science/09/08/duck.quack/"
     },
     "sourceName": "University of Salford Acoustics",
-    "sourceUrl": "https://www.cnn.com/2003/TECH/science/09/08/duck.quack/"
+    "sourceUrl": "https://www.cnn.com/2003/TECH/science/09/08/duck.quack/",
+    "visualQuery": "duck lake ripples"
   },
   {
     "id": "weird-09",
@@ -3112,14 +3170,14 @@
       "sourceHint": "John Cage Organ Project Halberstadt",
       "tag": "Zaman Rekoru",
       "quiz": {
-        "question": "Almanya'da 639 yıl sürecek olan John Cage bestesinin performans adı ne anlama gelir?",
+        "question": "Almanya'nın Halberstadt kentindeki 639 yıllık org konserinde müzikseverler neden bazı özel günlerde kiliseye akın eder?",
         "options": [
-          "As Slow As Possible (Mümkün Olduğunca Yavaş)",
-          "Endless Symphony (Sonsuz Senfoni)",
-          "Silent Echo (Sessiz Yankı)"
+          "Org borularının her hafta farklı bir bestecinin eserini hızlıca çalması yüzünden",
+          "Aylar veya yıllar boyunca basılı tutulan bir notadan sonraki akora nadir geçiş anına tanık olmak için",
+          "Kilise kulesindeki güneş saatinin yalnızca 100 yılda bir ses çıkarması yüzünden"
         ],
-        "correctIndex": 0,
-        "explanation": "ORGAN²/ASLSP adlı eserdeki ASLSP kısaltması 'As Slow As Possible' anlamına gelir."
+        "correctIndex": 1,
+        "explanation": "John Cage'in 'ORGAN²/ASLSP' (Mümkün Olduğunca Yavaş) eseri 2001'de başladı ve 2640'ta bitecek; tek bir nota değişimi bazen yıllar sonra gerçekleşiyor."
       },
       "sourceName": "John Cage Organ Foundation Halberstadt",
       "sourceUrl": "https://www.aslsp.org/das-projekt.html"
@@ -3132,20 +3190,21 @@
       "sourceHint": "John Cage Organ Project Halberstadt",
       "tag": "Endurance Record",
       "quiz": {
-        "question": "What does 'ASLSP' stand for in the 639-year-long musical performance?",
+        "question": "Why do visitors from around the world pack a German church on rare scheduled dates during this 639-year concert?",
         "options": [
-          "As Slow As Possible",
-          "All Sounds Last Forever",
-          "Acoustic Space Live Piece"
+          "Because the organ plays a high-speed remix every leap year",
+          "Because acoustic solar mirrors only chime once per decade",
+          "To witness a rare chord change after notes have been held down for months or years"
         ],
-        "correctIndex": 0,
-        "explanation": "John Cage titled the piece 'ORGAN²/ASLSP (As Slow As Possible)'."
+        "correctIndex": 2,
+        "explanation": "During John Cage's 2001–2640 performance of 'As Slow As Possible,' weighted organ keys sustain single harmonies for years between each dramatic note shift."
       },
       "sourceName": "John Cage Organ Foundation Halberstadt",
       "sourceUrl": "https://www.aslsp.org/das-projekt.html"
     },
     "sourceName": "John Cage Organ Foundation Halberstadt",
-    "sourceUrl": "https://www.aslsp.org/das-projekt.html"
+    "sourceUrl": "https://www.aslsp.org/das-projekt.html",
+    "visualQuery": "cathedral pipe organ"
   },
   {
     "id": "weird-10",
@@ -3164,11 +3223,11 @@
       "quiz": {
         "question": "Modern temiz sağım yöntemleri Emmental peynirindeki delikleri nasıl etkiledi?",
         "options": [
-          "Saman tozu azaldığı için peynirdeki delikler küçülüp azaldı",
           "Delikler iki katına çıktı",
-          "Peynirin rengi yeşile döndü"
+          "Peynirin rengi yeşile döndü",
+          "Saman tozu azaldığı için peynirdeki delikler küçülüp azaldı"
         ],
-        "correctIndex": 0,
+        "correctIndex": 2,
         "explanation": "Mikroskobik saman parçacıkları gaz kabarcıkları için çekirdek görevi gördüğünden, temiz sağım delikleri azalttı."
       },
       "sourceName": "Agroscope Switzerland Dairy Study",
@@ -3195,6 +3254,697 @@
       "sourceUrl": "https://doi.org/10.1016/j.idairyj.2015.03.001"
     },
     "sourceName": "Agroscope Switzerland Dairy Study",
-    "sourceUrl": "https://doi.org/10.1016/j.idairyj.2015.03.001"
+    "sourceUrl": "https://doi.org/10.1016/j.idairyj.2015.03.001",
+    "visualQuery": "swiss cheese holes"
+  },
+  {
+    "id": "statistics-01",
+    "category": "statistics",
+    "accentColor": "#6366F1",
+    "iconName": "Percent",
+    "emoji": "🎂",
+    "readingTimeSec": 18,
+    "visualQuery": "birthday party balloons",
+    "tr": {
+      "slug": "dogum-gunu-paradoksu-23-kiside-yuzde-50-olasilik",
+      "title": "Sadece 23 Kişilik Bir Odada İki Kişinin Aynı Gün Doğma İhtimali %50'yi Aşar",
+      "factText": "Sezgilerimiz 365 gün varken bu olasılığın çok düşük olduğunu söyler; oysa 23 kişi arasında 253 farklı ikili eşleşme oluştuğu için olasılık %50,7'ye fırlar.",
+      "deepDiveDetail": "Doğum Günü Paradoksu olarak bilinen bu olguda soru 'seninle aynı gün doğan biri var mı?' değildir; 'herhangi iki kişi eşleşir mi?' sorusudur. 23 kişinin oluşturabileceği benzersiz çift sayısı (23×22)/2 = 253'tür ve bu çiftlerin hiçbirinin çakışmama olasılığı %49,3'e kadar düşer. 57 kişide ise kesinlik %99'un üzerine çıkar.",
+      "sourceHint": "Stanford & MIT Olasılık Dersleri",
+      "tag": "Olasılık Paradoksu",
+      "quiz": {
+        "question": "23 kişilik bir odada iki kişinin aynı gün doğma olasılığının %50'yi geçmesinin temel matematiksel nedeni nedir?",
+        "options": [
+          "Kişi sayısı az olsa da karşılaştırılan ikili çift sayısının 253'e ulaşması",
+          "İnsanların yılın belirli yaz aylarında daha sık doğması",
+          "365 sayısının asal çarpanlarının 23'e yakın olması"
+        ],
+        "correctIndex": 0,
+        "explanation": "Olasılık bireylerin tekil sayısıyla değil, n×(n-1)/2 formülüyle hızla büyüyen ikili kombinasyon sayısıyla hesaplanır."
+      },
+      "guessChallenge": {
+        "type": "slider",
+        "prompt": "Sence en az %50 eşleşme şansı için odada kaç kişi yeterlidir?",
+        "min": 10,
+        "max": 120,
+        "step": 1,
+        "unit": "kişi",
+        "correctValue": 23
+      },
+      "sourceName": "Britannica — Birthday Problem",
+      "sourceUrl": "https://www.britannica.com/science/birthday-problem"
+    },
+    "en": {
+      "slug": "birthday-paradox-23-people-exceeds-50-percent",
+      "title": "In a Room of Just 23 People, There Is Over a 50% Chance Two Share a Birthday",
+      "factText": "Our intuition compares 23 against 365 days, but statistics checks all 253 possible pairs between people—pushing the match probability to 50.7%.",
+      "deepDiveDetail": "Known as the Birthday Paradox, the question is not whether someone matches your specific birthday, but whether any pair in the room collides. With 23 people, there are (23×22)/2 = 253 distinct pairs. At 57 people, the chance of at least one shared birthday tops 99%.",
+      "sourceHint": "Probability & Combinatorics",
+      "tag": "Probability Paradox",
+      "quiz": {
+        "question": "Why does the Birthday Paradox surpass 50% with only 23 people in a room?",
+        "options": [
+          "Because human births cluster heavily on weekends",
+          "Because the number of distinct pairs grows quadratically to 253 comparisons",
+          "Because leap years shrink the sample space by half"
+        ],
+        "correctIndex": 1,
+        "explanation": "Probability multiplies across all n(n-1)/2 pairs rather than checking against just one fixed person."
+      },
+      "guessChallenge": {
+        "type": "slider",
+        "prompt": "How many people do you think are needed for a >50% shared birthday chance?",
+        "min": 10,
+        "max": 120,
+        "step": 1,
+        "unit": "people",
+        "correctValue": 23
+      },
+      "sourceName": "Britannica — Birthday Problem",
+      "sourceUrl": "https://www.britannica.com/science/birthday-problem"
+    },
+    "sourceName": "Britannica — Birthday Problem",
+    "sourceUrl": "https://www.britannica.com/science/birthday-problem"
+  },
+  {
+    "id": "statistics-02",
+    "category": "statistics",
+    "accentColor": "#6366F1",
+    "iconName": "TrendingUp",
+    "emoji": "✈️",
+    "readingTimeSec": 20,
+    "visualQuery": "vintage propeller airplane",
+    "tr": {
+      "slug": "hayatta-kalma-onyargisi-abraham-wald-ucak-zirhi",
+      "title": "İstatistikçi Abraham Wald, Hasar Görmüş Uçakların Tam Tersine Zırh Ekleyerek Hayat Kurtardı",
+      "factText": "2. Dünya Savaşı'nda üsse dönen uçakların kanatlarında mermi izi yoğundu; ancak Wald asıl zırhın hiç delik olmayan motor bölümüne konması gerektiğini kanıtladı.",
+      "deepDiveDetail": "Bu klasik 'Hayatta Kalma Önyargısı' (Survivorship Bias) örneğinde ordu ilk başta üsse dönen uçaklarda en çok isabet alan kanat ve gövdeyi güçlendirmek istedi. Matematikçi Abraham Wald ise tam tersini fark etti: Motorundan veya kokpitinden vurulan uçaklar zaten okyanusa düştüğü için üsse dönüp istatistiğe hiç girememişti.",
+      "sourceHint": "Columbia İstatistik Araştırma Grubu",
+      "tag": "Veri Önyargısı",
+      "quiz": {
+        "question": "Üsse dönen uçakların motorlarında neredeyse hiç mermi deliği görülmemesi Wald'a neyi kanıtladı?",
+        "options": [
+          "Düşman nişancılarının motorları hedef almaktan kaçındığını",
+          "Motorundan vurulan uçakların hayatta kalıp geri dönemediğini",
+          "Motor kaplamasının mermileri tamamen sektirdiğini"
+        ],
+        "correctIndex": 1,
+        "explanation": "Veri setinde sadece hayatta kalanları görmek, kaybedilen vakaların nedenini gizler."
+      },
+      "guessChallenge": {
+        "type": "binary",
+        "prompt": "Geri dönen uçaklarda en az mermi izi görülen yerlerden hangisi güçlendirilmeliydi?",
+        "options": [
+          "Mermi izi olmayan motor ve kokpit",
+          "En çok mermi izi olan kanat uçları"
+        ],
+        "correctOptionIndex": 0
+      },
+      "sourceName": "AMS — Abraham Wald & Survivorship Bias",
+      "sourceUrl": "https://en.wikipedia.org/wiki/Survivorship_bias"
+    },
+    "en": {
+      "slug": "survivorship-bias-abraham-wald-ww2-planes",
+      "title": "A Statistician Saved Bomber Crews by Armoring the Places With Zero Bullet Holes",
+      "factText": "Returning WWII planes had dense bullet holes on their wings and tails—so mathematician Abraham Wald urged armoring the unblemished engines instead.",
+      "deepDiveDetail": "This landmark case of Survivorship Bias began when analysts suggested reinforcing where returning bombers took the most hits. Abraham Wald realized the missing data told the real story: planes hit in the engine or cockpit never returned home to be inspected.",
+      "sourceHint": "Statistical Research Group (1943)",
+      "tag": "Data Bias",
+      "quiz": {
+        "question": "What did the lack of bullet holes on returning planes' engines actually tell Abraham Wald?",
+        "options": [
+          "Enemy gunners deliberately avoided shooting at engines",
+          "Airplane wings attract magnetic interference from bullets",
+          "Planes hit in the engine crashed and were missing from the sample"
+        ],
+        "correctIndex": 2,
+        "explanation": "Studying only survivors hides the fatal damage patterns on aircraft that never made it back."
+      },
+      "guessChallenge": {
+        "type": "binary",
+        "prompt": "Which part did Wald recommend adding extra armor to?",
+        "options": [
+          "The unscathed engines & cockpit",
+          "The heavily peppered wing tips"
+        ],
+        "correctOptionIndex": 0
+      },
+      "sourceName": "AMS — Abraham Wald & Survivorship Bias",
+      "sourceUrl": "https://en.wikipedia.org/wiki/Survivorship_bias"
+    },
+    "sourceName": "AMS — Abraham Wald & Survivorship Bias",
+    "sourceUrl": "https://en.wikipedia.org/wiki/Survivorship_bias"
+  },
+  {
+    "id": "statistics-03",
+    "category": "statistics",
+    "accentColor": "#6366F1",
+    "iconName": "Dice5",
+    "emoji": "🚪",
+    "readingTimeSec": 18,
+    "visualQuery": "three mystery doors",
+    "tr": {
+      "slug": "monty-hall-problemi-kapi-degistirmek-sansi-ikiye-katlar",
+      "title": "Monty Hall Yarışmasında Kapıyı Değiştirmek Kazanma Şansını %33'ten %67'ye Çıkarır",
+      "factText": "3 kapıdan birini seçtikten sonra sunucu boş bir kapıyı açarsa, kalan diğer kapıya geçmek kazanma olasılığını tam iki katına çıkarır.",
+      "deepDiveDetail": "İlk seçimde doğru kapıyı tutturma şansın 1/3, diğer iki kapının birinde olma ihtimali ise 2/3'tür. Sunucu nereye açacağını bilerek boş olan bir kapıyı elediğinde, başlangıçtaki 2/3 olasılığının tamamı kapalı kalan tek diğer kapıda yoğunlaşır.",
+      "sourceHint": "Karar Teorisi & Bayes Kuralı",
+      "tag": "Koşullu Olasılık",
+      "quiz": {
+        "question": "Monty Hall probleminde sunucu neden rastgele değil bilerek boş kapıyı açınca olasılık değişir?",
+        "options": [
+          "Çünkü ödül son anda kapalı kapının arkasına taşınır",
+          "Çünkü iki kapı kaldığında olasılık her zaman %50'ye sabitlenir",
+          "Çünkü başlangıçtaki 2/3'lük ihtimal kalan tek kapalı kapıda toplanır"
+        ],
+        "correctIndex": 2,
+        "explanation": "Sunucunun ödülü bilerek boş kapıyı elemesi sisteme yeni bilgi ekler; değiştirirsen kazanma oranı 2/3 olur."
+      },
+      "guessChallenge": {
+        "type": "slider",
+        "prompt": "Sunucu boş kapıyı açtıktan sonra kapı değiştirirsen kazanma şansın yüzde kaç olur?",
+        "min": 20,
+        "max": 90,
+        "step": 1,
+        "unit": "%",
+        "correctValue": 67
+      },
+      "sourceName": "Britannica — Monty Hall Problem",
+      "sourceUrl": "https://www.britannica.com/science/Monty-Hall-problem"
+    },
+    "en": {
+      "slug": "monty-hall-problem-switching-doubles-odds",
+      "title": "Switching Doors in the Monty Hall Problem Doubles Your Odds From 33% to 67%",
+      "factText": "After you pick 1 of 3 closed doors and the host reveals an empty door, switching to the remaining door jumps your win probability to 2/3.",
+      "deepDiveDetail": "Your first pick only has a 1/3 chance of hiding the prize, leaving a 2/3 probability in the other two doors combined. Because the host deliberately opens an empty door, that entire 2/3 probability collapses onto the single remaining door.",
+      "sourceHint": "Conditional Probability & Bayes",
+      "tag": "Conditional Odds",
+      "quiz": {
+        "question": "Why doesn't the probability split 50/50 after the host opens a losing door?",
+        "options": [
+          "The host's knowledgeable choice concentrates the 2/3 odds onto the unpicked door",
+          "The prize is secretly moved behind the second door",
+          "The first pick always loses in a 3-door game"
+        ],
+        "correctIndex": 0,
+        "explanation": "Unlike a blind coin flip, the host never opens the winning door, preserving the 2/3 chance for switching."
+      },
+      "guessChallenge": {
+        "type": "slider",
+        "prompt": "After switching doors, what percentage of games do you expect to win?",
+        "min": 20,
+        "max": 90,
+        "step": 1,
+        "unit": "%",
+        "correctValue": 67
+      },
+      "sourceName": "Britannica — Monty Hall Problem",
+      "sourceUrl": "https://www.britannica.com/science/Monty-Hall-problem"
+    },
+    "sourceName": "Britannica — Monty Hall Problem",
+    "sourceUrl": "https://www.britannica.com/science/Monty-Hall-problem"
+  },
+  {
+    "id": "statistics-04",
+    "category": "statistics",
+    "accentColor": "#6366F1",
+    "iconName": "BarChart3",
+    "emoji": "🔢",
+    "readingTimeSec": 18,
+    "visualQuery": "glowing digital numbers",
+    "tr": {
+      "slug": "benford-yasasi-gercek-verilerde-sayilarin-yuzde-30u-1-ile-baslar",
+      "title": "Benford Yasası: Doğal Sayıların Neredeyse %30'u '1' Rakamıyla Başlar",
+      "factText": "Nehir uzunluklarından ülke nüfuslarına ve muhasebe faturalarına kadar gerçek dünya verilerinde ilk basamağın 1 olma olasılığı %30,1 iken 9 olma olasılığı sadece %4,6'dır.",
+      "deepDiveDetail": "İlk kez 1881'de Simon Newcomb'un logaritma kitaplarındaki ilk sayfaların daha fazla yıprandığını fark etmesiyle keşfedilen bu yasa, veriler farklı büyüklük mertebelerinde yayıldığında ortaya çıkar. Vergi denetçileri bugün hâlâ sahte bilançoları yakalamak için Benford Yasası'nı kullanır.",
+      "sourceHint": "NIST & Adli Muhasebe İstatistiği",
+      "tag": "Sayı Dağılımı",
+      "quiz": {
+        "question": "Mali denetçiler ve veri bilimciler Benford Yasası'nı en sık neyi tespit etmek için kullanır?",
+        "options": [
+          "İnsan eliyle uydurulmuş sahte faturaları ve manipüle edilmiş verileri",
+          "Asal sayıların sonsuz olup olmadığını",
+          "Borsadaki yarınki hisse senedi fiyatlarını"
+        ],
+        "correctIndex": 0,
+        "explanation": "İnsanlar rastgele sayı uydururken 1'den 9'a eşit dağıtmaya meyillidir; bu da Benford eğrisinden hemen sapma yaratır."
+      },
+      "guessChallenge": {
+        "type": "slider",
+        "prompt": "Doğal veri setlerinde sayıların yüzde kaçı '1' rakamıyla başlar?",
+        "min": 5,
+        "max": 60,
+        "step": 1,
+        "unit": "%",
+        "correctValue": 30
+      },
+      "sourceName": "Wolfram MathWorld — Benford's Law",
+      "sourceUrl": "https://mathworld.wolfram.com/BenfordsLaw.html"
+    },
+    "en": {
+      "slug": "benfords-law-30-percent-of-numbers-start-with-one",
+      "title": "Benford's Law: Nearly 30% of Natural Real-World Numbers Begin With the Digit '1'",
+      "factText": "From river lengths to city populations and tax filings, the leading digit '1' appears 30.1% of the time, while '9' shows up only 4.6%.",
+      "deepDiveDetail": "First noticed in 1881 when astronomer Simon Newcomb saw that the early pages of shared logarithm books were far more worn than the back pages, Benford's Law emerges whenever quantities span multiple orders of magnitude. Forensic auditors still use it to spot fabricated financial records.",
+      "sourceHint": "Forensic Statistics & Scale Invariance",
+      "tag": "Digit Distribution",
+      "quiz": {
+        "question": "Why do forensic auditors regularly run Benford's Law tests on financial statements?",
+        "options": [
+          "To predict exact quarterly stock dividends",
+          "To flag fabricated numbers where humans subconsciously overuse middle digits",
+          "To convert base-10 invoices into binary checksums"
+        ],
+        "correctIndex": 1,
+        "explanation": "When people invent fake data, they tend to pick digits uniformly—violating Benford's logarithmic leading-digit curve."
+      },
+      "guessChallenge": {
+        "type": "slider",
+        "prompt": "Roughly what % of real-world numbers start with the digit '1'?",
+        "min": 5,
+        "max": 60,
+        "step": 1,
+        "unit": "%",
+        "correctValue": 30
+      },
+      "sourceName": "Wolfram MathWorld — Benford's Law",
+      "sourceUrl": "https://mathworld.wolfram.com/BenfordsLaw.html"
+    },
+    "sourceName": "Wolfram MathWorld — Benford's Law",
+    "sourceUrl": "https://mathworld.wolfram.com/BenfordsLaw.html"
+  },
+  {
+    "id": "statistics-05",
+    "category": "statistics",
+    "accentColor": "#6366F1",
+    "iconName": "PieChart",
+    "emoji": "🔄",
+    "readingTimeSec": 20,
+    "visualQuery": "analytics pie chart",
+    "tr": {
+      "slug": "simpson-paradoksu-gruplar-birlestiginde-egilim-tersine-doner",
+      "title": "Simpson Paradoksu: Her Altkümede Başarılı Olan Tedavi, Toplamda Daha Kötü Görünebilir",
+      "factText": "İstatistikte alt grupların her birinde A seçeneği B'den iyi sonuç verse bile, tüm veriler tek havuzda birleştirildiğinde B seçeneği öne geçebilir.",
+      "deepDiveDetail": "1973 Berkeley lisansüstü kabul davasında erkeklerin genel kabul oranı kadınlardan yüksek görünüyordu; ancak bölümlere göre bakıldığında kadınların kabul oranı pek çok bölümde daha yüksekti. Nedeni gizli bir karıştırıcı değişkendi: Kadınlar kontenjanı en dar ve rekabeti en yüksek bölümlere daha yoğun başvurmuştu.",
+      "sourceHint": "UC Berkeley & Edward Simpson (1951)",
+      "tag": "Veri Paradoksu",
+      "quiz": {
+        "question": "Simpson Paradoksu'nun veri analizinde alt gruplar birleştirildiğinde eğilimi tersine çevirmesinin sorumlusu nedir?",
+        "options": [
+          "Ortalamanın daima medyandan büyük çıkması",
+          "Gruplar arası örneklem büyüklüğü farkı ve gizli karıştırıcı değişkenler",
+          "Ölçümlerde ondalık yuvarlama hatası yapılması"
+        ],
+        "correctIndex": 1,
+        "explanation": "Farklı zorluktaki veya büyüklükteki grupları ağırlıklarını dikkate almadan toplamak sahte bir genel trend üretir."
+      },
+      "guessChallenge": {
+        "type": "binary",
+        "prompt": "Bir ilaç hem hafif vakalarda hem ağır vakalarda daha iyiyse, birleşik tabloda her zaman daha mı iyi görünür?",
+        "options": [
+          "Hayır, grup büyüklükleri farklıysa tersine dönebilir",
+          "Evet, matematiksel olarak asla tersine dönemez"
+        ],
+        "correctOptionIndex": 0
+      },
+      "sourceName": "Stanford Encyclopedia — Simpson's Paradox",
+      "sourceUrl": "https://plato.stanford.edu/entries/paradox-simpson/"
+    },
+    "en": {
+      "slug": "simpsons-paradox-trend-reverses-when-groups-combine",
+      "title": "Simpson's Paradox: A Trend Can Completely Reverse When Subgroups Are Combined",
+      "factText": "A treatment can outperform another inside every separate patient subgroup—yet look worse overall once all rows are pooled together.",
+      "deepDiveDetail": "In the famous 1973 UC Berkeley admissions study, overall acceptance looked skewed toward men—but department-by-department data showed women were accepted at equal or higher rates. The hidden confounding factor was that women disproportionately applied to the most competitive departments with tiny acceptance rates.",
+      "sourceHint": "Stanford Encyclopedia of Philosophy",
+      "tag": "Data Paradox",
+      "quiz": {
+        "question": "What usually triggers Simpson's Paradox when analysts pool separate subgroups into one total chart?",
+        "options": [
+          "Using median values instead of standard deviations",
+          "Sorting rows alphabetically before plotting",
+          "An unmeasured confounding variable combined with uneven group sizes"
+        ],
+        "correctIndex": 2,
+        "explanation": "Imbalanced subgroup sizes mixed with a lurking confounder can flip the aggregate percentage upside down."
+      },
+      "guessChallenge": {
+        "type": "binary",
+        "prompt": "If Treatment A beats B in both mild cases AND severe cases, must A also win in the combined total?",
+        "options": [
+          "No, uneven sample mix can flip the total",
+          "Yes, the pooled percentage must match"
+        ],
+        "correctOptionIndex": 0
+      },
+      "sourceName": "Stanford Encyclopedia — Simpson's Paradox",
+      "sourceUrl": "https://plato.stanford.edu/entries/paradox-simpson/"
+    },
+    "sourceName": "Stanford Encyclopedia — Simpson's Paradox",
+    "sourceUrl": "https://plato.stanford.edu/entries/paradox-simpson/"
+  },
+  {
+    "id": "statistics-06",
+    "category": "statistics",
+    "accentColor": "#6366F1",
+    "iconName": "LineChart",
+    "emoji": "🧪",
+    "readingTimeSec": 20,
+    "visualQuery": "laboratory microscope test",
+    "tr": {
+      "slug": "bayes-teoremi-nadir-hastalikta-pozitif-test-yaniltici-olabilir",
+      "title": "%99 Doğru Bir Test Bile Nadir Durumlarda Yarıdan Fazla Yanlış Alarm Verebilir",
+      "factText": "10.000 kişiden sadece 1'inde görülen nadir bir hastalık için %99 duyarlılık ve %99 özgüllüğe (%1 yanlış pozitif) sahip bir test pozitif çıkarsa, kişinin gerçekten hasta olma ihtimali yalnızca ~%1 civarındadır.",
+      "deepDiveDetail": "Bayes Teoremi bize 'baz oranı'nın (base rate) önemini hatırlatır. 10.000 kişilik bir grupta 1 gerçek hasta pozitif çıkar; ancak sağlıklı 9.999 kişinin %1'i yani yaklaşık 100 kişi de yanlış pozitif alır. Böylece pozitif çıkan 101 kişiden sadece 1'i gerçekten hastadır!",
+      "sourceHint": "Bayes İstatistiği & Tıbbi Tarama",
+      "tag": "Bayes Teoremi",
+      "quiz": {
+        "question": "Test %99 doğru olmasına rağmen nadir hastalıklarda pozitif sonuçların çoğunun yanlış alarm çıkmasına ne ad verilir?",
+        "options": [
+          "Merkezi limit sapması",
+          "Normal dağılım çarpıklığı",
+          "Baz oranı ihmali (Base rate fallacy)"
+        ],
+        "correctIndex": 2,
+        "explanation": "Hastalığın toplumdaki nadirliği (ön olasılık) hesaba katılmadığında yanlış pozitiflerin sayısı gerçek hastaları katbekat aşar."
+      },
+      "guessChallenge": {
+        "type": "slider",
+        "prompt": "10.000'de 1 görülen hastalıkta %99 doğru test pozitif çıkarsa gerçek hasta olma ihtimali yaklaşık % kaçtır?",
+        "min": 1,
+        "max": 99,
+        "step": 1,
+        "unit": "%",
+        "correctValue": 1
+      },
+      "sourceName": "Khan Academy — Bayes' Theorem & Base Rates",
+      "sourceUrl": "https://en.wikipedia.org/wiki/Base_rate_fallacy"
+    },
+    "en": {
+      "slug": "bayes-theorem-base-rate-fallacy-99-percent-test",
+      "title": "A 99% Accurate Test Can Still Be Wrong 99% of the Time for Rare Conditions",
+      "factText": "If a condition affects only 1 in 10,000 people and a test has 99% sensitivity and 99% specificity (a 1% false-positive rate), testing positive gives just ~1% true odds of having it.",
+      "deepDiveDetail": "Bayes' Theorem shows why ignoring the base rate traps our intuition. Out of 10,000 tested people, 1 truly sick person tests positive—while 1% of the 9,999 healthy people (~100 people) receive false positives. Only 1 out of those ~101 positive alerts is real.",
+      "sourceHint": "Bayesian Inference & Diagnostics",
+      "tag": "Bayes Theorem",
+      "quiz": {
+        "question": "Why does a 99%-accurate screening test produce mostly false alarms when scanning the general public for a rare trait?",
+        "options": [
+          "False positives among the huge healthy majority vastly outnumber rare true cases",
+          "Medical sensors degrade after every 100 samples",
+          "Bayes' theorem only applies when sample sizes are below 30"
+        ],
+        "correctIndex": 0,
+        "explanation": "Known as the Base Rate Fallacy, ignoring prior rarity lets false positives swamp true positives."
+      },
+      "guessChallenge": {
+        "type": "slider",
+        "prompt": "For a 1-in-10,000 rarity with a 99% accurate test, about what % of positives are actually true?",
+        "min": 1,
+        "max": 99,
+        "step": 1,
+        "unit": "%",
+        "correctValue": 1
+      },
+      "sourceName": "Wikipedia — Base Rate Fallacy & Bayes",
+      "sourceUrl": "https://en.wikipedia.org/wiki/Base_rate_fallacy"
+    },
+    "sourceName": "Wikipedia — Base Rate Fallacy & Bayes",
+    "sourceUrl": "https://en.wikipedia.org/wiki/Base_rate_fallacy"
+  },
+  {
+    "id": "statistics-07",
+    "category": "statistics",
+    "accentColor": "#6366F1",
+    "iconName": "Users",
+    "emoji": "📈",
+    "readingTimeSec": 17,
+    "visualQuery": "spinning coin flip",
+    "tr": {
+      "slug": "kumarbaz-yanilgisi-madeni-paranin-hafizasi-yoktur",
+      "title": "Üst Üste 10 Kez Yazı Gelse Bile 11. Atışta Tura Gelme İhtimali Hâlâ Tam %50'dir",
+      "factText": "1913'te Monte Carlo'da rulet topu tam 26 kez üst üste siyaha düştüğünde oyuncular servet kaybetti; çünkü nesneler önceki sonuçları hatırlayıp 'dengelemeye' çalışmaz.",
+      "deepDiveDetail": "Kumarbaz Yanılgısı (Gambler's Fallacy), Büyük Sayılar Yasası'nın yanlış anlaşılmasından doğar. Büyük Sayılar Yasası geçmişi 'telafi ederek' değil, binlerce yeni bağımsız atışın içinde başlangıçtaki küçük sapmayı önemsizleştirerek ortalamayı %50'ye yaklaştırır.",
+      "sourceHint": "1913 Monte Carlo Rulet Vakası",
+      "tag": "Bağımsız Olaylar",
+      "quiz": {
+        "question": "Büyük Sayılar Yasası uzun vadede oranları %50'ye nasıl yaklaştırır?",
+        "options": [
+          "Eski sapmaları telafi ederek değil, dev örneklem içinde etkisizleştirerek",
+          "Madeni paranın her 10 atıştan sonra ağırlık merkezini kaydırarak",
+          "Önceki tura sayısını sonraki atışta zorunlu kılarak"
+        ],
+        "correctIndex": 0,
+        "explanation": "Bağımsız olayların hafızası yoktur; ilk 10 atıştaki fark 100.000 atış içinde matematiksel olarak seyrelir."
+      },
+      "guessChallenge": {
+        "type": "slider",
+        "prompt": "1913 Monte Carlo kumarhanesinde rulet topu rekor olarak kaç kez üst üste SİYAH geldi?",
+        "min": 5,
+        "max": 40,
+        "step": 1,
+        "unit": "kez",
+        "correctValue": 26
+      },
+      "sourceName": "Britannica — Gambler's Fallacy",
+      "sourceUrl": "https://en.wikipedia.org/wiki/Gambler%27s_fallacy"
+    },
+    "en": {
+      "slug": "gamblers-fallacy-coins-have-no-memory",
+      "title": "Even After 10 Heads in a Row, the Next Fair Coin Flip Is Still Exactly 50/50",
+      "factText": "In 1913 at Monte Carlo, black hit 26 spins in a row while gamblers bet millions on red—forgetting that independent trials have zero memory.",
+      "deepDiveDetail": "The Gambler's Fallacy misreads the Law of Large Numbers. A fair coin never 'owes' a tail to balance a streak; instead, thousands of future unbiased flips merely dilute an early anomaly until the ratio drifts back toward 50%.",
+      "sourceHint": "1913 Monte Carlo Casino Incident",
+      "tag": "Independent Trials",
+      "quiz": {
+        "question": "How does the Law of Large Numbers bring coin-flip averages toward 50% without a coin having memory?",
+        "options": [
+          "The coin subtly warms up on the heavier side",
+          "Vast numbers of future independent flips dilute any early streak",
+          "Short-term odds automatically invert after 5 repeats"
+        ],
+        "correctIndex": 1,
+        "explanation": "Independent trials never compensate for past streaks; dilution over large N drives convergence."
+      },
+      "guessChallenge": {
+        "type": "slider",
+        "prompt": "How many times in a row did roulette land on black in the 1913 Monte Carlo streak?",
+        "min": 5,
+        "max": 40,
+        "step": 1,
+        "unit": "times",
+        "correctValue": 26
+      },
+      "sourceName": "Wikipedia — Gambler's Fallacy",
+      "sourceUrl": "https://en.wikipedia.org/wiki/Gambler%27s_fallacy"
+    },
+    "sourceName": "Wikipedia — Gambler's Fallacy",
+    "sourceUrl": "https://en.wikipedia.org/wiki/Gambler%27s_fallacy"
+  },
+  {
+    "id": "statistics-08",
+    "category": "statistics",
+    "accentColor": "#6366F1",
+    "iconName": "BarChart3",
+    "emoji": "🔔",
+    "readingTimeSec": 18,
+    "visualQuery": "chalkboard math graph",
+    "tr": {
+      "slug": "ortalama-tuzagi-her-ortalama-insana-uymayan-kokpit-hikayesi",
+      "title": "'Ortalama' Vücut Ölçüsüne Göre Yapılan Kokpitlerde Hiçbir Pilot Verimli Uçamadı",
+      "factText": "1950'lerde ABD Hava Kuvvetleri 4.063 pilotu ölçüp tam 'ortalama' bir kokpit tasarladı; ancak neredeyse hiçbir pilotun 10 ölçünün tamamında ortalama aralıkta olmadığı ortaya çıktı.",
+      "deepDiveDetail": "İstatistikte tek boyutlu ortalamalar insanı yanıltır: 10 farklı vücut ölçüsünde %30'luk 'ortalama' bantta kalabilen pilot sayısı 4.063 kişide SIFIR çıktı! Bu keşif sayesinde ayarlanabilir koltuk ve pedallar doğdu—çünkü 'ortalama kullanıcı' çoğu zaman yalnızca bir matematiksel hayalettir.",
+      "sourceHint": "Gilbert Daniels — ABD Hava Kuvvetleri (1952)",
+      "tag": "Ortalama Tuzağı",
+      "quiz": {
+        "question": "4.063 pilotun 10 vücut ölçüsünün tamamında 'ortalama' banda sığan kaç kişi çıkması ergonomide neyi değiştirdi?",
+        "options": [
+          "Boyu ortalamaya uymayan tüm uçaklar hurdaya ayrıldı",
+          "Sıfır kişi çıkınca kokpitler 'ortalama' yerine ayarlanabilir tasarlanmaya başlandı",
+          "Tek ölçüt olarak yalnızca ayakkabı numarası baz alındı"
+        ],
+        "correctIndex": 1,
+        "explanation": "Çok değişkenli dağılımlarda her boyutta aynı anda ortalamada kalan birey neredeyse hiç yoktur."
+      },
+      "guessChallenge": {
+        "type": "slider",
+        "prompt": "4.063 pilotun kaçı 10 farklı ölçünün tamamında 'ortalama' aralığa denk geldi?",
+        "min": 0,
+        "max": 500,
+        "step": 1,
+        "unit": "pilot",
+        "correctValue": 0
+      },
+      "sourceName": "Todd Rose — The End of Average / USAF Study",
+      "sourceUrl": "https://en.wikipedia.org/wiki/The_End_of_Average"
+    },
+    "en": {
+      "slug": "average-trap-zero-pilots-fit-the-average-cockpit",
+      "title": "Out of 4,063 Pilots Measured, Literally Zero Fit the 'Average' Cockpit",
+      "factText": "In 1950, the US Air Force found that not a single pilot fell within the middle 30% 'average' range across all 10 physical dimensions at once.",
+      "deepDiveDetail": "Researcher Gilbert Daniels discovered that designing around averages fits nobody when traits vary independently. Out of 4,063 pilots, zero matched all 10 average measurements simultaneously—giving birth to adjustable seats, helmets, and straps.",
+      "sourceHint": "USAF Anthropometric Study (1952)",
+      "tag": "Flaw of Averages",
+      "quiz": {
+        "question": "How did Gilbert Daniels' 'Zero Average Pilots' discovery transform industrial design forever?",
+        "options": [
+          "It banned tall pilots from supersonic flight",
+          "It replaced statistics with alphabetical seating",
+          "It proved one-size-fits-average fails, sparking adjustable seats and controls"
+        ],
+        "correctIndex": 2,
+        "explanation": "Multi-dimensional independence makes an 'all-average' person vanish, driving modular adjustable design."
+      },
+      "guessChallenge": {
+        "type": "slider",
+        "prompt": "How many of the 4,063 pilots fell inside the average band on all 10 body dimensions?",
+        "min": 0,
+        "max": 500,
+        "step": 1,
+        "unit": "pilots",
+        "correctValue": 0
+      },
+      "sourceName": "The End of Average — Gilbert Daniels USAF Study",
+      "sourceUrl": "https://en.wikipedia.org/wiki/The_End_of_Average"
+    },
+    "sourceName": "The End of Average — Gilbert Daniels USAF Study",
+    "sourceUrl": "https://en.wikipedia.org/wiki/The_End_of_Average"
+  },
+  {
+    "id": "statistics-09",
+    "category": "statistics",
+    "accentColor": "#6366F1",
+    "iconName": "Sparkles",
+    "emoji": "🍦",
+    "readingTimeSec": 16,
+    "visualQuery": "summer beach sunset",
+    "tr": {
+      "slug": "korelasyon-nedensellik-degildir-dondurma-ve-gunes-yanigi",
+      "title": "Dondurma Satışları Arttıkça Güneş Yanıkları da Artar—Ama Suçlu Dondurma Değildir",
+      "factText": "İstatistikte iki verinin aynı anda yükselip alçalması (yüksek korelasyon), birinin diğerine sebep olduğunu kanıtlamaz; çoğu zaman perde arkasında 3. bir ortak neden vardır.",
+      "deepDiveDetail": "Yaz aylarında hem dondurma tüketimi hem de yüzme/güneşlenme vakaları fırladığı için iki grafik mükemmel bir uyum sergiler. Veri biliminde buna 'sahte korelasyon' (spurious correlation) denir; ortak neden burada yaz sıcaklığıdır.",
+      "sourceHint": "Deney Tasarımı & Nedensellik Analizi",
+      "tag": "Nedensellik Analizi",
+      "quiz": {
+        "question": "Yazın dondurma satışlarıyla boğulma veya güneş yanığı vakalarının aynı grafikte yükselmesi istatistikte neye örnektir?",
+        "options": [
+          "Dondurmanın içindeki şekerin cildi güneşe hassaslaştırmasına",
+          "Örneklem büyüklüğünün 100'ü geçince grafiğin ters dönmesine",
+          "Ortak bir 3. değişkenin yarattığı 'sahte korelasyon'a (korelasyon ≠ nedensellik)"
+        ],
+        "correctIndex": 2,
+        "explanation": "Sıcaklık (karıştırıcı değişken) hem dondurma talebini hem açık hava süresini aynı anda artırır."
+      },
+      "guessChallenge": {
+        "type": "binary",
+        "prompt": "İki veri seti arasında %98 korelasyon olması, birinin kesinlikle diğerine yol açtığını kanıtlar mı?",
+        "options": [
+          "Hayır, gizli bir 3. değişken ikisini birden tetikliyor olabilir",
+          "Evet, %90 üzeri her korelasyon doğrudan nedensellik demektir"
+        ],
+        "correctOptionIndex": 0
+      },
+      "sourceName": "Harvard Statistical Literacy — Correlation vs Causation",
+      "sourceUrl": "https://en.wikipedia.org/wiki/Correlation_does_not_imply_causation"
+    },
+    "en": {
+      "slug": "correlation-does-not-imply-causation-ice-cream-sunburn",
+      "title": "Ice Cream Sales Rise Right Alongside Sunburns—Yet Neither Causes the Other",
+      "factText": "Two charts climbing in near-perfect lockstep proves correlation, not causation—often driven by a hidden third variable like summer heat.",
+      "deepDiveDetail": "In data science, ice cream sales and sunburn or drowning incidents show tight positive correlation every year. Statisticians call this a spurious correlation triggered by a lurking confounder: sunny summer weather.",
+      "sourceHint": "Statistical Reasoning & Causality",
+      "tag": "Causation vs Correlation",
+      "quiz": {
+        "question": "Why do statisticians warn against concluding cause-and-effect from two matching trend lines?",
+        "options": [
+          "A hidden third confounder (like summer heat) can drive both trends together",
+          "Line graphs automatically smooth out reverse causation",
+          "Positive correlations always flip negative after five years"
+        ],
+        "correctIndex": 0,
+        "explanation": "Without randomized trials or causal controls, shared seasonal drivers create strong spurious links."
+      },
+      "guessChallenge": {
+        "type": "binary",
+        "prompt": "Does a 98% correlation between two trends prove one directly causes the other?",
+        "options": [
+          "No, a lurking third variable may drive both",
+          "Yes, anything over 90% proves causation"
+        ],
+        "correctOptionIndex": 0
+      },
+      "sourceName": "Wikipedia — Correlation Does Not Imply Causation",
+      "sourceUrl": "https://en.wikipedia.org/wiki/Correlation_does_not_imply_causation"
+    },
+    "sourceName": "Wikipedia — Correlation Does Not Imply Causation",
+    "sourceUrl": "https://en.wikipedia.org/wiki/Correlation_does_not_imply_causation"
+  },
+  {
+    "id": "statistics-10",
+    "category": "statistics",
+    "accentColor": "#6366F1",
+    "iconName": "Award",
+    "emoji": "📊",
+    "readingTimeSec": 18,
+    "visualQuery": "bell curve chart",
+    "tr": {
+      "slug": "uc-sigma-kurali-normal-dagilimin-yuzde-99-7si",
+      "title": "68-95-99,7 Kuralı: Doğadaki Çoğu Ölçüm 3 Standart Sapmanın İçine Sığar",
+      "factText": "Boy uzunluğundan sınav puanlarına ve ölçüm hatalarına kadar Çan Eğrisi'ne uyan verilerin %68'i 1, %95'i 2 ve %99,7'si ise 3 standart sapma içindedir.",
+      "deepDiveDetail": "Alman matematikçi Carl Friedrich Gauss tarafından formalize edilen Normal Dağılım sayesinde, fabrikalar 'Altı Sigma' (Six Sigma) kalite standardıyla milyonda 3,4'ten az hata hedefleyebilir. Merkezden sadece birkaç standart sapma uzaklaşmak olasılığı astronomik hızla düşürür.",
+      "sourceHint": "Gauss Dağılımı & Kalite İstatistiği",
+      "tag": "Çan Eğrisi",
+      "quiz": {
+        "question": "Fabrikaların ve laboratuvarların '3 Sigma' veya '6 Sigma' hedefleri koymasının istatistikteki anlamı nedir?",
+        "options": [
+          "Verilerin neredeyse tamamını kusursuz tolerans sınırları içine hapsetmek",
+          "Üretim makinelerini günde 6 saat kapatmak",
+          "Her test grubunda en fazla 6 kişi ölçmek"
+        ],
+        "correctIndex": 0,
+        "explanation": "Standart sapma (sigma) adımları büyüdükçe bu aralığın dışında kalan ekstrem hatalar milyonda birkaç vakaya iner."
+      },
+      "guessChallenge": {
+        "type": "slider",
+        "prompt": "Normal dağılımda verilerin yaklaşık yüzde kaçı merkezden ±2 standart sapma içinde kalır?",
+        "min": 40,
+        "max": 99,
+        "step": 1,
+        "unit": "%",
+        "correctValue": 95
+      },
+      "sourceName": "NIST Engineering Statistics — Normal Distribution",
+      "sourceUrl": "https://www.itl.nist.gov/div898/handbook/eda/section3/eda3661.htm"
+    },
+    "en": {
+      "slug": "empirical-rule-68-95-99-7-normal-distribution",
+      "title": "The 68-95-99.7 Rule Captures Almost Every Measurement on a Bell Curve",
+      "factText": "In any Gaussian normal distribution, 68% of data sits within 1 standard deviation, 95% within 2, and a massive 99.7% within 3.",
+      "deepDiveDetail": "Formalized by Carl Friedrich Gauss, the normal distribution lets engineers quantify how extreme an outlier truly is. Moving just a few standard deviations (sigma) away from the mean makes rare errors drop exponentially—which is why 'Six Sigma' quality programs target fewer than 3.4 defects per million.",
+      "sourceHint": "NIST Engineering Statistics Handbook",
+      "tag": "Bell Curve",
+      "quiz": {
+        "question": "What does reaching a 'Six Sigma' benchmark mean in statistical quality control?",
+        "options": [
+          "Inspecting only 6 samples out of every thousand units",
+          "Pushing defects down to fewer than ~3.4 per million by squeezing variation",
+          "Ensuring the median is always 6 times larger than the mean"
+        ],
+        "correctIndex": 1,
+        "explanation": "Each standard deviation (sigma) out on the bell curve shrinks tail failure rates dramatically."
+      },
+      "guessChallenge": {
+        "type": "slider",
+        "prompt": "On a normal bell curve, roughly what % of observations lie within ±2 standard deviations?",
+        "min": 40,
+        "max": 99,
+        "step": 1,
+        "unit": "%",
+        "correctValue": 95
+      },
+      "sourceName": "NIST Engineering Statistics — Normal Distribution",
+      "sourceUrl": "https://www.itl.nist.gov/div898/handbook/eda/section3/eda3661.htm"
+    },
+    "sourceName": "NIST Engineering Statistics — Normal Distribution",
+    "sourceUrl": "https://www.itl.nist.gov/div898/handbook/eda/section3/eda3661.htm"
   }
 ]

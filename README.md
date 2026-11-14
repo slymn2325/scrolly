@@ -19,31 +19,31 @@
 
 ## Türkçe
 
-**Scrolly**, kullanıcıların kayıt olmadan tek saniyede giriş yapabildiği; Türkçe (`TR`) ve İngilizce (`EN`) dil desteği sunan, TikTok/Reels akıcılığında tam ekran dikey keşif akışı, kategori seçici, **Dil Öğrenme (Language Lab)** modu, akıllı 5 kartlık DOM sanallaştırma ve çevrimdışı PWA desteği sunan mikro öğrenme web uygulamasıdır.
+**Scrolly**, kullanıcıların kayıt zorunluluğu olmadan tek saniyede keşfe başlayabildiği; Türkçe (`TR`) ve İngilizce (`EN`) çift dilli, dikey `100dvh` Reels akıcılığında mikro öğrenme, etkileşimli görsel motoru, **Scrolla** gerçek zamanlı 1v1 bilgi düelloları, **İstatistik** dahil 7 bilimsel kategori ve **Dil Öğrenme (Language Lab)** modu sunan bir Next.js 16 + React 19 PWA uygulamasıdır.
 
-### Öne Çıkan Özellikler
-- **Tam Ekran Dikey Keşif Akışı (`TikTokFeed` & `TikTokFactSlide`):** Kenardan kenara `100dvh` Reels sahneleri, masaüstü/tablette ortalanmış `9:16` sahne + ortam bulanıklığı, `activeIndex ± 2` (5 kart) DOM sanallaştırması ve `?fact=<slug>` senkronizasyonu.
-- **Üst Gezinme & Kategori Seçici:** Üst HUD üzerindeki **"Tümü (Genel)"** ve **"Kategori Seç ▾"** çekmecesi ile anında kategori filtreleme (`Uzay`, `Doğa`, `Bilim`, `Tarih`, `İnsan Vücudu`, `Garip Rekorlar`, `Dil Öğrenme`).
-- **Etkileşimli Dil Öğrenme Modu (`LanguageLabOverlay`):** Hem **Dil Öğrenme** filtresinde hem de her kartın sağ rayındaki **TR/EN Öğren** butonuyla açılan iki dilli hizalama, etkileşimli kelime rozetleri, **Web Speech API** telaffuz dinleme (`en-US`/`tr-TR`), kelime defteri (`localStorage`) ve 3 seçenekli boşluk doldurma etkileşimi.
-- **Akıllı Etkileşim & İnteraktif Diyagramlar (`GuessWidget`, `InteractiveSketchArt`):** Spoiler korumalı tahmin slider'ı, çift dokunuşla beğeni patlaması, alttan açılan Bilimsel Açıklama/Kaynak paneli (Bottom Sheet) ve Web Audio + titreşim (haptics) geri bildirimi.
-- **Sadeleştirilmiş 3 Sekmeli Dock (`IosFloatingIslandDock`):** `Keşfet`, `Quiz` ve `Profil/Seri` sekmeleriyle hızlı erişim, 13 kartta bir gelen Hafıza Quizi, Liderlik/Başarı Diploması ve Story görsel üreticisi (`storyCanvasGenerator.ts`, `diplomaCanvasGenerator.ts`).
-- **Çok Dilli Programatik SEO & GEO:** Postgres + JSON destekli ISR sayfaları (`/fact/[slug]`, `/en/fact/[slug]`, `/category/[category]`, `/en/category/[category]`), karşılıklı `hreflang` bağlantıları, `/sitemap.xml`, `/llms.txt`, `/llms-full.txt` ve `/opengraph-image`.
-- **AdSense, Consent Mode v2 & API Güvenliği:** `/ads.txt`, GTM + Google Consent Mode v2 (`Kabul Et` / `Reddet`), IP tabanlı hız sınırlaması (`lib/rateLimit.ts`), sunucu tarafında doğrulanan XP/beğeni telemetrisi ve iletişim formu honeypot koruması.
+### Öne Çıkan MVP Özellikleri
+- **Keşfet (Explore) & Çift Platform Reels Akışı (`TikTokFeed`, `TikTokFactSlide`, `DesktopLeftNav`):** Mobilde kenardan kenara `100dvh` dikey akış + yüzen alt navigasyon (`IosFloatingIslandDock`), masaüstü/tablette sol navigasyon rayı, ortalanmış `9:16` sahne, ortam bulanıklığı, `activeIndex ± 2` DOM sanallaştırması ve `?fact=<slug>` senkronizasyonu.
+- **7 Bilgi Kategorisi + İstatistik & Dil Öğrenme:** `Tümü (Genel)`, `Uzay`, `Doğa`, `Bilim`, `Tarih`, `İnsan Vücudu`, `Garip Rekorlar` ve yeni **İstatistik (`statistics`)** kategorisi (Doğum Günü Paradoksu, Hayatta Kalma Önyargısı, Monty Hall, Benford Yasası vb.) ile birlikte **Dil Öğrenme (`LanguageLabOverlay`)**.
+- **GIF + Etkileşimli Canvas Görsel Motoru (`lib/gifService.ts`, `FullBleedReelsCanvas`, `InteractiveSketchArt`):** Her karttaki `visualQuery` alanından `/api/gif` üzerinden Giphy/Tenor destekli temiz GIF araması; API anahtarı yoksa veya ağ kesilirse sıfır kırık görüntü için Canvas 2D + SVG vektör sahne motoruna otomatik düşüş.
+- **Etkileşimli Tahminler & Kavramsal Quizler (`GuessWidget`, `MemoryQuizCard`, `QuizHubModal`):** Her kartta sayısal/ikili tahmin etkileşimi ve neden-nasıl odaklı 3 seçenekli kavramsal quiz; 13 kartlık hafıza kontrol noktaları, XP/seri kazanımı ve Canvas 2D Story/Diploma görsel paylaşımı.
+- **Scrolla 1v1 Gerçek Zamanlı Düello (`DuelModal`, `/api/duels`, `/api/duels/[code]`):** Oda koduyla (`duelStore.ts` + Postgres kalıcılığı) iki oyuncunun eşzamanlı soru seti üzerinde yarıştığı 1v1 bilgi düellosu.
+- **Postgres Kalıcılığı & Küresel Liderlik Tablosu (`lib/db.ts`, `/api/profile`, `/api/leaderboard`, `/api/events`):** Çoklu cihaz profil senkronizasyonu, XP/seri/rozet kaydı, liderlik sıralaması ve `DATABASE_URL` tanımlı olmadığında yerel JSON (`public/data/facts/*.json`) geri dönüşü.
+- **Çok Dilli SEO & GEO:** `/fact/[slug]`, `/en/fact/[slug]`, `/category/[category]`, `/en/category/[category]` ISR sayfaları, karşılıklı `hreflang` etiketleri, `/sitemap.xml`, `/llms.txt`, `/llms-full.txt` ve `/opengraph-image`.
 
 ---
 
 ## English
 
-**Scrolly** is a bilingual (`TR` / `EN`), motion-first micro-discovery PWA built with Next.js 16 (App Router) and React 19. Designed for instant exploration with zero sign-up required, it features a full-screen `100dvh` Reels discovery feed, an interactive **Choose Category** drawer, an interactive **Language Lab** bilingual learning overlay, smart DOM virtualization, and offline-ready PWA capabilities.
+**Scrolly** is a bilingual (`TR` / `EN`) micro-discovery PWA built with **Next.js 16 (App Router)** and **React 19**. Built for instant zero-signup exploration, it combines a `100dvh` vertical Reels discovery experience, a hybrid **GIF + Canvas 2D** visual engine, **7 curated categories including Statistics**, **Language Lab**, real-time **Scrolla 1v1 Duels**, and PostgreSQL-backed profiles and leaderboards.
 
-### Key Features
-- **Full-Screen Vertical Reels Feed:** `100dvh` snap-scrolling scenes with a centered `9:16` stage on tablet/desktop, ambient color backdrop, 5-slide DOM virtualization (`activeIndex ± 2`), and automatic `?fact=<slug>` URL syncing.
-- **Category Selector & Round-Robin Discovery:** Switch seamlessly between `All (Genel)`, `Space`, `Nature`, `Science`, `History`, `Human Body`, `Weird Records`, and `Language Lab`.
-- **Interactive Language Lab (`LanguageLabOverlay`):** Aligned EN/TR study view accessible per card or via the Language Lab filter, featuring interactive vocabulary chips, **Web Speech API** pronunciation (`en-US` / `tr-TR`), personal wordbook saving (`localStorage`), and a 3-choice fill-in-the-blank challenge.
-- **Spoiler-Protected Guess Widget & Tactile Micro-Interactions:** Wide touch slider with reveal feedback, double-tap burst likes, Bottom Sheet source/explanation panel, Web Audio synth sound effects, and haptic feedback.
-- **Streamlined 3-Tab Floating Dock (`IosFloatingIslandDock`):** Clean `Discover`, `Quiz`, and `Profile/Streak` navigation, spaced memory checkpoints, downloadable Canvas 2D Story & Diploma generators.
-- **Multilingual SEO & AI Readability (GEO):** ISR-backed pages at `/fact/[slug]`, `/en/fact/[slug]`, `/category/[category]`, `/en/category/[category]` with reciprocal `hreflang` tags, `sitemap.xml`, `llms.txt`, `llms-full.txt`, and dynamic OpenGraph images.
-- **Privacy, Consent Mode v2 & API Hardening:** Default-denied Consent Mode v2 until user action (`Accept` / `Decline`), slot-guarded AdSense integration, IP rate limiting, deduplicated Postgres likes/telemetry, and honeypot-protected contact submissions.
+### Core MVP Features
+- **Explore Feed & Adaptive Reels Stage:** Edge-to-edge `100dvh` snap scrolling with a floating bottom dock on mobile and a dedicated left navigation rail + centered `9:16` stage on desktop/tablet, 5-slide DOM virtualization, and automatic `?fact=<slug>` URL synchronization.
+- **7 Curated Categories + Statistics & Language Lab:** Browse `All`, `Space`, `Nature`, `Science`, `History`, `Human Body`, `Weird Records`, and **Statistics** (Birthday Paradox, Survivorship Bias, Monty Hall, Benford's Law, Simpson's Paradox, etc.), plus interactive **Language Lab** vocabulary cards with Web Speech API pronunciation.
+- **Hybrid GIF + Interactive Canvas Visual Engine (`lib/gifService.ts`, `/api/gif`):** Looks up clean, family-safe animated GIFs via Giphy/Tenor using each card's concrete English `visualQuery`, with zero-flicker fallback to bespoke procedural Canvas 2D & interactive SVG scenes.
+- **Interactive Estimation & Conceptual Quizzes:** Spoiler-protected estimation sliders/binary challenges paired with conceptual 3-option "why/how" quizzes, spaced memory checkpoints, XP streaks, and downloadable Canvas 2D Story & Diploma cards.
+- **Scrolla Real-Time 1v1 Duels (`/api/duels`, `/api/duels/[code]`):** Room-code 1v1 trivia duels backed by PostgreSQL (`lib/duelStore.ts`) with synchronized card rounds and instant scoreboards.
+- **Postgres Persistence & Leaderboard (`/api/profile`, `/api/leaderboard`, `/api/events`):** Multi-device XP/streak persistence, event telemetry, and automatic graceful fallback to local JSON shards (`public/data/facts/*.json`) when `DATABASE_URL` is not configured.
+- **Multilingual SEO & AI Readability (GEO):** ISR-backed pages at `/fact/[slug]`, `/en/fact/[slug]`, `/category/[category]`, `/en/category/[category]` with reciprocal `hreflang` links, `sitemap.xml`, `llms.txt`, `llms-full.txt`, and dynamic OpenGraph images.
 
 ---
 
@@ -53,10 +53,9 @@
 | --- | --- |
 | Framework | Next.js 16 (App Router, ISR/SSG/SSR), React 19, TypeScript 5.6 |
 | Styling & Motion | Tailwind CSS 3.4, Framer Motion 11 |
-| Icons & Assets | Lucide React, Local `3d-fluency` PNGs & custom interactive SVGs |
-| Audio & Graphics | Web Audio API, Web Speech API (`speechSynthesis`), HTML5 Canvas 2D |
+| Visuals & Audio | Giphy/Tenor GIF API (`/api/gif`), HTML5 Canvas 2D, SVG illustrations, Web Audio & Web Speech API |
 | Database & Cache | PostgreSQL (`pg`) with optional `DATABASE_CA_CERT` + JSON fallback & `React.cache()` |
-| Automation & CI | GitHub Actions CI (`ci.yml`), OpenAI-compatible fact generator (`auto-generate-facts.yml`) |
+| Automation & CI | GitHub Actions CI (`ci.yml`), daily LLM + reservoir generator (`auto-generate-facts.yml`) |
 | Deployment | Heroku (`Procfile`) or any Node.js `22+` host |
 
 ---
@@ -66,28 +65,30 @@
 ```text
 scrolly/
 ├── app/
-│   ├── page.tsx                       # SSR giriş katmanı + tam ekran Reels akışı
-│   ├── layout.tsx                     # Root layout, viewport ve metadata
-│   ├── not-found.tsx / error.tsx      # Markalı 404 ve hata kurtarma ekranları
-│   ├── manifest.ts                    # PWA Web App Manifest
-│   ├── robots.ts / sitemap.ts         # Arama motoru tarama ve çok dilli sitemap
-│   ├── llms-full.txt/route.ts         # Yapay zekâ dizinleme (GEO) metin uç noktası
-│   ├── fact/[slug]/page.tsx           # Türkçe bilgi detay sayfası (ISR)
-│   ├── en/fact/[slug]/page.tsx        # İngilizce bilgi detay sayfası (ISR)
-│   ├── category/[category]/page.tsx   # Türkçe kategori arşivi (ISR)
-│   ├── en/category/[category]/page.tsx# İngilizce kategori arşivi (ISR)
-│   └── api/                           # `/api/facts`, `/api/events`, `/api/contact`
-├── components/                        # Reels akışı, Dil Öğrenme, Tahmin, Quiz, Reklam & Güven sayfaları
-├── i18n/translations.ts               # TR / EN çeviri sözlüğü
-├── lib/                               # Postgres havuzu (`db.ts`), hız sınırlama (`rateLimit.ts`), yardımcılar
-├── scripts/                           # Yapay zekâ tabanlı kart üretim ve doğrulama betikleri
+│   ├── page.tsx                       # SSR entry & Explore Reels experience
+│   ├── layout.tsx                     # Root layout, viewport, GTM & metadata
+│   ├── sitemap.ts / robots.ts         # Multilingual sitemap (7 categories + facts) & robots
+│   ├── llms-full.txt/route.ts         # AI indexing (GEO) endpoint
+│   ├── fact/[slug]/page.tsx           # TR fact detail page (ISR)
+│   ├── en/fact/[slug]/page.tsx        # EN fact detail page (ISR)
+│   ├── category/[category]/page.tsx   # TR category archive (ISR)
+│   ├── en/category/[category]/page.tsx# EN category archive (ISR)
+│   └── api/                           # `/facts`, `/gif`, `/duels`, `/duels/[code]`, `/profile`, `/leaderboard`, `/events`, `/contact`
+├── components/                        # Reels feed, Canvas scenes, Language Lab, Quiz Hub, Scrolla Duel UI, Trust pages
+├── data/                              # Vocabulary seed & generated vocabulary JSON
+├── i18n/translations.ts               # TR / EN translations
+├── lib/                               # Postgres pool (`db.ts`), duels (`duelStore.ts`), GIF service (`gifService.ts`), rate limiting
+├── scripts/
+│   ├── generateFacts.mjs              # Daily LLM fact + vocabulary generator & Postgres seeder
+│   ├── scientificFactReservoir.mjs    # Curated 7-category fallback reservoir & parametric templates
+│   └── seedVocabularyFacts.mjs        # Static vocabulary card generator (`data/vocabularyFacts.ts`)
 ├── public/
-│   ├── data/facts/                    # 6 kategori + birleşik JSON bilgi veri setleri
-│   ├── assets/                        # Yerel 3B ikon ve sahne görselleri
-│   ├── sw.js                          # Ağ/önbellek stratejili Service Worker
-│   └── ads.txt                        # Google AdSense doğrulama dosyası
-├── supabase/schema.sql                # Postgres tablo şeması (`facts`, `events`, `contact_messages`, `fact_likes`)
-└── eslint.config.mjs                  # ESLint flat yapılandırması
+│   ├── data/facts/                    # 7 category shards (`space`, `nature`, `human_body`, `history`, `science`, `records`, `statistics`) + `facts.json`
+│   ├── assets/                        # Local vector/illustration category assets & favicons
+│   ├── sw.js                          # Offline-ready Service Worker
+│   └── ads.txt                        # Google AdSense verification
+├── supabase/schema.sql                # Postgres schema reference
+└── next.config.mjs                    # Headers, redirects & image config
 ```
 
 ---
@@ -107,59 +108,67 @@ npm ci
 npm run dev
 ```
 
-Tarayıcıda `http://localhost:3000` adresini açın. (Mobil tam ekran deneyimini test etmek için Geliştirici Araçları'ndan `390×844` mobil görünümü seçebilirsiniz.)
+Tarayıcıda `http://localhost:3000` adresini açın. Uygulama `DATABASE_URL` olmadan da yerel JSON veri setiyle çalışır.
 
-### Doğrulama & Derleme / Verification & Build
+### Doğrulama & Betikler / Verification & Scripts
 
 ```bash
+# Type check, ESLint & production build
 npx tsc --noEmit
 npm run lint
 npm run build
 npm run start
+
+# Fact & vocabulary generation scripts
+node scripts/generateFacts.mjs        # Requires DATABASE_URL + AI key (GEMINI_API_KEY / OPENAI_API_KEY / AI_API_KEY)
+node scripts/seedVocabularyFacts.mjs  # Regenerates data/vocabularyFacts.ts
 ```
 
 ---
 
 ## Ortam Değişkenleri / Environment Variables
 
-Uygulama `DATABASE_URL` olmadan da yerel JSON veri setiyle çalışır; Postgres ve harici servis entegrasyonları için `.env.local` (veya Heroku Config Vars / GitHub Secrets) içinde aşağıdaki değişkenleri tanımlayabilirsiniz:
+Üretim veya yerel tam entegrasyon için `.env.local` (veya Heroku Config Vars / GitHub Secrets) içinde şu değişkenleri tanımlayın:
 
 ```env
-# PostgreSQL Bağlantısı / Postgres Database
+# PostgreSQL Bağlantısı / Postgres Persistence (Facts, Profiles, Duels, Leaderboard, Events)
 DATABASE_URL=postgres://user:password@host:5432/scrolly
-DATABASE_CA_CERT=                          # Opsiyonel: Üretim Postgres sunucusu için PEM CA sertifikası (reddedilmeyen TLS doğrulama)
+DATABASE_CA_CERT=                          # Opsiyonel: Üretim TLS için PEM CA sertifikası
 
-# Günlük Otomatik Kart Üretimi (scripts/generateFacts.mjs & GitHub Actions)
-OPENAI_API_KEY=                            # Veya AI_API_KEY / GEMINI_API_KEY
-AI_API_KEY=                                # Alternatif API anahtarı (OPENAI_API_KEY yerine kullanılabilir)
-GEMINI_API_KEY=                            # Google Gemini OpenAI-uyumlu uç nokta için alternatif anahtar
+# GIF Görsel Motoru / Animated GIF Engine (opsiyonel — yoksa yerel Canvas 2D sahneleri kullanılır)
+GIPHY_API_KEY=                             # Tercih edilen Giphy v1 Search API anahtarı
+TENOR_API_KEY=                             # Yedek Tenor v2 Search API anahtarı
+
+# Günlük Otomatik Kart Üretimi / Automated Fact & Vocabulary Generation
+GEMINI_API_KEY=                            # Veya OPENAI_API_KEY / AI_API_KEY
+OPENAI_API_KEY=
+AI_API_KEY=
 AI_MODELS_ENDPOINT=https://generativelanguage.googleapis.com/v1beta/openai/chat/completions
 AI_MODEL_NAME=gemini-4-hydrogen
 
-# Google Tag Manager & AdSense (Consent Mode v2 uyumlu)
+# Google Tag Manager & AdSense (Consent Mode v2)
 NEXT_PUBLIC_GTM_ID=GTM-N746KK52
-NEXT_PUBLIC_ADSENSE_SLOT_ID=               # Akış içi doğal reklam slot ID
-NEXT_PUBLIC_ADSENSE_STICKY_SLOT_ID=        # Alt sabit reklam bandı slot ID (tanımsızsa bant gizlenir)
+NEXT_PUBLIC_ADSENSE_SLOT_ID=
+NEXT_PUBLIC_ADSENSE_STICKY_SLOT_ID=
 
-# Opsiyonel: Supabase Global Liderlik Tablosu
-NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
+# Opsiyonel Harici Liderlik Tablosu / Optional External Leaderboard
+NEXT_PUBLIC_SUPABASE_URL=
+NEXT_PUBLIC_SUPABASE_ANON_KEY=
 ```
 
-> **Not:** `.env` ve `.env*.local` dosyaları `.gitignore` ile hariç tutulmuştur; gizli anahtarları (`DATABASE_URL`, `DATABASE_CA_CERT`, `OPENAI_API_KEY`, `AI_API_KEY`, `GEMINI_API_KEY`) asla `NEXT_PUBLIC_*` önekli istemci değişkenlerine koymayın.
+> **Güvenlik Notu:** `.env` ve `.env*.local` dosyaları `.gitignore` ile hariç tutulmuştur. `DATABASE_URL`, `DATABASE_CA_CERT`, `GIPHY_API_KEY`, `TENOR_API_KEY`, `GEMINI_API_KEY`, `OPENAI_API_KEY` ve `AI_API_KEY` gibi gizli anahtarları asla `NEXT_PUBLIC_` önekiyle paylaşmayın.
 
 ---
 
 ## Dağıtım (Heroku) / Deployment (Heroku)
 
-Depo kökündeki `Procfile` ve `package.json` (`"start": "next start -p $PORT"`) Heroku ile doğrudan uyumludur:
+Depo kökündeki `Procfile` (`web: npm run start`) ve `package.json` (`"start": "next start -p $PORT"`) Heroku ile doğrudan uyumludur:
 
 ```bash
 heroku create your-scrolly-app
+heroku config:set DATABASE_URL="..." GIPHY_API_KEY="..." GEMINI_API_KEY="..."
 git push heroku main
 ```
-
-Ortam değişkenlerini Heroku Config Vars üzerinden (`heroku config:set ...`) ekleyebilirsiniz.
 
 ---
 

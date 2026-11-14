@@ -3,30 +3,40 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import Link from 'next/link';
-import { AnimatePresence, motion, useDragControls, useReducedMotion } from 'framer-motion';
+import { AnimatePresence, motion, useDragControls } from 'framer-motion';
 import {
   ArrowDown,
   Bookmark,
   BookOpen,
+  CheckCircle2,
   ExternalLink,
   Heart,
   RotateCcw,
   RotateCw,
   Share2,
+  Sparkles,
   Swords,
   X,
+  Zap,
 } from 'lucide-react';
 import CategoryMotionArt from '@/components/CategoryMotionArt';
+import FactIcon from '@/components/FactIcon';
 import GuessWidget from '@/components/GuessWidget';
 import { FEED_EXPERIENCE_COPY, getCategoryMeta, type Language, translations } from '@/i18n/translations';
 import { ENABLE_COMPETITIVE_TABS } from '@/lib/featureFlags';
-import { trackEvent } from '@/lib/telemetry';
-import type { CategoryId, FactCard, GuessChallenge } from '@/types/fact';
+import { trackEvent, fetchTopicGifFromApi } from '@/lib/telemetry';
+import type { CategoryId, FactCard } from '@/types/fact';
 import { cryptoRandomInt } from '@/utils/cryptoRandom';
 import { getFactUrl } from '@/utils/factsData';
 import { vibrateTap } from '@/utils/haptics';
 import { isFactLiked, toggleLikedFact } from '@/utils/likedFacts';
-import { buildFactDetailArticle } from '@/utils/topicMotif';
+import {
+  buildFactDetailArticle,
+  buildStructuredDetailHighlights,
+  resolveFallbackVisualQuery,
+} from '@/utils/topicMotif';
+
+const CLIENT_GIF_CACHE = new Map<string, string | null>();
 
 interface TikTokFactSlideProps {
   fact: FactCard;
@@ -56,60 +66,6 @@ interface HeartBurst {
   y: number;
 }
 
-const CATEGORY_HANDLE: Record<CategoryId, { tr: string; en: string }> = {
-  space: { tr: 'UzayEvren', en: 'CosmosLab' },
-  nature: { tr: 'DoğaHarikası', en: 'WildEarth' },
-  human_body: { tr: 'İnsanBeden', en: 'BioHuman' },
-  history: { tr: 'ZamanArşivi', en: 'TimeVault' },
-  science: { tr: 'BilimKıvılcım', en: 'ScienceSpark' },
-  records: { tr: 'GaripRekor', en: 'OddRecords' },
-};
-
-function escapeRegExp(value: string): string {
-  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-}
-
-function buildSpoilerPattern(challenge: GuessChallenge): RegExp | null {
-  const tokens: string[] = [];
-
-  if (challenge.type === 'slider' && typeof challenge.correctValue === 'number') {
-    const raw = String(challenge.correctValue);
-    const us = challenge.correctValue.toLocaleString('en-US');
-    const tr = challenge.correctValue.toLocaleString('tr-TR');
-    for (const variant of [raw, us, tr]) {
-      if (variant && !tokens.includes(variant)) {
-        tokens.push(variant);
-      }
-    }
-  } else if (
-    challenge.type === 'binary' &&
-    Array.isArray(challenge.options) &&
-    typeof challenge.correctOptionIndex === 'number'
-  ) {
-    const correctOption = challenge.options[challenge.correctOptionIndex]?.trim();
-    if (correctOption) {
-      tokens.push(correctOption);
-      const firstWord = correctOption.split(/\s+/)[0];
-      if (firstWord && firstWord.length >= 3) {
-        tokens.push(firstWord);
-      }
-    }
-  }
-
-  if (tokens.length === 0) return null;
-  const sorted = tokens.sort((a, b) => b.length - a.length).map(escapeRegExp);
-  return new RegExp(`(${sorted.join('|')})`, 'gi');
-}
-
-function maskHeadlineText(title: string, challenge: GuessChallenge, teaserTitle?: string): string {
-  if (teaserTitle?.trim()) return teaserTitle.trim();
-  const pattern = buildSpoilerPattern(challenge);
-  if (pattern && pattern.test(title)) {
-    return title.replace(pattern, '[ ??? ]');
-  }
-  return title;
-}
-
 export default function TikTokFactSlide({
   fact,
   lang,
@@ -117,7 +73,7 @@ export default function TikTokFactSlide({
   isFavorite,
   isFirstCard = false,
   isActive = true,
-  cookieBannerVisible = false,
+  cookieBannerVisible: _cookieBannerVisible = false,
   onFlip,
   onDoubleTapLike,
   onDwellRead,
@@ -127,18 +83,24 @@ export default function TikTokFactSlide({
   onGuessReward,
   onToggleFavorite,
   onButtonPop,
+  onEarnXp,
+  onSuccessSound,
+  onWrongSound,
 }: TikTokFactSlideProps) {
   const [isFlipped, setIsFlipped] = useState(false);
   const [isFlipping, setIsFlipping] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
-  const [isGuessLocked, setIsGuessLocked] = useState(false);
   const [heartBursts, setHeartBursts] = useState<HeartBurst[]>([]);
   const [portalReady, setPortalReady] = useState(false);
+  const [miniQuizChoice, setMiniQuizChoice] = useState<number | null>(null);
+  const [miniQuizAwarded, setMiniQuizAwarded] = useState(false);
   const detailDragControls = useDragControls();
   const detailScrollRef = useRef<HTMLDivElement>(null);
   const detailDragYRef = useRef(0);
   const detailPullStartY = useRef<number | null>(null);
   const detailPulling = useRef(false);
+  const isFlippedRef = useRef(false);
+  isFlippedRef.current = isFlipped;
 
   useEffect(() => {
     setPortalReady(true);
@@ -167,19 +129,133 @@ export default function TikTokFactSlide({
   const factSlug = fact.slug || fact.en.slug || fact.tr.slug || fact.id;
   const detailArticle = useMemo(
     () =>
-      buildFactDetailArticle({
-        factText: localized.factText,
-        deepDiveDetail: localized.deepDiveDetail,
-        tag: localized.tag,
-        sourceHint: localized.sourceHint,
-        quiz: localized.quiz,
-      }),
-    [localized.factText, localized.deepDiveDetail, localized.tag, localized.sourceHint, localized.quiz]
+      buildFactDetailArticle(
+        {
+          factText: localized.factText,
+          deepDiveDetail: localized.deepDiveDetail,
+          tag: localized.tag,
+          sourceHint: localized.sourceHint,
+          quiz: localized.quiz,
+        },
+        lang
+      ),
+    [localized.factText, localized.deepDiveDetail, localized.tag, localized.sourceHint, localized.quiz, lang]
   );
   const topicText = useMemo(
     () => [localized.title, localized.factText, localized.tag, fact.sketchType].filter(Boolean).join(' '),
     [localized.title, localized.factText, localized.tag, fact.sketchType]
   );
+
+  const detailHighlights = useMemo(
+    () =>
+      buildStructuredDetailHighlights(
+        {
+          factText: localized.factText,
+          deepDiveDetail: localized.deepDiveDetail,
+          tag: localized.tag,
+          sourceHint: localized.sourceHint,
+          quiz: localized.quiz,
+        },
+        lang
+      ),
+    [localized.factText, localized.deepDiveDetail, localized.tag, localized.sourceHint, localized.quiz, lang]
+  );
+
+  const [resolvedGifUrl, setResolvedGifUrl] = useState<string | null>(
+    () => fact.gifUrl || CLIENT_GIF_CACHE.get(fact.id) || null
+  );
+  const [gifFailed, setGifFailed] = useState(false);
+  const [gifLoaded, setGifLoaded] = useState(false);
+  const gifImgRef = useRef<HTMLImageElement>(null);
+
+  const effectiveVisualQuery = useMemo(
+    () =>
+      fact.visualQuery?.trim() ||
+      resolveFallbackVisualQuery({
+        category: fact.category,
+        title: fact.en.title || localized.title,
+        factText: fact.en.factText || localized.factText,
+        tag: localized.tag,
+      }),
+    [fact.visualQuery, fact.category, fact.en.title, fact.en.factText, localized.title, localized.factText, localized.tag]
+  );
+
+  // Lazy-fetch & cache topic-relevant GIF once when slide becomes active
+  useEffect(() => {
+    setGifFailed(false);
+    setGifLoaded(false);
+    if (fact.gifUrl) {
+      CLIENT_GIF_CACHE.set(fact.id, fact.gifUrl);
+      setResolvedGifUrl(fact.gifUrl);
+      return;
+    }
+    if (CLIENT_GIF_CACHE.has(fact.id)) {
+      setResolvedGifUrl(CLIENT_GIF_CACHE.get(fact.id) ?? null);
+      return;
+    }
+    setResolvedGifUrl(null);
+    if (!isActive || !effectiveVisualQuery) return;
+
+    let cancelled = false;
+    void fetchTopicGifFromApi(effectiveVisualQuery, factSlug).then((url) => {
+      if (cancelled) return;
+      CLIENT_GIF_CACHE.set(fact.id, url);
+      if (url) setResolvedGifUrl(url);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [fact.id, fact.gifUrl, effectiveVisualQuery, factSlug, isActive]);
+
+  useEffect(() => {
+    if (gifImgRef.current?.complete && gifImgRef.current.naturalWidth > 0) {
+      setGifLoaded(true);
+    }
+  }, [resolvedGifUrl]);
+
+  const latestCardActionsRef = useRef<{
+    toggleLike: () => void;
+    toggleSave: () => void;
+    openDetail: () => void;
+    toggleFlip: () => void;
+    openDuel: () => void;
+    share: () => void;
+  } | null>(null);
+
+  useEffect(() => {
+    if (!isActive) return;
+    const handleCardAction = (ev: Event) => {
+      const detail = (ev as CustomEvent<{ factId?: string; action?: string }>).detail;
+      if (!detail || (detail.factId && detail.factId !== fact.id)) return;
+      const actions = latestCardActionsRef.current;
+      if (!actions) return;
+      switch (detail.action) {
+        case 'like':
+          actions.toggleLike();
+          break;
+        case 'save':
+          actions.toggleSave();
+          break;
+        case 'detail':
+          actions.openDetail();
+          break;
+        case 'flip':
+          actions.toggleFlip();
+          break;
+        case 'duel':
+          actions.openDuel();
+          break;
+        case 'share':
+          actions.share();
+          break;
+        default:
+          break;
+      }
+    };
+    window.addEventListener('scrolly-card-action', handleCardAction as EventListener);
+    return () =>
+      window.removeEventListener('scrolly-card-action', handleCardAction as EventListener);
+  }, [isActive, fact.id]);
 
   // Deterministic fallback likes when running completely offline without DB counts
   const baseLikesCount = useMemo(() => {
@@ -194,10 +270,12 @@ export default function TikTokFactSlide({
 
   useEffect(() => {
     setIsLiked(isFactLiked(fact.id));
+    isFlippedRef.current = false;
     setIsFlipped(false);
     setIsFlipping(false);
     setIsDragging(false);
-    setIsGuessLocked(false);
+    setMiniQuizChoice(null);
+    setMiniQuizAwarded(false);
     hasCountedDwellRef.current = false;
     hasSentDwellEventRef.current = false;
     visibleEnterTimeRef.current = null;
@@ -255,6 +333,7 @@ export default function TikTokFactSlide({
 
     if (!isActive) {
       clearPendingTimers();
+      setIsFlipped(false);
       setIsFlipping(false);
       setIsDragging(false);
       setHeartBursts([]);
@@ -381,6 +460,8 @@ export default function TikTokFactSlide({
   };
 
   const executeFlip = () => {
+    const next = !isFlippedRef.current;
+    isFlippedRef.current = next;
     setIsFlipping(true);
     detailDragYRef.current = 0;
     detailPullStartY.current = null;
@@ -393,15 +474,12 @@ export default function TikTokFactSlide({
       setIsFlipping(false);
     }, 260);
 
-    setIsFlipped((prev) => {
-      const next = !prev;
-      if (next) {
-        void trackEvent(factSlug, fact.category, 'detail_open', {
-          source: resolvedSourceName,
-        });
-      }
-      return next;
-    });
+    setIsFlipped(next);
+    if (next) {
+      void trackEvent(factSlug, fact.category, 'detail_open', {
+        source: resolvedSourceName,
+      });
+    }
     onFlip(fact);
   };
 
@@ -495,70 +573,27 @@ export default function TikTokFactSlide({
     void trackEvent(factSlug, fact.category, 'share');
     onOpenStoryShare(fact);
   };
-  const handleName = CATEGORY_HANDLE[fact.category]?.[lang] ?? 'Scrolly';
   const resolvedSourceName =
     localized.sourceName || fact.sourceName || localized.sourceHint;
   const resolvedSourceUrl = localized.sourceUrl || fact.sourceUrl;
 
-  const hasChallenge = Boolean(localized.guessChallenge);
-  const shouldMaskSpoiler = hasChallenge && !isGuessLocked && !isFlipped;
-
-  const displayHeadline = useMemo(() => {
-    if (!shouldMaskSpoiler || !localized.guessChallenge) {
-      return localized.title;
-    }
-    return maskHeadlineText(localized.title, localized.guessChallenge, localized.teaserTitle);
-  }, [shouldMaskSpoiler, localized.guessChallenge, localized.title, localized.teaserTitle]);
-
-  const renderedFactBody = useMemo(() => {
-    if (!shouldMaskSpoiler || !localized.guessChallenge) {
-      return localized.factText;
-    }
-    const text = localized.factText;
-    const pattern = buildSpoilerPattern(localized.guessChallenge);
-    if (pattern) {
-      const parts = text.split(pattern);
-      if (parts.length > 1) {
-        return parts.map((part, idx) => {
-          if (idx % 2 === 1) {
-            return (
-              <span key={`sp-${idx}`} className="inline-flex items-center gap-1 align-baseline">
-                <span
-                  data-testid="spoiler-mask"
-                  className="inline-flex items-center rounded bg-white/15 px-1.5 py-0.2 font-mono text-[11px] font-black tracking-wider text-white"
-                >
-                  [ ??? ]
-                </span>
-                <span className="blur-sm select-none opacity-60 transition-all duration-300">
-                  {part}
-                </span>
-              </span>
-            );
-          }
-          return <React.Fragment key={`tx-${idx}`}>{part}</React.Fragment>;
-        });
-      }
-    }
-
-    // Fallback: blur trailing clause while keeping curiosity lead-in visible
-    const splitAt = Math.max(24, Math.floor(text.length * 0.55));
-    const visibleLead = text.slice(0, splitAt);
-    const hiddenTail = text.slice(splitAt);
-    return (
-      <>
-        <span>{visibleLead} </span>
-        <span
-          data-testid="spoiler-mask"
-          className="mr-1 inline-flex items-center rounded bg-white/15 px-1.5 py-0.2 font-mono text-[11px] font-black tracking-wider text-white"
-        >
-          [ ??? ]
-        </span>
-        <span className="blur-sm select-none opacity-60 transition-all duration-300">
-          {hiddenTail}
-        </span>
-      </>
-    );
-  }, [shouldMaskSpoiler, localized.guessChallenge, localized.factText]);
+  latestCardActionsRef.current = {
+    toggleLike: () => handleToggleLikeClick({ stopPropagation: () => {} } as React.MouseEvent),
+    toggleSave: () => {
+      onToggleFavorite(fact);
+      vibrateTap(18);
+    },
+    openDetail: () => executeFlip(),
+    toggleFlip: () => {
+      onButtonPop();
+      executeFlip();
+    },
+    openDuel: () => {
+      void trackEvent(factSlug, fact.category, 'duel');
+      onOpenDuel(fact);
+    },
+    share: () => handleShareClick({ stopPropagation: () => {} } as React.MouseEvent),
+  };
 
     return (
     <div
@@ -596,7 +631,7 @@ export default function TikTokFactSlide({
       />
 
       <div className="relative mx-auto h-full w-full overflow-hidden bg-[#09090B]">
-        {/* Full-bleed cinematic canvas */}
+        {/* Full-bleed cinematic canvas (always present as seamless backdrop & fallback) */}
         <CategoryMotionArt
           variant="hero"
           factId={fact.id}
@@ -613,17 +648,37 @@ export default function TikTokFactSlide({
           tag={localized.tag}
         />
 
-        {/* Cinematic bottom gradient */}
-        <div className="pointer-events-none absolute inset-x-0 bottom-0 z-[5] h-[58%] bg-gradient-to-t from-[#09090B] via-[#09090B]/75 to-transparent" />
+        {/* Topic-relevant GIF media layer (only when cleanly matched via visualQuery) */}
+        {resolvedGifUrl && !gifFailed && (
+          <img
+            ref={gifImgRef}
+            src={resolvedGifUrl}
+            alt={localized.title}
+            loading="eager"
+            decoding="async"
+            data-testid="card-topic-gif"
+            onLoad={() => setGifLoaded(true)}
+            onError={() => setGifFailed(true)}
+            className={`pointer-events-none absolute inset-0 z-[2] h-full w-full object-cover transition-opacity duration-500 ${
+              gifLoaded ? 'opacity-75' : 'opacity-0'
+            }`}
+          />
+        )}
 
-        {/* Front content — mandatory safe paddings */}
+        {/* Readability dark gradient scrim so title & slider stay crisp over GIF/canvas */}
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-0 z-[5] bg-gradient-to-t from-black/90 via-black/55 to-black/70"
+        />
+
+        {/* Front content — mandatory safe paddings; full headline & short fact readable immediately */}
         <div
           data-testid="fact-card-front"
-          className={`relative z-10 flex h-full w-full flex-col justify-end overflow-hidden px-4 pt-[108px] pb-[96px] ${
+          className={`relative z-10 flex h-full w-full flex-col justify-end overflow-hidden px-4 pt-[96px] pb-[94px] lg:pt-[88px] lg:pb-7 ${
             isFlipped ? 'invisible pointer-events-none' : ''
           }`}
         >
-          <div className="pointer-events-none relative z-10 flex w-full flex-col gap-2 pr-16">
+          <div className="pointer-events-none relative z-10 flex max-h-full w-full flex-col gap-2 overflow-y-auto no-scrollbar pr-16 lg:pr-2">
             <div className="inline-flex w-fit items-center gap-1.5 rounded-full border border-white/20 bg-white/10 px-2.5 py-1 text-[10px] font-extrabold uppercase tracking-wide text-white backdrop-blur-md">
               <img src={catMeta.iconPath} alt="" aria-hidden="true" className="h-3.5 w-3.5 object-contain" />
               <span>{catMeta.label[lang]}</span>
@@ -631,16 +686,16 @@ export default function TikTokFactSlide({
 
             <h2
               data-testid="fact-headline"
-              className="font-display text-[22px] font-bold leading-snug text-white drop-shadow sm:text-2xl whitespace-normal break-words"
+              className="font-display text-[21px] font-bold leading-snug text-white drop-shadow sm:text-2xl whitespace-normal break-words"
             >
-              {displayHeadline}
+              {localized.title}
             </h2>
 
             <p
               data-testid="fact-body"
-              className="line-clamp-3 text-[13px] font-semibold leading-snug text-white/95 whitespace-normal break-words"
+              className="text-[13.5px] font-semibold leading-relaxed text-white/95 drop-shadow-sm sm:text-sm whitespace-normal break-words"
             >
-              {renderedFactBody}
+              {localized.factText}
             </p>
 
             {localized.guessChallenge && (
@@ -649,7 +704,6 @@ export default function TikTokFactSlide({
                 challenge={localized.guessChallenge}
                 lang={lang}
                 onGuessAnswered={(xpAwarded, accurate, details) => {
-                  setIsGuessLocked(true);
                   onGuessReward(xpAwarded, accurate, fact.category, details.accuracyPct);
                   void trackEvent(factSlug, fact.category, 'quick_guess', {
                     guess: details.userGuess,
@@ -685,13 +739,13 @@ export default function TikTokFactSlide({
           </div>
         </div>
 
-        {/* Right Reels action column — flush to stage edge (TikTok-attached) */}
+        {/* Right Reels action column — mobile/tablet only (desktop moves rail beside stage) */}
         {!isFlipped && (
           <div
             data-testid="reels-action-column"
             onClick={(e) => e.stopPropagation()}
             onDoubleClick={(e) => e.stopPropagation()}
-            className="absolute bottom-[104px] right-2 z-20 flex flex-col items-center gap-3 lg:bottom-[120px] lg:right-3"
+            className="absolute bottom-[104px] right-2 z-20 flex flex-col items-center gap-3 lg:hidden"
           >
             <motion.button
               type="button"
@@ -775,7 +829,7 @@ export default function TikTokFactSlide({
                 data-testid="card-duel-btn"
                 className="flex flex-col items-center gap-0.5"
               >
-                <span className="flex h-11 w-11 items-center justify-center rounded-full border border-white/20 bg-white/10 text-amber-300 backdrop-blur-md">
+                <span className="flex h-11 w-11 items-center justify-center rounded-full border border-violet-400/50 bg-gradient-to-br from-violet-600/90 to-fuchsia-600/90 text-white shadow-lg shadow-violet-500/30 backdrop-blur-md">
                   <Swords className="h-5 w-5" />
                 </span>
                 <span className="text-[10px] font-extrabold text-white/90">{t.dockDuel}</span>
@@ -808,7 +862,8 @@ export default function TikTokFactSlide({
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
                   transition={{ duration: 0.18 }}
-                  className="pointer-events-none fixed inset-0 z-[60] flex items-center justify-center bg-black/40"
+                  onClick={() => executeFlip()}
+                  className="pointer-events-auto fixed inset-0 z-[60] flex items-center justify-center bg-black/55 backdrop-blur-sm"
                 >
                   <motion.div
                     key="detail"
@@ -838,8 +893,10 @@ export default function TikTokFactSlide({
                     onDoubleClick={(e) => e.stopPropagation()}
                     onWheel={(e) => e.stopPropagation()}
                     data-theme={darkMode ? 'dark' : 'light'}
-                    className={`pointer-events-auto relative z-[60] flex h-[100dvh] w-full max-w-none flex-col overflow-hidden lg:h-[100dvh] lg:max-w-[min(620px,50vw)] lg:shadow-2xl ${
-                      darkMode ? 'bg-[#111115] text-white' : 'bg-[#FFFDF9] text-[#1E1B2E]'
+                    className={`pointer-events-auto relative z-[60] flex h-[100dvh] w-full max-w-none flex-col overflow-hidden lg:my-auto lg:h-[min(90dvh,820px)] lg:max-w-[min(620px,54vw)] lg:rounded-[28px] lg:border lg:shadow-2xl ${
+                      darkMode
+                        ? 'bg-[#111115] text-white lg:border-white/15'
+                        : 'bg-[#FFFDF9] text-[#1E1B2E] lg:border-[#1E1B2E]/10'
                     }`}
                   >
                     {/* Drag zone: handle + header — starts sheet drag on pointer/touch */}
@@ -847,7 +904,6 @@ export default function TikTokFactSlide({
                       data-testid="detail-drag-zone"
                       className="relative z-20 flex shrink-0 touch-none flex-col px-5 pt-[max(12px,env(safe-area-inset-top))] pb-2"
                       onPointerDown={(e) => {
-                        // Don't steal clicks from the close button
                         const target = e.target as HTMLElement;
                         if (target.closest('[data-testid="detail-close-btn"]')) return;
                         e.stopPropagation();
@@ -866,7 +922,7 @@ export default function TikTokFactSlide({
                       <div className="flex shrink-0 items-center justify-between gap-3">
                         <div
                           className={`inline-flex w-fit items-center gap-1.5 rounded-full px-3 py-1 text-xs font-extrabold ${
-                            darkMode ? 'bg-white/10 text-white' : 'bg-[#1E1B2E]/8 text-[#1E1B2E]'
+                            darkMode ? 'bg-white/10 text-white' : 'bg-[#1E1B2E]/[0.08] text-[#1E1B2E]'
                           }`}
                         >
                           <img src={catMeta.iconPath} alt="" aria-hidden="true" className="h-4 w-4 object-contain" />
@@ -894,7 +950,7 @@ export default function TikTokFactSlide({
 
                     <div
                       ref={detailScrollRef}
-                      className="no-scrollbar flex min-h-0 flex-1 flex-col overflow-y-auto px-5 pb-[104px] touch-pan-y"
+                      className="no-scrollbar flex min-h-0 flex-1 flex-col overflow-y-auto px-5 pb-6 touch-pan-y"
                       onPointerDown={(e) => {
                         const scroller = detailScrollRef.current;
                         if (!scroller || scroller.scrollTop > 2) {
@@ -924,26 +980,313 @@ export default function TikTokFactSlide({
                         detailPulling.current = false;
                       }}
                     >
-                      <div className="my-3 flex-1 pr-1">
-                        <h3 className="font-display text-xl font-bold leading-snug whitespace-normal break-words">
-                          {localized.title}
-                        </h3>
-                        <p
-                          data-testid="fact-detail-article"
-                          data-differs-from-teaser={detailArticle.differsFromTeaser ? 'true' : 'false'}
-                          className={`mt-3 whitespace-pre-wrap text-[14.5px] leading-relaxed break-words ${
-                            darkMode ? 'text-white/90' : 'text-[#1E1B2E]/85'
+                      <div className="my-2 flex-1 space-y-4 pr-0.5">
+                        {/* Visual Hero Banner */}
+                        <div
+                          className="relative overflow-hidden rounded-2xl border p-4"
+                          style={{
+                            borderColor: `${fact.accentColor}40`,
+                            background: darkMode
+                              ? `linear-gradient(135deg, ${fact.accentColor}2A 0%, rgba(17,17,22,0.92) 100%)`
+                              : `linear-gradient(135deg, ${fact.accentColor}1C 0%, #FFFFFF 100%)`,
+                          }}
+                        >
+                          <div className="flex items-start justify-between gap-3">
+                            <div className="min-w-0 flex-1">
+                              <div className="flex flex-wrap items-center gap-2">
+                                <span
+                                  className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider text-white"
+                                  style={{ backgroundColor: fact.accentColor || '#7C3AED' }}
+                                >
+                                  <span>{fact.emoji || catMeta.emoji}</span>
+                                  <span>{detailHighlights.topicTag}</span>
+                                </span>
+                                <span
+                                  className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[10px] font-black ${
+                                    darkMode
+                                      ? 'bg-amber-400/20 text-amber-300'
+                                      : 'bg-amber-100 text-amber-800'
+                                  }`}
+                                >
+                                  <Zap className="h-3 w-3" />
+                                  <span>{fact.readingTimeSec || 18}s · +15 XP</span>
+                                </span>
+                              </div>
+                              <h3 className="mt-2.5 font-display text-xl font-bold leading-snug whitespace-normal break-words">
+                                {localized.title}
+                              </h3>
+                            </div>
+                            <div
+                              className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border ${
+                                darkMode
+                                  ? 'border-white/15 bg-black/35'
+                                  : 'border-[#1E1B2E]/10 bg-white shadow-sm'
+                              }`}
+                            >
+                              <FactIcon
+                                name={fact.iconName}
+                                className="h-6 w-6"
+                                style={{ color: fact.accentColor || '#7C3AED' }}
+                              />
+                            </div>
+                          </div>
+
+                          {resolvedGifUrl && !gifFailed ? (
+                            <div className="relative mt-3 h-36 w-full overflow-hidden rounded-xl border border-white/15">
+                              <img
+                                src={resolvedGifUrl}
+                                alt={localized.title}
+                                onError={() => setGifFailed(true)}
+                                className="h-full w-full object-cover"
+                              />
+                              <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+                            </div>
+                          ) : (
+                            <div className="mt-3">
+                              <CategoryMotionArt
+                                variant="compact"
+                                category={fact.category}
+                                accentColor={fact.accentColor}
+                                iconName={fact.iconName}
+                                emoji={fact.emoji ?? catMeta.emoji}
+                                lang={lang}
+                                isActive={isFlipped}
+                              />
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Quick Takeaways Strip */}
+                        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                          <div
+                            className={`rounded-2xl border px-3.5 py-2.5 ${
+                              darkMode
+                                ? 'border-white/10 bg-white/[0.04]'
+                                : 'border-[#1E1B2E]/10 bg-white'
+                            }`}
+                          >
+                            <p
+                              className={`text-[10px] font-black uppercase tracking-wider ${
+                                darkMode ? 'text-violet-300' : 'text-violet-700'
+                              }`}
+                            >
+                              {lang === 'tr' ? '🎯 Hızlı Özet' : '🎯 Core Takeaway'}
+                            </p>
+                            <p
+                              className={`mt-1 text-xs font-semibold leading-relaxed ${
+                                darkMode ? 'text-white/85' : 'text-[#1E1B2E]/85'
+                              }`}
+                            >
+                              {localized.factText}
+                            </p>
+                          </div>
+                          <div
+                            className={`rounded-2xl border px-3.5 py-2.5 ${
+                              darkMode
+                                ? 'border-white/10 bg-white/[0.04]'
+                                : 'border-[#1E1B2E]/10 bg-white'
+                            }`}
+                          >
+                            <p
+                              className={`text-[10px] font-black uppercase tracking-wider ${
+                                darkMode ? 'text-sky-300' : 'text-sky-700'
+                              }`}
+                            >
+                              {lang === 'tr' ? '🔬 Bilimsel Odak' : '🔬 Focus Question'}
+                            </p>
+                            <p
+                              className={`mt-1 text-xs font-semibold leading-relaxed ${
+                                darkMode ? 'text-white/85' : 'text-[#1E1B2E]/85'
+                              }`}
+                            >
+                              {detailHighlights.curiosityHook}
+                            </p>
+                          </div>
+                        </div>
+
+                        {/* Scientific Deep-Dive Narrative */}
+                        <div
+                          className={`rounded-2xl border p-4 ${
+                            darkMode
+                              ? 'border-white/10 bg-white/[0.03]'
+                              : 'border-[#1E1B2E]/10 bg-white'
                           }`}
                         >
-                          {detailArticle.article}
-                        </p>
+                          <p
+                            className={`mb-2 text-[10px] font-black uppercase tracking-wider ${
+                              darkMode ? 'text-white/55' : 'text-[#1E1B2E]/55'
+                            }`}
+                          >
+                            {lang === 'tr' ? '📖 Derinlemesine Bilim Analizi' : '📖 Deep-Dive Science'}
+                          </p>
+                          <p
+                            data-testid="fact-detail-article"
+                            data-differs-from-teaser={detailArticle.differsFromTeaser ? 'true' : 'false'}
+                            className={`whitespace-pre-wrap text-[14.5px] leading-relaxed break-words ${
+                              darkMode ? 'text-white/90' : 'text-[#1E1B2E]/85'
+                            }`}
+                          >
+                            {detailArticle.article}
+                          </p>
+                        </div>
+
+                        {/* Engaging Key Insight & Curiosity Hook */}
+                        <div
+                          className={`rounded-2xl border p-3.5 ${
+                            darkMode
+                              ? 'border-amber-400/25 bg-amber-400/10'
+                              : 'border-amber-300 bg-amber-50'
+                          }`}
+                        >
+                          <p
+                            className={`text-[10px] font-black uppercase tracking-wider ${
+                              darkMode ? 'text-amber-300' : 'text-amber-800'
+                            }`}
+                          >
+                            {lang === 'tr' ? '💡 Kilit Bilimsel İçgörü' : '💡 Key Scientific Insight'}
+                          </p>
+                          <p
+                            className={`mt-1 text-xs font-bold leading-relaxed ${
+                              darkMode ? 'text-white/90' : 'text-[#1E1B2E]/90'
+                            }`}
+                          >
+                            {detailHighlights.keyInsight}
+                          </p>
+                        </div>
+
+                        {/* Interactive 1-Tap Comprehension Mini-Quiz (+15 XP) */}
+                        {localized.quiz && localized.quiz.options && localized.quiz.options.length >= 2 && (
+                          <div
+                            data-testid="detail-mini-quiz"
+                            className={`rounded-2xl border p-4 ${
+                              darkMode
+                                ? 'border-violet-400/30 bg-violet-500/10'
+                                : 'border-violet-200 bg-violet-50/70'
+                            }`}
+                          >
+                            <div className="flex items-center justify-between gap-2">
+                              <span
+                                className={`inline-flex items-center gap-1 text-[10px] font-black uppercase tracking-wider ${
+                                  darkMode ? 'text-violet-300' : 'text-violet-700'
+                                }`}
+                              >
+                                <Sparkles className="h-3.5 w-3.5" />
+                                <span>{lang === 'tr' ? 'Hızlı Kavrama Testi' : 'Quick Knowledge Check'}</span>
+                              </span>
+                              <span
+                                className={`rounded-full px-2 py-0.5 text-[10px] font-black ${
+                                  miniQuizChoice !== null && miniQuizChoice === localized.quiz.correctIndex
+                                    ? 'bg-emerald-500 text-white'
+                                    : darkMode
+                                      ? 'bg-amber-400/20 text-amber-300'
+                                      : 'bg-amber-100 text-amber-800'
+                                }`}
+                              >
+                                {miniQuizChoice !== null && miniQuizChoice === localized.quiz.correctIndex
+                                  ? '+15 XP ✓'
+                                  : '+15 XP'}
+                              </span>
+                            </div>
+                            <p className="mt-2 text-xs font-extrabold leading-snug">
+                              {localized.quiz.question}
+                            </p>
+                            <div className="mt-2.5 grid grid-cols-1 gap-1.5 sm:grid-cols-2">
+                              {localized.quiz.options.map((opt, idx) => {
+                                const picked = miniQuizChoice === idx;
+                                const answered = miniQuizChoice !== null;
+                                const isCorrectOpt = idx === localized.quiz.correctIndex;
+                                let optStyle = darkMode
+                                  ? 'border-white/15 bg-white/5 text-white hover:bg-white/10'
+                                  : 'border-[#1E1B2E]/15 bg-white text-[#1E1B2E] hover:bg-violet-50';
+                                if (answered) {
+                                  if (isCorrectOpt) {
+                                    optStyle = 'border-emerald-500 bg-emerald-500/20 text-emerald-500 dark:text-emerald-200';
+                                  } else if (picked) {
+                                    optStyle = 'border-rose-500 bg-rose-500/20 text-rose-500 dark:text-rose-200';
+                                  } else {
+                                    optStyle = darkMode
+                                      ? 'border-white/10 bg-white/[0.02] text-white/45'
+                                      : 'border-[#1E1B2E]/10 bg-white/50 text-[#1E1B2E]/45';
+                                  }
+                                }
+                                return (
+                                  <button
+                                    key={`${fact.id}-dq-${idx}`}
+                                    type="button"
+                                    data-testid={`detail-quiz-opt-${idx}`}
+                                    disabled={answered}
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      if (miniQuizChoice !== null) return;
+                                      onButtonPop();
+                                      setMiniQuizChoice(idx);
+                                      const right = idx === localized.quiz.correctIndex;
+                                      if (right) {
+                                        onSuccessSound?.();
+                                        if (!miniQuizAwarded) {
+                                          setMiniQuizAwarded(true);
+                                          onEarnXp?.(15, 'detail_mini_quiz');
+                                        }
+                                      } else {
+                                        onWrongSound?.();
+                                      }
+                                    }}
+                                    className={`flex min-h-[40px] items-center justify-between gap-2 rounded-xl border px-3 py-2 text-left text-[11px] font-bold transition ${optStyle}`}
+                                  >
+                                    <span className="whitespace-normal break-words leading-snug">{opt}</span>
+                                    {answered && isCorrectOpt && (
+                                      <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-500" />
+                                    )}
+                                  </button>
+                                );
+                              })}
+                            </div>
+                            {miniQuizChoice !== null && localized.quiz.explanation && (
+                              <p
+                                className={`mt-2.5 text-[11px] font-semibold leading-relaxed ${
+                                  darkMode ? 'text-white/80' : 'text-[#1E1B2E]/80'
+                                }`}
+                              >
+                                {localized.quiz.explanation}
+                              </p>
+                            )}
+                          </div>
+                        )}
+
+                        {/* Scrolla 1v1 Quick Duel Banner */}
+                        {ENABLE_COMPETITIVE_TABS && (
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onButtonPop();
+                              isFlippedRef.current = false;
+                              setIsFlipped(false);
+                              void trackEvent(factSlug, fact.category, 'duel');
+                              onOpenDuel(fact);
+                            }}
+                            className="flex w-full items-center justify-between gap-3 rounded-2xl border border-violet-400/40 bg-gradient-to-r from-violet-600/90 to-fuchsia-600/90 px-4 py-3 text-left text-white shadow-lg shadow-violet-500/20 transition hover:brightness-110"
+                          >
+                            <div className="min-w-0">
+                              <p className="text-[10px] font-black uppercase tracking-wider text-violet-100">
+                                Scrolla 1v1
+                              </p>
+                              <p className="text-xs font-extrabold">
+                                {lang === 'tr'
+                                  ? 'Bu bilgiyle arkadaşını 1v1 düelloya davet et!'
+                                  : 'Challenge a friend in a Scrolla 1v1 duel!'}
+                              </p>
+                            </div>
+                            <Swords className="h-5 w-5 shrink-0" />
+                          </button>
+                        )}
 
                         <div
                           data-testid="fact-source-box"
-                          className={`mt-4 flex flex-col gap-2.5 rounded-2xl border px-4 py-3 text-xs ${
+                          className={`mt-2 flex flex-col gap-2.5 rounded-2xl border px-4 py-3 text-xs ${
                             darkMode
                               ? 'border-white/15 bg-white/5'
-                              : 'border-[#1E1B2E]/12 bg-white'
+                              : 'border-[#1E1B2E]/[0.12] bg-white'
                           }`}
                         >
                           <div className={`flex items-start gap-2 font-bold ${darkMode ? 'text-white/90' : 'text-[#1E1B2E]'}`}>
@@ -1001,44 +1344,64 @@ export default function TikTokFactSlide({
                           </div>
                         </div>
                       </div>
+                    </div>
 
-                      <div className="relative z-50 flex shrink-0 flex-wrap items-center gap-2 pt-2">
-                        <motion.button
-                          type="button"
-                          whileTap={{ scale: 0.94 }}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            executeFlip();
-                          }}
-                          data-testid="flip-back-btn"
-                          className={`flex min-h-[46px] flex-1 items-center justify-center gap-2 rounded-2xl border px-4 text-xs font-extrabold ${
-                            darkMode
-                              ? 'border-white/15 bg-white/10 text-white'
-                              : 'border-[#1E1B2E]/15 bg-white text-[#1E1B2E]'
-                          }`}
-                        >
-                          <RotateCcw className="h-4 w-4 shrink-0" />
-                          <span>{lang === 'tr' ? 'Karta Dön' : 'Back to Card'}</span>
-                        </motion.button>
-                        <motion.button
-                          type="button"
-                          whileTap={{ scale: 0.94 }}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            onButtonPop();
+                    {/* Pinned footer bar — always reachable outside detailScrollRef */}
+                    <div
+                      onPointerDown={(e) => e.stopPropagation()}
+                      className={`relative z-50 flex shrink-0 flex-wrap items-center gap-2 border-t px-5 py-3 pb-[max(14px,env(safe-area-inset-bottom))] ${
+                        darkMode
+                          ? 'border-white/10 bg-[#111115]'
+                          : 'border-[#1E1B2E]/10 bg-[#FFFDF9]'
+                      }`}
+                    >
+                      <motion.button
+                        type="button"
+                        whileTap={{ scale: 0.94 }}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          executeFlip();
+                        }}
+                        data-testid="flip-back-btn"
+                        className={`flex min-h-[46px] flex-1 items-center justify-center gap-2 rounded-2xl border px-4 text-xs font-extrabold ${
+                          darkMode
+                            ? 'border-white/15 bg-white/10 text-white'
+                            : 'border-[#1E1B2E]/15 bg-white text-[#1E1B2E]'
+                        }`}
+                      >
+                        <RotateCcw className="h-4 w-4 shrink-0" />
+                        <span>{lang === 'tr' ? 'Karta Dön' : 'Back to Card'}</span>
+                      </motion.button>
+                      <motion.button
+                        type="button"
+                        whileTap={{ scale: 0.94 }}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onButtonPop();
+                          if (flipTimerRef.current) {
+                            clearTimeout(flipTimerRef.current);
+                            flipTimerRef.current = null;
+                          }
+                          isFlippedRef.current = false;
+                          setIsFlipping(false);
+                          setIsFlipped(false);
+                          window.dispatchEvent(
+                            new CustomEvent('scrolly-chrome-block', { detail: { open: false } })
+                          );
+                          setTimeout(() => {
                             onNextSlide();
-                          }}
-                          data-testid="next-card-btn"
-                          className={`flex min-h-[46px] flex-1 items-center justify-center gap-2 rounded-2xl px-4 text-xs font-extrabold ${
-                            darkMode
-                              ? 'bg-white text-[#09090B]'
-                              : 'bg-[#1E1B2E] text-white'
-                          }`}
-                        >
-                          <span>{lang === 'tr' ? 'Sonraki Bilgiye Kaydır' : t.tiktokNextSlideBtn}</span>
-                          <ArrowDown className="h-4 w-4 shrink-0" />
-                        </motion.button>
-                      </div>
+                          }, 30);
+                        }}
+                        data-testid="next-card-btn"
+                        className={`flex min-h-[46px] flex-1 items-center justify-center gap-2 rounded-2xl px-4 text-xs font-extrabold ${
+                          darkMode
+                            ? 'bg-white text-[#09090B]'
+                            : 'bg-[#1E1B2E] text-white'
+                        }`}
+                      >
+                        <span>{lang === 'tr' ? 'Sonraki Bilgiye Kaydır' : t.tiktokNextSlideBtn}</span>
+                        <ArrowDown className="h-4 w-4 shrink-0" />
+                      </motion.button>
                     </div>
                   </motion.div>
                 </motion.div>

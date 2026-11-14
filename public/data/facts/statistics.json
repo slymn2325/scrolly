@@ -1,0 +1,692 @@
+[
+  {
+    "id": "statistics-01",
+    "category": "statistics",
+    "accentColor": "#6366F1",
+    "iconName": "Percent",
+    "emoji": "🎂",
+    "readingTimeSec": 18,
+    "visualQuery": "birthday party balloons",
+    "tr": {
+      "slug": "dogum-gunu-paradoksu-23-kiside-yuzde-50-olasilik",
+      "title": "Sadece 23 Kişilik Bir Odada İki Kişinin Aynı Gün Doğma İhtimali %50'yi Aşar",
+      "factText": "Sezgilerimiz 365 gün varken bu olasılığın çok düşük olduğunu söyler; oysa 23 kişi arasında 253 farklı ikili eşleşme oluştuğu için olasılık %50,7'ye fırlar.",
+      "deepDiveDetail": "Doğum Günü Paradoksu olarak bilinen bu olguda soru 'seninle aynı gün doğan biri var mı?' değildir; 'herhangi iki kişi eşleşir mi?' sorusudur. 23 kişinin oluşturabileceği benzersiz çift sayısı (23×22)/2 = 253'tür ve bu çiftlerin hiçbirinin çakışmama olasılığı %49,3'e kadar düşer. 57 kişide ise kesinlik %99'un üzerine çıkar.",
+      "sourceHint": "Stanford & MIT Olasılık Dersleri",
+      "tag": "Olasılık Paradoksu",
+      "quiz": {
+        "question": "23 kişilik bir odada iki kişinin aynı gün doğma olasılığının %50'yi geçmesinin temel matematiksel nedeni nedir?",
+        "options": [
+          "Kişi sayısı az olsa da karşılaştırılan ikili çift sayısının 253'e ulaşması",
+          "İnsanların yılın belirli yaz aylarında daha sık doğması",
+          "365 sayısının asal çarpanlarının 23'e yakın olması"
+        ],
+        "correctIndex": 0,
+        "explanation": "Olasılık bireylerin tekil sayısıyla değil, n×(n-1)/2 formülüyle hızla büyüyen ikili kombinasyon sayısıyla hesaplanır."
+      },
+      "guessChallenge": {
+        "type": "slider",
+        "prompt": "Sence en az %50 eşleşme şansı için odada kaç kişi yeterlidir?",
+        "min": 10,
+        "max": 120,
+        "step": 1,
+        "unit": "kişi",
+        "correctValue": 23
+      },
+      "sourceName": "Britannica — Birthday Problem",
+      "sourceUrl": "https://www.britannica.com/science/birthday-problem"
+    },
+    "en": {
+      "slug": "birthday-paradox-23-people-exceeds-50-percent",
+      "title": "In a Room of Just 23 People, There Is Over a 50% Chance Two Share a Birthday",
+      "factText": "Our intuition compares 23 against 365 days, but statistics checks all 253 possible pairs between people—pushing the match probability to 50.7%.",
+      "deepDiveDetail": "Known as the Birthday Paradox, the question is not whether someone matches your specific birthday, but whether any pair in the room collides. With 23 people, there are (23×22)/2 = 253 distinct pairs. At 57 people, the chance of at least one shared birthday tops 99%.",
+      "sourceHint": "Probability & Combinatorics",
+      "tag": "Probability Paradox",
+      "quiz": {
+        "question": "Why does the Birthday Paradox surpass 50% with only 23 people in a room?",
+        "options": [
+          "Because human births cluster heavily on weekends",
+          "Because the number of distinct pairs grows quadratically to 253 comparisons",
+          "Because leap years shrink the sample space by half"
+        ],
+        "correctIndex": 1,
+        "explanation": "Probability multiplies across all n(n-1)/2 pairs rather than checking against just one fixed person."
+      },
+      "guessChallenge": {
+        "type": "slider",
+        "prompt": "How many people do you think are needed for a >50% shared birthday chance?",
+        "min": 10,
+        "max": 120,
+        "step": 1,
+        "unit": "people",
+        "correctValue": 23
+      },
+      "sourceName": "Britannica — Birthday Problem",
+      "sourceUrl": "https://www.britannica.com/science/birthday-problem"
+    },
+    "sourceName": "Britannica — Birthday Problem",
+    "sourceUrl": "https://www.britannica.com/science/birthday-problem"
+  },
+  {
+    "id": "statistics-02",
+    "category": "statistics",
+    "accentColor": "#6366F1",
+    "iconName": "TrendingUp",
+    "emoji": "✈️",
+    "readingTimeSec": 20,
+    "visualQuery": "vintage propeller airplane",
+    "tr": {
+      "slug": "hayatta-kalma-onyargisi-abraham-wald-ucak-zirhi",
+      "title": "İstatistikçi Abraham Wald, Hasar Görmüş Uçakların Tam Tersine Zırh Ekleyerek Hayat Kurtardı",
+      "factText": "2. Dünya Savaşı'nda üsse dönen uçakların kanatlarında mermi izi yoğundu; ancak Wald asıl zırhın hiç delik olmayan motor bölümüne konması gerektiğini kanıtladı.",
+      "deepDiveDetail": "Bu klasik 'Hayatta Kalma Önyargısı' (Survivorship Bias) örneğinde ordu ilk başta üsse dönen uçaklarda en çok isabet alan kanat ve gövdeyi güçlendirmek istedi. Matematikçi Abraham Wald ise tam tersini fark etti: Motorundan veya kokpitinden vurulan uçaklar zaten okyanusa düştüğü için üsse dönüp istatistiğe hiç girememişti.",
+      "sourceHint": "Columbia İstatistik Araştırma Grubu",
+      "tag": "Veri Önyargısı",
+      "quiz": {
+        "question": "Üsse dönen uçakların motorlarında neredeyse hiç mermi deliği görülmemesi Wald'a neyi kanıtladı?",
+        "options": [
+          "Düşman nişancılarının motorları hedef almaktan kaçındığını",
+          "Motorundan vurulan uçakların hayatta kalıp geri dönemediğini",
+          "Motor kaplamasının mermileri tamamen sektirdiğini"
+        ],
+        "correctIndex": 1,
+        "explanation": "Veri setinde sadece hayatta kalanları görmek, kaybedilen vakaların nedenini gizler."
+      },
+      "guessChallenge": {
+        "type": "binary",
+        "prompt": "Geri dönen uçaklarda en az mermi izi görülen yerlerden hangisi güçlendirilmeliydi?",
+        "options": [
+          "Mermi izi olmayan motor ve kokpit",
+          "En çok mermi izi olan kanat uçları"
+        ],
+        "correctOptionIndex": 0
+      },
+      "sourceName": "AMS — Abraham Wald & Survivorship Bias",
+      "sourceUrl": "https://en.wikipedia.org/wiki/Survivorship_bias"
+    },
+    "en": {
+      "slug": "survivorship-bias-abraham-wald-ww2-planes",
+      "title": "A Statistician Saved Bomber Crews by Armoring the Places With Zero Bullet Holes",
+      "factText": "Returning WWII planes had dense bullet holes on their wings and tails—so mathematician Abraham Wald urged armoring the unblemished engines instead.",
+      "deepDiveDetail": "This landmark case of Survivorship Bias began when analysts suggested reinforcing where returning bombers took the most hits. Abraham Wald realized the missing data told the real story: planes hit in the engine or cockpit never returned home to be inspected.",
+      "sourceHint": "Statistical Research Group (1943)",
+      "tag": "Data Bias",
+      "quiz": {
+        "question": "What did the lack of bullet holes on returning planes' engines actually tell Abraham Wald?",
+        "options": [
+          "Enemy gunners deliberately avoided shooting at engines",
+          "Airplane wings attract magnetic interference from bullets",
+          "Planes hit in the engine crashed and were missing from the sample"
+        ],
+        "correctIndex": 2,
+        "explanation": "Studying only survivors hides the fatal damage patterns on aircraft that never made it back."
+      },
+      "guessChallenge": {
+        "type": "binary",
+        "prompt": "Which part did Wald recommend adding extra armor to?",
+        "options": [
+          "The unscathed engines & cockpit",
+          "The heavily peppered wing tips"
+        ],
+        "correctOptionIndex": 0
+      },
+      "sourceName": "AMS — Abraham Wald & Survivorship Bias",
+      "sourceUrl": "https://en.wikipedia.org/wiki/Survivorship_bias"
+    },
+    "sourceName": "AMS — Abraham Wald & Survivorship Bias",
+    "sourceUrl": "https://en.wikipedia.org/wiki/Survivorship_bias"
+  },
+  {
+    "id": "statistics-03",
+    "category": "statistics",
+    "accentColor": "#6366F1",
+    "iconName": "Dice5",
+    "emoji": "🚪",
+    "readingTimeSec": 18,
+    "visualQuery": "three mystery doors",
+    "tr": {
+      "slug": "monty-hall-problemi-kapi-degistirmek-sansi-ikiye-katlar",
+      "title": "Monty Hall Yarışmasında Kapıyı Değiştirmek Kazanma Şansını %33'ten %67'ye Çıkarır",
+      "factText": "3 kapıdan birini seçtikten sonra sunucu boş bir kapıyı açarsa, kalan diğer kapıya geçmek kazanma olasılığını tam iki katına çıkarır.",
+      "deepDiveDetail": "İlk seçimde doğru kapıyı tutturma şansın 1/3, diğer iki kapının birinde olma ihtimali ise 2/3'tür. Sunucu nereye açacağını bilerek boş olan bir kapıyı elediğinde, başlangıçtaki 2/3 olasılığının tamamı kapalı kalan tek diğer kapıda yoğunlaşır.",
+      "sourceHint": "Karar Teorisi & Bayes Kuralı",
+      "tag": "Koşullu Olasılık",
+      "quiz": {
+        "question": "Monty Hall probleminde sunucu neden rastgele değil bilerek boş kapıyı açınca olasılık değişir?",
+        "options": [
+          "Çünkü ödül son anda kapalı kapının arkasına taşınır",
+          "Çünkü iki kapı kaldığında olasılık her zaman %50'ye sabitlenir",
+          "Çünkü başlangıçtaki 2/3'lük ihtimal kalan tek kapalı kapıda toplanır"
+        ],
+        "correctIndex": 2,
+        "explanation": "Sunucunun ödülü bilerek boş kapıyı elemesi sisteme yeni bilgi ekler; değiştirirsen kazanma oranı 2/3 olur."
+      },
+      "guessChallenge": {
+        "type": "slider",
+        "prompt": "Sunucu boş kapıyı açtıktan sonra kapı değiştirirsen kazanma şansın yüzde kaç olur?",
+        "min": 20,
+        "max": 90,
+        "step": 1,
+        "unit": "%",
+        "correctValue": 67
+      },
+      "sourceName": "Britannica — Monty Hall Problem",
+      "sourceUrl": "https://www.britannica.com/science/Monty-Hall-problem"
+    },
+    "en": {
+      "slug": "monty-hall-problem-switching-doubles-odds",
+      "title": "Switching Doors in the Monty Hall Problem Doubles Your Odds From 33% to 67%",
+      "factText": "After you pick 1 of 3 closed doors and the host reveals an empty door, switching to the remaining door jumps your win probability to 2/3.",
+      "deepDiveDetail": "Your first pick only has a 1/3 chance of hiding the prize, leaving a 2/3 probability in the other two doors combined. Because the host deliberately opens an empty door, that entire 2/3 probability collapses onto the single remaining door.",
+      "sourceHint": "Conditional Probability & Bayes",
+      "tag": "Conditional Odds",
+      "quiz": {
+        "question": "Why doesn't the probability split 50/50 after the host opens a losing door?",
+        "options": [
+          "The host's knowledgeable choice concentrates the 2/3 odds onto the unpicked door",
+          "The prize is secretly moved behind the second door",
+          "The first pick always loses in a 3-door game"
+        ],
+        "correctIndex": 0,
+        "explanation": "Unlike a blind coin flip, the host never opens the winning door, preserving the 2/3 chance for switching."
+      },
+      "guessChallenge": {
+        "type": "slider",
+        "prompt": "After switching doors, what percentage of games do you expect to win?",
+        "min": 20,
+        "max": 90,
+        "step": 1,
+        "unit": "%",
+        "correctValue": 67
+      },
+      "sourceName": "Britannica — Monty Hall Problem",
+      "sourceUrl": "https://www.britannica.com/science/Monty-Hall-problem"
+    },
+    "sourceName": "Britannica — Monty Hall Problem",
+    "sourceUrl": "https://www.britannica.com/science/Monty-Hall-problem"
+  },
+  {
+    "id": "statistics-04",
+    "category": "statistics",
+    "accentColor": "#6366F1",
+    "iconName": "BarChart3",
+    "emoji": "🔢",
+    "readingTimeSec": 18,
+    "visualQuery": "glowing digital numbers",
+    "tr": {
+      "slug": "benford-yasasi-gercek-verilerde-sayilarin-yuzde-30u-1-ile-baslar",
+      "title": "Benford Yasası: Doğal Sayıların Neredeyse %30'u '1' Rakamıyla Başlar",
+      "factText": "Nehir uzunluklarından ülke nüfuslarına ve muhasebe faturalarına kadar gerçek dünya verilerinde ilk basamağın 1 olma olasılığı %30,1 iken 9 olma olasılığı sadece %4,6'dır.",
+      "deepDiveDetail": "İlk kez 1881'de Simon Newcomb'un logaritma kitaplarındaki ilk sayfaların daha fazla yıprandığını fark etmesiyle keşfedilen bu yasa, veriler farklı büyüklük mertebelerinde yayıldığında ortaya çıkar. Vergi denetçileri bugün hâlâ sahte bilançoları yakalamak için Benford Yasası'nı kullanır.",
+      "sourceHint": "NIST & Adli Muhasebe İstatistiği",
+      "tag": "Sayı Dağılımı",
+      "quiz": {
+        "question": "Mali denetçiler ve veri bilimciler Benford Yasası'nı en sık neyi tespit etmek için kullanır?",
+        "options": [
+          "İnsan eliyle uydurulmuş sahte faturaları ve manipüle edilmiş verileri",
+          "Asal sayıların sonsuz olup olmadığını",
+          "Borsadaki yarınki hisse senedi fiyatlarını"
+        ],
+        "correctIndex": 0,
+        "explanation": "İnsanlar rastgele sayı uydururken 1'den 9'a eşit dağıtmaya meyillidir; bu da Benford eğrisinden hemen sapma yaratır."
+      },
+      "guessChallenge": {
+        "type": "slider",
+        "prompt": "Doğal veri setlerinde sayıların yüzde kaçı '1' rakamıyla başlar?",
+        "min": 5,
+        "max": 60,
+        "step": 1,
+        "unit": "%",
+        "correctValue": 30
+      },
+      "sourceName": "Wolfram MathWorld — Benford's Law",
+      "sourceUrl": "https://mathworld.wolfram.com/BenfordsLaw.html"
+    },
+    "en": {
+      "slug": "benfords-law-30-percent-of-numbers-start-with-one",
+      "title": "Benford's Law: Nearly 30% of Natural Real-World Numbers Begin With the Digit '1'",
+      "factText": "From river lengths to city populations and tax filings, the leading digit '1' appears 30.1% of the time, while '9' shows up only 4.6%.",
+      "deepDiveDetail": "First noticed in 1881 when astronomer Simon Newcomb saw that the early pages of shared logarithm books were far more worn than the back pages, Benford's Law emerges whenever quantities span multiple orders of magnitude. Forensic auditors still use it to spot fabricated financial records.",
+      "sourceHint": "Forensic Statistics & Scale Invariance",
+      "tag": "Digit Distribution",
+      "quiz": {
+        "question": "Why do forensic auditors regularly run Benford's Law tests on financial statements?",
+        "options": [
+          "To predict exact quarterly stock dividends",
+          "To flag fabricated numbers where humans subconsciously overuse middle digits",
+          "To convert base-10 invoices into binary checksums"
+        ],
+        "correctIndex": 1,
+        "explanation": "When people invent fake data, they tend to pick digits uniformly—violating Benford's logarithmic leading-digit curve."
+      },
+      "guessChallenge": {
+        "type": "slider",
+        "prompt": "Roughly what % of real-world numbers start with the digit '1'?",
+        "min": 5,
+        "max": 60,
+        "step": 1,
+        "unit": "%",
+        "correctValue": 30
+      },
+      "sourceName": "Wolfram MathWorld — Benford's Law",
+      "sourceUrl": "https://mathworld.wolfram.com/BenfordsLaw.html"
+    },
+    "sourceName": "Wolfram MathWorld — Benford's Law",
+    "sourceUrl": "https://mathworld.wolfram.com/BenfordsLaw.html"
+  },
+  {
+    "id": "statistics-05",
+    "category": "statistics",
+    "accentColor": "#6366F1",
+    "iconName": "PieChart",
+    "emoji": "🔄",
+    "readingTimeSec": 20,
+    "visualQuery": "analytics pie chart",
+    "tr": {
+      "slug": "simpson-paradoksu-gruplar-birlestiginde-egilim-tersine-doner",
+      "title": "Simpson Paradoksu: Her Altkümede Başarılı Olan Tedavi, Toplamda Daha Kötü Görünebilir",
+      "factText": "İstatistikte alt grupların her birinde A seçeneği B'den iyi sonuç verse bile, tüm veriler tek havuzda birleştirildiğinde B seçeneği öne geçebilir.",
+      "deepDiveDetail": "1973 Berkeley lisansüstü kabul davasında erkeklerin genel kabul oranı kadınlardan yüksek görünüyordu; ancak bölümlere göre bakıldığında kadınların kabul oranı pek çok bölümde daha yüksekti. Nedeni gizli bir karıştırıcı değişkendi: Kadınlar kontenjanı en dar ve rekabeti en yüksek bölümlere daha yoğun başvurmuştu.",
+      "sourceHint": "UC Berkeley & Edward Simpson (1951)",
+      "tag": "Veri Paradoksu",
+      "quiz": {
+        "question": "Simpson Paradoksu'nun veri analizinde alt gruplar birleştirildiğinde eğilimi tersine çevirmesinin sorumlusu nedir?",
+        "options": [
+          "Ortalamanın daima medyandan büyük çıkması",
+          "Gruplar arası örneklem büyüklüğü farkı ve gizli karıştırıcı değişkenler",
+          "Ölçümlerde ondalık yuvarlama hatası yapılması"
+        ],
+        "correctIndex": 1,
+        "explanation": "Farklı zorluktaki veya büyüklükteki grupları ağırlıklarını dikkate almadan toplamak sahte bir genel trend üretir."
+      },
+      "guessChallenge": {
+        "type": "binary",
+        "prompt": "Bir ilaç hem hafif vakalarda hem ağır vakalarda daha iyiyse, birleşik tabloda her zaman daha mı iyi görünür?",
+        "options": [
+          "Hayır, grup büyüklükleri farklıysa tersine dönebilir",
+          "Evet, matematiksel olarak asla tersine dönemez"
+        ],
+        "correctOptionIndex": 0
+      },
+      "sourceName": "Stanford Encyclopedia — Simpson's Paradox",
+      "sourceUrl": "https://plato.stanford.edu/entries/paradox-simpson/"
+    },
+    "en": {
+      "slug": "simpsons-paradox-trend-reverses-when-groups-combine",
+      "title": "Simpson's Paradox: A Trend Can Completely Reverse When Subgroups Are Combined",
+      "factText": "A treatment can outperform another inside every separate patient subgroup—yet look worse overall once all rows are pooled together.",
+      "deepDiveDetail": "In the famous 1973 UC Berkeley admissions study, overall acceptance looked skewed toward men—but department-by-department data showed women were accepted at equal or higher rates. The hidden confounding factor was that women disproportionately applied to the most competitive departments with tiny acceptance rates.",
+      "sourceHint": "Stanford Encyclopedia of Philosophy",
+      "tag": "Data Paradox",
+      "quiz": {
+        "question": "What usually triggers Simpson's Paradox when analysts pool separate subgroups into one total chart?",
+        "options": [
+          "Using median values instead of standard deviations",
+          "Sorting rows alphabetically before plotting",
+          "An unmeasured confounding variable combined with uneven group sizes"
+        ],
+        "correctIndex": 2,
+        "explanation": "Imbalanced subgroup sizes mixed with a lurking confounder can flip the aggregate percentage upside down."
+      },
+      "guessChallenge": {
+        "type": "binary",
+        "prompt": "If Treatment A beats B in both mild cases AND severe cases, must A also win in the combined total?",
+        "options": [
+          "No, uneven sample mix can flip the total",
+          "Yes, the pooled percentage must match"
+        ],
+        "correctOptionIndex": 0
+      },
+      "sourceName": "Stanford Encyclopedia — Simpson's Paradox",
+      "sourceUrl": "https://plato.stanford.edu/entries/paradox-simpson/"
+    },
+    "sourceName": "Stanford Encyclopedia — Simpson's Paradox",
+    "sourceUrl": "https://plato.stanford.edu/entries/paradox-simpson/"
+  },
+  {
+    "id": "statistics-06",
+    "category": "statistics",
+    "accentColor": "#6366F1",
+    "iconName": "LineChart",
+    "emoji": "🧪",
+    "readingTimeSec": 20,
+    "visualQuery": "laboratory microscope test",
+    "tr": {
+      "slug": "bayes-teoremi-nadir-hastalikta-pozitif-test-yaniltici-olabilir",
+      "title": "%99 Doğru Bir Test Bile Nadir Durumlarda Yarıdan Fazla Yanlış Alarm Verebilir",
+      "factText": "10.000 kişiden sadece 1'inde görülen nadir bir hastalık için %99 duyarlılık ve %99 özgüllüğe (%1 yanlış pozitif) sahip bir test pozitif çıkarsa, kişinin gerçekten hasta olma ihtimali yalnızca ~%1 civarındadır.",
+      "deepDiveDetail": "Bayes Teoremi bize 'baz oranı'nın (base rate) önemini hatırlatır. 10.000 kişilik bir grupta 1 gerçek hasta pozitif çıkar; ancak sağlıklı 9.999 kişinin %1'i yani yaklaşık 100 kişi de yanlış pozitif alır. Böylece pozitif çıkan 101 kişiden sadece 1'i gerçekten hastadır!",
+      "sourceHint": "Bayes İstatistiği & Tıbbi Tarama",
+      "tag": "Bayes Teoremi",
+      "quiz": {
+        "question": "Test %99 doğru olmasına rağmen nadir hastalıklarda pozitif sonuçların çoğunun yanlış alarm çıkmasına ne ad verilir?",
+        "options": [
+          "Merkezi limit sapması",
+          "Normal dağılım çarpıklığı",
+          "Baz oranı ihmali (Base rate fallacy)"
+        ],
+        "correctIndex": 2,
+        "explanation": "Hastalığın toplumdaki nadirliği (ön olasılık) hesaba katılmadığında yanlış pozitiflerin sayısı gerçek hastaları katbekat aşar."
+      },
+      "guessChallenge": {
+        "type": "slider",
+        "prompt": "10.000'de 1 görülen hastalıkta %99 doğru test pozitif çıkarsa gerçek hasta olma ihtimali yaklaşık % kaçtır?",
+        "min": 1,
+        "max": 99,
+        "step": 1,
+        "unit": "%",
+        "correctValue": 1
+      },
+      "sourceName": "Khan Academy — Bayes' Theorem & Base Rates",
+      "sourceUrl": "https://en.wikipedia.org/wiki/Base_rate_fallacy"
+    },
+    "en": {
+      "slug": "bayes-theorem-base-rate-fallacy-99-percent-test",
+      "title": "A 99% Accurate Test Can Still Be Wrong 99% of the Time for Rare Conditions",
+      "factText": "If a condition affects only 1 in 10,000 people and a test has 99% sensitivity and 99% specificity (a 1% false-positive rate), testing positive gives just ~1% true odds of having it.",
+      "deepDiveDetail": "Bayes' Theorem shows why ignoring the base rate traps our intuition. Out of 10,000 tested people, 1 truly sick person tests positive—while 1% of the 9,999 healthy people (~100 people) receive false positives. Only 1 out of those ~101 positive alerts is real.",
+      "sourceHint": "Bayesian Inference & Diagnostics",
+      "tag": "Bayes Theorem",
+      "quiz": {
+        "question": "Why does a 99%-accurate screening test produce mostly false alarms when scanning the general public for a rare trait?",
+        "options": [
+          "False positives among the huge healthy majority vastly outnumber rare true cases",
+          "Medical sensors degrade after every 100 samples",
+          "Bayes' theorem only applies when sample sizes are below 30"
+        ],
+        "correctIndex": 0,
+        "explanation": "Known as the Base Rate Fallacy, ignoring prior rarity lets false positives swamp true positives."
+      },
+      "guessChallenge": {
+        "type": "slider",
+        "prompt": "For a 1-in-10,000 rarity with a 99% accurate test, about what % of positives are actually true?",
+        "min": 1,
+        "max": 99,
+        "step": 1,
+        "unit": "%",
+        "correctValue": 1
+      },
+      "sourceName": "Wikipedia — Base Rate Fallacy & Bayes",
+      "sourceUrl": "https://en.wikipedia.org/wiki/Base_rate_fallacy"
+    },
+    "sourceName": "Wikipedia — Base Rate Fallacy & Bayes",
+    "sourceUrl": "https://en.wikipedia.org/wiki/Base_rate_fallacy"
+  },
+  {
+    "id": "statistics-07",
+    "category": "statistics",
+    "accentColor": "#6366F1",
+    "iconName": "Users",
+    "emoji": "📈",
+    "readingTimeSec": 17,
+    "visualQuery": "spinning coin flip",
+    "tr": {
+      "slug": "kumarbaz-yanilgisi-madeni-paranin-hafizasi-yoktur",
+      "title": "Üst Üste 10 Kez Yazı Gelse Bile 11. Atışta Tura Gelme İhtimali Hâlâ Tam %50'dir",
+      "factText": "1913'te Monte Carlo'da rulet topu tam 26 kez üst üste siyaha düştüğünde oyuncular servet kaybetti; çünkü nesneler önceki sonuçları hatırlayıp 'dengelemeye' çalışmaz.",
+      "deepDiveDetail": "Kumarbaz Yanılgısı (Gambler's Fallacy), Büyük Sayılar Yasası'nın yanlış anlaşılmasından doğar. Büyük Sayılar Yasası geçmişi 'telafi ederek' değil, binlerce yeni bağımsız atışın içinde başlangıçtaki küçük sapmayı önemsizleştirerek ortalamayı %50'ye yaklaştırır.",
+      "sourceHint": "1913 Monte Carlo Rulet Vakası",
+      "tag": "Bağımsız Olaylar",
+      "quiz": {
+        "question": "Büyük Sayılar Yasası uzun vadede oranları %50'ye nasıl yaklaştırır?",
+        "options": [
+          "Eski sapmaları telafi ederek değil, dev örneklem içinde etkisizleştirerek",
+          "Madeni paranın her 10 atıştan sonra ağırlık merkezini kaydırarak",
+          "Önceki tura sayısını sonraki atışta zorunlu kılarak"
+        ],
+        "correctIndex": 0,
+        "explanation": "Bağımsız olayların hafızası yoktur; ilk 10 atıştaki fark 100.000 atış içinde matematiksel olarak seyrelir."
+      },
+      "guessChallenge": {
+        "type": "slider",
+        "prompt": "1913 Monte Carlo kumarhanesinde rulet topu rekor olarak kaç kez üst üste SİYAH geldi?",
+        "min": 5,
+        "max": 40,
+        "step": 1,
+        "unit": "kez",
+        "correctValue": 26
+      },
+      "sourceName": "Britannica — Gambler's Fallacy",
+      "sourceUrl": "https://en.wikipedia.org/wiki/Gambler%27s_fallacy"
+    },
+    "en": {
+      "slug": "gamblers-fallacy-coins-have-no-memory",
+      "title": "Even After 10 Heads in a Row, the Next Fair Coin Flip Is Still Exactly 50/50",
+      "factText": "In 1913 at Monte Carlo, black hit 26 spins in a row while gamblers bet millions on red—forgetting that independent trials have zero memory.",
+      "deepDiveDetail": "The Gambler's Fallacy misreads the Law of Large Numbers. A fair coin never 'owes' a tail to balance a streak; instead, thousands of future unbiased flips merely dilute an early anomaly until the ratio drifts back toward 50%.",
+      "sourceHint": "1913 Monte Carlo Casino Incident",
+      "tag": "Independent Trials",
+      "quiz": {
+        "question": "How does the Law of Large Numbers bring coin-flip averages toward 50% without a coin having memory?",
+        "options": [
+          "The coin subtly warms up on the heavier side",
+          "Vast numbers of future independent flips dilute any early streak",
+          "Short-term odds automatically invert after 5 repeats"
+        ],
+        "correctIndex": 1,
+        "explanation": "Independent trials never compensate for past streaks; dilution over large N drives convergence."
+      },
+      "guessChallenge": {
+        "type": "slider",
+        "prompt": "How many times in a row did roulette land on black in the 1913 Monte Carlo streak?",
+        "min": 5,
+        "max": 40,
+        "step": 1,
+        "unit": "times",
+        "correctValue": 26
+      },
+      "sourceName": "Wikipedia — Gambler's Fallacy",
+      "sourceUrl": "https://en.wikipedia.org/wiki/Gambler%27s_fallacy"
+    },
+    "sourceName": "Wikipedia — Gambler's Fallacy",
+    "sourceUrl": "https://en.wikipedia.org/wiki/Gambler%27s_fallacy"
+  },
+  {
+    "id": "statistics-08",
+    "category": "statistics",
+    "accentColor": "#6366F1",
+    "iconName": "BarChart3",
+    "emoji": "🔔",
+    "readingTimeSec": 18,
+    "visualQuery": "chalkboard math graph",
+    "tr": {
+      "slug": "ortalama-tuzagi-her-ortalama-insana-uymayan-kokpit-hikayesi",
+      "title": "'Ortalama' Vücut Ölçüsüne Göre Yapılan Kokpitlerde Hiçbir Pilot Verimli Uçamadı",
+      "factText": "1950'lerde ABD Hava Kuvvetleri 4.063 pilotu ölçüp tam 'ortalama' bir kokpit tasarladı; ancak neredeyse hiçbir pilotun 10 ölçünün tamamında ortalama aralıkta olmadığı ortaya çıktı.",
+      "deepDiveDetail": "İstatistikte tek boyutlu ortalamalar insanı yanıltır: 10 farklı vücut ölçüsünde %30'luk 'ortalama' bantta kalabilen pilot sayısı 4.063 kişide SIFIR çıktı! Bu keşif sayesinde ayarlanabilir koltuk ve pedallar doğdu—çünkü 'ortalama kullanıcı' çoğu zaman yalnızca bir matematiksel hayalettir.",
+      "sourceHint": "Gilbert Daniels — ABD Hava Kuvvetleri (1952)",
+      "tag": "Ortalama Tuzağı",
+      "quiz": {
+        "question": "4.063 pilotun 10 vücut ölçüsünün tamamında 'ortalama' banda sığan kaç kişi çıkması ergonomide neyi değiştirdi?",
+        "options": [
+          "Boyu ortalamaya uymayan tüm uçaklar hurdaya ayrıldı",
+          "Sıfır kişi çıkınca kokpitler 'ortalama' yerine ayarlanabilir tasarlanmaya başlandı",
+          "Tek ölçüt olarak yalnızca ayakkabı numarası baz alındı"
+        ],
+        "correctIndex": 1,
+        "explanation": "Çok değişkenli dağılımlarda her boyutta aynı anda ortalamada kalan birey neredeyse hiç yoktur."
+      },
+      "guessChallenge": {
+        "type": "slider",
+        "prompt": "4.063 pilotun kaçı 10 farklı ölçünün tamamında 'ortalama' aralığa denk geldi?",
+        "min": 0,
+        "max": 500,
+        "step": 1,
+        "unit": "pilot",
+        "correctValue": 0
+      },
+      "sourceName": "Todd Rose — The End of Average / USAF Study",
+      "sourceUrl": "https://en.wikipedia.org/wiki/The_End_of_Average"
+    },
+    "en": {
+      "slug": "average-trap-zero-pilots-fit-the-average-cockpit",
+      "title": "Out of 4,063 Pilots Measured, Literally Zero Fit the 'Average' Cockpit",
+      "factText": "In 1950, the US Air Force found that not a single pilot fell within the middle 30% 'average' range across all 10 physical dimensions at once.",
+      "deepDiveDetail": "Researcher Gilbert Daniels discovered that designing around averages fits nobody when traits vary independently. Out of 4,063 pilots, zero matched all 10 average measurements simultaneously—giving birth to adjustable seats, helmets, and straps.",
+      "sourceHint": "USAF Anthropometric Study (1952)",
+      "tag": "Flaw of Averages",
+      "quiz": {
+        "question": "How did Gilbert Daniels' 'Zero Average Pilots' discovery transform industrial design forever?",
+        "options": [
+          "It banned tall pilots from supersonic flight",
+          "It replaced statistics with alphabetical seating",
+          "It proved one-size-fits-average fails, sparking adjustable seats and controls"
+        ],
+        "correctIndex": 2,
+        "explanation": "Multi-dimensional independence makes an 'all-average' person vanish, driving modular adjustable design."
+      },
+      "guessChallenge": {
+        "type": "slider",
+        "prompt": "How many of the 4,063 pilots fell inside the average band on all 10 body dimensions?",
+        "min": 0,
+        "max": 500,
+        "step": 1,
+        "unit": "pilots",
+        "correctValue": 0
+      },
+      "sourceName": "The End of Average — Gilbert Daniels USAF Study",
+      "sourceUrl": "https://en.wikipedia.org/wiki/The_End_of_Average"
+    },
+    "sourceName": "The End of Average — Gilbert Daniels USAF Study",
+    "sourceUrl": "https://en.wikipedia.org/wiki/The_End_of_Average"
+  },
+  {
+    "id": "statistics-09",
+    "category": "statistics",
+    "accentColor": "#6366F1",
+    "iconName": "Sparkles",
+    "emoji": "🍦",
+    "readingTimeSec": 16,
+    "visualQuery": "summer beach sunset",
+    "tr": {
+      "slug": "korelasyon-nedensellik-degildir-dondurma-ve-gunes-yanigi",
+      "title": "Dondurma Satışları Arttıkça Güneş Yanıkları da Artar—Ama Suçlu Dondurma Değildir",
+      "factText": "İstatistikte iki verinin aynı anda yükselip alçalması (yüksek korelasyon), birinin diğerine sebep olduğunu kanıtlamaz; çoğu zaman perde arkasında 3. bir ortak neden vardır.",
+      "deepDiveDetail": "Yaz aylarında hem dondurma tüketimi hem de yüzme/güneşlenme vakaları fırladığı için iki grafik mükemmel bir uyum sergiler. Veri biliminde buna 'sahte korelasyon' (spurious correlation) denir; ortak neden burada yaz sıcaklığıdır.",
+      "sourceHint": "Deney Tasarımı & Nedensellik Analizi",
+      "tag": "Nedensellik Analizi",
+      "quiz": {
+        "question": "Yazın dondurma satışlarıyla boğulma veya güneş yanığı vakalarının aynı grafikte yükselmesi istatistikte neye örnektir?",
+        "options": [
+          "Dondurmanın içindeki şekerin cildi güneşe hassaslaştırmasına",
+          "Örneklem büyüklüğünün 100'ü geçince grafiğin ters dönmesine",
+          "Ortak bir 3. değişkenin yarattığı 'sahte korelasyon'a (korelasyon ≠ nedensellik)"
+        ],
+        "correctIndex": 2,
+        "explanation": "Sıcaklık (karıştırıcı değişken) hem dondurma talebini hem açık hava süresini aynı anda artırır."
+      },
+      "guessChallenge": {
+        "type": "binary",
+        "prompt": "İki veri seti arasında %98 korelasyon olması, birinin kesinlikle diğerine yol açtığını kanıtlar mı?",
+        "options": [
+          "Hayır, gizli bir 3. değişken ikisini birden tetikliyor olabilir",
+          "Evet, %90 üzeri her korelasyon doğrudan nedensellik demektir"
+        ],
+        "correctOptionIndex": 0
+      },
+      "sourceName": "Harvard Statistical Literacy — Correlation vs Causation",
+      "sourceUrl": "https://en.wikipedia.org/wiki/Correlation_does_not_imply_causation"
+    },
+    "en": {
+      "slug": "correlation-does-not-imply-causation-ice-cream-sunburn",
+      "title": "Ice Cream Sales Rise Right Alongside Sunburns—Yet Neither Causes the Other",
+      "factText": "Two charts climbing in near-perfect lockstep proves correlation, not causation—often driven by a hidden third variable like summer heat.",
+      "deepDiveDetail": "In data science, ice cream sales and sunburn or drowning incidents show tight positive correlation every year. Statisticians call this a spurious correlation triggered by a lurking confounder: sunny summer weather.",
+      "sourceHint": "Statistical Reasoning & Causality",
+      "tag": "Causation vs Correlation",
+      "quiz": {
+        "question": "Why do statisticians warn against concluding cause-and-effect from two matching trend lines?",
+        "options": [
+          "A hidden third confounder (like summer heat) can drive both trends together",
+          "Line graphs automatically smooth out reverse causation",
+          "Positive correlations always flip negative after five years"
+        ],
+        "correctIndex": 0,
+        "explanation": "Without randomized trials or causal controls, shared seasonal drivers create strong spurious links."
+      },
+      "guessChallenge": {
+        "type": "binary",
+        "prompt": "Does a 98% correlation between two trends prove one directly causes the other?",
+        "options": [
+          "No, a lurking third variable may drive both",
+          "Yes, anything over 90% proves causation"
+        ],
+        "correctOptionIndex": 0
+      },
+      "sourceName": "Wikipedia — Correlation Does Not Imply Causation",
+      "sourceUrl": "https://en.wikipedia.org/wiki/Correlation_does_not_imply_causation"
+    },
+    "sourceName": "Wikipedia — Correlation Does Not Imply Causation",
+    "sourceUrl": "https://en.wikipedia.org/wiki/Correlation_does_not_imply_causation"
+  },
+  {
+    "id": "statistics-10",
+    "category": "statistics",
+    "accentColor": "#6366F1",
+    "iconName": "Award",
+    "emoji": "📊",
+    "readingTimeSec": 18,
+    "visualQuery": "bell curve chart",
+    "tr": {
+      "slug": "uc-sigma-kurali-normal-dagilimin-yuzde-99-7si",
+      "title": "68-95-99,7 Kuralı: Doğadaki Çoğu Ölçüm 3 Standart Sapmanın İçine Sığar",
+      "factText": "Boy uzunluğundan sınav puanlarına ve ölçüm hatalarına kadar Çan Eğrisi'ne uyan verilerin %68'i 1, %95'i 2 ve %99,7'si ise 3 standart sapma içindedir.",
+      "deepDiveDetail": "Alman matematikçi Carl Friedrich Gauss tarafından formalize edilen Normal Dağılım sayesinde, fabrikalar 'Altı Sigma' (Six Sigma) kalite standardıyla milyonda 3,4'ten az hata hedefleyebilir. Merkezden sadece birkaç standart sapma uzaklaşmak olasılığı astronomik hızla düşürür.",
+      "sourceHint": "Gauss Dağılımı & Kalite İstatistiği",
+      "tag": "Çan Eğrisi",
+      "quiz": {
+        "question": "Fabrikaların ve laboratuvarların '3 Sigma' veya '6 Sigma' hedefleri koymasının istatistikteki anlamı nedir?",
+        "options": [
+          "Verilerin neredeyse tamamını kusursuz tolerans sınırları içine hapsetmek",
+          "Üretim makinelerini günde 6 saat kapatmak",
+          "Her test grubunda en fazla 6 kişi ölçmek"
+        ],
+        "correctIndex": 0,
+        "explanation": "Standart sapma (sigma) adımları büyüdükçe bu aralığın dışında kalan ekstrem hatalar milyonda birkaç vakaya iner."
+      },
+      "guessChallenge": {
+        "type": "slider",
+        "prompt": "Normal dağılımda verilerin yaklaşık yüzde kaçı merkezden ±2 standart sapma içinde kalır?",
+        "min": 40,
+        "max": 99,
+        "step": 1,
+        "unit": "%",
+        "correctValue": 95
+      },
+      "sourceName": "NIST Engineering Statistics — Normal Distribution",
+      "sourceUrl": "https://www.itl.nist.gov/div898/handbook/eda/section3/eda3661.htm"
+    },
+    "en": {
+      "slug": "empirical-rule-68-95-99-7-normal-distribution",
+      "title": "The 68-95-99.7 Rule Captures Almost Every Measurement on a Bell Curve",
+      "factText": "In any Gaussian normal distribution, 68% of data sits within 1 standard deviation, 95% within 2, and a massive 99.7% within 3.",
+      "deepDiveDetail": "Formalized by Carl Friedrich Gauss, the normal distribution lets engineers quantify how extreme an outlier truly is. Moving just a few standard deviations (sigma) away from the mean makes rare errors drop exponentially—which is why 'Six Sigma' quality programs target fewer than 3.4 defects per million.",
+      "sourceHint": "NIST Engineering Statistics Handbook",
+      "tag": "Bell Curve",
+      "quiz": {
+        "question": "What does reaching a 'Six Sigma' benchmark mean in statistical quality control?",
+        "options": [
+          "Inspecting only 6 samples out of every thousand units",
+          "Pushing defects down to fewer than ~3.4 per million by squeezing variation",
+          "Ensuring the median is always 6 times larger than the mean"
+        ],
+        "correctIndex": 1,
+        "explanation": "Each standard deviation (sigma) out on the bell curve shrinks tail failure rates dramatically."
+      },
+      "guessChallenge": {
+        "type": "slider",
+        "prompt": "On a normal bell curve, roughly what % of observations lie within ±2 standard deviations?",
+        "min": 40,
+        "max": 99,
+        "step": 1,
+        "unit": "%",
+        "correctValue": 95
+      },
+      "sourceName": "NIST Engineering Statistics — Normal Distribution",
+      "sourceUrl": "https://www.itl.nist.gov/div898/handbook/eda/section3/eda3661.htm"
+    },
+    "sourceName": "NIST Engineering Statistics — Normal Distribution",
+    "sourceUrl": "https://www.itl.nist.gov/div898/handbook/eda/section3/eda3661.htm"
+  }
+]

@@ -14,14 +14,14 @@
       "sourceHint": "Guinness World Records / Protein Data Bank",
       "tag": "Dil & Biyokimya Rekoru",
       "quiz": {
-        "question": "Tam kimyasal adı 189.819 harf uzunluğunda olan dev proteinin kısa adı nedir?",
+        "question": "Tam adı 189.819 harf tutan dev Titin proteini insan kaslarının içinde hangi hayati görevi üstlenir?",
         "options": [
-          "Titin",
-          "Keratin",
-          "İnsülin"
+          "Kaslardaki laktik asidi oksijene çevirerek kalbe geri pompalar",
+          "Sadece tırnak ve saç tellerinin sertleşmesini sağlar",
+          "Moleküler bir yay gibi davranarak kas liflerine esneklik kazandırıp aşırı gerilmeyi önler"
         ],
-        "correctIndex": 0,
-        "explanation": "Kas esnekliğini sağlayan Titin proteininin tam sistematik adı 189.819 harftir."
+        "correctIndex": 2,
+        "explanation": "Kas sarkomerlerindeki en uzun protein zinciri olan Titin, kas kasılması sırasında yay gibi geri toplanarak dokunun bütünlüğünü ve esnekliğini korur."
       },
       "sourceName": "RCSB Protein Data Bank / Guinness",
       "sourceUrl": "https://pdb101.rcsb.org/motm/185"
@@ -34,20 +34,21 @@
       "sourceHint": "Guinness World Records / Protein Data Bank",
       "tag": "Language & Bio Record",
       "quiz": {
-        "question": "What is the short name of the protein whose full chemical name has 189,819 letters?",
+        "question": "What essential mechanical job does the giant 189,819-letter protein Titin perform inside your muscles?",
         "options": [
-          "Titin",
-          "Keratin",
-          "Insulin"
+          "It acts as a molecular spring giving muscle fibers elasticity and preventing tears",
+          "It converts lactic acid directly into oxygen inside red blood cells",
+          "It hardens fingernails and outer hair cuticles"
         ],
         "correctIndex": 0,
-        "explanation": "Titin, the massive muscle elasticity protein, holds the 189,819-letter chemical name record."
+        "explanation": "Spanning muscle sarcomeres like an elastic bungee cord, Titin provides passive tension and snaps stretched muscle fibers safely back into alignment."
       },
       "sourceName": "RCSB Protein Data Bank / Guinness",
       "sourceUrl": "https://pdb101.rcsb.org/motm/185"
     },
     "sourceName": "RCSB Protein Data Bank / Guinness",
-    "sourceUrl": "https://pdb101.rcsb.org/motm/185"
+    "sourceUrl": "https://pdb101.rcsb.org/motm/185",
+    "visualQuery": "protein molecule model"
   },
   {
     "id": "weird-02",
@@ -64,14 +65,14 @@
       "sourceHint": "University of Queensland Physics Museum",
       "tag": "Bilim Rekoru",
       "quiz": {
-        "question": "1927'de başlatılan ünlü Zift Damlası (Pitch Drop) deneyinde huniden bugüne kadar toplam kaç damla düştü?",
+        "question": "1927'den beri süren Zift Damlası deneyindeki zift çekiçle kırılabilecek kadar katı görünürken nasıl damlar?",
         "options": [
-          "9 damla",
-          "140 damla",
-          "600 damla"
+          "Oda sıcaklığında sudan yüz milyarlarca kat daha yoğun viskoziteye sahip aşırı yavaş bir sıvı olduğu için",
+          "İçindeki gizli asidin cam huniyi eritmesi yüzünden",
+          "Sadece gece sıcaklık sıfırın altına düştüğünde eridiği için"
         ],
         "correctIndex": 0,
-        "explanation": "Ziftin viskozitesi o kadar yüksektir ki her damlanın kopması 8 ila 13 yıl sürer; 9. damla 2014'te düşmüştür."
+        "explanation": "Zift aslında katı değil, viskozitesi sudan ~230 milyar kat yüksek olan amorf bir sıvıdır; bir damlasının oluşması yaklaşık 8-12 yıl sürer."
       },
       "guessChallenge": {
         "type": "slider",
@@ -93,14 +94,14 @@
       "sourceHint": "University of Queensland Physics Museum",
       "tag": "Lab Record",
       "quiz": {
-        "question": "How many drops have fallen so far in the famous University of Queensland Pitch Drop Experiment started in 1927?",
+        "question": "How can room-temperature pitch smash like brittle glass with a hammer yet slowly drip through a funnel?",
         "options": [
-          "9 drops",
-          "140 drops",
-          "600 drops"
+          "Electric currents melt one drop every ten years",
+          "It is an ultra-viscous liquid flowing roughly 230 billion times more slowly than water",
+          "Air humidity dissolves pitch particles overnight"
         ],
-        "correctIndex": 0,
-        "explanation": "Because pitch has ultra-high viscosity, only 9 drops have dripped since 1930 (the 9th fell in 2014)."
+        "correctIndex": 1,
+        "explanation": "Pitch exhibits brittle fracture under sudden shock yet behaves as a slow-moving fluid over decades."
       },
       "guessChallenge": {
         "type": "slider",
@@ -115,7 +116,8 @@
       "sourceUrl": "https://smp.uq.edu.au/pitch-drop-experiment"
     },
     "sourceName": "University of Queensland Physics Museum",
-    "sourceUrl": "https://smp.uq.edu.au/pitch-drop-experiment"
+    "sourceUrl": "https://smp.uq.edu.au/pitch-drop-experiment",
+    "visualQuery": "glass laboratory funnel"
   },
   {
     "id": "weird-03",
@@ -134,11 +136,11 @@
       "quiz": {
         "question": "Vombatların dışkısının küp şeklinde olmasının biyolojik sırrı nedir?",
         "options": [
-          "Bağırsak duvarının farklı esneklikteki bölgelerinin şekil vermesi",
           "Yalnızca küp şekilli taşlar yemeleri",
+          "Bağırsak duvarının farklı esneklikteki bölgelerinin şekil vermesi",
           "Doğumdan sonra özel bir keseden geçmesi"
         ],
-        "correctIndex": 0,
+        "correctIndex": 1,
         "explanation": "Bağırsağın sert ve esnek bölümlerindeki ritmik kasılmalar içeriği küp formuna sıkıştırır."
       },
       "sourceName": "National Geographic / Soft Matter Study",
@@ -154,18 +156,19 @@
       "quiz": {
         "question": "How do wombats manage to shape their droppings into cubes?",
         "options": [
-          "Alternating stiff and stretchy regions inside their intestines",
           "Eating square-shaped pebbles",
-          "Shaping them afterward with their paws"
+          "Shaping them afterward with their paws",
+          "Alternating stiff and stretchy regions inside their intestines"
         ],
-        "correctIndex": 0,
+        "correctIndex": 2,
         "explanation": "Varying stiffness along the intestinal walls molds flat faces and sharp edges."
       },
       "sourceName": "National Geographic / Soft Matter Study",
       "sourceUrl": "https://pubmed.ncbi.nlm.nih.gov/33289747/"
     },
     "sourceName": "National Geographic / Soft Matter Study",
-    "sourceUrl": "https://pubmed.ncbi.nlm.nih.gov/33289747/"
+    "sourceUrl": "https://pubmed.ncbi.nlm.nih.gov/33289747/",
+    "visualQuery": "australian wombat wildlife"
   },
   {
     "id": "weird-04",
@@ -182,14 +185,14 @@
       "sourceHint": "Guinness World Records / Susami Tourism",
       "tag": "Garip Mekan Rekoru",
       "quiz": {
-        "question": "Japonya'daki dünyanın en derin su altı posta kutusu kaç metre derinliktedir?",
+        "question": "Japonya'daki 10 metre su altındaki posta kutusuna atılan kartpostallar okyanusta nasıl bozulmadan alıcıya ulaşır?",
         "options": [
-          "10 metre",
-          "100 metre",
-          "1 metre"
+          "Deniz kaplumbağalarının postayı kıyıya taşımasıyla",
+          "Kutunun içinde yüksek basınçlı kurutma fırını olmasıyla",
+          "Suya dayanıklı plastik kartpostallar kullanılıp dalgıçlar tarafından her gün su geçirmez kutuda çıkarılmasıyla"
         ],
-        "correctIndex": 0,
-        "explanation": "Susami kıyısındaki su altı posta kutusu yaklaşık 10 metre derinliktedir ve düzenli olarak boşaltılır."
+        "correctIndex": 2,
+        "explanation": "Susami kasabasındaki gerçek resmi PTT kutusu, su geçirmez kartpostallar için dalgıçlar tarafından düzenli olarak boşaltılır."
       },
       "sourceName": "Guinness World Records / Susami Tourism",
       "sourceUrl": "https://www.guinnessworldrecords.com/world-records/69839-deepest-underwater-postbox"
@@ -202,20 +205,21 @@
       "sourceHint": "Guinness World Records / Susami Tourism",
       "tag": "Quirky World Record",
       "quiz": {
-        "question": "How deep underwater is Susami's working Guinness-record mailbox located?",
+        "question": "How do postcards mailed at Japan's 10-meter-deep underwater mailbox survive to reach recipients?",
         "options": [
-          "10 meters",
-          "100 meters",
-          "1 meter"
+          "Divers use waterproof plastic postcards and oil-based markers collected daily",
+          "Pressurized submarine tubes fire them straight to Tokyo",
+          "They are sealed inside glass bottles washed ashore"
         ],
         "correctIndex": 0,
-        "explanation": "Divers swim 10 meters down to drop waterproof postcards that staff regularly collect."
+        "explanation": "Local dive shop staff collect water-resistant plastic postcards daily and hand them over to Japan Post."
       },
       "sourceName": "Guinness World Records / Susami Tourism",
       "sourceUrl": "https://www.guinnessworldrecords.com/world-records/69839-deepest-underwater-postbox"
     },
     "sourceName": "Guinness World Records / Susami Tourism",
-    "sourceUrl": "https://www.guinnessworldrecords.com/world-records/69839-deepest-underwater-postbox"
+    "sourceUrl": "https://www.guinnessworldrecords.com/world-records/69839-deepest-underwater-postbox",
+    "visualQuery": "scuba diver ocean"
   },
   {
     "id": "weird-05",
@@ -232,14 +236,14 @@
       "sourceHint": "Alaska Public Media / BBC News",
       "tag": "Tuhaf Tarih Rekoru",
       "quiz": {
-        "question": "Alaska'nın Talkeetna kasabasında 20 yıl onursal belediye başkanı olan kedi Stubbs'ın 'ofisi' neredeydi?",
+        "question": "Talkeetna kasabasındaki sarı tekir kedi Stubbs nasıl oldu da 20 yıl boyunca onursal belediye başkanı olarak kaldı?",
         "options": [
-          "Yerel bir markette",
-          "Valilik binasında",
-          "Tren garında"
+          "Kasabanın resmi belediye meclisi olmadığı için halkın sevimli bir simge olarak Stubbs'ı benimsemesiyle",
+          "Alaska eyalet anayasasında hayvanlara yasal oy hakkı tanınmasıyla",
+          "Bölgedeki somon balığı vergilerini tek başına yönettiği için"
         ],
         "correctIndex": 0,
-        "explanation": "Stubbs vaktinin çoğunu Nagley's General Store adlı yerel markette geçirip turistleri karşılıyordu."
+        "explanation": "Talkeetna yerel yönetimi bulunmayan bir bölgeydi; 1997'de şaka olarak aday gösterilen Stubbs turistlerin ve yerlilerin sevgisiyle 20 yıl Nagley's marketinden kasabayı temsil etti."
       },
       "sourceName": "BBC News / Alaska Public Media",
       "sourceUrl": "https://www.smithsonianmag.com/smart-news/beloved-alaskan-cat-mayor-dies-180964188/"
@@ -252,20 +256,21 @@
       "sourceHint": "Alaska Public Media / BBC News",
       "tag": "Quirky History Record",
       "quiz": {
-        "question": "Where did Mayor Stubbs the cat hold his unofficial 'office hours' in Talkeetna?",
+        "question": "How did an orange tabby cat named Stubbs end up serving 20 years as Talkeetna's honorary mayor?",
         "options": [
-          "A local general store",
-          "The state capitol",
-          "A train depot"
+          "Alaska state law legally allows pets to cast tie-breaking council votes",
+          "Talkeetna had no formal city government, so locals embraced Stubbs as a beloved mascot",
+          "He won a dog-sledding championship that awarded lifelong political office"
         ],
-        "correctIndex": 0,
-        "explanation": "Stubbs greeted visitors daily at Nagley's General Store for two decades."
+        "correctIndex": 1,
+        "explanation": "Because Talkeetna was an unincorporated town without a human mayor, residents rallied around Stubbs as a charming civic ambassador at Nagley's General Store."
       },
       "sourceName": "BBC News / Alaska Public Media",
       "sourceUrl": "https://www.smithsonianmag.com/smart-news/beloved-alaskan-cat-mayor-dies-180964188/"
     },
     "sourceName": "BBC News / Alaska Public Media",
-    "sourceUrl": "https://www.smithsonianmag.com/smart-news/beloved-alaskan-cat-mayor-dies-180964188/"
+    "sourceUrl": "https://www.smithsonianmag.com/smart-news/beloved-alaskan-cat-mayor-dies-180964188/",
+    "visualQuery": "ginger tabby cat"
   },
   {
     "id": "weird-06",
@@ -282,14 +287,14 @@
       "sourceHint": "World Factbook / Coğrafya Verileri",
       "tag": "Coğrafya Şaşkınlığı",
       "quiz": {
-        "question": "Norveç ve Kuzey Kore'nin ikisiyle de kara sınırına sahip olan tek ülke hangisidir?",
+        "question": "Avrupa'daki Norveç ile Uzak Doğu'daki Kuzey Kore'yi birbirinden tek bir ülkenin ayırması Dünya coğrafyası hakkında ne gösterir?",
         "options": [
-          "Rusya",
-          "Çin",
-          "Finlandiya"
+          "Norveç ile Kuzey Kore'nin aynı okyanus adası üzerinde yer aldığını",
+          "Rusya'nın 11 saat dilimine yayılarak hem Kuzey Avrupa'ya hem Doğu Asya'ya sınır komşusu olduğunu",
+          "Arktik buzulların iki ülkeyi kara köprüsüyle doğrudan bağladığını"
         ],
-        "correctIndex": 0,
-        "explanation": "Rusya hem kuzeybatıda Norveç'e hem güneydoğuda Kuzey Kore'ye komşudur."
+        "correctIndex": 1,
+        "explanation": "Rusya kuzeybatıda Norveç'le ~196 km, güneydoğuda ise Tumen Nehri üzerinden Kuzey Kore ile ~17 km kara sınırı paylaşır."
       },
       "sourceName": "The World Factbook",
       "sourceUrl": "https://en.wikipedia.org/wiki/Norway%E2%80%93Russia_border"
@@ -302,20 +307,21 @@
       "sourceHint": "World Factbook / Geography Data",
       "tag": "Geography Mind-Bender",
       "quiz": {
-        "question": "Which single country shares land borders with both Norway and North Korea?",
+        "question": "What remarkable geographical scale does the single-country link between Norway and North Korea reveal?",
         "options": [
-          "Russia",
-          "China",
-          "Finland"
+          "Norway owns a Pacific island chain adjacent to the Korean Peninsula",
+          "Arctic sea ice creates a year-round highway linking both nations directly",
+          "Russia spans 11 time zones—bordering Scandinavia in the west and Korea in the east"
         ],
-        "correctIndex": 0,
-        "explanation": "Russia spans from Scandinavia to the Korean Peninsula, bordering both nations."
+        "correctIndex": 2,
+        "explanation": "Stretching across Eurasia, Russia shares a 196-km Arctic border with Norway and a 17-km border with North Korea along the Tumen River."
       },
       "sourceName": "The World Factbook",
       "sourceUrl": "https://en.wikipedia.org/wiki/Norway%E2%80%93Russia_border"
     },
     "sourceName": "The World Factbook",
-    "sourceUrl": "https://en.wikipedia.org/wiki/Norway%E2%80%93Russia_border"
+    "sourceUrl": "https://en.wikipedia.org/wiki/Norway%E2%80%93Russia_border",
+    "visualQuery": "northern lights mountains"
   },
   {
     "id": "weird-07",
@@ -327,19 +333,19 @@
     "tr": {
       "slug": "ananas-yerken-ananas-da-sizi-yer",
       "title": "Ananas Yerken Dilinizdeki Karıncalanma Enzim Savaşıdır",
-      "factText": "Taze ananas yediğinizde dilinizin hafifi sızlamasının sebebi, meyvedeki bromelain enziminin ağız içindeki proteinleri parçalamaya başlamasıdır.",
+      "factText": "Taze ananas yediğinizde dilinizin hafif sızlamasının sebebi, meyvedeki bromelain enziminin ağız içindeki proteinleri parçalamaya başlamasıdır.",
       "deepDiveDetail": "Bromelain et yumuşatıcı olarak bile kullanılan güçlü bir protein parçalayıcı enzimdir. Tabii tehlikeli değildir: ağzınızdaki tükürük enzimleri etkisiz hale getirir ve mide asidi bromelaini hemen sindirir; ancak o anlık karıncalanma tamamen bu enzimden gelir.",
       "sourceHint": "University of Melbourne Chemistry",
       "tag": "İlginç Biyokimya",
       "quiz": {
-        "question": "Taze ananasın dilde hafif sızlama yapmasına neden olan enzim hangisidir?",
+        "question": "Taze ananas yerken bromelain enzimi dil yüzeyindeki proteinleri parçaladığı halde neden ağzımızda kalıcı bir hasar oluşmaz?",
         "options": [
-          "Bromelain",
-          "Kafein",
-          "Laktaz"
+          "Dil hücreleri birkaç saniyede kendiliğinden metalik bir kalkan salgılar",
+          "Bromelain yalnızca ölü hücrelere tepki verip ısıyı sıfırlar",
+          "Tükürük enzimi hızla seyreltip temizler, mide asidi ise bromelaini hemen etkisiz hale getirir"
         ],
-        "correctIndex": 0,
-        "explanation": "Bromelain enzimi proteinleri parçalar; bu yüzden dil yüzeyinde geçici bir karıncalanma yaratır."
+        "correctIndex": 2,
+        "explanation": "Ananasın içindeki protein parçalayıcı bromelain yalnızca yüzeyde geçici bir karıncalanma yapar; yutulduğunda tükürük ve mide asidi tarafından anında sindirilir."
       },
       "sourceName": "University of Melbourne Chemistry",
       "sourceUrl": "https://pubmed.ncbi.nlm.nih.gov/34559534/"
@@ -352,20 +358,21 @@
       "sourceHint": "University of Melbourne Chemistry",
       "tag": "Food Oddity",
       "quiz": {
-        "question": "Which enzyme in fresh pineapple causes that mild tingling sensation on your tongue?",
+        "question": "If bromelain enzymes in fresh pineapple start breaking down tongue proteins, why doesn't eating it injure your mouth?",
         "options": [
-          "Bromelain",
-          "Amylase",
-          "Lactase"
+          "Saliva quickly dilutes it and harsh stomach acid neutralizes the enzyme immediately",
+          "Human taste buds coat themselves in waterproof wax while chewing fruit",
+          "Bromelain dissolves automatically when exposed to oxygen in the air"
         ],
         "correctIndex": 0,
-        "explanation": "Bromelain breaks down surface proteins until saliva and stomach acid neutralize it."
+        "explanation": "Saliva washes the enzyme away and your tongue's surface cells regenerate rapidly, while stomach acid denatures bromelain on arrival."
       },
       "sourceName": "University of Melbourne Chemistry",
       "sourceUrl": "https://pubmed.ncbi.nlm.nih.gov/34559534/"
     },
     "sourceName": "University of Melbourne Chemistry",
-    "sourceUrl": "https://pubmed.ncbi.nlm.nih.gov/34559534/"
+    "sourceUrl": "https://pubmed.ncbi.nlm.nih.gov/34559534/",
+    "visualQuery": "sliced yellow pineapple"
   },
   {
     "id": "weird-08",
@@ -404,18 +411,19 @@
       "quiz": {
         "question": "Why did people mistakenly believe a duck's quack doesn't echo?",
         "options": [
-          "The soft decay makes the echo blend into the original quack",
           "Quack frequencies pass straight through solid walls",
+          "The soft decay makes the echo blend into the original quack",
           "Ducks only quack underwater"
         ],
-        "correctIndex": 0,
+        "correctIndex": 1,
         "explanation": "Controlled acoustics tests confirmed quacks echo normally; they just fade smoothly together."
       },
       "sourceName": "University of Salford Acoustics",
       "sourceUrl": "https://www.cnn.com/2003/TECH/science/09/08/duck.quack/"
     },
     "sourceName": "University of Salford Acoustics",
-    "sourceUrl": "https://www.cnn.com/2003/TECH/science/09/08/duck.quack/"
+    "sourceUrl": "https://www.cnn.com/2003/TECH/science/09/08/duck.quack/",
+    "visualQuery": "duck lake ripples"
   },
   {
     "id": "weird-09",
@@ -432,14 +440,14 @@
       "sourceHint": "John Cage Organ Project Halberstadt",
       "tag": "Zaman Rekoru",
       "quiz": {
-        "question": "Almanya'da 639 yıl sürecek olan John Cage bestesinin performans adı ne anlama gelir?",
+        "question": "Almanya'nın Halberstadt kentindeki 639 yıllık org konserinde müzikseverler neden bazı özel günlerde kiliseye akın eder?",
         "options": [
-          "As Slow As Possible (Mümkün Olduğunca Yavaş)",
-          "Endless Symphony (Sonsuz Senfoni)",
-          "Silent Echo (Sessiz Yankı)"
+          "Org borularının her hafta farklı bir bestecinin eserini hızlıca çalması yüzünden",
+          "Aylar veya yıllar boyunca basılı tutulan bir notadan sonraki akora nadir geçiş anına tanık olmak için",
+          "Kilise kulesindeki güneş saatinin yalnızca 100 yılda bir ses çıkarması yüzünden"
         ],
-        "correctIndex": 0,
-        "explanation": "ORGAN²/ASLSP adlı eserdeki ASLSP kısaltması 'As Slow As Possible' anlamına gelir."
+        "correctIndex": 1,
+        "explanation": "John Cage'in 'ORGAN²/ASLSP' (Mümkün Olduğunca Yavaş) eseri 2001'de başladı ve 2640'ta bitecek; tek bir nota değişimi bazen yıllar sonra gerçekleşiyor."
       },
       "sourceName": "John Cage Organ Foundation Halberstadt",
       "sourceUrl": "https://www.aslsp.org/das-projekt.html"
@@ -452,20 +460,21 @@
       "sourceHint": "John Cage Organ Project Halberstadt",
       "tag": "Endurance Record",
       "quiz": {
-        "question": "What does 'ASLSP' stand for in the 639-year-long musical performance?",
+        "question": "Why do visitors from around the world pack a German church on rare scheduled dates during this 639-year concert?",
         "options": [
-          "As Slow As Possible",
-          "All Sounds Last Forever",
-          "Acoustic Space Live Piece"
+          "Because the organ plays a high-speed remix every leap year",
+          "Because acoustic solar mirrors only chime once per decade",
+          "To witness a rare chord change after notes have been held down for months or years"
         ],
-        "correctIndex": 0,
-        "explanation": "John Cage titled the piece 'ORGAN²/ASLSP (As Slow As Possible)'."
+        "correctIndex": 2,
+        "explanation": "During John Cage's 2001–2640 performance of 'As Slow As Possible,' weighted organ keys sustain single harmonies for years between each dramatic note shift."
       },
       "sourceName": "John Cage Organ Foundation Halberstadt",
       "sourceUrl": "https://www.aslsp.org/das-projekt.html"
     },
     "sourceName": "John Cage Organ Foundation Halberstadt",
-    "sourceUrl": "https://www.aslsp.org/das-projekt.html"
+    "sourceUrl": "https://www.aslsp.org/das-projekt.html",
+    "visualQuery": "cathedral pipe organ"
   },
   {
     "id": "weird-10",
@@ -484,11 +493,11 @@
       "quiz": {
         "question": "Modern temiz sağım yöntemleri Emmental peynirindeki delikleri nasıl etkiledi?",
         "options": [
-          "Saman tozu azaldığı için peynirdeki delikler küçülüp azaldı",
           "Delikler iki katına çıktı",
-          "Peynirin rengi yeşile döndü"
+          "Peynirin rengi yeşile döndü",
+          "Saman tozu azaldığı için peynirdeki delikler küçülüp azaldı"
         ],
-        "correctIndex": 0,
+        "correctIndex": 2,
         "explanation": "Mikroskobik saman parçacıkları gaz kabarcıkları için çekirdek görevi gördüğünden, temiz sağım delikleri azalttı."
       },
       "sourceName": "Agroscope Switzerland Dairy Study",
@@ -515,6 +524,7 @@
       "sourceUrl": "https://doi.org/10.1016/j.idairyj.2015.03.001"
     },
     "sourceName": "Agroscope Switzerland Dairy Study",
-    "sourceUrl": "https://doi.org/10.1016/j.idairyj.2015.03.001"
+    "sourceUrl": "https://doi.org/10.1016/j.idairyj.2015.03.001",
+    "visualQuery": "swiss cheese holes"
   }
 ]

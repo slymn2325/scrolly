@@ -10,6 +10,7 @@ export const CATEGORY_ILLUSTRATION_MAP: Record<CategoryId, string> = {
   history: '/assets/icons8/illustrations/history.png',
   science: '/assets/icons8/illustrations/science.png',
   records: '/assets/icons8/illustrations/records.png',
+  statistics: '/assets/icons8/illustrations/statistics.svg',
 };
 
 export const CATEGORY_SUB_ICON_MAP: Record<CategoryId, string> = {
@@ -19,6 +20,7 @@ export const CATEGORY_SUB_ICON_MAP: Record<CategoryId, string> = {
   history: '/assets/icons8/illustrations/history-sub.png',
   science: '/assets/icons8/illustrations/science-sub.png',
   records: '/assets/icons8/illustrations/records-sub.png',
+  statistics: '/assets/icons8/illustrations/statistics-sub.svg',
 };
 
 export const DOCK_ICON_MAP: Record<DockTabId, string> = {

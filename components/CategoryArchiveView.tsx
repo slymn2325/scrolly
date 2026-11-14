@@ -6,10 +6,13 @@ import {
   ArrowRight,
   BookOpen,
   ChevronRight,
+  Clock,
   Compass,
+  Film,
   Home,
   ShieldCheck,
   Sparkles,
+  Target,
 } from 'lucide-react';
 import HtmlLangSync from '@/components/HtmlLangSync';
 import SiteTrustFooter from '@/components/SiteTrustFooter';
@@ -23,6 +26,7 @@ import {
   categoryRouteSlugToId,
   getFactPrimarySlug,
 } from '@/utils/factsData';
+import { CATEGORY_ILLUSTRATION_MAP, CATEGORY_SUB_ICON_MAP } from '@/utils/icons8Assets';
 
 const CATEGORY_DESCRIPTIONS: Record<CategoryId, { tr: string; en: string }> = {
   space: {
@@ -48,6 +52,10 @@ const CATEGORY_DESCRIPTIONS: Record<CategoryId, { tr: string; en: string }> = {
   records: {
     tr: 'Doğanın ve bilimin sınırlarını zorlayan, Guinness ve akademik kayıtlarla belgelenmiş en sıra dışı rekorlar.',
     en: 'Verified Guinness and scientific extremes that push the boundaries of physics, biology, and human ingenuity.',
+  },
+  statistics: {
+    tr: 'Olasılık paradokslarından veri yanılsamalarına, Bayes teoreminden hayatta kalma önyargısına kadar zihin açan istatistik gerçekleri.',
+    en: 'Mind-bending probability paradoxes, survivorship bias, Bayes theorem, and surprising statistical truths backed by data.',
   },
 };
 
@@ -187,23 +195,25 @@ export default async function CategoryArchiveView({
         }}
       />
 
-      <div className="min-h-screen bg-[#FFFDF9] pb-16 text-ink">
+      <div className="min-h-screen bg-[#FFFDF9] pb-16 text-ink dark:bg-[#111115] dark:text-slate-100">
         {/* Sticky Top Bar */}
-        <header className="sticky top-0 z-30 border-b border-amber-100/80 bg-[#FFFDF9]/90 backdrop-blur-md">
+        <header className="sticky top-0 z-30 border-b border-amber-100/80 bg-[#FFFDF9]/90 backdrop-blur-md dark:border-white/10 dark:bg-[#111115]/90">
           <div className="mx-auto flex max-w-5xl items-center justify-between gap-3 px-4 py-3">
             <Link
               href="/"
-              className="inline-flex min-h-[44px] items-center gap-2 rounded-full border border-amber-200 bg-white px-3.5 py-1.5 text-xs font-bold text-ink shadow-pill hover:bg-amber-50 sm:text-sm"
+              className="inline-flex min-h-[44px] items-center gap-2 rounded-full border border-amber-200 bg-white px-3.5 py-1.5 text-xs font-bold text-ink shadow-pill hover:bg-amber-50 dark:border-white/15 dark:bg-[#18181F] dark:text-slate-100 dark:hover:bg-white/10 sm:text-sm"
             >
               <ArrowLeft className="h-4 w-4" />
               <span>{lang === 'tr' ? 'İnteraktif Akışa Dön' : 'Interactive Feed'}</span>
             </Link>
 
-            <div className="inline-flex items-center rounded-full border border-amber-200 bg-white p-0.5 shadow-pill">
+            <div className="inline-flex items-center rounded-full border border-amber-200 bg-white p-0.5 shadow-pill dark:border-white/15 dark:bg-[#18181F]">
               <Link
                 href={buildCategoryHref(canonicalSlug, 'tr')}
                 className={`inline-flex min-h-[40px] min-w-[44px] items-center justify-center rounded-full px-3 py-1 text-xs font-extrabold uppercase ${
-                  lang === 'tr' ? 'bg-ink text-white' : 'text-ink/80 hover:text-ink'
+                  lang === 'tr'
+                    ? 'bg-ink text-white dark:bg-amber-300 dark:text-[#111115]'
+                    : 'text-ink/80 hover:text-ink dark:text-slate-300 dark:hover:text-white'
                 }`}
               >
                 TR
@@ -211,7 +221,9 @@ export default async function CategoryArchiveView({
               <Link
                 href={buildCategoryHref(canonicalSlug, 'en')}
                 className={`inline-flex min-h-[40px] min-w-[44px] items-center justify-center rounded-full px-3 py-1 text-xs font-extrabold uppercase ${
-                  lang === 'en' ? 'bg-ink text-white' : 'text-ink/80 hover:text-ink'
+                  lang === 'en'
+                    ? 'bg-ink text-white dark:bg-amber-300 dark:text-[#111115]'
+                    : 'text-ink/80 hover:text-ink dark:text-slate-300 dark:hover:text-white'
                 }`}
               >
                 EN
@@ -219,7 +231,7 @@ export default async function CategoryArchiveView({
             </div>
           </div>
 
-          {/* 6-Category Navigation Strip */}
+          {/* 7-Category Navigation Strip */}
           <nav
             aria-label={lang === 'tr' ? 'Kategoriler' : 'Categories'}
             className="mx-auto flex max-w-5xl items-center gap-2 overflow-x-auto px-4 pb-3 no-scrollbar"
@@ -236,10 +248,15 @@ export default async function CategoryArchiveView({
                   className={`inline-flex min-h-[40px] shrink-0 items-center gap-1.5 rounded-full border px-3.5 py-1.5 text-xs font-extrabold transition-colors ${
                     isActive
                       ? `${metaItem.borderClass} ${metaItem.pillBg} ${metaItem.accentText}`
-                      : 'border-slate-200 bg-white text-ink/80 hover:bg-slate-50'
+                      : 'border-slate-200 bg-white text-ink/80 hover:bg-slate-50 dark:border-white/15 dark:bg-[#18181F] dark:text-slate-200 dark:hover:bg-white/10'
                   }`}
                 >
-                  <span>{metaItem.emoji}</span>
+                  <img
+                    src={CATEGORY_SUB_ICON_MAP[idItem]}
+                    alt=""
+                    aria-hidden="true"
+                    className="h-4 w-4 shrink-0 object-contain"
+                  />
                   <span>{metaItem.label[lang]}</span>
                 </Link>
               );
@@ -251,14 +268,17 @@ export default async function CategoryArchiveView({
           {/* Semantic Breadcrumb */}
           <nav
             aria-label="Breadcrumb"
-            className="mb-4 flex items-center gap-1.5 text-xs font-semibold text-ink/75"
+            className="mb-4 flex items-center gap-1.5 text-xs font-semibold text-ink/75 dark:text-slate-300"
           >
-            <Link href="/" className="inline-flex items-center gap-1 hover:text-violet-700 hover:underline">
+            <Link
+              href="/"
+              className="inline-flex items-center gap-1 hover:text-violet-700 hover:underline dark:hover:text-violet-300"
+            >
               <Home className="h-3.5 w-3.5" />
               <span>{lang === 'tr' ? 'Ana Sayfa' : 'Home'}</span>
             </Link>
-            <ChevronRight className="h-3.5 w-3.5 text-ink/50" />
-            <span className="font-bold text-ink">
+            <ChevronRight className="h-3.5 w-3.5 text-ink/50 dark:text-slate-500" />
+            <span className="font-bold text-ink dark:text-white">
               {catMeta.emoji} {catMeta.label[lang]}
             </span>
           </nav>
@@ -266,11 +286,11 @@ export default async function CategoryArchiveView({
           {/* Category Hero */}
           <section
             style={{ backgroundColor: catMeta.cardBg }}
-            className={`rounded-3xl border-2 ${catMeta.borderClass} p-6 shadow-cozy sm:p-8`}
+            className={`rounded-3xl border-2 ${catMeta.borderClass} p-6 text-[#1E1B2E] shadow-cozy sm:p-8`}
           >
-            <div className="flex flex-wrap items-center justify-between gap-4">
+            <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
               <div className="max-w-2xl">
-                <div className="inline-flex items-center gap-2 rounded-full bg-white/90 px-3 py-1 text-xs font-extrabold text-ink/80 shadow-sm">
+                <div className="inline-flex flex-wrap items-center gap-2 rounded-full bg-white/90 px-3 py-1 text-xs font-extrabold text-[#1E1B2E]/85 shadow-sm">
                   <Sparkles className="h-3.5 w-3.5 text-violet-600" />
                   <span>
                     {categoryFacts.length}{' '}
@@ -278,22 +298,40 @@ export default async function CategoryArchiveView({
                   </span>
                 </div>
 
-                <h1 className="mt-3 font-display text-2xl font-bold text-ink sm:text-4xl">
-                  {catMeta.emoji} {catMeta.label[lang]}
-                </h1>
+                <div className="mt-3 flex items-center gap-3">
+                  <img
+                    src={CATEGORY_SUB_ICON_MAP[categoryId]}
+                    alt=""
+                    aria-hidden="true"
+                    className="h-8 w-8 shrink-0 object-contain sm:h-9 sm:w-9"
+                  />
+                  <h1 className="font-display text-2xl font-bold text-[#1E1B2E] sm:text-4xl">
+                    {catMeta.label[lang]}
+                  </h1>
+                </div>
 
-                <p className="mt-2.5 text-sm leading-relaxed text-ink/85 sm:text-base">
+                <p className="mt-2.5 text-sm leading-relaxed text-[#1E1B2E]/85 sm:text-base">
                   {description}
                 </p>
+
+                <div className="mt-4">
+                  <Link
+                    href="/"
+                    className="inline-flex min-h-[44px] items-center gap-2 rounded-full bg-[#1E1B2E] px-5 py-3 font-display text-sm font-bold text-white shadow-md hover:opacity-90"
+                  >
+                    <Compass className="h-4 w-4" />
+                    <span>{lang === 'tr' ? 'Akışta Keşfet' : 'Explore in Feed'}</span>
+                  </Link>
+                </div>
               </div>
 
-              <Link
-                href="/"
-                className="inline-flex min-h-[44px] items-center gap-2 rounded-full bg-ink px-5 py-3 font-display text-sm font-bold text-white shadow-md hover:opacity-90"
-              >
-                <Compass className="h-4 w-4" />
-                <span>{lang === 'tr' ? 'Akışta Keşfet' : 'Explore in Feed'}</span>
-              </Link>
+              <div className="flex shrink-0 items-center justify-center self-start rounded-2xl border border-white/80 bg-white/75 p-4 shadow-sm sm:self-center">
+                <img
+                  src={CATEGORY_ILLUSTRATION_MAP[categoryId]}
+                  alt={catMeta.label[lang]}
+                  className="h-24 w-24 object-contain sm:h-28 sm:w-28"
+                />
+              </div>
             </div>
           </section>
 
@@ -304,7 +342,7 @@ export default async function CategoryArchiveView({
           >
             <h2
               id="category-facts-list-heading"
-              className="mb-4 font-display text-lg font-bold text-ink sm:text-xl"
+              className="mb-4 font-display text-lg font-bold text-ink dark:text-white sm:text-xl"
             >
               {lang === 'tr'
                 ? `${catMeta.label.tr} Alanındaki Tüm Keşifler`
@@ -321,39 +359,69 @@ export default async function CategoryArchiveView({
                   fact.sourceName ||
                   factContent.sourceHint ||
                   'Scrolly Archive';
+                const hasGifPreview = Boolean(fact.gifUrl);
+                const hasInteractiveGuess = Boolean(factContent.guessChallenge);
+                const readSec = Math.max(15, fact.readingTimeSec ?? 25);
 
                 return (
                   <article
                     key={fact.id}
-                    className={`flex flex-col justify-between rounded-2xl border ${catMeta.borderClass} bg-white p-5 shadow-sm transition-transform hover:-translate-y-0.5`}
+                    className={`flex flex-col justify-between rounded-2xl border ${catMeta.borderClass} bg-white p-5 shadow-sm transition-transform hover:-translate-y-0.5 dark:border-white/15 dark:bg-[#18181F]`}
                   >
                     <div>
-                      <div className="flex items-center justify-between gap-2 text-xs font-bold">
+                      <div className="flex flex-wrap items-center justify-between gap-2 text-xs font-bold">
                         <span
-                          className={`inline-flex items-center gap-1 rounded-full ${catMeta.pillBg} px-2.5 py-0.5 ${catMeta.accentText}`}
+                          className={`inline-flex items-center gap-1.5 rounded-full ${catMeta.pillBg} px-2.5 py-0.5 ${catMeta.accentText}`}
                         >
-                          <span>{fact.emoji ?? catMeta.emoji}</span>
+                          <img
+                            src={CATEGORY_SUB_ICON_MAP[categoryId]}
+                            alt=""
+                            aria-hidden="true"
+                            className="h-3.5 w-3.5 object-contain"
+                          />
                           <span>{factContent.tag || catMeta.label[lang]}</span>
                         </span>
-                        <span className="inline-flex items-center gap-1 text-[11px] text-emerald-800">
+                        <span className="inline-flex items-center gap-1 text-[11px] text-emerald-800 dark:text-emerald-300">
                           <ShieldCheck className="h-3.5 w-3.5" />
                           <span className="max-w-[160px] truncate">{sourceName}</span>
                         </span>
                       </div>
 
-                      <h3 className="mt-3 font-display text-lg font-bold leading-snug text-ink">
-                        <Link href={factHref} className="hover:text-violet-700 hover:underline">
+                      <h3 className="mt-3 font-display text-lg font-bold leading-snug text-ink dark:text-white">
+                        <Link
+                          href={factHref}
+                          className="hover:text-violet-700 hover:underline dark:hover:text-violet-300"
+                        >
                           {factContent.title}
                         </Link>
                       </h3>
 
-                      <p className="mt-2 text-sm leading-relaxed text-ink/80">
+                      <p className="mt-2 text-sm leading-relaxed text-ink/80 dark:text-slate-300">
                         {factContent.factText}
                       </p>
+
+                      <div className="mt-3 flex flex-wrap items-center gap-1.5 text-[11px] font-bold">
+                        <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2 py-0.5 text-slate-700 dark:bg-white/10 dark:text-slate-200">
+                          <Clock className="h-3 w-3" />
+                          <span>{readSec}s</span>
+                        </span>
+                        {hasGifPreview && (
+                          <span className="inline-flex items-center gap-1 rounded-full bg-violet-100 px-2 py-0.5 text-violet-800 dark:bg-violet-500/20 dark:text-violet-200">
+                            <Film className="h-3 w-3" />
+                            <span>{lang === 'tr' ? 'GIF Sahne' : 'GIF Scene'}</span>
+                          </span>
+                        )}
+                        {hasInteractiveGuess && (
+                          <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-amber-900 dark:bg-amber-400/20 dark:text-amber-200">
+                            <Target className="h-3 w-3" />
+                            <span>{lang === 'tr' ? 'Tahmin Et' : 'Guess'}</span>
+                          </span>
+                        )}
+                      </div>
                     </div>
 
-                    <div className="mt-4 flex items-center justify-between border-t border-slate-100 pt-3">
-                      <span className="inline-flex items-center gap-1 text-xs font-semibold text-ink/75">
+                    <div className="mt-4 flex items-center justify-between border-t border-slate-100 pt-3 dark:border-white/10">
+                      <span className="inline-flex items-center gap-1 text-xs font-semibold text-ink/75 dark:text-slate-300">
                         <BookOpen className="h-3.5 w-3.5" />
                         <span>
                           {lang === 'tr' ? 'Soru & Bilimsel Açıklama' : 'Q&A & Science'}
@@ -362,7 +430,7 @@ export default async function CategoryArchiveView({
 
                       <Link
                         href={factHref}
-                        className="inline-flex min-h-[44px] items-center gap-1 px-2 text-xs font-extrabold text-violet-700 hover:underline"
+                        className="inline-flex min-h-[44px] items-center gap-1 px-2 text-xs font-extrabold text-violet-700 hover:underline dark:text-violet-300"
                       >
                         <span>{lang === 'tr' ? 'Kartı İncele' : 'Read Fact'}</span>
                         <ArrowRight className="h-3.5 w-3.5" />

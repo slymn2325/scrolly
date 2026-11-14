@@ -24,12 +24,18 @@ export type TopicMotif =
   | 'molecule'
   | 'crystal'
   | 'lightning'
+  | 'statistics'
   | 'typographic'
   | 'generic';
 
 /** Higher weight = more specific. First max score wins. */
 const RULES: Array<{ motif: TopicMotif; re: RegExp; weight: number }> = [
   // —— Ultra-specific card topics ——
+  {
+    motif: 'statistics',
+    re: /probability|bayes|paradox|paradoks|olasilik|olasılık|istatistik|statistics|percentile|yüzdelik|dağılım|distribution|ortalama|medyan|median|simpson|monty hall|benford|survivorship|hayatta kalma|berkson|korelas|correlation|bell curve|çan eğrisi|standart sapma/i,
+    weight: 115,
+  },
   {
     motif: 'antarctic_fish',
     re: /icefish|buzbalığ|buzbalig|buz balığ|hemoglobin|hemoglobinsiz|transparent blood|şeffaf kan|antarctic icefish|antarktika buz/i,
@@ -246,67 +252,223 @@ export function resolveTopicMotif(input: {
       return 'molecule';
     case 'records':
       return 'lightning';
+    case 'statistics':
+      return 'statistics';
     default:
       return 'generic';
   }
 }
 
-/** Build a richer detail article from localized fact fields (≠ short teaser). */
-export function buildFactDetailArticle(localized: {
-  factText: string;
-  deepDiveDetail: string;
+/** Backward-compatible alias for older slide/feed imports. */
+export const classifyTopicMotif = resolveTopicMotif;
+
+const MOTIF_VISUAL_FALLBACKS: Record<string, string> = {
+  planet: 'planet Earth space',
+  forest: 'forest canopy nature',
+  anatomy: 'human brain neuron',
+  astrolabe: 'ancient compass map',
+  molecule: 'chemistry molecule atom',
+  lightning: 'lightning storm sky',
+  statistics: 'data chart animation',
+};
+
+const CATEGORY_VISUAL_FALLBACKS: Record<string, string> = {
+  space: 'outer space galaxy',
+  nature: 'wild nature landscape',
+  human_body: 'human biology science',
+  history: 'ancient architecture history',
+  science: 'physics chemistry lab',
+  records: 'world record extreme',
+  statistics: 'data visualization graph',
+};
+
+const BANNED_VISUAL_WORDS = new Set([
+  'meme',
+  'reaction',
+  'funny',
+  'lol',
+  'gif',
+  'anime',
+  'sticker',
+  'text',
+  'quote',
+  'scrolly',
+  'scrolla',
+]);
+
+/** Resolve a crisp 2-4 word English ASCII visualQuery suitable for GIF/media search. */
+export function resolveFallbackVisualQuery(input: {
+  category: CategoryId | string;
+  title?: string;
+  visualQuery?: string;
+  factText?: string;
   tag?: string;
-  sourceHint?: string;
-  quiz?: { question?: string; explanation?: string };
-}): { article: string; wordCount: number; differsFromTeaser: boolean } {
+}): string {
+  const sanitizeAsciiWords = (raw: string | undefined): string[] => {
+    if (!raw) return [];
+    return raw
+      .replace(/[^A-Za-z0-9\s-]/g, ' ')
+      .split(/\s+/)
+      .map((w) => w.trim().toLowerCase())
+      .filter((w) => w.length >= 2 && !BANNED_VISUAL_WORDS.has(w));
+  };
+
+  const explicitWords = sanitizeAsciiWords(input.visualQuery);
+  if (explicitWords.length >= 2) {
+    return explicitWords.slice(0, 4).join(' ');
+  }
+
+  const motif = resolveTopicMotif({
+    category: (input.category as CategoryId) || 'science',
+    title: input.title,
+    body: input.factText,
+    tag: input.tag,
+  });
+
+  if (explicitWords.length === 1) {
+    const baseCategoryWord = (CATEGORY_VISUAL_FALLBACKS[input.category] || 'science animation')
+      .split(' ')[0];
+    return `${explicitWords[0]} ${baseCategoryWord}`;
+  }
+
+  return (
+    MOTIF_VISUAL_FALLBACKS[motif] ||
+    CATEGORY_VISUAL_FALLBACKS[input.category] ||
+    'science cosmos motion'
+  );
+}
+
+export interface DetailHighlights {
+  deepSummary: string;
+  keyInsight: string;
+  curiosityHook: string;
+  topicTag: string;
+  sourceNote: string;
+}
+
+/** Extract engaging structured highlights for Detail cards & /fact/[slug] pages. */
+export function buildStructuredDetailHighlights(
+  localized: {
+    factText: string;
+    deepDiveDetail: string;
+    tag?: string;
+    sourceHint?: string;
+    quiz?: { question?: string; explanation?: string; options?: string[]; correctIndex?: number };
+  },
+  lang: 'tr' | 'en' = 'tr'
+): DetailHighlights {
   const teaser = (localized.factText || '').trim();
   const deep = (localized.deepDiveDetail || '').trim();
   const explanation = (localized.quiz?.explanation || '').trim();
-  const question = (localized.quiz?.question || '').trim();
+  const correctOpt =
+    localized.quiz?.options && typeof localized.quiz?.correctIndex === 'number'
+      ? (localized.quiz.options[localized.quiz.correctIndex] || '').trim()
+      : '';
+  const tag = (localized.tag || '').trim() || (lang === 'tr' ? 'Mikro Keşif' : 'Micro-Discovery');
+  const sourceNote =
+    (localized.sourceHint || '').trim() ||
+    (lang === 'tr' ? 'Doğrulanmış Bilimsel Arşiv' : 'Verified Scientific Source');
+
+  const deepSummary = deep && deep.toLowerCase() !== teaser.toLowerCase() ? deep : teaser;
+  const keyInsight =
+    explanation ||
+    (correctOpt
+      ? lang === 'tr'
+        ? `Kritik Mekanizma: ${correctOpt}`
+        : `Key Mechanism: ${correctOpt}`
+      : teaser);
+  const curiosityHook =
+    localized.quiz?.question?.trim() ||
+    (lang === 'tr'
+      ? 'Aşağıdaki interaktif tahminde bilimsel mekanizmayı test et!'
+      : 'Test your intuition on the underlying science below!');
+
+  return {
+    deepSummary,
+    keyInsight,
+    curiosityHook,
+    topicTag: tag,
+    sourceNote,
+  };
+}
+
+/** Build a vivid, non-repetitive detail article from localized fact fields (≠ short teaser). */
+export function buildFactDetailArticle(
+  localized: {
+    factText: string;
+    deepDiveDetail: string;
+    tag?: string;
+    sourceHint?: string;
+    quiz?: { question?: string; explanation?: string; options?: string[]; correctIndex?: number };
+  },
+  lang: 'tr' | 'en' = 'tr'
+): { article: string; wordCount: number; differsFromTeaser: boolean } {
+  const teaser = (localized.factText || '').trim();
+  const deep = (localized.deepDiveDetail || '').trim();
+  const explanation = (localized.quiz?.explanation || '').trim();
   const tag = (localized.tag || '').trim();
   const sourceHint = (localized.sourceHint || '').trim();
-
-  const blocks: string[] = [];
-  if (deep) blocks.push(deep);
+  const quizQuestion = (localized.quiz?.question || '').trim();
+  const quizAnswer =
+    typeof localized.quiz?.correctIndex === 'number' &&
+    Array.isArray(localized.quiz?.options)
+      ? (localized.quiz.options[localized.quiz.correctIndex] || '').trim()
+      : '';
 
   const normalize = (s: string) => s.replace(/\s+/g, ' ').trim().toLowerCase();
-  const deepSameAsTeaser = deep && teaser && normalize(deep) === normalize(teaser);
+  const normTeaser = normalize(teaser);
 
-  if (!deep || deepSameAsTeaser) {
-    if (teaser && !blocks.includes(teaser)) {
-      if (!deep) blocks.unshift(teaser);
+  const blocks: string[] = [];
+  if (deep && normalize(deep) !== normTeaser) {
+    blocks.push(deep);
+  }
+
+  // Deduplicate quiz explanation at sentence level against existing deep-dive narrative
+  if (explanation) {
+    const currentNorm = normalize(blocks.join(' '));
+    const sentences = explanation
+      .split(/(?<=[.!?])\s+/)
+      .map((s) => s.trim())
+      .filter(Boolean);
+    const freshSentences = sentences.filter((sentence) => {
+      const normSent = normalize(sentence);
+      if (normSent.length < 12) return !currentNorm.includes(normSent);
+      return !currentNorm.includes(normSent.slice(0, Math.min(48, normSent.length)));
+    });
+    const freshExplanation = freshSentences.join(' ').trim();
+    if (freshExplanation && normalize(freshExplanation) !== normTeaser) {
+      blocks.push(freshExplanation);
     }
   }
 
-  if (explanation && !blocks.some((b) => normalize(b).includes(normalize(explanation).slice(0, 40)))) {
-    blocks.push(explanation);
-  }
+  const currentWords = blocks.join(' ').split(/\s+/).filter(Boolean).length;
 
-  void question;
-
-  if (tag) {
-    blocks.push(`Konu başlığı: ${tag}. Bu kart, aynı temadaki diğer bilgilerle birlikte keşfetme akışında yer alır.`);
-  }
-  if (sourceHint) {
-    blocks.push(
-      `Araştırmacılar ve kurumlar bu gözlemi ${sourceHint} gibi kaynaklarda belgelemiştir. Tam metin ve atıflar için kaynak bağlantısını veya detay sayfasını kullanabilirsiniz.`
-    );
+  // Only enrich thin/missing deep-dives using real card quiz insight or source framing
+  if (blocks.length === 0 || currentWords < 14) {
+    if (blocks.length === 0 && teaser) {
+      blocks.push(teaser);
+    }
+    if (quizQuestion && quizAnswer && !normalize(blocks.join(' ')).includes(normalize(quizAnswer))) {
+      blocks.push(
+        lang === 'tr'
+          ? `Kritik nokta şu soruda gizli: ${quizQuestion} Yanıtı ise "${quizAnswer}" olarak öne çıkıyor.`
+          : `The real twist lies behind one question: ${quizQuestion} The surprising answer is ${quizAnswer}.`
+      );
+    } else if (sourceHint && !normalize(blocks.join(' ')).includes(normalize(sourceHint))) {
+      blocks.push(
+        lang === 'tr'
+          ? `${tag ? `${tag} başlığında ` : ''}${sourceHint} verileri incelendiğinde bu tablonun sanılandan çok daha keskin bir mekanizmaya dayandığı görülüyor.`
+          : `Looking closely at ${sourceHint}${tag ? ` within ${tag}` : ''}, the underlying mechanism turns out to be far more striking than intuition suggests.`
+      );
+    }
   }
 
   let article = blocks.filter(Boolean).join('\n\n').trim();
-  if (!article || normalize(article) === normalize(teaser)) {
-    article = [
-      deep || teaser,
-      explanation,
-      tag ? `Tema: ${tag}.` : '',
-      sourceHint ? `Kaynak notu: ${sourceHint}.` : '',
-      'Daha uzun okuma ve kaynak doğrulama için aşağıdaki bağlantıları kullanın.',
-    ]
-      .filter(Boolean)
-      .join('\n\n');
+  if (!article) {
+    article = deep || teaser || explanation;
   }
 
   const wordCount = article.split(/\s+/).filter(Boolean).length;
-  const differsFromTeaser = normalize(article) !== normalize(teaser);
+  const differsFromTeaser = normalize(article) !== normTeaser;
   return { article, wordCount, differsFromTeaser };
 }

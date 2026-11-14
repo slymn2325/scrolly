@@ -14,14 +14,14 @@
       "sourceHint": "NASA Planetary Fact Sheet",
       "tag": "Gezegen Dinamiği",
       "quiz": {
-        "question": "Venüs'ün kendi ekseni etrafında bir tam tur dönmesi yaklaşık kaç Dünya günü sürer?",
+        "question": "Venüs'te Güneş'in Dünya'dakinin aksine batıdan doğmasının asıl sebebi nedir?",
         "options": [
-          "243 gün",
-          "225 gün",
-          "365 gün"
+          "Venüs'ün kendi ekseni etrafında çoğu gezegene ters yönde dönmesi",
+          "Venüs'ün yörüngesinin Güneş'in içinden geçmesi",
+          "Venüs atmosferinin ışığı ayna gibi yansıtması"
         ],
         "correctIndex": 0,
-        "explanation": "Venüs kendi ekseni etrafında 243 günde, Güneş etrafında ise 225 günde döner."
+        "explanation": "Venüs saat yönünde (retrograd) döndüğü için gezegen yüzeyinden bakıldığında Güneş batı ufkundan doğar."
       },
       "guessChallenge": {
         "type": "slider",
@@ -43,14 +43,14 @@
       "sourceHint": "NASA Planetary Fact Sheet",
       "tag": "Planetary Motion",
       "quiz": {
-        "question": "Approximately how many Earth days does Venus take to rotate once on its own axis?",
+        "question": "Why does the Sun rise in the west and set in the east on Venus?",
         "options": [
-          "243 days",
-          "225 days",
-          "365 days"
+          "Venus orbits the Sun inside a figure-eight loop",
+          "Venus spins backward on its axis compared to most planets",
+          "Its sulfuric clouds reflect sunlight upside down"
         ],
-        "correctIndex": 0,
-        "explanation": "Venus takes 243 Earth days to spin once on its axis and 225 days to orbit the Sun."
+        "correctIndex": 1,
+        "explanation": "Venus has retrograde rotation—spinning clockwise—reversing sunrise and sunset."
       },
       "guessChallenge": {
         "type": "slider",
@@ -65,7 +65,8 @@
       "sourceUrl": "https://science.nasa.gov/venus/facts/"
     },
     "sourceName": "NASA Planetary Fact Sheet",
-    "sourceUrl": "https://science.nasa.gov/venus/facts/"
+    "sourceUrl": "https://science.nasa.gov/venus/facts/",
+    "visualQuery": "venus planet space"
   },
   {
     "id": "space-02",
@@ -84,11 +85,11 @@
       "quiz": {
         "question": "Bir magnetarın aşırı güçlü manyetik alanı yakındaki atomların elektron bulutlarına ne yapar?",
         "options": [
-          "Onları küresel halden ince iğne şekline uzatarak kimyasal bağları koparır",
           "Hepsini katı altın çekirdeğine dönüştürür",
+          "Onları küresel halden ince iğne şekline uzatarak kimyasal bağları koparır",
           "Atomları tamamen mutlak sıfırda dondurur"
         ],
-        "correctIndex": 0,
+        "correctIndex": 1,
         "explanation": "Katrilyon Gauss düzeyindeki manyetik alan elektron yörüngelerini iğne şeklinde deforme eder."
       },
       "guessChallenge": {
@@ -113,11 +114,11 @@
       "quiz": {
         "question": "How does a magnetar's field affect nearby atoms from roughly 1,000 km away?",
         "options": [
-          "It stretches spherical electron clouds into thin needles, breaking chemical bonds",
           "It freezes every electron into solid ice",
-          "It converts hydrogen atoms directly into lead"
+          "It converts hydrogen atoms directly into lead",
+          "It stretches spherical electron clouds into thin needles, breaking chemical bonds"
         ],
-        "correctIndex": 0,
+        "correctIndex": 2,
         "explanation": "Fields on the order of 10¹⁵ Gauss distort atomic electron orbitals into ultra-thin needles."
       },
       "guessChallenge": {
@@ -133,7 +134,8 @@
       "sourceUrl": "https://svs.gsfc.nasa.gov/10232"
     },
     "sourceName": "NASA Goddard Space Flight Center",
-    "sourceUrl": "https://svs.gsfc.nasa.gov/10232"
+    "sourceUrl": "https://svs.gsfc.nasa.gov/10232",
+    "visualQuery": "neutron star magnetic"
   },
   {
     "id": "space-03",
@@ -152,11 +154,11 @@
       "quiz": {
         "question": "Titan'daki sıvı metan yağmur damlaları neden Dünya'dakinden yaklaşık 6 kat yavaş düşer?",
         "options": [
-          "Düşük kütleçekimi ile yoğun kalın atmosferin sürtünme etkisi birleştiği için",
           "Yağmur damlaları buzdan değil gazdan oluştuğu için",
-          "Titan hiç kendi ekseninde dönmediği için"
+          "Titan hiç kendi ekseninde dönmediği için",
+          "Düşük kütleçekimi ile yoğun kalın atmosferin sürtünme etkisi birleştiği için"
         ],
-        "correctIndex": 0,
+        "correctIndex": 2,
         "explanation": "Dünya'nın %14'ü kadar yerçekimi ve 1,45 atm yüzey basıncı yağmur damlalarının terminal hızını sert şekilde düşürür."
       },
       "guessChallenge": {
@@ -201,7 +203,8 @@
       "sourceUrl": "https://science.nasa.gov/saturn/moons/titan/"
     },
     "sourceName": "NASA Solar System Exploration",
-    "sourceUrl": "https://science.nasa.gov/saturn/moons/titan/"
+    "sourceUrl": "https://science.nasa.gov/saturn/moons/titan/",
+    "visualQuery": "saturn moon titan"
   },
   {
     "id": "space-04",
@@ -240,18 +243,19 @@
       "quiz": {
         "question": "Why have the Apollo astronauts' footprints on the Moon not faded away?",
         "options": [
-          "The Moon has no wind or atmospheric erosion",
           "Lunar dust freezes solid when stepped on",
+          "The Moon has no wind or atmospheric erosion",
           "The boots were coated with permanent resin"
         ],
-        "correctIndex": 0,
+        "correctIndex": 1,
         "explanation": "With no wind or weather on the Moon, surface tracks persist for millions of years."
       },
       "sourceName": "NASA Apollo Archive",
       "sourceUrl": "https://starchild.gsfc.nasa.gov/docs/StarChild/space_level2/apollo11.html"
     },
     "sourceName": "NASA Apollo Archive",
-    "sourceUrl": "https://starchild.gsfc.nasa.gov/docs/StarChild/space_level2/apollo11.html"
+    "sourceUrl": "https://starchild.gsfc.nasa.gov/docs/StarChild/space_level2/apollo11.html",
+    "visualQuery": "astronaut moon footprint"
   },
   {
     "id": "space-05",
@@ -268,14 +272,14 @@
       "sourceHint": "NASA Solar System Exploration",
       "tag": "Güneş Sistemi",
       "quiz": {
-        "question": "Güneş, Güneş Sistemimizdeki toplam kütlenin yaklaşık yüzde kaçını oluşturur?",
+        "question": "Güneş Sistemimizin toplam kütlesinin dışında kalan %0,14'lük payın aslan payını ne oluşturur?",
         "options": [
-          "%99,86",
-          "%75,4",
-          "%50,2"
+          "Sadece Dünya ve Mars'ın demir çekirdeği",
+          "Jüpiter başta olmak üzere dev gezegenler",
+          "Ay ve Asteroit Kuşağı taşları"
         ],
-        "correctIndex": 0,
-        "explanation": "Tüm gezegenler, uydular ve asteroitler toplam kütlenin sadece %0,14'ünü oluşturur."
+        "correctIndex": 1,
+        "explanation": "Tek başına Jüpiter, diğer tüm gezegenlerin toplamından iki kat fazla kütleye sahip olarak kalan payı domine eder."
       },
       "guessChallenge": {
         "type": "slider",
@@ -297,14 +301,14 @@
       "sourceHint": "NASA Solar System Exploration",
       "tag": "Solar System",
       "quiz": {
-        "question": "Roughly what percentage of our Solar System's mass belongs to the Sun?",
+        "question": "What holds the lion's share of the remaining 0.14% mass outside our Sun?",
         "options": [
-          "99.86%",
-          "75.4%",
-          "50.2%"
+          "Earth and the Moon combined",
+          "Rocky pebbles in the Asteroid Belt",
+          "Giant planets led by Jupiter"
         ],
-        "correctIndex": 0,
-        "explanation": "All planets, moons, and asteroids combined make up just 0.14% of the Solar System's mass."
+        "correctIndex": 2,
+        "explanation": "Jupiter alone outweighs all other planets combined, absorbing most of that tiny 0.14% slice."
       },
       "guessChallenge": {
         "type": "slider",
@@ -319,7 +323,8 @@
       "sourceUrl": "https://science.nasa.gov/sun/facts/"
     },
     "sourceName": "NASA Solar System Exploration",
-    "sourceUrl": "https://science.nasa.gov/sun/facts/"
+    "sourceUrl": "https://science.nasa.gov/sun/facts/",
+    "visualQuery": "solar flare sun"
   },
   {
     "id": "space-06",
@@ -329,21 +334,21 @@
     "emoji": "🛰️",
     "readingTimeSec": 16,
     "tr": {
-      "slug": "uzayda-soguk-kaynak-olayı",
+      "slug": "uzayda-soguk-kaynak-olayi",
       "title": "İki Metal Uzayda Birbirine Dokununca Kendiliğinden Kaynar",
       "factText": "Uzay boşluğunda iki temiz metal parçası birbirine temas ettiğinde hiçbir ısı veya lehim olmadan kalıcı olarak birbirine kaynar.",
       "deepDiveDetail": "'Soğuk kaynak' (cold welding) adı verilen bu olayda, Dünya'da metallerin arasında bulunan ince oksit ve hava tabakası uzayda yoktur. Metal atomları hangi atomun hangi parçaya ait olduğunu 'anlayamaz' ve tek bir parça gibi birleşir.",
       "sourceHint": "European Space Agency (ESA)",
       "tag": "Uzay Mühendisliği",
       "quiz": {
-        "question": "Uzayda iki temiz metalin ısı olmadan birbirine yapışmasına ne ad verilir?",
+        "question": "Dünya'daki iki temiz çelik çubuk birbirine değdiğinde neden uzaydaki gibi kendiliğinden kaynamaz?",
         "options": [
-          "Soğuk kaynak (Cold welding)",
-          "Manyetik füzyon",
-          "Vakum erimesi"
+          "Dünya'nın yerçekimi metal atomlarının elektron paylaşmasını engeller",
+          "Oda sıcaklığındaki hava metalleri mutlak sıfırın üzerinde tutar",
+          "Atmosferdeki oksijen metallerin üzerinde atomik teması kesen ince bir oksit tabakası oluşturur"
         ],
-        "correctIndex": 0,
-        "explanation": "Araya girecek hava veya oksit tabakası olmadığından atomlar doğrudan bağ kurar; buna soğuk kaynak denir."
+        "correctIndex": 2,
+        "explanation": "Dünya'da oksijen metallerin yüzeyinde koruyucu oksit filmi oluşturur; uzay boşluğunda bu bariyer olmadığı için aynı metal atomları doğrudan bağ kurar."
       },
       "sourceName": "European Space Agency (ESA)",
       "sourceUrl": "https://en.wikipedia.org/wiki/Cold_welding"
@@ -356,20 +361,21 @@
       "sourceHint": "European Space Agency (ESA)",
       "tag": "Space Engineering",
       "quiz": {
-        "question": "What is the phenomenon where clean metals bond without heat in a vacuum called?",
+        "question": "Why don't two clean steel beams weld together on Earth the way they do in the vacuum of space?",
         "options": [
-          "Cold welding",
-          "Magnetic fusion",
-          "Vacuum melting"
+          "Earth's oxygen forms a thin oxide and air barrier that keeps metal atoms apart",
+          "Gravity pulls electron clouds downward so surfaces never touch",
+          "Room temperature keeps steel above its magnetic threshold"
         ],
         "correctIndex": 0,
-        "explanation": "Without air or an oxide barrier, metal atoms bond directly on contact in a process called cold welding."
+        "explanation": "Atmospheric oxygen instantly coats bare metals with an oxide shield; without air in space, identical metal surfaces fuse on contact."
       },
       "sourceName": "European Space Agency (ESA)",
       "sourceUrl": "https://en.wikipedia.org/wiki/Cold_welding"
     },
     "sourceName": "European Space Agency (ESA)",
-    "sourceUrl": "https://en.wikipedia.org/wiki/Cold_welding"
+    "sourceUrl": "https://en.wikipedia.org/wiki/Cold_welding",
+    "visualQuery": "spacecraft satellite orbit"
   },
   {
     "id": "space-07",
@@ -386,14 +392,14 @@
       "sourceHint": "Max Planck Institute for Radio Astronomy",
       "tag": "Astrokimya",
       "quiz": {
-        "question": "Sagittarius B2 bulutunda keşfedilen etil format molekülü Dünya'da en çok hangi meyvenin aromasında bulunur?",
+        "question": "Gökbilimciler 26.000 ışık yılı ötedeki Sagittarius B2 bulutunda ahududu aromalı etil format molekülünü nasıl tespit etti?",
         "options": [
-          "Ahududu",
-          "Karpuz",
-          "Limon"
+          "Radyo teleskoplarıyla moleküllerin dönerken yaydığı benzersiz mikrodalga frekanslarını ölçerek",
+          "Voyager sondasının bulutun içinden numune toplayıp Dünya'ya göndermesiyle",
+          "Bulutun kızılötesi görüntüsünün parlak kırmızı renk vermesiyle"
         ],
         "correctIndex": 0,
-        "explanation": "Etil format molekülü ahududuya kendine özgü meyvemsi kokusunu verir."
+        "explanation": "Her kimyasal molekül uzayda dönerken kendine özgü bir radyo/mikrodalga spektrum imzası yayar; astronomlar 30 metrelik IRAM radyo teleskobuyla bu imzayı yakaladı."
       },
       "sourceName": "Max Planck Institute for Radio Astronomy",
       "sourceUrl": "https://en.wikipedia.org/wiki/Ethyl_formate"
@@ -406,20 +412,21 @@
       "sourceHint": "Max Planck Institute for Radio Astronomy",
       "tag": "Astrochemistry",
       "quiz": {
-        "question": "Ethyl formate, found in the Sagittarius B2 space cloud, is famously responsible for which flavor?",
+        "question": "How did astronomers identify the raspberry-scented molecule ethyl formate 26,000 light-years away?",
         "options": [
-          "Raspberry",
-          "Watermelon",
-          "Lemon"
+          "By analyzing gas samples scooped up and returned by Voyager 1",
+          "By detecting unique microwave spectral fingerprints emitted as molecules spin in space",
+          "By matching the pinkish-red color of the nebula in visible light"
         ],
-        "correctIndex": 0,
-        "explanation": "Ethyl formate is a primary ester behind the scent and flavor of raspberries."
+        "correctIndex": 1,
+        "explanation": "Every molecule radiates distinct radio frequencies as it rotates; astronomers matched ethyl formate's exact spectral barcode using the IRAM radio telescope."
       },
       "sourceName": "Max Planck Institute for Radio Astronomy",
       "sourceUrl": "https://en.wikipedia.org/wiki/Ethyl_formate"
     },
     "sourceName": "Max Planck Institute for Radio Astronomy",
-    "sourceUrl": "https://en.wikipedia.org/wiki/Ethyl_formate"
+    "sourceUrl": "https://en.wikipedia.org/wiki/Ethyl_formate",
+    "visualQuery": "colorful space nebula"
   },
   {
     "id": "space-08",
@@ -438,11 +445,11 @@
       "quiz": {
         "question": "Satürn'ün ortalama yoğunluğunun sudan bile düşük olmasının nedeni nedir?",
         "options": [
-          "Büyük oranda hafif hidrojen ve helyum gazlarından oluşması",
           "İçinin tamamen boş bir kabuk olması",
+          "Büyük oranda hafif hidrojen ve helyum gazlarından oluşması",
           "Buzdan daha hafif katı karbon olması"
         ],
-        "correctIndex": 0,
+        "correctIndex": 1,
         "explanation": "Gaz devi Satürn'ün büyük kısmı en hafif iki element olan hidrojen ve helyumdan oluşur."
       },
       "sourceName": "NASA Saturn Fact Sheet",
@@ -458,18 +465,19 @@
       "quiz": {
         "question": "Why is Saturn's average density lower than that of water?",
         "options": [
-          "It is mostly made of light hydrogen and helium",
           "It is completely hollow inside",
-          "Its rings lift it upward"
+          "Its rings lift it upward",
+          "It is mostly made of light hydrogen and helium"
         ],
-        "correctIndex": 0,
+        "correctIndex": 2,
         "explanation": "Being composed mainly of hydrogen and helium gives Saturn a lower average density than water."
       },
       "sourceName": "NASA Saturn Fact Sheet",
       "sourceUrl": "https://science.nasa.gov/saturn/facts/"
     },
     "sourceName": "NASA Saturn Fact Sheet",
-    "sourceUrl": "https://science.nasa.gov/saturn/facts/"
+    "sourceUrl": "https://science.nasa.gov/saturn/facts/",
+    "visualQuery": "saturn planet rings"
   },
   {
     "id": "space-09",
@@ -486,14 +494,14 @@
       "sourceHint": "NASA Curiosity Rover Observations",
       "tag": "Mars Atmosferi",
       "quiz": {
-        "question": "Mars yüzeyinden bakıldığında gün batımı ne renkte görünür?",
+        "question": "Mars atmosferi neden gün batımında kızıl yerine mavi bir hale oluşturur?",
         "options": [
-          "Mavi",
-          "Koyu yeşil",
-          "Parlak mor"
+          "Mars'ta okyanus buharının gökyüzünü boyaması",
+          "Kutup buzullarının mavi lazer yansıması vermesi",
+          "İnce kızıl toz parçacıklarının mavi ışığı Güneş doğrultusunda ileri saçması"
         ],
-        "correctIndex": 0,
-        "explanation": "Mars'taki ince toz tabakası kırmızı ışığı saçarken mavi ışığı Güneş yönünden geçirir."
+        "correctIndex": 2,
+        "explanation": "Dünya'nın aksine Mars'taki mikroskobik toz, kırmızı ışığı çevreye dağıtırken mavi ışığı Güneş çevresinde toplar."
       },
       "sourceName": "NASA Mars Curiosity Observations",
       "sourceUrl": "https://science.nasa.gov/image-article/apod-2015-may-12-two-worlds-one-sun/"
@@ -506,20 +514,21 @@
       "sourceHint": "NASA Curiosity Rover Observations",
       "tag": "Martian Optics",
       "quiz": {
-        "question": "What color does the sky around the setting Sun appear from the surface of Mars?",
+        "question": "Why does Mars glow blue around the setting Sun while turning the daytime sky butterscotch-red?",
         "options": [
-          "Blue",
-          "Deep green",
-          "Bright purple"
+          "Fine Martian dust scatters blue light forward right near the Sun's path",
+          "Vaporized ocean mist freezes blue at twilight",
+          "Dry ice volcanoes reflect blue spectrum only at dusk"
         ],
         "correctIndex": 0,
-        "explanation": "Fine Martian dust lets blue light penetrate forward at sunset while scattering red away."
+        "explanation": "Mie scattering off fine iron-oxide dust passes blue wavelengths straight toward observers near the horizon."
       },
       "sourceName": "NASA Mars Curiosity Observations",
       "sourceUrl": "https://science.nasa.gov/image-article/apod-2015-may-12-two-worlds-one-sun/"
     },
     "sourceName": "NASA Mars Curiosity Observations",
-    "sourceUrl": "https://science.nasa.gov/image-article/apod-2015-may-12-two-worlds-one-sun/"
+    "sourceUrl": "https://science.nasa.gov/image-article/apod-2015-may-12-two-worlds-one-sun/",
+    "visualQuery": "mars sunset horizon"
   },
   {
     "id": "space-10",
@@ -536,14 +545,14 @@
       "sourceHint": "NASA Jet Propulsion Laboratory",
       "tag": "Yıldızlararası Keşif",
       "quiz": {
-        "question": "1977'de fırlatılan Voyager 1 uzay aracının içindeki insanlık mesajı kaydına ne ad verilir?",
+        "question": "Işık hızında ilerlemesine rağmen Voyager 1'in Dünya'ya gönderdiği radyo sinyallerinin ulaşması neden 22 saatten uzun sürer?",
         "options": [
-          "Altın Plak (Golden Record)",
-          "Uzay Kapsülü",
-          "Ay Diski"
+          "Araç Güneş'in etki sınırını geçip Dünya'dan 24 milyar km'den fazla uzaklaştığı için",
+          "Yıldızlararası uzaydaki karanlık maddenin radyo dalgalarını yavaşlatması yüzünden",
+          "1977 yapımı vericinin sinyali şifreleyip sırayla göndermesi yüzünden"
         ],
         "correctIndex": 0,
-        "explanation": "Dünya'dan sesler ve müzikler içeren bakır-altın kaplama disk 'Altın Plak' olarak bilinir."
+        "explanation": "Radyo dalgaları boşlukta saniyede ~300.000 km hızla gitse de 24 milyar kilometreyi aşan yıldızlararası mesafe tek yönlü iletişimi 22 saatin üzerine çıkarır."
       },
       "sourceName": "NASA Jet Propulsion Laboratory",
       "sourceUrl": "https://science.nasa.gov/mission/voyager/where-are-voyager-1-and-voyager-2-now/"
@@ -556,19 +565,20 @@
       "sourceHint": "NASA Jet Propulsion Laboratory",
       "tag": "Interstellar Exploration",
       "quiz": {
-        "question": "What is the famous audio-visual message disc carried aboard Voyager 1 called?",
+        "question": "Even at the speed of light, why do Voyager 1's radio signals take over 22 hours to reach Earth?",
         "options": [
-          "The Golden Record",
-          "The Silver Capsule",
-          "The Solar Disc"
+          "Because interstellar dust slows radio waves down to sound speed",
+          "Because the probe is over 24 billion km away beyond the Sun's heliosphere",
+          "Because its 1977 computer compresses messages overnight before transmitting"
         ],
-        "correctIndex": 0,
-        "explanation": "Carl Sagan and his team curated the Golden Record carrying Earth's sounds and greetings."
+        "correctIndex": 1,
+        "explanation": "Even moving at ~300,000 km/s, radio signals need more than 22 hours one-way to cross 24+ billion km of interstellar space."
       },
       "sourceName": "NASA Jet Propulsion Laboratory",
       "sourceUrl": "https://science.nasa.gov/mission/voyager/where-are-voyager-1-and-voyager-2-now/"
     },
     "sourceName": "NASA Jet Propulsion Laboratory",
-    "sourceUrl": "https://science.nasa.gov/mission/voyager/where-are-voyager-1-and-voyager-2-now/"
+    "sourceUrl": "https://science.nasa.gov/mission/voyager/where-are-voyager-1-and-voyager-2-now/",
+    "visualQuery": "voyager space probe"
   }
 ]

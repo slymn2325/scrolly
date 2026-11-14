@@ -118,6 +118,20 @@ export const CATEGORIES: CategoryMeta[] = [
     accentBg: 'bg-pink-600',
     ringClass: 'ring-pink-300',
   },
+  {
+    id: 'statistics',
+    emoji: '📊',
+    iconPath: '/assets/icons8/illustrations/statistics.svg',
+    label: { tr: 'İstatistik', en: 'Statistics' },
+    badge: { tr: 'Veri Kahini', en: 'Data Oracle' },
+    bgClass: 'bg-[#E8EBFF]',
+    cardBg: '#F4F6FF',
+    borderClass: 'border-indigo-200',
+    pillBg: 'bg-indigo-100',
+    accentText: 'text-indigo-700',
+    accentBg: 'bg-indigo-600',
+    ringClass: 'ring-indigo-300',
+  },
 ];
 
 export const VOCABULARY_META: CategoryMeta = {
@@ -190,7 +204,14 @@ export const FEED_EXPERIENCE_COPY = {
 } as const;
 
 export function getCategoryMeta(id: CategoryFilter | string): CategoryMeta {
-  const normalized = id === 'weird_records' ? 'records' : id === 'language_lab' ? 'vocabulary' : id;
+  const normalized =
+    id === 'weird_records'
+      ? 'records'
+      : id === 'language_lab'
+        ? 'vocabulary'
+        : id === 'istatistik'
+          ? 'statistics'
+          : id;
   if (normalized === 'vocabulary') {
     return VOCABULARY_META;
   }
@@ -247,19 +268,19 @@ export const translations = {
     nextLeagueLabel: 'Sonraki Lig',
     maxLeagueReached: 'Zirvedesin! En üst ligdesin.',
     youTag: 'SEN',
-    // 1v1 Duel
-    duelBtn: '1v1 Düello',
-    duelTitle: '1v1 Arkadaş Düellosu',
+    // 1v1 Scrolla Arena
+    duelBtn: 'Scrolla 1v1',
+    duelTitle: 'Scrolla Arena 1v1',
     duelSubtitle:
-      'Aynı 5 soruluk süre sınırlı testi oynayıp arkadaşına meydan okuma linki gönder!',
-    duelNameLabel: 'Takma Adın',
+      'Kısa oda koduyla arkadaşına meydan oku — aynı sorularla gerçek zamanlı yarış!',
+    duelNameLabel: 'Arena Takma Adın',
     duelDefaultName: 'Merak Avcısı',
-    duelCopyLinkBtn: 'Düello Linkini Kopyala',
-    duelLinkCopied: 'Düello Linki Kopyalandı! ✓',
-    duelStartBtn: 'Düelloyu Hemen Başlat',
-    duelIncomingBanner: 'Meydan Okuma Geldi!',
+    duelCopyLinkBtn: 'Scrolla Davet Linkini Kopyala',
+    duelLinkCopied: 'Scrolla Daveti Kopyalandı! ✓',
+    duelStartBtn: 'Scrolla Maçını Başlat',
+    duelIncomingBanner: 'Scrolla Arenasına Çağrı!',
     duelChallengerScore: 'Hedef Skor',
-    duelWonTitle: 'Düelloyu Kazandın!',
+    duelWonTitle: 'Scrolla Arenasını Kazandın!',
     duelLostTitle: 'Çok Yaklaştın! Rövanş Zamanı',
     duelTieTitle: 'Berabere! İkiniz de Efsanesiniz',
     duelShareWhatsapp: "WhatsApp'tan Meydan Oku",
@@ -338,7 +359,7 @@ export const translations = {
     dockLeaderboard: 'Leaderboard',
     dockQuiz: 'Quiz',
     dockExplore: 'Keşfet',
-    dockDuel: 'Düello',
+    dockDuel: 'Scrolla',
     dockDiploma: 'Diploma',
     // TikTok Overlay & Backface
     tiktokTapHint: 'Detay için dokun • Beğenmek için çift tıkla',
@@ -366,14 +387,14 @@ export const translations = {
     lbLiveSupabase: 'Canlı Kaşif Sıralaması',
     lbLocalDynamic: 'Canlı Kaşif Sıralaması',
     lbInviteTitle: 'Arkadaşına Meydan Oku',
-    lbInviteSubtitle: 'Canlı sıralamada arkadaşlarını geçmek için düello daveti gönder!',
-    lbInviteBtn: 'Düello Daveti Gönder',
+    lbInviteSubtitle: 'Canlı sıralamada arkadaşlarını geçmek için Scrolla 1v1 daveti gönder!',
+    lbInviteBtn: 'Scrolla Daveti Gönder',
     verifySourceCta: 'Kaynağı Doğrula',
     promotionZone: 'Yükselme Bölgesi (İlk 10)',
     relegationZone: 'Düşme Bölgesi (Son 5)',
     safeZone: 'Lig Koruma Bölgesi',
-    // Duel VS Card
-    vsComparisonTitle: '1v1 Düello Karşılaştırması',
+    // Scrolla VS Card
+    vsComparisonTitle: 'Scrolla 1v1 Karşılaştırması',
     yourResult: 'Senin Skorun',
     opponentResult: 'Rakip Skoru',
     // Diploma Profile Screen
@@ -482,19 +503,19 @@ export const translations = {
     nextLeagueLabel: 'Next League',
     maxLeagueReached: 'Top tier reached! You are in the highest league.',
     youTag: 'YOU',
-    // 1v1 Duel
-    duelBtn: '1v1 Duel',
-    duelTitle: '1v1 Friend Duel',
+    // 1v1 Scrolla Arena
+    duelBtn: 'Scrolla 1v1',
+    duelTitle: 'Scrolla 1v1 Arena',
     duelSubtitle:
-      'Play the exact same 5-question timed quiz and send a 1v1 challenge link to a friend!',
-    duelNameLabel: 'Your Nickname',
+      'Challenge a friend with a short room code — race live on the exact same questions!',
+    duelNameLabel: 'Arena Nickname',
     duelDefaultName: 'Curiosity Ace',
-    duelCopyLinkBtn: 'Copy 1v1 Duel Link',
-    duelLinkCopied: 'Duel Link Copied! ✓',
-    duelStartBtn: 'Start 1v1 Duel Now',
-    duelIncomingBanner: 'Incoming 1v1 Challenge!',
+    duelCopyLinkBtn: 'Copy Scrolla Invite Link',
+    duelLinkCopied: 'Scrolla Link Copied! ✓',
+    duelStartBtn: 'Start Scrolla Match',
+    duelIncomingBanner: 'Incoming Scrolla Challenge!',
     duelChallengerScore: 'Target Score',
-    duelWonTitle: 'You Won the 1v1 Duel!',
+    duelWonTitle: 'You Won the Scrolla Match!',
     duelLostTitle: 'Close Match! Ready for a Rematch?',
     duelTieTitle: "It's a Tie! Both Minds Are Sharp",
     duelShareWhatsapp: 'Challenge on WhatsApp',
@@ -573,7 +594,7 @@ export const translations = {
     dockLeaderboard: 'Leaderboard',
     dockQuiz: 'Quiz',
     dockExplore: 'Explore',
-    dockDuel: 'Duel',
+    dockDuel: 'Scrolla',
     dockDiploma: 'Diploma',
     // TikTok Overlay & Backface
     tiktokTapHint: 'Tap for details • Double-tap to like',
@@ -601,14 +622,14 @@ export const translations = {
     lbLiveSupabase: 'Live Explorer Ranking',
     lbLocalDynamic: 'Live Explorer Ranking',
     lbInviteTitle: 'Invite a Friend',
-    lbInviteSubtitle: 'Send a duel challenge to climb the live explorer ranking together!',
-    lbInviteBtn: 'Send Duel Invite',
+    lbInviteSubtitle: 'Send a Scrolla 1v1 invite to climb the live explorer ranking together!',
+    lbInviteBtn: 'Send Scrolla Invite',
     verifySourceCta: 'Verify Source',
     promotionZone: 'Promotion Zone (Top 10)',
     relegationZone: 'Relegation Zone (Bottom 5)',
     safeZone: 'Safe Zone',
-    // Duel VS Card
-    vsComparisonTitle: '1v1 VS Comparison',
+    // Scrolla VS Card
+    vsComparisonTitle: 'Scrolla 1v1 VS Comparison',
     yourResult: 'Your Result',
     opponentResult: 'Challenger',
     // Diploma Profile Screen

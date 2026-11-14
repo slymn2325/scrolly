@@ -9,9 +9,11 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const ROOT_DIR = path.resolve(__dirname, '..');
 
-const CATEGORIES = ['space', 'nature', 'human_body', 'history', 'science', 'records'];
-const SKETCH_ID_PATTERN = /^(space|nature|human|history|science|weird)-(0[1-9]|10)$/;
+const CATEGORIES = ['space', 'nature', 'human_body', 'history', 'science', 'records', 'statistics'];
+const SKETCH_ID_PATTERN = /^(space|nature|human|history|science|weird|statistics)-(0[1-9]|10)$/;
 const SKETCH_TYPES = [
+  'statistics',
+  'probability',
   'venus',
   'orbit',
   'magnetar',
@@ -123,7 +125,7 @@ const AI_MODELS_ENDPOINT =
 const DEFAULT_AI_MODEL_NAME = process.env.AI_MODEL_NAME || 'gemini-4-hydrogen';
 
 async function loadSeedFactsFromDisk() {
-  const shardFiles = ['space.json', 'nature.json', 'human_body.json', 'history.json', 'science.json', 'records.json'];
+  const shardFiles = ['space.json', 'nature.json', 'human_body.json', 'history.json', 'science.json', 'records.json', 'statistics.json'];
   const all = [];
 
   for (const file of shardFiles) {
@@ -168,11 +170,23 @@ async function ensureSchemaAndSeed(pool) {
       max_val NUMERIC,
       answer_val NUMERIC,
       sketch_type TEXT,
+      visual_query TEXT,
+      gif_url TEXT,
+      quiz_tr JSONB,
+      quiz_en JSONB,
       source_name TEXT,
       source_url TEXT,
       likes_count INT DEFAULT 0,
       created_at TIMESTAMPTZ DEFAULT NOW()
     );
+  `);
+
+  await pool.query(`
+    ALTER TABLE facts
+      ADD COLUMN IF NOT EXISTS visual_query TEXT,
+      ADD COLUMN IF NOT EXISTS gif_url TEXT,
+      ADD COLUMN IF NOT EXISTS quiz_tr JSONB,
+      ADD COLUMN IF NOT EXISTS quiz_en JSONB;
   `);
 
   await pool.query(`
@@ -273,12 +287,14 @@ async function ensureSchemaAndSeed(pool) {
           slug, category, title_tr, title_en, summary_tr, summary_en,
           detail_tr, detail_en, question_tr, question_en,
           unit_tr, unit_en, min_val, max_val, answer_val,
-          sketch_type, source_name, source_url, likes_count, created_at
+          sketch_type, visual_query, quiz_tr, quiz_en,
+          source_name, source_url, likes_count, created_at
         ) VALUES (
           $1, $2, $3, $4, $5, $6,
           $7, $8, $9, $10,
           $11, $12, $13, $14, $15,
-          $16, $17, $18, 0, NOW() - ($19 * INTERVAL '1 second')
+          $16, $17, $18::jsonb, $19::jsonb,
+          $20, $21, 0, NOW() - ($22 * INTERVAL '1 second')
         )
         ON CONFLICT (slug) DO NOTHING`,
         [
@@ -298,6 +314,9 @@ async function ensureSchemaAndSeed(pool) {
           maxVal,
           answerVal,
           fact.id,
+          fact.visualQuery || null,
+          fact.tr?.quiz ? JSON.stringify(fact.tr.quiz) : null,
+          fact.en?.quiz ? JSON.stringify(fact.en.quiz) : null,
           fact.en?.sourceName || fact.sourceName || fact.en?.sourceHint || '',
           fact.en?.sourceUrl || fact.sourceUrl || '',
           idx + 1,
@@ -515,6 +534,69 @@ async function validateGeneratedFact(item, existingSlugs, existingTitlesEn) {
     return null;
   }
 
+  const BANNED_VISUAL_WORDS = new Set([
+    'meme',
+    'memes',
+    'reaction',
+    'reactions',
+    'funny',
+    'anime',
+    'text',
+    'quote',
+    'quotes',
+    'caption',
+    'lol',
+    'wtf',
+    'mrw',
+    'mfw',
+    'subtitles',
+  ]);
+  const visualTokens = String(item.visualQuery || item.visual_query || '')
+    .toLowerCase()
+    .replace(/[^\x20-\x7E]/g, ' ')
+    .replace(/[^a-z0-9\s-]/g, ' ')
+    .split(/\s+/)
+    .filter((w) => w && !BANNED_VISUAL_WORDS.has(w))
+    .slice(0, 3);
+  const fallbackTokens = titleEn
+    .toLowerCase()
+    .replace(/[^a-z0-9\s]/g, ' ')
+    .split(/\s+/)
+    .filter((w) => w.length >= 4 && !BANNED_VISUAL_WORDS.has(w))
+    .slice(0, 3);
+  const visualQuery =
+    visualTokens.length >= 2
+      ? visualTokens.join(' ')
+      : fallbackTokens.length >= 2
+        ? fallbackTokens.join(' ')
+        : 'science discovery animation';
+
+  const normalizeQuizObj = (qObj, fallbackExplanation) => {
+    if (
+      qObj &&
+      typeof qObj === 'object' &&
+      typeof qObj.question === 'string' &&
+      qObj.question.trim().length > 0 &&
+      Array.isArray(qObj.options) &&
+      qObj.options.length === 3 &&
+      (qObj.correctIndex === 0 || qObj.correctIndex === 1 || qObj.correctIndex === 2)
+    ) {
+      const options = qObj.options.map((o) => String(o).trim());
+      const uniqueCount = new Set(options.map((o) => o.toLowerCase())).size;
+      const allPureNumbers = options.every((o) => /^[\d.,%+\-\s]+$/.test(o));
+      if (uniqueCount !== 3 || options.some((o) => !o) || allPureNumbers) {
+        return null;
+      }
+      return {
+        question: qObj.question.trim(),
+        options,
+        correctIndex: qObj.correctIndex,
+        explanation: String(qObj.explanation || '').trim() || fallbackExplanation,
+      };
+    }
+    return null;
+  };
+
   return {
     slug,
     category,
@@ -532,6 +614,9 @@ async function validateGeneratedFact(item, existingSlugs, existingTitlesEn) {
     max_val: maxVal,
     answer_val: answerVal,
     sketch_type: sketchTypeRaw,
+    visual_query: visualQuery,
+    quiz_tr: normalizeQuizObj(item.quiz_tr, detailTr),
+    quiz_en: normalizeQuizObj(item.quiz_en, detailEn),
     source_name: sourceName,
     source_url: sourceUrl,
   };
@@ -577,7 +662,8 @@ ${SKETCH_TYPES.join(', ')}
 
 Return a JSON object with a single key \`"facts"\` containing an array of 5 items, each with EXACTLY these keys:
 - "slug": lowercase ASCII kebab-case slug derived from English title (e.g. "europas-subsurface-ocean")
-- "category": one of "space" | "nature" | "human_body" | "history" | "science" | "records"
+- "category": one of "space" | "nature" | "human_body" | "history" | "science" | "records" | "statistics"
+- "visual_query": strictly 2-3 concrete English words depicting the real physical/natural/historical/statistical subject for GIF & media lookup (e.g. "swift bird sky", "colorful space nebula", "probability dice roll") — NEVER a full sentence and NEVER meme/reaction/funny/anime/text/quote words
 - "title_tr": punchy Turkish headline (max 90 chars)
 - "title_en": punchy English headline (max 90 chars)
 - "summary_tr": 1-2 engaging Turkish sentences explaining the hook (max 220 chars)
@@ -591,6 +677,8 @@ Return a JSON object with a single key \`"facts"\` containing an array of 5 item
 - "min_val": realistic minimum slider integer/number strictly less than max_val
 - "max_val": realistic maximum slider integer/number strictly greater than min_val
 - "answer_val": exact verified numerical answer between min_val and max_val
+- "quiz_tr": { "question": fascinating conceptual WHY/HOW/MECHANISM question in Turkish (NEVER a +/-30% number-guessing clone of the slider!), "options": [3 short distinct conceptual strings, never plain numbers], "correctIndex": 0|1|2 (vary evenly across 0, 1, 2 across the 5 items!), "explanation": "concise TR scientific takeaway" }
+- "quiz_en": { "question": fascinating conceptual WHY/HOW/MECHANISM question in English (NEVER a +/-30% number-guessing clone!), "options": [3 short distinct conceptual strings, never plain numbers], "correctIndex": 0|1|2 (vary evenly across 0, 1, 2 across the 5 items!), "explanation": "concise EN scientific takeaway" }
 - "sketch_type": exact matching value from the \`sketch_type\` list above
 - "source_name": authoritative institution or journal name
 - "source_url": real, live deep https:// article/DOI verification URL (never a root domain homepage)
@@ -868,12 +956,14 @@ async function main() {
           slug, category, title_tr, title_en, summary_tr, summary_en,
           detail_tr, detail_en, question_tr, question_en,
           unit_tr, unit_en, min_val, max_val, answer_val,
-          sketch_type, source_name, source_url, likes_count
+          sketch_type, visual_query, quiz_tr, quiz_en,
+          source_name, source_url, likes_count
         ) VALUES (
           $1, $2, $3, $4, $5, $6,
           $7, $8, $9, $10,
           $11, $12, $13, $14, $15,
-          $16, $17, $18, 0
+          $16, $17, $18::jsonb, $19::jsonb,
+          $20, $21, 0
         )
         ON CONFLICT (slug) DO NOTHING
         RETURNING id, slug, category`,
@@ -894,6 +984,9 @@ async function main() {
           clean.max_val,
           clean.answer_val,
           clean.sketch_type,
+          clean.visual_query || null,
+          clean.quiz_tr ? JSON.stringify(clean.quiz_tr) : null,
+          clean.quiz_en ? JSON.stringify(clean.quiz_en) : null,
           clean.source_name,
           clean.source_url,
         ]

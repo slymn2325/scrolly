@@ -1,57 +1,79 @@
 import type { FactCard } from '@/types/fact';
 import type { CategoryFilter } from '@/i18n/translations';
-import type { DuelKind } from '@/utils/duelCodec';
+import {
+  normalizeRoomCode,
+  type ScrollaPlayer,
+  type ScrollaRoom,
+  type ScrollaRoomStatus,
+} from '@/lib/duelStore';
 import { pickSeededFacts } from '@/utils/seededRandom';
+
+export type { ScrollaPlayer, ScrollaRoom, ScrollaRoomStatus };
 
 export const DUEL_QUESTION_COUNTS = [3, 5, 7, 10] as const;
 export type DuelQuestionCount = (typeof DUEL_QUESTION_COUNTS)[number];
 
-export interface DuelLobbyPlayer {
-  id: string;
-  name: string;
-  ready: boolean;
-  isHost: boolean;
-}
+const SCROLLA_PLAYER_KEY = 'scrolly_scrolla_player_id_v1';
+const USER_MEMORY_STORAGE_KEY = 'merak_user_state_v1';
 
-export interface DuelLobbyState {
-  duelId: string;
-  kind: DuelKind;
-  category: CategoryFilter;
-  questionCount: number;
-  cardIds: string[];
-  hostId: string;
-  players: DuelLobbyPlayer[];
-  started: boolean;
-  updatedAt: number;
-}
+export function getOrCreateScrollaPlayerId(preferredId?: string): string {
+  const cleanPreferred =
+    preferredId && preferredId.trim().length >= 4 && preferredId !== 'local-default-player'
+      ? preferredId.trim().slice(0, 64)
+      : '';
 
-function lobbyKey(duelId: string): string {
-  return `scrolly_duel_lobby_${duelId}`;
-}
+  if (typeof window !== 'undefined') {
+    if (cleanPreferred) {
+      try {
+        window.localStorage.setItem(SCROLLA_PLAYER_KEY, cleanPreferred);
+      } catch {
+        // Ignore storage failures
+      }
+      return cleanPreferred;
+    }
 
-export function createDuelId(): string {
-  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
-    return crypto.randomUUID().replace(/-/g, '').slice(0, 12);
+    try {
+      // Align with UserMemory playerId so DuelModal & ShareResultModal share host identity
+      const rawMemory = window.localStorage.getItem(USER_MEMORY_STORAGE_KEY);
+      if (rawMemory) {
+        const parsed = JSON.parse(rawMemory) as { playerId?: unknown };
+        if (
+          typeof parsed?.playerId === 'string' &&
+          parsed.playerId.trim().length >= 4 &&
+          parsed.playerId !== 'local-default-player'
+        ) {
+          const unified = parsed.playerId.trim().slice(0, 64);
+          window.localStorage.setItem(SCROLLA_PLAYER_KEY, unified);
+          return unified;
+        }
+      }
+
+      const existing = window.localStorage.getItem(SCROLLA_PLAYER_KEY);
+      if (existing && existing.trim().length >= 4) {
+        return existing.trim().slice(0, 64);
+      }
+      const created = createPlayerId();
+      window.localStorage.setItem(SCROLLA_PLAYER_KEY, created);
+      return created;
+    } catch {
+      // Ignore storage failures
+    }
   }
-  return `d${Date.now().toString(36)}${Math.floor(Math.random() * 1e6).toString(36)}`;
+  return cleanPreferred || createPlayerId();
 }
 
 export function createPlayerId(): string {
   if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
-    return crypto.randomUUID().replace(/-/g, '').slice(0, 10);
+    return crypto.randomUUID().replace(/-/g, '').slice(0, 12);
   }
-  return `p${Date.now().toString(36)}${Math.floor(Math.random() * 1e5).toString(36)}`;
-}
-
-export function requiredReadyCount(kind: DuelKind): number {
-  return kind === 'group' ? 3 : 2;
+  return `p${Date.now().toString(36)}${Math.floor(Math.random() * 1e6).toString(36)}`;
 }
 
 export function filterFactsForDuel(
   allFacts: FactCard[],
   category: CategoryFilter
 ): FactCard[] {
-  if (category === 'all') return allFacts;
+  if (category === 'all' || category === 'vocabulary') return allFacts;
   return allFacts.filter((f) => f.category === category);
 }
 
@@ -59,123 +81,171 @@ export function pickDuelQuestionIds(
   allFacts: FactCard[],
   category: CategoryFilter,
   questionCount: number,
-  duelId: string
+  seedId: string
 ): string[] {
   const pool = filterFactsForDuel(allFacts, category);
   const fallback = pool.length > 0 ? pool : allFacts;
-  const picked = pickSeededFacts(fallback, questionCount, `duel-${duelId}`);
+  const picked = pickSeededFacts(fallback, questionCount, `scrolla-${seedId}`);
   return picked.map((f) => f.id);
 }
 
 export function resolveFactsByIds(allFacts: FactCard[], ids: string[]): FactCard[] {
-  const matched = ids
+  return ids
     .map((id) =>
       allFacts.find((f) => f.id === id || f.slug === id || f.en.slug === id || f.tr.slug === id)
     )
     .filter((f): f is FactCard => Boolean(f));
-  return matched;
 }
 
-export function loadDuelLobby(duelId: string): DuelLobbyState | null {
-  if (typeof window === 'undefined' || !duelId) return null;
+export interface ScrollaApiResult {
+  ok: boolean;
+  room?: ScrollaRoom;
+  serverNowMs?: number;
+  kicked?: boolean;
+  error?: string;
+  status?: number;
+}
+
+function parseServerNow(raw?: string): number {
+  const parsed = raw ? Date.parse(raw) : NaN;
+  return Number.isFinite(parsed) ? parsed : Date.now();
+}
+
+export async function createScrollaRoom(params: {
+  hostId: string;
+  hostName: string;
+  hostEmoji?: string;
+  category: CategoryFilter;
+  questionCount: number;
+  cardIds?: string[];
+}): Promise<ScrollaApiResult> {
   try {
-    const raw = window.localStorage.getItem(lobbyKey(duelId));
-    if (!raw) return null;
-    const parsed = JSON.parse(raw) as DuelLobbyState;
-    if (!parsed?.duelId || !Array.isArray(parsed.players)) return null;
-    return parsed;
+    const res = await fetch('/api/duels', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(params),
+    });
+    const json = (await res.json()) as {
+      ok?: boolean;
+      room?: ScrollaRoom;
+      serverNow?: string;
+      error?: string;
+    };
+    return {
+      ok: Boolean(res.ok && json.ok && json.room),
+      room: json.room,
+      serverNowMs: parseServerNow(json.serverNow),
+      error: json.error,
+      status: res.status,
+    };
   } catch {
-    return null;
+    return { ok: false, error: 'network_error' };
   }
 }
 
-export function saveDuelLobby(state: DuelLobbyState): void {
-  if (typeof window === 'undefined') return;
+export async function fetchScrollaRoom(
+  code: string,
+  playerId: string
+): Promise<ScrollaApiResult> {
+  const cleanCode = normalizeRoomCode(code);
+  if (cleanCode.length !== 6) {
+    return { ok: false, error: 'invalid_code', status: 400 };
+  }
   try {
-    const next = { ...state, updatedAt: Date.now() };
-    window.localStorage.setItem(lobbyKey(state.duelId), JSON.stringify(next));
-    window.dispatchEvent(
-      new CustomEvent('scrolly-duel-lobby', { detail: { duelId: state.duelId } })
+    const res = await fetch(
+      `/api/duels/${encodeURIComponent(cleanCode)}?playerId=${encodeURIComponent(playerId)}`,
+      { cache: 'no-store' }
     );
+    const json = (await res.json()) as {
+      ok?: boolean;
+      kicked?: boolean;
+      room?: ScrollaRoom;
+      serverNow?: string;
+      error?: string;
+    };
+    return {
+      ok: Boolean(res.ok && json.ok && json.room),
+      kicked: Boolean(json.kicked),
+      room: json.room,
+      serverNowMs: parseServerNow(json.serverNow),
+      error: json.error,
+      status: res.status,
+    };
   } catch {
-    // private mode / quota
+    return { ok: false, error: 'network_error' };
   }
 }
 
-export function subscribeDuelLobby(
-  duelId: string,
-  onChange: (state: DuelLobbyState | null) => void
-): () => void {
-  if (typeof window === 'undefined') return () => undefined;
-
-  const emit = () => onChange(loadDuelLobby(duelId));
-
-  const onStorage = (event: StorageEvent) => {
-    if (event.key === lobbyKey(duelId)) emit();
-  };
-  const onCustom = (event: Event) => {
-    const detail = (event as CustomEvent<{ duelId?: string }>).detail;
-    if (!detail?.duelId || detail.duelId === duelId) emit();
-  };
-
-  window.addEventListener('storage', onStorage);
-  window.addEventListener('scrolly-duel-lobby', onCustom as EventListener);
-  emit();
-
-  return () => {
-    window.removeEventListener('storage', onStorage);
-    window.removeEventListener('scrolly-duel-lobby', onCustom as EventListener);
-  };
+async function postScrollaAction(
+  code: string,
+  payload: Record<string, unknown>
+): Promise<ScrollaApiResult> {
+  const cleanCode = normalizeRoomCode(code);
+  if (cleanCode.length !== 6) {
+    return { ok: false, error: 'invalid_code', status: 400 };
+  }
+  try {
+    const res = await fetch(`/api/duels/${encodeURIComponent(cleanCode)}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    const json = (await res.json()) as {
+      ok?: boolean;
+      room?: ScrollaRoom | null;
+      serverNow?: string;
+      error?: string;
+    };
+    return {
+      ok: Boolean(res.ok && json.ok && json.room),
+      room: json.room ?? undefined,
+      serverNowMs: parseServerNow(json.serverNow),
+      error: json.error,
+      status: res.status,
+    };
+  } catch {
+    return { ok: false, error: 'network_error' };
+  }
 }
 
-export function upsertLobbyPlayer(
-  state: DuelLobbyState,
-  player: DuelLobbyPlayer
-): DuelLobbyState {
-  const others = state.players.filter((p) => p.id !== player.id);
-  return {
-    ...state,
-    players: [...others, player].sort((a, b) => Number(b.isHost) - Number(a.isHost)),
-  };
+export function joinScrollaRoom(
+  code: string,
+  params: { playerId: string; name: string; emoji?: string }
+): Promise<ScrollaApiResult> {
+  return postScrollaAction(code, { action: 'join', ...params });
 }
 
-export function setPlayerReady(
-  state: DuelLobbyState,
+export function setSelfScrollaReady(
+  code: string,
   playerId: string,
   ready: boolean
-): DuelLobbyState {
-  return {
-    ...state,
-    players: state.players.map((p) => (p.id === playerId ? { ...p, ready } : p)),
-  };
+): Promise<ScrollaApiResult> {
+  return postScrollaAction(code, { action: 'ready', playerId, ready });
 }
 
-export function allRequiredReady(state: DuelLobbyState): boolean {
-  const need = requiredReadyCount(state.kind);
-  const readyCount = state.players.filter((p) => p.ready).length;
-  return readyCount >= need && state.players.length >= need;
+export function kickScrollaPlayer(
+  code: string,
+  hostId: string,
+  targetPlayerId: string
+): Promise<ScrollaApiResult> {
+  return postScrollaAction(code, { action: 'kick', playerId: hostId, targetPlayerId });
 }
 
-export function ensureSeatPlayers(
-  state: DuelLobbyState,
-  localPlayer: DuelLobbyPlayer
-): DuelLobbyState {
-  let next = upsertLobbyPlayer(state, localPlayer);
-  const need = requiredReadyCount(state.kind);
-  while (next.players.length < need) {
-    const idx = next.players.length + 1;
-    next = {
-      ...next,
-      players: [
-        ...next.players,
-        {
-          id: `${state.duelId}-seat-${idx}`,
-          name: `P${idx}`,
-          ready: false,
-          isHost: false,
-        },
-      ],
-    };
-  }
-  return next;
+export function startScrollaRoom(
+  code: string,
+  hostId: string
+): Promise<ScrollaApiResult> {
+  return postScrollaAction(code, { action: 'start', playerId: hostId });
+}
+
+export function completeScrollaRoom(
+  code: string,
+  playerId: string,
+  score: number
+): Promise<ScrollaApiResult> {
+  return postScrollaAction(code, { action: 'complete', playerId, score });
+}
+
+export async function leaveScrollaRoom(code: string, playerId: string): Promise<void> {
+  await postScrollaAction(code, { action: 'leave', playerId });
 }

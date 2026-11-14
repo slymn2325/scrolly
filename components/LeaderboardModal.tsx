@@ -2,10 +2,20 @@
 
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { ArrowDownRight, ArrowUpRight, Check, Crown, Radio, Swords, X } from 'lucide-react';
+import {
+  AlertCircle,
+  ArrowDownRight,
+  ArrowUpRight,
+  Check,
+  Crown,
+  Radio,
+  RefreshCw,
+  Swords,
+  Users,
+  X,
+} from 'lucide-react';
 import { type Language, translations } from '@/i18n/translations';
 import { DOCK_ICON_MAP, UI_ICON_PATHS } from '@/utils/icons8Assets';
-import { useEscapeClose } from '@/utils/useEscapeClose';
 import {
   fetchLeaderboardEntries,
   type LeaderboardEntry,
@@ -13,6 +23,7 @@ import {
   subscribeLeaderboardRealtime,
   WEEKLY_LEAGUE_TIERS,
 } from '@/utils/supabaseLeaderboard';
+import { useEscapeClose } from '@/utils/useEscapeClose';
 import { getLeagueInfo } from '@/utils/userMemory';
 
 interface LeaderboardModalProps {
@@ -44,7 +55,10 @@ export default function LeaderboardModal({
   const t = translations[lang];
   const [activeTab, setActiveTab] = useState<LeaderboardTab>('weekly');
   const [entries, setEntries] = useState<LeaderboardEntry[]>([]);
-  const [isLiveSupabase, setIsLiveSupabase] = useState(false);
+  const [isLiveBackend, setIsLiveBackend] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [hasError, setHasError] = useState(false);
   const [inviteCopied, setInviteCopied] = useState(false);
 
   const handleInviteClick = async () => {
@@ -64,23 +78,42 @@ export default function LeaderboardModal({
 
   const league = getLeagueInfo(userXp, lang);
 
-  const loadLeaderboard = useCallback(async () => {
-    const result = await fetchLeaderboardEntries(
-      activeTab,
-      nickname,
-      userXp,
-      weeklyXp,
-      dailyBestScore,
-      streakDays
-    );
-    setEntries(result.entries);
-    setIsLiveSupabase(result.isLiveSupabase);
-  }, [activeTab, nickname, userXp, weeklyXp, dailyBestScore, streakDays]);
+  const loadLeaderboard = useCallback(
+    async (background = false) => {
+      if (background) {
+        setIsRefreshing(true);
+      } else {
+        setIsLoading(true);
+      }
+      setHasError(false);
+
+      try {
+        const result = await fetchLeaderboardEntries(
+          activeTab,
+          nickname,
+          userXp,
+          weeklyXp,
+          dailyBestScore,
+          streakDays
+        );
+        setEntries(result.entries);
+        setIsLiveBackend(Boolean(result.isLiveBackend ?? result.isLiveSupabase));
+      } catch {
+        setHasError(true);
+      } finally {
+        setIsLoading(false);
+        setIsRefreshing(false);
+      }
+    },
+    [activeTab, nickname, userXp, weeklyXp, dailyBestScore, streakDays]
+  );
 
   useEffect(() => {
     if (!open) return;
-    loadLeaderboard();
-    const unsub = subscribeLeaderboardRealtime(loadLeaderboard);
+    void loadLeaderboard(false);
+    const unsub = subscribeLeaderboardRealtime(() => {
+      void loadLeaderboard(true);
+    });
     return () => unsub();
   }, [open, loadLeaderboard]);
 
@@ -92,6 +125,29 @@ export default function LeaderboardModal({
     const current = userXp - league.minXp;
     return Math.min(100, Math.max(4, Math.round((current / span) * 100)));
   }, [league, userXp]);
+
+  const myEntry = useMemo(() => entries.find((e) => e.isUser) ?? null, [entries]);
+  const myRank = myEntry?.rank ?? 1;
+  const activeTabScore =
+    myEntry?.score ??
+    (activeTab === 'daily'
+      ? dailyBestScore
+      : activeTab === 'weekly'
+        ? Math.max(weeklyXp, userXp)
+        : userXp);
+
+  const tabMetricLabel =
+    activeTab === 'daily'
+      ? lang === 'tr'
+        ? 'Bugünün En İyisi'
+        : "Today's Best"
+      : activeTab === 'weekly'
+        ? lang === 'tr'
+          ? 'Haftalık XP'
+          : 'Weekly XP'
+        : lang === 'tr'
+          ? 'Toplam XP'
+          : 'Total XP';
 
   return (
     <AnimatePresence>
@@ -133,24 +189,54 @@ export default function LeaderboardModal({
             )}
 
             {/* Header */}
-            <div className="flex items-center gap-2.5">
-              <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-amber-100/80 p-1.5 dark:bg-amber-900/40">
-                <img
-                  src={DOCK_ICON_MAP.leaderboard}
-                  alt=""
-                  aria-hidden="true"
-                  className="h-8 w-8 object-contain"
-                />
-              </div>
-              <div>
-                <h2 className="font-display text-lg font-bold text-ink dark:text-white">
-                  {t.leaderboardTitle}
-                </h2>
-                <div className="flex items-center gap-1.5 text-[11px] font-bold text-ink/75 dark:text-violet-100/85">
-                  <Radio className={`h-3 w-3 ${isLiveSupabase ? 'text-emerald-500 animate-pulse' : 'text-violet-500'}`} />
-                  <span>{isLiveSupabase ? t.lbLiveSupabase : t.lbLocalDynamic}</span>
+            <div className="flex items-center justify-between gap-2 pr-10 sm:pr-0">
+              <div className="flex items-center gap-2.5">
+                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-amber-100/80 p-1.5 dark:bg-amber-900/40">
+                  <img
+                    src={DOCK_ICON_MAP.leaderboard}
+                    alt=""
+                    aria-hidden="true"
+                    className="h-8 w-8 object-contain"
+                  />
+                </div>
+                <div>
+                  <h2 className="font-display text-lg font-bold text-ink dark:text-white">
+                    {t.leaderboardTitle}
+                  </h2>
+                  <div className="flex flex-wrap items-center gap-1.5 text-[11px] font-bold text-ink/75 dark:text-violet-100/85">
+                    <Radio
+                      className={`h-3 w-3 ${
+                        isLiveBackend ? 'text-emerald-500 animate-pulse' : 'text-amber-500'
+                      }`}
+                    />
+                    <span>
+                      {isLiveBackend
+                        ? t.lbLiveSupabase
+                        : lang === 'tr'
+                          ? 'Yerel Oturum Sıralaması'
+                          : 'Local Session Ranking'}
+                    </span>
+                    <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-extrabold text-ink/70 dark:bg-white/10 dark:text-violet-200">
+                      <Users className="h-2.5 w-2.5" />
+                      {entries.length}
+                    </span>
+                  </div>
                 </div>
               </div>
+
+              <motion.button
+                type="button"
+                whileTap={{ scale: 0.92 }}
+                onClick={() => void loadLeaderboard(true)}
+                disabled={isLoading || isRefreshing}
+                aria-label={lang === 'tr' ? 'Sıralamayı yenile' : 'Refresh leaderboard'}
+                data-testid="leaderboard-refresh-btn"
+                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white text-ink/70 shadow-sm hover:bg-slate-50 disabled:opacity-60 dark:border-white/15 dark:bg-white/10 dark:text-violet-100"
+              >
+                <RefreshCw
+                  className={`h-4 w-4 ${isLoading || isRefreshing ? 'animate-spin' : ''}`}
+                />
+              </motion.button>
             </div>
 
             {/* 3 Tabs: Daily Sprint / Weekly League / All-Time */}
@@ -181,9 +267,9 @@ export default function LeaderboardModal({
               })}
             </div>
 
-            {/* 5-Tier Weekly League Overview Strip */}
+            {/* 5-Tier Weekly League + User Rank Overview Strip */}
             <div className="mt-3 rounded-2xl border border-amber-200/80 bg-white p-3.5 shadow-sm dark:border-white/10 dark:bg-white/5">
-              <div className="flex items-center justify-between gap-2">
+              <div className="flex flex-wrap items-center justify-between gap-2">
                 <div className="flex items-center gap-1.5">
                   {WEEKLY_LEAGUE_TIERS.map((tier) => {
                     const active = tier.id === league.id;
@@ -228,11 +314,16 @@ export default function LeaderboardModal({
                 />
               </div>
 
-              <p className="mt-1.5 text-[10px] font-semibold text-ink/60 dark:text-violet-200/70">
-                {league.nextMinXp
-                  ? `${t.nextLeagueLabel}: ${league.nextMinXp} XP (${Math.max(0, league.nextMinXp - userXp)} XP)`
-                  : t.maxLeagueReached}
-              </p>
+              <div className="mt-2 flex flex-wrap items-center justify-between gap-2 text-[10px] font-semibold text-ink/65 dark:text-violet-200/75">
+                <span>
+                  {league.nextMinXp
+                    ? `${t.nextLeagueLabel}: ${league.nextMinXp} XP (${Math.max(0, league.nextMinXp - userXp)} XP)`
+                    : t.maxLeagueReached}
+                </span>
+                <span className="rounded-full bg-violet-50 px-2 py-0.5 font-extrabold text-violet-800 dark:bg-violet-900/50 dark:text-violet-200">
+                  #{myRank} · {tabMetricLabel}: {activeTabScore} XP
+                </span>
+              </div>
             </div>
 
             {/* Zone Legend (Green Top 10 Promotion / Coral Bottom 5 Relegation) */}
@@ -247,64 +338,134 @@ export default function LeaderboardModal({
               </span>
             </div>
 
+            {/* Error State Banner */}
+            {hasError && (
+              <div
+                data-testid="leaderboard-error-state"
+                className="mt-2.5 flex items-center justify-between gap-2 rounded-2xl border border-rose-200 bg-rose-50 px-3.5 py-2.5 text-xs font-bold text-rose-900 dark:border-rose-700/50 dark:bg-rose-950/50 dark:text-rose-200"
+              >
+                <span className="inline-flex items-center gap-1.5">
+                  <AlertCircle className="h-4 w-4 shrink-0" />
+                  <span>
+                    {lang === 'tr'
+                      ? 'Sıralama sunucusuna ulaşılamadı.'
+                      : 'Could not reach leaderboard server.'}
+                  </span>
+                </span>
+                <button
+                  type="button"
+                  onClick={() => void loadLeaderboard(false)}
+                  className="shrink-0 rounded-full bg-rose-600 px-3 py-1 text-[11px] font-extrabold text-white"
+                >
+                  {lang === 'tr' ? 'Tekrar Dene' : 'Retry'}
+                </button>
+              </div>
+            )}
+
             {/* Ranked List */}
             <div
               data-testid="leaderboard-list"
               className="no-scrollbar mt-2 flex-1 space-y-1.5 overflow-y-auto pb-5 pr-0.5"
             >
-              {entries.map((row) => {
-                const zoneClass = row.isUser
-                  ? 'border-violet-500 bg-pastel-lavender/75 font-extrabold text-violet-950 dark:border-violet-400 dark:bg-violet-900/55 dark:text-white'
-                  : row.zone === 'promotion'
-                  ? 'border-emerald-200 bg-emerald-50/55 text-ink dark:border-emerald-800/50 dark:bg-emerald-950/25 dark:text-violet-100'
-                  : row.zone === 'relegation'
-                  ? 'border-rose-200 bg-rose-50/55 text-ink dark:border-rose-800/50 dark:bg-rose-950/25 dark:text-violet-100'
-                  : 'border-slate-100 bg-white text-ink dark:border-white/10 dark:bg-white/5 dark:text-violet-100';
-
-                return (
-                  <div
-                    key={row.id}
-                    data-zone={row.zone}
-                    className={`flex items-center justify-between rounded-2xl border px-3 py-2 text-xs ${zoneClass}`}
-                  >
-                    <div className="flex min-w-0 items-center gap-2.5">
-                      <span className="w-5 text-center font-black text-ink/60 dark:text-violet-300">
-                        {row.rank === 1 ? (
-                          <Crown className="mx-auto h-4 w-4 text-amber-500" />
-                        ) : (
-                          `#${row.rank}`
-                        )}
-                      </span>
-                      <span className="text-base">{row.avatar}</span>
-                      <div className="flex min-w-0 items-center gap-1.5">
-                        <span className="font-bold whitespace-normal break-words">{row.name}</span>
-                        {row.isUser && (
-                          <span className="shrink-0 rounded-full bg-violet-600 px-1.5 py-0.5 text-[9px] font-black text-white">
-                            {t.youTag}
-                          </span>
-                        )}
+              {isLoading && entries.length === 0 ? (
+                <div data-testid="leaderboard-loading" className="space-y-2 py-1">
+                  {[0, 1, 2, 3, 4].map((skeletonIdx) => (
+                    <div
+                      key={skeletonIdx}
+                      className="flex h-11 animate-pulse items-center justify-between rounded-2xl border border-slate-100 bg-slate-100/80 px-3 dark:border-white/10 dark:bg-white/5"
+                    >
+                      <div className="flex items-center gap-2.5">
+                        <div className="h-4 w-6 rounded bg-slate-200 dark:bg-white/10" />
+                        <div className="h-5 w-5 rounded-full bg-slate-200 dark:bg-white/10" />
+                        <div className="h-3.5 w-28 rounded bg-slate-200 dark:bg-white/10" />
                       </div>
+                      <div className="h-5 w-14 rounded-full bg-slate-200 dark:bg-white/10" />
                     </div>
+                  ))}
+                </div>
+              ) : entries.length === 0 ? (
+                <div
+                  data-testid="leaderboard-empty-state"
+                  className="rounded-2xl border border-dashed border-slate-200 bg-white/80 p-6 text-center dark:border-white/15 dark:bg-white/5"
+                >
+                  <p className="font-display text-sm font-bold text-ink dark:text-white">
+                    {lang === 'tr'
+                      ? 'Bu kategoride henüz skor yok!'
+                      : 'No scores recorded in this tab yet!'}
+                  </p>
+                  <p className="mt-1 text-xs text-ink/65 dark:text-violet-200/75">
+                    {lang === 'tr'
+                      ? 'İlk puanı yazmak için bir quiz veya Scrolla 1v1 maçı oyna.'
+                      : 'Play a quiz or a Scrolla 1v1 match to claim the #1 spot.'}
+                  </p>
+                </div>
+              ) : (
+                <>
+                  {entries.map((row) => {
+                    const zoneClass = row.isUser
+                      ? 'border-violet-500 bg-pastel-lavender/75 font-extrabold text-violet-950 dark:border-violet-400 dark:bg-violet-900/55 dark:text-white'
+                      : row.zone === 'promotion'
+                        ? 'border-emerald-200 bg-emerald-50/55 text-ink dark:border-emerald-800/50 dark:bg-emerald-950/25 dark:text-violet-100'
+                        : row.zone === 'relegation'
+                          ? 'border-rose-200 bg-rose-50/55 text-ink dark:border-rose-800/50 dark:bg-rose-950/25 dark:text-violet-100'
+                          : 'border-slate-100 bg-white text-ink dark:border-white/10 dark:bg-white/5 dark:text-violet-100';
 
-                    <div className="flex shrink-0 items-center gap-2 font-bold">
-                      <span className="inline-flex items-center gap-1 text-amber-600 dark:text-amber-300">
-                        <img
-                          src={UI_ICON_PATHS.streakFire}
-                          alt=""
-                          aria-hidden="true"
-                          className="h-3.5 w-3.5 object-contain"
-                        />
-                        {row.streak}
-                      </span>
-                      <span className="rounded-full bg-white/80 px-2 py-0.5 text-ink dark:bg-black/30 dark:text-white">
-                        {row.score} XP
-                      </span>
+                    return (
+                      <div
+                        key={row.id}
+                        data-zone={row.zone}
+                        className={`flex items-center justify-between rounded-2xl border px-3 py-2 text-xs ${zoneClass}`}
+                      >
+                        <div className="flex min-w-0 items-center gap-2.5">
+                          <span className="w-6 text-center font-black text-ink/60 dark:text-violet-300">
+                            {row.rank === 1 ? (
+                              <Crown className="mx-auto h-4 w-4 text-amber-500" />
+                            ) : (
+                              `#${row.rank}`
+                            )}
+                          </span>
+                          <span className="text-base">{row.avatar}</span>
+                          <div className="flex min-w-0 items-center gap-1.5">
+                            <span className="font-bold whitespace-normal break-words">
+                              {row.name}
+                            </span>
+                            {row.isUser && (
+                              <span className="shrink-0 rounded-full bg-violet-600 px-1.5 py-0.5 text-[9px] font-black text-white">
+                                {t.youTag}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+
+                        <div className="flex shrink-0 items-center gap-2 font-bold">
+                          <span className="inline-flex items-center gap-1 text-amber-600 dark:text-amber-300">
+                            <img
+                              src={UI_ICON_PATHS.streakFire}
+                              alt=""
+                              aria-hidden="true"
+                              className="h-3.5 w-3.5 object-contain"
+                            />
+                            {row.streak}
+                          </span>
+                          <span className="rounded-full bg-white/80 px-2 py-0.5 text-ink dark:bg-black/30 dark:text-white">
+                            {row.score} XP
+                          </span>
+                        </div>
+                      </div>
+                    );
+                  })}
+
+                  {entries.length === 1 && !isLoading && (
+                    <div className="rounded-2xl border border-amber-200/70 bg-amber-50/70 px-3.5 py-2.5 text-center text-[11px] font-semibold text-amber-900 dark:border-amber-600/30 dark:bg-amber-950/30 dark:text-amber-200">
+                      {lang === 'tr'
+                        ? 'Diğer cihazlardan katılan kaşifler puan kazandıkça burada canlı görünecek!'
+                        : 'Explorers joining from other devices appear live right here as they score!'}
                     </div>
-                  </div>
-                );
-              })}
+                  )}
+                </>
+              )}
 
-              {/* Invite a Friend / Challenge Card */}
+              {/* Invite a Friend / Scrolla 1v1 Challenge Card */}
               <div
                 data-testid="leaderboard-invite-card"
                 className="mt-3 rounded-2xl border-2 border-dashed border-violet-300/80 bg-gradient-to-br from-pastel-lavender/45 via-white to-amber-50/70 p-4 text-center dark:border-violet-600/50 dark:from-violet-950/40 dark:via-[#1E1933] dark:to-amber-950/30"

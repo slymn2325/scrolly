@@ -148,12 +148,16 @@ export default function GuessWidget({
     ? pluralizeUnit(challenge.correctValue ?? initialSliderValue, challenge.unit, lang)
     : challenge.options?.[challenge.correctOptionIndex ?? 0] ?? '';
 
-  const tierMessage =
+  const rawTierMessage =
     tier === 'spotOn'
       ? t.guessSpotOn
       : tier === 'close'
         ? t.guessClose
         : t.guessParticipated;
+  const tierMessage = rawTierMessage
+    .replace(/\s*\(\s*\+\d+\s*XP\s*\)/gi, '')
+    .replace(/\s*·?\s*\+\d+\s*XP/gi, '')
+    .trim();
 
   const binaryOptions = (challenge.options ?? []).slice(0, 2);
 
@@ -264,7 +268,7 @@ export default function GuessWidget({
               )}
               <span className="whitespace-normal break-words leading-snug">{tierMessage}</span>
               <span className="inline-flex shrink-0 items-center gap-0.5 rounded-full bg-amber-400/25 px-1.5 py-0.5 text-[10px] font-black text-amber-100">
-                <Sparkles className="h-2.5 w-2.5" />+{earnedXp} XP
+                <Sparkles className="h-2.5 w-2.5" />+{earnedXp} XP{isSlider ? ` · %${accuracyPct}` : ''}
               </span>
             </div>
             <p className="mt-1 text-[11px] font-bold text-white/80 whitespace-normal break-words leading-snug">

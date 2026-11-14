@@ -53,6 +53,7 @@ export const ROUND_ROBIN_CATEGORY_ORDER: CategoryId[] = [
   'human_body',
   'science',
   'records',
+  'statistics',
 ];
 
 /**
@@ -105,6 +106,7 @@ export const CATEGORY_ROUTE_SLUGS = [
   'history',
   'human-body',
   'records',
+  'statistics',
 ] as const;
 
 export type CategoryRouteSlug = (typeof CATEGORY_ROUTE_SLUGS)[number];
@@ -126,6 +128,9 @@ export function categoryRouteSlugToId(routeSlug: string): CategoryId | null {
     case 'records':
     case 'weird_records':
       return 'records';
+    case 'statistics':
+    case 'istatistik':
+      return 'statistics';
     default:
       return null;
   }
@@ -133,7 +138,14 @@ export function categoryRouteSlugToId(routeSlug: string): CategoryId | null {
 
 export function categoryIdToRouteSlug(category: CategoryId | string): CategoryRouteSlug {
   if (category === 'human_body' || category === 'human-body') return 'human-body';
-  if (category === 'space' || category === 'nature' || category === 'science' || category === 'history' || category === 'records') {
+  if (
+    category === 'space' ||
+    category === 'nature' ||
+    category === 'science' ||
+    category === 'history' ||
+    category === 'records' ||
+    category === 'statistics'
+  ) {
     return category;
   }
   return 'science';
