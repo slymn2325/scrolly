@@ -1,6 +1,6 @@
 'use client';
 
-import React, { forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useRef } from 'react';
+import React, { forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
 import NativeAdSlide from '@/components/NativeAdSlide';
 import QuizCtaSlide from '@/components/QuizCtaSlide';
@@ -78,6 +78,11 @@ const TikTokFeed = forwardRef<TikTokFeedHandle, TikTokFeedProps>(function TikTok
   ref
 ) {
   const scrollRef = useRef<HTMLDivElement>(null);
+  const settleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const activeIndexRef = useRef<number>(0);
+  const onSlideIndexChangeRef = useRef(onSlideIndexChange);
+  onSlideIndexChangeRef.current = onSlideIndexChange;
+  const [activeIndex, setActiveIndex] = useState<number>(0);
   const t = translations[lang];
 
   // Build slide stream: insert QuizCtaSlide every 13 fact cards, and NativeAdSlide offset at 7 + 13k so they are never adjacent
@@ -104,6 +109,64 @@ const TikTokFeed = forwardRef<TikTokFeedHandle, TikTokFeedProps>(function TikTok
     return items;
   }, [deckFacts]);
 
+  useEffect(() => {
+    activeIndexRef.current = 0;
+    setActiveIndex(0);
+  }, [deckFacts]);
+
+  // Detect active card with IntersectionObserver (threshold: 0.65) and debounce telemetry callback by 150ms
+  useEffect(() => {
+    const container = scrollRef.current;
+    if (!container || slides.length === 0) return;
+
+    const slideNodes = Array.from(container.querySelectorAll<HTMLElement>('[data-slide-index]'));
+    if (slideNodes.length === 0) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        let bestIdx: number | null = null;
+        let bestRatio = 0;
+
+        for (const entry of entries) {
+          if (entry.isIntersecting && entry.intersectionRatio >= 0.65 && entry.intersectionRatio >= bestRatio) {
+            const parsed = Number((entry.target as HTMLElement).dataset.slideIndex);
+            if (Number.isFinite(parsed)) {
+              bestIdx = parsed;
+              bestRatio = entry.intersectionRatio;
+            }
+          }
+        }
+
+        if (bestIdx === null) return;
+        const settledIdx = bestIdx;
+        activeIndexRef.current = settledIdx;
+        setActiveIndex((prev) => (prev === settledIdx ? prev : settledIdx));
+
+        if (settleTimerRef.current) {
+          clearTimeout(settleTimerRef.current);
+        }
+        settleTimerRef.current = setTimeout(() => {
+          settleTimerRef.current = null;
+          onSlideIndexChangeRef.current?.(settledIdx);
+        }, 150);
+      },
+      {
+        root: container,
+        threshold: [0.65],
+      }
+    );
+
+    slideNodes.forEach((node) => observer.observe(node));
+
+    return () => {
+      observer.disconnect();
+      if (settleTimerRef.current) {
+        clearTimeout(settleTimerRef.current);
+        settleTimerRef.current = null;
+      }
+    };
+  }, [slides]);
+
   const scrollToSlide = useCallback((targetIndex: number) => {
     const container = scrollRef.current;
     if (!container) return;
@@ -116,17 +179,15 @@ const TikTokFeed = forwardRef<TikTokFeedHandle, TikTokFeedProps>(function TikTok
     ref,
     () => ({
       scrollToTop: () => {
+        activeIndexRef.current = 0;
+        setActiveIndex(0);
         const container = scrollRef.current;
         if (container) {
           container.scrollTo({ top: 0, behavior: 'smooth' });
         }
       },
       scrollToNext: (fromSlideIdx?: number) => {
-        const container = scrollRef.current;
-        if (!container) return;
-        const h = container.clientHeight || window.innerHeight;
-        const current =
-          typeof fromSlideIdx === 'number' ? fromSlideIdx : Math.round(container.scrollTop / h);
+        const current = typeof fromSlideIdx === 'number' ? fromSlideIdx : activeIndexRef.current;
         scrollToSlide(current + 1);
       },
     }),
@@ -155,14 +216,14 @@ const TikTokFeed = forwardRef<TikTokFeedHandle, TikTokFeedProps>(function TikTok
 
   return (
     <div className="relative h-full w-full overflow-hidden">
-      {/* Top Floating Transparent Overlay */}
+      {/* Top Floating Overlay */}
       <header className="pointer-events-none fixed inset-x-0 top-0 z-30 mx-auto w-full max-w-[430px] md:max-w-6xl bg-gradient-to-b from-black/15 via-black/5 to-transparent px-3 pt-[calc(env(safe-area-inset-top)+10px)] pb-3 md:px-8 md:pt-5 dark:from-black/55 dark:via-black/25 dark:to-transparent">
         {/* Top Utility Bar: Left Streak+XP | Right Controls */}
         <div className="pointer-events-auto flex items-center justify-between gap-2">
           <div className="flex items-center gap-1.5">
             <div
               data-testid="top-streak-xp-pill"
-              className="inline-flex items-center gap-2 rounded-full border border-white/65 bg-white/65 px-3 py-1.5 text-xs font-extrabold text-ink shadow-sm backdrop-blur-xl dark:border-white/15 dark:bg-black/45 dark:text-white"
+              className="inline-flex items-center gap-2 rounded-full border border-slate-200/90 bg-white/95 px-3 py-1.5 text-xs font-extrabold text-ink shadow-sm dark:border-white/15 dark:bg-slate-900/95 dark:text-white"
             >
               <span className="inline-flex items-center gap-1 text-amber-600 dark:text-amber-300">
                 <img
@@ -191,10 +252,10 @@ const TikTokFeed = forwardRef<TikTokFeedHandle, TikTokFeedProps>(function TikTok
               onClick={onOpenQuizHub}
               data-testid="quiz-progress-pill"
               title={t.quizSubtitle}
-              className={`rounded-full border px-2.5 py-1.5 text-[11px] font-extrabold backdrop-blur-xl transition-all ${
+              className={`rounded-full border px-2.5 py-1.5 text-[11px] font-extrabold transition-all ${
                 cardsSinceLastQuiz >= 5
                   ? 'border-emerald-300/90 bg-gradient-to-r from-emerald-500 to-amber-500 text-white shadow-md ring-2 ring-emerald-300/50 dark:border-emerald-400/70'
-                  : 'border-white/60 bg-white/60 text-ink/75 hover:bg-white/80 dark:border-white/15 dark:bg-black/45 dark:text-violet-200'
+                  : 'border-slate-200/90 bg-white/95 text-ink/80 hover:bg-white dark:border-white/15 dark:bg-slate-900/95 dark:text-violet-200'
               }`}
             >
               {cardsSinceLastQuiz >= 5 ? '5/5 ✓' : `${Math.min(5, cardsSinceLastQuiz)}/5`}
@@ -208,7 +269,7 @@ const TikTokFeed = forwardRef<TikTokFeedHandle, TikTokFeedProps>(function TikTok
               onClick={onToggleDarkMode}
               aria-label={darkMode ? t.lightModeOn : t.darkModeOn}
               data-testid="theme-toggle-btn"
-              className="flex h-8 w-8 items-center justify-center rounded-full border border-white/65 bg-white/65 text-ink shadow-sm backdrop-blur-xl dark:border-white/15 dark:bg-black/45 dark:text-amber-300"
+              className="flex h-8 w-8 items-center justify-center rounded-full border border-slate-200/90 bg-white/95 text-ink shadow-sm dark:border-white/15 dark:bg-slate-900/95 dark:text-amber-300"
             >
               <img
                 src={darkMode ? UI_ICON_PATHS.themeSun : UI_ICON_PATHS.themeMoon}
@@ -224,7 +285,7 @@ const TikTokFeed = forwardRef<TikTokFeedHandle, TikTokFeedProps>(function TikTok
               onClick={onToggleSound}
               aria-label={soundEnabled ? t.soundOn : t.soundOff}
               data-testid="sound-toggle-btn"
-              className="flex h-8 w-8 items-center justify-center rounded-full border border-white/65 bg-white/65 text-ink shadow-sm backdrop-blur-xl dark:border-white/15 dark:bg-black/45 dark:text-violet-200"
+              className="flex h-8 w-8 items-center justify-center rounded-full border border-slate-200/90 bg-white/95 text-ink shadow-sm dark:border-white/15 dark:bg-slate-900/95 dark:text-violet-200"
             >
               <img
                 src={soundEnabled ? UI_ICON_PATHS.soundOn : UI_ICON_PATHS.soundOff}
@@ -237,7 +298,7 @@ const TikTokFeed = forwardRef<TikTokFeedHandle, TikTokFeedProps>(function TikTok
             <div
               role="group"
               aria-label="Language switch"
-              className="flex items-center gap-0.5 rounded-full border border-white/65 bg-white/65 p-0.5 text-[11px] font-black backdrop-blur-xl dark:border-white/15 dark:bg-black/45"
+              className="flex items-center gap-0.5 rounded-full border border-slate-200/90 bg-white/95 p-0.5 text-[11px] font-black dark:border-white/15 dark:bg-slate-900/95"
             >
               <img
                 src={UI_ICON_PATHS.langGlobe}
@@ -287,10 +348,10 @@ const TikTokFeed = forwardRef<TikTokFeedHandle, TikTokFeedProps>(function TikTok
                 whileTap={{ scale: 0.94 }}
                 onClick={() => onSelectCategory(cat.id)}
                 data-testid={`category-pill-${cat.id}`}
-                className={`inline-flex shrink-0 items-center gap-1.5 rounded-full px-3 py-1 text-[11px] font-extrabold backdrop-blur-xl transition-all ${
+                className={`inline-flex shrink-0 items-center gap-1.5 rounded-full px-3 py-1 text-[11px] font-extrabold transition-all ${
                   isActive
                     ? 'bg-ink text-white shadow-md dark:bg-white dark:text-ink'
-                    : 'border border-white/55 bg-white/55 text-ink/80 hover:bg-white/80 dark:border-white/15 dark:bg-black/35 dark:text-white/80'
+                    : 'border border-slate-200/90 bg-white/95 text-ink/85 hover:bg-white dark:border-white/15 dark:bg-slate-900/95 dark:text-white/85'
                 }`}
               >
                 <img
@@ -306,64 +367,68 @@ const TikTokFeed = forwardRef<TikTokFeedHandle, TikTokFeedProps>(function TikTok
         </div>
       </header>
 
-      {/* Vertical Full-Bleed TikTok Snap Scroll Container */}
+      {/* Vertical Full-Bleed TikTok Snap Scroll Container (Windowed DOM Virtualization: activeIndex - 2 .. activeIndex + 2) */}
       <div
         ref={scrollRef}
         data-testid="tiktok-feed-container"
-        onScroll={(e) => {
-          if (!onSlideIndexChange) return;
-          const el = e.currentTarget;
-          const h = el.clientHeight || window.innerHeight || 1;
-          const idx = Math.round(el.scrollTop / h);
-          onSlideIndexChange(idx);
-        }}
+        data-active-index={activeIndex}
         className="tiktok-feed-scroll no-scrollbar h-full w-full overflow-y-scroll snap-y snap-mandatory scroll-smooth"
       >
-        {slides.map((slide, slideIdx) =>
-          slide.type === 'fact' ? (
-            <TikTokFactSlide
+        {slides.map((slide, slideIdx) => {
+          const isWithinWindow = Math.abs(slideIdx - activeIndex) <= 2;
+          const isSlideActive = slideIdx === activeIndex;
+
+          return (
+            <div
               key={slide.key}
-              fact={slide.fact}
-              lang={lang}
-              isFavorite={favoriteIds.includes(slide.fact.id)}
-              isFirstCard={slide.factIndex === 0}
-              cookieBannerVisible={cookieBannerVisible}
-              onFlip={onFlipCard}
-              onDoubleTapLike={onDoubleTapLike}
-              onDwellRead={onDwellRead}
-              onNextSlide={() => scrollToSlide(slideIdx + 1)}
-              onOpenDuel={onOpenDuelFromCard}
-              onOpenStoryShare={onOpenStoryShare}
-              onGuessReward={onGuessReward}
-              onToggleFavorite={onToggleFavorite}
-              onButtonPop={onButtonPop}
-            />
-          ) : slide.type === 'quizCta' ? (
-            <QuizCtaSlide
-              key={slide.key}
-              lang={lang}
-              recentReadCount={cardsSinceLastQuiz}
-              cookieBannerVisible={cookieBannerVisible}
-              onOpenQuizHub={onOpenQuizHub}
-              onSkipNext={() => {
-                onButtonPop();
-                scrollToSlide(slideIdx + 1);
-              }}
-            />
-          ) : (
-            <NativeAdSlide
-              key={slide.key}
-              lang={lang}
-              adIndex={slide.adIndex}
-              totalCardsViewed={totalCardsViewed}
-              cookieBannerVisible={cookieBannerVisible}
-              onSkip={() => {
-                onButtonPop();
-                scrollToSlide(slideIdx + 1);
-              }}
-            />
-          )
-        )}
+              data-slide-index={slideIdx}
+              className="reels-slide h-[100dvh] w-full shrink-0 snap-start"
+              aria-hidden={!isWithinWindow ? true : undefined}
+            >
+              {!isWithinWindow ? null : slide.type === 'fact' ? (
+                <TikTokFactSlide
+                  fact={slide.fact}
+                  lang={lang}
+                  isFavorite={favoriteIds.includes(slide.fact.id)}
+                  isFirstCard={slide.factIndex === 0}
+                  isActive={isSlideActive}
+                  cookieBannerVisible={cookieBannerVisible}
+                  onFlip={onFlipCard}
+                  onDoubleTapLike={onDoubleTapLike}
+                  onDwellRead={onDwellRead}
+                  onNextSlide={() => scrollToSlide(slideIdx + 1)}
+                  onOpenDuel={onOpenDuelFromCard}
+                  onOpenStoryShare={onOpenStoryShare}
+                  onGuessReward={onGuessReward}
+                  onToggleFavorite={onToggleFavorite}
+                  onButtonPop={onButtonPop}
+                />
+              ) : slide.type === 'quizCta' ? (
+                <QuizCtaSlide
+                  lang={lang}
+                  recentReadCount={cardsSinceLastQuiz}
+                  cookieBannerVisible={cookieBannerVisible}
+                  onOpenQuizHub={onOpenQuizHub}
+                  onSkipNext={() => {
+                    onButtonPop();
+                    scrollToSlide(slideIdx + 1);
+                  }}
+                />
+              ) : (
+                <NativeAdSlide
+                  lang={lang}
+                  adIndex={slide.adIndex}
+                  totalCardsViewed={totalCardsViewed}
+                  cookieBannerVisible={cookieBannerVisible}
+                  onSkip={() => {
+                    onButtonPop();
+                    scrollToSlide(slideIdx + 1);
+                  }}
+                />
+              )}
+            </div>
+          );
+        })}
       </div>
     </div>
   );

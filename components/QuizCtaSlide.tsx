@@ -61,7 +61,7 @@ export default function QuizCtaSlide({
         </div>
 
         {/* Center Invitation Card */}
-        <div className="my-auto rounded-3xl border border-violet-200/80 bg-white/85 p-5 sm:p-7 shadow-lg backdrop-blur-xl dark:border-white/15 dark:bg-[#19142E]/90">
+        <div className="my-auto rounded-3xl border border-violet-200/80 bg-white/95 p-5 sm:p-7 shadow-lg dark:border-white/15 dark:bg-slate-900/95">
           <div className="mb-4 flex items-center justify-between gap-3">
             <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-violet-500 to-emerald-500 p-2.5 text-white shadow-md">
               <img
@@ -111,7 +111,7 @@ export default function QuizCtaSlide({
           type="button"
           onClick={onSkipNext}
           data-testid="quiz-cta-continue-btn"
-          className="mx-auto inline-flex min-h-[40px] items-center justify-center gap-1.5 rounded-full border border-slate-200/80 bg-white/75 px-4 py-2 text-[11px] font-extrabold text-ink/75 shadow-xs backdrop-blur-md transition hover:bg-white dark:border-white/15 dark:bg-white/10 dark:text-violet-200 dark:hover:bg-white/15 whitespace-normal break-words text-center"
+          className="mx-auto inline-flex min-h-[40px] items-center justify-center gap-1.5 rounded-full border border-slate-200/90 bg-white/95 px-4 py-2 text-[11px] font-extrabold text-ink/80 shadow-xs transition hover:bg-white dark:border-white/15 dark:bg-slate-900/95 dark:text-violet-200 dark:hover:bg-slate-800 whitespace-normal break-words text-center"
         >
           <span>{t.quizCtaContinueHint}</span>
           <ArrowDown className="h-3.5 w-3.5 shrink-0" />

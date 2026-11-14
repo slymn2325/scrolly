@@ -87,6 +87,7 @@ html.dark [data-fact-surface='true'] p {
 .reels-slide {
   scroll-snap-align: start;
   scroll-snap-stop: always;
+  contain: layout style paint;
 }
 
 /* Hide scrollbars cleanly for horizontal category pills */

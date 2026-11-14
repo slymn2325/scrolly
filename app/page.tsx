@@ -281,19 +281,23 @@ export default function HomePage() {
     };
   }, [staticAllFacts]);
 
-  // Synchronize user profile XP, streak, and nickname to Postgres when updated
+  // Synchronize user profile XP, streak, and nickname to Postgres when settled (debounced 150ms)
   useEffect(() => {
     if (!hasHydratedRef.current) return;
     if (memory.xp === 0 && memory.streakDays === 0) return;
 
     const activeSlug = seedFact?.slug || seedFact?.en.slug || seedFact?.tr.slug || seedFact?.id || 'profile';
-    void trackEvent(
-      activeSlug,
-      seedFact?.category || 'general',
-      'profile_sync',
-      { xp: memory.xp, streak: memory.streakDays },
-      { xp: memory.xp, streak: memory.streakDays, username: memory.nickname }
-    );
+    const syncTimer = setTimeout(() => {
+      void trackEvent(
+        activeSlug,
+        seedFact?.category || 'general',
+        'profile_sync',
+        { xp: memory.xp, streak: memory.streakDays },
+        { xp: memory.xp, streak: memory.streakDays, username: memory.nickname }
+      );
+    }, 150);
+
+    return () => clearTimeout(syncTimer);
   }, [memory.xp, memory.streakDays, memory.nickname, seedFact]);
 
   // Keep <html> .dark class & lang attribute synchronized

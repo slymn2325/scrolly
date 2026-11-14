@@ -71,11 +71,7 @@ export default function IosFloatingIslandDock({
       <nav
         aria-label="iOS Floating Island Dock"
         data-testid="ios-floating-dock"
-        style={{
-          WebkitBackdropFilter: 'blur(40px) saturate(180%)',
-          backdropFilter: 'blur(40px) saturate(180%)',
-        }}
-        className="pointer-events-auto flex w-full items-center justify-between rounded-full border border-white/45 bg-white/20 px-2 py-1.5 shadow-[0_8px_32px_rgba(0,0,0,0.16),inset_0_1px_1px_rgba(255,255,255,0.65)] backdrop-blur-2xl backdrop-saturate-180 dark:border-white/20 dark:bg-black/25 dark:shadow-[0_12px_36px_rgba(0,0,0,0.5),inset_0_1px_1px_rgba(255,255,255,0.2)]"
+        className="pointer-events-auto flex w-full items-center justify-between rounded-full border border-slate-200/90 bg-white/90 px-2 py-1.5 shadow-[0_8px_32px_rgba(0,0,0,0.16),inset_0_1px_1px_rgba(255,255,255,0.65)] backdrop-blur-sm dark:border-white/20 dark:bg-slate-900/90 dark:shadow-[0_12px_36px_rgba(0,0,0,0.5),inset_0_1px_1px_rgba(255,255,255,0.2)]"
       >
       {tabs.map((tab) => {
         const isActive = activeTab === tab.id;
@@ -100,7 +96,7 @@ export default function IosFloatingIslandDock({
               <motion.span
                 layoutId="ios-island-pill"
                 transition={{ type: 'spring', stiffness: 420, damping: 30 }}
-                className="absolute inset-0 rounded-full border border-white/60 bg-white/35 shadow-sm backdrop-blur-md dark:border-white/30 dark:bg-white/20"
+                className="absolute inset-0 rounded-full border border-violet-200/80 bg-violet-50/95 shadow-sm dark:border-white/25 dark:bg-white/15"
               />
             )}
 

@@ -28,6 +28,7 @@ interface TikTokFactSlideProps {
   lang: Language;
   isFavorite: boolean;
   isFirstCard?: boolean;
+  isActive?: boolean;
   cookieBannerVisible?: boolean;
   onFlip: (fact: FactCard) => void;
   onDoubleTapLike: (fact: FactCard) => void;
@@ -147,6 +148,7 @@ export default function TikTokFactSlide({
   lang,
   isFavorite,
   isFirstCard = false,
+  isActive = true,
   cookieBannerVisible = false,
   onFlip,
   onDoubleTapLike,
@@ -159,11 +161,17 @@ export default function TikTokFactSlide({
   onButtonPop,
 }: TikTokFactSlideProps) {
   const [isFlipped, setIsFlipped] = useState(false);
+  const [isFlipping, setIsFlipping] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
   const [isGuessLocked, setIsGuessLocked] = useState(false);
   const [heartBursts, setHeartBursts] = useState<HeartBurst[]>([]);
 
   const slideRef = useRef<HTMLDivElement>(null);
   const singleTapTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const flipTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const settleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const dwellTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const burstTimersRef = useRef<Array<ReturnType<typeof setTimeout>>>([]);
   const lastTapTimeRef = useRef<number>(0);
   const lastBurstTimeRef = useRef<number>(0);
   const hasCountedDwellRef = useRef<boolean>(false);
@@ -190,21 +198,16 @@ export default function TikTokFactSlide({
   useEffect(() => {
     setDbLikeDelta(0);
     setIsFlipped(false);
+    setIsFlipping(false);
+    setIsDragging(false);
     setIsGuessLocked(false);
+    hasCountedDwellRef.current = false;
+    hasSentDwellEventRef.current = false;
+    visibleEnterTimeRef.current = null;
   }, [fact.id, fact.likesCount]);
 
-  const hasDbLikes = typeof fact.likesCount === 'number';
-  const displayLikes = hasDbLikes
-    ? Math.max(0, (fact.likesCount ?? 0) + dbLikeDelta)
-    : isFavorite
-      ? baseLikesCount + 1
-      : baseLikesCount;
-
-  // Dwell-Time 1.5s read counter + >3s telemetry duration event on slide leave/unmount
+  // Settle 150ms debounce + 1.5s dwell read tracking + off-screen timer cleanup driven by parent isActive
   useEffect(() => {
-    const el = slideRef.current;
-    if (!el) return;
-
     const flushDwellDuration = () => {
       if (visibleEnterTimeRef.current !== null && !hasSentDwellEventRef.current) {
         const dwellSec = (Date.now() - visibleEnterTimeRef.current) / 1000;
@@ -220,46 +223,84 @@ export default function TikTokFactSlide({
       }
     };
 
-    let dwellTimer: ReturnType<typeof setTimeout> | null = null;
-    const observer = new IntersectionObserver(
-      (entries) => {
-        const entry = entries[0];
-        if (entry?.isIntersecting && entry.intersectionRatio >= 0.65) {
-          if (visibleEnterTimeRef.current === null) {
-            visibleEnterTimeRef.current = Date.now();
-          }
-          if (!hasCountedDwellRef.current && !dwellTimer) {
-            dwellTimer = setTimeout(() => {
-              if (!hasCountedDwellRef.current) {
-                hasCountedDwellRef.current = true;
-                onDwellRead(fact);
-              }
-            }, 1500);
-          }
-        } else {
-          if (dwellTimer) {
-            clearTimeout(dwellTimer);
-            dwellTimer = null;
-          }
-          flushDwellDuration();
-        }
-      },
-      { threshold: [0.65] }
-    );
+    const clearPendingTimers = () => {
+      if (settleTimerRef.current) {
+        clearTimeout(settleTimerRef.current);
+        settleTimerRef.current = null;
+      }
+      if (dwellTimerRef.current) {
+        clearTimeout(dwellTimerRef.current);
+        dwellTimerRef.current = null;
+      }
+      if (singleTapTimerRef.current) {
+        clearTimeout(singleTapTimerRef.current);
+        singleTapTimerRef.current = null;
+      }
+      if (flipTimerRef.current) {
+        clearTimeout(flipTimerRef.current);
+        flipTimerRef.current = null;
+      }
+      if (burstTimersRef.current.length > 0) {
+        burstTimersRef.current.forEach((tid) => clearTimeout(tid));
+        burstTimersRef.current = [];
+      }
+    };
 
-    observer.observe(el);
+    if (!isActive) {
+      clearPendingTimers();
+      setIsFlipping(false);
+      setIsDragging(false);
+      setHeartBursts([]);
+      flushDwellDuration();
+      return;
+    }
+
+    // Wait 150ms for swipe momentum to settle before writing dwell timestamps/telemetry
+    settleTimerRef.current = setTimeout(() => {
+      settleTimerRef.current = null;
+      if (visibleEnterTimeRef.current === null) {
+        visibleEnterTimeRef.current = Date.now();
+      }
+      if (!hasCountedDwellRef.current && !dwellTimerRef.current) {
+        dwellTimerRef.current = setTimeout(() => {
+          dwellTimerRef.current = null;
+          if (!hasCountedDwellRef.current) {
+            hasCountedDwellRef.current = true;
+            onDwellRead(fact);
+          }
+        }, 1500);
+      }
+    }, 150);
+
     return () => {
-      observer.disconnect();
-      if (dwellTimer) clearTimeout(dwellTimer);
+      clearPendingTimers();
       flushDwellDuration();
     };
-  }, [fact, factSlug, onDwellRead]);
+  }, [isActive, fact, factSlug, onDwellRead]);
+
+  const hasDbLikes = typeof fact.likesCount === 'number';
+  const displayLikes = hasDbLikes
+    ? Math.max(0, (fact.likesCount ?? 0) + dbLikeDelta)
+    : isFavorite
+      ? baseLikesCount + 1
+      : baseLikesCount;
 
   useEffect(() => {
     return () => {
       if (singleTapTimerRef.current) {
         clearTimeout(singleTapTimerRef.current);
       }
+      if (flipTimerRef.current) {
+        clearTimeout(flipTimerRef.current);
+      }
+      if (settleTimerRef.current) {
+        clearTimeout(settleTimerRef.current);
+      }
+      if (dwellTimerRef.current) {
+        clearTimeout(dwellTimerRef.current);
+      }
+      burstTimersRef.current.forEach((tid) => clearTimeout(tid));
+      burstTimersRef.current = [];
     };
   }, []);
 
@@ -283,9 +324,10 @@ export default function TikTokFactSlide({
 
     const burstId = now + cryptoRandomInt(1000);
     setHeartBursts((prev) => [...prev, { id: burstId, x, y }]);
-    setTimeout(() => {
+    const burstTimer = setTimeout(() => {
       setHeartBursts((prev) => prev.filter((item) => item.id !== burstId));
     }, 900);
+    burstTimersRef.current.push(burstTimer);
 
     if (!isFavorite) {
       setDbLikeDelta((prev) => prev + 1);
@@ -295,6 +337,15 @@ export default function TikTokFactSlide({
   };
 
   const executeFlip = () => {
+    setIsFlipping(true);
+    if (flipTimerRef.current) {
+      clearTimeout(flipTimerRef.current);
+    }
+    flipTimerRef.current = setTimeout(() => {
+      flipTimerRef.current = null;
+      setIsFlipping(false);
+    }, 260);
+
     setIsFlipped((prev) => {
       const next = !prev;
       if (next) {
@@ -419,8 +470,18 @@ export default function TikTokFactSlide({
       ref={slideRef}
       data-testid="fact-card"
       data-fact-id={fact.id}
+      data-active={isActive ? 'true' : 'false'}
       onClick={handleSceneClick}
       onDoubleClick={handleNativeDoubleClick}
+      onPointerDown={() => setIsDragging(true)}
+      onPointerUp={() => setIsDragging(false)}
+      onPointerCancel={() => setIsDragging(false)}
+      onTouchStart={() => setIsDragging(true)}
+      onTouchEnd={() => setIsDragging(false)}
+      style={{
+        contain: 'layout style paint',
+        willChange: isFlipping || isDragging ? 'transform' : 'auto',
+      }}
       className="reels-slide relative h-full w-full shrink-0 cursor-pointer overflow-hidden select-none"
     >
       {/* Full-Bleed Light Mesh Aurora */}
@@ -434,15 +495,15 @@ export default function TikTokFactSlide({
         style={{ backgroundImage: mesh.dark }}
       />
 
-      {/* Subtle Animated Ambient Orbs */}
+      {/* Subtle Animated Ambient Orbs (Paused off-screen via isActive) */}
       <motion.div
-        animate={{ x: [-14, 14, -14], y: [-10, 12, -10] }}
+        animate={isActive ? { x: [-14, 14, -14], y: [-10, 12, -10] } : undefined}
         transition={{ duration: 11, repeat: Infinity, ease: 'easeInOut' }}
         style={{ backgroundColor: `${fact.accentColor}26` }}
         className="pointer-events-none absolute -left-16 top-20 h-64 w-64 lg:h-96 lg:w-96 rounded-full blur-3xl"
       />
       <motion.div
-        animate={{ x: [14, -14, 14], y: [10, -14, 10] }}
+        animate={isActive ? { x: [14, -14, 14], y: [10, -14, 10] } : undefined}
         transition={{ duration: 13, repeat: Infinity, ease: 'easeInOut' }}
         style={{ backgroundColor: `${fact.accentColor}20` }}
         className="pointer-events-none absolute -right-14 bottom-24 h-72 w-72 lg:h-[26rem] lg:w-[26rem] rounded-full blur-3xl"
@@ -462,6 +523,7 @@ export default function TikTokFactSlide({
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -12 }}
             transition={{ duration: 0.22, ease: 'easeOut' }}
+            style={{ willChange: isFlipping || isDragging ? 'transform' : 'auto' }}
             className={`relative z-20 mx-auto flex h-full w-full max-w-[430px] flex-col justify-between overflow-y-auto no-scrollbar px-4 pt-[calc(5.8rem+env(safe-area-inset-top))] lg:grid lg:max-w-5xl lg:grid-cols-12 lg:items-center lg:gap-10 lg:px-8 lg:pt-[110px] lg:pb-[110px] ${
               cookieBannerVisible
                 ? 'pb-[calc(154px+env(safe-area-inset-bottom))]'
@@ -480,13 +542,14 @@ export default function TikTokFactSlide({
                 emoji={fact.emoji ?? catMeta.emoji}
                 lang={lang}
                 isFirstCard={isFirstCard}
+                isActive={isActive}
                 onButtonPop={onButtonPop}
               />
             </div>
 
             {/* Right / Bottom TikTok Description + Guess Overlay */}
             <div className="pointer-events-none relative z-20 flex w-full flex-col gap-1.5 pr-[76px] lg:col-span-6 lg:pr-[84px]">
-              <div className="inline-flex w-fit items-center gap-1.5 rounded-full border border-white/70 bg-white/70 px-2.5 py-0.5 text-[10.5px] font-extrabold text-ink backdrop-blur-md dark:border-white/15 dark:bg-white/10 dark:text-violet-100">
+              <div className="inline-flex w-fit items-center gap-1.5 rounded-full border border-slate-200/90 bg-white/95 px-2.5 py-0.5 text-[10.5px] font-extrabold text-ink dark:border-white/15 dark:bg-slate-900/95 dark:text-violet-100">
                 <img
                   src={catMeta.iconPath}
                   alt=""
@@ -545,7 +608,7 @@ export default function TikTokFactSlide({
                   }}
                   onDoubleClick={(e) => e.stopPropagation()}
                   onPointerDown={(e) => e.stopPropagation()}
-                  className="inline-flex items-center gap-1.5 rounded-full border border-white/80 bg-white/85 px-3 py-1.5 text-[11px] font-extrabold text-violet-900 shadow-sm backdrop-blur-md transition hover:bg-white dark:border-white/20 dark:bg-white/15 dark:text-violet-100 dark:hover:bg-white/25"
+                  className="inline-flex items-center gap-1.5 rounded-full border border-slate-200/90 bg-white/95 px-3 py-1.5 text-[11px] font-extrabold text-violet-900 shadow-sm transition hover:bg-white dark:border-white/20 dark:bg-slate-900/95 dark:text-violet-100 dark:hover:bg-slate-800"
                 >
                   <span>{lang === 'tr' ? 'Detayı / Kaynağı Gör ↻' : 'See Details / Source ↻'}</span>
                 </button>
@@ -565,7 +628,8 @@ export default function TikTokFactSlide({
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.97, y: 14 }}
             transition={{ duration: 0.22, ease: 'easeOut' }}
-            className="relative z-20 flex h-full w-full flex-col bg-white/75 backdrop-blur-2xl dark:bg-[#0D0A19]/82"
+            style={{ willChange: isFlipping || isDragging ? 'transform' : 'auto' }}
+            className="relative z-20 flex h-full w-full flex-col bg-white/95 dark:bg-slate-900/95"
           >
             <div
               className={`mx-auto flex h-full w-full max-w-[430px] md:max-w-2xl flex-col justify-between overflow-hidden px-4 sm:px-6 pt-[calc(5.8rem+env(safe-area-inset-top))] md:pt-[118px] ${
@@ -597,7 +661,7 @@ export default function TikTokFactSlide({
                     executeFlip();
                   }}
                   aria-label={t.tiktokBackFrontBtn}
-                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-ink/10 bg-white/85 text-ink/70 shadow-sm hover:bg-white dark:border-white/15 dark:bg-white/10 dark:text-violet-200"
+                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-ink/10 bg-white/95 text-ink/70 shadow-sm hover:bg-white dark:border-white/15 dark:bg-slate-800/95 dark:text-violet-200"
                 >
                   <X className="h-4 w-4" />
                 </button>
@@ -616,7 +680,7 @@ export default function TikTokFactSlide({
                 {/* Verified Academic/Institutional Source Box */}
                 <div
                   data-testid="fact-source-box"
-                  className="mt-4 flex flex-col gap-2.5 rounded-2xl border border-amber-200/90 bg-white/90 px-4 py-3 text-xs shadow-sm backdrop-blur-md dark:border-white/15 dark:bg-white/10"
+                  className="mt-4 flex flex-col gap-2.5 rounded-2xl border border-amber-200/90 bg-white/95 px-4 py-3 text-xs shadow-sm dark:border-white/15 dark:bg-slate-900/95"
                 >
                   <div className="flex items-start gap-2 font-bold text-ink/85 dark:text-violet-100">
                     <BookOpen className="mt-0.5 h-4 w-4 shrink-0 text-violet-600 dark:text-violet-300" />
@@ -694,7 +758,7 @@ export default function TikTokFactSlide({
                     executeFlip();
                   }}
                   data-testid="flip-back-btn"
-                  className="flex flex-1 min-h-[48px] items-center justify-center gap-2 rounded-2xl border border-ink/20 bg-white/90 px-4 py-2.5 text-xs sm:text-sm font-extrabold text-ink shadow-sm backdrop-blur-md dark:border-white/20 dark:bg-white/15 dark:text-white whitespace-normal break-words leading-snug"
+                  className="flex flex-1 min-h-[48px] items-center justify-center gap-2 rounded-2xl border border-slate-200/90 bg-white/95 px-4 py-2.5 text-xs sm:text-sm font-extrabold text-ink shadow-sm dark:border-white/20 dark:bg-slate-900/95 dark:text-white whitespace-normal break-words leading-snug"
                 >
                   <RotateCcw className="h-4 w-4 shrink-0" />
                   <span>{t.tiktokBackFrontBtn}</span>
@@ -706,7 +770,7 @@ export default function TikTokFactSlide({
                   onClick={handleShareClick}
                   aria-label={t.shareFact}
                   data-testid="back-share-story-btn"
-                  className="flex min-h-[48px] items-center justify-center gap-1.5 rounded-2xl border border-violet-300/80 bg-violet-100/90 px-3.5 py-2.5 text-xs font-extrabold text-violet-900 shadow-sm backdrop-blur-md dark:border-violet-400/30 dark:bg-violet-900/55 dark:text-violet-100"
+                  className="flex min-h-[48px] items-center justify-center gap-1.5 rounded-2xl border border-violet-300/80 bg-violet-100/95 px-3.5 py-2.5 text-xs font-extrabold text-violet-900 shadow-sm dark:border-violet-400/30 dark:bg-slate-900/95 dark:text-violet-100"
                 >
                   <Share2 className="h-4 w-4 shrink-0" />
                 </motion.button>
@@ -762,10 +826,10 @@ export default function TikTokFactSlide({
             className="flex flex-col items-center gap-0.5"
           >
             <span
-              className={`flex h-11 w-11 items-center justify-center rounded-full border backdrop-blur-xl transition-all ${
+              className={`flex h-11 w-11 items-center justify-center rounded-full border transition-all ${
                 isFavorite
                   ? 'border-rose-400 bg-rose-500 text-white shadow-lg shadow-rose-500/40'
-                  : 'border-white/70 bg-white/65 text-ink shadow-md dark:border-white/20 dark:bg-black/40 dark:text-white'
+                  : 'border-slate-200/90 bg-white/95 text-ink shadow-md dark:border-white/20 dark:bg-slate-900/95 dark:text-white'
               }`}
             >
               <Heart className={`h-5 w-5 ${isFavorite ? 'fill-current' : ''}`} />
@@ -787,7 +851,7 @@ export default function TikTokFactSlide({
             data-testid="flip-card-btn"
             className="flex flex-col items-center gap-0.5"
           >
-            <span className="flex h-11 w-11 items-center justify-center rounded-full border border-white/70 bg-white/65 text-ink shadow-md backdrop-blur-xl dark:border-white/20 dark:bg-black/40 dark:text-white">
+            <span className="flex h-11 w-11 items-center justify-center rounded-full border border-slate-200/90 bg-white/95 text-ink shadow-md dark:border-white/20 dark:bg-slate-900/95 dark:text-white">
               <RotateCw className="h-5 w-5" />
             </span>
             <span className="text-[10.5px] font-extrabold text-ink/85 dark:text-white/90">
@@ -809,7 +873,7 @@ export default function TikTokFactSlide({
               data-testid="card-duel-btn"
               className="flex flex-col items-center gap-0.5"
             >
-              <span className="flex h-11 w-11 items-center justify-center rounded-full border border-white/70 bg-white/65 text-amber-700 shadow-md backdrop-blur-xl dark:border-white/20 dark:bg-black/40 dark:text-amber-300">
+              <span className="flex h-11 w-11 items-center justify-center rounded-full border border-slate-200/90 bg-white/95 text-amber-700 shadow-md dark:border-white/20 dark:bg-slate-900/95 dark:text-amber-300">
                 <Swords className="h-5 w-5" />
               </span>
               <span className="text-[10.5px] font-extrabold text-ink/85 dark:text-white/90">
@@ -827,7 +891,7 @@ export default function TikTokFactSlide({
             data-testid="card-share-btn"
             className="flex flex-col items-center gap-0.5"
           >
-            <span className="flex h-11 w-11 items-center justify-center rounded-full border border-white/70 bg-white/65 text-ink shadow-md backdrop-blur-xl transition-colors dark:border-white/20 dark:bg-black/40 dark:text-white">
+            <span className="flex h-11 w-11 items-center justify-center rounded-full border border-slate-200/90 bg-white/95 text-ink shadow-md transition-colors dark:border-white/20 dark:bg-slate-900/95 dark:text-white">
               <Share2 className="h-5 w-5" />
             </span>
             <span className="text-[10.5px] font-extrabold text-ink/85 dark:text-white/90">

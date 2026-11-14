@@ -17,6 +17,7 @@ interface InteractiveSketchArtProps {
   accentColor: string;
   lang: 'tr' | 'en';
   isFirstCard?: boolean;
+  isActive?: boolean;
   onButtonPop?: () => void;
 }
 
@@ -169,6 +170,7 @@ export default function InteractiveSketchArt({
   accentColor,
   lang,
   isFirstCard = false,
+  isActive = true,
   onButtonPop,
 }: InteractiveSketchArtProps) {
   const [active, setActive] = useState(false);
@@ -176,9 +178,15 @@ export default function InteractiveSketchArt({
   const reduceMotion = useReducedMotion();
   const containerRef = useRef<HTMLDivElement>(null);
   const isInView = useInView(containerRef, { amount: 0.25 });
-  const shouldAnimate = !reduceMotion && isInView;
+  const shouldAnimate = isActive && !reduceMotion && isInView;
   const uid = useId().replace(/:/g, '');
   const gridPatternId = `sketch-grid-${uid}`;
+
+  useEffect(() => {
+    if (!isActive) {
+      setActive(false);
+    }
+  }, [isActive]);
 
   useEffect(() => {
     try {
@@ -214,7 +222,7 @@ export default function InteractiveSketchArt({
     setActive((prev) => !prev);
   };
 
-  const showOnboardingHint = isFirstCard && !hasInteractedEver && !active;
+  const showOnboardingHint = isFirstCard && isActive && !hasInteractedEver && !active;
 
   const hintLabel =
     lang === 'tr'
@@ -239,7 +247,7 @@ export default function InteractiveSketchArt({
       onDoubleClick={(e) => e.stopPropagation()}
       onPointerDown={(e) => e.stopPropagation()}
       onTouchStart={(e) => e.stopPropagation()}
-      className="pointer-events-auto relative mx-auto flex h-full w-full max-w-[348px] lg:max-w-[460px] cursor-pointer items-center justify-center overflow-hidden rounded-2xl border border-ink/15 bg-white/55 shadow-[0_8px_24px_rgba(15,23,42,0.08)] backdrop-blur-md transition-colors hover:bg-white/70 dark:border-violet-300/20 dark:bg-[#120F24]/65 dark:hover:bg-[#181430]/75 select-none"
+      className="pointer-events-auto relative mx-auto flex h-full w-full max-w-[348px] lg:max-w-[460px] cursor-pointer items-center justify-center overflow-hidden rounded-2xl border border-slate-200/90 bg-white/95 shadow-[0_8px_24px_rgba(15,23,42,0.08)] transition-colors hover:bg-white dark:border-violet-300/20 dark:bg-slate-900/95 dark:hover:bg-slate-800/95 select-none"
     >
       {/* Top-Left Notebook Sketch Index Badge */}
       <div className="pointer-events-none absolute left-2.5 top-2 z-10 flex items-center gap-1 rounded-md border border-ink/10 bg-white/75 px-1.5 py-0.5 font-mono text-[9px] font-extrabold uppercase tracking-wider text-ink/70 dark:border-white/15 dark:bg-black/45 dark:text-violet-200/85">
@@ -267,10 +275,14 @@ export default function InteractiveSketchArt({
       {showOnboardingHint && (
         <div
           data-testid="diagram-onboarding-hint"
-          className="pointer-events-none absolute bottom-2.5 left-1/2 z-20 flex -translate-x-1/2 items-center gap-2 rounded-full border border-violet-300 bg-violet-950/90 px-3 py-1 text-[10.5px] font-black text-white shadow-lg backdrop-blur-md dark:border-amber-300/50 dark:bg-violet-600/95"
+          className="pointer-events-none absolute bottom-2.5 left-1/2 z-20 flex -translate-x-1/2 items-center gap-2 rounded-full border border-violet-300 bg-violet-950/95 px-3 py-1 text-[10.5px] font-black text-white shadow-lg dark:border-amber-300/50 dark:bg-violet-600/95"
         >
           <span className="relative flex h-2.5 w-2.5">
-            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-amber-400 opacity-90" />
+            <span
+              className={`absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-90 ${
+                isActive ? 'animate-ping' : ''
+              }`}
+            />
             <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-amber-300" />
           </span>
           <span className="whitespace-nowrap">

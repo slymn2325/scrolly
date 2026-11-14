@@ -16,6 +16,7 @@ interface CategoryMotionArtProps {
   lang?: 'tr' | 'en';
   variant?: 'hero' | 'compact';
   isFirstCard?: boolean;
+  isActive?: boolean;
   onButtonPop?: () => void;
 }
 
@@ -27,12 +28,13 @@ export default function CategoryMotionArt({
   lang = 'tr',
   variant = 'hero',
   isFirstCard = false,
+  isActive = true,
   onButtonPop,
 }: CategoryMotionArtProps) {
   const reduceMotion = useReducedMotion();
   const containerRef = useRef<HTMLDivElement>(null);
   const isInView = useInView(containerRef, { amount: 0.25 });
-  const shouldAnimate = !reduceMotion && isInView;
+  const shouldAnimate = isActive && !reduceMotion && isInView;
   const heroIllustration = CATEGORY_ILLUSTRATION_MAP[category];
   const subIllustration = CATEGORY_SUB_ICON_MAP[category];
 
@@ -64,10 +66,9 @@ export default function CategoryMotionArt({
             }
             transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
             style={{
-              backgroundColor: 'rgba(255,255,255,0.85)',
               boxShadow: `0 6px 18px -4px ${accentColor}40`,
             }}
-            className="flex h-14 w-14 items-center justify-center rounded-2xl p-1.5 backdrop-blur-md dark:bg-[#241E3D]/90"
+            className="flex h-14 w-14 items-center justify-center rounded-2xl bg-white/95 p-1.5 dark:bg-slate-900/95"
           >
             <img
               src={heroIllustration}
@@ -100,6 +101,7 @@ export default function CategoryMotionArt({
         accentColor={accentColor}
         lang={lang}
         isFirstCard={isFirstCard}
+        isActive={isActive}
         onButtonPop={onButtonPop}
       />
     </div>

@@ -143,7 +143,7 @@ export default function GuessWidget({
       onDoubleClick={stop}
       onPointerDown={stop}
       onTouchStart={stop}
-      className="pointer-events-auto mt-1.5 rounded-2xl border border-white/75 bg-white/78 p-2.5 shadow-[0_8px_24px_rgba(15,23,42,0.08)] backdrop-blur-xl dark:border-white/15 dark:bg-[#141026]/80"
+      className="pointer-events-auto mt-1.5 rounded-2xl border border-slate-200/90 bg-white/95 p-2.5 shadow-[0_8px_24px_rgba(15,23,42,0.08)] dark:border-white/15 dark:bg-slate-900/95"
     >
       <div className="mb-1.5 flex flex-wrap items-center justify-between gap-2">
         <span
