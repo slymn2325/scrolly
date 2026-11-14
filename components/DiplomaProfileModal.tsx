@@ -527,6 +527,36 @@ export default function DiplomaProfileModal({
                 >
                   {lang === 'tr' ? 'Gizlilik Politikası' : 'Privacy Policy'}
                 </Link>
+                <Link
+                  href={lang === 'en' ? '/about?lang=en' : '/about'}
+                  onClick={() => {
+                    onButtonPop();
+                    onClose();
+                  }}
+                  className="text-[11px] font-bold text-ink/55 underline decoration-ink/25 underline-offset-4 transition hover:text-ink dark:text-violet-200/65 dark:decoration-violet-300/30 dark:hover:text-white"
+                >
+                  {lang === 'tr' ? 'Hakkımızda' : 'About'}
+                </Link>
+                <Link
+                  href={lang === 'en' ? '/terms?lang=en' : '/terms'}
+                  onClick={() => {
+                    onButtonPop();
+                    onClose();
+                  }}
+                  className="text-[11px] font-bold text-ink/55 underline decoration-ink/25 underline-offset-4 transition hover:text-ink dark:text-violet-200/65 dark:decoration-violet-300/30 dark:hover:text-white"
+                >
+                  {lang === 'tr' ? 'Kullanım Koşulları' : 'Terms'}
+                </Link>
+                <Link
+                  href={lang === 'en' ? '/contact?lang=en' : '/contact'}
+                  onClick={() => {
+                    onButtonPop();
+                    onClose();
+                  }}
+                  className="text-[11px] font-bold text-ink/55 underline decoration-ink/25 underline-offset-4 transition hover:text-ink dark:text-violet-200/65 dark:decoration-violet-300/30 dark:hover:text-white"
+                >
+                  {lang === 'tr' ? 'İletişim' : 'Contact'}
+                </Link>
               </div>
             </div>
           </motion.div>

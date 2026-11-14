@@ -27,6 +27,7 @@ import {
 import CategoryMotionArt from '@/components/CategoryMotionArt';
 import FactIcon from '@/components/FactIcon';
 import FloatingBackground from '@/components/FloatingBackground';
+import SiteTrustFooter from '@/components/SiteTrustFooter';
 import StickyAdBanner from '@/components/StickyAdBanner';
 import { getCategoryMeta, type Language, translations } from '@/i18n/translations';
 import {
@@ -605,6 +606,8 @@ export default function SingleFactView({
           </section>
         )}
       </main>
+
+      <SiteTrustFooter lang={lang} />
 
       <StickyAdBanner
         lang={lang}

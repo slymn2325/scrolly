@@ -24,3 +24,10 @@
 - [Tam Bilgi Külliyatı (llms-full.txt)](https://scrolly.live/llms-full.txt): Veritabanındaki tüm doğrulanmış bilgi kartlarının özetlerini, soru-cevaplarını, kaynak URL'lerini ve kanonik bağlantılarını içeren düz metin / Markdown arşivi
 - [Dinamik XML Site Haritası (sitemap.xml)](https://scrolly.live/sitemap.xml): Tüm ana sayfalar, kategori merkezleri ve tekil `/fact/[slug]` sayfalarının güncel indeksi
 - [Ana Etkileşimli Akış (Home)](https://scrolly.live/): Dikey kaydırmalı etkileşimli mikro öğrenme deneyimi
+
+## Kurumsal & Güven Sayfaları / Editorial & Trust Pages
+
+- [Hakkımızda / About](https://scrolly.live/about): Editöryal metodoloji, bilimsel kaynak doğrulama standartları ve yayıncı bilgileri
+- [Gizlilik ve Çerez Politikası / Privacy Policy](https://scrolly.live/privacy): Yerel depolama, PWA önbelleği ve Google AdSense çerez açıklamaları
+- [Kullanım Koşulları / Terms of Use](https://scrolly.live/terms): Eğitim içeriği bildirimi ve hizmet şartları
+- [İletişim / Contact](https://scrolly.live/contact): Kaynak düzeltme bildirimleri ve yayıncı iletişimi (`contact@scrolly.live`)

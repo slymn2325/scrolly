@@ -11,6 +11,7 @@ import {
   ShieldCheck,
   Sparkles,
 } from 'lucide-react';
+import SiteTrustFooter from '@/components/SiteTrustFooter';
 import { getCategoryMeta, type Language } from '@/i18n/translations';
 import { getAllFactsServer } from '@/lib/db';
 import type { CategoryId } from '@/types/fact';
@@ -378,6 +379,8 @@ export default async function CategoryHubPage({ params, searchParams }: Category
             </div>
           </section>
         </main>
+
+        <SiteTrustFooter lang={lang} />
       </div>
     </>
   );

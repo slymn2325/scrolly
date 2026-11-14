@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import Link from 'next/link';
 import { AnimatePresence } from 'framer-motion';
 import CookieBanner from '@/components/CookieBanner';
 import DiplomaProfileModal from '@/components/DiplomaProfileModal';
@@ -17,6 +18,7 @@ import TikTokFeed, { type TikTokFeedHandle } from '@/components/TikTokFeed';
 import {
   type CategoryFilter,
   type CategoryId,
+  getCategoryMeta,
   type Language,
 } from '@/i18n/translations';
 import {
@@ -25,9 +27,12 @@ import {
   trackEvent,
 } from '@/lib/telemetry';
 import {
+  CATEGORY_ROUTE_SLUGS,
+  categoryRouteSlugToId,
   type FactCard as FactCardType,
   getAllFacts,
   getFactById,
+  getFactPrimarySlug,
 } from '@/utils/factsData';
 import { decodeDuelPayload } from '@/utils/duelCodec';
 import { cryptoRandomFloat } from '@/utils/cryptoRandom';
@@ -814,6 +819,52 @@ export default function HomePage() {
         showQuizDot={showQuizDot}
         onSelectTab={handleDockSelectTab}
       />
+
+      {/* Semantic SSR Site Directory for Search & Policy Review Crawlers */}
+      <nav aria-label="Site Directory" className="sr-only">
+        <h2>Scrolly Platform &amp; Editorial Index</h2>
+        <ul>
+          <li>
+            <Link href="/about">Hakkımızda / About Us</Link>
+          </li>
+          <li>
+            <Link href="/privacy">Gizlilik ve Çerez Politikası / Privacy Policy</Link>
+          </li>
+          <li>
+            <Link href="/terms">Kullanım Koşulları / Terms of Use</Link>
+          </li>
+          <li>
+            <Link href="/contact">İletişim / Contact</Link>
+          </li>
+        </ul>
+        <h3>Konu Kategorileri / Topic Hubs</h3>
+        <ul>
+          {CATEGORY_ROUTE_SLUGS.map((catSlug) => {
+            const catId = categoryRouteSlugToId(catSlug)!;
+            const meta = getCategoryMeta(catId);
+            return (
+              <li key={catSlug}>
+                <Link href={`/category/${catSlug}`}>
+                  {meta.label.tr} / {meta.label.en}
+                </Link>
+              </li>
+            );
+          })}
+        </ul>
+        <h3>Öne Çıkan Doğrulanmış Kartlar / Featured Verified Facts</h3>
+        <ul>
+          {staticAllFacts.slice(0, 18).map((fact) => {
+            const slug = getFactPrimarySlug(fact);
+            return (
+              <li key={fact.id}>
+                <Link href={`/fact/${slug}`}>
+                  {fact.tr.title} — {fact.en.title}
+                </Link>
+              </li>
+            );
+          })}
+        </ul>
+      </nav>
     </div>
   );
 }

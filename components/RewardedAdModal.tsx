@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
-import { Gift, RotateCcw, Sparkles, Timer, X } from 'lucide-react';
+import { RotateCcw, Sparkles, Timer, X } from 'lucide-react';
 import { type Language, translations } from '@/i18n/translations';
 
 interface RewardedAdModalProps {
@@ -38,7 +38,7 @@ export default function RewardedAdModal({
     <div
       role="dialog"
       aria-modal="true"
-      aria-label={t.rewardedBadge}
+      aria-label={t.rewindUnlockBtn}
       data-testid="rewarded-ad-modal"
       className="fixed inset-0 z-50 flex items-center justify-center bg-ink/45 p-4 backdrop-blur-sm"
     >
@@ -47,13 +47,13 @@ export default function RewardedAdModal({
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.92, y: 18 }}
         transition={{ type: 'spring', stiffness: 320, damping: 25 }}
-        className="relative w-full max-w-md rounded-3xl border-2 border-amber-200 bg-[#FFFDF9] p-6 shadow-cozy-lg"
+        className="relative w-full max-w-[430px] rounded-3xl border-2 border-amber-200 bg-[#FFFDF9] p-6 shadow-cozy-lg"
       >
         <motion.button
           type="button"
           whileTap={{ scale: 0.94 }}
           onClick={onClose}
-          aria-label="Close"
+          aria-label={lang === 'tr' ? 'Kapat' : 'Close'}
           className="absolute right-4 top-4 rounded-full bg-slate-100 p-2 text-ink/55 hover:bg-slate-200"
         >
           <X className="h-4 w-4" />
@@ -61,31 +61,38 @@ export default function RewardedAdModal({
 
         <div className="flex items-center gap-2">
           <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-100 px-3 py-1 text-xs font-extrabold text-amber-800">
-            <Gift className="h-3.5 w-3.5" />
-            {t.rewardedBadge}
+            <RotateCcw className="h-3.5 w-3.5" />
+            {t.rewindUnlockBtn}
           </span>
         </div>
 
         <h2 className="mt-3 font-display text-xl font-bold text-ink sm:text-2xl">
-          {t.rewardedTitle}
+          {lang === 'tr'
+            ? 'Oturum Boyu Sınırsız Geri Sarma'
+            : 'Unlimited Session Rewinds'}
         </h2>
         <p className="mt-1.5 text-xs leading-relaxed text-ink/70 sm:text-sm">
-          {t.rewardedSubtitle}
+          {lang === 'tr'
+            ? 'Kısa hazırlık tamamlandığında bu oturum boyunca okuduğun tüm bilgi kartlarına sınırsızca geri dönebilirsin.'
+            : 'Once the brief preparation completes, you can rewind freely through every discovery card you viewed during this session.'}
         </p>
 
-        {/* Simulated Natural Sponsor Preview */}
-        <div
-          data-ad-slot="rewarded-sponsor-slot"
-          className="mt-4 rounded-2xl border border-violet-200 bg-gradient-to-br from-pastel-lavender/70 via-white to-pastel-sun/70 p-4"
-        >
+        {/* Honest Utility Session Box */}
+        <div className="mt-4 rounded-2xl border border-violet-200 bg-gradient-to-br from-pastel-lavender/70 via-white to-pastel-sun/70 p-4">
           <div className="flex items-center gap-2 text-xs font-extrabold text-violet-700">
             <Sparkles className="h-4 w-4" />
-            <span>{t.sponsoredLabel}</span>
+            <span>{lang === 'tr' ? 'Keşif Oturumu' : 'Discovery Boost'}</span>
           </div>
           <p className="mt-1.5 font-display text-base font-bold text-ink">
-            {t.rewardedSponsorName}
+            {lang === 'tr'
+              ? 'Kaçırdığın Detayları Yeniden İncele'
+              : 'Revisit Missed Science Details'}
           </p>
-          <p className="mt-1 text-xs text-ink/75">{t.rewardedSponsorDesc}</p>
+          <p className="mt-1 text-xs text-ink/75">
+            {lang === 'tr'
+              ? 'Birincil kaynak bağlantılarını kontrol et, kartların arka yüzünü oku ve Hafıza Quizine hazırlan.'
+              : 'Inspect verified citations, read scientific explanations, and prepare for your Memory Quiz.'}
+          </p>
         </div>
 
         {/* Countdown / Claim Action */}

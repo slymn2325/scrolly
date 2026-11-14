@@ -16,10 +16,28 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 1.0,
     },
     {
-      url: 'https://scrolly.live/privacy',
-      lastModified: new Date('2026-01-01T00:00:00.000Z'),
+      url: 'https://scrolly.live/about',
+      lastModified: new Date('2026-11-01T00:00:00.000Z'),
       changeFrequency: 'monthly',
-      priority: 0.3,
+      priority: 0.4,
+    },
+    {
+      url: 'https://scrolly.live/privacy',
+      lastModified: new Date('2026-11-01T00:00:00.000Z'),
+      changeFrequency: 'monthly',
+      priority: 0.4,
+    },
+    {
+      url: 'https://scrolly.live/terms',
+      lastModified: new Date('2026-11-01T00:00:00.000Z'),
+      changeFrequency: 'monthly',
+      priority: 0.4,
+    },
+    {
+      url: 'https://scrolly.live/contact',
+      lastModified: new Date('2026-11-01T00:00:00.000Z'),
+      changeFrequency: 'monthly',
+      priority: 0.4,
     },
   ];
 

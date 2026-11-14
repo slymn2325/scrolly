@@ -8,6 +8,8 @@ export default function robots(): MetadataRoute.Robots {
           '*',
           'Googlebot',
           'Bingbot',
+          'Mediapartners-Google',
+          'AdsBot-Google',
           'GPTBot',
           'OAI-SearchBot',
           'PerplexityBot',
