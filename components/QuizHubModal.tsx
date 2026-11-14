@@ -14,6 +14,7 @@ interface QuizHubModalProps {
   dailyCompleted: boolean;
   dailyBestScore: number;
   recentCount: number;
+  presentation?: 'modal' | 'page';
   onSelectMode: (mode: QuizModeChoice) => void;
   onClose: () => void;
   onButtonPop: () => void;
@@ -25,44 +26,57 @@ export default function QuizHubModal({
   dailyCompleted,
   dailyBestScore,
   recentCount,
+  presentation = 'modal',
   onSelectMode,
   onClose,
   onButtonPop,
 }: QuizHubModalProps) {
   const t = translations[lang];
+  const isPage = presentation === 'page';
 
-  useEscapeClose(open, onClose);
+  useEscapeClose(open && !isPage, onClose);
 
   return (
     <AnimatePresence>
       {open && (
         <div
-          role="dialog"
-          aria-modal="true"
+          role={isPage ? 'region' : 'dialog'}
+          aria-modal={isPage ? undefined : true}
           aria-label={t.quizHubTitle}
           data-testid="quiz-hub-modal"
-          className="fixed inset-0 z-50 flex w-full items-center justify-center bg-ink/55 px-3 pt-4 backdrop-blur-md"
+          data-presentation={presentation}
+          className={
+            isPage
+              ? 'absolute inset-0 z-20 flex h-full w-full flex-col bg-[#FFFDF9] dark:bg-[#171228]'
+              : 'fixed inset-0 z-50 flex w-full items-center justify-center bg-ink/55 px-3 pt-4 backdrop-blur-md'
+          }
         >
           <motion.div
-            initial={{ opacity: 0, scale: 0.92, y: 20 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.92, y: 20 }}
-            transition={{ type: 'spring', stiffness: 320, damping: 24 }}
-            className="relative mb-[92px] max-h-[84dvh] w-full max-w-[430px] md:max-w-2xl overflow-y-auto no-scrollbar rounded-3xl border border-white/70 bg-[#FFFDF9]/95 p-5 shadow-2xl backdrop-blur-2xl dark:border-violet-700/50 dark:bg-[#171228]/95 sm:p-6"
+            initial={isPage ? { opacity: 0, x: 12 } : { opacity: 0, scale: 0.92, y: 20 }}
+            animate={isPage ? { opacity: 1, x: 0 } : { opacity: 1, scale: 1, y: 0 }}
+            exit={isPage ? { opacity: 0, x: 8 } : { opacity: 0, scale: 0.92, y: 20 }}
+            transition={{ type: 'spring', stiffness: 320, damping: 26 }}
+            className={
+              isPage
+                ? 'relative h-full w-full overflow-y-auto no-scrollbar px-4 pb-[108px] pt-4 lg:pb-6'
+                : 'relative mb-[92px] max-h-[84dvh] w-full max-w-[430px] md:max-w-2xl overflow-y-auto no-scrollbar rounded-3xl border border-white/70 bg-[#FFFDF9]/95 p-5 shadow-2xl backdrop-blur-2xl dark:border-violet-700/50 dark:bg-[#171228]/95 sm:p-6'
+            }
           >
-            <motion.button
-              type="button"
-              whileTap={{ scale: 0.92 }}
-              onClick={() => {
-                onButtonPop();
-                onClose();
-              }}
-              aria-label="Close"
-              data-testid="quiz-hub-close-btn"
-              className="absolute right-3 top-3 flex h-11 w-11 items-center justify-center rounded-full bg-slate-100 text-ink/75 hover:bg-slate-200 dark:bg-white/10 dark:text-violet-100"
-            >
-              <X className="h-4 w-4" />
-            </motion.button>
+            {!isPage && (
+              <motion.button
+                type="button"
+                whileTap={{ scale: 0.92 }}
+                onClick={() => {
+                  onButtonPop();
+                  onClose();
+                }}
+                aria-label="Close"
+                data-testid="quiz-hub-close-btn"
+                className="absolute right-3 top-3 flex h-11 w-11 items-center justify-center rounded-full bg-slate-100 text-ink/75 hover:bg-slate-200 dark:bg-white/10 dark:text-violet-100"
+              >
+                <X className="h-4 w-4" />
+              </motion.button>
+            )}
 
             <div className="flex items-center gap-3">
               <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-violet-500 to-fuchsia-500 text-white shadow-md">

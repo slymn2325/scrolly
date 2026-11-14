@@ -36,7 +36,8 @@ import {
   type FactCard as FactCardType,
   interleaveFactsByCategory,
 } from '@/utils/factsData';
-import { decodeDuelPayload } from '@/utils/duelCodec';
+import { decodeDuelPayload, type DuelPayload } from '@/utils/duelCodec';
+import { resolveFactsByIds } from '@/utils/duelLobby';
 import { cryptoRandomFloat } from '@/utils/cryptoRandom';
 import {
   vibrateDoubleTap,
@@ -84,8 +85,6 @@ import {
   updateUserNickname,
   type UserMemoryState,
 } from '@/utils/userMemory';
-
-type ActiveOverlayModal = 'none' | 'leaderboard' | 'quizHub' | 'duel' | 'diploma';
 
 interface ActiveQuizSession {
   key: string;
@@ -187,9 +186,9 @@ export default function HomeClient({ initialFacts }: HomeClientProps) {
   const [seedFact, setSeedFact] = useState<FactCardType>(initialFacts[0]);
 
   const [activeTab, setActiveTab] = useState<DockTabId>('explore');
-  const [activeModal, setActiveModal] = useState<ActiveOverlayModal>('none');
   const [chromeBlocked, setChromeBlocked] = useState(false);
   const [activeQuiz, setActiveQuiz] = useState<ActiveQuizSession | null>(null);
+  const [incomingDuel, setIncomingDuel] = useState<DuelPayload | null>(null);
   const [storyShareFact, setStoryShareFact] = useState<FactCardType | null>(null);
   const [maxSwipedCards, setMaxSwipedCards] = useState(0);
   const [manualPwaOpen, setManualPwaOpen] = useState(false);
@@ -301,31 +300,16 @@ export default function HomeClient({ initialFacts }: HomeClientProps) {
       if (duelParam) {
         const decoded = decodeDuelPayload(duelParam);
         if (decoded && decoded.cardIds.length > 0) {
-          const matched = decoded.cardIds
-            .map((id) =>
-              activePool.find(
-                (f) => f.id === id || f.slug === id || f.en.slug === id || f.tr.slug === id
-              )
-            )
-            .filter((f): f is FactCardType => Boolean(f));
-          const pool = [...matched];
-          for (const candidate of activePool) {
-            if (!pool.some((f) => f.id === candidate.id)) pool.push(candidate);
-            if (pool.length >= 5) break;
-          }
-          setActiveQuiz({
-            key: `duel-url-${Date.now()}`,
-            mode: 'duel',
-            questions: pool.slice(0, 5).map((fact) => ({ fact })),
-            duelConfig: {
-              factIds: pool.slice(0, 5).map((f) => f.id),
-              challengerName: decoded.name,
-              targetScore: decoded.score,
-              targetTimeSec: decoded.timeSec,
-              kind: decoded.kind ?? '1v1',
-            },
+          // Open duel lobby page with shared pack — do not auto-start until all ready
+          const resolved = resolveFactsByIds(activePool, decoded.cardIds);
+          const cardIds =
+            resolved.length > 0 ? resolved.map((f) => f.id) : decoded.cardIds;
+          setIncomingDuel({
+            ...decoded,
+            cardIds,
           });
-          setActiveTab('quiz');
+          setActiveQuiz(null);
+          setActiveTab('duel');
           setShowWelcome(false);
         }
       } else if (openQuizParam === 'daily') {
@@ -470,7 +454,6 @@ export default function HomeClient({ initialFacts }: HomeClientProps) {
     vibrateTap(12);
     playPop(soundEnabled);
     setActiveQuiz(null);
-    setActiveModal('quizHub');
     setActiveTab('quiz');
   }, [soundEnabled]);
 
@@ -540,7 +523,7 @@ export default function HomeClient({ initialFacts }: HomeClientProps) {
       setSeedFact(fact);
       vibrateSheet(12);
       playPop(soundEnabled);
-      setActiveModal('duel');
+      setIncomingDuel(null);
       setActiveTab('duel');
     },
     [soundEnabled]
@@ -548,7 +531,6 @@ export default function HomeClient({ initialFacts }: HomeClientProps) {
 
   const handleStartQuizMode = (choice: QuizModeChoice) => {
     vibrateTap(12);
-    setActiveModal('none');
     setActiveTab('quiz');
 
     const pool = allFactsRef.current;
@@ -587,25 +569,22 @@ export default function HomeClient({ initialFacts }: HomeClientProps) {
   const handleStartDuel = (config: DuelChallengeConfig) => {
     vibrateTap(12);
     const activePool = allFactsRef.current;
-    const duelFacts = config.factIds
-      .map((id) =>
-        activePool.find(
-          (f) => f.id === id || f.slug === id || f.en.slug === id || f.tr.slug === id
-        )
-      )
-      .filter((f): f is FactCardType => Boolean(f));
-    const pool = [...duelFacts];
-    for (const candidate of activePool) {
-      if (!pool.some((f) => f.id === candidate.id)) pool.push(candidate);
-      if (pool.length >= 5) break;
+    const questionCount = Math.max(1, config.questionCount || config.factIds.length || 5);
+    let duelFacts = resolveFactsByIds(activePool, config.factIds);
+    if (duelFacts.length < questionCount) {
+      for (const candidate of activePool) {
+        if (!duelFacts.some((f) => f.id === candidate.id)) duelFacts.push(candidate);
+        if (duelFacts.length >= questionCount) break;
+      }
     }
+    duelFacts = duelFacts.slice(0, questionCount);
 
-    setActiveModal('none');
-    setActiveTab('quiz');
+    setIncomingDuel(null);
+    setActiveTab('duel');
     setActiveQuiz({
-      key: `duel-${Date.now()}`,
+      key: `duel-${config.duelId || Date.now()}`,
       mode: 'duel',
-      questions: pool.slice(0, 5).map((fact) => ({ fact })),
+      questions: duelFacts.map((fact) => ({ fact })),
       duelConfig: config,
     });
   };
@@ -681,9 +660,9 @@ export default function HomeClient({ initialFacts }: HomeClientProps) {
     playPop(soundEnabled);
 
     if (tab === 'explore') {
-      const alreadyExploring = activeTab === 'explore' && activeModal === 'none' && !activeQuiz;
-      setActiveModal('none');
+      const alreadyExploring = activeTab === 'explore' && !activeQuiz;
       setActiveQuiz(null);
+      setIncomingDuel(null);
       setActiveTab('explore');
 
       if (alreadyExploring) {
@@ -701,19 +680,17 @@ export default function HomeClient({ initialFacts }: HomeClientProps) {
       return;
     }
 
-    setActiveQuiz(null);
+    if (tab !== 'duel') setIncomingDuel(null);
+    if (tab !== 'quiz' && tab !== 'duel') setActiveQuiz(null);
+    if (tab === 'quiz') setActiveQuiz(null);
     setActiveTab(tab);
-
-    if (tab === 'leaderboard') setActiveModal('leaderboard');
-    if (tab === 'quiz') setActiveModal('quizHub');
-    if (tab === 'duel') setActiveModal('duel');
-    if (tab === 'diploma') setActiveModal('diploma');
   };
 
   const closeOverlayToExplore = () => {
     vibrateTap(12);
     playPop(soundEnabled);
-    setActiveModal('none');
+    setIncomingDuel(null);
+    setActiveQuiz(null);
     setActiveTab('explore');
   };
 
@@ -740,7 +717,8 @@ export default function HomeClient({ initialFacts }: HomeClientProps) {
   };
 
   const cookieBannerVisible =
-    !memory.cookieAccepted && activeModal === 'none' && !activeQuiz && !showWelcome;
+    !memory.cookieAccepted && activeTab === 'explore' && !activeQuiz && !showWelcome;
+  const showExploreFeed = activeTab === 'explore' && !activeQuiz;
 
   useEffect(() => {
     const onAmbient = (event: Event) => {
@@ -814,13 +792,13 @@ export default function HomeClient({ initialFacts }: HomeClientProps) {
         {/* Immersive vertical stage: full-bleed on mobile/tablet; tall center column on desktop */}
         <div
           data-testid="reels-phone-frame"
-          className={`relative z-10 mx-auto flex h-full w-full min-w-0 flex-1 flex-col overflow-hidden lg:mx-0 lg:max-w-[min(620px,50vw)] lg:shadow-[0_0_100px_-18px_rgba(0,0,0,0.55)] ${
+          className={`relative z-10 mx-auto flex h-full w-full min-w-0 flex-1 flex-col overflow-hidden lg:mx-0 lg:w-[min(620px,50vw)] lg:max-w-[min(620px,50vw)] lg:flex-none lg:shadow-[0_0_100px_-18px_rgba(0,0,0,0.55)] ${
             isDark ? 'bg-[#09090B] text-white' : 'bg-[#F7F5FB] text-[#1E1B2E]'
           }`}
         >
         <OfflineManager lang={lang} />
 
-        {activeModal === 'none' && !activeQuiz && !storyShareFact && !shareModalData && (
+        {showExploreFeed && !storyShareFact && !shareModalData && (
           <PwaInstallPrompt
             lang={lang}
             swipedCount={maxSwipedCards}
@@ -830,43 +808,48 @@ export default function HomeClient({ initialFacts }: HomeClientProps) {
           />
         )}
 
-        <TikTokFeed
-          ref={feedRef}
-          deckFacts={deckFacts}
-          lang={lang}
-          darkMode={memory.darkMode}
-          soundEnabled={soundEnabled}
-          activeCategory={activeCategory}
-          favoriteIds={memory.favoriteIds}
-          streakDays={memory.streakDays}
-          xp={memory.xp}
-          cardsSinceLastQuiz={memory.cardsSinceLastQuiz}
-          totalCardsViewed={Math.max(memory.totalSwipes, getTotalCardsViewed())}
-          cookieBannerVisible={cookieBannerVisible}
-          onSelectCategory={handleSelectCategory}
-          onChangeLang={handleChangeLang}
-          onToggleDarkMode={handleToggleDarkMode}
-          onToggleSound={handleToggleSound}
-          onFlipCard={handleFlipCard}
-          onDoubleTapLike={handleDoubleTapLike}
-          onDwellRead={handleDwellRead}
-          onOpenDuelFromCard={handleOpenDuelFromCard}
-          onOpenStoryShare={handleOpenStoryShare}
-          onGuessReward={handleGuessReward}
-          onToggleFavorite={handleToggleFavorite}
-          onOpenQuizHub={handleOpenQuizHub}
-          onButtonPop={() => playPop(soundEnabled)}
-          onSlideIndexChange={(idx) => setMaxSwipedCards((prev) => Math.max(prev, idx))}
-          onEarnXp={(xpAmount) => {
-            setMemory((prev) => addUserXp(prev, xpAmount));
-          }}
-          onSuccessSound={() => playDing(soundEnabled)}
-          onWrongSound={() => playWrong(soundEnabled)}
-        />
+        {showExploreFeed && (
+          <TikTokFeed
+            ref={feedRef}
+            deckFacts={deckFacts}
+            lang={lang}
+            darkMode={memory.darkMode}
+            soundEnabled={soundEnabled}
+            activeCategory={activeCategory}
+            favoriteIds={memory.favoriteIds}
+            streakDays={memory.streakDays}
+            xp={memory.xp}
+            cardsSinceLastQuiz={memory.cardsSinceLastQuiz}
+            totalCardsViewed={Math.max(memory.totalSwipes, getTotalCardsViewed())}
+            cookieBannerVisible={cookieBannerVisible}
+            onSelectCategory={handleSelectCategory}
+            onChangeLang={handleChangeLang}
+            onToggleDarkMode={handleToggleDarkMode}
+            onToggleSound={handleToggleSound}
+            onFlipCard={handleFlipCard}
+            onDoubleTapLike={handleDoubleTapLike}
+            onDwellRead={handleDwellRead}
+            onOpenDuelFromCard={handleOpenDuelFromCard}
+            onOpenStoryShare={handleOpenStoryShare}
+            onGuessReward={handleGuessReward}
+            onToggleFavorite={handleToggleFavorite}
+            onOpenQuizHub={handleOpenQuizHub}
+            onButtonPop={() => playPop(soundEnabled)}
+            onSlideIndexChange={(idx) => setMaxSwipedCards((prev) => Math.max(prev, idx))}
+            onEarnXp={(xpAmount) => {
+              setMemory((prev) => addUserXp(prev, xpAmount));
+            }}
+            onSuccessSound={() => playDing(soundEnabled)}
+            onWrongSound={() => playWrong(soundEnabled)}
+          />
+        )}
 
         <AnimatePresence>
           {activeQuiz && (
-            <div className="fixed inset-0 z-40 flex w-full items-center justify-center bg-ink/55 px-3 pt-4 backdrop-blur-md">
+            <div
+              data-testid="active-quiz-page"
+              className="absolute inset-0 z-30 flex h-full w-full flex-col overflow-y-auto bg-[#FFFDF9] px-3 pb-[108px] pt-4 dark:bg-[#171228] lg:pb-6"
+            >
               <MemoryQuizCard
                 key={activeQuiz.key}
                 questions={activeQuiz.questions}
@@ -883,7 +866,7 @@ export default function HomeClient({ initialFacts }: HomeClientProps) {
                   vibrateTap(12);
                   playPop(soundEnabled);
                   setActiveQuiz(null);
-                  setActiveTab('explore');
+                  setActiveTab(activeQuiz.mode === 'duel' ? 'duel' : 'quiz');
                   setMemory((prev) => {
                     const updated = { ...prev, cardsSinceLastQuiz: 0 };
                     saveUserMemory(updated);
@@ -896,7 +879,8 @@ export default function HomeClient({ initialFacts }: HomeClientProps) {
         </AnimatePresence>
 
         <LeaderboardModal
-          open={activeModal === 'leaderboard'}
+          open={activeTab === 'leaderboard' && !activeQuiz}
+          presentation="page"
           lang={lang}
           nickname={memory.nickname}
           userXp={memory.xp}
@@ -906,14 +890,15 @@ export default function HomeClient({ initialFacts }: HomeClientProps) {
           onInviteDuel={() => {
             vibrateTap(12);
             playPop(soundEnabled);
-            setActiveModal('duel');
+            setIncomingDuel(null);
             setActiveTab('duel');
           }}
           onClose={closeOverlayToExplore}
         />
 
         <QuizHubModal
-          open={activeModal === 'quizHub'}
+          open={activeTab === 'quiz' && !activeQuiz}
+          presentation="page"
           lang={lang}
           dailyCompleted={dailyCompleted}
           dailyBestScore={memory.dailyBestScore}
@@ -924,18 +909,21 @@ export default function HomeClient({ initialFacts }: HomeClientProps) {
         />
 
         <DuelModal
-          open={activeModal === 'duel'}
+          open={activeTab === 'duel' && !activeQuiz}
+          presentation="page"
           lang={lang}
           defaultNickname={memory.nickname}
           seedFact={seedFact}
           allFacts={allFacts}
+          incomingDuel={incomingDuel}
           onStartDuel={handleStartDuel}
           onClose={closeOverlayToExplore}
           onButtonPop={() => playPop(soundEnabled)}
         />
 
         <DiplomaProfileModal
-          open={activeModal === 'diploma'}
+          open={activeTab === 'diploma' && !activeQuiz}
+          presentation="page"
           lang={lang}
           memory={memory}
           allFacts={allFacts}
@@ -1016,18 +1004,20 @@ export default function HomeClient({ initialFacts }: HomeClientProps) {
         </div>
       </div>
 
-        <DesktopFeedSideRail
-          lang={lang}
-          darkMode={isDark}
-          onPrev={() => {
-            vibrateTap(10);
-            feedRef.current?.scrollToPrev();
-          }}
-          onNext={() => {
-            vibrateTap(10);
-            feedRef.current?.scrollToNext();
-          }}
-        />
+        {showExploreFeed && (
+          <DesktopFeedSideRail
+            lang={lang}
+            darkMode={isDark}
+            onPrev={() => {
+              vibrateTap(10);
+              feedRef.current?.scrollToPrev();
+            }}
+            onNext={() => {
+              vibrateTap(10);
+              feedRef.current?.scrollToNext();
+            }}
+          />
+        )}
         </div>
       </div>
     </div>

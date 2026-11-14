@@ -43,6 +43,7 @@ interface DiplomaProfileModalProps {
   lang: Language;
   memory: UserMemoryState;
   allFacts: FactCard[];
+  presentation?: 'modal' | 'page';
   onUpdateNickname: (nick: string) => void;
   onToggleNotifications: () => void;
   onSelectCategoryFromConstellation: (category: CategoryId) => void;
@@ -58,6 +59,7 @@ export default function DiplomaProfileModal({
   lang,
   memory,
   allFacts,
+  presentation = 'modal',
   onUpdateNickname,
   onToggleNotifications,
   onSelectCategoryFromConstellation,
@@ -67,6 +69,7 @@ export default function DiplomaProfileModal({
   onButtonPop,
   onCelebrateLeague,
 }: DiplomaProfileModalProps) {
+  const isPage = presentation === 'page';
   const [justReset, setJustReset] = useState(false);
   const [exportingDiploma, setExportingDiploma] = useState(false);
   const [diplomaStatusMsg, setDiplomaStatusMsg] = useState<string | null>(null);
@@ -98,7 +101,7 @@ export default function DiplomaProfileModal({
     return () => window.removeEventListener('scrolly-vocab-updated', sync);
   }, [open]);
 
-  useEscapeClose(open, onClose);
+  useEscapeClose(open && !isPage, onClose);
 
   const favoriteFacts = allFacts.filter((f) => memory.favoriteIds.includes(f.id));
   const categoryList = CATEGORIES.filter((c) => c.id !== 'all');
@@ -174,18 +177,27 @@ export default function DiplomaProfileModal({
     <AnimatePresence>
       {open && (
         <div
-          role="dialog"
-          aria-modal="true"
+          role={isPage ? 'region' : 'dialog'}
+          aria-modal={isPage ? undefined : true}
           aria-label={t.diplomaTitle}
           data-testid="diploma-modal"
-          className="fixed inset-0 z-50 flex w-full items-center justify-center bg-ink/55 px-3 pt-4 backdrop-blur-md"
+          data-presentation={presentation}
+          className={
+            isPage
+              ? 'absolute inset-0 z-20 flex h-full w-full flex-col bg-[#FFFDF9] dark:bg-[#171228]'
+              : 'fixed inset-0 z-50 flex w-full items-center justify-center bg-ink/55 px-3 pt-4 backdrop-blur-md'
+          }
         >
           <motion.div
-            initial={{ opacity: 0, scale: 0.92, y: 18 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.92, y: 18 }}
-            transition={{ type: 'spring', stiffness: 320, damping: 24 }}
-            className="relative mb-[92px] flex max-h-[82dvh] w-full max-w-[430px] md:max-w-2xl flex-col overflow-hidden rounded-3xl border-2 border-amber-200 bg-[#FFFDF9] shadow-2xl dark:border-violet-700/50 dark:bg-[#171228]"
+            initial={isPage ? { opacity: 0, x: 12 } : { opacity: 0, scale: 0.92, y: 18 }}
+            animate={isPage ? { opacity: 1, x: 0 } : { opacity: 1, scale: 1, y: 0 }}
+            exit={isPage ? { opacity: 0, x: 8 } : { opacity: 0, scale: 0.92, y: 18 }}
+            transition={{ type: 'spring', stiffness: 320, damping: 26 }}
+            className={
+              isPage
+                ? 'relative flex h-full w-full flex-col overflow-hidden pb-[96px] lg:pb-0'
+                : 'relative mb-[92px] flex max-h-[82dvh] w-full max-w-[430px] md:max-w-2xl flex-col overflow-hidden rounded-3xl border-2 border-amber-200 bg-[#FFFDF9] shadow-2xl dark:border-violet-700/50 dark:bg-[#171228]'
+            }
           >
             {/* Header */}
             <div className="flex shrink-0 items-center justify-between border-b border-amber-100 px-5 py-4 dark:border-white/10">
@@ -203,6 +215,7 @@ export default function DiplomaProfileModal({
                 </h2>
               </div>
 
+              {!isPage && (
               <motion.button
                 type="button"
                 whileTap={{ scale: 0.92 }}
@@ -216,6 +229,7 @@ export default function DiplomaProfileModal({
               >
                 <X className="h-4 w-4" />
               </motion.button>
+              )}
             </div>
 
             {/* Scrollable Body */}
