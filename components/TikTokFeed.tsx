@@ -107,6 +107,7 @@ const TikTokFeed = forwardRef<TikTokFeedHandle, TikTokFeedProps>(function TikTok
   onSlideIndexChangeRef.current = onSlideIndexChange;
   const [activeIndex, setActiveIndex] = useState<number>(0);
   const [isCategoryDrawerOpen, setIsCategoryDrawerOpen] = useState<boolean>(false);
+  const [chromeBlocked, setChromeBlocked] = useState<boolean>(false);
   const t = translations[lang];
   const copy = FEED_EXPERIENCE_COPY[lang];
   const allCategoryMeta = CATEGORIES[0];
@@ -335,13 +336,28 @@ const TikTokFeed = forwardRef<TikTokFeedHandle, TikTokFeedProps>(function TikTok
     return () => window.removeEventListener('keydown', handleEsc);
   }, [isCategoryDrawerOpen]);
 
+  // When a card detail overlay is open, disable HUD hit-testing so close/back controls stay reachable
+  useEffect(() => {
+    const onChromeBlock = (event: Event) => {
+      const detail = (event as CustomEvent<{ open?: boolean }>).detail;
+      setChromeBlocked(Boolean(detail?.open));
+    };
+    window.addEventListener('scrolly-chrome-block', onChromeBlock as EventListener);
+    return () => window.removeEventListener('scrolly-chrome-block', onChromeBlock as EventListener);
+  }, []);
+
   const progressTotal = Math.max(1, Math.min(13, slides.length));
   const progressSlot = activeIndex % progressTotal;
 
   return (
     <div className="relative mx-auto h-full w-full max-w-[440px] overflow-hidden">
-      {/* Top HUD — z-30, hard-capped to 440px stage */}
-      <header className="pointer-events-none absolute inset-x-0 top-0 z-30 w-full max-w-[440px] bg-gradient-to-b from-black/25 via-black/5 to-transparent px-2.5 pt-[calc(env(safe-area-inset-top)+6px)] pb-2 dark:from-black/60 dark:via-black/25 dark:to-transparent">
+      {/* Top HUD — z-30, hard-capped to 440px stage (disabled while detail overlay is open) */}
+      <header
+        data-chrome-blocked={chromeBlocked ? 'true' : 'false'}
+        className={`pointer-events-none absolute inset-x-0 top-0 z-30 w-full max-w-[440px] bg-gradient-to-b from-black/25 via-black/5 to-transparent px-2.5 pt-[calc(env(safe-area-inset-top)+6px)] pb-2 dark:from-black/60 dark:via-black/25 dark:to-transparent ${
+          chromeBlocked ? 'opacity-40' : ''
+        }`}
+      >
         {/* Stories-Style Segmented Deck Progress Indicator */}
         <div
           aria-hidden="true"
@@ -365,7 +381,11 @@ const TikTokFeed = forwardRef<TikTokFeedHandle, TikTokFeedProps>(function TikTok
           })}
         </div>
         {/* Top Utility Bar: Left Streak+XP | Right Controls */}
-        <div className="pointer-events-auto flex flex-wrap items-center justify-between gap-1.5">
+        <div
+          className={`flex flex-wrap items-center justify-between gap-1.5 ${
+            chromeBlocked ? 'pointer-events-none' : 'pointer-events-auto'
+          }`}
+        >
           <div className="flex flex-wrap items-center gap-1">
             <div
               data-testid="top-streak-xp-pill"
@@ -483,7 +503,9 @@ const TikTokFeed = forwardRef<TikTokFeedHandle, TikTokFeedProps>(function TikTok
         {/* Genel + Kategori Seç ▾ */}
         <div
           data-testid="category-bar"
-          className="pointer-events-auto mt-1.5 flex flex-wrap items-center gap-1.5"
+          className={`mt-1.5 flex flex-wrap items-center gap-1.5 ${
+            chromeBlocked ? 'pointer-events-none' : 'pointer-events-auto'
+          }`}
         >
           <motion.button
             type="button"

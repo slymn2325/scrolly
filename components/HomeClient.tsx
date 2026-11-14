@@ -182,6 +182,7 @@ export default function HomeClient({ initialFacts }: HomeClientProps) {
 
   const [activeTab, setActiveTab] = useState<DockTabId>('explore');
   const [activeModal, setActiveModal] = useState<ActiveOverlayModal>('none');
+  const [chromeBlocked, setChromeBlocked] = useState(false);
   const [activeQuiz, setActiveQuiz] = useState<ActiveQuizSession | null>(null);
   const [storyShareFact, setStoryShareFact] = useState<FactCardType | null>(null);
   const [maxSwipedCards, setMaxSwipedCards] = useState(0);
@@ -195,6 +196,15 @@ export default function HomeClient({ initialFacts }: HomeClientProps) {
     questionIds: string[];
     duelConfig?: DuelChallengeConfig | null;
   } | null>(null);
+
+  useEffect(() => {
+    const onChromeBlock = (event: Event) => {
+      const detail = (event as CustomEvent<{ open?: boolean }>).detail;
+      setChromeBlocked(Boolean(detail?.open));
+    };
+    window.addEventListener('scrolly-chrome-block', onChromeBlock as EventListener);
+    return () => window.removeEventListener('scrolly-chrome-block', onChromeBlock as EventListener);
+  }, []);
 
   useEffect(() => {
     const loaded = loadUserMemory();
@@ -915,6 +925,7 @@ export default function HomeClient({ initialFacts }: HomeClientProps) {
         lang={lang}
         showQuizDot={showQuizDot}
         onSelectTab={handleDockSelectTab}
+        chromeBlocked={chromeBlocked}
       />
     </div>
   );

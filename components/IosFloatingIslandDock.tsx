@@ -13,6 +13,8 @@ interface IosFloatingIslandDockProps {
   lang: Language;
   showQuizDot: boolean;
   onSelectTab: (tab: DockTabId) => void;
+  /** When true, dock ignores pointer hits so overlays above remain clickable */
+  chromeBlocked?: boolean;
 }
 
 export default function IosFloatingIslandDock({
@@ -20,6 +22,7 @@ export default function IosFloatingIslandDock({
   lang,
   showQuizDot,
   onSelectTab,
+  chromeBlocked = false,
 }: IosFloatingIslandDockProps) {
   const t = translations[lang];
 
@@ -67,11 +70,18 @@ export default function IosFloatingIslandDock({
     : [allTabs[2], allTabs[1], allTabs[4]];
 
   return (
-    <div className="pointer-events-none fixed inset-x-0 bottom-[calc(0.75rem+env(safe-area-inset-bottom))] z-30 mx-auto w-full max-w-[440px] px-3">
+    <div
+      data-testid="ios-floating-dock-shell"
+      className={`pointer-events-none fixed inset-x-0 bottom-[calc(0.75rem+env(safe-area-inset-bottom))] z-30 mx-auto w-full max-w-[440px] px-3 ${
+        chromeBlocked ? 'opacity-40' : ''
+      }`}
+    >
       <nav
         aria-label="iOS Floating Island Dock"
         data-testid="ios-floating-dock"
-        className="pointer-events-auto flex w-full items-center justify-between rounded-full border border-slate-200/90 bg-white/90 px-2 py-1.5 shadow-[0_8px_32px_rgba(0,0,0,0.16),inset_0_1px_1px_rgba(255,255,255,0.65)] backdrop-blur-sm dark:border-white/20 dark:bg-slate-900/90 dark:shadow-[0_12px_36px_rgba(0,0,0,0.5),inset_0_1px_1px_rgba(255,255,255,0.2)]"
+        className={`${
+          chromeBlocked ? 'pointer-events-none' : 'pointer-events-auto'
+        } flex w-full items-center justify-between rounded-full border border-slate-200/90 bg-white/90 px-2 py-1.5 shadow-[0_8px_32px_rgba(0,0,0,0.16),inset_0_1px_1px_rgba(255,255,255,0.65)] backdrop-blur-sm dark:border-white/20 dark:bg-slate-900/90 dark:shadow-[0_12px_36px_rgba(0,0,0,0.5),inset_0_1px_1px_rgba(255,255,255,0.2)]`}
       >
       {tabs.map((tab) => {
         const isActive = activeTab === tab.id;

@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import Link from 'next/link';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import {
@@ -280,6 +281,11 @@ export default function TikTokFactSlide({
   const [isDragging, setIsDragging] = useState(false);
   const [isGuessLocked, setIsGuessLocked] = useState(false);
   const [heartBursts, setHeartBursts] = useState<HeartBurst[]>([]);
+  const [portalReady, setPortalReady] = useState(false);
+
+  useEffect(() => {
+    setPortalReady(true);
+  }, []);
 
   const slideRef = useRef<HTMLDivElement>(null);
   const singleTapTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -419,6 +425,15 @@ export default function TikTokFactSlide({
     window.addEventListener('keydown', handleEsc);
     return () => window.removeEventListener('keydown', handleEsc);
   }, [isFlipped]);
+
+  // Detail must sit above feed HUD/dock (separate stacking contexts). Broadcast so chrome disables hits.
+  useEffect(() => {
+    const open = Boolean(isFlipped && isActive);
+    window.dispatchEvent(new CustomEvent('scrolly-chrome-block', { detail: { open } }));
+    return () => {
+      window.dispatchEvent(new CustomEvent('scrolly-chrome-block', { detail: { open: false } }));
+    };
+  }, [isFlipped, isActive]);
 
   useEffect(() => {
     return () => {
@@ -816,178 +831,191 @@ export default function TikTokFactSlide({
           </div>
         </div>
 
-        {/* ================= FULL-CARD OPAQUE DETAIL / SOURCE VIEW (z-40) ================= */}
-        <AnimatePresence>
-          {isFlipped && (
-            <motion.div
-              key="detail"
-              data-testid="fact-card-back"
-              data-card-view="detail"
-              role="dialog"
-              aria-modal="true"
-              aria-label={copy.detailSheetTitle}
-              initial={{ opacity: 0, y: 24 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 24 }}
-              transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
-              onClick={(e) => e.stopPropagation()}
-              onDoubleClick={(e) => e.stopPropagation()}
-              onPointerDown={(e) => e.stopPropagation()}
-              onWheel={(e) => e.stopPropagation()}
-              className="absolute inset-0 z-40 flex h-full w-full flex-col bg-slate-50 pt-6 dark:bg-slate-950"
-            >
-              <div
-                className={`no-scrollbar flex h-full w-full flex-col overflow-y-auto px-4 ${
-                  cookieBannerVisible
-                    ? 'pb-[calc(160px+env(safe-area-inset-bottom))]'
-                    : 'pb-24'
-                }`}
-              >
-                <div className="flex shrink-0 items-center justify-between gap-3">
-                  <div className="inline-flex w-fit items-center gap-1.5 rounded-full bg-violet-100 px-3 py-1 text-xs font-extrabold text-violet-900 dark:bg-violet-900 dark:text-violet-100">
-                    <img
-                      src={catMeta.iconPath}
-                      alt=""
-                      aria-hidden="true"
-                      className="h-4 w-4 object-contain"
-                    />
-                    <span>{t.whyHowHeader}</span>
-                  </div>
-
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onButtonPop();
-                      executeFlip();
-                    }}
-                    aria-label={t.tiktokBackFrontBtn}
-                    data-testid="detail-close-btn"
-                    className="relative z-50 flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white text-ink shadow-sm dark:border-white/15 dark:bg-slate-900 dark:text-violet-100"
-                  >
-                    <X className="h-4 w-4" />
-                  </button>
-                </div>
-
-                <div className="my-3 flex-1 pr-1">
-                  <h3 className="font-display text-lg font-bold leading-snug text-ink dark:text-white sm:text-xl whitespace-normal break-words">
-                    {localized.title}
-                  </h3>
-
-                  <p className="mt-3 text-[14.5px] leading-relaxed text-ink dark:text-slate-100 whitespace-normal break-words">
-                    {localized.deepDiveDetail}
-                  </p>
-
+        {/* Detail portal escapes slide contain/transform so it paints above HUD/dock */}
+        {portalReady &&
+          createPortal(
+            <AnimatePresence>
+              {isFlipped && (
+                <motion.div
+                  key="detail-root"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.18 }}
+                  className="pointer-events-none fixed inset-0 z-[60] flex justify-center"
+                >
+                <motion.div
+                  key="detail"
+                  data-testid="fact-card-back"
+                  data-card-view="detail"
+                  role="dialog"
+                  aria-modal="true"
+                  aria-label={copy.detailSheetTitle}
+                  initial={{ opacity: 0, y: 24 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: 24 }}
+                  transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
+                  onClick={(e) => e.stopPropagation()}
+                  onDoubleClick={(e) => e.stopPropagation()}
+                  onPointerDown={(e) => e.stopPropagation()}
+                  onWheel={(e) => e.stopPropagation()}
+                  className="pointer-events-auto relative z-[60] flex h-[100dvh] w-full max-w-[440px] flex-col bg-slate-50 pt-[calc(1.5rem+env(safe-area-inset-top))] dark:bg-slate-950"
+                >
                   <div
-                    data-testid="fact-source-box"
-                    className="mt-4 flex flex-col gap-2.5 rounded-2xl border border-amber-200 bg-white px-4 py-3 text-xs shadow-sm dark:border-white/15 dark:bg-slate-900"
+                    className={`no-scrollbar flex h-full w-full flex-col overflow-y-auto px-4 ${
+                      cookieBannerVisible
+                        ? 'pb-[calc(160px+env(safe-area-inset-bottom))]'
+                        : 'pb-24'
+                    }`}
                   >
-                    <div className="flex items-start gap-2 font-bold text-ink dark:text-violet-100">
-                      <BookOpen className="mt-0.5 h-4 w-4 shrink-0 text-violet-600 dark:text-violet-300" />
-                      <div className="min-w-0 flex-1">
+                    <div className="flex shrink-0 items-center justify-between gap-3">
+                      <div className="inline-flex w-fit items-center gap-1.5 rounded-full bg-violet-100 px-3 py-1 text-xs font-extrabold text-violet-900 dark:bg-violet-900 dark:text-violet-100">
+                        <img
+                          src={catMeta.iconPath}
+                          alt=""
+                          aria-hidden="true"
+                          className="h-4 w-4 object-contain"
+                        />
+                        <span>{t.whyHowHeader}</span>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onButtonPop();
+                          executeFlip();
+                        }}
+                        aria-label={t.tiktokBackFrontBtn}
+                        data-testid="detail-close-btn"
+                        className="relative z-50 flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white text-ink shadow-sm dark:border-white/15 dark:bg-slate-900 dark:text-violet-100"
+                      >
+                        <X className="h-4 w-4" />
+                      </button>
+                    </div>
+
+                    <div className="my-3 flex-1 pr-1">
+                      <h3 className="font-display text-lg font-bold leading-snug text-ink dark:text-white sm:text-xl whitespace-normal break-words">
+                        {localized.title}
+                      </h3>
+
+                      <p className="mt-3 text-[14.5px] leading-relaxed text-ink dark:text-slate-100 whitespace-normal break-words">
+                        {localized.deepDiveDetail}
+                      </p>
+
+                      <div
+                        data-testid="fact-source-box"
+                        className="mt-4 flex flex-col gap-2.5 rounded-2xl border border-amber-200 bg-white px-4 py-3 text-xs shadow-sm dark:border-white/15 dark:bg-slate-900"
+                      >
+                        <div className="flex items-start gap-2 font-bold text-ink dark:text-violet-100">
+                          <BookOpen className="mt-0.5 h-4 w-4 shrink-0 text-violet-600 dark:text-violet-300" />
+                          <div className="min-w-0 flex-1">
+                            <span
+                              lang={lang}
+                              className="block text-[10px] font-black uppercase tracking-wider text-ink/80 dark:text-violet-200"
+                            >
+                              {t.sourceLabel}
+                            </span>
+                            <span
+                              data-testid="fact-source-name"
+                              className="text-xs font-extrabold whitespace-normal break-words"
+                            >
+                              {resolvedSourceName}
+                            </span>
+                          </div>
+                        </div>
+
+                        <div className="flex flex-wrap items-center justify-between gap-2 border-t border-black/5 pt-2 dark:border-white/10">
+                          {resolvedSourceUrl ? (
+                            <a
+                              href={resolvedSourceUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              onClick={(e) => e.stopPropagation()}
+                              data-testid="fact-source-link"
+                              className="inline-flex min-h-[36px] items-center gap-1 rounded-full bg-violet-100 px-3 py-1 text-[11px] font-extrabold text-violet-800 hover:bg-violet-200 dark:bg-violet-500/25 dark:text-violet-200"
+                            >
+                              <span>{t.verifySourceCta}</span>
+                              <ExternalLink className="h-3 w-3 shrink-0" />
+                            </a>
+                          ) : (
+                            <span className="text-[11px] font-semibold text-ink/80 dark:text-violet-100/85">
+                              {localized.sourceHint}
+                            </span>
+                          )}
+
+                          <Link
+                            href={factUrl}
+                            onClick={(e) => e.stopPropagation()}
+                            className="inline-flex min-h-[36px] items-center gap-1 font-extrabold text-ink/70 hover:underline dark:text-violet-200"
+                          >
+                            <span>{t.readFullPage}</span>
+                            <ExternalLink className="h-3 w-3 shrink-0" />
+                          </Link>
+                        </div>
+                      </div>
+
+                      <div className="mt-3 flex flex-wrap items-center gap-2">
                         <span
-                          lang={lang}
-                          className="block text-[10px] font-black uppercase tracking-wider text-ink/80 dark:text-violet-200"
+                          className={`inline-flex items-center gap-1.5 rounded-full ${catMeta.bgClass} px-3 py-1 text-[11px] font-extrabold ${catMeta.accentText}`}
                         >
-                          {t.sourceLabel}
+                          <span>{catMeta.emoji}</span>
+                          <span>{catMeta.label[lang]}</span>
                         </span>
-                        <span
-                          data-testid="fact-source-name"
-                          className="text-xs font-extrabold whitespace-normal break-words"
-                        >
-                          {resolvedSourceName}
+                        <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-3 py-1 text-[11px] font-extrabold text-amber-900 dark:bg-amber-900/40 dark:text-amber-200">
+                          +15 XP
                         </span>
                       </div>
                     </div>
 
-                    <div className="flex flex-wrap items-center justify-between gap-2 border-t border-black/5 pt-2 dark:border-white/10">
-                      {resolvedSourceUrl ? (
-                        <a
-                          href={resolvedSourceUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          onClick={(e) => e.stopPropagation()}
-                          data-testid="fact-source-link"
-                          className="inline-flex min-h-[36px] items-center gap-1 rounded-full bg-violet-100 px-3 py-1 text-[11px] font-extrabold text-violet-800 hover:bg-violet-200 dark:bg-violet-500/25 dark:text-violet-200"
-                        >
-                          <span>{t.verifySourceCta}</span>
-                          <ExternalLink className="h-3 w-3 shrink-0" />
-                        </a>
-                      ) : (
-                        <span className="text-[11px] font-semibold text-ink/80 dark:text-violet-100/85">
-                          {localized.sourceHint}
-                        </span>
-                      )}
-
-                      <Link
-                        href={factUrl}
-                        onClick={(e) => e.stopPropagation()}
-                        className="inline-flex min-h-[36px] items-center gap-1 font-extrabold text-ink/70 hover:underline dark:text-violet-200"
+                    <div className="relative z-50 flex shrink-0 flex-wrap items-center gap-2 pt-2">
+                      <motion.button
+                        type="button"
+                        whileTap={{ scale: 0.94 }}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          executeFlip();
+                        }}
+                        data-testid="flip-back-btn"
+                        className="flex min-h-[46px] flex-1 items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-2 text-xs font-extrabold text-ink shadow-sm dark:border-white/20 dark:bg-slate-900 dark:text-white sm:text-sm"
                       >
-                        <span>{t.readFullPage}</span>
-                        <ExternalLink className="h-3 w-3 shrink-0" />
-                      </Link>
+                        <RotateCcw className="h-4 w-4 shrink-0" />
+                        <span>{lang === 'tr' ? 'Karta Dön' : 'Back to Card'}</span>
+                      </motion.button>
+
+                      <motion.button
+                        type="button"
+                        whileTap={{ scale: 0.94 }}
+                        onClick={handleShareClick}
+                        aria-label={t.shareFact}
+                        data-testid="back-share-story-btn"
+                        className="flex min-h-[46px] items-center justify-center gap-1.5 rounded-2xl border border-violet-300 bg-violet-100 px-3.5 py-2 text-xs font-extrabold text-violet-900 shadow-sm dark:border-violet-400/30 dark:bg-slate-900 dark:text-violet-100"
+                      >
+                        <Share2 className="h-4 w-4 shrink-0" />
+                      </motion.button>
+
+                      <motion.button
+                        type="button"
+                        whileTap={{ scale: 0.94 }}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onButtonPop();
+                          onNextSlide();
+                        }}
+                        data-testid="next-card-btn"
+                        className="flex min-h-[46px] flex-1 items-center justify-center gap-2 rounded-2xl bg-ink px-4 py-2 text-xs font-extrabold text-white shadow-lg dark:bg-violet-600 sm:text-sm"
+                      >
+                        <span>{lang === 'tr' ? 'Sonraki Bilgiye Kaydır' : t.tiktokNextSlideBtn}</span>
+                        <ArrowDown className="h-4 w-4 shrink-0" />
+                      </motion.button>
                     </div>
                   </div>
-
-                  <div className="mt-3 flex flex-wrap items-center gap-2">
-                    <span
-                      className={`inline-flex items-center gap-1.5 rounded-full ${catMeta.bgClass} px-3 py-1 text-[11px] font-extrabold ${catMeta.accentText}`}
-                    >
-                      <span>{catMeta.emoji}</span>
-                      <span>{catMeta.label[lang]}</span>
-                    </span>
-                    <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-3 py-1 text-[11px] font-extrabold text-amber-900 dark:bg-amber-900/40 dark:text-amber-200">
-                      +15 XP
-                    </span>
-                  </div>
-                </div>
-
-                <div className="relative z-50 flex shrink-0 flex-wrap items-center gap-2 pt-2">
-                  <motion.button
-                    type="button"
-                    whileTap={{ scale: 0.94 }}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      executeFlip();
-                    }}
-                    data-testid="flip-back-btn"
-                    className="flex min-h-[46px] flex-1 items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-2 text-xs font-extrabold text-ink shadow-sm dark:border-white/20 dark:bg-slate-900 dark:text-white sm:text-sm"
-                  >
-                    <RotateCcw className="h-4 w-4 shrink-0" />
-                    <span>{lang === 'tr' ? 'Karta Dön' : 'Back to Card'}</span>
-                  </motion.button>
-
-                  <motion.button
-                    type="button"
-                    whileTap={{ scale: 0.94 }}
-                    onClick={handleShareClick}
-                    aria-label={t.shareFact}
-                    data-testid="back-share-story-btn"
-                    className="flex min-h-[46px] items-center justify-center gap-1.5 rounded-2xl border border-violet-300 bg-violet-100 px-3.5 py-2 text-xs font-extrabold text-violet-900 shadow-sm dark:border-violet-400/30 dark:bg-slate-900 dark:text-violet-100"
-                  >
-                    <Share2 className="h-4 w-4 shrink-0" />
-                  </motion.button>
-
-                  <motion.button
-                    type="button"
-                    whileTap={{ scale: 0.94 }}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onButtonPop();
-                      onNextSlide();
-                    }}
-                    data-testid="next-card-btn"
-                    className="flex min-h-[46px] flex-1 items-center justify-center gap-2 rounded-2xl bg-ink px-4 py-2 text-xs font-extrabold text-white shadow-lg dark:bg-violet-600 sm:text-sm"
-                  >
-                    <span>{lang === 'tr' ? 'Sonraki Bilgiye Kaydır' : t.tiktokNextSlideBtn}</span>
-                    <ArrowDown className="h-4 w-4 shrink-0" />
-                  </motion.button>
-                </div>
-              </div>
-            </motion.div>
+                </motion.div>
+                </motion.div>
+              )}
+            </AnimatePresence>,
+            document.body
           )}
-        </AnimatePresence>
 
       {/* Right action column — z-20 (Hidden When Detail View Is Open) */}
       {!isFlipped && (
