@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import {
   ArrowDown,
+  Bookmark,
   BookOpen,
   ExternalLink,
   Heart,
@@ -639,14 +640,36 @@ export default function TikTokFactSlide({
               whileTap={{ scale: 0.9 }}
               onClick={(e) => {
                 e.stopPropagation();
-                if (isFavorite) {
-                  setDbLikeDelta((prev) => prev - 1);
-                  void trackEvent(factSlug, fact.category, 'unlike', { trigger: 'heart_btn' });
-                } else {
-                  setDbLikeDelta((prev) => prev + 1);
-                  void trackEvent(factSlug, fact.category, 'like', { trigger: 'heart_btn' });
-                }
+                setDbLikeDelta((prev) => prev + 1);
+                void trackEvent(factSlug, fact.category, 'like', { trigger: 'heart_btn' });
+                onDoubleTapLike(fact);
+                vibrateTap(18);
+              }}
+              aria-label={lang === 'tr' ? 'Beğen' : 'Like'}
+              data-testid="card-like-btn"
+              className="flex flex-col items-center gap-0.5"
+            >
+              <span className="flex h-11 w-11 items-center justify-center rounded-full border border-white/20 bg-white/10 text-rose-300 backdrop-blur-md">
+                <Heart className="h-5 w-5 fill-current" />
+              </span>
+              <span className="text-[10px] font-extrabold text-white/90">
+                {displayLikes === 1
+                  ? lang === 'tr'
+                    ? '1 beğeni'
+                    : '1 like'
+                  : lang === 'tr'
+                    ? `${displayLikes} beğeni`
+                    : `${displayLikes} likes`}
+              </span>
+            </motion.button>
+
+            <motion.button
+              type="button"
+              whileTap={{ scale: 0.9 }}
+              onClick={(e) => {
+                e.stopPropagation();
                 onToggleFavorite(fact);
+                vibrateTap(18);
               }}
               aria-label={t.favorite}
               data-testid="card-favorite-btn"
@@ -654,19 +677,13 @@ export default function TikTokFactSlide({
             >
               <span
                 className={`flex h-11 w-11 items-center justify-center rounded-full border border-white/20 backdrop-blur-md transition-all ${
-                  isFavorite ? 'bg-rose-500 text-white' : 'bg-white/10 text-white'
+                  isFavorite ? 'bg-amber-400 text-[#09090B]' : 'bg-white/10 text-amber-200'
                 }`}
               >
-                <Heart className={`h-5 w-5 ${isFavorite ? 'fill-current' : ''}`} />
+                <Bookmark className={`h-5 w-5 ${isFavorite ? 'fill-current' : ''}`} />
               </span>
               <span className="text-[10px] font-extrabold text-white/90">
-                {displayLikes === 1
-                  ? lang === 'tr'
-                    ? '1 beğeni'
-                    : '1 heart'
-                  : lang === 'tr'
-                    ? `${displayLikes} beğeni`
-                    : `${displayLikes} hearts`}
+                {lang === 'tr' ? 'Kaydet' : 'Save'}
               </span>
             </motion.button>
 
