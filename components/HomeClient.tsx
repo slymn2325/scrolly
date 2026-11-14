@@ -726,10 +726,48 @@ export default function HomeClient({ initialFacts }: HomeClientProps) {
   };
 
   const cookieBannerVisible = !memory.cookieAccepted && activeModal === 'none' && !activeQuiz;
+  const [ambientAccent, setAmbientAccent] = useState<string>(
+    () => seedFact?.accentColor || '#818CF8'
+  );
+
+  useEffect(() => {
+    const onAmbient = (event: Event) => {
+      const accent = (event as CustomEvent<{ accent?: string }>).detail?.accent;
+      if (typeof accent === 'string' && accent.length > 0) setAmbientAccent(accent);
+    };
+    window.addEventListener('scrolly-ambient-accent', onAmbient as EventListener);
+    return () => window.removeEventListener('scrolly-ambient-accent', onAmbient as EventListener);
+  }, []);
 
   return (
-    <div className="relative flex h-[100dvh] w-screen items-center justify-center overflow-hidden bg-[#050508] select-none">
-      <div className="relative mx-auto h-[100dvh] w-full max-w-[430px] overflow-hidden bg-[#09090B] text-white md:rounded-[28px] md:border md:border-white/10 md:shadow-2xl">
+    <div
+      data-testid="reels-desktop-shell"
+      className="relative flex h-[100dvh] w-screen items-center justify-center overflow-hidden bg-[#07070C] select-none"
+    >
+      {/* Soft blurred ambient sides (desktop cinematic stage) */}
+      <div aria-hidden="true" className="pointer-events-none absolute inset-0 hidden md:block">
+        <div
+          className="absolute left-1/2 top-1/2 h-[140%] w-[min(1100px,96vw)] -translate-x-1/2 -translate-y-1/2 rounded-full blur-3xl transition-[background] duration-700"
+          style={{
+            background: `radial-gradient(ellipse at center, ${ambientAccent}66 0%, ${ambientAccent}28 38%, transparent 68%)`,
+          }}
+        />
+        <div
+          className="absolute left-[8%] top-[12%] h-[22rem] w-[22rem] rounded-full blur-3xl"
+          style={{ background: `${ambientAccent}40` }}
+        />
+        <div
+          className="absolute right-[6%] bottom-[10%] h-[26rem] w-[26rem] rounded-full blur-3xl"
+          style={{ background: `${ambientAccent}36` }}
+        />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_28%,#07070C_82%)]" />
+      </div>
+
+      {/* Centered 9:16 phone frame — rounded corners visible on md+ */}
+      <div
+        data-testid="reels-phone-frame"
+        className="relative z-10 mx-auto flex h-[100dvh] w-full max-w-[430px] flex-col overflow-hidden bg-[#09090B] text-white md:h-[calc(100dvh-2.5rem)] md:max-h-[920px] md:rounded-[28px] md:border md:border-white/15 md:shadow-[0_30px_100px_-16px_rgba(0,0,0,0.95),0_0_60px_-12px_rgba(255,255,255,0.08)]"
+      >
         <OfflineManager lang={lang} />
 
         {activeModal === 'none' && !activeQuiz && !storyShareFact && !shareModalData && (
@@ -914,15 +952,15 @@ export default function HomeClient({ initialFacts }: HomeClientProps) {
             });
           }}
         />
-      </div>
 
-      <IosFloatingIslandDock
-        activeTab={activeTab}
-        lang={lang}
-        showQuizDot={showQuizDot}
-        onSelectTab={handleDockSelectTab}
-        chromeBlocked={chromeBlocked}
-      />
+        <IosFloatingIslandDock
+          activeTab={activeTab}
+          lang={lang}
+          showQuizDot={showQuizDot}
+          onSelectTab={handleDockSelectTab}
+          chromeBlocked={chromeBlocked}
+        />
+      </div>
     </div>
   );
 }

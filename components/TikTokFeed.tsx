@@ -346,39 +346,27 @@ const TikTokFeed = forwardRef<TikTokFeedHandle, TikTokFeedProps>(function TikTok
     return () => window.removeEventListener('scrolly-chrome-block', onChromeBlock as EventListener);
   }, []);
 
-  const progressTotal = Math.max(1, Math.min(13, slides.length));
-  const progressSlot = activeIndex % progressTotal;
+  // Ambient accent for desktop side wash (HomeClient listens)
+  useEffect(() => {
+    const slide = slides[activeIndex];
+    let accent = '#818CF8';
+    if (slide?.type === 'fact') accent = slide.fact.accentColor || accent;
+    else if (slide?.type === 'vocabulary') accent = '#818CF8';
+    else if (slide?.type === 'quizCta') accent = '#F59E0B';
+    window.dispatchEvent(
+      new CustomEvent('scrolly-ambient-accent', { detail: { accent } })
+    );
+  }, [activeIndex, slides]);
 
   return (
     <div className="relative mx-auto h-full w-full max-w-[430px] overflow-hidden bg-[#09090B]">
-      {/* Top HUD — max ~96px, never spills stage */}
+      {/* Top HUD — compact, no stories/1-5 counter */}
       <header
         data-chrome-blocked={chromeBlocked ? 'true' : 'false'}
         className={`pointer-events-none absolute inset-x-0 top-0 z-30 h-[96px] w-full max-w-[430px] overflow-hidden bg-gradient-to-b from-black/70 via-black/35 to-transparent px-2.5 pt-[max(8px,env(safe-area-inset-top))] pb-1.5 ${
           chromeBlocked ? 'opacity-40' : ''
         }`}
       >
-        <div
-          aria-hidden="true"
-          data-testid="stories-progress-bar"
-          className="mb-1 flex items-center gap-1"
-        >
-          {Array.from({ length: progressTotal }).map((_, idx) => {
-            const isFilled = idx <= progressSlot;
-            return (
-              <span
-                key={`seg-${idx}`}
-                className="h-[2px] flex-1 overflow-hidden rounded-full bg-white/20"
-              >
-                <span
-                  className={`block h-full w-full rounded-full transition-all duration-300 ${
-                    isFilled ? 'bg-white opacity-90' : 'opacity-0'
-                  }`}
-                />
-              </span>
-            );
-          })}
-        </div>
         {/* Top Utility Bar: Left Streak+XP | Right Controls */}
         <div
           className={`flex flex-wrap items-center justify-between gap-1.5 ${
@@ -410,21 +398,6 @@ const TikTokFeed = forwardRef<TikTokFeedHandle, TikTokFeedProps>(function TikTok
                 <span>{xp}</span>
               </span>
             </div>
-
-            <motion.button
-              type="button"
-              whileTap={{ scale: 0.94 }}
-              onClick={onOpenQuizHub}
-              data-testid="quiz-progress-pill"
-              title={t.quizSubtitle}
-              className={`rounded-full border px-2 py-1 text-[10px] font-extrabold transition-all ${
-                cardsSinceLastQuiz >= 5
-                  ? 'border-emerald-300/70 bg-gradient-to-r from-emerald-500 to-amber-500 text-white'
-                  : 'border-white/15 bg-white/10 text-white/80'
-              }`}
-            >
-              {cardsSinceLastQuiz >= 5 ? '5/5 ✓' : `${Math.min(5, cardsSinceLastQuiz)}/5`}
-            </motion.button>
           </div>
 
           <div className="flex flex-wrap items-center gap-1">

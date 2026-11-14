@@ -540,7 +540,7 @@ export default function TikTokFactSlide({
         }}
       />
 
-      <div className="relative mx-auto h-full w-full max-w-[430px] overflow-hidden bg-[#09090B] md:rounded-[28px] md:border md:border-white/10 md:shadow-2xl">
+      <div className="relative mx-auto h-full w-full max-w-[430px] overflow-hidden bg-[#09090B]">
         {/* Full-bleed cinematic canvas */}
         <CategoryMotionArt
           variant="hero"
@@ -750,7 +750,7 @@ export default function TikTokFactSlide({
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
                   transition={{ duration: 0.18 }}
-                  className="pointer-events-none fixed inset-0 z-[60] flex justify-center"
+                  className="pointer-events-none fixed inset-0 z-[60] flex items-center justify-center"
                 >
                   <motion.div
                     key="detail"
@@ -767,7 +767,7 @@ export default function TikTokFactSlide({
                     onDoubleClick={(e) => e.stopPropagation()}
                     onPointerDown={(e) => e.stopPropagation()}
                     onWheel={(e) => e.stopPropagation()}
-                    className="pointer-events-auto relative z-[60] flex h-[100dvh] w-full max-w-[430px] flex-col bg-[#111115] text-white"
+                    className="pointer-events-auto relative z-[60] flex h-[100dvh] w-full max-w-[430px] flex-col overflow-hidden bg-[#111115] text-white md:h-[calc(100dvh-2.5rem)] md:max-h-[920px] md:rounded-[28px] md:border md:border-white/10 md:shadow-2xl"
                   >
                     <div className="no-scrollbar flex h-full w-full flex-col overflow-y-auto px-5 pt-[104px] pb-[104px]">
                       <div className="flex shrink-0 items-center justify-between gap-3">
