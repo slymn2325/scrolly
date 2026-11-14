@@ -41,28 +41,66 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     },
   ];
 
-  const categoryRoutes: MetadataRoute.Sitemap = CATEGORY_ROUTE_SLUGS.map((slug) => ({
-    url: `https://scrolly.live/category/${slug}`,
-    lastModified: now,
-    changeFrequency: 'daily',
-    priority: 0.8,
-  }));
+  const categoryRoutes: MetadataRoute.Sitemap = CATEGORY_ROUTE_SLUGS.flatMap((slug) => {
+    const trUrl = `https://scrolly.live/category/${slug}`;
+    const enUrl = `https://scrolly.live/en/category/${slug}`;
+    const alternates = {
+      languages: {
+        tr: trUrl,
+        en: enUrl,
+      },
+    };
+    return [
+      {
+        url: trUrl,
+        lastModified: now,
+        changeFrequency: 'daily',
+        priority: 0.8,
+        alternates,
+      },
+      {
+        url: enUrl,
+        lastModified: now,
+        changeFrequency: 'daily',
+        priority: 0.8,
+        alternates,
+      },
+    ];
+  });
 
   const seenFactUrls = new Set<string>();
   const factRoutes: MetadataRoute.Sitemap = [];
 
   for (const { fact, updatedAt } of entries) {
     const primarySlug = getFactPrimarySlug(fact);
-    const url = `https://scrolly.live/fact/${primarySlug}`;
-    if (seenFactUrls.has(url)) continue;
-    seenFactUrls.add(url);
+    const trUrl = `https://scrolly.live/fact/${primarySlug}`;
+    const enUrl = `https://scrolly.live/en/fact/${primarySlug}`;
+    if (seenFactUrls.has(trUrl)) continue;
+    seenFactUrls.add(trUrl);
 
-    factRoutes.push({
-      url,
-      lastModified: updatedAt,
-      changeFrequency: 'weekly',
-      priority: 0.7,
-    });
+    const alternates = {
+      languages: {
+        tr: trUrl,
+        en: enUrl,
+      },
+    };
+
+    factRoutes.push(
+      {
+        url: trUrl,
+        lastModified: updatedAt,
+        changeFrequency: 'weekly',
+        priority: 0.7,
+        alternates,
+      },
+      {
+        url: enUrl,
+        lastModified: updatedAt,
+        changeFrequency: 'weekly',
+        priority: 0.7,
+        alternates,
+      }
+    );
   }
 
   return [...staticRoutes, ...categoryRoutes, ...factRoutes];

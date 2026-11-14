@@ -228,7 +228,7 @@
         "explanation": "Atmosferi ve hava olayları olmadığı için Ay yüzeyindeki izler milyonlarca yıl bozulmadan kalır."
       },
       "sourceName": "NASA Apollo Archive",
-      "sourceUrl": "https://www.nasa.gov/history/alsj/"
+      "sourceUrl": "https://starchild.gsfc.nasa.gov/docs/StarChild/space_level2/apollo11.html"
     },
     "en": {
       "slug": "footprints-on-the-moon-last-millions-of-years",
@@ -248,10 +248,10 @@
         "explanation": "With no wind or weather on the Moon, surface tracks persist for millions of years."
       },
       "sourceName": "NASA Apollo Archive",
-      "sourceUrl": "https://www.nasa.gov/history/alsj/"
+      "sourceUrl": "https://starchild.gsfc.nasa.gov/docs/StarChild/space_level2/apollo11.html"
     },
     "sourceName": "NASA Apollo Archive",
-    "sourceUrl": "https://www.nasa.gov/history/alsj/"
+    "sourceUrl": "https://starchild.gsfc.nasa.gov/docs/StarChild/space_level2/apollo11.html"
   },
   {
     "id": "space-05",
@@ -346,7 +346,7 @@
         "explanation": "Araya girecek hava veya oksit tabakası olmadığından atomlar doğrudan bağ kurar; buna soğuk kaynak denir."
       },
       "sourceName": "European Space Agency (ESA)",
-      "sourceUrl": "https://www.esa.int/"
+      "sourceUrl": "https://en.wikipedia.org/wiki/Cold_welding"
     },
     "en": {
       "slug": "cold-welding-in-outer-space",
@@ -366,10 +366,10 @@
         "explanation": "Without air or an oxide barrier, metal atoms bond directly on contact in a process called cold welding."
       },
       "sourceName": "European Space Agency (ESA)",
-      "sourceUrl": "https://www.esa.int/"
+      "sourceUrl": "https://en.wikipedia.org/wiki/Cold_welding"
     },
     "sourceName": "European Space Agency (ESA)",
-    "sourceUrl": "https://www.esa.int/"
+    "sourceUrl": "https://en.wikipedia.org/wiki/Cold_welding"
   },
   {
     "id": "space-07",
@@ -396,7 +396,7 @@
         "explanation": "Etil format molekülü ahududuya kendine özgü meyvemsi kokusunu verir."
       },
       "sourceName": "Max Planck Institute for Radio Astronomy",
-      "sourceUrl": "https://www.mpifr-bonn.mpg.de/en"
+      "sourceUrl": "https://en.wikipedia.org/wiki/Ethyl_formate"
     },
     "en": {
       "slug": "center-of-milky-way-contains-raspberry-flavor-molecule",
@@ -416,10 +416,10 @@
         "explanation": "Ethyl formate is a primary ester behind the scent and flavor of raspberries."
       },
       "sourceName": "Max Planck Institute for Radio Astronomy",
-      "sourceUrl": "https://www.mpifr-bonn.mpg.de/en"
+      "sourceUrl": "https://en.wikipedia.org/wiki/Ethyl_formate"
     },
     "sourceName": "Max Planck Institute for Radio Astronomy",
-    "sourceUrl": "https://www.mpifr-bonn.mpg.de/en"
+    "sourceUrl": "https://en.wikipedia.org/wiki/Ethyl_formate"
   },
   {
     "id": "space-08",
@@ -496,7 +496,7 @@
         "explanation": "Mars'taki ince toz tabakası kırmızı ışığı saçarken mavi ışığı Güneş yönünden geçirir."
       },
       "sourceName": "NASA Mars Curiosity Observations",
-      "sourceUrl": "https://science.nasa.gov/mars/"
+      "sourceUrl": "https://science.nasa.gov/image-article/apod-2015-may-12-two-worlds-one-sun/"
     },
     "en": {
       "slug": "sunsets-on-mars-appear-blue",
@@ -516,10 +516,10 @@
         "explanation": "Fine Martian dust lets blue light penetrate forward at sunset while scattering red away."
       },
       "sourceName": "NASA Mars Curiosity Observations",
-      "sourceUrl": "https://science.nasa.gov/mars/"
+      "sourceUrl": "https://science.nasa.gov/image-article/apod-2015-may-12-two-worlds-one-sun/"
     },
     "sourceName": "NASA Mars Curiosity Observations",
-    "sourceUrl": "https://science.nasa.gov/mars/"
+    "sourceUrl": "https://science.nasa.gov/image-article/apod-2015-may-12-two-worlds-one-sun/"
   },
   {
     "id": "space-10",
@@ -546,7 +546,7 @@
         "explanation": "Dünya'dan sesler ve müzikler içeren bakır-altın kaplama disk 'Altın Plak' olarak bilinir."
       },
       "sourceName": "NASA Jet Propulsion Laboratory",
-      "sourceUrl": "https://voyager.jpl.nasa.gov/mission/status/"
+      "sourceUrl": "https://science.nasa.gov/mission/voyager/where-are-voyager-1-and-voyager-2-now/"
     },
     "en": {
       "slug": "voyager-1-signals-from-over-24-billion-km-away",
@@ -566,10 +566,10 @@
         "explanation": "Carl Sagan and his team curated the Golden Record carrying Earth's sounds and greetings."
       },
       "sourceName": "NASA Jet Propulsion Laboratory",
-      "sourceUrl": "https://voyager.jpl.nasa.gov/mission/status/"
+      "sourceUrl": "https://science.nasa.gov/mission/voyager/where-are-voyager-1-and-voyager-2-now/"
     },
     "sourceName": "NASA Jet Propulsion Laboratory",
-    "sourceUrl": "https://voyager.jpl.nasa.gov/mission/status/"
+    "sourceUrl": "https://science.nasa.gov/mission/voyager/where-are-voyager-1-and-voyager-2-now/"
   },
   {
     "id": "nature-01",
@@ -741,7 +741,7 @@
         "correctValue": 400
       },
       "sourceName": "Science (AAAS)",
-      "sourceUrl": "https://www.science.org/doi/10.1126/science.aaf1703"
+      "sourceUrl": "https://pubmed.ncbi.nlm.nih.gov/27516602/"
     },
     "en": {
       "slug": "greenland-shark-eye-lens-radiocarbon-400-years",
@@ -770,10 +770,10 @@
         "correctValue": 400
       },
       "sourceName": "Science (AAAS)",
-      "sourceUrl": "https://www.science.org/doi/10.1126/science.aaf1703"
+      "sourceUrl": "https://pubmed.ncbi.nlm.nih.gov/27516602/"
     },
     "sourceName": "Science (AAAS)",
-    "sourceUrl": "https://www.science.org/doi/10.1126/science.aaf1703"
+    "sourceUrl": "https://pubmed.ncbi.nlm.nih.gov/27516602/"
   },
   {
     "id": "nature-04",
@@ -800,7 +800,7 @@
         "explanation": "Arılar tıpkı çiçek şekillerini tanıdıkları gibi yüz özelliklerinin bütünsel yerleşimini (configural processing) öğrenirler."
       },
       "sourceName": "Journal of Experimental Biology",
-      "sourceUrl": "https://journals.biologists.com/jeb"
+      "sourceUrl": "https://pubmed.ncbi.nlm.nih.gov/16326952/"
     },
     "en": {
       "slug": "honeybees-can-recognize-human-faces",
@@ -820,10 +820,10 @@
         "explanation": "Bees process the spatial arrangement of eyes, nose, and mouth just like flower patterns."
       },
       "sourceName": "Journal of Experimental Biology",
-      "sourceUrl": "https://journals.biologists.com/jeb"
+      "sourceUrl": "https://pubmed.ncbi.nlm.nih.gov/16326952/"
     },
     "sourceName": "Journal of Experimental Biology",
-    "sourceUrl": "https://journals.biologists.com/jeb"
+    "sourceUrl": "https://pubmed.ncbi.nlm.nih.gov/16326952/"
   },
   {
     "id": "nature-05",
@@ -918,7 +918,7 @@
         "explanation": "Ağaç dallarını ve yaprakları hassas biçimde kavrama gereksinimi iki farklı türde benzer parmak izi evrimleştirmiştir."
       },
       "sourceName": "University of Adelaide Anatomy Study",
-      "sourceUrl": "https://www.adelaide.edu.au/"
+      "sourceUrl": "https://www.snopes.com/fact-check/koala-fingerprints-crime-scene/"
     },
     "en": {
       "slug": "koala-fingerprints-nearly-identical-to-humans",
@@ -938,10 +938,10 @@
         "explanation": "Independent adaptation for gripping trees produced nearly identical fingerprint ridges."
       },
       "sourceName": "University of Adelaide Anatomy Study",
-      "sourceUrl": "https://www.adelaide.edu.au/"
+      "sourceUrl": "https://www.snopes.com/fact-check/koala-fingerprints-crime-scene/"
     },
     "sourceName": "University of Adelaide Anatomy Study",
-    "sourceUrl": "https://www.adelaide.edu.au/"
+    "sourceUrl": "https://www.snopes.com/fact-check/koala-fingerprints-crime-scene/"
   },
   {
     "id": "nature-07",
@@ -968,7 +968,7 @@
         "explanation": "Her yunus hayatının başında kendine özgü bir imza ıslığı oluşturur ve bunu isim olarak kullanır."
       },
       "sourceName": "PNAS / University of St Andrews",
-      "sourceUrl": "https://www.pnas.org/doi/10.1073/pnas.1304459110"
+      "sourceUrl": "https://pubmed.ncbi.nlm.nih.gov/23878217/"
     },
     "en": {
       "slug": "dolphins-call-each-other-by-signature-whistles",
@@ -988,10 +988,10 @@
         "explanation": "Each dolphin develops a distinct signature whistle that other dolphins repeat to address them."
       },
       "sourceName": "PNAS / University of St Andrews",
-      "sourceUrl": "https://www.pnas.org/doi/10.1073/pnas.1304459110"
+      "sourceUrl": "https://pubmed.ncbi.nlm.nih.gov/23878217/"
     },
     "sourceName": "PNAS / University of St Andrews",
-    "sourceUrl": "https://www.pnas.org/doi/10.1073/pnas.1304459110"
+    "sourceUrl": "https://pubmed.ncbi.nlm.nih.gov/23878217/"
   },
   {
     "id": "nature-08",
@@ -1068,7 +1068,7 @@
         "explanation": "Armillaria ostoyae mantarının yer altı ağı neredeyse 10 km²'lik tek bir genetik organizmadır."
       },
       "sourceName": "USDA Forest Service",
-      "sourceUrl": "https://www.fs.usda.gov/"
+      "sourceUrl": "https://www.scientificamerican.com/article/strange-but-true-largest-organism-is-fungus/"
     },
     "en": {
       "slug": "worlds-largest-living-organism-is-an-underground-fungus",
@@ -1088,10 +1088,10 @@
         "explanation": "The Armillaria ostoyae fungus spreads underground across nearly 10 square kilometers."
       },
       "sourceName": "USDA Forest Service",
-      "sourceUrl": "https://www.fs.usda.gov/"
+      "sourceUrl": "https://www.scientificamerican.com/article/strange-but-true-largest-organism-is-fungus/"
     },
     "sourceName": "USDA Forest Service",
-    "sourceUrl": "https://www.fs.usda.gov/"
+    "sourceUrl": "https://www.scientificamerican.com/article/strange-but-true-largest-organism-is-fungus/"
   },
   {
     "id": "nature-10",
@@ -1268,7 +1268,7 @@
         "explanation": "Mikroskobik kılcal damarlar eklendiğinde toplam uzunluk yaklaşık 96.000 km'ye (Dünya'nın iki katından fazlasına) ulaşır."
       },
       "sourceName": "British Heart Foundation",
-      "sourceUrl": "https://www.bhf.org.uk/"
+      "sourceUrl": "https://pmc.ncbi.nlm.nih.gov/articles/PMC4355271/"
     },
     "en": {
       "slug": "blood-vessels-circle-earth-twice",
@@ -1288,10 +1288,10 @@
         "explanation": "Driven mostly by microscopic capillaries, human blood vessels total roughly 96,000 km."
       },
       "sourceName": "British Heart Foundation",
-      "sourceUrl": "https://www.bhf.org.uk/"
+      "sourceUrl": "https://pmc.ncbi.nlm.nih.gov/articles/PMC4355271/"
     },
     "sourceName": "British Heart Foundation",
-    "sourceUrl": "https://www.bhf.org.uk/"
+    "sourceUrl": "https://pmc.ncbi.nlm.nih.gov/articles/PMC4355271/"
   },
   {
     "id": "human-04",
@@ -1418,7 +1418,7 @@
         "explanation": "Tüm ökaryot canlılar solunum ve hücre bölünmesi gibi temel hücresel genleri ortak atalardan paylaşır."
       },
       "sourceName": "National Human Genome Research Institute",
-      "sourceUrl": "https://www.genome.gov/"
+      "sourceUrl": "https://www.genome.gov/about-genomics/fact-sheets/Comparative-Genomics-Fact-Sheet"
     },
     "en": {
       "slug": "humans-and-bananas-share-60-percent-core-genes",
@@ -1438,10 +1438,10 @@
         "explanation": "Fundamental genes for energy and cell division are conserved across all complex life."
       },
       "sourceName": "National Human Genome Research Institute",
-      "sourceUrl": "https://www.genome.gov/"
+      "sourceUrl": "https://www.genome.gov/about-genomics/fact-sheets/Comparative-Genomics-Fact-Sheet"
     },
     "sourceName": "National Human Genome Research Institute",
-    "sourceUrl": "https://www.genome.gov/"
+    "sourceUrl": "https://www.genome.gov/about-genomics/fact-sheets/Comparative-Genomics-Fact-Sheet"
   },
   {
     "id": "human-07",
@@ -1468,7 +1468,7 @@
         "explanation": "Dil izi (lingual print) parmak izi gibi genetik ve gelişimsel olarak kişiye özeldir."
       },
       "sourceName": "National Library of Medicine (PubMed)",
-      "sourceUrl": "https://pubmed.ncbi.nlm.nih.gov/"
+      "sourceUrl": "https://pubmed.ncbi.nlm.nih.gov/28123263/"
     },
     "en": {
       "slug": "your-tongue-print-is-as-unique-as-your-fingerprint",
@@ -1488,10 +1488,10 @@
         "explanation": "Like fingerprints, tongue shapes and papillae patterns are unique to every individual."
       },
       "sourceName": "National Library of Medicine (PubMed)",
-      "sourceUrl": "https://pubmed.ncbi.nlm.nih.gov/"
+      "sourceUrl": "https://pubmed.ncbi.nlm.nih.gov/28123263/"
     },
     "sourceName": "National Library of Medicine (PubMed)",
-    "sourceUrl": "https://pubmed.ncbi.nlm.nih.gov/"
+    "sourceUrl": "https://pubmed.ncbi.nlm.nih.gov/28123263/"
   },
   {
     "id": "human-08",
@@ -1518,7 +1518,7 @@
         "explanation": "Dakikada ortalama 70 atışla kalp günde yaklaşık 100.000 kez kan pompalar."
       },
       "sourceName": "American Heart Association",
-      "sourceUrl": "https://www.heart.org/"
+      "sourceUrl": "https://www.nhlbi.nih.gov/health/heart"
     },
     "en": {
       "slug": "your-heart-beats-about-2-5-billion-times-in-a-lifetime",
@@ -1538,10 +1538,10 @@
         "explanation": "At ~70 beats per minute, the heart beats roughly 100,000 times every 24 hours."
       },
       "sourceName": "American Heart Association",
-      "sourceUrl": "https://www.heart.org/"
+      "sourceUrl": "https://www.nhlbi.nih.gov/health/heart"
     },
     "sourceName": "American Heart Association",
-    "sourceUrl": "https://www.heart.org/"
+    "sourceUrl": "https://www.nhlbi.nih.gov/health/heart"
   },
   {
     "id": "human-09",
@@ -1618,7 +1618,7 @@
         "explanation": "Derin uykuda beyin koku sinyallerine yanıt vermez; bu yüzden duman dedektörleri yüksek sesle çalışır."
       },
       "sourceName": "Brown University Sleep Research",
-      "sourceUrl": "https://www.brown.edu/"
+      "sourceUrl": "https://pubmed.ncbi.nlm.nih.gov/15164891/"
     },
     "en": {
       "slug": "humans-cannot-smell-while-fast-asleep",
@@ -1638,10 +1638,10 @@
         "explanation": "Because smell won't reliably wake sleepers, fire safety relies on loud audible alarms."
       },
       "sourceName": "Brown University Sleep Research",
-      "sourceUrl": "https://www.brown.edu/"
+      "sourceUrl": "https://pubmed.ncbi.nlm.nih.gov/15164891/"
     },
     "sourceName": "Brown University Sleep Research",
-    "sourceUrl": "https://www.brown.edu/"
+    "sourceUrl": "https://pubmed.ncbi.nlm.nih.gov/15164891/"
   },
   {
     "id": "history-01",
@@ -1818,7 +1818,7 @@
         "explanation": "Akdeniz'deki Murex (Bolinus) deniz salyangozlarının bezlerinden çıkan salgı mor boyaya dönüştürülüyordu."
       },
       "sourceName": "Metropolitan Museum of Art",
-      "sourceUrl": "https://www.metmuseum.org/"
+      "sourceUrl": "https://en.wikipedia.org/wiki/Tyrian_purple"
     },
     "en": {
       "slug": "ancient-tyrian-purple-came-from-sea-snails",
@@ -1838,10 +1838,10 @@
         "explanation": "Murex sea snails secreted the rare pigment used to dye imperial garments."
       },
       "sourceName": "Metropolitan Museum of Art",
-      "sourceUrl": "https://www.metmuseum.org/"
+      "sourceUrl": "https://en.wikipedia.org/wiki/Tyrian_purple"
     },
     "sourceName": "Metropolitan Museum of Art",
-    "sourceUrl": "https://www.metmuseum.org/"
+    "sourceUrl": "https://en.wikipedia.org/wiki/Tyrian_purple"
   },
   {
     "id": "history-05",
@@ -1868,7 +1868,7 @@
         "explanation": "Wrangel Adası'ndaki izole mamutlar yaklaşık 4.000 yıl öncesine kadar yaşadı."
       },
       "sourceName": "Current Biology / Radiocarbon Study",
-      "sourceUrl": "https://www.cell.com/current-biology/home"
+      "sourceUrl": "https://pubmed.ncbi.nlm.nih.gov/25913407/"
     },
     "en": {
       "slug": "woolly-mammoths-still-lived-when-pyramids-were-built",
@@ -1888,10 +1888,10 @@
         "explanation": "An isolated population on Wrangel Island persisted alongside early Bronze Age civilizations."
       },
       "sourceName": "Current Biology / Radiocarbon Study",
-      "sourceUrl": "https://www.cell.com/current-biology/home"
+      "sourceUrl": "https://pubmed.ncbi.nlm.nih.gov/25913407/"
     },
     "sourceName": "Current Biology / Radiocarbon Study",
-    "sourceUrl": "https://www.cell.com/current-biology/home"
+    "sourceUrl": "https://pubmed.ncbi.nlm.nih.gov/25913407/"
   },
   {
     "id": "history-06",
@@ -1918,7 +1918,7 @@
         "explanation": "'Thermopolium' kelime anlamıyla 'sıcak bir şeylerin satıldığı yer' demektir."
       },
       "sourceName": "Archaeological Park of Pompeii",
-      "sourceUrl": "https://pompeiisites.org/en/"
+      "sourceUrl": "https://pompeiisites.org/en/comunicati/the-ancient-snack-bar-of-regio-v-resurfaces-in-its-entirety-with-scenes-of-still-life-food-residues-animal-bones-and-victims-of-the-eruption/"
     },
     "en": {
       "slug": "ancient-rome-had-street-fast-food-counters",
@@ -1938,10 +1938,10 @@
         "explanation": "Thermopolium literally translates to 'a place where something hot is sold'."
       },
       "sourceName": "Archaeological Park of Pompeii",
-      "sourceUrl": "https://pompeiisites.org/en/"
+      "sourceUrl": "https://pompeiisites.org/en/comunicati/the-ancient-snack-bar-of-regio-v-resurfaces-in-its-entirety-with-scenes-of-still-life-food-residues-animal-bones-and-victims-of-the-eruption/"
     },
     "sourceName": "Archaeological Park of Pompeii",
-    "sourceUrl": "https://pompeiisites.org/en/"
+    "sourceUrl": "https://pompeiisites.org/en/comunicati/the-ancient-snack-bar-of-regio-v-resurfaces-in-its-entirety-with-scenes-of-still-life-food-residues-animal-bones-and-victims-of-the-eruption/"
   },
   {
     "id": "history-07",
@@ -1968,7 +1968,7 @@
         "explanation": "Rüzgar tanrısı Aeolus'un adını taşıyan 'Aeolipile', tarihteki ilk bilinen buhar türbini düzeneğidir."
       },
       "sourceName": "Science Museum London",
-      "sourceUrl": "https://www.sciencemuseum.org.uk/"
+      "sourceUrl": "https://en.wikipedia.org/wiki/Aeolipile"
     },
     "en": {
       "slug": "ancient-alexandria-built-steam-engine-2000-years-ago",
@@ -1988,10 +1988,10 @@
         "explanation": "Named after Aeolus, god of winds, the aeolipile used steam jets to spin a metal sphere."
       },
       "sourceName": "Science Museum London",
-      "sourceUrl": "https://www.sciencemuseum.org.uk/"
+      "sourceUrl": "https://en.wikipedia.org/wiki/Aeolipile"
     },
     "sourceName": "Science Museum London",
-    "sourceUrl": "https://www.sciencemuseum.org.uk/"
+    "sourceUrl": "https://en.wikipedia.org/wiki/Aeolipile"
   },
   {
     "id": "history-08",
@@ -2018,7 +2018,7 @@
         "explanation": "Knocker-upper'lar uzun sopalarla pencerelere vurarak sabah vardiyacılarını uyandırırdı."
       },
       "sourceName": "BBC History Archives",
-      "sourceUrl": "https://www.bbc.co.uk/history"
+      "sourceUrl": "https://www.atlasobscura.com/articles/what-did-people-use-before-alarm-clocks"
     },
     "en": {
       "slug": "human-alarm-clocks-called-knocker-uppers",
@@ -2038,10 +2038,10 @@
         "explanation": "Knocker-uppers used long poles or pea shooters to wake factory workers on time."
       },
       "sourceName": "BBC History Archives",
-      "sourceUrl": "https://www.bbc.co.uk/history"
+      "sourceUrl": "https://www.atlasobscura.com/articles/what-did-people-use-before-alarm-clocks"
     },
     "sourceName": "BBC History Archives",
-    "sourceUrl": "https://www.bbc.co.uk/history"
+    "sourceUrl": "https://www.atlasobscura.com/articles/what-did-people-use-before-alarm-clocks"
   },
   {
     "id": "history-09",
@@ -2068,7 +2068,7 @@
         "explanation": "Aşırı nadir olduğundan ananası yemeden sadece masada sergilemek büyük prestij göstergesiydi."
       },
       "sourceName": "Royal Botanic Gardens, Kew",
-      "sourceUrl": "https://www.kew.org/"
+      "sourceUrl": "https://en.wikipedia.org/wiki/Pineapple"
     },
     "en": {
       "slug": "people-rented-pineapples-as-status-symbols",
@@ -2088,10 +2088,10 @@
         "explanation": "Extreme rarity turned a displayed pineapple into the ultimate luxury status symbol."
       },
       "sourceName": "Royal Botanic Gardens, Kew",
-      "sourceUrl": "https://www.kew.org/"
+      "sourceUrl": "https://en.wikipedia.org/wiki/Pineapple"
     },
     "sourceName": "Royal Botanic Gardens, Kew",
-    "sourceUrl": "https://www.kew.org/"
+    "sourceUrl": "https://en.wikipedia.org/wiki/Pineapple"
   },
   {
     "id": "history-10",
@@ -2118,7 +2118,7 @@
         "explanation": "Günümüze kalan kısmı Topkapı Sarayı'nda korunan harita ceylan derisi üzerine çizilmiştir."
       },
       "sourceName": "UNESCO / Topkapı Palace Archives",
-      "sourceUrl": "https://www.unesco.org/en"
+      "sourceUrl": "https://www.unesco.org/en/memory-world/piri-reis-world-map-1513"
     },
     "en": {
       "slug": "piri-reis-world-map-drawn-in-1513",
@@ -2138,10 +2138,10 @@
         "explanation": "The surviving fragment preserved in Topkapı Palace was drawn on gazelle parchment."
       },
       "sourceName": "UNESCO / Topkapı Palace Archives",
-      "sourceUrl": "https://www.unesco.org/en"
+      "sourceUrl": "https://www.unesco.org/en/memory-world/piri-reis-world-map-1513"
     },
     "sourceName": "UNESCO / Topkapı Palace Archives",
-    "sourceUrl": "https://www.unesco.org/en"
+    "sourceUrl": "https://www.unesco.org/en/memory-world/piri-reis-world-map-1513"
   },
   {
     "id": "science-01",
@@ -2168,7 +2168,7 @@
         "explanation": "Üçlü noktada sıcaklık ve basınç üç fazın aynı anda var olmasını sağlar."
       },
       "sourceName": "NIST Thermodynamics Standards",
-      "sourceUrl": "https://www.nist.gov/"
+      "sourceUrl": "https://www.nist.gov/si-redefinition/kelvin-introduction"
     },
     "en": {
       "slug": "water-can-boil-and-freeze-at-the-same-time",
@@ -2188,10 +2188,10 @@
         "explanation": "At the triple point, pressure and temperature balance all three phases simultaneously."
       },
       "sourceName": "NIST Thermodynamics Standards",
-      "sourceUrl": "https://www.nist.gov/"
+      "sourceUrl": "https://www.nist.gov/si-redefinition/kelvin-introduction"
     },
     "sourceName": "NIST Thermodynamics Standards",
-    "sourceUrl": "https://www.nist.gov/"
+    "sourceUrl": "https://www.nist.gov/si-redefinition/kelvin-introduction"
   },
   {
     "id": "science-02",
@@ -2227,7 +2227,7 @@
         "correctValue": 2
       },
       "sourceName": "APS Physics / Physical Review",
-      "sourceUrl": "https://journals.aps.org/pr/abstract/10.1103/PhysRev.54.843"
+      "sourceUrl": "https://en.wikipedia.org/wiki/Superfluidity"
     },
     "en": {
       "slug": "superfluid-helium-4-climbs-container-walls-zero-viscosity",
@@ -2256,10 +2256,10 @@
         "correctValue": 2
       },
       "sourceName": "APS Physics / Physical Review",
-      "sourceUrl": "https://journals.aps.org/pr/abstract/10.1103/PhysRev.54.843"
+      "sourceUrl": "https://en.wikipedia.org/wiki/Superfluidity"
     },
     "sourceName": "APS Physics / Physical Review",
-    "sourceUrl": "https://journals.aps.org/pr/abstract/10.1103/PhysRev.54.843"
+    "sourceUrl": "https://en.wikipedia.org/wiki/Superfluidity"
   },
   {
     "id": "science-03",
@@ -2404,7 +2404,7 @@
         "explanation": "Geniş alana yayılan mikro damlacıklar yükselen hava akımlarının üzerinde kolayca süzülür."
       },
       "sourceName": "USGS Water Science School",
-      "sourceUrl": "https://www.usgs.gov/special-topics/water-science-school"
+      "sourceUrl": "https://www.usgs.gov/water-science-school/science/how-much-does-a-cloud-weigh"
     },
     "en": {
       "slug": "a-fluffy-cumulus-cloud-weighs-500-tons",
@@ -2424,10 +2424,10 @@
         "explanation": "Microscopic droplets fall so slowly that gentle updrafts keep the cloud suspended."
       },
       "sourceName": "USGS Water Science School",
-      "sourceUrl": "https://www.usgs.gov/special-topics/water-science-school"
+      "sourceUrl": "https://www.usgs.gov/water-science-school/science/how-much-does-a-cloud-weigh"
     },
     "sourceName": "USGS Water Science School",
-    "sourceUrl": "https://www.usgs.gov/special-topics/water-science-school"
+    "sourceUrl": "https://www.usgs.gov/water-science-school/science/how-much-does-a-cloud-weigh"
   },
   {
     "id": "science-06",
@@ -2504,7 +2504,7 @@
         "explanation": "Yüksekte ufuk çizgisi görüşü kesmediği için gökkuşağının alt yarısı da tamamlanır."
       },
       "sourceName": "Met Office UK / Atmospheric Optics",
-      "sourceUrl": "https://www.metoffice.gov.uk/weather/learn-about/weather/optical-effects/rainbows"
+      "sourceUrl": "https://weather.metoffice.gov.uk/learn-about/weather/optical-effects/rainbows"
     },
     "en": {
       "slug": "rainbows-are-actually-full-circles",
@@ -2524,10 +2524,10 @@
         "explanation": "From high altitude, the ground no longer blocks the lower half of the 42-degree light cone."
       },
       "sourceName": "Met Office UK / Atmospheric Optics",
-      "sourceUrl": "https://www.metoffice.gov.uk/weather/learn-about/weather/optical-effects/rainbows"
+      "sourceUrl": "https://weather.metoffice.gov.uk/learn-about/weather/optical-effects/rainbows"
     },
     "sourceName": "Met Office UK / Atmospheric Optics",
-    "sourceUrl": "https://www.metoffice.gov.uk/weather/learn-about/weather/optical-effects/rainbows"
+    "sourceUrl": "https://weather.metoffice.gov.uk/learn-about/weather/optical-effects/rainbows"
   },
   {
     "id": "science-08",
@@ -2654,7 +2654,7 @@
         "explanation": "Cam amorf bir katıdır; ustalar el yapımı camın kalın tarafını çerçevede alta koyardı."
       },
       "sourceName": "Corning Museum of Glass",
-      "sourceUrl": "https://www.cmog.org/"
+      "sourceUrl": "https://math.ucr.edu/home/baez/physics/General/Glass/glass.html"
     },
     "en": {
       "slug": "old-glass-windows-are-not-flowing-downward",
@@ -2674,10 +2674,10 @@
         "explanation": "Glass does not flow visibly at room temperature; historical glaziers put the heavy side down."
       },
       "sourceName": "Corning Museum of Glass",
-      "sourceUrl": "https://www.cmog.org/"
+      "sourceUrl": "https://math.ucr.edu/home/baez/physics/General/Glass/glass.html"
     },
     "sourceName": "Corning Museum of Glass",
-    "sourceUrl": "https://www.cmog.org/"
+    "sourceUrl": "https://math.ucr.edu/home/baez/physics/General/Glass/glass.html"
   },
   {
     "id": "weird-01",
@@ -2704,7 +2704,7 @@
         "explanation": "Kas esnekliğini sağlayan Titin proteininin tam sistematik adı 189.819 harftir."
       },
       "sourceName": "RCSB Protein Data Bank / Guinness",
-      "sourceUrl": "https://www.rcsb.org/"
+      "sourceUrl": "https://pdb101.rcsb.org/motm/185"
     },
     "en": {
       "slug": "longest-chemical-word-takes-three-hours-to-pronounce",
@@ -2724,10 +2724,10 @@
         "explanation": "Titin, the massive muscle elasticity protein, holds the 189,819-letter chemical name record."
       },
       "sourceName": "RCSB Protein Data Bank / Guinness",
-      "sourceUrl": "https://www.rcsb.org/"
+      "sourceUrl": "https://pdb101.rcsb.org/motm/185"
     },
     "sourceName": "RCSB Protein Data Bank / Guinness",
-    "sourceUrl": "https://www.rcsb.org/"
+    "sourceUrl": "https://pdb101.rcsb.org/motm/185"
   },
   {
     "id": "weird-02",
@@ -2822,7 +2822,7 @@
         "explanation": "Bağırsağın sert ve esnek bölümlerindeki ritmik kasılmalar içeriği küp formuna sıkıştırır."
       },
       "sourceName": "National Geographic / Soft Matter Study",
-      "sourceUrl": "https://www.nationalgeographic.com/animals/article/wombat-cube-shaped-poop-explained"
+      "sourceUrl": "https://pubmed.ncbi.nlm.nih.gov/33289747/"
     },
     "en": {
       "slug": "wombats-produce-cube-shaped-poop",
@@ -2842,10 +2842,10 @@
         "explanation": "Varying stiffness along the intestinal walls molds flat faces and sharp edges."
       },
       "sourceName": "National Geographic / Soft Matter Study",
-      "sourceUrl": "https://www.nationalgeographic.com/animals/article/wombat-cube-shaped-poop-explained"
+      "sourceUrl": "https://pubmed.ncbi.nlm.nih.gov/33289747/"
     },
     "sourceName": "National Geographic / Soft Matter Study",
-    "sourceUrl": "https://www.nationalgeographic.com/animals/article/wombat-cube-shaped-poop-explained"
+    "sourceUrl": "https://pubmed.ncbi.nlm.nih.gov/33289747/"
   },
   {
     "id": "weird-04",
@@ -2872,7 +2872,7 @@
         "explanation": "Susami kıyısındaki su altı posta kutusu yaklaşık 10 metre derinliktedir ve düzenli olarak boşaltılır."
       },
       "sourceName": "Guinness World Records / Susami Tourism",
-      "sourceUrl": "https://www.guinnessworldrecords.com/"
+      "sourceUrl": "https://www.guinnessworldrecords.com/world-records/69839-deepest-underwater-postbox"
     },
     "en": {
       "slug": "worlds-deepest-underwater-mailbox-in-japan",
@@ -2892,10 +2892,10 @@
         "explanation": "Divers swim 10 meters down to drop waterproof postcards that staff regularly collect."
       },
       "sourceName": "Guinness World Records / Susami Tourism",
-      "sourceUrl": "https://www.guinnessworldrecords.com/"
+      "sourceUrl": "https://www.guinnessworldrecords.com/world-records/69839-deepest-underwater-postbox"
     },
     "sourceName": "Guinness World Records / Susami Tourism",
-    "sourceUrl": "https://www.guinnessworldrecords.com/"
+    "sourceUrl": "https://www.guinnessworldrecords.com/world-records/69839-deepest-underwater-postbox"
   },
   {
     "id": "weird-05",
@@ -2922,7 +2922,7 @@
         "explanation": "Stubbs vaktinin çoğunu Nagley's General Store adlı yerel markette geçirip turistleri karşılıyordu."
       },
       "sourceName": "BBC News / Alaska Public Media",
-      "sourceUrl": "https://www.bbc.com/news"
+      "sourceUrl": "https://www.smithsonianmag.com/smart-news/beloved-alaskan-cat-mayor-dies-180964188/"
     },
     "en": {
       "slug": "cat-served-as-honorary-mayor-in-alaska",
@@ -2942,10 +2942,10 @@
         "explanation": "Stubbs greeted visitors daily at Nagley's General Store for two decades."
       },
       "sourceName": "BBC News / Alaska Public Media",
-      "sourceUrl": "https://www.bbc.com/news"
+      "sourceUrl": "https://www.smithsonianmag.com/smart-news/beloved-alaskan-cat-mayor-dies-180964188/"
     },
     "sourceName": "BBC News / Alaska Public Media",
-    "sourceUrl": "https://www.bbc.com/news"
+    "sourceUrl": "https://www.smithsonianmag.com/smart-news/beloved-alaskan-cat-mayor-dies-180964188/"
   },
   {
     "id": "weird-06",
@@ -2972,7 +2972,7 @@
         "explanation": "Rusya hem kuzeybatıda Norveç'e hem güneydoğuda Kuzey Kore'ye komşudur."
       },
       "sourceName": "The World Factbook",
-      "sourceUrl": "https://www.cia.gov/the-world-factbook/"
+      "sourceUrl": "https://en.wikipedia.org/wiki/Norway%E2%80%93Russia_border"
     },
     "en": {
       "slug": "only-one-country-separates-norway-and-north-korea",
@@ -2992,10 +2992,10 @@
         "explanation": "Russia spans from Scandinavia to the Korean Peninsula, bordering both nations."
       },
       "sourceName": "The World Factbook",
-      "sourceUrl": "https://www.cia.gov/the-world-factbook/"
+      "sourceUrl": "https://en.wikipedia.org/wiki/Norway%E2%80%93Russia_border"
     },
     "sourceName": "The World Factbook",
-    "sourceUrl": "https://www.cia.gov/the-world-factbook/"
+    "sourceUrl": "https://en.wikipedia.org/wiki/Norway%E2%80%93Russia_border"
   },
   {
     "id": "weird-07",
@@ -3022,7 +3022,7 @@
         "explanation": "Bromelain enzimi proteinleri parçalar; bu yüzden dil yüzeyinde geçici bir karıncalanma yaratır."
       },
       "sourceName": "University of Melbourne Chemistry",
-      "sourceUrl": "https://www.unimelb.edu.au/"
+      "sourceUrl": "https://pubmed.ncbi.nlm.nih.gov/34559534/"
     },
     "en": {
       "slug": "pineapple-enzymes-tingle-your-tongue",
@@ -3042,10 +3042,10 @@
         "explanation": "Bromelain breaks down surface proteins until saliva and stomach acid neutralize it."
       },
       "sourceName": "University of Melbourne Chemistry",
-      "sourceUrl": "https://www.unimelb.edu.au/"
+      "sourceUrl": "https://pubmed.ncbi.nlm.nih.gov/34559534/"
     },
     "sourceName": "University of Melbourne Chemistry",
-    "sourceUrl": "https://www.unimelb.edu.au/"
+    "sourceUrl": "https://pubmed.ncbi.nlm.nih.gov/34559534/"
   },
   {
     "id": "weird-08",
@@ -3072,7 +3072,7 @@
         "explanation": "Akustik testler ördek vaklamasının yankılandığını, ancak ses profili yüzünden fark edilmesinin zor olduğunu göstermiştir."
       },
       "sourceName": "University of Salford Acoustics",
-      "sourceUrl": "https://www.salford.ac.uk/"
+      "sourceUrl": "https://www.cnn.com/2003/TECH/science/09/08/duck.quack/"
     },
     "en": {
       "slug": "a-ducks-quack-actually-does-echo",
@@ -3092,10 +3092,10 @@
         "explanation": "Controlled acoustics tests confirmed quacks echo normally; they just fade smoothly together."
       },
       "sourceName": "University of Salford Acoustics",
-      "sourceUrl": "https://www.salford.ac.uk/"
+      "sourceUrl": "https://www.cnn.com/2003/TECH/science/09/08/duck.quack/"
     },
     "sourceName": "University of Salford Acoustics",
-    "sourceUrl": "https://www.salford.ac.uk/"
+    "sourceUrl": "https://www.cnn.com/2003/TECH/science/09/08/duck.quack/"
   },
   {
     "id": "weird-09",
@@ -3122,7 +3122,7 @@
         "explanation": "ORGAN²/ASLSP adlı eserdeki ASLSP kısaltması 'As Slow As Possible' anlamına gelir."
       },
       "sourceName": "John Cage Organ Foundation Halberstadt",
-      "sourceUrl": "https://aslsp.org/de/home.html"
+      "sourceUrl": "https://www.aslsp.org/das-projekt.html"
     },
     "en": {
       "slug": "639-year-long-organ-concert-in-germany",
@@ -3142,10 +3142,10 @@
         "explanation": "John Cage titled the piece 'ORGAN²/ASLSP (As Slow As Possible)'."
       },
       "sourceName": "John Cage Organ Foundation Halberstadt",
-      "sourceUrl": "https://aslsp.org/de/home.html"
+      "sourceUrl": "https://www.aslsp.org/das-projekt.html"
     },
     "sourceName": "John Cage Organ Foundation Halberstadt",
-    "sourceUrl": "https://aslsp.org/de/home.html"
+    "sourceUrl": "https://www.aslsp.org/das-projekt.html"
   },
   {
     "id": "weird-10",
@@ -3172,7 +3172,7 @@
         "explanation": "Mikroskobik saman parçacıkları gaz kabarcıkları için çekirdek görevi gördüğünden, temiz sağım delikleri azalttı."
       },
       "sourceName": "Agroscope Switzerland Dairy Study",
-      "sourceUrl": "https://www.agroscope.admin.ch/agroscope/en/home.html"
+      "sourceUrl": "https://doi.org/10.1016/j.idairyj.2015.03.001"
     },
     "en": {
       "slug": "tiny-hay-particles-cause-holes-in-swiss-cheese",
@@ -3192,9 +3192,9 @@
         "explanation": "Without microscopic hay particles to seed gas bubbles, fewer eyes formed in the cheese."
       },
       "sourceName": "Agroscope Switzerland Dairy Study",
-      "sourceUrl": "https://www.agroscope.admin.ch/agroscope/en/home.html"
+      "sourceUrl": "https://doi.org/10.1016/j.idairyj.2015.03.001"
     },
     "sourceName": "Agroscope Switzerland Dairy Study",
-    "sourceUrl": "https://www.agroscope.admin.ch/agroscope/en/home.html"
+    "sourceUrl": "https://doi.org/10.1016/j.idairyj.2015.03.001"
   }
 ]

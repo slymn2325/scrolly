@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { ensureSchema, getPool, hasDatabaseUrl } from '@/lib/db';
+import { checkRateLimit, extractClientIp } from '@/lib/rateLimit';
 
 export const dynamic = 'force-dynamic';
 
@@ -24,15 +25,43 @@ interface ContactPayload {
   subject?: unknown;
   message?: unknown;
   lang?: unknown;
+  website?: unknown;
+  company?: unknown;
 }
 
 export async function POST(request: Request) {
+  const clientIp = extractClientIp(request);
+  const limitResult = checkRateLimit(`contact:${clientIp}`, 5, 10 * 60_000);
+  if (!limitResult.allowed) {
+    return NextResponse.json(
+      { ok: false, error: 'Too many contact submissions. Please wait a few minutes.' },
+      {
+        status: 429,
+        headers: { 'Retry-After': String(limitResult.retryAfterSec) },
+      }
+    );
+  }
+
   let body: ContactPayload;
   try {
     body = (await request.json()) as ContactPayload;
   } catch {
     return NextResponse.json(
       { ok: false, error: 'Invalid JSON request body.' },
+      { status: 400 }
+    );
+  }
+
+  const honeypotValue =
+    typeof body.website === 'string'
+      ? body.website.trim()
+      : typeof body.company === 'string'
+        ? body.company.trim()
+        : '';
+
+  if (honeypotValue.length > 0) {
+    return NextResponse.json(
+      { ok: false, error: 'Invalid submission.' },
       { status: 400 }
     );
   }
@@ -85,28 +114,45 @@ export async function POST(request: Request) {
     );
   }
 
-  let persistedMode: 'postgres' | 'acknowledged' = 'acknowledged';
-
-  if (hasDatabaseUrl()) {
-    try {
-      await ensureSchema();
-      const pool = getPool();
-      await pool.query(
-        `INSERT INTO contact_messages (name, email, subject, message, lang)
-         VALUES ($1, $2, $3, $4, $5)`,
-        [name, email, subject, message, lang]
-      );
-      persistedMode = 'postgres';
-    } catch (err) {
-      console.error('[POST /api/contact] Failed to persist contact message:', err);
-      persistedMode = 'acknowledged';
-    }
+  if (!hasDatabaseUrl()) {
+    return NextResponse.json(
+      {
+        ok: false,
+        error:
+          lang === 'en'
+            ? `Database storage is unavailable right now. Please write directly to ${OFFICIAL_CONTACT_EMAIL}.`
+            : `Mesaj veritabanı şu anda kullanılamıyor. Lütfen doğrudan ${OFFICIAL_CONTACT_EMAIL} adresine yazın.`,
+      },
+      { status: 503 }
+    );
   }
 
-  return NextResponse.json({
-    ok: true,
-    recipient: OFFICIAL_CONTACT_EMAIL,
-    mode: persistedMode,
-    subject,
-  });
+  try {
+    await ensureSchema();
+    const pool = getPool();
+    await pool.query(
+      `INSERT INTO contact_messages (name, email, subject, message, lang)
+       VALUES ($1, $2, $3, $4, $5)`,
+      [name, email, subject, message, lang]
+    );
+
+    return NextResponse.json({
+      ok: true,
+      recipient: OFFICIAL_CONTACT_EMAIL,
+      mode: 'postgres',
+      subject,
+    });
+  } catch (err) {
+    console.error('[POST /api/contact] Failed to persist contact message:', err);
+    return NextResponse.json(
+      {
+        ok: false,
+        error:
+          lang === 'en'
+            ? `Message could not be saved right now. Please write directly to ${OFFICIAL_CONTACT_EMAIL}.`
+            : `Mesajınız şu anda kaydedilemedi. Lütfen doğrudan ${OFFICIAL_CONTACT_EMAIL} adresine e-posta gönderin.`,
+      },
+      { status: 500 }
+    );
+  }
 }

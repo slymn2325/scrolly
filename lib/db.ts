@@ -104,9 +104,13 @@ export function getPool(): Pool {
   }
 
   if (!global.__scrollyPgPool) {
+    const sslConfig = process.env.DATABASE_CA_CERT
+      ? { rejectUnauthorized: true, ca: process.env.DATABASE_CA_CERT }
+      : { rejectUnauthorized: false };
+
     global.__scrollyPgPool = new Pool({
       connectionString: process.env.DATABASE_URL,
-      ssl: { rejectUnauthorized: false },
+      ssl: sslConfig,
       max: 10,
       idleTimeoutMillis: 30000,
     });
@@ -250,6 +254,16 @@ export async function ensureSchema(): Promise<void> {
           message TEXT NOT NULL,
           lang TEXT DEFAULT 'tr',
           created_at TIMESTAMPTZ DEFAULT NOW()
+        );
+      `);
+
+      await pool.query(`
+        CREATE TABLE IF NOT EXISTS fact_likes (
+          id BIGSERIAL PRIMARY KEY,
+          fact_slug TEXT NOT NULL,
+          device_id TEXT NOT NULL,
+          created_at TIMESTAMPTZ DEFAULT NOW(),
+          UNIQUE (fact_slug, device_id)
         );
       `);
 

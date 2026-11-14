@@ -43,6 +43,7 @@ export default function ContactInteractiveSection({ lang }: ContactInteractiveSe
   const [email, setEmail] = useState('');
   const [subject, setSubject] = useState<string>(subjects[0]);
   const [message, setMessage] = useState('');
+  const [website, setWebsite] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [submittedInfo, setSubmittedInfo] = useState<{
@@ -131,6 +132,7 @@ export default function ContactInteractiveSection({ lang }: ContactInteractiveSe
           subject: activeSubject,
           message: trimmedMessage,
           lang,
+          website,
         }),
       });
 
@@ -292,6 +294,16 @@ export default function ContactInteractiveSection({ lang }: ContactInteractiveSe
         )}
 
         <form onSubmit={handleSubmit} data-testid="contact-form" className="space-y-4">
+          <input
+            type="text"
+            name="website"
+            value={website}
+            onChange={(e) => setWebsite(e.target.value)}
+            tabIndex={-1}
+            autoComplete="off"
+            aria-hidden="true"
+            className="sr-only"
+          />
           <div className="grid gap-4 sm:grid-cols-2">
             <label className="block space-y-1.5">
               <span className="text-xs font-extrabold text-ink/85 dark:text-violet-100">

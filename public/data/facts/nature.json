@@ -169,7 +169,7 @@
         "correctValue": 400
       },
       "sourceName": "Science (AAAS)",
-      "sourceUrl": "https://www.science.org/doi/10.1126/science.aaf1703"
+      "sourceUrl": "https://pubmed.ncbi.nlm.nih.gov/27516602/"
     },
     "en": {
       "slug": "greenland-shark-eye-lens-radiocarbon-400-years",
@@ -198,10 +198,10 @@
         "correctValue": 400
       },
       "sourceName": "Science (AAAS)",
-      "sourceUrl": "https://www.science.org/doi/10.1126/science.aaf1703"
+      "sourceUrl": "https://pubmed.ncbi.nlm.nih.gov/27516602/"
     },
     "sourceName": "Science (AAAS)",
-    "sourceUrl": "https://www.science.org/doi/10.1126/science.aaf1703"
+    "sourceUrl": "https://pubmed.ncbi.nlm.nih.gov/27516602/"
   },
   {
     "id": "nature-04",
@@ -228,7 +228,7 @@
         "explanation": "Arılar tıpkı çiçek şekillerini tanıdıkları gibi yüz özelliklerinin bütünsel yerleşimini (configural processing) öğrenirler."
       },
       "sourceName": "Journal of Experimental Biology",
-      "sourceUrl": "https://journals.biologists.com/jeb"
+      "sourceUrl": "https://pubmed.ncbi.nlm.nih.gov/16326952/"
     },
     "en": {
       "slug": "honeybees-can-recognize-human-faces",
@@ -248,10 +248,10 @@
         "explanation": "Bees process the spatial arrangement of eyes, nose, and mouth just like flower patterns."
       },
       "sourceName": "Journal of Experimental Biology",
-      "sourceUrl": "https://journals.biologists.com/jeb"
+      "sourceUrl": "https://pubmed.ncbi.nlm.nih.gov/16326952/"
     },
     "sourceName": "Journal of Experimental Biology",
-    "sourceUrl": "https://journals.biologists.com/jeb"
+    "sourceUrl": "https://pubmed.ncbi.nlm.nih.gov/16326952/"
   },
   {
     "id": "nature-05",
@@ -346,7 +346,7 @@
         "explanation": "Ağaç dallarını ve yaprakları hassas biçimde kavrama gereksinimi iki farklı türde benzer parmak izi evrimleştirmiştir."
       },
       "sourceName": "University of Adelaide Anatomy Study",
-      "sourceUrl": "https://www.adelaide.edu.au/"
+      "sourceUrl": "https://www.snopes.com/fact-check/koala-fingerprints-crime-scene/"
     },
     "en": {
       "slug": "koala-fingerprints-nearly-identical-to-humans",
@@ -366,10 +366,10 @@
         "explanation": "Independent adaptation for gripping trees produced nearly identical fingerprint ridges."
       },
       "sourceName": "University of Adelaide Anatomy Study",
-      "sourceUrl": "https://www.adelaide.edu.au/"
+      "sourceUrl": "https://www.snopes.com/fact-check/koala-fingerprints-crime-scene/"
     },
     "sourceName": "University of Adelaide Anatomy Study",
-    "sourceUrl": "https://www.adelaide.edu.au/"
+    "sourceUrl": "https://www.snopes.com/fact-check/koala-fingerprints-crime-scene/"
   },
   {
     "id": "nature-07",
@@ -396,7 +396,7 @@
         "explanation": "Her yunus hayatının başında kendine özgü bir imza ıslığı oluşturur ve bunu isim olarak kullanır."
       },
       "sourceName": "PNAS / University of St Andrews",
-      "sourceUrl": "https://www.pnas.org/doi/10.1073/pnas.1304459110"
+      "sourceUrl": "https://pubmed.ncbi.nlm.nih.gov/23878217/"
     },
     "en": {
       "slug": "dolphins-call-each-other-by-signature-whistles",
@@ -416,10 +416,10 @@
         "explanation": "Each dolphin develops a distinct signature whistle that other dolphins repeat to address them."
       },
       "sourceName": "PNAS / University of St Andrews",
-      "sourceUrl": "https://www.pnas.org/doi/10.1073/pnas.1304459110"
+      "sourceUrl": "https://pubmed.ncbi.nlm.nih.gov/23878217/"
     },
     "sourceName": "PNAS / University of St Andrews",
-    "sourceUrl": "https://www.pnas.org/doi/10.1073/pnas.1304459110"
+    "sourceUrl": "https://pubmed.ncbi.nlm.nih.gov/23878217/"
   },
   {
     "id": "nature-08",
@@ -496,7 +496,7 @@
         "explanation": "Armillaria ostoyae mantarının yer altı ağı neredeyse 10 km²'lik tek bir genetik organizmadır."
       },
       "sourceName": "USDA Forest Service",
-      "sourceUrl": "https://www.fs.usda.gov/"
+      "sourceUrl": "https://www.scientificamerican.com/article/strange-but-true-largest-organism-is-fungus/"
     },
     "en": {
       "slug": "worlds-largest-living-organism-is-an-underground-fungus",
@@ -516,10 +516,10 @@
         "explanation": "The Armillaria ostoyae fungus spreads underground across nearly 10 square kilometers."
       },
       "sourceName": "USDA Forest Service",
-      "sourceUrl": "https://www.fs.usda.gov/"
+      "sourceUrl": "https://www.scientificamerican.com/article/strange-but-true-largest-organism-is-fungus/"
     },
     "sourceName": "USDA Forest Service",
-    "sourceUrl": "https://www.fs.usda.gov/"
+    "sourceUrl": "https://www.scientificamerican.com/article/strange-but-true-largest-organism-is-fungus/"
   },
   {
     "id": "nature-10",

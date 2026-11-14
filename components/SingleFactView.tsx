@@ -81,6 +81,10 @@ export default function SingleFactView({
   }, [initialLang, primarySlug]);
 
   useEffect(() => {
+    document.documentElement.lang = lang;
+  }, [lang]);
+
+  useEffect(() => {
     const state = loadUserMemory();
     setSoundEnabled(state.soundEnabled);
     setIsFavorite(state.favoriteIds.includes(fact.id));

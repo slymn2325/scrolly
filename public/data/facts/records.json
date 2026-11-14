@@ -24,7 +24,7 @@
         "explanation": "Kas esnekliğini sağlayan Titin proteininin tam sistematik adı 189.819 harftir."
       },
       "sourceName": "RCSB Protein Data Bank / Guinness",
-      "sourceUrl": "https://www.rcsb.org/"
+      "sourceUrl": "https://pdb101.rcsb.org/motm/185"
     },
     "en": {
       "slug": "longest-chemical-word-takes-three-hours-to-pronounce",
@@ -44,10 +44,10 @@
         "explanation": "Titin, the massive muscle elasticity protein, holds the 189,819-letter chemical name record."
       },
       "sourceName": "RCSB Protein Data Bank / Guinness",
-      "sourceUrl": "https://www.rcsb.org/"
+      "sourceUrl": "https://pdb101.rcsb.org/motm/185"
     },
     "sourceName": "RCSB Protein Data Bank / Guinness",
-    "sourceUrl": "https://www.rcsb.org/"
+    "sourceUrl": "https://pdb101.rcsb.org/motm/185"
   },
   {
     "id": "weird-02",
@@ -142,7 +142,7 @@
         "explanation": "Bağırsağın sert ve esnek bölümlerindeki ritmik kasılmalar içeriği küp formuna sıkıştırır."
       },
       "sourceName": "National Geographic / Soft Matter Study",
-      "sourceUrl": "https://www.nationalgeographic.com/animals/article/wombat-cube-shaped-poop-explained"
+      "sourceUrl": "https://pubmed.ncbi.nlm.nih.gov/33289747/"
     },
     "en": {
       "slug": "wombats-produce-cube-shaped-poop",
@@ -162,10 +162,10 @@
         "explanation": "Varying stiffness along the intestinal walls molds flat faces and sharp edges."
       },
       "sourceName": "National Geographic / Soft Matter Study",
-      "sourceUrl": "https://www.nationalgeographic.com/animals/article/wombat-cube-shaped-poop-explained"
+      "sourceUrl": "https://pubmed.ncbi.nlm.nih.gov/33289747/"
     },
     "sourceName": "National Geographic / Soft Matter Study",
-    "sourceUrl": "https://www.nationalgeographic.com/animals/article/wombat-cube-shaped-poop-explained"
+    "sourceUrl": "https://pubmed.ncbi.nlm.nih.gov/33289747/"
   },
   {
     "id": "weird-04",
@@ -192,7 +192,7 @@
         "explanation": "Susami kıyısındaki su altı posta kutusu yaklaşık 10 metre derinliktedir ve düzenli olarak boşaltılır."
       },
       "sourceName": "Guinness World Records / Susami Tourism",
-      "sourceUrl": "https://www.guinnessworldrecords.com/"
+      "sourceUrl": "https://www.guinnessworldrecords.com/world-records/69839-deepest-underwater-postbox"
     },
     "en": {
       "slug": "worlds-deepest-underwater-mailbox-in-japan",
@@ -212,10 +212,10 @@
         "explanation": "Divers swim 10 meters down to drop waterproof postcards that staff regularly collect."
       },
       "sourceName": "Guinness World Records / Susami Tourism",
-      "sourceUrl": "https://www.guinnessworldrecords.com/"
+      "sourceUrl": "https://www.guinnessworldrecords.com/world-records/69839-deepest-underwater-postbox"
     },
     "sourceName": "Guinness World Records / Susami Tourism",
-    "sourceUrl": "https://www.guinnessworldrecords.com/"
+    "sourceUrl": "https://www.guinnessworldrecords.com/world-records/69839-deepest-underwater-postbox"
   },
   {
     "id": "weird-05",
@@ -242,7 +242,7 @@
         "explanation": "Stubbs vaktinin çoğunu Nagley's General Store adlı yerel markette geçirip turistleri karşılıyordu."
       },
       "sourceName": "BBC News / Alaska Public Media",
-      "sourceUrl": "https://www.bbc.com/news"
+      "sourceUrl": "https://www.smithsonianmag.com/smart-news/beloved-alaskan-cat-mayor-dies-180964188/"
     },
     "en": {
       "slug": "cat-served-as-honorary-mayor-in-alaska",
@@ -262,10 +262,10 @@
         "explanation": "Stubbs greeted visitors daily at Nagley's General Store for two decades."
       },
       "sourceName": "BBC News / Alaska Public Media",
-      "sourceUrl": "https://www.bbc.com/news"
+      "sourceUrl": "https://www.smithsonianmag.com/smart-news/beloved-alaskan-cat-mayor-dies-180964188/"
     },
     "sourceName": "BBC News / Alaska Public Media",
-    "sourceUrl": "https://www.bbc.com/news"
+    "sourceUrl": "https://www.smithsonianmag.com/smart-news/beloved-alaskan-cat-mayor-dies-180964188/"
   },
   {
     "id": "weird-06",
@@ -292,7 +292,7 @@
         "explanation": "Rusya hem kuzeybatıda Norveç'e hem güneydoğuda Kuzey Kore'ye komşudur."
       },
       "sourceName": "The World Factbook",
-      "sourceUrl": "https://www.cia.gov/the-world-factbook/"
+      "sourceUrl": "https://en.wikipedia.org/wiki/Norway%E2%80%93Russia_border"
     },
     "en": {
       "slug": "only-one-country-separates-norway-and-north-korea",
@@ -312,10 +312,10 @@
         "explanation": "Russia spans from Scandinavia to the Korean Peninsula, bordering both nations."
       },
       "sourceName": "The World Factbook",
-      "sourceUrl": "https://www.cia.gov/the-world-factbook/"
+      "sourceUrl": "https://en.wikipedia.org/wiki/Norway%E2%80%93Russia_border"
     },
     "sourceName": "The World Factbook",
-    "sourceUrl": "https://www.cia.gov/the-world-factbook/"
+    "sourceUrl": "https://en.wikipedia.org/wiki/Norway%E2%80%93Russia_border"
   },
   {
     "id": "weird-07",
@@ -342,7 +342,7 @@
         "explanation": "Bromelain enzimi proteinleri parçalar; bu yüzden dil yüzeyinde geçici bir karıncalanma yaratır."
       },
       "sourceName": "University of Melbourne Chemistry",
-      "sourceUrl": "https://www.unimelb.edu.au/"
+      "sourceUrl": "https://pubmed.ncbi.nlm.nih.gov/34559534/"
     },
     "en": {
       "slug": "pineapple-enzymes-tingle-your-tongue",
@@ -362,10 +362,10 @@
         "explanation": "Bromelain breaks down surface proteins until saliva and stomach acid neutralize it."
       },
       "sourceName": "University of Melbourne Chemistry",
-      "sourceUrl": "https://www.unimelb.edu.au/"
+      "sourceUrl": "https://pubmed.ncbi.nlm.nih.gov/34559534/"
     },
     "sourceName": "University of Melbourne Chemistry",
-    "sourceUrl": "https://www.unimelb.edu.au/"
+    "sourceUrl": "https://pubmed.ncbi.nlm.nih.gov/34559534/"
   },
   {
     "id": "weird-08",
@@ -392,7 +392,7 @@
         "explanation": "Akustik testler ördek vaklamasının yankılandığını, ancak ses profili yüzünden fark edilmesinin zor olduğunu göstermiştir."
       },
       "sourceName": "University of Salford Acoustics",
-      "sourceUrl": "https://www.salford.ac.uk/"
+      "sourceUrl": "https://www.cnn.com/2003/TECH/science/09/08/duck.quack/"
     },
     "en": {
       "slug": "a-ducks-quack-actually-does-echo",
@@ -412,10 +412,10 @@
         "explanation": "Controlled acoustics tests confirmed quacks echo normally; they just fade smoothly together."
       },
       "sourceName": "University of Salford Acoustics",
-      "sourceUrl": "https://www.salford.ac.uk/"
+      "sourceUrl": "https://www.cnn.com/2003/TECH/science/09/08/duck.quack/"
     },
     "sourceName": "University of Salford Acoustics",
-    "sourceUrl": "https://www.salford.ac.uk/"
+    "sourceUrl": "https://www.cnn.com/2003/TECH/science/09/08/duck.quack/"
   },
   {
     "id": "weird-09",
@@ -442,7 +442,7 @@
         "explanation": "ORGAN²/ASLSP adlı eserdeki ASLSP kısaltması 'As Slow As Possible' anlamına gelir."
       },
       "sourceName": "John Cage Organ Foundation Halberstadt",
-      "sourceUrl": "https://aslsp.org/de/home.html"
+      "sourceUrl": "https://www.aslsp.org/das-projekt.html"
     },
     "en": {
       "slug": "639-year-long-organ-concert-in-germany",
@@ -462,10 +462,10 @@
         "explanation": "John Cage titled the piece 'ORGAN²/ASLSP (As Slow As Possible)'."
       },
       "sourceName": "John Cage Organ Foundation Halberstadt",
-      "sourceUrl": "https://aslsp.org/de/home.html"
+      "sourceUrl": "https://www.aslsp.org/das-projekt.html"
     },
     "sourceName": "John Cage Organ Foundation Halberstadt",
-    "sourceUrl": "https://aslsp.org/de/home.html"
+    "sourceUrl": "https://www.aslsp.org/das-projekt.html"
   },
   {
     "id": "weird-10",
@@ -492,7 +492,7 @@
         "explanation": "Mikroskobik saman parçacıkları gaz kabarcıkları için çekirdek görevi gördüğünden, temiz sağım delikleri azalttı."
       },
       "sourceName": "Agroscope Switzerland Dairy Study",
-      "sourceUrl": "https://www.agroscope.admin.ch/agroscope/en/home.html"
+      "sourceUrl": "https://doi.org/10.1016/j.idairyj.2015.03.001"
     },
     "en": {
       "slug": "tiny-hay-particles-cause-holes-in-swiss-cheese",
@@ -512,9 +512,9 @@
         "explanation": "Without microscopic hay particles to seed gas bubbles, fewer eyes formed in the cheese."
       },
       "sourceName": "Agroscope Switzerland Dairy Study",
-      "sourceUrl": "https://www.agroscope.admin.ch/agroscope/en/home.html"
+      "sourceUrl": "https://doi.org/10.1016/j.idairyj.2015.03.001"
     },
     "sourceName": "Agroscope Switzerland Dairy Study",
-    "sourceUrl": "https://www.agroscope.admin.ch/agroscope/en/home.html"
+    "sourceUrl": "https://doi.org/10.1016/j.idairyj.2015.03.001"
   }
 ]

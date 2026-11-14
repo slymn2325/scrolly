@@ -24,7 +24,7 @@
         "explanation": "Üçlü noktada sıcaklık ve basınç üç fazın aynı anda var olmasını sağlar."
       },
       "sourceName": "NIST Thermodynamics Standards",
-      "sourceUrl": "https://www.nist.gov/"
+      "sourceUrl": "https://www.nist.gov/si-redefinition/kelvin-introduction"
     },
     "en": {
       "slug": "water-can-boil-and-freeze-at-the-same-time",
@@ -44,10 +44,10 @@
         "explanation": "At the triple point, pressure and temperature balance all three phases simultaneously."
       },
       "sourceName": "NIST Thermodynamics Standards",
-      "sourceUrl": "https://www.nist.gov/"
+      "sourceUrl": "https://www.nist.gov/si-redefinition/kelvin-introduction"
     },
     "sourceName": "NIST Thermodynamics Standards",
-    "sourceUrl": "https://www.nist.gov/"
+    "sourceUrl": "https://www.nist.gov/si-redefinition/kelvin-introduction"
   },
   {
     "id": "science-02",
@@ -83,7 +83,7 @@
         "correctValue": 2
       },
       "sourceName": "APS Physics / Physical Review",
-      "sourceUrl": "https://journals.aps.org/pr/abstract/10.1103/PhysRev.54.843"
+      "sourceUrl": "https://en.wikipedia.org/wiki/Superfluidity"
     },
     "en": {
       "slug": "superfluid-helium-4-climbs-container-walls-zero-viscosity",
@@ -112,10 +112,10 @@
         "correctValue": 2
       },
       "sourceName": "APS Physics / Physical Review",
-      "sourceUrl": "https://journals.aps.org/pr/abstract/10.1103/PhysRev.54.843"
+      "sourceUrl": "https://en.wikipedia.org/wiki/Superfluidity"
     },
     "sourceName": "APS Physics / Physical Review",
-    "sourceUrl": "https://journals.aps.org/pr/abstract/10.1103/PhysRev.54.843"
+    "sourceUrl": "https://en.wikipedia.org/wiki/Superfluidity"
   },
   {
     "id": "science-03",
@@ -260,7 +260,7 @@
         "explanation": "Geniş alana yayılan mikro damlacıklar yükselen hava akımlarının üzerinde kolayca süzülür."
       },
       "sourceName": "USGS Water Science School",
-      "sourceUrl": "https://www.usgs.gov/special-topics/water-science-school"
+      "sourceUrl": "https://www.usgs.gov/water-science-school/science/how-much-does-a-cloud-weigh"
     },
     "en": {
       "slug": "a-fluffy-cumulus-cloud-weighs-500-tons",
@@ -280,10 +280,10 @@
         "explanation": "Microscopic droplets fall so slowly that gentle updrafts keep the cloud suspended."
       },
       "sourceName": "USGS Water Science School",
-      "sourceUrl": "https://www.usgs.gov/special-topics/water-science-school"
+      "sourceUrl": "https://www.usgs.gov/water-science-school/science/how-much-does-a-cloud-weigh"
     },
     "sourceName": "USGS Water Science School",
-    "sourceUrl": "https://www.usgs.gov/special-topics/water-science-school"
+    "sourceUrl": "https://www.usgs.gov/water-science-school/science/how-much-does-a-cloud-weigh"
   },
   {
     "id": "science-06",
@@ -360,7 +360,7 @@
         "explanation": "Yüksekte ufuk çizgisi görüşü kesmediği için gökkuşağının alt yarısı da tamamlanır."
       },
       "sourceName": "Met Office UK / Atmospheric Optics",
-      "sourceUrl": "https://www.metoffice.gov.uk/weather/learn-about/weather/optical-effects/rainbows"
+      "sourceUrl": "https://weather.metoffice.gov.uk/learn-about/weather/optical-effects/rainbows"
     },
     "en": {
       "slug": "rainbows-are-actually-full-circles",
@@ -380,10 +380,10 @@
         "explanation": "From high altitude, the ground no longer blocks the lower half of the 42-degree light cone."
       },
       "sourceName": "Met Office UK / Atmospheric Optics",
-      "sourceUrl": "https://www.metoffice.gov.uk/weather/learn-about/weather/optical-effects/rainbows"
+      "sourceUrl": "https://weather.metoffice.gov.uk/learn-about/weather/optical-effects/rainbows"
     },
     "sourceName": "Met Office UK / Atmospheric Optics",
-    "sourceUrl": "https://www.metoffice.gov.uk/weather/learn-about/weather/optical-effects/rainbows"
+    "sourceUrl": "https://weather.metoffice.gov.uk/learn-about/weather/optical-effects/rainbows"
   },
   {
     "id": "science-08",
@@ -510,7 +510,7 @@
         "explanation": "Cam amorf bir katıdır; ustalar el yapımı camın kalın tarafını çerçevede alta koyardı."
       },
       "sourceName": "Corning Museum of Glass",
-      "sourceUrl": "https://www.cmog.org/"
+      "sourceUrl": "https://math.ucr.edu/home/baez/physics/General/Glass/glass.html"
     },
     "en": {
       "slug": "old-glass-windows-are-not-flowing-downward",
@@ -530,9 +530,9 @@
         "explanation": "Glass does not flow visibly at room temperature; historical glaziers put the heavy side down."
       },
       "sourceName": "Corning Museum of Glass",
-      "sourceUrl": "https://www.cmog.org/"
+      "sourceUrl": "https://math.ucr.edu/home/baez/physics/General/Glass/glass.html"
     },
     "sourceName": "Corning Museum of Glass",
-    "sourceUrl": "https://www.cmog.org/"
+    "sourceUrl": "https://math.ucr.edu/home/baez/physics/General/Glass/glass.html"
   }
 ]

@@ -310,6 +310,7 @@ export const translations = {
     cookieText:
       'Okuduğun kartları tekrar göstermemek, seri puanını korumak ve çevrimdışı hafızanı saklamak için çerez ve yerel depolama kullanıyoruz.',
     cookieAccept: 'Anladım',
+    cookieDecline: 'Reddet',
     // Profile Drawer
     drawerTitle: 'Keşif Pasaportun',
     drawerDiscovered: 'Keşfedilen',
@@ -544,6 +545,7 @@ export const translations = {
     cookieText:
       'We use cookies and offline browser memory to hide read cards, keep your streak, and personalize your deck.',
     cookieAccept: 'Got it',
+    cookieDecline: 'Decline',
     // Profile Drawer
     drawerTitle: 'Discovery Passport',
     drawerDiscovered: 'Discovered',

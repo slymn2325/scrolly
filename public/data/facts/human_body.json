@@ -124,7 +124,7 @@
         "explanation": "Mikroskobik kılcal damarlar eklendiğinde toplam uzunluk yaklaşık 96.000 km'ye (Dünya'nın iki katından fazlasına) ulaşır."
       },
       "sourceName": "British Heart Foundation",
-      "sourceUrl": "https://www.bhf.org.uk/"
+      "sourceUrl": "https://pmc.ncbi.nlm.nih.gov/articles/PMC4355271/"
     },
     "en": {
       "slug": "blood-vessels-circle-earth-twice",
@@ -144,10 +144,10 @@
         "explanation": "Driven mostly by microscopic capillaries, human blood vessels total roughly 96,000 km."
       },
       "sourceName": "British Heart Foundation",
-      "sourceUrl": "https://www.bhf.org.uk/"
+      "sourceUrl": "https://pmc.ncbi.nlm.nih.gov/articles/PMC4355271/"
     },
     "sourceName": "British Heart Foundation",
-    "sourceUrl": "https://www.bhf.org.uk/"
+    "sourceUrl": "https://pmc.ncbi.nlm.nih.gov/articles/PMC4355271/"
   },
   {
     "id": "human-04",
@@ -274,7 +274,7 @@
         "explanation": "Tüm ökaryot canlılar solunum ve hücre bölünmesi gibi temel hücresel genleri ortak atalardan paylaşır."
       },
       "sourceName": "National Human Genome Research Institute",
-      "sourceUrl": "https://www.genome.gov/"
+      "sourceUrl": "https://www.genome.gov/about-genomics/fact-sheets/Comparative-Genomics-Fact-Sheet"
     },
     "en": {
       "slug": "humans-and-bananas-share-60-percent-core-genes",
@@ -294,10 +294,10 @@
         "explanation": "Fundamental genes for energy and cell division are conserved across all complex life."
       },
       "sourceName": "National Human Genome Research Institute",
-      "sourceUrl": "https://www.genome.gov/"
+      "sourceUrl": "https://www.genome.gov/about-genomics/fact-sheets/Comparative-Genomics-Fact-Sheet"
     },
     "sourceName": "National Human Genome Research Institute",
-    "sourceUrl": "https://www.genome.gov/"
+    "sourceUrl": "https://www.genome.gov/about-genomics/fact-sheets/Comparative-Genomics-Fact-Sheet"
   },
   {
     "id": "human-07",
@@ -324,7 +324,7 @@
         "explanation": "Dil izi (lingual print) parmak izi gibi genetik ve gelişimsel olarak kişiye özeldir."
       },
       "sourceName": "National Library of Medicine (PubMed)",
-      "sourceUrl": "https://pubmed.ncbi.nlm.nih.gov/"
+      "sourceUrl": "https://pubmed.ncbi.nlm.nih.gov/28123263/"
     },
     "en": {
       "slug": "your-tongue-print-is-as-unique-as-your-fingerprint",
@@ -344,10 +344,10 @@
         "explanation": "Like fingerprints, tongue shapes and papillae patterns are unique to every individual."
       },
       "sourceName": "National Library of Medicine (PubMed)",
-      "sourceUrl": "https://pubmed.ncbi.nlm.nih.gov/"
+      "sourceUrl": "https://pubmed.ncbi.nlm.nih.gov/28123263/"
     },
     "sourceName": "National Library of Medicine (PubMed)",
-    "sourceUrl": "https://pubmed.ncbi.nlm.nih.gov/"
+    "sourceUrl": "https://pubmed.ncbi.nlm.nih.gov/28123263/"
   },
   {
     "id": "human-08",
@@ -374,7 +374,7 @@
         "explanation": "Dakikada ortalama 70 atışla kalp günde yaklaşık 100.000 kez kan pompalar."
       },
       "sourceName": "American Heart Association",
-      "sourceUrl": "https://www.heart.org/"
+      "sourceUrl": "https://www.nhlbi.nih.gov/health/heart"
     },
     "en": {
       "slug": "your-heart-beats-about-2-5-billion-times-in-a-lifetime",
@@ -394,10 +394,10 @@
         "explanation": "At ~70 beats per minute, the heart beats roughly 100,000 times every 24 hours."
       },
       "sourceName": "American Heart Association",
-      "sourceUrl": "https://www.heart.org/"
+      "sourceUrl": "https://www.nhlbi.nih.gov/health/heart"
     },
     "sourceName": "American Heart Association",
-    "sourceUrl": "https://www.heart.org/"
+    "sourceUrl": "https://www.nhlbi.nih.gov/health/heart"
   },
   {
     "id": "human-09",
@@ -474,7 +474,7 @@
         "explanation": "Derin uykuda beyin koku sinyallerine yanıt vermez; bu yüzden duman dedektörleri yüksek sesle çalışır."
       },
       "sourceName": "Brown University Sleep Research",
-      "sourceUrl": "https://www.brown.edu/"
+      "sourceUrl": "https://pubmed.ncbi.nlm.nih.gov/15164891/"
     },
     "en": {
       "slug": "humans-cannot-smell-while-fast-asleep",
@@ -494,9 +494,9 @@
         "explanation": "Because smell won't reliably wake sleepers, fire safety relies on loud audible alarms."
       },
       "sourceName": "Brown University Sleep Research",
-      "sourceUrl": "https://www.brown.edu/"
+      "sourceUrl": "https://pubmed.ncbi.nlm.nih.gov/15164891/"
     },
     "sourceName": "Brown University Sleep Research",
-    "sourceUrl": "https://www.brown.edu/"
+    "sourceUrl": "https://pubmed.ncbi.nlm.nih.gov/15164891/"
   }
 ]

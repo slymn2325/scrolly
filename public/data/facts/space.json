@@ -228,7 +228,7 @@
         "explanation": "Atmosferi ve hava olayları olmadığı için Ay yüzeyindeki izler milyonlarca yıl bozulmadan kalır."
       },
       "sourceName": "NASA Apollo Archive",
-      "sourceUrl": "https://www.nasa.gov/history/alsj/"
+      "sourceUrl": "https://starchild.gsfc.nasa.gov/docs/StarChild/space_level2/apollo11.html"
     },
     "en": {
       "slug": "footprints-on-the-moon-last-millions-of-years",
@@ -248,10 +248,10 @@
         "explanation": "With no wind or weather on the Moon, surface tracks persist for millions of years."
       },
       "sourceName": "NASA Apollo Archive",
-      "sourceUrl": "https://www.nasa.gov/history/alsj/"
+      "sourceUrl": "https://starchild.gsfc.nasa.gov/docs/StarChild/space_level2/apollo11.html"
     },
     "sourceName": "NASA Apollo Archive",
-    "sourceUrl": "https://www.nasa.gov/history/alsj/"
+    "sourceUrl": "https://starchild.gsfc.nasa.gov/docs/StarChild/space_level2/apollo11.html"
   },
   {
     "id": "space-05",
@@ -346,7 +346,7 @@
         "explanation": "Araya girecek hava veya oksit tabakası olmadığından atomlar doğrudan bağ kurar; buna soğuk kaynak denir."
       },
       "sourceName": "European Space Agency (ESA)",
-      "sourceUrl": "https://www.esa.int/"
+      "sourceUrl": "https://en.wikipedia.org/wiki/Cold_welding"
     },
     "en": {
       "slug": "cold-welding-in-outer-space",
@@ -366,10 +366,10 @@
         "explanation": "Without air or an oxide barrier, metal atoms bond directly on contact in a process called cold welding."
       },
       "sourceName": "European Space Agency (ESA)",
-      "sourceUrl": "https://www.esa.int/"
+      "sourceUrl": "https://en.wikipedia.org/wiki/Cold_welding"
     },
     "sourceName": "European Space Agency (ESA)",
-    "sourceUrl": "https://www.esa.int/"
+    "sourceUrl": "https://en.wikipedia.org/wiki/Cold_welding"
   },
   {
     "id": "space-07",
@@ -396,7 +396,7 @@
         "explanation": "Etil format molekülü ahududuya kendine özgü meyvemsi kokusunu verir."
       },
       "sourceName": "Max Planck Institute for Radio Astronomy",
-      "sourceUrl": "https://www.mpifr-bonn.mpg.de/en"
+      "sourceUrl": "https://en.wikipedia.org/wiki/Ethyl_formate"
     },
     "en": {
       "slug": "center-of-milky-way-contains-raspberry-flavor-molecule",
@@ -416,10 +416,10 @@
         "explanation": "Ethyl formate is a primary ester behind the scent and flavor of raspberries."
       },
       "sourceName": "Max Planck Institute for Radio Astronomy",
-      "sourceUrl": "https://www.mpifr-bonn.mpg.de/en"
+      "sourceUrl": "https://en.wikipedia.org/wiki/Ethyl_formate"
     },
     "sourceName": "Max Planck Institute for Radio Astronomy",
-    "sourceUrl": "https://www.mpifr-bonn.mpg.de/en"
+    "sourceUrl": "https://en.wikipedia.org/wiki/Ethyl_formate"
   },
   {
     "id": "space-08",
@@ -496,7 +496,7 @@
         "explanation": "Mars'taki ince toz tabakası kırmızı ışığı saçarken mavi ışığı Güneş yönünden geçirir."
       },
       "sourceName": "NASA Mars Curiosity Observations",
-      "sourceUrl": "https://science.nasa.gov/mars/"
+      "sourceUrl": "https://science.nasa.gov/image-article/apod-2015-may-12-two-worlds-one-sun/"
     },
     "en": {
       "slug": "sunsets-on-mars-appear-blue",
@@ -516,10 +516,10 @@
         "explanation": "Fine Martian dust lets blue light penetrate forward at sunset while scattering red away."
       },
       "sourceName": "NASA Mars Curiosity Observations",
-      "sourceUrl": "https://science.nasa.gov/mars/"
+      "sourceUrl": "https://science.nasa.gov/image-article/apod-2015-may-12-two-worlds-one-sun/"
     },
     "sourceName": "NASA Mars Curiosity Observations",
-    "sourceUrl": "https://science.nasa.gov/mars/"
+    "sourceUrl": "https://science.nasa.gov/image-article/apod-2015-may-12-two-worlds-one-sun/"
   },
   {
     "id": "space-10",
@@ -546,7 +546,7 @@
         "explanation": "Dünya'dan sesler ve müzikler içeren bakır-altın kaplama disk 'Altın Plak' olarak bilinir."
       },
       "sourceName": "NASA Jet Propulsion Laboratory",
-      "sourceUrl": "https://voyager.jpl.nasa.gov/mission/status/"
+      "sourceUrl": "https://science.nasa.gov/mission/voyager/where-are-voyager-1-and-voyager-2-now/"
     },
     "en": {
       "slug": "voyager-1-signals-from-over-24-billion-km-away",
@@ -566,9 +566,9 @@
         "explanation": "Carl Sagan and his team curated the Golden Record carrying Earth's sounds and greetings."
       },
       "sourceName": "NASA Jet Propulsion Laboratory",
-      "sourceUrl": "https://voyager.jpl.nasa.gov/mission/status/"
+      "sourceUrl": "https://science.nasa.gov/mission/voyager/where-are-voyager-1-and-voyager-2-now/"
     },
     "sourceName": "NASA Jet Propulsion Laboratory",
-    "sourceUrl": "https://voyager.jpl.nasa.gov/mission/status/"
+    "sourceUrl": "https://science.nasa.gov/mission/voyager/where-are-voyager-1-and-voyager-2-now/"
   }
 ]

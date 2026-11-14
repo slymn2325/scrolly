@@ -4,6 +4,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { AnimatePresence } from 'framer-motion';
 import CookieBanner from '@/components/CookieBanner';
 import DiplomaProfileModal from '@/components/DiplomaProfileModal';
+import { applyGoogleConsentChoice } from '@/utils/consent';
 import DuelModal, { type DuelChallengeConfig } from '@/components/DuelModal';
 import IosFloatingIslandDock, { type DockTabId } from '@/components/IosFloatingIslandDock';
 import LeaderboardModal from '@/components/LeaderboardModal';
@@ -883,6 +884,17 @@ export default function HomeClient({ initialFacts }: HomeClientProps) {
           onAccept={() => {
             vibrateTap(12);
             playPop(soundEnabled);
+            applyGoogleConsentChoice('granted');
+            setMemory((prev) => {
+              const updated = { ...prev, cookieAccepted: true };
+              saveUserMemory(updated);
+              return updated;
+            });
+          }}
+          onDecline={() => {
+            vibrateTap(12);
+            playPop(soundEnabled);
+            applyGoogleConsentChoice('denied');
             setMemory((prev) => {
               const updated = { ...prev, cookieAccepted: true };
               saveUserMemory(updated);

@@ -165,7 +165,21 @@ export default async function FactOpenGraphImage({ params }: OgProps) {
               color: '#065F46',
             }}
           >
-            <span>✓</span>
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M20 6L9 17L4 12"
+                stroke="#065F46"
+                strokeWidth="3"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
             <span>Kaynak / Source: {sourceName}</span>
           </div>
 

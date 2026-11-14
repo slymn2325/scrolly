@@ -218,15 +218,15 @@ export default function NativeAdSlide({
 
               <div className="mt-4 flex flex-wrap items-center gap-2">
                 <Link
-                  href={lang === 'en' ? '/about?lang=en' : '/about'}
-                  className="inline-flex items-center gap-1.5 rounded-full border border-violet-200 bg-white px-3 py-1.5 text-xs font-extrabold text-violet-800 hover:bg-violet-50 dark:border-violet-700/50 dark:bg-slate-800 dark:text-violet-200"
+                  href="/about"
+                  className="inline-flex min-h-[44px] items-center gap-1.5 rounded-full border border-violet-200 bg-white px-3.5 py-1.5 text-xs font-extrabold text-violet-800 hover:bg-violet-50 dark:border-violet-700/50 dark:bg-slate-800 dark:text-violet-200"
                 >
                   <Info className="h-3.5 w-3.5" />
                   <span>{lang === 'tr' ? 'Yayın İlkeleri' : 'Editorial Standards'}</span>
                 </Link>
                 <Link
-                  href={`/category/science${lang === 'en' ? '?lang=en' : ''}`}
-                  className="inline-flex items-center gap-1.5 rounded-full border border-amber-200 bg-amber-50 px-3 py-1.5 text-xs font-extrabold text-amber-900 hover:bg-amber-100 dark:border-amber-700/40 dark:bg-amber-900/30 dark:text-amber-200"
+                  href={lang === 'en' ? '/en/category/science' : '/category/science'}
+                  className="inline-flex min-h-[44px] items-center gap-1.5 rounded-full border border-amber-200 bg-amber-50 px-3.5 py-1.5 text-xs font-extrabold text-amber-900 hover:bg-amber-100 dark:border-amber-700/40 dark:bg-amber-900/30 dark:text-amber-200"
                 >
                   <BookOpen className="h-3.5 w-3.5" />
                   <span>{lang === 'tr' ? 'Bilim Arşivi' : 'Science Hub'}</span>

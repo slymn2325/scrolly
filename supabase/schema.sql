@@ -120,3 +120,18 @@ begin
   );
 end;
 $$;
+
+create table if not exists public.fact_likes (
+  id bigserial primary key,
+  fact_slug text not null,
+  device_id text not null,
+  created_at timestamptz not null default now(),
+  unique (fact_slug, device_id)
+);
+
+alter table public.fact_likes enable row level security;
+
+drop policy if exists "Fact likes readable by everyone" on public.fact_likes;
+create policy "Fact likes readable by everyone"
+  on public.fact_likes for select
+  using (true);
