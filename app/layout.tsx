@@ -34,6 +34,48 @@ export const viewport: Viewport = {
   themeColor: '#EDE9FE',
 };
 
+const ROOT_SCHEMA_JSON_LD = {
+  '@context': 'https://schema.org',
+  '@graph': [
+    {
+      '@type': 'WebSite',
+      '@id': 'https://scrolly.live/#website',
+      name: 'Scrolly',
+      alternateName: 'scrolly.live',
+      url: 'https://scrolly.live',
+      description:
+        'Scrolly (https://scrolly.live), uzay, doğa, bilim, tarih, insan vücudu ve dünya rekorları alanlarında doğrulanmış bilimsel kaynaklara dayalı, etkileşimli iki dilli (Türkçe ve İngilizce) mikro öğrenme kartları sunan bir bilgi platformudur.',
+      inLanguage: ['tr', 'en'],
+      potentialAction: {
+        '@type': 'SearchAction',
+        target: 'https://scrolly.live/?fact={search_term_string}',
+        'query-input': 'required name=search_term_string',
+      },
+    },
+    {
+      '@type': 'WebApplication',
+      '@id': 'https://scrolly.live/#webapp',
+      name: 'Scrolly',
+      url: 'https://scrolly.live',
+      applicationCategory: 'EducationalApplication',
+      operatingSystem: 'Web, iOS, Android',
+      browserRequirements: 'Requires JavaScript, HTML5',
+      inLanguage: ['tr', 'en'],
+      isAccessibleForFree: true,
+      offers: {
+        '@type': 'Offer',
+        price: '0',
+        priceCurrency: 'USD',
+      },
+      publisher: {
+        '@type': 'Organization',
+        name: 'Scrolly',
+        url: 'https://scrolly.live',
+      },
+    },
+  ],
+};
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -47,6 +89,12 @@ export default function RootLayout({
         <link
           href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
           rel="stylesheet"
+        />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify(ROOT_SCHEMA_JSON_LD).replace(/</g, '\\u003c'),
+          }}
         />
       </head>
       <body className="min-h-screen bg-[#FFFDF9] font-sans text-ink antialiased selection:bg-amber-200 selection:text-ink">

@@ -1,4 +1,4 @@
-const CACHE_VERSION = 'v1.0.7';
+const CACHE_VERSION = 'v1.0.8';
 const CACHE_NAME = `scrolly-offline-${CACHE_VERSION}`;
 
 const PRECACHE_URLS = [
@@ -100,8 +100,17 @@ self.addEventListener('fetch', (event) => {
 
   if (event.request.method !== 'GET') return;
 
-  // Never intercept or alter ads.txt (must always be served directly as plain text)
-  if (url.pathname === '/ads.txt') return;
+  // NetworkOnly bypass for SEO, crawler, ad verification, and AI index endpoints
+  const SEO_AND_BOT_PATHS = new Set([
+    '/ads.txt',
+    '/robots.txt',
+    '/sitemap.xml',
+    '/llms.txt',
+    '/llms-full.txt',
+  ]);
+  if (SEO_AND_BOT_PATHS.has(url.pathname)) {
+    return;
+  }
 
   // Isolate third-party ad requests when offline (or blocked)
   if (isAdRequest(url)) {

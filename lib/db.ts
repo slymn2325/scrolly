@@ -1,6 +1,6 @@
 import { Pool } from 'pg';
 import type { CategoryId, FactCard, FactQuizContent, GuessChallenge } from '@/types/fact';
-import { getAllFacts } from '@/utils/factsData';
+import { getAllFacts, getFactPrimarySlug } from '@/utils/factsData';
 
 export interface DbFactRow {
   id: number;
@@ -109,10 +109,6 @@ export function getPool(): Pool {
   }
 
   return global.__scrollyPgPool;
-}
-
-function getFactPrimarySlug(fact: FactCard): string {
-  return fact.slug || fact.en.slug || fact.tr.slug || fact.id;
 }
 
 async function seedInitialFactsIfEmpty(pool: Pool): Promise<void> {
@@ -515,3 +511,106 @@ export function mapDbRowToFactCard(row: DbFactRow): FactCard {
     },
   };
 }
+
+export interface ServerFactEntry {
+  fact: FactCard;
+  updatedAt: Date;
+}
+
+function parseTimestamp(value?: string | Date | null, fallback = new Date()): Date {
+  if (value instanceof Date && !Number.isNaN(value.getTime())) {
+    return value;
+  }
+  if (typeof value === 'string' && value.trim().length > 0) {
+    const parsed = new Date(value);
+    if (!Number.isNaN(parsed.getTime())) {
+      return parsed;
+    }
+  }
+  return fallback;
+}
+
+function buildStaticServerEntries(): ServerFactEntry[] {
+  const defaultDate = new Date('2026-01-01T00:00:00.000Z');
+  return getAllFacts().map((fact) => ({
+    fact: {
+      ...fact,
+      slug: getFactPrimarySlug(fact),
+      sketchType: fact.sketchType || fact.id,
+    },
+    updatedAt: parseTimestamp(fact.createdAt, defaultDate),
+  }));
+}
+
+export async function getAllFactsWithTimestampsServer(): Promise<ServerFactEntry[]> {
+  const staticEntries = buildStaticServerEntries();
+
+  if (!hasDatabaseUrl()) {
+    return staticEntries;
+  }
+
+  try {
+    await ensureSchema();
+    const pool = getPool();
+    const result = await pool.query<DbFactRow>(
+      'SELECT * FROM facts ORDER BY created_at DESC, id DESC'
+    );
+
+    if (result.rows.length === 0) {
+      return staticEntries;
+    }
+
+    const seenKeys = new Set<string>();
+    const combined: ServerFactEntry[] = [];
+
+    for (const row of result.rows) {
+      const card = mapDbRowToFactCard(row);
+      const updatedAt = parseTimestamp(row.created_at ?? card.createdAt);
+      const keys = [
+        row.slug,
+        getFactPrimarySlug(card),
+        card.id,
+        card.en.slug,
+        card.tr.slug,
+      ].filter(Boolean);
+      keys.forEach((k) => seenKeys.add(k));
+      combined.push({ fact: card, updatedAt });
+    }
+
+    for (const entry of staticEntries) {
+      const f = entry.fact;
+      const keys = [getFactPrimarySlug(f), f.id, f.en.slug, f.tr.slug].filter(Boolean);
+      const alreadyPresent = keys.some((k) => seenKeys.has(k));
+      if (!alreadyPresent) {
+        keys.forEach((k) => seenKeys.add(k));
+        combined.push(entry);
+      }
+    }
+
+    return combined;
+  } catch (err) {
+    console.error('[lib/db] getAllFactsWithTimestampsServer fallback to static facts:', err);
+    return staticEntries;
+  }
+}
+
+export async function getAllFactsServer(): Promise<FactCard[]> {
+  const entries = await getAllFactsWithTimestampsServer();
+  return entries.map((entry) => entry.fact);
+}
+
+export async function getFactBySlugServer(slug: string): Promise<FactCard | undefined> {
+  const normalized = slug.trim();
+  if (!normalized) return undefined;
+
+  const allFacts = await getAllFactsServer();
+  return allFacts.find(
+    (item) =>
+      item.slug === normalized ||
+      getFactPrimarySlug(item) === normalized ||
+      item.en.slug === normalized ||
+      item.tr.slug === normalized ||
+      item.id === normalized
+  );
+}
+

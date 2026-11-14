@@ -123,11 +123,30 @@ function buildPersonalizedDeck(
   return combined.length > 0 ? combined : allFacts;
 }
 
+function promoteFactToFront(
+  deck: FactCardType[],
+  pool: FactCardType[],
+  targetSlug: string | null
+): FactCardType[] {
+  if (!targetSlug) return deck;
+  const normalized = targetSlug.trim();
+  const match = pool.find(
+    (f) =>
+      f.slug === normalized ||
+      f.en.slug === normalized ||
+      f.tr.slug === normalized ||
+      f.id === normalized
+  );
+  if (!match) return deck;
+  return [match, ...deck.filter((f) => f.id !== match.id)];
+}
+
 export default function HomePage() {
   const staticAllFacts = useMemo(() => getAllFacts(), []);
   const [allFacts, setAllFacts] = useState<FactCardType[]>(staticAllFacts);
   const feedRef = useRef<TikTokFeedHandle>(null);
   const activeCategoryRef = useRef<CategoryFilter>('all');
+  const requestedFactSlugRef = useRef<string | null>(null);
   const hasHydratedRef = useRef(false);
 
   const [memory, setMemory] = useState<UserMemoryState>(() => getDefaultUserState());
@@ -161,13 +180,21 @@ export default function HomePage() {
 
     initTelemetrySync();
 
-    const initialDeck = buildPersonalizedDeck(
+    let requestedFactSlug: string | null = null;
+    if (typeof window !== 'undefined') {
+      const searchParams = new URLSearchParams(window.location.search);
+      requestedFactSlug = searchParams.get('fact');
+      requestedFactSlugRef.current = requestedFactSlug;
+    }
+
+    const baseDeck = buildPersonalizedDeck(
       staticAllFacts,
       'all',
       loaded.seenIds,
       loaded.categoryWeights,
       false
     );
+    const initialDeck = promoteFactToFront(baseDeck, staticAllFacts, requestedFactSlug);
     setDeckFacts(initialDeck);
     if (initialDeck[0]) setSeedFact(initialDeck[0]);
 
@@ -176,15 +203,21 @@ export default function HomePage() {
       if (cancelled || !liveFacts || liveFacts.length === 0) return;
       setAllFacts(liveFacts);
       const currentMem = loadUserMemory();
-      const updatedDeck = buildPersonalizedDeck(
+      const baseLiveDeck = buildPersonalizedDeck(
         liveFacts,
         activeCategoryRef.current,
         currentMem.seenIds,
         currentMem.categoryWeights,
         false
       );
+      const targetSlug =
+        activeCategoryRef.current === 'all' ? requestedFactSlugRef.current : null;
+      const updatedDeck = promoteFactToFront(baseLiveDeck, liveFacts, targetSlug);
       setDeckFacts(updatedDeck);
       if (updatedDeck[0]) setSeedFact(updatedDeck[0]);
+      if (targetSlug) {
+        requestAnimationFrame(() => feedRef.current?.scrollToTop());
+      }
     });
 
     if (typeof window !== 'undefined') {

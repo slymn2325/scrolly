@@ -1,0 +1,26 @@
+# Scrolly — Mikro Keşif & Bilimsel Bilgi Platformu (https://scrolly.live)
+
+> Scrolly (https://scrolly.live), uzay, doğa, bilim, tarih, insan vücudu ve dünya rekorları alanlarında doğrulanmış bilimsel kaynaklara dayalı, etkileşimli iki dilli (Türkçe ve İngilizce) mikro öğrenme kartları sunan bir bilgi platformudur.
+
+> Scrolly (https://scrolly.live) is an interactive bilingual (Turkish and English) micro-learning platform offering scientifically verified discovery cards, interactive sketches, quick-guess challenges, and memory quizzes across Space, Nature, Science, History, Human Body, and World Records.
+
+## Platform Özellikleri / Core Capabilities
+
+- **Doğrulanmış Bilgi Kartları (Verified Fact Cards):** Her kart; doğrudan özet yanıt, derinlemesine bilimsel açıklama ("Neden / Nasıl?"), tıklanabilir birincil kaynak bağlantısı (`sourceUrl`) ve etkileşimli tahmin / quiz sorusu içerir.
+- **İki Dilli Yapı (Bilingual TR / EN):** Tüm içerikler Türkçe ve İngilizce olarak indeksli SSR sayfalarda (`?lang=tr` ve `?lang=en`) sunulur.
+- **Konu Alanları (6 Categories):** Uzay (`space`), Doğa (`nature`), Bilim (`science`), Tarih (`history`), İnsan Vücudu (`human-body`), Garip Rekorlar (`records`).
+
+## Kategori Merkezleri / Topic Category Hubs
+
+- [Uzay / Space](https://scrolly.live/category/space): Kozmos, gezegenler, yıldızlar, kara delikler ve uzay keşfi bilgileri
+- [Doğa / Nature](https://scrolly.live/category/nature): Hayvanlar alemi, ekosistemler, okyanuslar ve Dünya bilimi
+- [Bilim / Science](https://scrolly.live/category/science): Fizik, kimya, matematik ve bilimsel keşifler
+- [Tarih / History](https://scrolly.live/category/history): Antik uygarlıklar, icatlar ve tarihsel dönüm noktaları
+- [İnsan Vücudu / Human Body](https://scrolly.live/category/human-body): Anatomi, nörobilim, genetik ve insan biyolojisi
+- [Garip Rekorlar / Weird Records](https://scrolly.live/category/records): Şaşırtıcı dünya rekorları ve sıradışı istatistikler
+
+## AI & Arama Motoru İndeksleri / Machine-Readable Feeds
+
+- [Tam Bilgi Külliyatı (llms-full.txt)](https://scrolly.live/llms-full.txt): Veritabanındaki tüm doğrulanmış bilgi kartlarının özetlerini, soru-cevaplarını, kaynak URL'lerini ve kanonik bağlantılarını içeren düz metin / Markdown arşivi
+- [Dinamik XML Site Haritası (sitemap.xml)](https://scrolly.live/sitemap.xml): Tüm ana sayfalar, kategori merkezleri ve tekil `/fact/[slug]` sayfalarının güncel indeksi
+- [Ana Etkileşimli Akış (Home)](https://scrolly.live/): Dikey kaydırmalı etkileşimli mikro öğrenme deneyimi
