@@ -109,14 +109,14 @@ export default function DuelModal({
           aria-modal="true"
           aria-label={t.duelTitle}
           data-testid="duel-modal"
-          className="fixed inset-0 z-50 flex items-center justify-center bg-ink/55 p-4 pb-24 backdrop-blur-md"
+          className="fixed inset-0 z-50 mx-auto flex w-full max-w-[430px] items-center justify-center bg-ink/55 px-3 pt-4 backdrop-blur-md"
         >
           <motion.div
             initial={{ opacity: 0, scale: 0.9, y: 18 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.9, y: 18 }}
             transition={{ type: 'spring', stiffness: 320, damping: 24 }}
-            className="relative max-h-[84dvh] w-full max-w-md overflow-y-auto no-scrollbar rounded-3xl border-2 border-amber-200 bg-[#FFFDF9] p-5 shadow-2xl dark:border-violet-700/50 dark:bg-[#1A162B] sm:p-6"
+            className="relative mb-[92px] max-h-[84dvh] w-full overflow-y-auto no-scrollbar rounded-3xl border-2 border-amber-200 bg-[#FFFDF9] p-5 shadow-2xl dark:border-violet-700/50 dark:bg-[#1A162B] sm:p-6"
           >
             <motion.button
               type="button"

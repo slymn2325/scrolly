@@ -22,7 +22,9 @@
         ],
         "correctIndex": 0,
         "explanation": "Kleopatra piramitlerden ~2.500 yıl sonra, Apollo 11 Ay inişinden ise ~2.000 yıl önce yaşadı."
-      }
+      },
+      "sourceName": "Encyclopaedia Britannica",
+      "sourceUrl": "https://www.britannica.com/biography/Cleopatra-queen-of-Egypt"
     },
     "en": {
       "slug": "cleopatra-lived-closer-to-moon-landing-than-pyramids",
@@ -40,8 +42,12 @@
         ],
         "correctIndex": 0,
         "explanation": "About 2,530 years separated Cleopatra from the Great Pyramid, compared to ~2,000 years before Apollo 11."
-      }
-    }
+      },
+      "sourceName": "Encyclopaedia Britannica",
+      "sourceUrl": "https://www.britannica.com/biography/Cleopatra-queen-of-Egypt"
+    },
+    "sourceName": "Encyclopaedia Britannica",
+    "sourceUrl": "https://www.britannica.com/biography/Cleopatra-queen-of-Egypt"
   },
   {
     "id": "history-02",
@@ -66,7 +72,9 @@
         ],
         "correctIndex": 0,
         "explanation": "Oxford'da eğitim 1096'da, Tenochtitlan ise 1325'te kuruldu."
-      }
+      },
+      "sourceName": "University of Oxford Archives",
+      "sourceUrl": "https://www.ox.ac.uk/about/organisation/history"
     },
     "en": {
       "slug": "oxford-university-older-than-aztec-empire",
@@ -84,8 +92,12 @@
         ],
         "correctIndex": 0,
         "explanation": "Teaching at Oxford dates to 1096 CE, over two centuries before Tenochtitlan's founding in 1325 CE."
-      }
-    }
+      },
+      "sourceName": "University of Oxford Archives",
+      "sourceUrl": "https://www.ox.ac.uk/about/organisation/history"
+    },
+    "sourceName": "University of Oxford Archives",
+    "sourceUrl": "https://www.ox.ac.uk/about/organisation/history"
   },
   {
     "id": "history-03",
@@ -110,7 +122,9 @@
         ],
         "correctIndex": 0,
         "explanation": "09:02'de başlayan çatışma yaklaşık 38 dakika sonra ateşkesle sona erdi."
-      }
+      },
+      "sourceName": "Guinness World Records / UK Archives",
+      "sourceUrl": "https://www.guinnessworldrecords.com/world-records/shortest-war"
     },
     "en": {
       "slug": "shortest-war-in-history-lasted-38-minutes",
@@ -128,8 +142,12 @@
         ],
         "correctIndex": 0,
         "explanation": "Fighting started at 9:02 AM and ended around 9:40 AM—about 38 minutes later."
-      }
-    }
+      },
+      "sourceName": "Guinness World Records / UK Archives",
+      "sourceUrl": "https://www.guinnessworldrecords.com/world-records/shortest-war"
+    },
+    "sourceName": "Guinness World Records / UK Archives",
+    "sourceUrl": "https://www.guinnessworldrecords.com/world-records/shortest-war"
   },
   {
     "id": "history-04",
@@ -154,7 +172,9 @@
         ],
         "correctIndex": 0,
         "explanation": "Akdeniz'deki Murex (Bolinus) deniz salyangozlarının bezlerinden çıkan salgı mor boyaya dönüştürülüyordu."
-      }
+      },
+      "sourceName": "Metropolitan Museum of Art",
+      "sourceUrl": "https://www.metmuseum.org/"
     },
     "en": {
       "slug": "ancient-tyrian-purple-came-from-sea-snails",
@@ -172,8 +192,12 @@
         ],
         "correctIndex": 0,
         "explanation": "Murex sea snails secreted the rare pigment used to dye imperial garments."
-      }
-    }
+      },
+      "sourceName": "Metropolitan Museum of Art",
+      "sourceUrl": "https://www.metmuseum.org/"
+    },
+    "sourceName": "Metropolitan Museum of Art",
+    "sourceUrl": "https://www.metmuseum.org/"
   },
   {
     "id": "history-05",
@@ -198,7 +222,9 @@
         ],
         "correctIndex": 0,
         "explanation": "Wrangel Adası'ndaki izole mamutlar yaklaşık 4.000 yıl öncesine kadar yaşadı."
-      }
+      },
+      "sourceName": "Current Biology / Radiocarbon Study",
+      "sourceUrl": "https://www.cell.com/current-biology/home"
     },
     "en": {
       "slug": "woolly-mammoths-still-lived-when-pyramids-were-built",
@@ -216,8 +242,12 @@
         ],
         "correctIndex": 0,
         "explanation": "An isolated population on Wrangel Island persisted alongside early Bronze Age civilizations."
-      }
-    }
+      },
+      "sourceName": "Current Biology / Radiocarbon Study",
+      "sourceUrl": "https://www.cell.com/current-biology/home"
+    },
+    "sourceName": "Current Biology / Radiocarbon Study",
+    "sourceUrl": "https://www.cell.com/current-biology/home"
   },
   {
     "id": "history-06",
@@ -242,7 +272,9 @@
         ],
         "correctIndex": 0,
         "explanation": "'Thermopolium' kelime anlamıyla 'sıcak bir şeylerin satıldığı yer' demektir."
-      }
+      },
+      "sourceName": "Archaeological Park of Pompeii",
+      "sourceUrl": "https://pompeiisites.org/en/"
     },
     "en": {
       "slug": "ancient-rome-had-street-fast-food-counters",
@@ -260,8 +292,12 @@
         ],
         "correctIndex": 0,
         "explanation": "Thermopolium literally translates to 'a place where something hot is sold'."
-      }
-    }
+      },
+      "sourceName": "Archaeological Park of Pompeii",
+      "sourceUrl": "https://pompeiisites.org/en/"
+    },
+    "sourceName": "Archaeological Park of Pompeii",
+    "sourceUrl": "https://pompeiisites.org/en/"
   },
   {
     "id": "history-07",
@@ -286,7 +322,9 @@
         ],
         "correctIndex": 0,
         "explanation": "Rüzgar tanrısı Aeolus'un adını taşıyan 'Aeolipile', tarihteki ilk bilinen buhar türbini düzeneğidir."
-      }
+      },
+      "sourceName": "Science Museum London",
+      "sourceUrl": "https://www.sciencemuseum.org.uk/"
     },
     "en": {
       "slug": "ancient-alexandria-built-steam-engine-2000-years-ago",
@@ -304,8 +342,12 @@
         ],
         "correctIndex": 0,
         "explanation": "Named after Aeolus, god of winds, the aeolipile used steam jets to spin a metal sphere."
-      }
-    }
+      },
+      "sourceName": "Science Museum London",
+      "sourceUrl": "https://www.sciencemuseum.org.uk/"
+    },
+    "sourceName": "Science Museum London",
+    "sourceUrl": "https://www.sciencemuseum.org.uk/"
   },
   {
     "id": "history-08",
@@ -330,7 +372,9 @@
         ],
         "correctIndex": 0,
         "explanation": "Knocker-upper'lar uzun sopalarla pencerelere vurarak sabah vardiyacılarını uyandırırdı."
-      }
+      },
+      "sourceName": "BBC History Archives",
+      "sourceUrl": "https://www.bbc.co.uk/history"
     },
     "en": {
       "slug": "human-alarm-clocks-called-knocker-uppers",
@@ -348,8 +392,12 @@
         ],
         "correctIndex": 0,
         "explanation": "Knocker-uppers used long poles or pea shooters to wake factory workers on time."
-      }
-    }
+      },
+      "sourceName": "BBC History Archives",
+      "sourceUrl": "https://www.bbc.co.uk/history"
+    },
+    "sourceName": "BBC History Archives",
+    "sourceUrl": "https://www.bbc.co.uk/history"
   },
   {
     "id": "history-09",
@@ -374,7 +422,9 @@
         ],
         "correctIndex": 0,
         "explanation": "Aşırı nadir olduğundan ananası yemeden sadece masada sergilemek büyük prestij göstergesiydi."
-      }
+      },
+      "sourceName": "Royal Botanic Gardens, Kew",
+      "sourceUrl": "https://www.kew.org/"
     },
     "en": {
       "slug": "people-rented-pineapples-as-status-symbols",
@@ -392,8 +442,12 @@
         ],
         "correctIndex": 0,
         "explanation": "Extreme rarity turned a displayed pineapple into the ultimate luxury status symbol."
-      }
-    }
+      },
+      "sourceName": "Royal Botanic Gardens, Kew",
+      "sourceUrl": "https://www.kew.org/"
+    },
+    "sourceName": "Royal Botanic Gardens, Kew",
+    "sourceUrl": "https://www.kew.org/"
   },
   {
     "id": "history-10",
@@ -418,7 +472,9 @@
         ],
         "correctIndex": 0,
         "explanation": "Günümüze kalan kısmı Topkapı Sarayı'nda korunan harita ceylan derisi üzerine çizilmiştir."
-      }
+      },
+      "sourceName": "UNESCO / Topkapı Palace Archives",
+      "sourceUrl": "https://www.unesco.org/en"
     },
     "en": {
       "slug": "piri-reis-world-map-drawn-in-1513",
@@ -436,7 +492,11 @@
         ],
         "correctIndex": 0,
         "explanation": "The surviving fragment preserved in Topkapı Palace was drawn on gazelle parchment."
-      }
-    }
+      },
+      "sourceName": "UNESCO / Topkapı Palace Archives",
+      "sourceUrl": "https://www.unesco.org/en"
+    },
+    "sourceName": "UNESCO / Topkapı Palace Archives",
+    "sourceUrl": "https://www.unesco.org/en"
   }
 ]

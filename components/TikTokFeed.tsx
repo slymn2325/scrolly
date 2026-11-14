@@ -27,6 +27,7 @@ interface TikTokFeedProps {
   streakDays: number;
   xp: number;
   cardsSinceLastQuiz: number;
+  cookieBannerVisible?: boolean;
   onSelectCategory: (cat: CategoryFilter) => void;
   onChangeLang: (lang: Language) => void;
   onToggleDarkMode: () => void;
@@ -53,6 +54,7 @@ const TikTokFeed = forwardRef<TikTokFeedHandle, TikTokFeedProps>(function TikTok
     streakDays,
     xp,
     cardsSinceLastQuiz,
+    cookieBannerVisible = false,
     onSelectCategory,
     onChangeLang,
     onToggleDarkMode,
@@ -72,14 +74,14 @@ const TikTokFeed = forwardRef<TikTokFeedHandle, TikTokFeedProps>(function TikTok
   const scrollRef = useRef<HTMLDivElement>(null);
   const t = translations[lang];
 
-  // Build slide stream: after the first 5 fact scenes, insert a NativeAdSlide every 6th slide
+  // Build slide stream: insert an isolated full-screen NativeAdSlide once every 7 fact cards
   const slides: FeedSlideItem[] = useMemo(() => {
     const items: FeedSlideItem[] = [];
     let adCount = 0;
 
     deckFacts.forEach((fact, idx) => {
       items.push({ type: 'fact', key: `fact-${fact.id}-${idx}`, fact });
-      if ((idx + 1) % 5 === 0 && idx < deckFacts.length - 1) {
+      if ((idx + 1) % 7 === 0 && idx < deckFacts.length - 1) {
         items.push({ type: 'ad', key: `ad-${adCount}-${idx}`, adIndex: adCount });
         adCount += 1;
       }
@@ -118,9 +120,9 @@ const TikTokFeed = forwardRef<TikTokFeedHandle, TikTokFeedProps>(function TikTok
   );
 
   return (
-    <div className="relative h-full w-full overflow-hidden">
+    <div className="relative mx-auto h-full w-full max-w-[430px] overflow-hidden">
       {/* Top Floating Transparent Overlay */}
-      <header className="pointer-events-none absolute inset-x-0 top-0 z-30 bg-gradient-to-b from-black/15 via-black/5 to-transparent px-3.5 pb-4 pt-[calc(0.75rem+env(safe-area-inset-top))] dark:from-black/55 dark:via-black/25 dark:to-transparent">
+      <header className="pointer-events-none absolute inset-x-0 top-0 z-30 mx-auto w-full max-w-[430px] bg-gradient-to-b from-black/15 via-black/5 to-transparent px-3 pb-3 pt-[calc(0.65rem+env(safe-area-inset-top))] dark:from-black/55 dark:via-black/25 dark:to-transparent">
         {/* Top Utility Bar: Left Streak+XP | Right Controls */}
         <div className="pointer-events-auto flex items-center justify-between gap-2">
           <div className="flex items-center gap-1.5">
@@ -230,8 +232,17 @@ const TikTokFeed = forwardRef<TikTokFeedHandle, TikTokFeedProps>(function TikTok
           </div>
         </div>
 
-        {/* TikTok-Style Horizontal Floating Category Tabs */}
-        <div className="no-scrollbar pointer-events-auto mt-2.5 flex items-center gap-1.5 overflow-x-auto">
+        {/* TikTok-Style Horizontal Floating Category Tabs with soft right fade mask */}
+        <div
+          data-testid="category-bar"
+          style={{
+            WebkitMaskImage:
+              'linear-gradient(to right, black 0%, black 88%, transparent 100%)',
+            maskImage:
+              'linear-gradient(to right, black 0%, black 88%, transparent 100%)',
+          }}
+          className="no-scrollbar pointer-events-auto mt-2 flex items-center gap-1.5 overflow-x-auto pr-8"
+        >
           {CATEGORIES.map((cat) => {
             const isActive = activeCategory === cat.id;
             return (
@@ -280,6 +291,7 @@ const TikTokFeed = forwardRef<TikTokFeedHandle, TikTokFeedProps>(function TikTok
               fact={slide.fact}
               lang={lang}
               isFavorite={favoriteIds.includes(slide.fact.id)}
+              cookieBannerVisible={cookieBannerVisible}
               onFlip={onFlipCard}
               onDoubleTapLike={onDoubleTapLike}
               onDwellRead={onDwellRead}
@@ -295,6 +307,7 @@ const TikTokFeed = forwardRef<TikTokFeedHandle, TikTokFeedProps>(function TikTok
               key={slide.key}
               lang={lang}
               adIndex={slide.adIndex}
+              cookieBannerVisible={cookieBannerVisible}
               onSkip={() => {
                 onButtonPop();
                 scrollToSlide(slideIdx + 1);

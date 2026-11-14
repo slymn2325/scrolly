@@ -22,7 +22,9 @@
         ],
         "correctIndex": 0,
         "explanation": "Üçlü noktada sıcaklık ve basınç üç fazın aynı anda var olmasını sağlar."
-      }
+      },
+      "sourceName": "NIST Thermodynamics Standards",
+      "sourceUrl": "https://www.nist.gov/"
     },
     "en": {
       "slug": "water-can-boil-and-freeze-at-the-same-time",
@@ -40,8 +42,12 @@
         ],
         "correctIndex": 0,
         "explanation": "At the triple point, pressure and temperature balance all three phases simultaneously."
-      }
-    }
+      },
+      "sourceName": "NIST Thermodynamics Standards",
+      "sourceUrl": "https://www.nist.gov/"
+    },
+    "sourceName": "NIST Thermodynamics Standards",
+    "sourceUrl": "https://www.nist.gov/"
   },
   {
     "id": "science-02",
@@ -66,7 +72,9 @@
         ],
         "correctIndex": 0,
         "explanation": "Düşük nem, asidik pH ve doğal hidrojen peroksit bakterilerin yaşamasını imkansız kılar."
-      }
+      },
+      "sourceName": "Smithsonian Magazine / Food Chemistry",
+      "sourceUrl": "https://www.smithsonianmag.com/science-nature/the-science-behind-honeys-eternal-shelf-life-1218690/"
     },
     "en": {
       "slug": "natural-honey-never-spoils",
@@ -84,8 +92,12 @@
         ],
         "correctIndex": 0,
         "explanation": "Low water content, acidic pH, and trace hydrogen peroxide prevent microbes from surviving."
-      }
-    }
+      },
+      "sourceName": "Smithsonian Magazine / Food Chemistry",
+      "sourceUrl": "https://www.smithsonianmag.com/science-nature/the-science-behind-honeys-eternal-shelf-life-1218690/"
+    },
+    "sourceName": "Smithsonian Magazine / Food Chemistry",
+    "sourceUrl": "https://www.smithsonianmag.com/science-nature/the-science-behind-honeys-eternal-shelf-life-1218690/"
   },
   {
     "id": "science-03",
@@ -110,7 +122,9 @@
         ],
         "correctIndex": 0,
         "explanation": "Zaman farkı hesaba katılmasa GPS konum hesaplaması hızla kilometrelerce hata üretirdi."
-      }
+      },
+      "sourceName": "NIST Atomic Clocks & Relativity",
+      "sourceUrl": "https://www.nist.gov/news-events/news/2010/09/nist-pair-aluminum-atomic-clocks-reveal-einsteins-relativity-personal-scale"
     },
     "en": {
       "slug": "time-runs-slightly-faster-on-a-skyscraper",
@@ -128,8 +142,12 @@
         ],
         "correctIndex": 0,
         "explanation": "Even microsecond clock drift translates into huge distance errors at the speed of light."
-      }
-    }
+      },
+      "sourceName": "NIST Atomic Clocks & Relativity",
+      "sourceUrl": "https://www.nist.gov/news-events/news/2010/09/nist-pair-aluminum-atomic-clocks-reveal-einsteins-relativity-personal-scale"
+    },
+    "sourceName": "NIST Atomic Clocks & Relativity",
+    "sourceUrl": "https://www.nist.gov/news-events/news/2010/09/nist-pair-aluminum-atomic-clocks-reveal-einsteins-relativity-personal-scale"
   },
   {
     "id": "science-04",
@@ -154,7 +172,9 @@
         ],
         "correctIndex": 0,
         "explanation": "Muzlar potasyum açısından zengindir ve doğadaki potasyumun küçük bir kısmı radyoaktif Potasyum-40'tır."
-      }
+      },
+      "sourceName": "US EPA / Oak Ridge Associated Universities",
+      "sourceUrl": "https://www.epa.gov/radtown/natural-radioactivity-food"
     },
     "en": {
       "slug": "bananas-are-naturally-slightly-radioactive",
@@ -172,8 +192,12 @@
         ],
         "correctIndex": 0,
         "explanation": "Bananas are rich in potassium, and a tiny fraction of natural potassium is the isotope K-40."
-      }
-    }
+      },
+      "sourceName": "US EPA / Oak Ridge Associated Universities",
+      "sourceUrl": "https://www.epa.gov/radtown/natural-radioactivity-food"
+    },
+    "sourceName": "US EPA / Oak Ridge Associated Universities",
+    "sourceUrl": "https://www.epa.gov/radtown/natural-radioactivity-food"
   },
   {
     "id": "science-05",
@@ -198,7 +222,9 @@
         ],
         "correctIndex": 0,
         "explanation": "Geniş alana yayılan mikro damlacıklar yükselen hava akımlarının üzerinde kolayca süzülür."
-      }
+      },
+      "sourceName": "USGS Water Science School",
+      "sourceUrl": "https://www.usgs.gov/special-topics/water-science-school"
     },
     "en": {
       "slug": "a-fluffy-cumulus-cloud-weighs-500-tons",
@@ -216,8 +242,12 @@
         ],
         "correctIndex": 0,
         "explanation": "Microscopic droplets fall so slowly that gentle updrafts keep the cloud suspended."
-      }
-    }
+      },
+      "sourceName": "USGS Water Science School",
+      "sourceUrl": "https://www.usgs.gov/special-topics/water-science-school"
+    },
+    "sourceName": "USGS Water Science School",
+    "sourceUrl": "https://www.usgs.gov/special-topics/water-science-school"
   },
   {
     "id": "science-06",
@@ -242,7 +272,9 @@
         ],
         "correctIndex": 0,
         "explanation": "Daha sıkı molekül dizilimi ve yüksek esneklik modülü titreşimi daha hızlı iletir."
-      }
+      },
+      "sourceName": "NOAA Ocean Acoustics",
+      "sourceUrl": "https://oceanservice.noaa.gov/facts/sound.html"
     },
     "en": {
       "slug": "sound-travels-four-times-faster-in-water",
@@ -260,8 +292,12 @@
         ],
         "correctIndex": 0,
         "explanation": "Closely packed water molecules transfer mechanical vibrations far more rapidly."
-      }
-    }
+      },
+      "sourceName": "NOAA Ocean Acoustics",
+      "sourceUrl": "https://oceanservice.noaa.gov/facts/sound.html"
+    },
+    "sourceName": "NOAA Ocean Acoustics",
+    "sourceUrl": "https://oceanservice.noaa.gov/facts/sound.html"
   },
   {
     "id": "science-07",
@@ -286,7 +322,9 @@
         ],
         "correctIndex": 0,
         "explanation": "Yüksekte ufuk çizgisi görüşü kesmediği için gökkuşağının alt yarısı da tamamlanır."
-      }
+      },
+      "sourceName": "Met Office UK / Atmospheric Optics",
+      "sourceUrl": "https://www.metoffice.gov.uk/weather/learn-about/weather/optical-effects/rainbows"
     },
     "en": {
       "slug": "rainbows-are-actually-full-circles",
@@ -304,8 +342,12 @@
         ],
         "correctIndex": 0,
         "explanation": "From high altitude, the ground no longer blocks the lower half of the 42-degree light cone."
-      }
-    }
+      },
+      "sourceName": "Met Office UK / Atmospheric Optics",
+      "sourceUrl": "https://www.metoffice.gov.uk/weather/learn-about/weather/optical-effects/rainbows"
+    },
+    "sourceName": "Met Office UK / Atmospheric Optics",
+    "sourceUrl": "https://www.metoffice.gov.uk/weather/learn-about/weather/optical-effects/rainbows"
   },
   {
     "id": "science-08",
@@ -330,7 +372,9 @@
         ],
         "correctIndex": 0,
         "explanation": "Dünya'da ~3 trilyon ağaç varken Samanyolu'nda ~100–400 milyar yıldız bulunur."
-      }
+      },
+      "sourceName": "Nature / Yale Forestry Study",
+      "sourceUrl": "https://www.nature.com/articles/nature14967"
     },
     "en": {
       "slug": "more-trees-on-earth-than-stars-in-milky-way",
@@ -348,8 +392,12 @@
         ],
         "correctIndex": 0,
         "explanation": "Earth's ~3 trillion trees outnumber the Milky Way's estimated 100–400 billion stars."
-      }
-    }
+      },
+      "sourceName": "Nature / Yale Forestry Study",
+      "sourceUrl": "https://www.nature.com/articles/nature14967"
+    },
+    "sourceName": "Nature / Yale Forestry Study",
+    "sourceUrl": "https://www.nature.com/articles/nature14967"
   },
   {
     "id": "science-09",
@@ -374,7 +422,9 @@
         ],
         "correctIndex": 0,
         "explanation": "Güneş'ten çıktıktan sonra 150 milyon km mesafeyi ışık hızıyla ~8 dakika 20 saniyede kat eder."
-      }
+      },
+      "sourceName": "NASA Sun Science",
+      "sourceUrl": "https://science.nasa.gov/sun/"
     },
     "en": {
       "slug": "sunlight-takes-8-minutes-to-earth-but-millennia-to-leave-sun",
@@ -392,8 +442,12 @@
         ],
         "correctIndex": 0,
         "explanation": "After finally escaping the Sun's dense interior, sunlight reaches Earth in ~8 minutes 20 seconds."
-      }
-    }
+      },
+      "sourceName": "NASA Sun Science",
+      "sourceUrl": "https://science.nasa.gov/sun/"
+    },
+    "sourceName": "NASA Sun Science",
+    "sourceUrl": "https://science.nasa.gov/sun/"
   },
   {
     "id": "science-10",
@@ -418,7 +472,9 @@
         ],
         "correctIndex": 0,
         "explanation": "Cam amorf bir katıdır; ustalar el yapımı camın kalın tarafını çerçevede alta koyardı."
-      }
+      },
+      "sourceName": "Corning Museum of Glass",
+      "sourceUrl": "https://www.cmog.org/"
     },
     "en": {
       "slug": "old-glass-windows-are-not-flowing-downward",
@@ -436,7 +492,11 @@
         ],
         "correctIndex": 0,
         "explanation": "Glass does not flow visibly at room temperature; historical glaziers put the heavy side down."
-      }
-    }
+      },
+      "sourceName": "Corning Museum of Glass",
+      "sourceUrl": "https://www.cmog.org/"
+    },
+    "sourceName": "Corning Museum of Glass",
+    "sourceUrl": "https://www.cmog.org/"
   }
 ]

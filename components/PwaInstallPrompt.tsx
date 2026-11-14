@@ -110,18 +110,19 @@ export default function PwaInstallPrompt({
 
   return (
     <AnimatePresence>
-      <motion.div
-        initial={{ opacity: 0, y: -16, scale: 0.96 }}
-        animate={{ opacity: 1, y: 0, scale: 1 }}
-        exit={{ opacity: 0, y: -16, scale: 0.96 }}
-        transition={{ type: 'spring', stiffness: 320, damping: 26 }}
-        data-testid="pwa-install-prompt"
-        style={{
-          WebkitBackdropFilter: 'blur(36px) saturate(180%)',
-          backdropFilter: 'blur(36px) saturate(180%)',
-        }}
-        className="fixed left-3 right-3 top-[calc(5.6rem+env(safe-area-inset-top))] z-40 mx-auto max-w-[400px] rounded-3xl border border-white/55 bg-white/35 p-3 shadow-[0_12px_36px_rgba(15,23,42,0.18),inset_0_1px_1px_rgba(255,255,255,0.75)] dark:border-white/20 dark:bg-[#130F24]/65"
-      >
+      <div className="pointer-events-none fixed inset-x-0 top-[calc(6.35rem+env(safe-area-inset-top))] z-30 mx-auto w-full max-w-[430px] px-3 md:top-[calc(2dvh+6.35rem+env(safe-area-inset-top))]">
+        <motion.div
+          initial={{ opacity: 0, y: -16, scale: 0.96 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          exit={{ opacity: 0, y: -16, scale: 0.96 }}
+          transition={{ type: 'spring', stiffness: 320, damping: 26 }}
+          data-testid="pwa-install-prompt"
+          style={{
+            WebkitBackdropFilter: 'blur(36px) saturate(180%)',
+            backdropFilter: 'blur(36px) saturate(180%)',
+          }}
+          className="pointer-events-auto w-full rounded-3xl border border-white/55 bg-white/85 p-3 shadow-[0_12px_36px_rgba(15,23,42,0.18),inset_0_1px_1px_rgba(255,255,255,0.75)] dark:border-white/20 dark:bg-[#130F24]/90"
+        >
         <div className="flex items-start justify-between gap-2.5">
           <div className="flex items-start gap-2.5">
             <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-[#6C5CE7] to-[#FF7675] text-white shadow-sm">
@@ -184,7 +185,8 @@ export default function PwaInstallPrompt({
             </motion.span>
           </div>
         )}
-      </motion.div>
+        </motion.div>
+      </div>
     </AnimatePresence>
   );
 }

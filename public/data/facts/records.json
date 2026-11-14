@@ -22,7 +22,9 @@
         ],
         "correctIndex": 0,
         "explanation": "Kas esnekliğini sağlayan Titin proteininin tam sistematik adı 189.819 harftir."
-      }
+      },
+      "sourceName": "RCSB Protein Data Bank / Guinness",
+      "sourceUrl": "https://www.rcsb.org/"
     },
     "en": {
       "slug": "longest-chemical-word-takes-three-hours-to-pronounce",
@@ -40,8 +42,12 @@
         ],
         "correctIndex": 0,
         "explanation": "Titin, the massive muscle elasticity protein, holds the 189,819-letter chemical name record."
-      }
-    }
+      },
+      "sourceName": "RCSB Protein Data Bank / Guinness",
+      "sourceUrl": "https://www.rcsb.org/"
+    },
+    "sourceName": "RCSB Protein Data Bank / Guinness",
+    "sourceUrl": "https://www.rcsb.org/"
   },
   {
     "id": "weird-02",
@@ -66,7 +72,9 @@
         ],
         "correctIndex": 0,
         "explanation": "Demir ısındıkça genleşir (thermal expansion), soğuk kış günlerinde ise tekrar büzülür."
-      }
+      },
+      "sourceName": "Tour Eiffel Official Engineering Facts",
+      "sourceUrl": "https://www.toureiffel.paris/en/the-monument/key-figures"
     },
     "en": {
       "slug": "eiffel-tower-grows-15-cm-taller-in-summer",
@@ -84,8 +92,12 @@
         ],
         "correctIndex": 0,
         "explanation": "Iron expands when heated and contracts again during cold winter nights."
-      }
-    }
+      },
+      "sourceName": "Tour Eiffel Official Engineering Facts",
+      "sourceUrl": "https://www.toureiffel.paris/en/the-monument/key-figures"
+    },
+    "sourceName": "Tour Eiffel Official Engineering Facts",
+    "sourceUrl": "https://www.toureiffel.paris/en/the-monument/key-figures"
   },
   {
     "id": "weird-03",
@@ -110,7 +122,9 @@
         ],
         "correctIndex": 0,
         "explanation": "Bağırsağın sert ve esnek bölümlerindeki ritmik kasılmalar içeriği küp formuna sıkıştırır."
-      }
+      },
+      "sourceName": "National Geographic / Soft Matter Study",
+      "sourceUrl": "https://www.nationalgeographic.com/animals/article/wombat-cube-shaped-poop-explained"
     },
     "en": {
       "slug": "wombats-produce-cube-shaped-poop",
@@ -128,8 +142,12 @@
         ],
         "correctIndex": 0,
         "explanation": "Varying stiffness along the intestinal walls molds flat faces and sharp edges."
-      }
-    }
+      },
+      "sourceName": "National Geographic / Soft Matter Study",
+      "sourceUrl": "https://www.nationalgeographic.com/animals/article/wombat-cube-shaped-poop-explained"
+    },
+    "sourceName": "National Geographic / Soft Matter Study",
+    "sourceUrl": "https://www.nationalgeographic.com/animals/article/wombat-cube-shaped-poop-explained"
   },
   {
     "id": "weird-04",
@@ -154,7 +172,9 @@
         ],
         "correctIndex": 0,
         "explanation": "Susami kıyısındaki su altı posta kutusu yaklaşık 10 metre derinliktedir ve düzenli olarak boşaltılır."
-      }
+      },
+      "sourceName": "Guinness World Records / Susami Tourism",
+      "sourceUrl": "https://www.guinnessworldrecords.com/"
     },
     "en": {
       "slug": "worlds-deepest-underwater-mailbox-in-japan",
@@ -172,8 +192,12 @@
         ],
         "correctIndex": 0,
         "explanation": "Divers swim 10 meters down to drop waterproof postcards that staff regularly collect."
-      }
-    }
+      },
+      "sourceName": "Guinness World Records / Susami Tourism",
+      "sourceUrl": "https://www.guinnessworldrecords.com/"
+    },
+    "sourceName": "Guinness World Records / Susami Tourism",
+    "sourceUrl": "https://www.guinnessworldrecords.com/"
   },
   {
     "id": "weird-05",
@@ -198,7 +222,9 @@
         ],
         "correctIndex": 0,
         "explanation": "Stubbs vaktinin çoğunu Nagley's General Store adlı yerel markette geçirip turistleri karşılıyordu."
-      }
+      },
+      "sourceName": "BBC News / Alaska Public Media",
+      "sourceUrl": "https://www.bbc.com/news"
     },
     "en": {
       "slug": "cat-served-as-honorary-mayor-in-alaska",
@@ -216,8 +242,12 @@
         ],
         "correctIndex": 0,
         "explanation": "Stubbs greeted visitors daily at Nagley's General Store for two decades."
-      }
-    }
+      },
+      "sourceName": "BBC News / Alaska Public Media",
+      "sourceUrl": "https://www.bbc.com/news"
+    },
+    "sourceName": "BBC News / Alaska Public Media",
+    "sourceUrl": "https://www.bbc.com/news"
   },
   {
     "id": "weird-06",
@@ -242,7 +272,9 @@
         ],
         "correctIndex": 0,
         "explanation": "Rusya hem kuzeybatıda Norveç'e hem güneydoğuda Kuzey Kore'ye komşudur."
-      }
+      },
+      "sourceName": "The World Factbook",
+      "sourceUrl": "https://www.cia.gov/the-world-factbook/"
     },
     "en": {
       "slug": "only-one-country-separates-norway-and-north-korea",
@@ -260,8 +292,12 @@
         ],
         "correctIndex": 0,
         "explanation": "Russia spans from Scandinavia to the Korean Peninsula, bordering both nations."
-      }
-    }
+      },
+      "sourceName": "The World Factbook",
+      "sourceUrl": "https://www.cia.gov/the-world-factbook/"
+    },
+    "sourceName": "The World Factbook",
+    "sourceUrl": "https://www.cia.gov/the-world-factbook/"
   },
   {
     "id": "weird-07",
@@ -286,7 +322,9 @@
         ],
         "correctIndex": 0,
         "explanation": "Bromelain enzimi proteinleri parçalar; bu yüzden dil yüzeyinde geçici bir karıncalanma yaratır."
-      }
+      },
+      "sourceName": "University of Melbourne Chemistry",
+      "sourceUrl": "https://www.unimelb.edu.au/"
     },
     "en": {
       "slug": "pineapple-enzymes-tingle-your-tongue",
@@ -304,8 +342,12 @@
         ],
         "correctIndex": 0,
         "explanation": "Bromelain breaks down surface proteins until saliva and stomach acid neutralize it."
-      }
-    }
+      },
+      "sourceName": "University of Melbourne Chemistry",
+      "sourceUrl": "https://www.unimelb.edu.au/"
+    },
+    "sourceName": "University of Melbourne Chemistry",
+    "sourceUrl": "https://www.unimelb.edu.au/"
   },
   {
     "id": "weird-08",
@@ -330,7 +372,9 @@
         ],
         "correctIndex": 0,
         "explanation": "Akustik testler ördek vaklamasının yankılandığını, ancak ses profili yüzünden fark edilmesinin zor olduğunu göstermiştir."
-      }
+      },
+      "sourceName": "University of Salford Acoustics",
+      "sourceUrl": "https://www.salford.ac.uk/"
     },
     "en": {
       "slug": "a-ducks-quack-actually-does-echo",
@@ -348,8 +392,12 @@
         ],
         "correctIndex": 0,
         "explanation": "Controlled acoustics tests confirmed quacks echo normally; they just fade smoothly together."
-      }
-    }
+      },
+      "sourceName": "University of Salford Acoustics",
+      "sourceUrl": "https://www.salford.ac.uk/"
+    },
+    "sourceName": "University of Salford Acoustics",
+    "sourceUrl": "https://www.salford.ac.uk/"
   },
   {
     "id": "weird-09",
@@ -374,7 +422,9 @@
         ],
         "correctIndex": 0,
         "explanation": "ORGAN²/ASLSP adlı eserdeki ASLSP kısaltması 'As Slow As Possible' anlamına gelir."
-      }
+      },
+      "sourceName": "John Cage Organ Foundation Halberstadt",
+      "sourceUrl": "https://aslsp.org/de/home.html"
     },
     "en": {
       "slug": "639-year-long-organ-concert-in-germany",
@@ -392,8 +442,12 @@
         ],
         "correctIndex": 0,
         "explanation": "John Cage titled the piece 'ORGAN²/ASLSP (As Slow As Possible)'."
-      }
-    }
+      },
+      "sourceName": "John Cage Organ Foundation Halberstadt",
+      "sourceUrl": "https://aslsp.org/de/home.html"
+    },
+    "sourceName": "John Cage Organ Foundation Halberstadt",
+    "sourceUrl": "https://aslsp.org/de/home.html"
   },
   {
     "id": "weird-10",
@@ -418,7 +472,9 @@
         ],
         "correctIndex": 0,
         "explanation": "Mikroskobik saman parçacıkları gaz kabarcıkları için çekirdek görevi gördüğünden, temiz sağım delikleri azalttı."
-      }
+      },
+      "sourceName": "Agroscope Switzerland Dairy Study",
+      "sourceUrl": "https://www.agroscope.admin.ch/agroscope/en/home.html"
     },
     "en": {
       "slug": "tiny-hay-particles-cause-holes-in-swiss-cheese",
@@ -436,7 +492,11 @@
         ],
         "correctIndex": 0,
         "explanation": "Without microscopic hay particles to seed gas bubbles, fewer eyes formed in the cheese."
-      }
-    }
+      },
+      "sourceName": "Agroscope Switzerland Dairy Study",
+      "sourceUrl": "https://www.agroscope.admin.ch/agroscope/en/home.html"
+    },
+    "sourceName": "Agroscope Switzerland Dairy Study",
+    "sourceUrl": "https://www.agroscope.admin.ch/agroscope/en/home.html"
   }
 ]

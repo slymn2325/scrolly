@@ -535,10 +535,12 @@ export default function HomePage() {
     feedRef.current?.scrollToTop();
   };
 
+  const cookieBannerVisible = !memory.cookieAccepted && activeModal === 'none' && !activeQuiz;
+
   return (
     <div className="relative flex h-[100dvh] w-screen items-center justify-center overflow-hidden bg-black md:bg-[#0B0915]">
-      {/* Mobile-First Full-Bleed Frame (100% edge-to-edge on mobile, crisp phone bezel on desktop) */}
-      <div className="relative h-[100dvh] w-full overflow-hidden md:h-[94dvh] md:max-w-[440px] md:rounded-[2.75rem] md:border-[6px] md:border-neutral-900/90 md:shadow-2xl">
+      {/* Mobile-First Full-Bleed Frame (locked 430px column on mobile & desktop) */}
+      <div className="relative mx-auto h-[100dvh] w-full max-w-[430px] overflow-hidden md:h-[96dvh] md:rounded-[2.5rem] md:border-[5px] md:border-neutral-900/90 md:shadow-2xl">
         <OfflineManager lang={lang} />
 
         {activeModal === 'none' && !activeQuiz && !storyShareFact && !shareModalData && (
@@ -560,6 +562,7 @@ export default function HomePage() {
           streakDays={memory.streakDays}
           xp={memory.xp}
           cardsSinceLastQuiz={memory.cardsSinceLastQuiz}
+          cookieBannerVisible={cookieBannerVisible}
           onSelectCategory={handleSelectCategory}
           onChangeLang={handleChangeLang}
           onToggleDarkMode={handleToggleDarkMode}
@@ -578,7 +581,7 @@ export default function HomePage() {
         {/* Active Quiz Overlay (Daily Sprint / Weekly Marathon / Memory Quiz / 1v1 Duel) */}
         <AnimatePresence>
           {activeQuiz && (
-            <div className="fixed inset-0 z-40 flex items-center justify-center bg-ink/55 p-4 pb-24 backdrop-blur-md">
+            <div className="fixed inset-0 z-40 mx-auto flex w-full max-w-[430px] items-center justify-center bg-ink/55 px-3 pt-4 backdrop-blur-md">
               <MemoryQuizCard
                 key={activeQuiz.key}
                 questions={activeQuiz.questions}
@@ -687,7 +690,7 @@ export default function HomePage() {
         {/* Non-Intrusive Cookie Notice Above Dock */}
         <CookieBanner
           lang={lang}
-          visible={!memory.cookieAccepted && activeModal === 'none' && !activeQuiz}
+          visible={cookieBannerVisible}
           onAccept={() => {
             vibrateTap(12);
             playPop(soundEnabled);

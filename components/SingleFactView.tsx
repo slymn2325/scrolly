@@ -59,6 +59,9 @@ export default function SingleFactView({
   const t = translations[lang];
   const content = fact[lang];
   const catMeta = getCategoryMeta(fact.category);
+  const resolvedSourceName =
+    content.sourceName || fact.sourceName || content.sourceHint;
+  const resolvedSourceUrl = content.sourceUrl || fact.sourceUrl;
 
   const preparedQuiz = useMemo(
     () => prepareQuizOptions(content.quiz, `${fact.id}-${lang}`),
@@ -233,11 +236,24 @@ export default function SingleFactView({
             <p className="text-sm leading-relaxed text-ink/85 sm:text-base">
               {content.deepDiveDetail}
             </p>
-            <div className="mt-4 flex items-center gap-2 border-t border-slate-100 pt-3 text-xs font-semibold text-ink/60">
-              <BookOpen className="h-4 w-4 text-amber-600" />
-              <span>
-                <strong>{t.seoVerifiedSource}:</strong> {content.sourceHint}
-              </span>
+            <div className="mt-4 flex flex-wrap items-center justify-between gap-2 border-t border-slate-100 pt-3 text-xs font-semibold text-ink/60">
+              <div className="flex items-center gap-2">
+                <BookOpen className="h-4 w-4 shrink-0 text-amber-600" />
+                <span>
+                  <strong>{t.seoVerifiedSource}:</strong> {resolvedSourceName}
+                </span>
+              </div>
+              {resolvedSourceUrl && (
+                <a
+                  href={resolvedSourceUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1 font-extrabold text-violet-700 hover:underline"
+                >
+                  <span>{t.verifySourceCta}</span>
+                  <ArrowRight className="h-3.5 w-3.5" />
+                </a>
+              )}
             </div>
           </div>
         </motion.article>

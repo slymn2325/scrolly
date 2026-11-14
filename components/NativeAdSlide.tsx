@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
-import { ArrowDown, ArrowUpRight, Megaphone, Sparkles } from 'lucide-react';
+import { ArrowDown, ArrowUpRight, Compass, Megaphone, Sparkles } from 'lucide-react';
 import { type Language, translations } from '@/i18n/translations';
 
 const ADSENSE_CLIENT_ID = 'ca-pub-1368005726792126';
@@ -17,46 +17,53 @@ declare global {
 interface NativeAdSlideProps {
   lang: Language;
   adIndex: number;
+  cookieBannerVisible?: boolean;
   onSkip: () => void;
 }
 
-const SPONSOR_ITEMS = [
+const DISCOVERY_TIP_ITEMS = [
   {
     tr: {
-      brand: 'Scrolly Bilim Atlası',
-      title: 'Günde 5 Dakikada Evrenin Sırlarını Dinle',
-      body: 'Astrofizik, kuantum dünyası ve insan beyni üzerine ücretsiz sesli bölümlerle bilgini derinleştir.',
-      tag: 'Bilim & Kültür',
+      brand: 'Scrolly Keşif İpucu',
+      title: 'Bilgileri İnteraktif Eskizlerle Test Et',
+      body: 'Her bilgi kartının üstündeki eskiz defterine dokunarak bilimsel animasyonları canlandırabilir, ardından tahmin kilitleyerek +20 XP kazanabilirsin.',
+      tag: 'Keşif Rehberi',
     },
     en: {
-      brand: 'Scrolly Science Atlas',
-      title: 'Daily 5-Minute Cosmic & Science Audio Drops',
-      body: 'Dive deeper into astrophysics, quantum oddities, and neuroscience with bite-sized daily audio.',
-      tag: 'Science & Audio',
+      brand: 'Scrolly Discovery Tip',
+      title: 'Animate Every Scientific Sketch Diagram',
+      body: 'Tap any hand-drawn notebook diagram above the card to trigger measurements, lock your Quick Guess for +20 XP, and check verified sources on the back.',
+      tag: 'Explorer Tip',
     },
   },
   {
     tr: {
-      brand: 'CosmosKit Gözlem Seti',
-      title: 'Şehir Işıklarından Uzak Gökyüzü Rehberi',
-      body: 'Yeni başlayanlar için yıldız haritası, gezegen takvimi ve cep dürbünü rehberi.',
-      tag: 'Keşif Ekipmanı',
+      brand: 'Scrolly Çevrimdışı Mod',
+      title: 'İnternetsiz Ortamda Bile Akış Seninle',
+      body: 'Metroda veya uçakta tüm kategoriler, hafıza quizleri ve 9:16 Story / Başarı Diploması üreticisi cihazında hazır çalışır.',
+      tag: 'Offline PWA',
     },
     en: {
-      brand: 'CosmosKit Starlight',
-      title: 'Your Pocket Night-Sky Observatory Guide',
-      body: 'Interactive constellation maps, planet visibility alerts, and beginner optics curated cleanly.',
-      tag: 'Explore Gear',
+      brand: 'Scrolly Offline Mode',
+      title: 'Zero Connection? Your Deck Keeps Flowing',
+      body: 'Every fact category, memory sprint quiz, and your 9:16 Story & Explorer Diploma PNG generator run locally even without Wi-Fi.',
+      tag: 'Offline PWA',
     },
   },
 ];
 
-export default function NativeAdSlide({ lang, adIndex, onSkip }: NativeAdSlideProps) {
+export default function NativeAdSlide({
+  lang,
+  adIndex,
+  cookieBannerVisible = false,
+  onSkip,
+}: NativeAdSlideProps) {
   const t = translations[lang];
-  const sponsor = SPONSOR_ITEMS[adIndex % SPONSOR_ITEMS.length][lang];
+  const tip = DISCOVERY_TIP_ITEMS[adIndex % DISCOVERY_TIP_ITEMS.length][lang];
   const [isOnline, setIsOnline] = useState(true);
   const [adFailed, setAdFailed] = useState(false);
 
+  // Only load real AdSense unit when NEXT_PUBLIC_ADSENSE_SLOT_ID is explicitly defined & online
   const shouldRenderLiveAdSense = Boolean(ADSENSE_SLOT_ID) && isOnline && !adFailed;
 
   useEffect(() => {
@@ -85,10 +92,13 @@ export default function NativeAdSlide({ lang, adIndex, onSkip }: NativeAdSlidePr
     <div
       data-testid="native-ad-card"
       data-adsense-client={ADSENSE_CLIENT_ID}
-      // Strictly isolated from card flip, heart burst, likes, and read counters
       onClick={(e) => e.stopPropagation()}
       onDoubleClick={(e) => e.stopPropagation()}
-      className="reels-slide relative flex h-full w-full shrink-0 flex-col justify-between overflow-hidden bg-gradient-to-br from-amber-50 via-[#FFFBF0] to-violet-100 px-5 pb-24 pt-28 select-none dark:from-[#1A132B] dark:via-[#120F24] dark:to-[#1F1735]"
+      className={`reels-slide relative mx-auto flex h-full w-full max-w-[430px] shrink-0 flex-col justify-between overflow-hidden bg-gradient-to-br from-amber-50 via-[#FFFBF0] to-violet-100 px-5 pt-[calc(6.25rem+env(safe-area-inset-top))] select-none dark:from-[#1A132B] dark:via-[#120F24] dark:to-[#1F1735] ${
+        cookieBannerVisible
+          ? 'pb-[calc(154px+env(safe-area-inset-bottom))]'
+          : 'pb-[calc(94px+env(safe-area-inset-bottom))]'
+      }`}
     >
       {/* Ambient Sponsor Glow */}
       <div className="pointer-events-none absolute -right-12 top-24 h-64 w-64 rounded-full bg-amber-300/25 blur-3xl dark:bg-amber-500/15" />
@@ -96,20 +106,23 @@ export default function NativeAdSlide({ lang, adIndex, onSkip }: NativeAdSlidePr
 
       {/* Top Sponsored Indicator */}
       <div className="relative z-10 flex items-center justify-between">
-        <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-300 bg-amber-100/90 px-3 py-1 text-xs font-extrabold uppercase tracking-wider text-amber-900 shadow-sm dark:border-amber-600/60 dark:bg-amber-900/50 dark:text-amber-200">
+        <span
+          data-testid="sponsored-badge"
+          className="inline-flex items-center gap-1.5 rounded-full border border-amber-300 bg-amber-100/90 px-3 py-1 text-xs font-extrabold uppercase tracking-wider text-amber-900 shadow-sm dark:border-amber-600/60 dark:bg-amber-900/50 dark:text-amber-200"
+        >
           <Megaphone className="h-3.5 w-3.5" />
           <span>{t.sponsoredLabel}</span>
         </span>
         <span className="rounded-full bg-white/80 px-3 py-1 text-xs font-bold text-ink/70 backdrop-blur-md dark:bg-white/10 dark:text-violet-200">
-          {shouldRenderLiveAdSense ? 'Google AdSense' : sponsor.tag}
+          {shouldRenderLiveAdSense ? 'Google AdSense' : tip.tag}
         </span>
       </div>
 
-      {/* Center Showcase: Live AdSense Unit when slot + network active, Demo Sponsor Card offline/fallback */}
+      {/* Live AdSense Slot when NEXT_PUBLIC_ADSENSE_SLOT_ID is set + online, otherwise clean Scrolly Discovery Tip */}
       {shouldRenderLiveAdSense ? (
         <div
           data-testid="adsense-slot-container"
-          className="relative z-10 my-auto flex w-full flex-col items-center justify-center rounded-3xl border border-amber-200/80 bg-white/80 p-4 shadow-md backdrop-blur-md dark:border-white/15 dark:bg-white/5"
+          className="relative z-10 my-auto flex w-full flex-col items-center justify-center rounded-3xl border border-amber-200/80 bg-white/85 p-4 shadow-md backdrop-blur-md dark:border-white/15 dark:bg-white/5"
         >
           <ins
             className="adsbygoogle"
@@ -121,37 +134,38 @@ export default function NativeAdSlide({ lang, adIndex, onSkip }: NativeAdSlidePr
           />
         </div>
       ) : (
-        <div className="relative z-10 my-auto flex flex-col items-start">
-          <div className="mb-5 flex h-20 w-20 items-center justify-center rounded-3xl bg-gradient-to-br from-amber-400 to-rose-400 text-white shadow-lg">
-            <Sparkles className="h-10 w-10" />
+        <div
+          data-testid="scrolly-discovery-tip-fallback"
+          className="relative z-10 my-auto flex flex-col items-start rounded-3xl border border-amber-200/75 bg-white/75 p-5 shadow-sm backdrop-blur-xl dark:border-white/15 dark:bg-white/10"
+        >
+          <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-amber-400 to-violet-500 text-white shadow-md">
+            <Compass className="h-7 w-7" />
           </div>
 
-          <p className="text-xs font-black uppercase tracking-wider text-violet-700 dark:text-violet-300">
-            {sponsor.brand}
+          <p className="inline-flex items-center gap-1 text-xs font-black uppercase tracking-wider text-violet-700 dark:text-violet-300">
+            <Sparkles className="h-3.5 w-3.5" />
+            <span>{tip.brand}</span>
           </p>
-          <h2 className="mt-2 font-display text-3xl font-bold leading-tight text-ink dark:text-white">
-            {sponsor.title}
+          <h2 className="mt-2 font-display text-2xl font-bold leading-tight text-ink dark:text-white">
+            {tip.title}
           </h2>
-          <p className="mt-3 text-base leading-relaxed text-ink/80 dark:text-violet-100/85">
-            {sponsor.body}
+          <p className="mt-2.5 text-sm leading-relaxed text-ink/80 dark:text-violet-100/85">
+            {tip.body}
           </p>
         </div>
       )}
 
       {/* Footer Actions — Above iOS Floating Island Dock */}
       <div className="relative z-20 flex items-center gap-3">
-        <motion.a
-          href="#sponsored-info"
-          onClick={(e) => {
-            e.preventDefault();
-            onSkip();
-          }}
+        <motion.button
+          type="button"
+          onClick={onSkip}
           whileTap={{ scale: 0.95 }}
           className="inline-flex items-center gap-1.5 rounded-full border border-amber-300 bg-white/90 px-5 py-3 text-xs font-extrabold text-ink shadow-sm backdrop-blur-md dark:border-white/20 dark:bg-white/15 dark:text-white"
         >
           <span>{t.adLearnMore}</span>
           <ArrowUpRight className="h-4 w-4" />
-        </motion.a>
+        </motion.button>
 
         <motion.button
           type="button"

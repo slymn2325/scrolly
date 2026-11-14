@@ -31,7 +31,9 @@
         "step": 1,
         "unit": "kalp",
         "correctValue": 3
-      }
+      },
+      "sourceName": "Smithsonian Ocean Portal",
+      "sourceUrl": "https://ocean.si.edu/ocean-life/invertebrates/octopus"
     },
     "en": {
       "slug": "octopuses-have-three-hearts-and-blue-blood",
@@ -58,8 +60,12 @@
         "step": 1,
         "unit": "hearts",
         "correctValue": 3
-      }
-    }
+      },
+      "sourceName": "Smithsonian Ocean Portal",
+      "sourceUrl": "https://ocean.si.edu/ocean-life/invertebrates/octopus"
+    },
+    "sourceName": "Smithsonian Ocean Portal",
+    "sourceUrl": "https://ocean.si.edu/ocean-life/invertebrates/octopus"
   },
   {
     "id": "nature-02",
@@ -93,7 +99,9 @@
           "Solucan Tünelleri"
         ],
         "correctOptionIndex": 0
-      }
+      },
+      "sourceName": "Nature Journal / Suzanne Simard",
+      "sourceUrl": "https://www.nature.com/articles/41557"
     },
     "en": {
       "slug": "trees-communicate-underground-wood-wide-web",
@@ -120,8 +128,12 @@
           "Earthworm Tunnels"
         ],
         "correctOptionIndex": 0
-      }
-    }
+      },
+      "sourceName": "Nature Journal / Suzanne Simard",
+      "sourceUrl": "https://www.nature.com/articles/41557"
+    },
+    "sourceName": "Nature Journal / Suzanne Simard",
+    "sourceUrl": "https://www.nature.com/articles/41557"
   },
   {
     "id": "nature-03",
@@ -146,7 +158,9 @@
         ],
         "correctIndex": 0,
         "explanation": "Fosil pulları köpekbalıklarının yaklaşık 400 milyon yıldır var olduğunu, yani ağaçlardan daha eski olduğunu gösterir."
-      }
+      },
+      "sourceName": "Natural History Museum London",
+      "sourceUrl": "https://www.nhm.ac.uk/discover/shark-evolution-a-450-million-year-timeline.html"
     },
     "en": {
       "slug": "sharks-are-older-than-trees-and-saturns-rings",
@@ -164,8 +178,12 @@
         ],
         "correctIndex": 0,
         "explanation": "Fossil evidence places early sharks over 400 million years ago, before the first trees."
-      }
-    }
+      },
+      "sourceName": "Natural History Museum London",
+      "sourceUrl": "https://www.nhm.ac.uk/discover/shark-evolution-a-450-million-year-timeline.html"
+    },
+    "sourceName": "Natural History Museum London",
+    "sourceUrl": "https://www.nhm.ac.uk/discover/shark-evolution-a-450-million-year-timeline.html"
   },
   {
     "id": "nature-04",
@@ -190,7 +208,9 @@
         ],
         "correctIndex": 0,
         "explanation": "Arılar tıpkı çiçek şekillerini tanıdıkları gibi yüz özelliklerinin bütünsel yerleşimini (configural processing) öğrenirler."
-      }
+      },
+      "sourceName": "Journal of Experimental Biology",
+      "sourceUrl": "https://journals.biologists.com/jeb"
     },
     "en": {
       "slug": "honeybees-can-recognize-human-faces",
@@ -208,8 +228,12 @@
         ],
         "correctIndex": 0,
         "explanation": "Bees process the spatial arrangement of eyes, nose, and mouth just like flower patterns."
-      }
-    }
+      },
+      "sourceName": "Journal of Experimental Biology",
+      "sourceUrl": "https://journals.biologists.com/jeb"
+    },
+    "sourceName": "Journal of Experimental Biology",
+    "sourceUrl": "https://journals.biologists.com/jeb"
   },
   {
     "id": "nature-05",
@@ -234,7 +258,9 @@
         ],
         "correctIndex": 0,
         "explanation": "Alg ve karideslerde bulunan karotenoid pigmentler zamanla tüyleri pembeye boyar."
-      }
+      },
+      "sourceName": "National Audubon Society",
+      "sourceUrl": "https://www.audubon.org/"
     },
     "en": {
       "slug": "flamingos-are-born-grey-not-pink",
@@ -252,8 +278,12 @@
         ],
         "correctIndex": 0,
         "explanation": "Carotenoids from algae and brine shrimp tint their feathers pink over time."
-      }
-    }
+      },
+      "sourceName": "National Audubon Society",
+      "sourceUrl": "https://www.audubon.org/"
+    },
+    "sourceName": "National Audubon Society",
+    "sourceUrl": "https://www.audubon.org/"
   },
   {
     "id": "nature-06",
@@ -278,7 +308,9 @@
         ],
         "correctIndex": 0,
         "explanation": "Ağaç dallarını ve yaprakları hassas biçimde kavrama gereksinimi iki farklı türde benzer parmak izi evrimleştirmiştir."
-      }
+      },
+      "sourceName": "University of Adelaide Anatomy Study",
+      "sourceUrl": "https://www.adelaide.edu.au/"
     },
     "en": {
       "slug": "koala-fingerprints-nearly-identical-to-humans",
@@ -296,8 +328,12 @@
         ],
         "correctIndex": 0,
         "explanation": "Independent adaptation for gripping trees produced nearly identical fingerprint ridges."
-      }
-    }
+      },
+      "sourceName": "University of Adelaide Anatomy Study",
+      "sourceUrl": "https://www.adelaide.edu.au/"
+    },
+    "sourceName": "University of Adelaide Anatomy Study",
+    "sourceUrl": "https://www.adelaide.edu.au/"
   },
   {
     "id": "nature-07",
@@ -322,7 +358,9 @@
         ],
         "correctIndex": 0,
         "explanation": "Her yunus hayatının başında kendine özgü bir imza ıslığı oluşturur ve bunu isim olarak kullanır."
-      }
+      },
+      "sourceName": "PNAS / University of St Andrews",
+      "sourceUrl": "https://www.pnas.org/doi/10.1073/pnas.1304459110"
     },
     "en": {
       "slug": "dolphins-call-each-other-by-signature-whistles",
@@ -340,8 +378,12 @@
         ],
         "correctIndex": 0,
         "explanation": "Each dolphin develops a distinct signature whistle that other dolphins repeat to address them."
-      }
-    }
+      },
+      "sourceName": "PNAS / University of St Andrews",
+      "sourceUrl": "https://www.pnas.org/doi/10.1073/pnas.1304459110"
+    },
+    "sourceName": "PNAS / University of St Andrews",
+    "sourceUrl": "https://www.pnas.org/doi/10.1073/pnas.1304459110"
   },
   {
     "id": "nature-08",
@@ -366,7 +408,9 @@
         ],
         "correctIndex": 0,
         "explanation": "Patilerini kenetleyerek veya kelp yosunlarına sarılarak akıntıda dağılmadan uyurlar."
-      }
+      },
+      "sourceName": "Monterey Bay Aquarium",
+      "sourceUrl": "https://www.montereybayaquarium.org/animals/animals-a-to-z/sea-otter"
     },
     "en": {
       "slug": "sea-otters-hold-hands-while-sleeping",
@@ -384,8 +428,12 @@
         ],
         "correctIndex": 0,
         "explanation": "Linking paws (and wrapping in kelp) keeps otters together while they sleep."
-      }
-    }
+      },
+      "sourceName": "Monterey Bay Aquarium",
+      "sourceUrl": "https://www.montereybayaquarium.org/animals/animals-a-to-z/sea-otter"
+    },
+    "sourceName": "Monterey Bay Aquarium",
+    "sourceUrl": "https://www.montereybayaquarium.org/animals/animals-a-to-z/sea-otter"
   },
   {
     "id": "nature-09",
@@ -410,7 +458,9 @@
         ],
         "correctIndex": 0,
         "explanation": "Armillaria ostoyae mantarının yer altı ağı neredeyse 10 km²'lik tek bir genetik organizmadır."
-      }
+      },
+      "sourceName": "USDA Forest Service",
+      "sourceUrl": "https://www.fs.usda.gov/"
     },
     "en": {
       "slug": "worlds-largest-living-organism-is-an-underground-fungus",
@@ -428,8 +478,12 @@
         ],
         "correctIndex": 0,
         "explanation": "The Armillaria ostoyae fungus spreads underground across nearly 10 square kilometers."
-      }
-    }
+      },
+      "sourceName": "USDA Forest Service",
+      "sourceUrl": "https://www.fs.usda.gov/"
+    },
+    "sourceName": "USDA Forest Service",
+    "sourceUrl": "https://www.fs.usda.gov/"
   },
   {
     "id": "nature-10",
@@ -454,7 +508,9 @@
         ],
         "correctIndex": 0,
         "explanation": "Kıvrımlı yapı su depolandıkça kaktüsün hacminin güvenle şişmesini sağlar."
-      }
+      },
+      "sourceName": "National Park Service (Saguaro)",
+      "sourceUrl": "https://www.nps.gov/sagu/learn/nature/saguaro.htm"
     },
     "en": {
       "slug": "saguaro-cactus-expands-like-accordion-to-store-water",
@@ -472,7 +528,11 @@
         ],
         "correctIndex": 0,
         "explanation": "The pleats unfold smoothly so the cactus can swell with stored water without splitting."
-      }
-    }
+      },
+      "sourceName": "National Park Service (Saguaro)",
+      "sourceUrl": "https://www.nps.gov/sagu/learn/nature/saguaro.htm"
+    },
+    "sourceName": "National Park Service (Saguaro)",
+    "sourceUrl": "https://www.nps.gov/sagu/learn/nature/saguaro.htm"
   }
 ]

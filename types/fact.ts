@@ -31,6 +31,8 @@ export interface LocalizedContent {
   factText: string;
   deepDiveDetail: string;
   sourceHint: string;
+  sourceName?: string;
+  sourceUrl?: string;
   tag?: string;
   quiz: FactQuizContent;
   guessChallenge?: GuessChallenge;
@@ -43,6 +45,8 @@ export interface FactCard {
   iconName: string;
   emoji?: string;
   readingTimeSec?: number;
+  sourceName?: string;
+  sourceUrl?: string;
   tr: LocalizedContent;
   en: LocalizedContent;
 }

@@ -31,7 +31,9 @@
         "step": 1,
         "unit": "gün",
         "correctValue": 243
-      }
+      },
+      "sourceName": "NASA Planetary Fact Sheet",
+      "sourceUrl": "https://science.nasa.gov/venus/facts/"
     },
     "en": {
       "slug": "a-day-on-venus-is-longer-than-a-year",
@@ -58,8 +60,12 @@
         "step": 1,
         "unit": "days",
         "correctValue": 243
-      }
-    }
+      },
+      "sourceName": "NASA Planetary Fact Sheet",
+      "sourceUrl": "https://science.nasa.gov/venus/facts/"
+    },
+    "sourceName": "NASA Planetary Fact Sheet",
+    "sourceUrl": "https://science.nasa.gov/venus/facts/"
   },
   {
     "id": "space-02",
@@ -93,7 +99,9 @@
         "step": 5,
         "unit": "km",
         "correctValue": 20
-      }
+      },
+      "sourceName": "Chandra X-Ray Observatory / ESA",
+      "sourceUrl": "https://chandra.harvard.edu/xray_sources/neutron_stars.html"
     },
     "en": {
       "slug": "teaspoon-of-neutron-star-weight",
@@ -120,8 +128,12 @@
         "step": 5,
         "unit": "km",
         "correctValue": 20
-      }
-    }
+      },
+      "sourceName": "Chandra X-Ray Observatory / ESA",
+      "sourceUrl": "https://chandra.harvard.edu/xray_sources/neutron_stars.html"
+    },
+    "sourceName": "Chandra X-Ray Observatory / ESA",
+    "sourceUrl": "https://chandra.harvard.edu/xray_sources/neutron_stars.html"
   },
   {
     "id": "space-03",
@@ -155,7 +167,9 @@
           "Oksijen Gazı"
         ],
         "correctOptionIndex": 0
-      }
+      },
+      "sourceName": "SLAC National Accelerator Laboratory",
+      "sourceUrl": "https://www6.slac.stanford.edu/"
     },
     "en": {
       "slug": "diamond-rain-on-neptune-and-uranus",
@@ -182,8 +196,12 @@
           "Oxygen Gas"
         ],
         "correctOptionIndex": 0
-      }
-    }
+      },
+      "sourceName": "SLAC National Accelerator Laboratory",
+      "sourceUrl": "https://www6.slac.stanford.edu/"
+    },
+    "sourceName": "SLAC National Accelerator Laboratory",
+    "sourceUrl": "https://www6.slac.stanford.edu/"
   },
   {
     "id": "space-04",
@@ -208,7 +226,9 @@
         ],
         "correctIndex": 0,
         "explanation": "Atmosferi ve hava olayları olmadığı için Ay yüzeyindeki izler milyonlarca yıl bozulmadan kalır."
-      }
+      },
+      "sourceName": "NASA Apollo Archive",
+      "sourceUrl": "https://www.nasa.gov/history/alsj/"
     },
     "en": {
       "slug": "footprints-on-the-moon-last-millions-of-years",
@@ -226,8 +246,12 @@
         ],
         "correctIndex": 0,
         "explanation": "With no wind or weather on the Moon, surface tracks persist for millions of years."
-      }
-    }
+      },
+      "sourceName": "NASA Apollo Archive",
+      "sourceUrl": "https://www.nasa.gov/history/alsj/"
+    },
+    "sourceName": "NASA Apollo Archive",
+    "sourceUrl": "https://www.nasa.gov/history/alsj/"
   },
   {
     "id": "space-05",
@@ -261,7 +285,9 @@
         "step": 1,
         "unit": "%",
         "correctValue": 99
-      }
+      },
+      "sourceName": "NASA Solar System Exploration",
+      "sourceUrl": "https://science.nasa.gov/sun/facts/"
     },
     "en": {
       "slug": "sun-holds-99-percent-of-solar-system-mass",
@@ -288,8 +314,12 @@
         "step": 1,
         "unit": "%",
         "correctValue": 99
-      }
-    }
+      },
+      "sourceName": "NASA Solar System Exploration",
+      "sourceUrl": "https://science.nasa.gov/sun/facts/"
+    },
+    "sourceName": "NASA Solar System Exploration",
+    "sourceUrl": "https://science.nasa.gov/sun/facts/"
   },
   {
     "id": "space-06",
@@ -314,7 +344,9 @@
         ],
         "correctIndex": 0,
         "explanation": "Araya girecek hava veya oksit tabakası olmadığından atomlar doğrudan bağ kurar; buna soğuk kaynak denir."
-      }
+      },
+      "sourceName": "European Space Agency (ESA)",
+      "sourceUrl": "https://www.esa.int/"
     },
     "en": {
       "slug": "cold-welding-in-outer-space",
@@ -332,8 +364,12 @@
         ],
         "correctIndex": 0,
         "explanation": "Without air or an oxide barrier, metal atoms bond directly on contact in a process called cold welding."
-      }
-    }
+      },
+      "sourceName": "European Space Agency (ESA)",
+      "sourceUrl": "https://www.esa.int/"
+    },
+    "sourceName": "European Space Agency (ESA)",
+    "sourceUrl": "https://www.esa.int/"
   },
   {
     "id": "space-07",
@@ -358,7 +394,9 @@
         ],
         "correctIndex": 0,
         "explanation": "Etil format molekülü ahududuya kendine özgü meyvemsi kokusunu verir."
-      }
+      },
+      "sourceName": "Max Planck Institute for Radio Astronomy",
+      "sourceUrl": "https://www.mpifr-bonn.mpg.de/en"
     },
     "en": {
       "slug": "center-of-milky-way-contains-raspberry-flavor-molecule",
@@ -376,8 +414,12 @@
         ],
         "correctIndex": 0,
         "explanation": "Ethyl formate is a primary ester behind the scent and flavor of raspberries."
-      }
-    }
+      },
+      "sourceName": "Max Planck Institute for Radio Astronomy",
+      "sourceUrl": "https://www.mpifr-bonn.mpg.de/en"
+    },
+    "sourceName": "Max Planck Institute for Radio Astronomy",
+    "sourceUrl": "https://www.mpifr-bonn.mpg.de/en"
   },
   {
     "id": "space-08",
@@ -402,7 +444,9 @@
         ],
         "correctIndex": 0,
         "explanation": "Gaz devi Satürn'ün büyük kısmı en hafif iki element olan hidrojen ve helyumdan oluşur."
-      }
+      },
+      "sourceName": "NASA Saturn Fact Sheet",
+      "sourceUrl": "https://science.nasa.gov/saturn/facts/"
     },
     "en": {
       "slug": "saturn-is-less-dense-than-water",
@@ -420,8 +464,12 @@
         ],
         "correctIndex": 0,
         "explanation": "Being composed mainly of hydrogen and helium gives Saturn a lower average density than water."
-      }
-    }
+      },
+      "sourceName": "NASA Saturn Fact Sheet",
+      "sourceUrl": "https://science.nasa.gov/saturn/facts/"
+    },
+    "sourceName": "NASA Saturn Fact Sheet",
+    "sourceUrl": "https://science.nasa.gov/saturn/facts/"
   },
   {
     "id": "space-09",
@@ -446,7 +494,9 @@
         ],
         "correctIndex": 0,
         "explanation": "Mars'taki ince toz tabakası kırmızı ışığı saçarken mavi ışığı Güneş yönünden geçirir."
-      }
+      },
+      "sourceName": "NASA Mars Curiosity Observations",
+      "sourceUrl": "https://science.nasa.gov/mars/"
     },
     "en": {
       "slug": "sunsets-on-mars-appear-blue",
@@ -464,8 +514,12 @@
         ],
         "correctIndex": 0,
         "explanation": "Fine Martian dust lets blue light penetrate forward at sunset while scattering red away."
-      }
-    }
+      },
+      "sourceName": "NASA Mars Curiosity Observations",
+      "sourceUrl": "https://science.nasa.gov/mars/"
+    },
+    "sourceName": "NASA Mars Curiosity Observations",
+    "sourceUrl": "https://science.nasa.gov/mars/"
   },
   {
     "id": "space-10",
@@ -490,7 +544,9 @@
         ],
         "correctIndex": 0,
         "explanation": "Dünya'dan sesler ve müzikler içeren bakır-altın kaplama disk 'Altın Plak' olarak bilinir."
-      }
+      },
+      "sourceName": "NASA Jet Propulsion Laboratory",
+      "sourceUrl": "https://voyager.jpl.nasa.gov/mission/status/"
     },
     "en": {
       "slug": "voyager-1-signals-from-over-24-billion-km-away",
@@ -508,7 +564,11 @@
         ],
         "correctIndex": 0,
         "explanation": "Carl Sagan and his team curated the Golden Record carrying Earth's sounds and greetings."
-      }
-    }
+      },
+      "sourceName": "NASA Jet Propulsion Laboratory",
+      "sourceUrl": "https://voyager.jpl.nasa.gov/mission/status/"
+    },
+    "sourceName": "NASA Jet Propulsion Laboratory",
+    "sourceUrl": "https://voyager.jpl.nasa.gov/mission/status/"
   }
 ]

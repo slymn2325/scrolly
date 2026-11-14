@@ -201,7 +201,7 @@ export default function MemoryQuizCard({
       exit={{ opacity: 0, scale: 0.94, y: -12 }}
       transition={{ type: 'spring', stiffness: 280, damping: 24 }}
       data-testid="memory-quiz-card"
-      className="mx-auto flex max-h-[85dvh] w-full max-w-md flex-col justify-between overflow-y-auto no-scrollbar rounded-3xl border-2 border-violet-200 bg-white/95 p-5 shadow-2xl backdrop-blur-xl dark:border-violet-700/60 dark:bg-[#1A162B]/95 sm:p-6"
+      className="mx-auto mb-[92px] flex max-h-[84dvh] w-full max-w-[430px] flex-col justify-between overflow-y-auto no-scrollbar rounded-3xl border-2 border-violet-200 bg-white/95 p-5 shadow-2xl backdrop-blur-xl dark:border-violet-700/60 dark:bg-[#1A162B]/95 sm:p-6"
     >
       {/* Incoming 1v1 Duel Banner */}
       {duelConfig && (

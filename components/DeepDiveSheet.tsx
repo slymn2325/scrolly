@@ -44,6 +44,9 @@ export default function DeepDiveSheet({
   const content = fact[lang];
   const catMeta = getCategoryMeta(fact.category);
   const factUrl = getFactUrl(fact, lang);
+  const resolvedSourceName =
+    content.sourceName || fact.sourceName || content.sourceHint;
+  const resolvedSourceUrl = content.sourceUrl || fact.sourceUrl;
 
   const preparedQuiz = useMemo(
     () => prepareQuizOptions(content.quiz, `${fact.id}-${lang}-sheet`),
@@ -68,7 +71,7 @@ export default function DeepDiveSheet({
   return (
     <AnimatePresence>
       {open && (
-        <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center sm:p-4">
+        <div className="fixed inset-0 z-50 mx-auto flex w-full max-w-[430px] items-end justify-center sm:items-center sm:p-3">
           {/* Backdrop */}
           <motion.div
             initial={{ opacity: 0 }}
@@ -92,7 +95,7 @@ export default function DeepDiveSheet({
             aria-modal="true"
             aria-label={t.deepDiveBtn}
             data-testid="deep-dive-sheet"
-            className="relative z-10 flex max-h-[88vh] w-full max-w-xl flex-col rounded-t-3xl border-t-2 border-amber-200 bg-[#FFFDF9] shadow-cozy-lg sm:rounded-3xl sm:border-2"
+            className="relative z-10 flex max-h-[86dvh] w-full max-w-[430px] flex-col rounded-t-3xl border-t-2 border-amber-200 bg-[#FFFDF9] shadow-cozy-lg sm:mb-[92px] sm:rounded-3xl sm:border-2"
           >
             {/* Drag Handle */}
             <div className="flex flex-col items-center pt-3 pb-1">
@@ -168,11 +171,24 @@ export default function DeepDiveSheet({
                 <p className="text-sm leading-relaxed text-ink/85 sm:text-base">
                   {content.deepDiveDetail}
                 </p>
-                <div className="mt-3 flex items-center gap-2 border-t border-black/5 pt-2.5 text-xs font-semibold text-ink/65">
-                  <BookOpen className="h-3.5 w-3.5 text-amber-600" />
-                  <span>
-                    <strong>{t.sourceLabel}:</strong> {content.sourceHint}
-                  </span>
+                <div className="mt-3 flex flex-wrap items-center justify-between gap-2 border-t border-black/5 pt-2.5 text-xs font-semibold text-ink/65">
+                  <div className="flex items-center gap-2">
+                    <BookOpen className="h-3.5 w-3.5 shrink-0 text-amber-600" />
+                    <span>
+                      <strong>{t.sourceLabel}:</strong> {resolvedSourceName}
+                    </span>
+                  </div>
+                  {resolvedSourceUrl && (
+                    <a
+                      href={resolvedSourceUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1 font-extrabold text-violet-700 hover:underline"
+                    >
+                      <span>{t.verifySourceCta}</span>
+                      <ExternalLink className="h-3 w-3" />
+                    </a>
+                  )}
                 </div>
               </div>
 

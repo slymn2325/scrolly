@@ -5,6 +5,7 @@
 :root {
   --bg-cream: #FFFDF9;
   --text-ink: #1E1B2E;
+  --sketch-pill-bg: rgba(255, 255, 255, 0.88);
 }
 
 html,
@@ -36,6 +37,7 @@ html.dark,
 html.dark body {
   background-color: #0F0D1A;
   color: #F5F3FF;
+  --sketch-pill-bg: rgba(18, 15, 36, 0.9);
 }
 
 /* Dark mode card surface overrides for inline pastel backgrounds */

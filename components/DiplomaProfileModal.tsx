@@ -138,14 +138,14 @@ export default function DiplomaProfileModal({
           aria-modal="true"
           aria-label={t.diplomaTitle}
           data-testid="diploma-modal"
-          className="fixed inset-0 z-50 flex items-center justify-center bg-ink/55 p-4 pb-24 backdrop-blur-md"
+          className="fixed inset-0 z-50 mx-auto flex w-full max-w-[430px] items-center justify-center bg-ink/55 px-3 pt-4 backdrop-blur-md"
         >
           <motion.div
             initial={{ opacity: 0, scale: 0.92, y: 18 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.92, y: 18 }}
             transition={{ type: 'spring', stiffness: 320, damping: 24 }}
-            className="relative flex max-h-[82dvh] w-full max-w-md flex-col overflow-hidden rounded-3xl border-2 border-amber-200 bg-[#FFFDF9] shadow-2xl dark:border-violet-700/50 dark:bg-[#171228]"
+            className="relative mb-[92px] flex max-h-[82dvh] w-full flex-col overflow-hidden rounded-3xl border-2 border-amber-200 bg-[#FFFDF9] shadow-2xl dark:border-violet-700/50 dark:bg-[#171228]"
           >
             {/* Header */}
             <div className="flex items-center justify-between border-b border-amber-100 px-5 py-4 dark:border-white/10">

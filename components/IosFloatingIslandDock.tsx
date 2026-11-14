@@ -62,15 +62,16 @@ export default function IosFloatingIslandDock({
   ];
 
   return (
-    <nav
-      aria-label="iOS Floating Island Dock"
-      data-testid="ios-floating-dock"
-      style={{
-        WebkitBackdropFilter: 'blur(40px) saturate(180%)',
-        backdropFilter: 'blur(40px) saturate(180%)',
-      }}
-      className="fixed bottom-[calc(0.85rem+env(safe-area-inset-bottom))] left-1/2 z-50 flex w-[94%] max-w-[420px] -translate-x-1/2 items-center justify-between rounded-full border border-white/45 bg-white/20 px-2 py-1.5 shadow-[0_8px_32px_rgba(0,0,0,0.16),inset_0_1px_1px_rgba(255,255,255,0.65)] backdrop-blur-2xl backdrop-saturate-180 dark:border-white/20 dark:bg-black/25 dark:shadow-[0_12px_36px_rgba(0,0,0,0.5),inset_0_1px_1px_rgba(255,255,255,0.2)] md:bottom-[calc(3dvh+0.85rem+env(safe-area-inset-bottom))] md:max-w-[404px]"
-    >
+    <div className="pointer-events-none fixed inset-x-0 bottom-[calc(0.75rem+env(safe-area-inset-bottom))] z-50 mx-auto w-full max-w-[430px] px-3 md:bottom-[calc(2dvh+0.75rem+env(safe-area-inset-bottom))]">
+      <nav
+        aria-label="iOS Floating Island Dock"
+        data-testid="ios-floating-dock"
+        style={{
+          WebkitBackdropFilter: 'blur(40px) saturate(180%)',
+          backdropFilter: 'blur(40px) saturate(180%)',
+        }}
+        className="pointer-events-auto flex w-full items-center justify-between rounded-full border border-white/45 bg-white/20 px-2 py-1.5 shadow-[0_8px_32px_rgba(0,0,0,0.16),inset_0_1px_1px_rgba(255,255,255,0.65)] backdrop-blur-2xl backdrop-saturate-180 dark:border-white/20 dark:bg-black/25 dark:shadow-[0_12px_36px_rgba(0,0,0,0.5),inset_0_1px_1px_rgba(255,255,255,0.2)]"
+      >
       {tabs.map((tab) => {
         const isActive = activeTab === tab.id;
         const isCenter = tab.id === 'explore';
@@ -124,6 +125,7 @@ export default function IosFloatingIslandDock({
           </motion.button>
         );
       })}
-    </nav>
+      </nav>
+    </div>
   );
 }

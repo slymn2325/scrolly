@@ -377,10 +377,12 @@ export default function FactCard({
               {/* Embedded Live Category Motion Graphic */}
               <div className="mt-3">
                 <CategoryMotionArt
+                  factId={fact.id}
                   category={fact.category}
                   accentColor={fact.accentColor}
                   iconName={fact.iconName}
                   emoji={fact.emoji}
+                  lang={lang}
                 />
               </div>
 

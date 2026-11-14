@@ -22,7 +22,9 @@
         ],
         "correctIndex": 0,
         "explanation": "Kafatası ve eklem bölgelerindeki ayrı kemikler büyüme çağında birleşip tek kemik haline gelir."
-      }
+      },
+      "sourceName": "Cleveland Clinic Anatomy",
+      "sourceUrl": "https://my.clevelandclinic.org/health/body/21048-skeletal-system"
     },
     "en": {
       "slug": "babies-are-born-with-around-300-bones",
@@ -40,8 +42,12 @@
         ],
         "correctIndex": 0,
         "explanation": "Separate infant bone segments gradually harden and fuse into larger adult bones."
-      }
-    }
+      },
+      "sourceName": "Cleveland Clinic Anatomy",
+      "sourceUrl": "https://my.clevelandclinic.org/health/body/21048-skeletal-system"
+    },
+    "sourceName": "Cleveland Clinic Anatomy",
+    "sourceUrl": "https://my.clevelandclinic.org/health/body/21048-skeletal-system"
   },
   {
     "id": "human-02",
@@ -66,7 +72,9 @@
         ],
         "correctIndex": 0,
         "explanation": "Beyin dokusunda ağrı reseptörü bulunmaz; baş ağrısı çevredeki zarlar ve damarlardan kaynaklanır."
-      }
+      },
+      "sourceName": "Johns Hopkins Medicine",
+      "sourceUrl": "https://www.hopkinsmedicine.org/health/conditions-and-diseases/anatomy-of-the-brain"
     },
     "en": {
       "slug": "human-brain-cannot-feel-pain",
@@ -84,8 +92,12 @@
         ],
         "correctIndex": 0,
         "explanation": "Brain tissue has no pain receptors; headaches arise from surrounding tissues and blood vessels."
-      }
-    }
+      },
+      "sourceName": "Johns Hopkins Medicine",
+      "sourceUrl": "https://www.hopkinsmedicine.org/health/conditions-and-diseases/anatomy-of-the-brain"
+    },
+    "sourceName": "Johns Hopkins Medicine",
+    "sourceUrl": "https://www.hopkinsmedicine.org/health/conditions-and-diseases/anatomy-of-the-brain"
   },
   {
     "id": "human-03",
@@ -110,7 +122,9 @@
         ],
         "correctIndex": 0,
         "explanation": "Mikroskobik kılcal damarlar eklendiğinde toplam uzunluk yaklaşık 96.000 km'ye (Dünya'nın iki katından fazlasına) ulaşır."
-      }
+      },
+      "sourceName": "British Heart Foundation",
+      "sourceUrl": "https://www.bhf.org.uk/"
     },
     "en": {
       "slug": "blood-vessels-circle-earth-twice",
@@ -128,8 +142,12 @@
         ],
         "correctIndex": 0,
         "explanation": "Driven mostly by microscopic capillaries, human blood vessels total roughly 96,000 km."
-      }
-    }
+      },
+      "sourceName": "British Heart Foundation",
+      "sourceUrl": "https://www.bhf.org.uk/"
+    },
+    "sourceName": "British Heart Foundation",
+    "sourceUrl": "https://www.bhf.org.uk/"
   },
   {
     "id": "human-04",
@@ -154,7 +172,9 @@
         ],
         "correctIndex": 0,
         "explanation": "Alkalin bikarbonat içeren mukus tabakası asidi nötralize ederek mide duvarını korur."
-      }
+      },
+      "sourceName": "NIH / NIDDK Digestive Health",
+      "sourceUrl": "https://www.niddk.nih.gov/health-information/digestive-diseases/digestive-system-how-it-works"
     },
     "en": {
       "slug": "stomach-acid-strong-enough-to-dissolve-metal",
@@ -172,8 +192,12 @@
         ],
         "correctIndex": 0,
         "explanation": "Bicarbonate-buffered mucus neutralizes acid right along the stomach wall."
-      }
-    }
+      },
+      "sourceName": "NIH / NIDDK Digestive Health",
+      "sourceUrl": "https://www.niddk.nih.gov/health-information/digestive-diseases/digestive-system-how-it-works"
+    },
+    "sourceName": "NIH / NIDDK Digestive Health",
+    "sourceUrl": "https://www.niddk.nih.gov/health-information/digestive-diseases/digestive-system-how-it-works"
   },
   {
     "id": "human-05",
@@ -198,7 +222,9 @@
         ],
         "correctIndex": 0,
         "explanation": "Kan damarları görüşü engelleyeceği için kornea saydam kalır ve oksijeni doğrudan havadan alır."
-      }
+      },
+      "sourceName": "American Academy of Ophthalmology",
+      "sourceUrl": "https://www.aao.org/eye-health/anatomy/parts-of-eye"
     },
     "en": {
       "slug": "cornea-gets-oxygen-directly-from-the-air",
@@ -216,8 +242,12 @@
         ],
         "correctIndex": 0,
         "explanation": "Staying free of blood vessels keeps the cornea transparent while tears absorb oxygen from air."
-      }
-    }
+      },
+      "sourceName": "American Academy of Ophthalmology",
+      "sourceUrl": "https://www.aao.org/eye-health/anatomy/parts-of-eye"
+    },
+    "sourceName": "American Academy of Ophthalmology",
+    "sourceUrl": "https://www.aao.org/eye-health/anatomy/parts-of-eye"
   },
   {
     "id": "human-06",
@@ -242,7 +272,9 @@
         ],
         "correctIndex": 0,
         "explanation": "Tüm ökaryot canlılar solunum ve hücre bölünmesi gibi temel hücresel genleri ortak atalardan paylaşır."
-      }
+      },
+      "sourceName": "National Human Genome Research Institute",
+      "sourceUrl": "https://www.genome.gov/"
     },
     "en": {
       "slug": "humans-and-bananas-share-60-percent-core-genes",
@@ -260,8 +292,12 @@
         ],
         "correctIndex": 0,
         "explanation": "Fundamental genes for energy and cell division are conserved across all complex life."
-      }
-    }
+      },
+      "sourceName": "National Human Genome Research Institute",
+      "sourceUrl": "https://www.genome.gov/"
+    },
+    "sourceName": "National Human Genome Research Institute",
+    "sourceUrl": "https://www.genome.gov/"
   },
   {
     "id": "human-07",
@@ -286,7 +322,9 @@
         ],
         "correctIndex": 0,
         "explanation": "Dil izi (lingual print) parmak izi gibi genetik ve gelişimsel olarak kişiye özeldir."
-      }
+      },
+      "sourceName": "National Library of Medicine (PubMed)",
+      "sourceUrl": "https://pubmed.ncbi.nlm.nih.gov/"
     },
     "en": {
       "slug": "your-tongue-print-is-as-unique-as-your-fingerprint",
@@ -304,8 +342,12 @@
         ],
         "correctIndex": 0,
         "explanation": "Like fingerprints, tongue shapes and papillae patterns are unique to every individual."
-      }
-    }
+      },
+      "sourceName": "National Library of Medicine (PubMed)",
+      "sourceUrl": "https://pubmed.ncbi.nlm.nih.gov/"
+    },
+    "sourceName": "National Library of Medicine (PubMed)",
+    "sourceUrl": "https://pubmed.ncbi.nlm.nih.gov/"
   },
   {
     "id": "human-08",
@@ -330,7 +372,9 @@
         ],
         "correctIndex": 0,
         "explanation": "Dakikada ortalama 70 atışla kalp günde yaklaşık 100.000 kez kan pompalar."
-      }
+      },
+      "sourceName": "American Heart Association",
+      "sourceUrl": "https://www.heart.org/"
     },
     "en": {
       "slug": "your-heart-beats-about-2-5-billion-times-in-a-lifetime",
@@ -348,8 +392,12 @@
         ],
         "correctIndex": 0,
         "explanation": "At ~70 beats per minute, the heart beats roughly 100,000 times every 24 hours."
-      }
-    }
+      },
+      "sourceName": "American Heart Association",
+      "sourceUrl": "https://www.heart.org/"
+    },
+    "sourceName": "American Heart Association",
+    "sourceUrl": "https://www.heart.org/"
   },
   {
     "id": "human-09",
@@ -374,7 +422,9 @@
         ],
         "correctIndex": 0,
         "explanation": "Orta kulaktaki 3 mm'lik üzengi kemiği ses titreşimlerini iç kulağa iletir."
-      }
+      },
+      "sourceName": "NIH / NIDCD Hearing Research",
+      "sourceUrl": "https://www.nidcd.nih.gov/health/how-do-we-hear"
     },
     "en": {
       "slug": "smallest-bone-in-the-body-is-in-your-ear",
@@ -392,8 +442,12 @@
         ],
         "correctIndex": 0,
         "explanation": "The tiny 3-millimeter stapes helps transmit sound vibrations inside the middle ear."
-      }
-    }
+      },
+      "sourceName": "NIH / NIDCD Hearing Research",
+      "sourceUrl": "https://www.nidcd.nih.gov/health/how-do-we-hear"
+    },
+    "sourceName": "NIH / NIDCD Hearing Research",
+    "sourceUrl": "https://www.nidcd.nih.gov/health/how-do-we-hear"
   },
   {
     "id": "human-10",
@@ -418,7 +472,9 @@
         ],
         "correctIndex": 0,
         "explanation": "Derin uykuda beyin koku sinyallerine yanıt vermez; bu yüzden duman dedektörleri yüksek sesle çalışır."
-      }
+      },
+      "sourceName": "Brown University Sleep Research",
+      "sourceUrl": "https://www.brown.edu/"
     },
     "en": {
       "slug": "humans-cannot-smell-while-fast-asleep",
@@ -436,7 +492,11 @@
         ],
         "correctIndex": 0,
         "explanation": "Because smell won't reliably wake sleepers, fire safety relies on loud audible alarms."
-      }
-    }
+      },
+      "sourceName": "Brown University Sleep Research",
+      "sourceUrl": "https://www.brown.edu/"
+    },
+    "sourceName": "Brown University Sleep Research",
+    "sourceUrl": "https://www.brown.edu/"
   }
 ]

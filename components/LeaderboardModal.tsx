@@ -77,14 +77,14 @@ export default function LeaderboardModal({
           aria-modal="true"
           aria-label={t.leaderboardTitle}
           data-testid="leaderboard-modal"
-          className="fixed inset-0 z-50 flex items-center justify-center bg-ink/55 p-4 pb-24 backdrop-blur-md"
+          className="fixed inset-0 z-50 mx-auto flex w-full max-w-[430px] items-center justify-center bg-ink/55 px-3 pt-4 backdrop-blur-md"
         >
           <motion.div
             initial={{ opacity: 0, scale: 0.9, y: 18 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.9, y: 18 }}
             transition={{ type: 'spring', stiffness: 320, damping: 24 }}
-            className="relative flex max-h-[82dvh] w-full max-w-md flex-col rounded-3xl border-2 border-amber-200 bg-[#FFFDF9] p-5 shadow-2xl dark:border-violet-700/50 dark:bg-[#1A162B]"
+            className="relative mb-[92px] flex max-h-[82dvh] w-full flex-col rounded-3xl border-2 border-amber-200 bg-[#FFFDF9] p-5 shadow-2xl dark:border-violet-700/50 dark:bg-[#1A162B]"
           >
             <motion.button
               type="button"
@@ -213,7 +213,7 @@ export default function LeaderboardModal({
             </div>
 
             {/* Ranked List */}
-            <div className="no-scrollbar mt-2 flex-1 space-y-1.5 overflow-y-auto pr-0.5">
+            <div className="no-scrollbar mt-2 flex-1 space-y-1.5 overflow-y-auto pb-5 pr-0.5">
               {entries.map((row) => {
                 const zoneClass = row.isUser
                   ? 'border-violet-500 bg-pastel-lavender/75 font-extrabold text-violet-950 dark:border-violet-400 dark:bg-violet-900/55 dark:text-white'

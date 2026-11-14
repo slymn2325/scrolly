@@ -34,14 +34,14 @@ export default function OfflineManager({ lang }: OfflineManagerProps) {
     window.addEventListener('online', handleOnline);
     window.addEventListener('offline', handleOffline);
 
-    // Evict stale pre-v5 offline cache buckets if present & register updated Service Worker
+    // Evict stale pre-v1.0.2 offline cache buckets if present & register updated Service Worker
     if ('caches' in window) {
       caches
         .keys()
         .then((keys) =>
           Promise.all(
             keys
-              .filter((k) => k !== 'scrolly-offline-v1.0.1')
+              .filter((k) => k !== 'scrolly-offline-v1.0.2')
               .map((oldKey) => caches.delete(oldKey))
           )
         )
@@ -95,23 +95,24 @@ export default function OfflineManager({ lang }: OfflineManagerProps) {
   return (
     <AnimatePresence>
       {isOffline && (
-        <motion.div
-          initial={{ opacity: 0, y: -16 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -16 }}
-          data-testid="offline-mode-banner"
-          className="pointer-events-none fixed left-1/2 top-24 z-40 -translate-x-1/2"
-        >
-          <div className="inline-flex items-center gap-2 whitespace-nowrap rounded-full border border-emerald-400/50 bg-emerald-950/90 px-3.5 py-1.5 text-[11px] font-extrabold text-emerald-100 shadow-lg backdrop-blur-xl">
-            <img
-              src={STATE_ILLUSTRATION_PATHS.offlineState}
-              alt=""
-              aria-hidden="true"
-              className="h-5 w-5 object-contain"
-            />
-            <span>{t.offlineReadyBanner}</span>
-          </div>
-        </motion.div>
+        <div className="pointer-events-none fixed inset-x-0 top-[calc(6.35rem+env(safe-area-inset-top))] z-40 mx-auto flex w-full max-w-[430px] justify-center px-3 md:top-[calc(2dvh+6.35rem+env(safe-area-inset-top))]">
+          <motion.div
+            initial={{ opacity: 0, y: -16 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -16 }}
+            data-testid="offline-mode-banner"
+          >
+            <div className="inline-flex items-center gap-2 whitespace-nowrap rounded-full border border-emerald-400/50 bg-emerald-950/90 px-3.5 py-1.5 text-[11px] font-extrabold text-emerald-100 shadow-lg backdrop-blur-xl">
+              <img
+                src={STATE_ILLUSTRATION_PATHS.offlineState}
+                alt=""
+                aria-hidden="true"
+                className="h-5 w-5 object-contain"
+              />
+              <span>{t.offlineReadyBanner}</span>
+            </div>
+          </motion.div>
+        </div>
       )}
     </AnimatePresence>
   );
