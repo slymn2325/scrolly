@@ -422,7 +422,18 @@ Return a JSON object with a single key \`"facts"\` containing an array of 6 item
     throw new Error(`GitHub Models API error (${response.status}): ${errText}`);
   }
 
-  const data = await response.json();
+  const rawBody = await response.text();
+  let data;
+  try {
+    data = JSON.parse(rawBody);
+  } catch {
+    if (rawBody.trim().toUpperCase() === 'OK') {
+      console.warn('[generateFacts] GitHub Models returned a plain-text OK response; no facts were generated.');
+      return [];
+    }
+    throw new Error(`GitHub Models API returned non-JSON content: ${rawBody.trim()}`);
+  }
+
   const content = data?.choices?.[0]?.message?.content;
   if (!content) {
     throw new Error('GitHub Models API returned an empty message payload.');
