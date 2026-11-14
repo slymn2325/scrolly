@@ -2,7 +2,7 @@
 
 import React, { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
-import { usePathname, useRouter } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import {
   ArrowLeft,
@@ -36,10 +36,11 @@ import StickyAdBanner from '@/components/StickyAdBanner';
 import { getCategoryMeta, type Language, translations } from '@/i18n/translations';
 import { formatValueWithUnit } from '@/lib/formatUnit';
 import {
+  buildCategoryHref,
+  buildFactHref,
   categoryIdToRouteSlug,
   type FactCard,
   getFactPrimarySlug,
-  getFactUrl,
 } from '@/utils/factsData';
 import { vibrateTap } from '@/utils/haptics';
 import { prepareQuizOptions } from '@/utils/recommendation';
@@ -64,7 +65,6 @@ export default function SingleFactView({
   hasExplicitLang = true,
 }: SingleFactViewProps) {
   const router = useRouter();
-  const pathname = usePathname();
   const [lang, setLang] = useState<Language>(initialLang);
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [isFavorite, setIsFavorite] = useState(false);
@@ -128,17 +128,14 @@ export default function SingleFactView({
   }, [content.guessChallenge, lang]);
 
   const handleLangSwitch = (targetLang: Language) => {
+    const safeLang: 'tr' | 'en' = targetLang === 'en' ? 'en' : 'tr';
     vibrateTap(12);
     playPop(soundEnabled);
-    setLang(targetLang);
+    setLang(safeLang);
     setSelectedOption(null);
     const state = loadUserMemory();
-    saveUserMemory({ ...state, lang: targetLang });
-    if (pathname?.startsWith('/fact/')) {
-      router.push(`/fact/${primarySlug}?lang=${targetLang}`);
-    } else {
-      router.push(getFactUrl(fact, targetLang));
-    }
+    saveUserMemory({ ...state, lang: safeLang });
+    router.push(buildFactHref(primarySlug, safeLang));
   };
 
   const handleToggleSound = () => {
@@ -169,9 +166,9 @@ export default function SingleFactView({
     }
   };
 
-  const categoryHref = hasExplicitLang
-    ? `/category/${categorySlug}?lang=${lang}`
-    : `/category/${categorySlug}`;
+  const safeLang: 'tr' | 'en' = lang === 'en' ? 'en' : 'tr';
+  const categoryHref = buildCategoryHref(categorySlug, safeLang);
+  const canonicalPath = buildFactHref(primarySlug, safeLang);
 
   const feedOpenHref = `/?fact=${encodeURIComponent(primarySlug)}`;
 
@@ -438,7 +435,7 @@ export default function SingleFactView({
           <div className="flex flex-wrap items-center gap-2">
             <a
               href={`https://wa.me/?text=${encodeURIComponent(
-                `${content.title} — https://scrolly.live/fact/${primarySlug}`
+                `${content.title} — https://scrolly.live${canonicalPath}`
               )}`}
               target="_blank"
               rel="noopener noreferrer"
@@ -451,7 +448,7 @@ export default function SingleFactView({
             <a
               href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(
                 content.title
-              )}&url=${encodeURIComponent(`https://scrolly.live/fact/${primarySlug}`)}`}
+              )}&url=${encodeURIComponent(`https://scrolly.live${canonicalPath}`)}`}
               target="_blank"
               rel="noopener noreferrer"
               data-testid="share-x-btn"
@@ -464,7 +461,7 @@ export default function SingleFactView({
               type="button"
               data-testid="share-copy-link-btn"
               onClick={() => {
-                const url = `https://scrolly.live/fact/${primarySlug}`;
+                const url = `https://scrolly.live${canonicalPath}`;
                 if (typeof navigator !== 'undefined' && navigator.clipboard?.writeText) {
                   navigator.clipboard.writeText(url).catch(() => {});
                 }
@@ -640,9 +637,7 @@ export default function SingleFactView({
               {relatedFacts.map((rel) => {
                 const relMeta = getCategoryMeta(rel.category);
                 const relSlug = getFactPrimarySlug(rel);
-                const relHref = hasExplicitLang
-                  ? `/fact/${relSlug}?lang=${lang}`
-                  : `/fact/${relSlug}`;
+                const relHref = buildFactHref(relSlug, safeLang);
                 return (
                   <Link
                     key={rel.id}

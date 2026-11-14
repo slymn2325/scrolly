@@ -1187,63 +1187,30 @@ function normalizeCandidateSlug(rawSlug) {
 }
 
 /**
- * Deterministic fallback card when every curated item in a category has already
- * been inserted in earlier workflow runs.
+ * Selects an unused parametric curated template for a category, returning null
+ * if all curated templates have already been inserted (never duplicates titles with dates).
  */
-export function synthesizeParametricFact(category, existingSlugs, existingTitlesEn, runSeed = Date.now()) {
+export function synthesizeParametricFact(category, existingSlugs, existingTitlesEn) {
   const bank = PARAMETRIC_VERIFIED_TEMPLATES[category] ?? PARAMETRIC_VERIFIED_TEMPLATES.science;
   const unused = bank.find(
     (item) =>
       !existingSlugs.has(item.topic) &&
       !existingTitlesEn.has(item.title_en.toLowerCase())
   );
-  if (unused) {
-    return {
-      slug: unused.topic,
-      category,
-      ...unused,
-    };
-  }
-
-  // If even secondary curated items are exhausted, pick rotation by runSeed with unique timestamp suffix
-  const chosen = bank[Math.abs(Math.floor(runSeed)) % bank.length];
-  const stamp = new Date().toISOString().slice(0, 10);
-  let candidateSlug = normalizeCandidateSlug(`${chosen.topic}-${stamp}`);
-  let candidateTitleEn = `${chosen.title_en} (${stamp})`;
-  let suffix = 1;
-  while (
-    existingSlugs.has(candidateSlug) ||
-    existingTitlesEn.has(candidateTitleEn.toLowerCase())
-  ) {
-    candidateSlug = normalizeCandidateSlug(`${chosen.topic}-${stamp}-${suffix}`);
-    candidateTitleEn = `${chosen.title_en} (${stamp} #${suffix})`;
-    suffix += 1;
+  if (!unused) {
+    return null;
   }
 
   return {
-    slug: candidateSlug,
+    slug: unused.topic,
     category,
-    title_tr: chosen.title_tr,
-    title_en: candidateTitleEn,
-    summary_tr: chosen.summary_tr,
-    summary_en: chosen.summary_en,
-    detail_tr: chosen.detail_tr,
-    detail_en: chosen.detail_en,
-    question_tr: chosen.question_tr,
-    question_en: chosen.question_en,
-    unit_tr: chosen.unit_tr,
-    unit_en: chosen.unit_en,
-    min_val: chosen.min_val,
-    max_val: chosen.max_val,
-    answer_val: chosen.answer_val,
-    sketch_type: chosen.sketch_type,
-    source_name: chosen.source_name,
-    source_url: chosen.source_url,
+    ...unused,
   };
 }
 
 /**
- * Selects exactly 6 unique, scientifically verified facts (1 per category).
+ * Selects up to 6 unique, scientifically verified facts (up to 1 per category).
+ * Stops gracefully without creating dated duplicate clones if a category reservoir is exhausted.
  */
 export function selectAutonomousSixFacts(existingSlugs, existingTitlesEn, topEngaged = []) {
   const engagedKeywords = new Set(
@@ -1265,7 +1232,7 @@ export function selectAutonomousSixFacts(existingSlugs, existingTitlesEn, topEng
       return true;
     });
 
-    let pick;
+    let pick = null;
     if (pool.length > 0) {
       // Rank candidates lightly toward topics matching high-engagement words, falling back to first unseen
       const ranked = [...pool].sort((a, b) => {
@@ -1281,7 +1248,14 @@ export function selectAutonomousSixFacts(existingSlugs, existingTitlesEn, topEng
       });
       pick = ranked[0];
     } else {
-      pick = synthesizeParametricFact(category, usedSlugs, usedTitles, Date.now() + idx);
+      pick = synthesizeParametricFact(category, usedSlugs, usedTitles);
+    }
+
+    if (!pick) {
+      console.warn(
+        `[Scrolly Reservoir] Kategori havuzu tükendi (${category}), kopya kart üretilmedi ve atlandı.`
+      );
+      continue;
     }
 
     usedSlugs.add(pick.slug);

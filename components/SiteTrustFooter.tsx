@@ -2,7 +2,11 @@ import React from 'react';
 import Link from 'next/link';
 import { ShieldCheck } from 'lucide-react';
 import { getCategoryMeta, type Language } from '@/i18n/translations';
-import { CATEGORY_ROUTE_SLUGS, categoryRouteSlugToId } from '@/utils/factsData';
+import {
+  buildCategoryHref,
+  CATEGORY_ROUTE_SLUGS,
+  categoryRouteSlugToId,
+} from '@/utils/factsData';
 
 interface SiteTrustFooterProps {
   lang?: Language;
@@ -85,7 +89,7 @@ export default function SiteTrustFooter({
             return (
               <Link
                 key={slug}
-                href={`/category/${slug}${langSuffix}`}
+                href={buildCategoryHref(slug, isEn ? 'en' : 'tr')}
                 className="inline-flex items-center gap-1 rounded-full border border-slate-200/80 bg-[#FFFDF9] px-2.5 py-1 font-bold text-ink/80 transition hover:border-violet-300 hover:text-violet-700 dark:border-white/15 dark:bg-white/5 dark:text-violet-100"
               >
                 <span>{meta.emoji}</span>

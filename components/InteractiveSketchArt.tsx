@@ -21,120 +21,151 @@ interface InteractiveSketchArtProps {
   onButtonPop?: () => void;
 }
 
-const FALLBACK_FACT_BY_CATEGORY: Record<CategoryId, string> = {
-  space: 'space-01',
-  nature: 'nature-01',
-  human_body: 'human-01',
-  history: 'history-01',
-  science: 'science-01',
-  records: 'weird-01',
-};
-
 const SKETCH_ID_PATTERN = /^(space|nature|human|history|science|weird)-\d{2}$/;
 
 const SKETCH_KEYWORD_MAP: Record<string, string> = {
-  orbit: 'space-01',
-  planet: 'space-01',
-  neutron: 'space-02',
-  star: 'space-02',
-  diamond_rain: 'space-03',
+  venus: 'space-01',
+  orbit: 'sketch-orbit',
+  magnetar: 'space-02',
+  titan: 'space-03',
   footprint: 'space-04',
   moon: 'space-04',
-  galaxy: 'space-05',
-  voyager: 'space-06',
-  sunset: 'space-07',
-  mars: 'space-07',
-  black_hole: 'space-08',
-  olympus_mons: 'space-09',
-  iss: 'space-10',
-  station: 'space-10',
-  octopus: 'nature-01',
-  tree: 'nature-02',
-  forest: 'nature-02',
-  immortal_jellyfish: 'nature-03',
-  tardigrade: 'nature-04',
-  shark: 'nature-05',
-  honeybee: 'nature-06',
-  bee: 'nature-06',
-  flamingo: 'nature-07',
-  fungi: 'nature-08',
-  mycelium: 'nature-08',
-  sloth: 'nature-09',
-  whale: 'nature-10',
+  sun_mass: 'space-05',
+  cold_weld: 'space-06',
+  sagittarius: 'space-07',
+  saturn: 'space-08',
+  mars_sunset: 'space-09',
+  mars: 'space-09',
+  voyager: 'space-10',
+  black_hole: 'sketch-blackhole',
+  blackhole: 'sketch-blackhole',
+  olympus_mons: 'sketch-olympus-mons',
+  iss: 'sketch-iss',
+  station: 'sketch-iss',
+  icefish: 'nature-01',
+  mycelium: 'nature-02',
+  wood_wide_web: 'nature-02',
+  shark: 'nature-03',
+  honeybee: 'nature-04',
+  bee: 'nature-04',
+  swift: 'nature-05',
+  koala: 'nature-06',
+  dolphin: 'nature-07',
+  otter: 'nature-08',
+  fungus: 'nature-09',
+  cactus: 'nature-10',
+  immortal_jellyfish: 'sketch-jellyfish',
+  tardigrade: 'sketch-tardigrade',
+  whale: 'sketch-whale',
   bones: 'human-01',
   skeleton: 'human-01',
   brain: 'human-02',
-  neurons: 'human-02',
   vessels: 'human-03',
   circulation: 'human-03',
   stomach: 'human-04',
   acid: 'human-04',
-  dna: 'human-05',
-  helix: 'human-05',
-  eye: 'human-06',
-  vision: 'human-06',
-  heart: 'human-07',
-  pulse: 'human-07',
-  sweat: 'human-08',
-  skin: 'human-08',
-  liver: 'human-09',
-  fingerprint: 'human-10',
-  gobeklitepe: 'history-01',
-  monolith: 'history-01',
-  pyramid: 'history-01',
-  war: 'history-02',
-  hourglass: 'history-02',
-  oxford: 'history-03',
-  aztec: 'history-03',
-  cleopatra: 'history-04',
-  timeline: 'history-04',
-  printing: 'history-05',
-  scroll: 'history-05',
-  olympics: 'history-06',
-  napoleon: 'history-07',
-  viking: 'history-08',
-  kadesh: 'history-09',
-  treaty: 'history-09',
-  map: 'history-10',
+  cornea: 'human-05',
+  dna: 'sketch-dna',
+  helix: 'sketch-dna',
+  tongue: 'human-07',
+  heart: 'human-08',
+  heartbeat: 'human-08',
+  pulse: 'human-08',
+  stapes: 'human-09',
+  eye: 'sketch-eye',
+  vision: 'sketch-eye',
+  sweat: 'sketch-sweat',
+  liver: 'sketch-liver',
+  cleopatra: 'history-01',
+  oxford: 'history-02',
+  war: 'history-03',
+  hourglass: 'history-03',
+  purple_snail: 'history-04',
+  mammoth: 'history-05',
+  pompeii: 'history-06',
+  steam_turbine: 'history-07',
+  knocker_upper: 'history-08',
+  pineapple: 'history-09',
+  piri_reis: 'history-10',
   compass: 'history-10',
-  water: 'science-01',
+  gobeklitepe: 'sketch-gobeklitepe',
+  treaty: 'sketch-treaty',
+  kadesh: 'sketch-treaty',
+  viking: 'sketch-viking',
+  printing: 'sketch-printing',
   triple_point: 'science-01',
-  banana: 'science-02',
-  radiation: 'science-02',
-  lightning: 'science-03',
-  plasma: 'science-03',
-  atom: 'science-04',
-  quantum: 'science-04',
-  light: 'science-05',
-  photon: 'science-05',
-  gold: 'science-06',
-  supernova: 'science-06',
-  helium: 'science-07',
-  superfluid: 'science-07',
-  entanglement: 'science-08',
+  water: 'science-01',
+  superfluid: 'science-02',
+  helium: 'science-02',
+  time_dilation: 'science-03',
+  sonoluminescence: 'science-04',
+  cloud: 'science-05',
+  sound_water: 'science-06',
+  rainbow: 'science-07',
+  trees_stars: 'science-08',
   sun_photon: 'science-09',
   glass: 'science-10',
-  amorphous: 'science-10',
-  protein: 'weird-01',
-  word: 'weird-01',
-  eiffel: 'weird-02',
-  thermal: 'weird-02',
-  cloud: 'weird-03',
-  weight: 'weird-03',
-  chess: 'weird-04',
-  honey: 'weird-05',
-  jar: 'weird-05',
-  wombat: 'weird-06',
-  cube: 'weird-06',
-  antarctica: 'weird-07',
-  desert: 'weird-07',
-  shuffling: 'weird-08',
-  cards: 'weird-08',
-  saturn: 'weird-09',
-  density: 'weird-09',
-  sound: 'weird-10',
-  decibel: 'weird-10',
+  lightning: 'sketch-lightning',
+  plasma: 'sketch-lightning',
+  atom: 'sketch-atom',
+  photon: 'sketch-photon',
+  prism: 'sketch-photon',
+  entanglement: 'sketch-entanglement',
+  protein: 'sketch-protein',
+  titin: 'weird-01',
+  pitch: 'weird-02',
+  wombat: 'weird-03',
+  mailbox: 'weird-04',
+  stubbs: 'weird-05',
+  norway: 'weird-06',
+  bromelain: 'weird-07',
+  duck: 'weird-08',
+  organ: 'weird-09',
+  cheese: 'weird-10',
+  antarctica: 'sketch-antarctica',
+  decibel: 'sketch-decibel',
+  cards: 'sketch-cards',
+  chess: 'sketch-chess',
 };
+
+const SPACE_NATURE_SKETCH_IDS = new Set([
+  'sketch-olympus-mons',
+  'sketch-iss',
+  'sketch-blackhole',
+  'sketch-orbit',
+  'sketch-tardigrade',
+  'sketch-whale',
+  'sketch-jellyfish',
+  'neutral-space',
+  'neutral-nature',
+]);
+
+const BODY_HISTORY_SKETCH_IDS = new Set([
+  'sketch-eye',
+  'sketch-sweat',
+  'sketch-liver',
+  'sketch-dna',
+  'sketch-gobeklitepe',
+  'sketch-treaty',
+  'sketch-viking',
+  'sketch-printing',
+  'neutral-human_body',
+  'neutral-history',
+]);
+
+function normalizeNeutralCategory(category: CategoryId | string): string {
+  if (category === 'weird_records' || category === 'records') return 'neutral-records';
+  if (
+    category === 'space' ||
+    category === 'nature' ||
+    category === 'human_body' ||
+    category === 'history' ||
+    category === 'science'
+  ) {
+    return `neutral-${category}`;
+  }
+  return 'neutral-science';
+}
 
 export function resolveSketchId(
   factId?: string,
@@ -160,7 +191,7 @@ export function resolveSketchId(
     }
   }
 
-  return FALLBACK_FACT_BY_CATEGORY[category];
+  return normalizeNeutralCategory(category);
 }
 
 export default function InteractiveSketchArt({
@@ -203,9 +234,13 @@ export default function InteractiveSketchArt({
 
   const resolvedId = resolveSketchId(factId, sketchType, category);
   const isSpaceOrNature =
-    resolvedId.startsWith('space-') || resolvedId.startsWith('nature-');
+    resolvedId.startsWith('space-') ||
+    resolvedId.startsWith('nature-') ||
+    SPACE_NATURE_SKETCH_IDS.has(resolvedId);
   const isBodyOrHistory =
-    resolvedId.startsWith('human-') || resolvedId.startsWith('history-');
+    resolvedId.startsWith('human-') ||
+    resolvedId.startsWith('history-') ||
+    BODY_HISTORY_SKETCH_IDS.has(resolvedId);
 
   const handleInteract = (e: React.SyntheticEvent) => {
     e.stopPropagation();

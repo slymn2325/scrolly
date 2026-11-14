@@ -502,7 +502,6 @@ export function ScienceWeirdSketch({
       );
 
     case 'weird-10':
-    default:
       // Swiss cheese holes caused by microscopic hay particles
       return (
         <g>
@@ -518,6 +517,217 @@ export function ScienceWeirdSketch({
             </g>
           ))}
           <DimLine x1="84" y1="148" x2="236" y2="148" label={active ? (isTr ? 'SAMAN PARTİKÜLÜ + CO₂ ÇEKİRDEĞİ' : 'HAY MICRO-PARTICLE NUCLEATION') : 'MICRO-BUBBLE SEEDS'} color={accentColor} />
+        </g>
+      );
+
+    case 'sketch-lightning':
+      // Lightning plasma bolt 28,000–30,000 K (~5x Sun surface)
+      return (
+        <g>
+          <path d="M 104 48 Q 130 34 156 46 Q 186 32 212 50 Q 222 66 202 70 L 112 70 Q 94 64 104 48 Z" fill="currentColor" fillOpacity="0.14" stroke="currentColor" strokeWidth="1.8" />
+          <motion.polygon
+            points="168,68 144,100 162,100 148,136 186,92 166,92"
+            fill="#FACC15"
+            stroke="#EA580C"
+            strokeWidth="1.8"
+            animate={shouldAnimate ? { scale: active ? [1, 1.15, 1] : [1, 1.05, 1] } : undefined}
+            transition={{ duration: 0.7, repeat: Infinity }}
+            style={{ originX: '164px', originY: '100px' }}
+          />
+          <DimLine x1="84" y1="150" x2="236" y2="150" label={active ? '≈ 30,000 K (5× GÜNEŞ YÜZEYİ)' : 'PLASMA CHANNEL'} color="#EA580C" />
+        </g>
+      );
+
+    case 'sketch-protein':
+      // Folded polypeptide / protein molecular chain
+      return (
+        <g>
+          <motion.path
+            d="M 74 96 C 98 48 134 128 160 80 C 186 36 222 126 246 78"
+            fill="none"
+            stroke={accentColor}
+            strokeWidth="3"
+            strokeLinecap="round"
+            animate={shouldAnimate && active ? { pathLength: [0.85, 1, 0.85] } : undefined}
+            transition={{ duration: 1.6, repeat: Infinity }}
+          />
+          {[96, 134, 160, 198, 232].map((cx, i) => (
+            <circle key={cx} cx={cx} cy={i % 2 === 0 ? 74 : 96} r="7" fill="#FFFFFF" stroke="currentColor" strokeWidth="1.8" />
+          ))}
+          <DimLine x1="78" y1="148" x2="242" y2="148" label={active ? (isTr ? 'AMİNO ASİT KATLAMA YAPISI' : '3D POLYPEPTIDE FOLD') : 'MOLECULAR BIOLOGY'} color={accentColor} />
+        </g>
+      );
+
+    case 'sketch-entanglement':
+      // Quantum entangled photon pair
+      return (
+        <g>
+          <circle cx="96" cy="88" r="14" fill={accentColor} fillOpacity="0.28" stroke={accentColor} strokeWidth="2" />
+          <circle cx="224" cy="88" r="14" fill="#0EA5E9" fillOpacity="0.28" stroke="#0EA5E9" strokeWidth="2" />
+          <motion.path
+            d="M 110 88 Q 160 58 210 88"
+            fill="none"
+            stroke={accentColor}
+            strokeWidth="2"
+            strokeDasharray="6 4"
+            animate={shouldAnimate ? { strokeDashoffset: active ? [20, 0] : [10, 0] } : undefined}
+            transition={{ duration: 1.1, repeat: Infinity, ease: 'linear' }}
+          />
+          <text x="96" y="92" textAnchor="middle" fontSize="10" fontWeight="900" fill="currentColor">↑</text>
+          <text x="224" y="92" textAnchor="middle" fontSize="10" fontWeight="900" fill="currentColor">↓</text>
+          <DimLine x1="88" y1="148" x2="232" y2="148" label={active ? (isTr ? 'KUANTUM DOLANIKLIK ÇİFTİ' : 'CORRELATED SPIN STATE') : 'BELL PAIR'} color={accentColor} />
+        </g>
+      );
+
+    case 'sketch-atom':
+      // Atomic orbital shell & vast empty electron cloud
+      return (
+        <g>
+          <circle cx="160" cy="86" r="6" fill="#F43F5E" />
+          {[0, 60, 120].map((deg) => (
+            <motion.ellipse
+              key={deg}
+              cx="160"
+              cy="86"
+              rx="66"
+              ry="22"
+              fill="none"
+              stroke={accentColor}
+              strokeWidth="1.6"
+              transform={`rotate(${deg} 160 86)`}
+              animate={shouldAnimate && active ? { strokeOpacity: [0.4, 1, 0.4] } : undefined}
+              transition={{ duration: 1.5, repeat: Infinity }}
+            />
+          ))}
+          <DimLine x1="88" y1="148" x2="232" y2="148" label={active ? (isTr ? '%99.9999999 BOŞLUK • ELEKTRON BULUTU' : '99.9999999% EMPTY SPACE') : 'ATOMIC ORBITALS'} color={accentColor} />
+        </g>
+      );
+
+    case 'sketch-photon':
+      // Prism wavelength refraction
+      return (
+        <g>
+          <line x1="54" y1="96" x2="128" y2="90" stroke="currentColor" strokeWidth="2.4" />
+          <polygon points="124,124 162,48 200,124" fill="#38BDF8" fillOpacity="0.22" stroke="currentColor" strokeWidth="2" />
+          <line x1="184" y1="86" x2="264" y2="70" stroke="#EF4444" strokeWidth="2" />
+          <line x1="188" y1="94" x2="264" y2="96" stroke="#10B981" strokeWidth="2" />
+          <line x1="192" y1="102" x2="264" y2="120" stroke="#6366F1" strokeWidth="2" />
+          <DimLine x1="88" y1="150" x2="232" y2="150" label={active ? (isTr ? 'DALGA BOYU KIRILIMI' : 'OPTICAL REFRACTION') : 'SPECTRUM'} color={accentColor} />
+        </g>
+      );
+
+    case 'sketch-antarctica':
+      // Polar Ice Sheet Desert (~14.2M km²)
+      return (
+        <g>
+          <path d="M 60 116 Q 112 72 162 84 Q 214 58 262 116 Z" fill="#BAE6FD" fillOpacity="0.38" stroke="currentColor" strokeWidth="2" />
+          <polygon points="154,60 176,34 198,66" fill="#E0F2FE" stroke="currentColor" strokeWidth="1.6" />
+          <HotspotPin
+            cx="176"
+            cy="38"
+            accentColor="#0284C7"
+            active={active}
+            shouldAnimate={shouldAnimate}
+            label={active ? (isTr ? '14.2 MİLYON KM² • KUTUP ÇÖLÜ' : '14.2M KM² • POLAR DESERT') : 'ANTARCTIC ICE SHEET'}
+            align="top"
+          />
+          <DimLine x1="72" y1="148" x2="248" y2="148" label={isTr ? 'YILLIK YAĞIŞ < 200 MM' : 'PRECIPITATION < 200 MM/YR'} color="#0284C7" />
+        </g>
+      );
+
+    case 'sketch-decibel':
+      // Acoustic shockwave & decibel scale
+      return (
+        <g>
+          <circle cx="98" cy="88" r="12" fill={accentColor} />
+          {[32, 54, 78, 102].map((r, i) => (
+            <motion.path
+              key={r}
+              d={`M ${98 + r * 0.7} ${88 - r * 0.6} A ${r} ${r} 0 0 1 ${98 + r * 0.7} ${88 + r * 0.6}`}
+              fill="none"
+              stroke={i >= 2 ? '#F43F5E' : accentColor}
+              strokeWidth="2.4"
+              animate={shouldAnimate ? { opacity: active ? [0.2, 1, 0.2] : [0.4, 0.9, 0.4] } : undefined}
+              transition={{ duration: 1.2, repeat: Infinity, delay: i * 0.15 }}
+            />
+          ))}
+          <DimLine x1="88" y1="148" x2="232" y2="148" label={active ? (isTr ? 'LOGARİTMİK BASINÇ DALGASI' : 'ACOUSTIC SHOCKWAVE') : 'DECIBEL (dB) SCALE'} color="#F43F5E" />
+        </g>
+      );
+
+    case 'sketch-cards':
+      // 52! card deck permutations (~8 x 10^67)
+      return (
+        <g>
+          {[0, 1, 2].map((idx) => (
+            <rect
+              key={idx}
+              x={114 + idx * 18}
+              y={54 + idx * 6}
+              width="54"
+              height="74"
+              rx="6"
+              fill="#FFFFFF"
+              fillOpacity="0.9"
+              stroke="currentColor"
+              strokeWidth="2"
+              transform={`rotate(${(idx - 1) * (active ? 10 : 5)} 160 92)`}
+            />
+          ))}
+          <text x="172" y="102" textAnchor="middle" fontSize="14" fontWeight="900" fill={accentColor}>52!</text>
+          <DimLine x1="88" y1="150" x2="232" y2="150" label={active ? '8 × 10⁶⁷ OLASILIK' : 'PERMUTATIONS'} color={accentColor} />
+        </g>
+      );
+
+    case 'sketch-chess':
+      // Chessboard Shannon number (10^120)
+      return (
+        <g>
+          <rect x="112" y="42" width="96" height="96" rx="4" fill="none" stroke="currentColor" strokeWidth="2" />
+          {[0, 1, 2, 3].map((row) =>
+            [0, 1, 2, 3].map((col) => (
+              <rect
+                key={`${row}-${col}`}
+                x={112 + col * 24}
+                y={42 + row * 24}
+                width="24"
+                height="24"
+                fill={(row + col) % 2 === 0 ? accentColor : 'none'}
+                fillOpacity={active ? 0.38 : 0.22}
+              />
+            ))
+          )}
+          <DimLine x1="88" y1="152" x2="232" y2="152" label={active ? 'SHANNON SAYISI ≈ 10¹²⁰' : '64 SQUARES COMBINATORICS'} color={accentColor} />
+        </g>
+      );
+
+    case 'neutral-science':
+      // Neutral animated science / physics icon scene
+      return (
+        <g>
+          <path d="M 142 46 L 178 46 M 148 46 L 148 76 L 120 124 Q 116 132 126 132 L 194 132 Q 204 132 200 124 L 172 76 L 172 46" fill="#38BDF8" fillOpacity="0.18" stroke="currentColor" strokeWidth="2" />
+          <motion.circle
+            cx="154"
+            cy="112"
+            r="5"
+            fill={accentColor}
+            animate={shouldAnimate ? { y: active ? [-2, -16, -2] : [-2, -8, -2] } : undefined}
+            transition={{ duration: 1.6, repeat: Infinity }}
+          />
+          <circle cx="168" cy="118" r="3.5" fill={accentColor} opacity="0.7" />
+          <DimLine x1="88" y1="150" x2="232" y2="150" label={isTr ? 'FİZİK & DENEYSEL BİLİM' : 'PHYSICS & LAB SCIENCE'} color={accentColor} />
+        </g>
+      );
+
+    case 'neutral-records':
+    default:
+      // Neutral animated odd records trophy scene
+      return (
+        <g>
+          <path d="M 134 52 L 186 52 L 178 90 Q 160 108 142 90 Z" fill="#F472B6" fillOpacity="0.25" stroke="currentColor" strokeWidth="2" />
+          <line x1="160" y1="99" x2="160" y2="124" stroke="currentColor" strokeWidth="2.4" />
+          <rect x="138" y="124" width="44" height="10" rx="3" fill={accentColor} fillOpacity="0.35" stroke="currentColor" strokeWidth="1.8" />
+          <DimLine x1="88" y1="150" x2="232" y2="150" label={isTr ? 'REKORLAR & İLGİNÇ OLGULAR' : 'RECORDS & CURIOSITIES'} color={accentColor} />
         </g>
       );
   }

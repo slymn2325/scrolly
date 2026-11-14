@@ -13,49 +13,54 @@ const ROOT_DIR = path.resolve(__dirname, '..');
 const CATEGORIES = ['space', 'nature', 'human_body', 'history', 'science', 'records'];
 const SKETCH_TYPES = [
   'orbit',
-  'neutron',
-  'diamond_rain',
-  'footprint',
+  'wave',
+  'heartbeat',
+  'hourglass',
+  'atom',
+  'trophy',
+  'blackhole',
+  'black_hole',
+  'dna',
+  'brain',
+  'compass',
+  'prism',
+  'flame',
+  'telescope',
+  'leaf',
+  'muscle',
+  'scroll',
+  'magnet',
+  'crown',
   'galaxy',
   'voyager',
   'mars',
-  'black_hole',
   'olympus_mons',
   'iss',
-  'octopus',
-  'tree',
-  'immortal_jellyfish',
+  'footprint',
   'tardigrade',
   'shark',
   'honeybee',
   'flamingo',
-  'mycelium',
+  'immortal_jellyfish',
   'sloth',
   'whale',
   'bones',
-  'brain',
   'vessels',
   'stomach',
-  'dna',
   'eye',
   'heart',
   'sweat',
   'liver',
   'fingerprint',
   'gobeklitepe',
-  'hourglass',
   'oxford',
   'timeline',
   'printing',
   'olympics',
-  'napoleon',
   'viking',
   'treaty',
-  'compass',
   'triple_point',
-  'radiation',
   'lightning',
-  'atom',
   'photon',
   'supernova',
   'superfluid',
@@ -66,16 +71,18 @@ const SKETCH_TYPES = [
   'thermal',
   'cloud',
   'chess',
-  'honey',
   'cube',
+  'wombat',
   'antarctica',
   'cards',
   'saturn',
   'decibel',
 ];
+const VALID_SKETCH_TYPES = new Set(SKETCH_TYPES);
 
-const GITHUB_MODELS_ENDPOINT =
-  process.env.AI_MODELS_ENDPOINT || 'https://models.github.ai/inference/chat/completions';
+const AI_MODELS_ENDPOINT =
+  process.env.AI_MODELS_ENDPOINT || 'https://api.groq.com/openai/v1/chat/completions';
+const DEFAULT_AI_MODEL_NAME = process.env.AI_MODEL_NAME || 'llama-3.3-70b-versatile';
 
 async function loadSeedFactsFromDisk() {
   const shardFiles = ['space.json', 'nature.json', 'human_body.json', 'history.json', 'science.json', 'records.json'];
@@ -326,7 +333,85 @@ function normalizeSlug(rawSlug, titleEn) {
   return base || `scrolly-fact-${Date.now()}`;
 }
 
-function validateGeneratedFact(item, existingSlugs, existingTitlesEn) {
+function getGenerationToken() {
+  return String(process.env.AI_API_KEY || process.env.OPENAI_API_KEY || '').trim();
+}
+
+function isRootOrGenericUrl(urlStr) {
+  try {
+    const parsed = new URL(urlStr);
+    if (parsed.protocol !== 'https:' && parsed.protocol !== 'http:') {
+      return true;
+    }
+    const cleanPath = parsed.pathname.replace(/\/+$/, '').toLowerCase();
+    if (
+      cleanPath === '' ||
+      cleanPath === '/en' ||
+      cleanPath === '/tr' ||
+      cleanPath === '/index.html' ||
+      cleanPath === '/index.php' ||
+      cleanPath === '/home' ||
+      cleanPath === '/home.html'
+    ) {
+      return true;
+    }
+    return false;
+  } catch {
+    return true;
+  }
+}
+
+async function verifyPrimarySourceUrl(urlStr) {
+  if (isRootOrGenericUrl(urlStr)) {
+    return { ok: false, reason: 'root-or-invalid-url' };
+  }
+
+  const parsed = new URL(urlStr);
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 8000);
+  const headers = {
+    'User-Agent': 'ScrollyFactVerifier/1.0 (+https://scrolly.live)',
+    Accept: 'text/html,application/xhtml+xml,application/json;q=0.9,*/*;q=0.8',
+  };
+
+  try {
+    let res = await fetch(urlStr, {
+      method: 'HEAD',
+      redirect: 'follow',
+      signal: controller.signal,
+      headers,
+    });
+    if (res.status === 405 || res.status === 403 || res.status === 501) {
+      res = await fetch(urlStr, {
+        method: 'GET',
+        redirect: 'follow',
+        signal: controller.signal,
+        headers,
+      });
+    }
+    if (res.ok) {
+      return { ok: true, status: res.status };
+    }
+    // Academic DOI / PubMed resolvers sometimes block automated TLS handshakes with 403 while valid; require strict 200 for all other domains
+    if (
+      (res.status === 403 || res.status === 405) &&
+      (parsed.hostname === 'doi.org' || parsed.hostname.endsWith('.doi.org') || parsed.hostname === 'pubmed.ncbi.nlm.nih.gov') &&
+      parsed.pathname.length > 6
+    ) {
+      return { ok: true, status: res.status, academicIdentifier: true };
+    }
+    return { ok: false, reason: `http-${res.status}` };
+  } catch (err) {
+    return {
+      ok: false,
+      reason: err instanceof Error ? err.message : 'network-error',
+    };
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+async function validateGeneratedFact(item, existingSlugs, existingTitlesEn) {
   if (!item || typeof item !== 'object') return null;
 
   const category = String(item.category || '').trim().toLowerCase();
@@ -384,7 +469,20 @@ function validateGeneratedFact(item, existingSlugs, existingTitlesEn) {
   const answerVal = Math.min(maxVal, Math.max(minVal, rawAnswer));
 
   const sketchTypeRaw = String(item.sketch_type || '').trim().toLowerCase();
-  const sketchType = SKETCH_TYPES.includes(sketchTypeRaw) ? sketchTypeRaw : 'orbit';
+  if (!VALID_SKETCH_TYPES.has(sketchTypeRaw)) {
+    console.warn(
+      `[generateFacts] Rejected candidate "${titleEn}" due to invalid sketch_type "${sketchTypeRaw}".`
+    );
+    return null;
+  }
+
+  const sourceCheck = await verifyPrimarySourceUrl(sourceUrl);
+  if (!sourceCheck.ok) {
+    console.warn(
+      `[generateFacts] Rejected candidate "${titleEn}" due to unverified primary source URL (${sourceCheck.reason}): ${sourceUrl}`
+    );
+    return null;
+  }
 
   return {
     slug,
@@ -402,19 +500,13 @@ function validateGeneratedFact(item, existingSlugs, existingTitlesEn) {
     min_val: minVal,
     max_val: maxVal,
     answer_val: answerVal,
-    sketch_type: sketchType,
+    sketch_type: sketchTypeRaw,
     source_name: sourceName,
     source_url: sourceUrl,
   };
 }
 
-async function generateFactsWithGitHubModels(existingSlugs, existingTitlesEn, topEngaged) {
-  const token = process.env.GITHUB_TOKEN || process.env.OPENAI_API_KEY;
-  if (!token) {
-    console.warn('[generateFacts] No remote AI token found — using built-in autonomous scientific generator.');
-    return selectAutonomousSixFacts(existingSlugs, existingTitlesEn, topEngaged);
-  }
-
+function buildPrompts(existingTitlesEn, topEngaged) {
   const recentTitlesSample = Array.from(existingTitlesEn).slice(0, 90);
   const engagementContext =
     topEngaged.length > 0
@@ -427,7 +519,7 @@ async function generateFactsWithGitHubModels(existingSlugs, existingTitlesEn, to
       : 'No prior telemetry events yet—aim for crisp, astonishing, verified scientific hooks.';
 
   const systemPrompt = `You are the chief scientific editor for Scrolly (scrolly.live), a bilingual (Turkish & English) micro-learning discovery feed.
-Generate strictly valid JSON matching the exact schema requested. Every fact MUST be scientifically true, verifiable, fascinating, and cite a REAL, permanent, authoritative institutional or academic URL starting with https:// (such as NASA, ESA, NOAA, NIH/NCBI, Nature, Science, Smithsonian, UNESCO, British Museum, Guinness World Records, Britannica, or peer-reviewed university pages). Never invent fake DOIs or broken placeholder URLs.
+Generate strictly valid JSON matching the exact schema requested. Every fact MUST be scientifically true, verifiable, fascinating, and cite a REAL, permanent, deep primary source URL starting with https:// (such as a specific NASA/ESA/NOAA article URL, NIH/PubMed paper, Nature/Science DOI, Smithsonian/UNESCO/Guinness specific entry page, or university press release — NEVER a root homepage like https://www.nasa.gov/ or https://www.nature.com/).
 
 STRICT ANTI-CLICHÉ BAN LIST — NEVER generate or paraphrase these overused internet trivia tropes:
 1. A teaspoon of neutron star weighing billions of tons
@@ -450,7 +542,7 @@ ${engagementContext}
 Forbidden existing topics (DO NOT duplicate or paraphrase these titles):
 ${recentTitlesSample.join(' | ')}
 
-Available visual sketch themes for \`sketch_type\`:
+Available visual sketch themes for \`sketch_type\` (you MUST pick one exact value from this list):
 ${SKETCH_TYPES.join(', ')}
 
 Return a JSON object with a single key \`"facts"\` containing an array of 6 items, each with EXACTLY these keys:
@@ -469,12 +561,33 @@ Return a JSON object with a single key \`"facts"\` containing an array of 6 item
 - "min_val": realistic minimum slider integer/number strictly less than max_val
 - "max_val": realistic maximum slider integer/number strictly greater than min_val
 - "answer_val": exact verified numerical answer between min_val and max_val
-- "sketch_type": best matching keyword from the sketch_type list above
+- "sketch_type": exact matching value from the \`sketch_type\` list above
 - "source_name": authoritative institution or journal name
-- "source_url": real, live https:// verification URL from the authoritative source`;
+- "source_url": real, live deep https:// article/DOI verification URL (never a root domain homepage)`;
 
+  return { systemPrompt, userPrompt };
+}
+
+async function fetchGeneratedFactsFromModel(existingSlugs, existingTitlesEn, topEngaged) {
+  const useOfflineReservoir = process.argv.includes('--offline-reservoir');
+  const token = getGenerationToken();
+
+  if (!token) {
+    if (useOfflineReservoir) {
+      console.warn('[generateFacts] --offline-reservoir active — selecting verified reservoir candidates.');
+      return selectAutonomousSixFacts(existingSlugs, existingTitlesEn, topEngaged);
+    }
+    console.error(
+      '[generateFacts] Fatal: Missing AI_API_KEY or OPENAI_API_KEY environment variable.'
+    );
+    process.exit(1);
+  }
+
+  const { systemPrompt, userPrompt } = buildPrompts(existingTitlesEn, topEngaged);
+
+  let response;
   try {
-    const response = await fetch(GITHUB_MODELS_ENDPOINT, {
+    response = await fetch(AI_MODELS_ENDPOINT, {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${token}`,
@@ -482,7 +595,7 @@ Return a JSON object with a single key \`"facts"\` containing an array of 6 item
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: process.env.AI_MODEL_NAME || 'openai/gpt-4o-mini',
+        model: DEFAULT_AI_MODEL_NAME,
         response_format: { type: 'json_object' },
         temperature: 0.7,
         max_tokens: 3200,
@@ -492,43 +605,48 @@ Return a JSON object with a single key \`"facts"\` containing an array of 6 item
         ],
       }),
     });
+  } catch (err) {
+    console.error(
+      `[generateFacts] Fatal network failure calling ${AI_MODELS_ENDPOINT}:`,
+      err instanceof Error ? err.message : String(err)
+    );
+    process.exit(1);
+  }
 
-    const rawText = (await response.text()).trim();
-    if (!response.ok || !rawText.startsWith('{')) {
-      console.warn(
-        `[generateFacts] Remote endpoint returned HTTP ${response.status} non-JSON response (${JSON.stringify(rawText.slice(0, 40))}) — using built-in autonomous scientific generator.`
-      );
-      return selectAutonomousSixFacts(existingSlugs, existingTitlesEn, topEngaged);
-    }
+  const rawText = (await response.text()).trim();
+  if (!response.ok || !rawText.startsWith('{')) {
+    console.error(
+      `[generateFacts] Fatal: AI endpoint (${AI_MODELS_ENDPOINT}, model=${DEFAULT_AI_MODEL_NAME}) returned HTTP ${response.status} non-JSON response: ${rawText.slice(0, 300)}`
+    );
+    process.exit(1);
+  }
 
+  let parsedPayload;
+  try {
     const data = JSON.parse(rawText);
     const rawContent = String(data?.choices?.[0]?.message?.content || '').trim();
     if (!rawContent) {
-      console.warn(
-        '[generateFacts] Remote AI returned an empty message payload — using built-in autonomous scientific generator.'
-      );
-      return selectAutonomousSixFacts(existingSlugs, existingTitlesEn, topEngaged);
+      throw new Error('Empty choices[0].message.content returned by AI endpoint.');
     }
-
     const cleanedContent = rawContent
       .replace(/^```(?:json)?\s*/i, '')
       .replace(/\s*```$/i, '')
       .trim();
-    const parsed = JSON.parse(cleanedContent);
-    if (!Array.isArray(parsed?.facts) || parsed.facts.length === 0) {
-      console.warn(
-        '[generateFacts] Remote AI JSON payload does not contain a non-empty "facts" array — using built-in autonomous scientific generator.'
-      );
-      return selectAutonomousSixFacts(existingSlugs, existingTitlesEn, topEngaged);
-    }
-
-    return parsed.facts;
+    parsedPayload = JSON.parse(cleanedContent);
   } catch (err) {
-    console.warn(
-      `[generateFacts] Remote AI call failed (${err instanceof Error ? err.message : String(err)}) — using built-in autonomous scientific generator.`
+    console.error(
+      '[generateFacts] Fatal: Invalid JSON returned by AI endpoint:',
+      err instanceof Error ? err.message : String(err)
     );
-    return selectAutonomousSixFacts(existingSlugs, existingTitlesEn, topEngaged);
+    process.exit(1);
   }
+
+  if (!Array.isArray(parsedPayload?.facts) || parsedPayload.facts.length === 0) {
+    console.error('[generateFacts] Fatal: AI response JSON does not contain a non-empty "facts" array.');
+    process.exit(1);
+  }
+
+  return parsedPayload.facts;
 }
 
 async function main() {
@@ -538,7 +656,9 @@ async function main() {
 
   const pool = new Pool({
     connectionString: process.env.DATABASE_URL,
-    ssl: { rejectUnauthorized: false },
+    ssl: process.env.DATABASE_CA_CERT
+      ? { rejectUnauthorized: true, ca: process.env.DATABASE_CA_CERT }
+      : { rejectUnauthorized: false },
   });
 
   try {
@@ -561,7 +681,7 @@ async function main() {
 
     console.log(`[generateFacts] Loaded ${existingSlugs.size} existing facts and top ${topRes.rows.length} engagement benchmarks.`);
 
-    const rawGenerated = await generateFactsWithGitHubModels(
+    const rawGenerated = await fetchGeneratedFactsFromModel(
       existingSlugs,
       existingTitlesEn,
       topRes.rows
@@ -572,7 +692,7 @@ async function main() {
     const tempTitles = new Set(existingTitlesEn);
 
     for (const candidate of rawGenerated) {
-      const clean = validateGeneratedFact(candidate, tempSlugs, tempTitles);
+      const clean = await validateGeneratedFact(candidate, tempSlugs, tempTitles);
       if (!clean) {
         console.warn('[generateFacts] Skipped invalid or duplicate candidate:', candidate?.title_en || candidate?.slug);
         continue;
@@ -582,26 +702,14 @@ async function main() {
       validCandidates.push(clean);
     }
 
-    // Guarantee 1 valid bilingual card per category (6 total) even if remote model skipped a category
-    const coveredCategories = new Set(validCandidates.map((item) => item.category));
-    if (coveredCategories.size < CATEGORIES.length) {
-      const fallbackSix = selectAutonomousSixFacts(tempSlugs, tempTitles, topRes.rows);
-      for (const fallbackCandidate of fallbackSix) {
-        if (coveredCategories.has(fallbackCandidate.category)) continue;
-        const cleanFallback = validateGeneratedFact(fallbackCandidate, tempSlugs, tempTitles);
-        if (cleanFallback) {
-          tempSlugs.add(cleanFallback.slug);
-          tempTitles.add(cleanFallback.title_en.toLowerCase());
-          coveredCategories.add(cleanFallback.category);
-          validCandidates.push(cleanFallback);
-        }
-      }
+    if (validCandidates.length === 0 && !process.argv.includes('--offline-reservoir')) {
+      console.error('[generateFacts] Fatal: Zero valid verified facts survived validation from remote AI output.');
+      process.exit(1);
     }
 
     const insertedSummary = [];
 
     for (const clean of validCandidates) {
-
       const insertRes = await pool.query(
         `INSERT INTO facts (
           slug, category, title_tr, title_en, summary_tr, summary_en,
@@ -652,8 +760,8 @@ async function main() {
       }
     }
 
-    console.log('\n=== Scrolly GitHub Models Fact Generation Summary ===');
-    console.log(`Generated candidates: ${rawGenerated.length} | Inserted into Postgres: ${insertedSummary.length}`);
+    console.log('\n=== Scrolly OpenAI-Compatible Fact Generation Summary ===');
+    console.log(`Generated candidates: ${rawGenerated.length} | Verified: ${validCandidates.length} | Inserted into Postgres: ${insertedSummary.length}`);
     if (insertedSummary.length > 0) {
       console.table(insertedSummary);
     }

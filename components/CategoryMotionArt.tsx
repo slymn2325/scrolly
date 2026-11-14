@@ -92,7 +92,7 @@ export default function CategoryMotionArt({
     <div
       data-testid="category-motion-art"
       data-category={category}
-      className="relative mx-auto flex h-[clamp(135px,23vh,210px)] lg:h-[340px] w-full max-w-[320px] lg:max-w-[460px] items-center justify-center"
+      className="relative mx-auto flex h-[clamp(148px,22dvh,228px)] w-full max-w-[330px] md:h-[clamp(240px,30vh,380px)] md:max-w-[480px] lg:h-[clamp(148px,21dvh,215px)] lg:max-w-[320px] items-center justify-center"
     >
       <InteractiveSketchArt
         factId={factId}

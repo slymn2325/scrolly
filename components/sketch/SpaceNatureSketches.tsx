@@ -719,7 +719,6 @@ export function SpaceNatureSketch({
       );
 
     case 'nature-10':
-    default:
       // Saguaro cactus accordion pleats water expansion
       return (
         <g>
@@ -732,6 +731,232 @@ export function SpaceNatureSketch({
             ))}
           </motion.g>
           <DimLine x1="110" y1="158" x2="210" y2="158" label={active ? (isTr ? 'SU DOLU (+5,000 LİTRE)' : 'EXPANDED (+5,000 L)') : (isTr ? 'AKORDEON KIVRIMLAR' : 'ACCORDION PLEATS')} color="#059669" />
+        </g>
+      );
+
+    case 'sketch-olympus-mons':
+      // Olympus Mons (21.9 km) vs Mount Everest (8.8 km)
+      return (
+        <g>
+          {/* Everest */}
+          <polygon points="58,136 92,98 126,136" fill="#94A3B8" fillOpacity="0.25" stroke="currentColor" strokeWidth="1.8" />
+          <text x="92" y="148" textAnchor="middle" fontSize="8" fontWeight="800" fill="currentColor">EVEREST 8.8 km</text>
+          {/* Olympus Mons Shield Volcano */}
+          <motion.polygon
+            points="132,136 196,42 264,136"
+            fill={accentColor}
+            fillOpacity={active ? 0.34 : 0.2}
+            stroke={accentColor}
+            strokeWidth="2.2"
+            animate={{ scaleY: active ? 1.06 : 1 }}
+            style={{ originX: '198px', originY: '136px' }}
+          />
+          <ellipse cx="196" cy="43" rx="10" ry="3.5" fill="#F43F5E" fillOpacity="0.45" stroke="#F43F5E" strokeWidth="1.4" />
+          <HotspotPin
+            cx="196"
+            cy="42"
+            accentColor={accentColor}
+            active={active}
+            shouldAnimate={shouldAnimate}
+            label={active ? 'OLYMPUS MONS • 21.9 KM (~2.5×)' : 'MARS SHIELD VOLCANO'}
+            align="left"
+          />
+        </g>
+      );
+
+    case 'sketch-iss':
+      // ISS orbital loop (~90 min orbit, 16 sunrises/day)
+      return (
+        <g>
+          <circle cx="160" cy="88" r="32" fill="#0EA5E9" fillOpacity="0.22" stroke="currentColor" strokeWidth="2" />
+          <ellipse cx="160" cy="88" rx="84" ry="38" fill="none" stroke={accentColor} strokeDasharray="5 4" strokeWidth="1.5" />
+          <motion.g
+            animate={shouldAnimate ? { rotate: 360 } : undefined}
+            transition={{ duration: active ? 4 : 8, repeat: Infinity, ease: 'linear' }}
+            style={{ originX: '160px', originY: '88px' }}
+          >
+            <rect x="234" y="82" width="20" height="12" rx="2" fill={accentColor} stroke="currentColor" strokeWidth="1.4" />
+            <line x1="238" y1="74" x2="238" y2="102" stroke="#38BDF8" strokeWidth="3" />
+            <line x1="250" y1="74" x2="250" y2="102" stroke="#38BDF8" strokeWidth="3" />
+          </motion.g>
+          <DimLine
+            x1="76"
+            y1="148"
+            x2="244"
+            y2="148"
+            label={active ? (isTr ? '27,600 KM/S • GÜNDE 16 GÜNDOĞUMU' : '27,600 KM/H • 16 SUNRISES/DAY') : '408 KM ORBIT'}
+            color={accentColor}
+          />
+        </g>
+      );
+
+    case 'sketch-blackhole':
+      // Accretion disk & event horizon
+      return (
+        <g>
+          <ellipse cx="160" cy="88" rx="86" ry="20" fill="none" stroke="#F59E0B" strokeWidth="2.4" strokeOpacity="0.65" />
+          <motion.ellipse
+            cx="160"
+            cy="88"
+            rx="62"
+            ry="14"
+            fill="none"
+            stroke={accentColor}
+            strokeWidth="2"
+            strokeDasharray="6 4"
+            animate={shouldAnimate ? { rotate: 360 } : undefined}
+            transition={{ duration: active ? 2.5 : 6, repeat: Infinity, ease: 'linear' }}
+            style={{ originX: '160px', originY: '88px' }}
+          />
+          <circle cx="160" cy="88" r={active ? 28 : 24} fill="#0F172A" stroke="#F59E0B" strokeWidth="2" />
+          <DimLine x1="88" y1="148" x2="232" y2="148" label={active ? (isTr ? 'OLAY UFKU & YIĞILMA DİSKİ' : 'EVENT HORIZON') : 'GRAVITY WELL'} color={accentColor} />
+        </g>
+      );
+
+    case 'sketch-orbit':
+      // Generic planetary orbit mechanics
+      return (
+        <g>
+          <ellipse cx="160" cy="88" rx="88" ry="40" fill="none" stroke="currentColor" strokeOpacity="0.35" strokeDasharray="5 3" strokeWidth="1.5" />
+          <circle cx="130" cy="88" r="14" fill="#F59E0B" fillOpacity="0.28" stroke="#F59E0B" strokeWidth="2" />
+          <motion.circle
+            cx="248"
+            cy="88"
+            r="10"
+            fill={accentColor}
+            stroke="currentColor"
+            strokeWidth="1.6"
+            animate={shouldAnimate ? { rotate: 360 } : undefined}
+            transition={{ duration: active ? 4 : 8, repeat: Infinity, ease: 'linear' }}
+            style={{ originX: '160px', originY: '88px' }}
+          />
+          <DimLine x1="72" y1="148" x2="248" y2="148" label={active ? (isTr ? 'KEPLER YÖRÜNGE MEKANİĞİ' : 'ORBITAL MECHANICS') : 'KEPLER ELLIPSE'} color={accentColor} />
+        </g>
+      );
+
+    case 'sketch-tardigrade':
+      // Tardigrade cryptobiosis tun state in vacuum/radiation
+      return (
+        <g>
+          <motion.g animate={{ scale: active ? 0.86 : 1 }} transition={{ type: 'spring' }} style={{ originX: '160px', originY: '86px' }}>
+            <ellipse cx="160" cy="86" rx="46" ry="26" fill={accentColor} fillOpacity="0.24" stroke="currentColor" strokeWidth="2.2" />
+            {[128, 148, 170, 190].map((lx) => (
+              <g key={lx}>
+                <line x1={lx} y1="108" x2={lx - 4} y2="122" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" />
+                <line x1={lx} y1="64" x2={lx - 2} y2="56" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+              </g>
+            ))}
+            <circle cx="204" cy="86" r="5" fill="none" stroke="currentColor" strokeWidth="1.8" />
+          </motion.g>
+          <HotspotPin
+            cx="160"
+            cy="56"
+            accentColor={accentColor}
+            active={active}
+            shouldAnimate={shouldAnimate}
+            label={active ? (isTr ? 'KRİPTOBİYOTİK TUN MODU' : 'CRYPTOBIOTIC TUN STATE') : 'TARDIGRADA (~0.5 MM)'}
+            align="top"
+          />
+          <DimLine x1="88" y1="148" x2="232" y2="148" label={active ? '-272 °C • +150 °C • UZAY VAKUMU' : 'EXTREMOPHILE'} color={accentColor} />
+        </g>
+      );
+
+    case 'sketch-whale':
+      // Blue whale heart size (180 kg) & slow dive bradycardia (2 bpm)
+      return (
+        <g>
+          <InkPath
+            d="M 52 94 Q 108 54 176 74 Q 214 82 248 64 L 242 88 L 264 96 Q 210 104 166 112 Q 104 122 52 94 Z"
+            stroke="currentColor"
+            fill={accentColor}
+            shouldAnimate={shouldAnimate}
+          />
+          <motion.circle
+            cx="134"
+            cy="88"
+            r="14"
+            fill="#F43F5E"
+            fillOpacity="0.32"
+            stroke="#F43F5E"
+            strokeWidth="2"
+            animate={shouldAnimate ? { scale: active ? [1, 1.25, 1] : [1, 1.1, 1] } : undefined}
+            transition={{ duration: active ? 2.4 : 1.5, repeat: Infinity }}
+            style={{ originX: '134px', originY: '88px' }}
+          />
+          <HotspotPin
+            cx="134"
+            cy="68"
+            accentColor="#F43F5E"
+            active={active}
+            shouldAnimate={shouldAnimate}
+            label={active ? (isTr ? '180 KG KALP • 2 ATIM/DK' : '180 KG HEART • 2 BPM') : 'BALAENOPTERA'}
+            align="top"
+          />
+        </g>
+      );
+
+    case 'sketch-jellyfish':
+      // Turritopsis dohrnii transdifferentiation cycle
+      return (
+        <g>
+          <motion.path
+            d="M 122 86 Q 160 44 198 86 Q 160 94 122 86 Z"
+            fill={accentColor}
+            fillOpacity="0.28"
+            stroke="currentColor"
+            strokeWidth="2"
+            animate={shouldAnimate ? { y: active ? [0, -8, 0] : [0, -3, 0] } : undefined}
+            transition={{ duration: 2, repeat: Infinity }}
+          />
+          {[138, 152, 168, 182].map((tx) => (
+            <path key={tx} d={`M ${tx} 88 Q ${tx - 6} 108 ${tx + 4} 128`} fill="none" stroke={accentColor} strokeWidth="1.6" />
+          ))}
+          <DimLine x1="94" y1="148" x2="226" y2="148" label={active ? (isTr ? 'MEDÜZ ↺ POLİP GERİ DÖNÜŞÜM' : 'MEDUSA ↺ POLYP RESET') : 'TRANSDIFFERENTIATION'} color={accentColor} />
+        </g>
+      );
+
+    case 'neutral-space':
+      // Neutral animated cosmos icon scene (never reuses another fact's specific diagram)
+      return (
+        <g>
+          <motion.circle
+            cx="160"
+            cy="86"
+            r="34"
+            fill={accentColor}
+            fillOpacity="0.16"
+            stroke={accentColor}
+            strokeWidth="2"
+            animate={shouldAnimate ? { scale: active ? [1, 1.1, 1] : [1, 1.04, 1] } : undefined}
+            transition={{ duration: 3, repeat: Infinity }}
+            style={{ originX: '160px', originY: '86px' }}
+          />
+          <ellipse cx="160" cy="86" rx="64" ry="18" fill="none" stroke="currentColor" strokeOpacity="0.45" strokeWidth="1.6" transform="rotate(-18 160 86)" />
+          <circle cx="96" cy="52" r="2.5" fill="#F59E0B" />
+          <circle cx="228" cy="48" r="2.2" fill={accentColor} />
+          <circle cx="236" cy="122" r="2" fill="currentColor" opacity="0.5" />
+          <DimLine x1="88" y1="148" x2="232" y2="148" label={isTr ? 'KOZMOS & ASTROFİZİK' : 'COSMOS & ASTROPHYSICS'} color={accentColor} />
+        </g>
+      );
+
+    case 'neutral-nature':
+    default:
+      // Neutral animated botanical/ecology icon scene
+      return (
+        <g>
+          <motion.path
+            d="M 160 128 C 122 114 114 68 160 44 C 206 68 198 114 160 128 Z"
+            fill="#10B981"
+            fillOpacity="0.24"
+            stroke="currentColor"
+            strokeWidth="2"
+            animate={shouldAnimate ? { scale: active ? [1, 1.08, 1] : [1, 1.03, 1] } : undefined}
+            transition={{ duration: 3, repeat: Infinity }}
+            style={{ originX: '160px', originY: '86px' }}
+          />
+          <line x1="160" y1="54" x2="160" y2="136" stroke="#059669" strokeWidth="2" />
+          <path d="M 160 86 L 140 72 M 160 100 L 180 86" stroke="#059669" strokeWidth="1.6" />
+          <DimLine x1="88" y1="150" x2="232" y2="150" label={isTr ? 'DOĞA & EKOSİSTEMLER' : 'NATURE & ECOLOGY'} color={accentColor} />
         </g>
       );
   }

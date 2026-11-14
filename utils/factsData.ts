@@ -222,10 +222,20 @@ export function getFactBySlug(slug: string): FactCard | undefined {
   return legacyId ? ALL_FACTS.find((f) => f.id === legacyId) : undefined;
 }
 
+export function buildFactHref(slug: string, lang?: string): string {
+  const safeLang: 'tr' | 'en' = lang === 'en' ? 'en' : 'tr';
+  const cleanSlug = encodeURIComponent(String(slug || '').trim());
+  return safeLang === 'en' ? `/en/fact/${cleanSlug}` : `/fact/${cleanSlug}`;
+}
+
+export function buildCategoryHref(slug: string, lang?: string): string {
+  const safeLang: 'tr' | 'en' = lang === 'en' ? 'en' : 'tr';
+  const cleanSlug = encodeURIComponent(String(slug || '').trim());
+  return safeLang === 'en' ? `/en/category/${cleanSlug}` : `/category/${cleanSlug}`;
+}
+
 export function getFactUrl(fact: FactCard, lang?: Language): string {
-  const slug = getFactPrimarySlug(fact);
-  if (!lang) return `/fact/${slug}`;
-  return `/fact/${slug}?lang=${lang}`;
+  return buildFactHref(getFactPrimarySlug(fact), lang);
 }
 
 export function getRelatedFactsFromPool(

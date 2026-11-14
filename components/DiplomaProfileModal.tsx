@@ -24,7 +24,11 @@ import {
   translations,
 } from '@/i18n/translations';
 import { generateDiplomaCertificateImage } from '@/utils/diplomaCanvasGenerator';
-import { type FactCard, getFactUrl } from '@/utils/factsData';
+import {
+  buildFactHref,
+  type FactCard,
+  getFactPrimarySlug,
+} from '@/utils/factsData';
 import { DOCK_ICON_MAP, UI_ICON_PATHS } from '@/utils/icons8Assets';
 import { getLeagueInfo, type UserMemoryState } from '@/utils/userMemory';
 
@@ -435,7 +439,7 @@ export default function DiplomaProfileModal({
                       {favoriteFacts.map((fact) => (
                         <Link
                           key={fact.id}
-                          href={getFactUrl(fact, lang)}
+                          href={buildFactHref(getFactPrimarySlug(fact), lang)}
                           onClick={onButtonPop}
                           className="flex items-start justify-between gap-2 rounded-2xl border border-slate-100 bg-white p-3 text-xs font-bold text-ink shadow-sm transition hover:border-violet-300 dark:border-white/10 dark:bg-white/5 dark:text-white"
                         >

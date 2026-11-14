@@ -311,8 +311,8 @@ export default function HomePage() {
   const lang: Language = memory.lang;
   const soundEnabled = memory.soundEnabled;
   const topCategory = getTopCategory(memory.categoryWeights);
-  const todayStr = getTodayDateString();
-  const dailyCompleted = memory.lastDailyQuizDate === todayStr;
+  const dailyCompleted =
+    Boolean(memory.lastDailyQuizDate) && memory.lastDailyQuizDate === getTodayDateString();
   const showQuizDot = memory.cardsSinceLastQuiz >= 5 || !dailyCompleted;
 
   const handleChangeLang = (nextLang: Language) => {

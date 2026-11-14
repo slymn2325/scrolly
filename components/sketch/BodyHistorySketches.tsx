@@ -454,7 +454,6 @@ export function BodyHistorySketch({
       );
 
     case 'history-10':
-    default:
       // Piri Reis 1513 portolan compass rose & coastline
       return (
         <g>
@@ -470,6 +469,210 @@ export function BodyHistorySketch({
             style={{ originX: '192px', originY: '90px' }}
           />
           <DimLine x1="78" y1="156" x2="232" y2="156" label="PİRİ REİS • 1513 CE" color={accentColor} />
+        </g>
+      );
+
+    case 'sketch-eye':
+      // Human eye optics & 10M color shades
+      return (
+        <g>
+          <path d="M 72 88 Q 160 36 248 88 Q 160 140 72 88 Z" fill="#FFFFFF" fillOpacity="0.3" stroke="currentColor" strokeWidth="2.2" />
+          <circle cx="160" cy="88" r="24" fill={accentColor} fillOpacity="0.28" stroke={accentColor} strokeWidth="2" />
+          <motion.circle
+            cx="160"
+            cy="88"
+            r={active ? 8 : 13}
+            fill="#0F172A"
+            transition={{ type: 'spring', stiffness: 200 }}
+          />
+          <HotspotPin
+            cx="184"
+            cy="70"
+            accentColor={accentColor}
+            active={active}
+            shouldAnimate={shouldAnimate}
+            label={active ? (isTr ? '3 KONİ • ~10 MİLYON TON' : '3 CONES • ~10M COLORS') : 'TRICHROMATIC VISION'}
+            align="left"
+          />
+          <DimLine x1="88" y1="150" x2="232" y2="150" label={isTr ? 'RETİNA FOTORESEPTÖRLERİ' : 'RETINA OPTICS'} color={accentColor} />
+        </g>
+      );
+
+    case 'sketch-sweat':
+      // 2-4 million sweat glands thermoregulation
+      return (
+        <g>
+          <path d="M 68 96 Q 160 88 252 96" stroke="currentColor" strokeWidth="2.2" fill="none" />
+          {[104, 140, 178, 214].map((gx, i) => (
+            <motion.path
+              key={gx}
+              d={`M ${gx} 54 C ${gx - 10} 72 ${gx + 10} 72 ${gx} 54 Z`}
+              fill="#0EA5E9"
+              fillOpacity="0.3"
+              stroke="#0284C7"
+              strokeWidth="1.6"
+              animate={shouldAnimate ? { y: active ? [0, -10, 0] : [0, -4, 0] } : undefined}
+              transition={{ duration: 1.5, repeat: Infinity, delay: i * 0.2 }}
+            />
+          ))}
+          <DimLine x1="88" y1="146" x2="232" y2="146" label={active ? (isTr ? '2–4 MİLYON TER BEZİ' : '2–4 MILLION GLANDS') : 'THERMOREGULATION'} color="#0284C7" />
+        </g>
+      );
+
+    case 'sketch-liver':
+      // Liver regeneration from 25% tissue
+      return (
+        <g>
+          <path d="M 88 76 Q 134 46 218 68 Q 228 96 178 118 Q 108 124 88 76 Z" fill={accentColor} fillOpacity="0.22" stroke="currentColor" strokeWidth="2" />
+          <motion.path
+            d="M 88 76 Q 124 54 152 62 L 146 118 Q 106 118 88 76 Z"
+            fill="#F43F5E"
+            fillOpacity={active ? 0.45 : 0.25}
+            stroke="#F43F5E"
+            strokeWidth="1.8"
+          />
+          <DimLine x1="88" y1="148" x2="232" y2="148" label={active ? (isTr ? '%25 DOKUDAN TAM YENİLENME' : 'REGENERATES FROM 25%') : 'HEPATIC MITOSIS'} color={accentColor} />
+        </g>
+      );
+
+    case 'sketch-dna':
+      // Clean DNA double helix base pairs
+      return (
+        <g>
+          <motion.g animate={shouldAnimate && active ? { scaleY: [1, 1.06, 1] } : undefined} transition={{ duration: 1.6, repeat: Infinity }}>
+            {[0, 1, 2, 3, 4].map((step) => {
+              const x = 90 + step * 35;
+              const topY = step % 2 === 0 ? 58 : 114;
+              const botY = step % 2 === 0 ? 114 : 58;
+              return (
+                <g key={step}>
+                  <line x1={x} y1={topY} x2={x} y2={botY} stroke={accentColor} strokeWidth="2.2" />
+                  <circle cx={x} cy={topY} r="4" fill={accentColor} />
+                  <circle cx={x} cy={botY} r="4" fill="#0EA5E9" />
+                </g>
+              );
+            })}
+            <path d="M 76 86 Q 112 48 160 86 Q 208 124 244 86" fill="none" stroke="currentColor" strokeWidth="2" />
+            <path d="M 76 86 Q 112 124 160 86 Q 208 48 244 86" fill="none" stroke="currentColor" strokeWidth="2" strokeOpacity="0.55" />
+          </motion.g>
+          <DimLine x1="84" y1="148" x2="236" y2="148" label={active ? (isTr ? 'ÇİFT SARMAL NÜKLEOTİD ZİNCİRİ' : 'DOUBLE HELIX POLYMER') : 'DNA STRUCTURE'} color={accentColor} />
+        </g>
+      );
+
+    case 'sketch-gobeklitepe':
+      // Göbeklitepe T-shaped megalith pillars (9600-8200 BCE)
+      return (
+        <g>
+          <line x1="56" y1="132" x2="264" y2="132" stroke="currentColor" strokeWidth="2" />
+          {/* T-Pillars */}
+          <motion.g animate={{ y: active ? -3 : 0 }} transition={{ type: 'spring' }}>
+            <path d="M 104 60 L 146 60 L 146 76 L 134 76 L 134 132 L 116 132 L 116 76 L 104 76 Z" fill={accentColor} fillOpacity="0.25" stroke="currentColor" strokeWidth="2" />
+            <path d="M 174 52 L 218 52 L 218 68 L 204 68 L 204 132 L 188 132 L 188 68 L 174 68 Z" fill={accentColor} fillOpacity="0.35" stroke="currentColor" strokeWidth="2" />
+          </motion.g>
+          <HotspotPin
+            cx="196"
+            cy="52"
+            accentColor={accentColor}
+            active={active}
+            shouldAnimate={shouldAnimate}
+            label={active ? 'MÖ 9600 • ŞANLIURFA' : 'T-SHAPED MEGALITHS'}
+            align="left"
+          />
+          <DimLine x1="72" y1="150" x2="248" y2="150" label={isTr ? 'STONEHENGE’DEN ~6,000 YIL ESKİ' : '~6,000 YRS OLDER THAN STONEHENGE'} color={accentColor} />
+        </g>
+      );
+
+    case 'sketch-treaty':
+      // Kadesh Peace Treaty clay tablet (1259 BCE)
+      return (
+        <g>
+          <rect x="108" y="42" width="104" height="94" rx="14" fill="#FDE68A" fillOpacity="0.35" stroke="currentColor" strokeWidth="2.2" />
+          {[62, 76, 90, 104, 118].map((ly, i) => (
+            <line key={ly} x1="126" y1={ly} x2={i % 2 === 0 ? 194 : 182} y2={ly} stroke={accentColor} strokeWidth="2" strokeDasharray="6 3" />
+          ))}
+          <DimLine x1="88" y1="150" x2="232" y2="150" label={active ? (isTr ? 'KADEŞ ANTLAŞMASI • MÖ 1259' : 'KADESH TREATY • 1259 BCE') : 'CUNEIFORM CLAY TABLET'} color={accentColor} />
+        </g>
+      );
+
+    case 'sketch-viking':
+      // Norse longship Vinland route (~1000 CE)
+      return (
+        <g>
+          <path d="M 52 122 Q 104 114 160 122 Q 216 130 268 122" stroke="#0EA5E9" strokeWidth="2" fill="none" />
+          <motion.g animate={shouldAnimate ? { x: active ? [0, 8, 0] : [0, 3, 0] } : undefined} transition={{ duration: 2.5, repeat: Infinity }}>
+            <path d="M 96 106 Q 160 130 224 106 L 210 118 L 110 118 Z" fill={accentColor} fillOpacity="0.28" stroke="currentColor" strokeWidth="2" />
+            <line x1="160" y1="54" x2="160" y2="112" stroke="currentColor" strokeWidth="2.2" />
+            <polygon points="160,56 198,86 160,96" fill="#F43F5E" fillOpacity="0.28" stroke="currentColor" strokeWidth="1.6" />
+          </motion.g>
+          <DimLine x1="88" y1="148" x2="232" y2="148" label={active ? 'L’ANSE AUX MEADOWS • ~1000 CE' : 'NORSE VOYAGE'} color={accentColor} />
+        </g>
+      );
+
+    case 'sketch-printing':
+      // Gutenberg movable metal type blocks
+      return (
+        <g>
+          {[96, 134, 172].map((bx, i) => (
+            <motion.rect
+              key={bx}
+              x={bx}
+              y={active ? 68 : 54}
+              width="32"
+              height="44"
+              rx="4"
+              fill={accentColor}
+              fillOpacity="0.25"
+              stroke="currentColor"
+              strokeWidth="2"
+              transition={{ type: 'spring', delay: i * 0.05 }}
+            />
+          ))}
+          <rect x="86" y="114" width="148" height="16" rx="3" fill="#FFFDF9" stroke="currentColor" strokeWidth="1.8" />
+          <DimLine x1="88" y1="150" x2="232" y2="150" label={active ? 'GUTENBERG • ~1450 CE' : 'MOVABLE TYPE PRESS'} color={accentColor} />
+        </g>
+      );
+
+    case 'neutral-human_body':
+      // Neutral animated anatomy/physiology scene
+      return (
+        <g>
+          <motion.circle
+            cx="160"
+            cy="86"
+            r="34"
+            fill="#F43F5E"
+            fillOpacity="0.16"
+            stroke="#F43F5E"
+            strokeWidth="2"
+            animate={shouldAnimate ? { scale: active ? [1, 1.12, 1] : [1, 1.05, 1] } : undefined}
+            transition={{ duration: 1.4, repeat: Infinity }}
+            style={{ originX: '160px', originY: '86px' }}
+          />
+          <polyline points="116,86 138,86 148,66 160,108 172,72 182,86 204,86" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
+          <DimLine x1="88" y1="148" x2="232" y2="148" label={isTr ? 'İNSAN ANATOMİSİ & FİZYOLOJİSİ' : 'HUMAN ANATOMY & BIOLOGY'} color={accentColor} />
+        </g>
+      );
+
+    case 'neutral-history':
+    default:
+      // Neutral animated archive/timeline scene
+      return (
+        <g>
+          <rect x="108" y="46" width="104" height="82" rx="8" fill="#FDE68A" fillOpacity="0.24" stroke="currentColor" strokeWidth="2" />
+          <path d="M 108 58 Q 100 52 108 46 M 212 116 Q 220 122 212 128" fill="none" stroke="currentColor" strokeWidth="1.8" />
+          <motion.circle
+            cx="160"
+            cy="86"
+            r="16"
+            fill={accentColor}
+            fillOpacity="0.22"
+            stroke={accentColor}
+            strokeWidth="1.8"
+            animate={shouldAnimate ? { rotate: active ? 180 : 0 } : undefined}
+            transition={{ duration: 1 }}
+            style={{ originX: '160px', originY: '86px' }}
+          />
+          <DimLine x1="88" y1="150" x2="232" y2="150" label={isTr ? 'TARİH & UYGARLIK ARŞİVİ' : 'HISTORY & ARCHIVES'} color={accentColor} />
         </g>
       );
   }

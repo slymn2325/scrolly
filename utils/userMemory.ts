@@ -207,8 +207,10 @@ function createClientPlayerId(): string {
   return cryptoRandomUuid();
 }
 
-function getDefaultNickname(lang: Language): string {
-  return lang === 'tr' ? 'Merak Kaşifi #42' : 'Curiosity Explorer #42';
+function getDefaultNickname(lang: Language, tagNumber = 42): string {
+  return lang === 'tr'
+    ? `Merak Kaşifi #${tagNumber}`
+    : `Curiosity Explorer #${tagNumber}`;
 }
 
 function getYesterdayDateString(): string {
@@ -241,12 +243,15 @@ function writeCookie(name: string, value: string, days = 365): void {
   )}; expires=${expires}; path=/; SameSite=Lax`;
 }
 
-export function getDefaultUserState(): UserMemoryState {
-  const detectedLang = detectBrowserLanguage();
+/**
+ * Deterministic initial state safe for SSR + React hydration (never reads navigator.language).
+ */
+export function getDefaultUserState(lang: Language = 'tr'): UserMemoryState {
+  const safeLang: Language = lang === 'en' ? 'en' : 'tr';
   return {
     playerId: 'local-default-player',
-    nickname: getDefaultNickname(detectedLang),
-    lang: detectedLang,
+    nickname: getDefaultNickname(safeLang, 42),
+    lang: safeLang,
     darkMode: false,
     xp: 0,
     weeklyXp: 0,
@@ -262,9 +267,9 @@ export function getDefaultUserState(): UserMemoryState {
     categoryWeights: createEmptyWeights(),
     categoryAccuracy: createEmptyCategoryAccuracy(),
     streakDays: 1,
-    lastVisitDate: getTodayDateString(),
+    lastVisitDate: '',
     badges: [],
-    soundEnabled: true,
+    soundEnabled: false,
     cookieAccepted: false,
     isReturningUser: false,
     rewindsRemaining: 2,
@@ -371,6 +376,7 @@ export function loadUserMemory(): UserMemoryState {
       ? savedHighest
       : computedLeague;
 
+  const randomTag = Math.floor(100 + Math.random() * 900);
   const state: UserMemoryState = {
     playerId:
       typeof parsed?.playerId === 'string' && parsed.playerId !== 'local-default-player'
@@ -379,7 +385,7 @@ export function loadUserMemory(): UserMemoryState {
     nickname:
       typeof parsed?.nickname === 'string' && parsed.nickname.trim()
         ? parsed.nickname.trim().slice(0, 24)
-        : getDefaultNickname(resolvedLang),
+        : getDefaultNickname(resolvedLang, randomTag),
     lang: resolvedLang,
     darkMode: Boolean(parsed?.darkMode),
     xp: resolvedXp,
@@ -400,7 +406,7 @@ export function loadUserMemory(): UserMemoryState {
     streakDays: Math.max(1, streakDays),
     lastVisitDate: today,
     badges: normalizeBadges(parsed?.badges),
-    soundEnabled: typeof parsed?.soundEnabled === 'boolean' ? parsed.soundEnabled : true,
+    soundEnabled: typeof parsed?.soundEnabled === 'boolean' ? parsed.soundEnabled : false,
     cookieAccepted: Boolean(parsed?.cookieAccepted),
     isReturningUser:
       hadPriorStorage && ((parsed?.seenIds?.length ?? 0) > 0 || Boolean(parsed?.isReturningUser)),
@@ -655,7 +661,11 @@ export function completeMemoryQuiz(
 }
 
 export function resetUserMemory(): UserMemoryState {
-  const fresh = getDefaultUserState();
+  const detectedLang = detectBrowserLanguage();
+  const fresh = getDefaultUserState(detectedLang);
+  fresh.playerId = createClientPlayerId();
+  fresh.nickname = getDefaultNickname(detectedLang, Math.floor(100 + Math.random() * 900));
+  fresh.lastVisitDate = getTodayDateString();
   fresh.cookieAccepted = true;
   saveUserMemory(fresh);
   if (typeof window !== 'undefined') {

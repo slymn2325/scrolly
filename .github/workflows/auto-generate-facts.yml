@@ -1,4 +1,4 @@
-name: Auto Generate Daily Facts (GitHub Models)
+name: Auto Generate Daily Facts (OpenAI-Compatible AI)
 
 on:
   schedule:
@@ -6,28 +6,30 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
-  models: read
+  contents: write
 
 jobs:
   generate-facts:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v5
         with:
-          node-version: '20'
+          node-version: '22'
           cache: 'npm'
 
       - name: Install dependencies
         run: npm ci
 
-      - name: Generate and save 6 bilingual facts via GitHub Models
+      - name: Generate and Insert Facts into Postgres
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          OPENAI_API_KEY: ${{ secrets.AI_API_KEY }}
+          AI_API_KEY: ${{ secrets.AI_API_KEY }}
+          AI_MODELS_ENDPOINT: ${{ vars.AI_MODELS_ENDPOINT || 'https://api.groq.com/openai/v1/chat/completions' }}
+          AI_MODEL_NAME: ${{ vars.AI_MODEL_NAME || 'llama-3.3-70b-versatile' }}
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           # Rejects overused internet trivia clichés (neutron star teaspoon, diamond rain, octopus 3 hearts, honey, Eiffel Tower, etc.)
           ANTI_CLICHE_STRICT: 'true'

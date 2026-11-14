@@ -512,6 +512,8 @@ export default function TikTokFactSlide({
       {/* Subtle translucent readability veil */}
       <div className="pointer-events-none absolute inset-x-0 bottom-0 h-[62%] bg-gradient-to-t from-white/25 via-white/15 to-transparent dark:from-[#0A0814]/70 dark:via-[#0A0814]/40 dark:to-transparent" />
 
+      {/* Centered Responsive Stage Wrapper (anchors content & action rail to 9:16/tablet stage boundary) */}
+      <div className="relative mx-auto h-full w-full md:max-w-[600px] lg:max-w-[540px]">
       {/* 2D Animated Face Switcher (Zero 3D Mirror Text Bleed-Through on iOS Safari PWA) */}
       <AnimatePresence mode="wait" initial={false}>
         {!isFlipped ? (
@@ -524,14 +526,14 @@ export default function TikTokFactSlide({
             exit={{ opacity: 0, y: -12 }}
             transition={{ duration: 0.22, ease: 'easeOut' }}
             style={{ willChange: isFlipping || isDragging ? 'transform' : 'auto' }}
-            className={`relative z-20 mx-auto flex h-full w-full max-w-[430px] flex-col justify-between overflow-y-auto no-scrollbar px-4 pt-[calc(5.8rem+env(safe-area-inset-top))] lg:grid lg:max-w-5xl lg:grid-cols-12 lg:items-center lg:gap-10 lg:px-8 lg:pt-[110px] lg:pb-[110px] ${
+            className={`relative z-20 mx-auto flex h-full w-full max-w-[430px] md:max-w-[600px] lg:max-w-[540px] flex-col justify-between md:justify-center md:[justify-content:safe_center] md:gap-8 overflow-y-auto no-scrollbar px-4 md:px-6 pt-[calc(5.8rem+env(safe-area-inset-top))] lg:pt-[96px] lg:pb-[100px] ${
               cookieBannerVisible
                 ? 'pb-[calc(154px+env(safe-area-inset-bottom))]'
                 : 'pb-[calc(94px+env(safe-area-inset-bottom))]'
             }`}
           >
             {/* Left / Top Visual Area: Topic-Specific Interactive Sketch Diagram */}
-            <div className="relative z-20 flex w-full shrink-0 items-center justify-center lg:col-span-6">
+            <div className="relative z-20 flex w-full shrink-0 items-center justify-center">
               <CategoryMotionArt
                 variant="hero"
                 factId={fact.id}
@@ -547,8 +549,8 @@ export default function TikTokFactSlide({
               />
             </div>
 
-            {/* Right / Bottom TikTok Description + Guess Overlay */}
-            <div className="pointer-events-none relative z-20 flex w-full flex-col gap-1.5 pr-[76px] lg:col-span-6 lg:pr-[84px]">
+            {/* Bottom Description + Guess Overlay */}
+            <div className="pointer-events-none relative z-20 flex w-full flex-col gap-1.5 pr-[76px] md:pr-[84px]">
               <div className="inline-flex w-fit items-center gap-1.5 rounded-full border border-slate-200/90 bg-white/95 px-2.5 py-0.5 text-[10.5px] font-extrabold text-ink dark:border-white/15 dark:bg-slate-900/95 dark:text-violet-100">
                 <img
                   src={catMeta.iconPath}
@@ -795,12 +797,12 @@ export default function TikTokFactSlide({
         )}
       </AnimatePresence>
 
-      {/* Vertical TikTok Action Column (Hidden When Detail View Is Open) */}
+      {/* Vertical TikTok Action Column Anchored to Stage Boundary (Hidden When Detail View Is Open) */}
       {!isFlipped && (
         <div
           onClick={(e) => e.stopPropagation()}
           onDoubleClick={(e) => e.stopPropagation()}
-          className={`absolute right-3 lg:right-8 z-30 flex flex-col items-center gap-3 transition-[bottom] duration-200 lg:bottom-1/2 lg:translate-y-1/2 ${
+          className={`absolute right-3 md:right-4 z-30 flex flex-col items-center gap-3 transition-[bottom] duration-200 md:bottom-1/2 md:translate-y-1/2 ${
             cookieBannerVisible
               ? 'bottom-[calc(154px+env(safe-area-inset-bottom))]'
               : 'bottom-[calc(94px+env(safe-area-inset-bottom))]'
@@ -900,6 +902,7 @@ export default function TikTokFactSlide({
           </motion.button>
         </div>
       )}
+      </div>
 
       {/* Double-Tap Heart Burst Animation Overlay at (x, y) */}
       <AnimatePresence>

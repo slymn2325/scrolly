@@ -16,6 +16,8 @@ import { getCategoryMeta, type Language } from '@/i18n/translations';
 import { getAllFactsServer } from '@/lib/db';
 import type { CategoryId } from '@/types/fact';
 import {
+  buildCategoryHref,
+  buildFactHref,
   CATEGORY_ROUTE_SLUGS,
   categoryIdToRouteSlug,
   categoryRouteSlugToId,
@@ -118,7 +120,7 @@ export default async function CategoryHubPage({ params, searchParams }: Category
     notFound();
   }
 
-  const { lang, hasExplicitLang } = resolveLangParam(query?.lang);
+  const { lang } = resolveLangParam(query?.lang);
   const catMeta = getCategoryMeta(categoryId);
   const canonicalSlug = categoryIdToRouteSlug(categoryId);
   const canonicalUrl = `https://scrolly.live/category/${canonicalSlug}`;
@@ -202,7 +204,7 @@ export default async function CategoryHubPage({ params, searchParams }: Category
 
             <div className="inline-flex items-center rounded-full border border-amber-200 bg-white p-0.5 shadow-pill">
               <Link
-                href={`/category/${canonicalSlug}?lang=tr`}
+                href={buildCategoryHref(canonicalSlug, 'tr')}
                 className={`rounded-full px-2.5 py-1 text-xs font-extrabold uppercase ${
                   lang === 'tr' ? 'bg-ink text-white' : 'text-ink/60 hover:text-ink'
                 }`}
@@ -210,7 +212,7 @@ export default async function CategoryHubPage({ params, searchParams }: Category
                 TR
               </Link>
               <Link
-                href={`/category/${canonicalSlug}?lang=en`}
+                href={buildCategoryHref(canonicalSlug, 'en')}
                 className={`rounded-full px-2.5 py-1 text-xs font-extrabold uppercase ${
                   lang === 'en' ? 'bg-ink text-white' : 'text-ink/60 hover:text-ink'
                 }`}
@@ -229,9 +231,7 @@ export default async function CategoryHubPage({ params, searchParams }: Category
               const idItem = categoryRouteSlugToId(slugItem)!;
               const metaItem = getCategoryMeta(idItem);
               const isActive = idItem === categoryId;
-              const href = hasExplicitLang
-                ? `/category/${slugItem}?lang=${lang}`
-                : `/category/${slugItem}`;
+              const href = buildCategoryHref(slugItem, lang);
               return (
                 <Link
                   key={slugItem}
@@ -318,9 +318,7 @@ export default async function CategoryHubPage({ params, searchParams }: Category
               {categoryFacts.map((fact) => {
                 const factContent = fact[lang];
                 const primarySlug = getFactPrimarySlug(fact);
-                const factHref = hasExplicitLang
-                  ? `/fact/${primarySlug}?lang=${lang}`
-                  : `/fact/${primarySlug}`;
+                const factHref = buildFactHref(primarySlug, lang);
                 const sourceName =
                   factContent.sourceName ||
                   fact.sourceName ||
