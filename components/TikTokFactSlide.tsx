@@ -19,6 +19,7 @@ import GuessWidget from '@/components/GuessWidget';
 import { getCategoryMeta, type Language, translations } from '@/i18n/translations';
 import { trackEvent } from '@/lib/telemetry';
 import type { CategoryId, FactCard } from '@/types/fact';
+import { cryptoRandomInt } from '@/utils/cryptoRandom';
 import { getFactUrl } from '@/utils/factsData';
 
 interface TikTokFactSlideProps {
@@ -229,7 +230,7 @@ export default function TikTokFactSlide({
         ? clientY - rect.top
         : (rect?.height ?? 640) * 0.45;
 
-    const burstId = now + Math.floor(Math.random() * 1000);
+    const burstId = now + cryptoRandomInt(1000);
     setHeartBursts((prev) => [...prev, { id: burstId, x, y }]);
     setTimeout(() => {
       setHeartBursts((prev) => prev.filter((item) => item.id !== burstId));

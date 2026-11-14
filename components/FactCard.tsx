@@ -27,6 +27,7 @@ import {
 } from 'lucide-react';
 import CategoryMotionArt from '@/components/CategoryMotionArt';
 import { getCategoryMeta, type Language, translations } from '@/i18n/translations';
+import { cryptoRandomFloat } from '@/utils/cryptoRandom';
 import { type FactCard as FactCardType, getFactUrl } from '@/utils/factsData';
 import { vibrateThreshold } from '@/utils/haptics';
 
@@ -123,7 +124,7 @@ export default function FactCard({
     const rect = cardSurfaceRef.current?.getBoundingClientRect();
     const relX = rect ? clientX - rect.left : 180;
     const relY = rect ? clientY - rect.top : 220;
-    const burstId = Date.now() + Math.random();
+    const burstId = Date.now() + cryptoRandomFloat();
 
     setHeartBursts((prev) => [...prev.slice(-4), { id: burstId, x: relX, y: relY }]);
     setTimeout(() => {

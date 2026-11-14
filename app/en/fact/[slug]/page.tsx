@@ -5,7 +5,7 @@ import { getCategoryMeta } from '@/i18n/translations';
 import { getAllFacts, getFactBySlug, getRelatedFacts } from '@/utils/factsData';
 
 interface PageProps {
-  params: { slug: string };
+  params: Promise<{ slug: string }>;
 }
 
 export function generateStaticParams() {
@@ -14,8 +14,9 @@ export function generateStaticParams() {
   }));
 }
 
-export function generateMetadata({ params }: PageProps): Metadata {
-  const fact = getFactBySlug(params.slug);
+export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
+  const { slug } = await params;
+  const fact = getFactBySlug(slug);
   if (!fact) {
     return {
       title: 'Fact Not Found | Scrolly',
@@ -43,8 +44,9 @@ export function generateMetadata({ params }: PageProps): Metadata {
   };
 }
 
-export default function EnglishFactPage({ params }: PageProps) {
-  const fact = getFactBySlug(params.slug);
+export default async function EnglishFactPage({ params }: PageProps) {
+  const { slug } = await params;
+  const fact = getFactBySlug(slug);
   if (!fact) {
     notFound();
   }

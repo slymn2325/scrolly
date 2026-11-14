@@ -30,6 +30,7 @@ import {
   getFactById,
 } from '@/utils/factsData';
 import { decodeDuelPayload } from '@/utils/duelCodec';
+import { cryptoRandomFloat } from '@/utils/cryptoRandom';
 import {
   vibrateDoubleTap,
   vibrateFlip,
@@ -105,7 +106,7 @@ function buildPersonalizedDeck(
   const topCats = new Set(sortedCategories.slice(0, 2));
 
   const scoreRank = (fact: FactCardType) => {
-    const base = shuffle ? Math.random() : 0.5;
+    const base = shuffle ? cryptoRandomFloat() : 0.5;
     const priorityBoost = category === 'all' && topCats.has(fact.category) ? 0.4 : 0;
     return base + priorityBoost;
   };

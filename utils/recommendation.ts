@@ -1,4 +1,5 @@
 import type { CategoryFilter, CategoryId } from '@/i18n/translations';
+import { cryptoRandomFloat } from '@/utils/cryptoRandom';
 import type { FactCardData, FactQuizItem } from '@/utils/factsData';
 
 export interface QuizQuestionItem {
@@ -93,7 +94,7 @@ export function selectNextFactCard(
   });
 
   const totalWeight = weighted.reduce((sum, item) => sum + item.weight, 0);
-  let cursor = Math.random() * totalWeight;
+  let cursor = cryptoRandomFloat() * totalWeight;
 
   for (const item of weighted) {
     cursor -= item.weight;
@@ -136,6 +137,6 @@ export function generateMemoryQuizFromRecent(
   }
 
   // Shuffle the last up to 5 read cards and select 3 questions
-  const shuffled = [...pool].sort(() => Math.random() - 0.5);
+  const shuffled = [...pool].sort(() => cryptoRandomFloat() - 0.5);
   return shuffled.slice(0, 3).map((fact) => ({ fact }));
 }

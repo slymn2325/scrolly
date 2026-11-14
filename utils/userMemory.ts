@@ -1,4 +1,5 @@
 import type { CategoryId, Language } from '@/i18n/translations';
+import { cryptoRandomUuid } from '@/utils/cryptoRandom';
 import { LEAGUE_SHIELD_MAP, type LeagueTierId } from '@/utils/icons8Assets';
 
 const LOCAL_STORAGE_KEY = 'merak_user_state_v1';
@@ -133,10 +134,7 @@ export function getTodayDateString(): string {
 }
 
 function createClientPlayerId(): string {
-  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
-    return crypto.randomUUID();
-  }
-  return `player-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
+  return cryptoRandomUuid();
 }
 
 function getDefaultNickname(lang: Language): string {
