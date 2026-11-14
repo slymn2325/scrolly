@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import { ArrowUp, Share, Smartphone, Sparkles, X } from 'lucide-react';
 import { type Language, translations } from '@/i18n/translations';
@@ -30,6 +31,24 @@ export function checkIsStandalone(): boolean {
   return Boolean(mediaMatch || navStandalone);
 }
 
+function readDismissedFromStorage(): boolean {
+  if (typeof window === 'undefined') return true;
+  try {
+    return window.localStorage.getItem(PWA_DISMISSED_KEY) === 'true';
+  } catch {
+    return false;
+  }
+}
+
+function writeDismissedToStorage(): void {
+  if (typeof window === 'undefined') return;
+  try {
+    window.localStorage.setItem(PWA_DISMISSED_KEY, 'true');
+  } catch {
+    // private mode / quota — still hide via React state
+  }
+}
+
 export default function PwaInstallPrompt({
   lang,
   swipedCount,
@@ -37,6 +56,7 @@ export default function PwaInstallPrompt({
   onCloseForceOpen,
   onButtonPop,
 }: PwaInstallPromptProps) {
+  const [portalReady, setPortalReady] = useState(false);
   const [isStandalone, setIsStandalone] = useState(false);
   const [dismissed, setDismissed] = useState(true);
   const [hydrated, setHydrated] = useState(false);
@@ -47,6 +67,10 @@ export default function PwaInstallPrompt({
   const t = translations[lang];
 
   useEffect(() => {
+    setPortalReady(true);
+  }, []);
+
+  useEffect(() => {
     if (typeof window === 'undefined') return;
 
     const syncStandalone = () => {
@@ -54,13 +78,7 @@ export default function PwaInstallPrompt({
     };
 
     syncStandalone();
-
-    try {
-      const alreadyDismissed = window.localStorage.getItem(PWA_DISMISSED_KEY) === 'true';
-      setDismissed(alreadyDismissed);
-    } catch {
-      setDismissed(false);
-    }
+    setDismissed(readDismissedFromStorage());
     setHydrated(true);
 
     const mq =
@@ -84,6 +102,8 @@ export default function PwaInstallPrompt({
     const handleAppInstalled = () => {
       setDeferredPrompt(null);
       setIsStandalone(true);
+      writeDismissedToStorage();
+      setDismissed(true);
     };
 
     window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
@@ -102,26 +122,25 @@ export default function PwaInstallPrompt({
     };
   }, []);
 
-  // Profile can re-open after a prior dismiss
   useEffect(() => {
-    if (forceOpen) setClosedThisSession(false);
+    if (forceOpen) {
+      setClosedThisSession(false);
+      setDismissed(false);
+    }
   }, [forceOpen]);
 
   const dismissNow = (e?: React.SyntheticEvent) => {
     e?.preventDefault();
     e?.stopPropagation();
     onButtonPop();
-    setClosedThisSession(true);
-    try {
-      window.localStorage.setItem(PWA_DISMISSED_KEY, 'true');
-    } catch {
-      // Ignore storage quota errors
-    }
+    writeDismissedToStorage();
     setDismissed(true);
+    setClosedThisSession(true);
     onCloseForceOpen?.();
   };
 
   const handleInstallClick = async (e: React.MouseEvent) => {
+    e.preventDefault();
     e.stopPropagation();
     onButtonPop();
     if (deferredPrompt) {
@@ -135,58 +154,63 @@ export default function PwaInstallPrompt({
         setShowIosHint(true);
       }
       setDeferredPrompt(null);
-      dismissNow();
-      return;
+    } else {
+      setShowIosHint(true);
     }
-    setShowIosHint(true);
     dismissNow();
   };
 
-  const showPrompt =
+  const storageDismissed = hydrated && readDismissedFromStorage();
+  const shouldRender =
+    portalReady &&
     hydrated &&
     !isStandalone &&
     !closedThisSession &&
-    (forceOpen || (!dismissed && swipedCount >= 2));
+    (forceOpen || (!storageDismissed && !dismissed && swipedCount >= 2));
 
-  return (
+  if (!portalReady) return null;
+
+  return createPortal(
     <AnimatePresence>
-      {showPrompt && (
-        <>
-          {/* Above HUD (z-30) so X / outside dismiss aren't blocked */}
+      {shouldRender && (
+        <div data-testid="pwa-install-root" className="contents">
           <button
             type="button"
+            tabIndex={-1}
             aria-label={t.pwaDismissLabel}
             data-testid="pwa-install-backdrop"
             onClick={dismissNow}
-            onPointerDown={(e) => e.stopPropagation()}
-            className="fixed inset-0 z-[54] cursor-default bg-black/25"
+            onPointerDown={(ev) => {
+              ev.stopPropagation();
+            }}
+            className="fixed inset-0 z-[80] bg-black/35"
           />
-          <div className="pointer-events-none fixed inset-x-0 top-[calc(5.5rem+env(safe-area-inset-top))] z-[55] mx-auto w-full max-w-[430px] px-3 lg:max-w-[min(620px,50vw)]">
+          <div className="pointer-events-none fixed inset-x-0 top-[max(12px,env(safe-area-inset-top))] z-[81] flex justify-center px-3 pt-2">
             <motion.div
               initial={{ opacity: 0, y: -16, scale: 0.96 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: -16, scale: 0.96 }}
-              transition={{ type: 'spring', stiffness: 320, damping: 26 }}
+              exit={{ opacity: 0, y: -12, scale: 0.97 }}
+              transition={{ type: 'spring', stiffness: 340, damping: 28 }}
               data-testid="pwa-install-prompt"
               role="dialog"
               aria-modal="true"
               aria-label={t.pwaPromptTitle}
-              onClick={(e) => e.stopPropagation()}
-              onPointerDown={(e) => e.stopPropagation()}
+              onClick={(ev) => ev.stopPropagation()}
+              onPointerDown={(ev) => ev.stopPropagation()}
               style={{
                 WebkitBackdropFilter: 'blur(36px) saturate(180%)',
                 backdropFilter: 'blur(36px) saturate(180%)',
               }}
-              className="pointer-events-auto relative z-[56] w-full rounded-3xl border border-white/55 bg-white/90 p-3 shadow-[0_12px_36px_rgba(15,23,42,0.22),inset_0_1px_1px_rgba(255,255,255,0.75)] dark:border-white/20 dark:bg-[#130F24]/95"
+              className="pointer-events-auto relative w-full max-w-[430px] rounded-3xl border border-white/55 bg-white/95 p-3 shadow-[0_16px_40px_rgba(15,23,42,0.28)] dark:border-white/20 dark:bg-[#130F24]/96 lg:max-w-[min(620px,50vw)]"
             >
               <div className="flex items-start justify-between gap-2.5">
                 <div className="flex min-w-0 items-start gap-2.5">
                   <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-[#6C5CE7] to-[#FF7675] text-white shadow-sm">
                     <Smartphone className="h-4 w-4" />
                   </div>
-                  <div className="min-w-0">
+                  <div className="min-w-0 pr-1">
                     <div className="flex items-center gap-1">
-                      <Sparkles className="h-3 w-3 text-violet-700 dark:text-violet-300" />
+                      <Sparkles className="h-3 w-3 shrink-0 text-violet-700 dark:text-violet-300" />
                       <p className="text-xs font-extrabold leading-tight text-ink dark:text-white">
                         {t.pwaPromptTitle}
                       </p>
@@ -202,10 +226,10 @@ export default function PwaInstallPrompt({
                   aria-label={t.pwaDismissLabel}
                   data-testid="pwa-install-dismiss-btn"
                   onClick={dismissNow}
-                  onPointerDown={(e) => e.stopPropagation()}
-                  className="relative z-[57] flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-white/70 text-ink hover:bg-white dark:bg-white/15 dark:text-white"
+                  onPointerDown={(ev) => ev.stopPropagation()}
+                  className="relative z-[82] -mr-1 -mt-1 flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-slate-100 text-ink hover:bg-slate-200 dark:bg-white/15 dark:text-white dark:hover:bg-white/25"
                 >
-                  <X className="h-4 w-4" />
+                  <X className="h-4 w-4" strokeWidth={2.5} />
                 </button>
               </div>
 
@@ -215,7 +239,7 @@ export default function PwaInstallPrompt({
                   whileTap={{ scale: 0.95 }}
                   onClick={handleInstallClick}
                   data-testid="pwa-install-action-btn"
-                  className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-full bg-ink px-3.5 py-2.5 text-xs font-black text-white shadow-sm hover:opacity-95 dark:bg-violet-600"
+                  className="inline-flex min-h-[44px] flex-1 items-center justify-center gap-1.5 rounded-full bg-ink px-3.5 py-2.5 text-xs font-black text-white shadow-sm hover:opacity-95 dark:bg-violet-600"
                 >
                   <span>{t.pwaInstallBtn}</span>
                 </motion.button>
@@ -223,7 +247,7 @@ export default function PwaInstallPrompt({
                   type="button"
                   data-testid="pwa-install-not-now-btn"
                   onClick={dismissNow}
-                  className="inline-flex h-10 items-center justify-center rounded-full px-3 text-[11px] font-extrabold text-ink/70 hover:text-ink dark:text-violet-100/80 dark:hover:text-white"
+                  className="inline-flex h-11 items-center justify-center rounded-full px-3 text-[11px] font-extrabold text-ink/70 hover:text-ink dark:text-violet-100/80 dark:hover:text-white"
                 >
                   {lang === 'tr' ? 'Şimdi değil' : 'Not now'}
                 </button>
@@ -249,8 +273,9 @@ export default function PwaInstallPrompt({
               )}
             </motion.div>
           </div>
-        </>
+        </div>
       )}
-    </AnimatePresence>
+    </AnimatePresence>,
+    document.body
   );
 }
