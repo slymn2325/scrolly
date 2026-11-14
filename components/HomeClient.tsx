@@ -503,10 +503,10 @@ export default function HomeClient({ initialFacts }: HomeClientProps) {
 
   const handleDoubleTapLike = useCallback(
     (fact: FactCardType) => {
+      // Like feedback only — never auto-save / favorite. Liked IDs live in likedFacts localStorage.
       setSeedFact(fact);
       vibrateDoubleTap(12);
       playPopDing(soundEnabled);
-      setMemory((prev) => toggleFavoriteFact(prev, fact.id, fact.category, true));
     },
     [soundEnabled]
   );
@@ -766,7 +766,7 @@ export default function HomeClient({ initialFacts }: HomeClientProps) {
       {/* Centered 9:16 phone frame — rounded corners visible on md+ */}
       <div
         data-testid="reels-phone-frame"
-        className="relative z-10 mx-auto flex h-[100dvh] w-full max-w-[430px] flex-col overflow-hidden bg-[#09090B] text-white md:h-[calc(100dvh-2.5rem)] md:max-h-[920px] md:rounded-[28px] md:border md:border-white/15 md:shadow-[0_30px_100px_-16px_rgba(0,0,0,0.95),0_0_60px_-12px_rgba(255,255,255,0.08)]"
+        className="dark relative z-10 mx-auto flex h-[100dvh] w-full max-w-[430px] flex-col overflow-hidden bg-[#09090B] text-white md:h-[calc(100dvh-2.5rem)] md:max-h-[920px] md:rounded-[28px] md:border md:border-white/15 md:shadow-[0_30px_100px_-16px_rgba(0,0,0,0.95),0_0_60px_-12px_rgba(255,255,255,0.08)]"
       >
         <OfflineManager lang={lang} />
 

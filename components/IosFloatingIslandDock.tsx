@@ -97,20 +97,18 @@ export default function IosFloatingIslandDock({
             aria-label={tab.label}
             aria-current={isActive ? 'page' : undefined}
             className={`relative flex min-h-[44px] flex-1 flex-col items-center justify-center gap-0.5 rounded-full py-1.5 transition-colors ${
-              isActive
-                ? 'text-violet-800 dark:text-violet-100'
-                : 'text-ink/85 hover:text-ink dark:text-white/85 dark:hover:text-white'
+              isActive ? 'text-white' : 'text-white/75 hover:text-white'
             }`}
           >
             {isActive && (
               <motion.span
                 layoutId="ios-island-pill"
                 transition={{ type: 'spring', stiffness: 420, damping: 30 }}
-                className="absolute inset-0 rounded-full border border-violet-200/80 bg-violet-50/95 shadow-sm dark:border-white/25 dark:bg-white/15"
+                className="absolute inset-0 rounded-full border border-white/25 bg-white/15 shadow-sm"
               />
             )}
 
-            <span className="relative z-10 flex items-center justify-center drop-shadow-[0_2px_4px_rgba(0,0,0,0.22)]">
+            <span className="relative z-10 flex items-center justify-center drop-shadow-[0_2px_4px_rgba(0,0,0,0.35)]">
               <img
                 src={tab.iconSrc}
                 alt=""
@@ -125,12 +123,12 @@ export default function IosFloatingIslandDock({
                   className="absolute -right-1 -top-1 flex h-2.5 w-2.5"
                 >
                   <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-rose-400 opacity-75" />
-                  <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-rose-500 ring-2 ring-white dark:ring-neutral-900" />
+                  <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-rose-500 ring-2 ring-[#111115]" />
                 </span>
               )}
             </span>
 
-            <span className="relative z-10 truncate text-[10px] font-extrabold tracking-tight drop-shadow-[0_1px_2px_rgba(0,0,0,0.22)]">
+            <span className="relative z-10 truncate text-[10px] font-extrabold tracking-tight text-inherit drop-shadow-[0_1px_2px_rgba(0,0,0,0.4)]">
               {tab.label}
             </span>
           </motion.button>

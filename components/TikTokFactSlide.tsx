@@ -25,6 +25,7 @@ import type { CategoryId, FactCard, GuessChallenge } from '@/types/fact';
 import { cryptoRandomInt } from '@/utils/cryptoRandom';
 import { getFactUrl } from '@/utils/factsData';
 import { vibrateTap } from '@/utils/haptics';
+import { isFactLiked, toggleLikedFact } from '@/utils/likedFacts';
 
 interface TikTokFactSlideProps {
   fact: FactCard;
@@ -166,10 +167,10 @@ export default function TikTokFactSlide({
     return 400 + (sum % 890);
   }, [fact.id]);
 
-  const [dbLikeDelta, setDbLikeDelta] = useState<number>(0);
+  const [isLiked, setIsLiked] = useState(false);
 
   useEffect(() => {
-    setDbLikeDelta(0);
+    setIsLiked(isFactLiked(fact.id));
     setIsFlipped(false);
     setIsFlipping(false);
     setIsDragging(false);
@@ -178,6 +179,12 @@ export default function TikTokFactSlide({
     hasSentDwellEventRef.current = false;
     visibleEnterTimeRef.current = null;
   }, [fact.id, fact.likesCount]);
+
+  useEffect(() => {
+    const syncLiked = () => setIsLiked(isFactLiked(fact.id));
+    window.addEventListener('scrolly-liked-facts-updated', syncLiked);
+    return () => window.removeEventListener('scrolly-liked-facts-updated', syncLiked);
+  }, [fact.id]);
 
   // Settle 150ms debounce + 1.5s dwell read tracking + off-screen timer cleanup driven by parent isActive
   useEffect(() => {
@@ -255,12 +262,10 @@ export default function TikTokFactSlide({
     };
   }, [isActive, fact, factSlug, onDwellRead]);
 
-  const hasDbLikes = typeof fact.likesCount === 'number';
-  const displayLikes = hasDbLikes
-    ? Math.max(0, (fact.likesCount ?? 0) + dbLikeDelta)
-    : isFavorite
-      ? baseLikesCount + 1
-      : baseLikesCount;
+  const baseDisplayLikes =
+    typeof fact.likesCount === 'number' ? Math.max(0, fact.likesCount) : baseLikesCount;
+  // Liked adds +1 locally; unlike removes that +1. Never tied to favorite/save.
+  const displayLikes = Math.max(0, baseDisplayLikes + (isLiked ? 1 : 0));
 
   useEffect(() => {
     if (!isFlipped) return;
@@ -313,6 +318,16 @@ export default function TikTokFactSlide({
     }
     lastBurstTimeRef.current = now;
 
+    const nextLiked = toggleLikedFact(fact.id);
+    setIsLiked(nextLiked);
+    void trackEvent(factSlug, fact.category, nextLiked ? 'like' : 'unlike', {
+      trigger: 'double_tap',
+    });
+    onDoubleTapLike(fact);
+
+    // Burst animation only when liking (not on unlike)
+    if (!nextLiked) return;
+
     const rect = slideRef.current?.getBoundingClientRect();
     const x =
       rect && typeof clientX === 'number' && clientX > 0
@@ -329,12 +344,17 @@ export default function TikTokFactSlide({
       setHeartBursts((prev) => prev.filter((item) => item.id !== burstId));
     }, 900);
     burstTimersRef.current.push(burstTimer);
+  };
 
-    if (!isFavorite) {
-      setDbLikeDelta((prev) => prev + 1);
-      void trackEvent(factSlug, fact.category, 'like', { trigger: 'double_tap' });
-    }
+  const handleToggleLikeClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    const nextLiked = toggleLikedFact(fact.id);
+    setIsLiked(nextLiked);
+    void trackEvent(factSlug, fact.category, nextLiked ? 'like' : 'unlike', {
+      trigger: 'heart_btn',
+    });
     onDoubleTapLike(fact);
+    vibrateTap(18);
   };
 
   const executeFlip = () => {
@@ -581,7 +601,7 @@ export default function TikTokFactSlide({
 
             <p
               data-testid="fact-body"
-              className="line-clamp-3 text-[13px] font-medium leading-snug text-white/85 whitespace-normal break-words"
+              className="line-clamp-3 text-[13px] font-semibold leading-snug text-white/95 whitespace-normal break-words"
             >
               {renderedFactBody}
             </p>
@@ -638,19 +658,19 @@ export default function TikTokFactSlide({
             <motion.button
               type="button"
               whileTap={{ scale: 0.9 }}
-              onClick={(e) => {
-                e.stopPropagation();
-                setDbLikeDelta((prev) => prev + 1);
-                void trackEvent(factSlug, fact.category, 'like', { trigger: 'heart_btn' });
-                onDoubleTapLike(fact);
-                vibrateTap(18);
-              }}
-              aria-label={lang === 'tr' ? 'Beğen' : 'Like'}
+              onClick={handleToggleLikeClick}
+              aria-label={lang === 'tr' ? (isLiked ? 'Beğeniyi kaldır' : 'Beğen') : isLiked ? 'Unlike' : 'Like'}
+              aria-pressed={isLiked}
               data-testid="card-like-btn"
+              data-liked={isLiked ? 'true' : 'false'}
               className="flex flex-col items-center gap-0.5"
             >
-              <span className="flex h-11 w-11 items-center justify-center rounded-full border border-white/20 bg-white/10 text-rose-300 backdrop-blur-md">
-                <Heart className="h-5 w-5 fill-current" />
+              <span
+                className={`flex h-11 w-11 items-center justify-center rounded-full border border-white/20 backdrop-blur-md transition-all ${
+                  isLiked ? 'bg-rose-500 text-white' : 'bg-white/10 text-rose-300'
+                }`}
+              >
+                <Heart className={`h-5 w-5 ${isLiked ? 'fill-current' : ''}`} />
               </span>
               <span className="text-[10px] font-extrabold text-white/90">
                 {displayLikes === 1

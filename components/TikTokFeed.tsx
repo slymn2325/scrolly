@@ -359,17 +359,21 @@ const TikTokFeed = forwardRef<TikTokFeedHandle, TikTokFeedProps>(function TikTok
   }, [activeIndex, slides]);
 
   return (
-    <div className="relative mx-auto h-full w-full max-w-[430px] overflow-hidden bg-[#09090B]">
-      {/* Top HUD — compact, no stories/1-5 counter */}
+    <div className="dark relative mx-auto h-full w-full max-w-[430px] overflow-hidden bg-[#09090B] text-white">
+      {/* Top HUD — compact, no stories/1-5 counter. overflow-visible so category drawer is not clipped. */}
       <header
         data-chrome-blocked={chromeBlocked ? 'true' : 'false'}
-        className={`pointer-events-none absolute inset-x-0 top-0 z-30 h-[96px] w-full max-w-[430px] overflow-hidden bg-gradient-to-b from-black/70 via-black/35 to-transparent px-2.5 pt-[max(8px,env(safe-area-inset-top))] pb-1.5 ${
+        className={`pointer-events-none absolute inset-x-0 top-0 z-30 w-full max-w-[430px] px-2.5 pt-[max(8px,env(safe-area-inset-top))] pb-1.5 ${
           chromeBlocked ? 'opacity-40' : ''
         }`}
       >
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-x-0 top-0 h-[96px] bg-gradient-to-b from-black/80 via-black/40 to-transparent"
+        />
         {/* Top Utility Bar: Left Streak+XP | Right Controls */}
         <div
-          className={`flex flex-wrap items-center justify-between gap-1.5 ${
+          className={`relative z-10 flex flex-wrap items-center justify-between gap-1.5 ${
             chromeBlocked ? 'pointer-events-none' : 'pointer-events-auto'
           }`}
         >
@@ -471,7 +475,7 @@ const TikTokFeed = forwardRef<TikTokFeedHandle, TikTokFeedProps>(function TikTok
         {/* Genel + Kategori Seç ▾ */}
         <div
           data-testid="category-bar"
-          className={`mt-1.5 flex flex-wrap items-center gap-1.5 ${
+          className={`relative z-10 mt-1.5 flex flex-wrap items-center gap-1.5 ${
             chromeBlocked ? 'pointer-events-none' : 'pointer-events-auto'
           }`}
         >
@@ -546,56 +550,59 @@ const TikTokFeed = forwardRef<TikTokFeedHandle, TikTokFeedProps>(function TikTok
           )}
         </div>
 
-        {/* Opaque category picker — z-40 above HUD */}
-        <AnimatePresence>
-          {isCategoryDrawerOpen && (
-            <motion.div
-              key="category-drawer"
-              initial={{ opacity: 0, y: -8, scale: 0.98 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: -8, scale: 0.98 }}
-              transition={{ duration: 0.18, ease: 'easeOut' }}
-              data-testid="category-drawer"
-              className="pointer-events-auto relative z-40 mt-1 max-h-[50dvh] overflow-y-auto rounded-2xl border border-white/15 bg-[#111115] p-2 shadow-xl"
-            >
-              <div className="flex flex-wrap items-center gap-1.5">
-                {CATEGORY_SELECTOR_OPTIONS.map((cat) => {
-                  const isActive = activeCategory === cat.id;
-                  const labelText =
-                    cat.id === 'all' ? (lang === 'tr' ? 'Tümü (Genel)' : 'All (General)') : cat.label[lang];
-                  return (
-                    <button
-                      key={cat.id}
-                      type="button"
-                      onClick={() => {
-                        onButtonPop();
-                        onSelectCategory(cat.id);
-                        setIsCategoryDrawerOpen(false);
-                      }}
-                      data-testid={`category-option-${cat.id}`}
-                      className={`inline-flex h-9 items-center gap-1.5 rounded-full border px-2.5 text-[11px] font-extrabold transition ${
-                        isActive
-                          ? cat.id === 'vocabulary'
-                            ? 'border-indigo-400 bg-indigo-600 text-white'
-                            : 'border-white bg-white text-[#09090B]'
-                          : 'border-white/15 bg-white/5 text-white/90 hover:bg-white/10'
-                      }`}
-                    >
-                      <img
-                        src={cat.iconPath}
-                        alt=""
-                        aria-hidden="true"
-                        className="h-4 w-4 object-contain"
-                      />
-                      <span>{labelText}</span>
-                    </button>
-                  );
-                })}
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
       </header>
+
+      {/* Opaque category picker — sibling of header so it is never clipped by HUD height */}
+      <AnimatePresence>
+        {isCategoryDrawerOpen && (
+          <motion.div
+            key="category-drawer"
+            initial={{ opacity: 0, y: -8, scale: 0.98 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -8, scale: 0.98 }}
+            transition={{ duration: 0.18, ease: 'easeOut' }}
+            data-testid="category-drawer"
+            className={`pointer-events-auto absolute inset-x-2.5 top-[92px] z-40 max-h-[50dvh] overflow-y-auto rounded-2xl border border-white/20 bg-[#111115] p-2.5 text-white shadow-2xl ${
+              chromeBlocked ? 'opacity-40 pointer-events-none' : ''
+            }`}
+          >
+            <div className="flex flex-wrap items-center gap-1.5">
+              {CATEGORY_SELECTOR_OPTIONS.map((cat) => {
+                const isActive = activeCategory === cat.id;
+                const labelText =
+                  cat.id === 'all' ? (lang === 'tr' ? 'Tümü (Genel)' : 'All (General)') : cat.label[lang];
+                return (
+                  <button
+                    key={cat.id}
+                    type="button"
+                    onClick={() => {
+                      onButtonPop();
+                      onSelectCategory(cat.id);
+                      setIsCategoryDrawerOpen(false);
+                    }}
+                    data-testid={`category-option-${cat.id}`}
+                    className={`inline-flex h-9 items-center gap-1.5 rounded-full border px-2.5 text-[11px] font-extrabold transition ${
+                      isActive
+                        ? cat.id === 'vocabulary'
+                          ? 'border-indigo-400 bg-indigo-600 text-white'
+                          : 'border-white bg-white text-[#09090B]'
+                        : 'border-white/20 bg-white/10 text-white hover:bg-white/15'
+                    }`}
+                  >
+                    <img
+                      src={cat.iconPath}
+                      alt=""
+                      aria-hidden="true"
+                      className="h-4 w-4 object-contain"
+                    />
+                    <span>{labelText}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Vertical Full-Bleed TikTok Snap Scroll Container (Windowed DOM Virtualization: activeIndex - 2 .. activeIndex + 2) */}
       <div
@@ -612,7 +619,7 @@ const TikTokFeed = forwardRef<TikTokFeedHandle, TikTokFeedProps>(function TikTok
             <div
               key={slide.key}
               data-slide-index={slideIdx}
-              className="reels-slide h-[100dvh] w-full shrink-0 snap-start"
+              className="reels-slide h-full min-h-full w-full shrink-0 snap-start"
               aria-hidden={!isWithinWindow ? true : undefined}
             >
               {!isWithinWindow ? null : slide.type === 'fact' ? (

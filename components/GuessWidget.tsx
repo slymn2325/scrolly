@@ -184,7 +184,7 @@ export default function GuessWidget({
         )}
       </div>
 
-      <p className="mb-2 text-xs font-bold leading-snug text-white/90 whitespace-normal break-words">
+      <p className="mb-2 text-xs font-bold leading-snug text-white whitespace-normal break-words">
         {challenge.prompt}
       </p>
 
@@ -240,7 +240,7 @@ export default function GuessWidget({
                 data-testid={`guess-binary-${idx}`}
                 onClick={(e) => handleBinaryPick(e, idx)}
                 onDoubleClick={stop}
-                className="flex h-11 items-center justify-center rounded-xl border border-white/20 bg-white/10 px-2 text-[11px] font-extrabold text-white transition hover:bg-white/20"
+                className="flex h-11 items-center justify-center rounded-xl border border-white/25 bg-white/15 px-2 text-[11px] font-extrabold text-white transition hover:bg-white/25"
               >
                 <span className="line-clamp-2 text-center leading-snug">{opt}</span>
               </motion.button>
