@@ -91,7 +91,7 @@ async function loadSeedFactsFromDisk() {
   for (const file of shardFiles) {
     const publicPath = path.join(ROOT_DIR, 'public', 'data', 'facts', file);
     const dataPath = path.join(ROOT_DIR, 'data', 'facts', file);
-    let raw = null;
+    let raw;
     try {
       raw = await fs.readFile(publicPath, 'utf8');
     } catch {

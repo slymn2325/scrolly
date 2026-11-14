@@ -450,7 +450,7 @@ export default function SingleFactView({
               <span>WhatsApp</span>
             </a>
             <a
-              href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(
+              href={`https://x.com/intent/post?text=${encodeURIComponent(
                 content.title
               )}&url=${encodeURIComponent(`https://scrolly.live${canonicalPath}`)}`}
               target="_blank"

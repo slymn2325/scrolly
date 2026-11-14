@@ -88,9 +88,7 @@ const CATEGORY_VISUAL_DEFAULTS: Record<
 };
 
 declare global {
-  // eslint-disable-next-line no-var
   var __scrollyPgPool: Pool | undefined;
-  // eslint-disable-next-line no-var
   var __scrollySchemaReadyPromise: Promise<void> | undefined;
 }
 

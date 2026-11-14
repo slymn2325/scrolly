@@ -2,6 +2,8 @@ import type { MetadataRoute } from 'next';
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
+    id: '/',
+    lang: 'tr',
     name: 'Scrolly - Her Gün Yeni Bir Bilgi',
     short_name: 'Scrolly',
     description:

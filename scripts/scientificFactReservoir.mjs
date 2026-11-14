@@ -1178,14 +1178,6 @@ const PARAMETRIC_VERIFIED_TEMPLATES = {
   ],
 };
 
-function normalizeCandidateSlug(rawSlug) {
-  return String(rawSlug || '')
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '')
-    .slice(0, 80);
-}
-
 /**
  * Selects an unused parametric curated template for a category, returning null
  * if all curated templates have already been inserted (never duplicates titles with dates).
@@ -1232,7 +1224,7 @@ export function selectAutonomousSixFacts(existingSlugs, existingTitlesEn, topEng
       return true;
     });
 
-    let pick = null;
+    let pick;
     if (pool.length > 0) {
       // Rank candidates lightly toward topics matching high-engagement words, falling back to first unseen
       const ranked = [...pool].sort((a, b) => {

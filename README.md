@@ -4,7 +4,7 @@
 
 **Tek Saniyede Mikro Keşif Platformu · One-Second Micro-Discovery Platform**
 
-[![Next.js](https://img.shields.io/badge/Next.js-14-000000?style=flat-square&logo=nextdotjs)](https://nextjs.org/)
+[![Next.js](https://img.shields.io/badge/Next.js-16-000000?style=flat-square&logo=nextdotjs)](https://nextjs.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.6-3178C6?style=flat-square&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-3.4-06B6D4?style=flat-square&logo=tailwindcss&logoColor=white)](https://tailwindcss.com/)
 [![Framer Motion](https://img.shields.io/badge/Framer_Motion-11-0055FF?style=flat-square&logo=framer&logoColor=white)](https://www.framer.com/motion/)
@@ -19,33 +19,31 @@
 
 ## Türkçe
 
-**Scrolly**, kullanıcıların kayıt olmadan tek saniyede giriş yapabildiği; Türkçe (`TR`) ve İngilizce (`EN`) dil desteği sunan, TikTok/Reels akıcılığında tam ekran dikey keşif akışı, 3B kart çevirme, iOS Liquid Glass yüzen ada menüsü, süreli hafıza quizleri, 1v1 düello linkleri ve çevrimdışı (Offline PWA) desteği sunan hareket odaklı bir mikro öğrenme web uygulamasıdır.
+**Scrolly**, kullanıcıların kayıt olmadan tek saniyede giriş yapabildiği; Türkçe (`TR`) ve İngilizce (`EN`) dil desteği sunan, TikTok/Reels akıcılığında tam ekran dikey keşif akışı, kategori seçici, **Dil Öğrenme (Language Lab)** modu, akıllı 5 kartlık DOM sanallaştırma ve çevrimdışı PWA desteği sunan mikro öğrenme web uygulamasıdır.
 
 ### Öne Çıkan Özellikler
-- **Tam Ekran Dikey Keşif Akışı (`TikTokFeed` & `TikTokFactSlide`):** Kenardan kenara `100dvh` sahneler, kategoriye özel canlı motion grafik arka planlar ve Icons8 `3d-fluency` yerel görsel varlıkları.
-- **3B Kart Çevirme & Çift Dokunuşla Beğeni:** Tek dokunuşla kartın arkasına dönerek derinlemesine açıklamaya geçiş, çift dokunuşta dokunulan noktada kalp patlaması ve Web Audio + titreşim (haptics) geri bildirimi.
-- **İnteraktif "Tahmin Et" Mikro Etkileşimi (`GuessWidget`):** Kartı çevirmeden önce kaydırıcı (slider) veya ikili seçim ile tahminde bulunarak anlık geri bildirim ve bonus XP kazanma.
-- **iOS Şeffaf Ada Menüsü (`IosFloatingIslandDock`):** Arkadan kayan bilgi sahnelerini canlı biçimde bulanıklaştıran 5 sekmeli (`Liderlik`, `Quiz`, `Keşfet`, `Düello`, `Diploma`) Liquid Glass alt navigasyon barı.
-- **Hafıza Quizi, Liderlik & 1v1 Düello:** Son okunan kartlardan anında quiz, 60 saniyelik hızlı sprint modu, lig rozetleri (Bronz → Elmas) ve URL kodlu 1v1 arkadaş düellosu (`DuelModal` / `duelCodec.ts`). Opsiyonel Supabase senkronizasyonu ve tam çevrimdışı yerel yedek desteği.
-- **9:16 Story & Başarı Diploması Üreticisi:** İnternet bağlantısı olmadan da çalışan saf HTML5 `<canvas>` tabanlı `1080×1920` Story görseli (`storyCanvasGenerator.ts`), interaktif **Konu Takımyıldızı** (`TopicConstellation`) ve indirilebilir Başarı Diploması (`diplomaCanvasGenerator.ts`).
-- **Offline-First PWA & Programatik SEO:** `public/sw.js` servis çalışanı ile önbelleğe alınan bilgi JSON'ları ve varlıklar; Türkçe (`/bilgi/[slug]`) ve İngilizce (`/en/fact/[slug]`) statik SEO bilgi sayfaları.
-- **AdSense & Gizlilik Desteği:** `/ads.txt` doğrulaması, akış içi doğal/ödüllü reklam desteği (`NativeAdSlide`, `RewardedAdModal`) ve iki dilli `/privacy` sayfası.
+- **Tam Ekran Dikey Keşif Akışı (`TikTokFeed` & `TikTokFactSlide`):** Kenardan kenara `100dvh` Reels sahneleri, masaüstü/tablette ortalanmış `9:16` sahne + ortam bulanıklığı, `activeIndex ± 2` (5 kart) DOM sanallaştırması ve `?fact=<slug>` senkronizasyonu.
+- **Üst Gezinme & Kategori Seçici:** Üst HUD üzerindeki **"Tümü (Genel)"** ve **"Kategori Seç ▾"** çekmecesi ile anında kategori filtreleme (`Uzay`, `Doğa`, `Bilim`, `Tarih`, `İnsan Vücudu`, `Garip Rekorlar`, `Dil Öğrenme`).
+- **Etkileşimli Dil Öğrenme Modu (`LanguageLabOverlay`):** Hem **Dil Öğrenme** filtresinde hem de her kartın sağ rayındaki **TR/EN Öğren** butonuyla açılan iki dilli hizalama, etkileşimli kelime rozetleri, **Web Speech API** telaffuz dinleme (`en-US`/`tr-TR`), kelime defteri (`localStorage`) ve 3 seçenekli boşluk doldurma etkileşimi.
+- **Akıllı Etkileşim & İnteraktif Diyagramlar (`GuessWidget`, `InteractiveSketchArt`):** Spoiler korumalı tahmin slider'ı, çift dokunuşla beğeni patlaması, alttan açılan Bilimsel Açıklama/Kaynak paneli (Bottom Sheet) ve Web Audio + titreşim (haptics) geri bildirimi.
+- **Sadeleştirilmiş 3 Sekmeli Dock (`IosFloatingIslandDock`):** `Keşfet`, `Quiz` ve `Profil/Seri` sekmeleriyle hızlı erişim, 13 kartta bir gelen Hafıza Quizi, Liderlik/Başarı Diploması ve Story görsel üreticisi (`storyCanvasGenerator.ts`, `diplomaCanvasGenerator.ts`).
+- **Çok Dilli Programatik SEO & GEO:** Postgres + JSON destekli ISR sayfaları (`/fact/[slug]`, `/en/fact/[slug]`, `/category/[category]`, `/en/category/[category]`), karşılıklı `hreflang` bağlantıları, `/sitemap.xml`, `/llms.txt`, `/llms-full.txt` ve `/opengraph-image`.
+- **AdSense, Consent Mode v2 & API Güvenliği:** `/ads.txt`, GTM + Google Consent Mode v2 (`Kabul Et` / `Reddet`), IP tabanlı hız sınırlaması (`lib/rateLimit.ts`), sunucu tarafında doğrulanan XP/beğeni telemetrisi ve iletişim formu honeypot koruması.
 
 ---
 
 ## English
 
-**Scrolly** is a bilingual (`TR` / `EN`), motion-first micro-discovery PWA built with Next.js App Router. Designed for instant exploration with zero sign-up required, it combines a full-bleed vertical discovery feed, 3D card flips, an iOS Liquid Glass floating dock, interactive prediction widgets, timed memory quizzes, shareable 1v1 duels, and offline HTML5 Canvas Story/Diploma generation.
+**Scrolly** is a bilingual (`TR` / `EN`), motion-first micro-discovery PWA built with Next.js 16 (App Router) and React 19. Designed for instant exploration with zero sign-up required, it features a full-screen `100dvh` Reels discovery feed, an interactive **Choose Category** drawer, an interactive **Language Lab** bilingual learning overlay, smart DOM virtualization, and offline-ready PWA capabilities.
 
 ### Key Features
-- **Full-Bleed Vertical Discovery Feed:** Edge-to-edge `100dvh` scenes with category-themed animated motion backgrounds and local Icons8 `3d-fluency` iconography and illustrations.
-- **3D Flip & Double-Tap Like:** Single tap to flip into deep-dive explanations; double tap anywhere on a slide for a burst animation accompanied by synthesized Web Audio sound effects (`soundEngine.ts`) and tactile haptics.
-- **Interactive "Guess First" Widget (`GuessWidget`):** Predict numerical or binary answers before revealing the card to earn bonus XP.
-- **iOS Liquid Glass Floating Island Dock (`IosFloatingIslandDock`):** Translucent 5-tab navigation dock (`Leaderboard`, `Quiz`, `Explore`, `Duel`, `Diploma`) blurring live feed content underneath.
-- **Quizzes, Leagues & 1v1 Duels:** Instant memory quizzes from recently viewed facts, 60-second sprint challenges, progression leagues (`Bronze` to `Diamond`), and URL-encoded 1v1 challenge links (`duelCodec.ts`), backed by optional Supabase RPCs (`supabase/schema.sql`) with local fallback.
-- **Offline HTML5 Canvas Generators:** Generate `1080×1920` (9:16) shareable Story cards (`storyCanvasGenerator.ts`) and downloadable Achievement Diplomas (`diplomaCanvasGenerator.ts`) plus an interactive Topic Constellation (`TopicConstellation.tsx`) completely client-side.
-- **Offline-First PWA & Programmatic SEO:** Standalone installable PWA (`app/manifest.ts`, `public/sw.js`) with precached JSON datasets across 6 knowledge categories and static/SSG routes at `/bilgi/[slug]` (TR) and `/en/fact/[slug]` (EN).
-- **AdSense & Privacy Ready:** Direct `public/ads.txt` serving (bypassing Service Worker cache), configurable native/rewarded ad slots (`NativeAdSlide.tsx`), and a bilingual Privacy & Cookie Policy at `/privacy`.
+- **Full-Screen Vertical Reels Feed:** `100dvh` snap-scrolling scenes with a centered `9:16` stage on tablet/desktop, ambient color backdrop, 5-slide DOM virtualization (`activeIndex ± 2`), and automatic `?fact=<slug>` URL syncing.
+- **Category Selector & Round-Robin Discovery:** Switch seamlessly between `All (Genel)`, `Space`, `Nature`, `Science`, `History`, `Human Body`, `Weird Records`, and `Language Lab`.
+- **Interactive Language Lab (`LanguageLabOverlay`):** Aligned EN/TR study view accessible per card or via the Language Lab filter, featuring interactive vocabulary chips, **Web Speech API** pronunciation (`en-US` / `tr-TR`), personal wordbook saving (`localStorage`), and a 3-choice fill-in-the-blank challenge.
+- **Spoiler-Protected Guess Widget & Tactile Micro-Interactions:** Wide touch slider with reveal feedback, double-tap burst likes, Bottom Sheet source/explanation panel, Web Audio synth sound effects, and haptic feedback.
+- **Streamlined 3-Tab Floating Dock (`IosFloatingIslandDock`):** Clean `Discover`, `Quiz`, and `Profile/Streak` navigation, spaced memory checkpoints, downloadable Canvas 2D Story & Diploma generators.
+- **Multilingual SEO & AI Readability (GEO):** ISR-backed pages at `/fact/[slug]`, `/en/fact/[slug]`, `/category/[category]`, `/en/category/[category]` with reciprocal `hreflang` tags, `sitemap.xml`, `llms.txt`, `llms-full.txt`, and dynamic OpenGraph images.
+- **Privacy, Consent Mode v2 & API Hardening:** Default-denied Consent Mode v2 until user action (`Accept` / `Decline`), slot-guarded AdSense integration, IP rate limiting, deduplicated Postgres likes/telemetry, and honeypot-protected contact submissions.
 
 ---
 
@@ -53,13 +51,13 @@
 
 | Katman / Layer | Teknoloji / Technology |
 | --- | --- |
-| Framework | Next.js 14 (App Router, SSG/SSR), React 18, TypeScript 5 |
-| Styling & Motion | Tailwind CSS 3, Framer Motion 11 |
-| Icons & Assets | Lucide React, Local Icons8 `3d-fluency` PNGs, Canvas Confetti |
-| Audio & Graphics | Web Audio API (synthesized SFX), HTML5 Canvas 2D |
-| Offline & PWA | Custom Service Worker (`public/sw.js`), Web App Manifest (`app/manifest.ts`) |
-| Backend (Optional) | Supabase PostgreSQL (`supabase/schema.sql`) with `localStorage` fallback |
-| Deployment | Heroku (`Procfile`) or any Node.js host |
+| Framework | Next.js 16 (App Router, ISR/SSG/SSR), React 19, TypeScript 5.6 |
+| Styling & Motion | Tailwind CSS 3.4, Framer Motion 11 |
+| Icons & Assets | Lucide React, Local `3d-fluency` PNGs & custom interactive SVGs |
+| Audio & Graphics | Web Audio API, Web Speech API (`speechSynthesis`), HTML5 Canvas 2D |
+| Database & Cache | PostgreSQL (`pg`) with optional `DATABASE_CA_CERT` + JSON fallback & `React.cache()` |
+| Automation & CI | GitHub Actions CI (`ci.yml`), OpenAI-compatible fact generator (`auto-generate-facts.yml`) |
+| Deployment | Heroku (`Procfile`) or any Node.js `22+` host |
 
 ---
 
@@ -68,22 +66,28 @@
 ```text
 scrolly/
 ├── app/
-│   ├── page.tsx                  # Ana tam ekran dikey keşif uygulaması
-│   ├── layout.tsx                # Root layout, metadata, AdSense & tema desteği
-│   ├── manifest.ts               # PWA Web App Manifest
-│   ├── bilgi/[slug]/page.tsx     # Türkçe programatik SEO sayfaları
-│   ├── en/fact/[slug]/page.tsx   # İngilizce programatik SEO sayfaları
-│   └── privacy/page.tsx          # İki dilli Gizlilik ve Çerez Politikası (/privacy)
-├── components/                   # Feed, 3D kartlar, Liquid Glass Dock, Quiz, Düello, Diploma ve Reklam bileşenleri
-├── i18n/translations.ts          # TR / EN çeviri sözlüğü ve otomatik dil algılama
+│   ├── page.tsx                       # SSR giriş katmanı + tam ekran Reels akışı
+│   ├── layout.tsx                     # Root layout, viewport ve metadata
+│   ├── not-found.tsx / error.tsx      # Markalı 404 ve hata kurtarma ekranları
+│   ├── manifest.ts                    # PWA Web App Manifest
+│   ├── robots.ts / sitemap.ts         # Arama motoru tarama ve çok dilli sitemap
+│   ├── llms-full.txt/route.ts         # Yapay zekâ dizinleme (GEO) metin uç noktası
+│   ├── fact/[slug]/page.tsx           # Türkçe bilgi detay sayfası (ISR)
+│   ├── en/fact/[slug]/page.tsx        # İngilizce bilgi detay sayfası (ISR)
+│   ├── category/[category]/page.tsx   # Türkçe kategori arşivi (ISR)
+│   ├── en/category/[category]/page.tsx# İngilizce kategori arşivi (ISR)
+│   └── api/                           # `/api/facts`, `/api/events`, `/api/contact`
+├── components/                        # Reels akışı, Dil Öğrenme, Tahmin, Quiz, Reklam & Güven sayfaları
+├── i18n/translations.ts               # TR / EN çeviri sözlüğü
+├── lib/                               # Postgres havuzu (`db.ts`), hız sınırlama (`rateLimit.ts`), yardımcılar
+├── scripts/                           # Yapay zekâ tabanlı kart üretim ve doğrulama betikleri
 ├── public/
-│   ├── data/facts/               # 6 kategori + birleşik JSON bilgi veri setleri
-│   ├── assets/icons8/            # Yerel Icons8 3d-fluency ikonları ve illüstrasyonları
-│   ├── sw.js                     # Offline-first Service Worker
-│   └── ads.txt                   # Google AdSense doğrulama dosyası
-├── supabase/schema.sql           # Opsiyonel liderlik tablosu şeması ve RPC fonksiyonları
-├── utils/                        # Canvas üreticileri, ses motoru, düello kodlayıcı, hafıza/öneri motoru
-└── Procfile                      # Heroku web process tanımı (`web: npm run start`)
+│   ├── data/facts/                    # 6 kategori + birleşik JSON bilgi veri setleri
+│   ├── assets/                        # Yerel 3B ikon ve sahne görselleri
+│   ├── sw.js                          # Ağ/önbellek stratejili Service Worker
+│   └── ads.txt                        # Google AdSense doğrulama dosyası
+├── supabase/schema.sql                # Postgres tablo şeması (`facts`, `events`, `contact_messages`, `fact_likes`)
+└── eslint.config.mjs                  # ESLint flat yapılandırması
 ```
 
 ---
@@ -91,7 +95,7 @@ scrolly/
 ## Kurulum ve Çalıştırma / Getting Started
 
 ### Gereksinimler / Prerequisites
-- Node.js `18+` (önerilen: `20+` LTS)
+- Node.js `22+` (LTS)
 - npm
 
 ### Yerel Kurulum / Local Development
@@ -99,35 +103,49 @@ scrolly/
 ```bash
 git clone https://github.com/slymn2325/scrolly.git
 cd scrolly
-npm install
+npm ci
 npm run dev
 ```
 
-Tarayıcıda `http://localhost:3000` adresini açın. (Mobil tam ekran deneyimini test etmek için Geliştirici Araçları'ndan `390×844` mobil görünümü seçmeniz önerilir.)
+Tarayıcıda `http://localhost:3000` adresini açın. (Mobil tam ekran deneyimini test etmek için Geliştirici Araçları'ndan `390×844` mobil görünümü seçebilirsiniz.)
 
-### Derleme / Production Build
+### Doğrulama & Derleme / Verification & Build
 
 ```bash
+npx tsc --noEmit
+npm run lint
 npm run build
 npm run start
 ```
 
 ---
 
-## Ortam Değişkenleri (Opsiyonel) / Environment Variables (Optional)
+## Ortam Değişkenleri / Environment Variables
 
-Uygulama hiçbir ortam değişkeni olmadan varsayılan çevrimdışı/yerel modda eksiksiz çalışır. İsteğe bağlı olarak kök dizinde `.env.local` oluşturabilirsiniz:
+Uygulama `DATABASE_URL` olmadan da yerel JSON veri setiyle çalışır; Postgres ve harici servis entegrasyonları için `.env.local` (veya Heroku Config Vars / GitHub Secrets) içinde aşağıdaki değişkenleri tanımlayabilirsiniz:
 
 ```env
-# Opsiyonel: Canlı Global Liderlik Tablosu (Supabase)
+# PostgreSQL Bağlantısı / Postgres Database
+DATABASE_URL=postgres://user:password@host:5432/scrolly
+DATABASE_CA_CERT=                          # Opsiyonel: Üretim Postgres sunucusu için PEM CA sertifikası (reddedilmeyen TLS doğrulama)
+
+# Günlük Otomatik Kart Üretimi (scripts/generateFacts.mjs & GitHub Actions)
+OPENAI_API_KEY=                            # Veya AI_API_KEY
+AI_API_KEY=                                # Alternatif API anahtarı (OPENAI_API_KEY yerine kullanılabilir)
+AI_MODELS_ENDPOINT=https://api.groq.com/openai/v1/chat/completions
+AI_MODEL_NAME=llama-3.3-70b-versatile
+
+# Google Tag Manager & AdSense (Consent Mode v2 uyumlu)
+NEXT_PUBLIC_GTM_ID=GTM-N746KK52
+NEXT_PUBLIC_ADSENSE_SLOT_ID=               # Akış içi doğal reklam slot ID
+NEXT_PUBLIC_ADSENSE_STICKY_SLOT_ID=        # Alt sabit reklam bandı slot ID (tanımsızsa bant gizlenir)
+
+# Opsiyonel: Supabase Global Liderlik Tablosu
 NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
-
-# Opsiyonel: Google AdSense Akış İçi Reklam Slot ID
-NEXT_PUBLIC_ADSENSE_SLOT_ID=1234567890
 ```
 
-> **Not:** `.env` ve `.env*.local` dosyaları `.gitignore` ile hariç tutulmuştur; gizli anahtarları veya sunucu taraflı `service_role` anahtarlarını asla istemci tarafına eklemeyin.
+> **Not:** `.env` ve `.env*.local` dosyaları `.gitignore` ile hariç tutulmuştur; gizli anahtarları (`DATABASE_URL`, `DATABASE_CA_CERT`, `OPENAI_API_KEY`, `AI_API_KEY`) asla `NEXT_PUBLIC_*` önekli istemci değişkenlerine koymayın.
 
 ---
 
@@ -140,7 +158,7 @@ heroku create your-scrolly-app
 git push heroku main
 ```
 
-İsteğe bağlı ortam değişkenlerini Heroku Config Vars üzerinden (`heroku config:set ...`) ekleyebilirsiniz.
+Ortam değişkenlerini Heroku Config Vars üzerinden (`heroku config:set ...`) ekleyebilirsiniz.
 
 ---
 

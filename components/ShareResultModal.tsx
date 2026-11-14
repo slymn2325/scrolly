@@ -119,7 +119,7 @@ export default function ShareResultModal({
   };
 
   const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(fullShareText)}`;
-  const xShareUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(fullShareText)}`;
+  const xShareUrl = `https://x.com/intent/post?text=${encodeURIComponent(fullShareText)}`;
 
   return (
     <div

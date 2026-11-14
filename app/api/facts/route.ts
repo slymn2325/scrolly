@@ -55,7 +55,7 @@ export async function GET(request: Request) {
   };
 
   let source: 'postgres' | 'local' = 'local';
-  let allFacts: FactCard[] = [];
+  let allFacts: FactCard[];
 
   if (!hasDatabaseUrl()) {
     allFacts = getLocalFallbackFacts();

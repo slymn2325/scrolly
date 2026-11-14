@@ -8,7 +8,6 @@ import {
   MessageCircle,
   Play,
   Share2,
-  Swords,
   X,
 } from 'lucide-react';
 import { type Language, translations } from '@/i18n/translations';
@@ -213,7 +212,7 @@ export default function DuelModal({
                   <span>{t.duelShareWhatsapp}</span>
                 </motion.a>
                 <motion.a
-                  href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(challengeText)}`}
+                  href={`https://x.com/intent/post?text=${encodeURIComponent(challengeText)}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   whileTap={{ scale: 0.94 }}
