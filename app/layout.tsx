@@ -34,6 +34,8 @@ export const viewport: Viewport = {
   themeColor: '#EDE9FE',
 };
 
+const GTM_ID = process.env.NEXT_PUBLIC_GTM_ID || 'GTM-TQ6VVKM7';
+
 const ROOT_SCHEMA_JSON_LD = {
   '@context': 'https://schema.org',
   '@graph': [
@@ -99,6 +101,19 @@ export default function RootLayout({
       </head>
       <body className="min-h-screen bg-[#FFFDF9] font-sans text-ink antialiased selection:bg-amber-200 selection:text-ink">
         {children}
+        <Script
+          id="google-tag-script"
+          src={`https://www.googletagmanager.com/gtm.js?id=${GTM_ID}`}
+          strategy="afterInteractive"
+        />
+        <Script id="google-tag-init" strategy="afterInteractive">
+          {`
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+            gtag('config', '${GTM_ID}', { send_page_view: true });
+          `}
+        </Script>
         <Script
           id="google-adsense-script"
           strategy="afterInteractive"

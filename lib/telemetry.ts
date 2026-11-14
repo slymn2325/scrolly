@@ -36,6 +36,13 @@ const OFFLINE_QUEUE_STORAGE_KEY = 'scrolly_offline_events';
 const CACHED_FACTS_STORAGE_KEY = 'scrolly_cached_facts_v1';
 const MAX_OFFLINE_QUEUE_LENGTH = 200;
 
+declare global {
+  interface Window {
+    dataLayer?: Array<Record<string, unknown> | unknown[]>;
+    gtag?: (...args: unknown[]) => void;
+  }
+}
+
 let syncListenersRegistered = false;
 let isFlushingQueue = false;
 
@@ -146,6 +153,25 @@ export async function trackEvent(
   profileSync?: ProfileSyncPayload
 ): Promise<void> {
   if (typeof window === 'undefined') return;
+
+  try {
+    window.dataLayer = window.dataLayer || [];
+    window.dataLayer.push({
+      event: `scrolly_${eventType}`,
+      fact_slug: factSlug,
+      category,
+      ...meta,
+    });
+    if (typeof window.gtag === 'function') {
+      window.gtag('event', eventType, {
+        fact_slug: factSlug,
+        event_category: category,
+        ...meta,
+      });
+    }
+  } catch {
+    // Ignore third-party tag layer errors cleanly
+  }
 
   const deviceId = getOrCreateDeviceId();
   const record: TelemetryEventRecord = {
