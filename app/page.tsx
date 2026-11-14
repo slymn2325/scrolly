@@ -140,6 +140,7 @@ export default function HomePage() {
   const [activeQuiz, setActiveQuiz] = useState<ActiveQuizSession | null>(null);
   const [storyShareFact, setStoryShareFact] = useState<FactCardType | null>(null);
   const [maxSwipedCards, setMaxSwipedCards] = useState(0);
+  const [manualPwaOpen, setManualPwaOpen] = useState(false);
 
   const [shareModalData, setShareModalData] = useState<{
     results: boolean[];
@@ -315,34 +316,18 @@ export default function HomePage() {
     feedRef.current?.scrollToTop();
   };
 
-  const handleDwellRead = useCallback(
-    (fact: FactCardType) => {
-      setSeedFact(fact);
-      setMemory((prev) => {
-        const updated = recordCardRead(prev, fact.id, fact.category);
-        if (
-          updated.cardsSinceLastQuiz >= 5 &&
-          !activeQuiz &&
-          activeModal === 'none' &&
-          !shareModalData
-        ) {
-          const questions = generateMemoryQuizFromRecent(
-            updated.recentFiveIds,
-            allFacts,
-            fact
-          );
-          setActiveQuiz({
-            key: `auto-mem-${Date.now()}`,
-            mode: 'memory',
-            questions,
-          });
-          setActiveTab('quiz');
-        }
-        return updated;
-      });
-    },
-    [activeModal, activeQuiz, allFacts, shareModalData]
-  );
+  const handleDwellRead = useCallback((fact: FactCardType) => {
+    setSeedFact(fact);
+    setMemory((prev) => recordCardRead(prev, fact.id, fact.category));
+  }, []);
+
+  const handleOpenQuizHub = useCallback(() => {
+    vibrateTap(12);
+    playPop(soundEnabled);
+    setActiveQuiz(null);
+    setActiveModal('quizHub');
+    setActiveTab('quiz');
+  }, [soundEnabled]);
 
   const handleFlipCard = useCallback(
     (fact: FactCardType) => {
@@ -623,6 +608,8 @@ export default function HomePage() {
           <PwaInstallPrompt
             lang={lang}
             swipedCount={maxSwipedCards}
+            forceOpen={manualPwaOpen}
+            onCloseForceOpen={() => setManualPwaOpen(false)}
             onButtonPop={() => playPop(soundEnabled)}
           />
         )}
@@ -650,6 +637,7 @@ export default function HomePage() {
           onOpenStoryShare={handleOpenStoryShare}
           onGuessReward={handleGuessReward}
           onToggleFavorite={handleToggleFavorite}
+          onOpenQuizHub={handleOpenQuizHub}
           onButtonPop={() => playPop(soundEnabled)}
           onSlideIndexChange={(idx) => setMaxSwipedCards((prev) => Math.max(prev, idx))}
         />
@@ -738,6 +726,7 @@ export default function HomePage() {
             setActiveTab('explore');
           }}
           onResetMemory={handleResetMemory}
+          onRequestPwaInstall={() => setManualPwaOpen(true)}
           onClose={closeOverlayToExplore}
           onButtonPop={() => playPop(soundEnabled)}
           onCelebrateLeague={() => playLeagueCelebration(soundEnabled)}

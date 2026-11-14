@@ -351,6 +351,14 @@ export const translations = {
     pwaInstallBtn: 'Uygulamayı Yükle 📲',
     pwaIosInstruction: "Uygulama gibi tam ekran kullanmak için: Paylaş → Ana Ekrana Ekle'ye dokun",
     pwaDismissLabel: 'Kapat',
+    pwaManualInstallLink: '📲 Ana Ekrana Ekle',
+    // In-Feed Quiz CTA Slide
+    quizCtaBadge: 'Hafıza Kontrol Noktası',
+    quizCtaTitle: 'Hafızanı Test Etmeye Hazır Mısın?',
+    quizCtaSubtitle:
+      'Son okuduğun kartlardan oluşacak hızlı quiz ile +150 Bonus XP kazan ve sıralamada öne geç!',
+    quizCtaPrimaryBtn: 'Quize Git →',
+    quizCtaContinueHint: 'Veya akışa devam etmek için aşağı kaydır',
   },
   en: {
     brandName: 'Scrolly',
@@ -577,6 +585,14 @@ export const translations = {
     pwaInstallBtn: 'Install App 📲',
     pwaIosInstruction: 'For full-screen app mode: Tap Share → Add to Home Screen',
     pwaDismissLabel: 'Dismiss',
+    pwaManualInstallLink: '📲 Add to Home Screen',
+    // In-Feed Quiz CTA Slide
+    quizCtaBadge: 'Memory Checkpoint',
+    quizCtaTitle: 'Ready to Test Your Memory?',
+    quizCtaSubtitle:
+      'Play a quick quiz built from your recently read cards to earn up to +150 Bonus XP and climb the league!',
+    quizCtaPrimaryBtn: 'Go to Quiz →',
+    quizCtaContinueHint: 'Or swipe down to keep exploring uninterrupted',
   },
 } as const;
 

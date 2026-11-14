@@ -3,6 +3,7 @@
 import React, { forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useRef } from 'react';
 import { motion } from 'framer-motion';
 import NativeAdSlide from '@/components/NativeAdSlide';
+import QuizCtaSlide from '@/components/QuizCtaSlide';
 import TikTokFactSlide from '@/components/TikTokFactSlide';
 import { CATEGORIES, type CategoryFilter, type CategoryId, type Language, translations } from '@/i18n/translations';
 import type { FactCard } from '@/types/fact';
@@ -10,6 +11,7 @@ import { UI_ICON_PATHS } from '@/utils/icons8Assets';
 
 export type FeedSlideItem =
   | { type: 'fact'; key: string; fact: FactCard }
+  | { type: 'quizCta'; key: string; ctaIndex: number }
   | { type: 'ad'; key: string; adIndex: number };
 
 export interface TikTokFeedHandle {
@@ -39,6 +41,7 @@ interface TikTokFeedProps {
   onOpenStoryShare: (fact: FactCard) => void;
   onGuessReward: (xp: number, accurate: boolean, category?: CategoryId, accuracyPct?: number) => void;
   onToggleFavorite: (fact: FactCard) => void;
+  onOpenQuizHub: () => void;
   onButtonPop: () => void;
   onSlideIndexChange?: (slideIndex: number) => void;
 }
@@ -66,6 +69,7 @@ const TikTokFeed = forwardRef<TikTokFeedHandle, TikTokFeedProps>(function TikTok
     onOpenStoryShare,
     onGuessReward,
     onToggleFavorite,
+    onOpenQuizHub,
     onButtonPop,
     onSlideIndexChange,
   },
@@ -74,14 +78,22 @@ const TikTokFeed = forwardRef<TikTokFeedHandle, TikTokFeedProps>(function TikTok
   const scrollRef = useRef<HTMLDivElement>(null);
   const t = translations[lang];
 
-  // Build slide stream: insert an isolated full-screen NativeAdSlide once every 7 fact cards
+  // Build slide stream: insert QuizCtaSlide every 6 fact cards, and NativeAdSlide offset by 3 cards so they are never adjacent
   const slides: FeedSlideItem[] = useMemo(() => {
     const items: FeedSlideItem[] = [];
     let adCount = 0;
+    let ctaCount = 0;
 
     deckFacts.forEach((fact, idx) => {
       items.push({ type: 'fact', key: `fact-${fact.id}-${idx}`, fact });
-      if ((idx + 1) % 7 === 0 && idx < deckFacts.length - 1) {
+      const position = idx + 1;
+      const hasMoreFacts = idx < deckFacts.length - 1;
+      if (!hasMoreFacts) return;
+
+      if (position % 6 === 0) {
+        items.push({ type: 'quizCta', key: `quiz-cta-${ctaCount}-${idx}`, ctaIndex: ctaCount });
+        ctaCount += 1;
+      } else if (position >= 9 && (position - 9) % 12 === 0) {
         items.push({ type: 'ad', key: `ad-${adCount}-${idx}`, adIndex: adCount });
         adCount += 1;
       }
@@ -171,13 +183,20 @@ const TikTokFeed = forwardRef<TikTokFeedHandle, TikTokFeedProps>(function TikTok
               </span>
             </div>
 
-            <span
+            <motion.button
+              type="button"
+              whileTap={{ scale: 0.94 }}
+              onClick={onOpenQuizHub}
               data-testid="quiz-progress-pill"
               title={t.quizSubtitle}
-              className="rounded-full border border-white/60 bg-white/60 px-2.5 py-1.5 text-[11px] font-extrabold text-ink/75 backdrop-blur-xl dark:border-white/15 dark:bg-black/45 dark:text-violet-200"
+              className={`rounded-full border px-2.5 py-1.5 text-[11px] font-extrabold backdrop-blur-xl transition-all ${
+                cardsSinceLastQuiz >= 5
+                  ? 'border-emerald-300/90 bg-gradient-to-r from-emerald-500 to-amber-500 text-white shadow-md ring-2 ring-emerald-300/50 dark:border-emerald-400/70'
+                  : 'border-white/60 bg-white/60 text-ink/75 hover:bg-white/80 dark:border-white/15 dark:bg-black/45 dark:text-violet-200'
+              }`}
             >
-              {Math.min(5, cardsSinceLastQuiz)}/5
-            </span>
+              {cardsSinceLastQuiz >= 5 ? '5/5 ✓' : `${Math.min(5, cardsSinceLastQuiz)}/5`}
+            </motion.button>
           </div>
 
           <div className="flex items-center gap-1.5">
@@ -315,6 +334,18 @@ const TikTokFeed = forwardRef<TikTokFeedHandle, TikTokFeedProps>(function TikTok
               onGuessReward={onGuessReward}
               onToggleFavorite={onToggleFavorite}
               onButtonPop={onButtonPop}
+            />
+          ) : slide.type === 'quizCta' ? (
+            <QuizCtaSlide
+              key={slide.key}
+              lang={lang}
+              recentReadCount={cardsSinceLastQuiz}
+              cookieBannerVisible={cookieBannerVisible}
+              onOpenQuizHub={onOpenQuizHub}
+              onSkipNext={() => {
+                onButtonPop();
+                scrollToSlide(slideIdx + 1);
+              }}
             />
           ) : (
             <NativeAdSlide

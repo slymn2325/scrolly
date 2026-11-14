@@ -14,6 +14,7 @@ import {
   Share2,
   X,
 } from 'lucide-react';
+import { checkIsStandalone } from '@/components/PwaInstallPrompt';
 import TopicRadarChart from '@/components/TopicRadarChart';
 import {
   CATEGORIES,
@@ -36,6 +37,7 @@ interface DiplomaProfileModalProps {
   onToggleNotifications: () => void;
   onSelectCategoryFromConstellation: (category: CategoryId) => void;
   onResetMemory: () => void;
+  onRequestPwaInstall?: () => void;
   onClose: () => void;
   onButtonPop: () => void;
   onCelebrateLeague: () => void;
@@ -50,6 +52,7 @@ export default function DiplomaProfileModal({
   onToggleNotifications,
   onSelectCategoryFromConstellation,
   onResetMemory,
+  onRequestPwaInstall,
   onClose,
   onButtonPop,
   onCelebrateLeague,
@@ -57,11 +60,13 @@ export default function DiplomaProfileModal({
   const [justReset, setJustReset] = useState(false);
   const [exportingDiploma, setExportingDiploma] = useState(false);
   const [diplomaStatusMsg, setDiplomaStatusMsg] = useState<string | null>(null);
+  const [isStandalone, setIsStandalone] = useState(false);
   const scrollBodyRef = useRef<HTMLDivElement>(null);
   const t = translations[lang];
   const league = getLeagueInfo(memory.xp, lang);
 
   useEffect(() => {
+    setIsStandalone(checkIsStandalone());
     if (!open) return;
     const resetTop = () => {
       if (scrollBodyRef.current) {
@@ -495,7 +500,22 @@ export default function DiplomaProfileModal({
                 <span>{t.drawerReset}</span>
               </motion.button>
 
-              <div className="mt-2.5 flex items-center justify-center">
+              <div className="mt-2.5 flex flex-wrap items-center justify-center gap-x-4 gap-y-1.5">
+                {!isStandalone && onRequestPwaInstall && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      onButtonPop();
+                      onClose();
+                      onRequestPwaInstall();
+                    }}
+                    data-testid="diploma-pwa-install-link"
+                    className="text-[11px] font-extrabold text-violet-700 underline decoration-violet-400/40 underline-offset-4 transition hover:text-violet-900 dark:text-violet-300 dark:hover:text-white"
+                  >
+                    {t.pwaManualInstallLink}
+                  </button>
+                )}
+
                 <Link
                   href="/privacy"
                   onClick={() => {

@@ -10,13 +10,17 @@ interface BeforeInstallPromptEvent extends Event {
   userChoice: Promise<{ outcome: 'accepted' | 'dismissed'; platform: string }>;
 }
 
+export const PWA_DISMISSED_KEY = 'scrolly_pwa_prompt_dismissed';
+
 interface PwaInstallPromptProps {
   lang: Language;
   swipedCount: number;
+  forceOpen?: boolean;
+  onCloseForceOpen?: () => void;
   onButtonPop: () => void;
 }
 
-function checkIsStandalone(): boolean {
+export function checkIsStandalone(): boolean {
   if (typeof window === 'undefined') return false;
   const mediaMatch =
     typeof window.matchMedia === 'function' &&
@@ -29,10 +33,12 @@ function checkIsStandalone(): boolean {
 export default function PwaInstallPrompt({
   lang,
   swipedCount,
+  forceOpen = false,
+  onCloseForceOpen,
   onButtonPop,
 }: PwaInstallPromptProps) {
   const [isStandalone, setIsStandalone] = useState(false);
-  const [dismissed, setDismissed] = useState(false);
+  const [dismissed, setDismissed] = useState(true);
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [showIosHint, setShowIosHint] = useState(true);
 
@@ -46,6 +52,13 @@ export default function PwaInstallPrompt({
     };
 
     syncStandalone();
+
+    try {
+      const alreadyDismissed = window.localStorage.getItem(PWA_DISMISSED_KEY) === 'true';
+      setDismissed(alreadyDismissed);
+    } catch {
+      setDismissed(false);
+    }
 
     const mq =
       typeof window.matchMedia === 'function'
@@ -86,7 +99,17 @@ export default function PwaInstallPrompt({
     };
   }, []);
 
-  if (isStandalone || dismissed || swipedCount < 2) {
+  const persistDismissal = () => {
+    try {
+      window.localStorage.setItem(PWA_DISMISSED_KEY, 'true');
+    } catch {
+      // Ignore storage quota errors
+    }
+    setDismissed(true);
+    onCloseForceOpen?.();
+  };
+
+  if (isStandalone || (!forceOpen && (dismissed || swipedCount < 2))) {
     return null;
   }
 
@@ -103,9 +126,11 @@ export default function PwaInstallPrompt({
         setShowIosHint(true);
       }
       setDeferredPrompt(null);
+      persistDismissal();
       return;
     }
-    setShowIosHint((prev) => !prev || true);
+    setShowIosHint(true);
+    persistDismissal();
   };
 
   return (
@@ -147,7 +172,7 @@ export default function PwaInstallPrompt({
             data-testid="pwa-install-dismiss-btn"
             onClick={() => {
               onButtonPop();
-              setDismissed(true);
+              persistDismissal();
             }}
             className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-white/55 text-ink/75 hover:bg-white/80 dark:bg-white/10 dark:text-white/80"
           >
