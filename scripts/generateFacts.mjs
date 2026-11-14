@@ -2,6 +2,7 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import pg from 'pg';
+import { selectAutonomousSixFacts } from './scientificFactReservoir.mjs';
 
 const { Pool } = pg;
 
@@ -73,7 +74,8 @@ const SKETCH_TYPES = [
   'decibel',
 ];
 
-const GITHUB_MODELS_ENDPOINT = 'https://models.github.ai/inference/chat/completions';
+const GITHUB_MODELS_ENDPOINT =
+  process.env.AI_MODELS_ENDPOINT || 'https://models.github.ai/inference/chat/completions';
 
 async function loadSeedFactsFromDisk() {
   const shardFiles = ['space.json', 'nature.json', 'human_body.json', 'history.json', 'science.json', 'records.json'];
@@ -347,10 +349,11 @@ function validateGeneratedFact(item, existingSlugs, existingTitlesEn) {
   };
 }
 
-async function generateFactsWithGitHubModels(existingTitlesEn, topEngaged) {
-  const token = process.env.GITHUB_TOKEN;
+async function generateFactsWithGitHubModels(existingSlugs, existingTitlesEn, topEngaged) {
+  const token = process.env.GITHUB_TOKEN || process.env.OPENAI_API_KEY;
   if (!token) {
-    throw new Error('GITHUB_TOKEN environment variable is required to call GitHub Models.');
+    console.warn('[generateFacts] No remote AI token found — using built-in autonomous scientific generator.');
+    return selectAutonomousSixFacts(existingSlugs, existingTitlesEn, topEngaged);
   }
 
   const recentTitlesSample = Array.from(existingTitlesEn).slice(0, 90);
@@ -399,41 +402,62 @@ Return a JSON object with a single key \`"facts"\` containing an array of 6 item
 - "source_name": authoritative institution or journal name
 - "source_url": real, live https:// verification URL from the authoritative source`;
 
-  const response = await fetch(GITHUB_MODELS_ENDPOINT, {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${token}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      model: 'openai/gpt-4o-mini',
-      response_format: { type: 'json_object' },
-      temperature: 0.7,
-      max_tokens: 3200,
-      messages: [
-        { role: 'system', content: systemPrompt },
-        { role: 'user', content: userPrompt },
-      ],
-    }),
-  });
+  try {
+    const response = await fetch(GITHUB_MODELS_ENDPOINT, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        Accept: 'application/json',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: process.env.AI_MODEL_NAME || 'openai/gpt-4o-mini',
+        response_format: { type: 'json_object' },
+        temperature: 0.7,
+        max_tokens: 3200,
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: userPrompt },
+        ],
+      }),
+    });
 
-  if (!response.ok) {
-    const errText = await response.text();
-    throw new Error(`GitHub Models API error (${response.status}): ${errText}`);
+    const rawText = (await response.text()).trim();
+    if (!response.ok || !rawText.startsWith('{')) {
+      console.warn(
+        `[generateFacts] Remote endpoint returned HTTP ${response.status} non-JSON response (${JSON.stringify(rawText.slice(0, 40))}) — using built-in autonomous scientific generator.`
+      );
+      return selectAutonomousSixFacts(existingSlugs, existingTitlesEn, topEngaged);
+    }
+
+    const data = JSON.parse(rawText);
+    const rawContent = String(data?.choices?.[0]?.message?.content || '').trim();
+    if (!rawContent) {
+      console.warn(
+        '[generateFacts] Remote AI returned an empty message payload — using built-in autonomous scientific generator.'
+      );
+      return selectAutonomousSixFacts(existingSlugs, existingTitlesEn, topEngaged);
+    }
+
+    const cleanedContent = rawContent
+      .replace(/^```(?:json)?\s*/i, '')
+      .replace(/\s*```$/i, '')
+      .trim();
+    const parsed = JSON.parse(cleanedContent);
+    if (!Array.isArray(parsed?.facts) || parsed.facts.length === 0) {
+      console.warn(
+        '[generateFacts] Remote AI JSON payload does not contain a non-empty "facts" array — using built-in autonomous scientific generator.'
+      );
+      return selectAutonomousSixFacts(existingSlugs, existingTitlesEn, topEngaged);
+    }
+
+    return parsed.facts;
+  } catch (err) {
+    console.warn(
+      `[generateFacts] Remote AI call failed (${err instanceof Error ? err.message : String(err)}) — using built-in autonomous scientific generator.`
+    );
+    return selectAutonomousSixFacts(existingSlugs, existingTitlesEn, topEngaged);
   }
-
-  const data = await response.json();
-  const content = data?.choices?.[0]?.message?.content;
-  if (!content) {
-    throw new Error('GitHub Models API returned an empty message payload.');
-  }
-
-  const parsed = JSON.parse(content);
-  if (!Array.isArray(parsed?.facts)) {
-    throw new Error('GitHub Models JSON payload does not contain a "facts" array.');
-  }
-
-  return parsed.facts;
 }
 
 async function main() {
@@ -466,15 +490,46 @@ async function main() {
 
     console.log(`[generateFacts] Loaded ${existingSlugs.size} existing facts and top ${topRes.rows.length} engagement benchmarks.`);
 
-    const rawGenerated = await generateFactsWithGitHubModels(existingTitlesEn, topRes.rows);
-    const insertedSummary = [];
+    const rawGenerated = await generateFactsWithGitHubModels(
+      existingSlugs,
+      existingTitlesEn,
+      topRes.rows
+    );
+
+    const validCandidates = [];
+    const tempSlugs = new Set(existingSlugs);
+    const tempTitles = new Set(existingTitlesEn);
 
     for (const candidate of rawGenerated) {
-      const clean = validateGeneratedFact(candidate, existingSlugs, existingTitlesEn);
+      const clean = validateGeneratedFact(candidate, tempSlugs, tempTitles);
       if (!clean) {
         console.warn('[generateFacts] Skipped invalid or duplicate candidate:', candidate?.title_en || candidate?.slug);
         continue;
       }
+      tempSlugs.add(clean.slug);
+      tempTitles.add(clean.title_en.toLowerCase());
+      validCandidates.push(clean);
+    }
+
+    // Guarantee 1 valid bilingual card per category (6 total) even if remote model skipped a category
+    const coveredCategories = new Set(validCandidates.map((item) => item.category));
+    if (coveredCategories.size < CATEGORIES.length) {
+      const fallbackSix = selectAutonomousSixFacts(tempSlugs, tempTitles, topRes.rows);
+      for (const fallbackCandidate of fallbackSix) {
+        if (coveredCategories.has(fallbackCandidate.category)) continue;
+        const cleanFallback = validateGeneratedFact(fallbackCandidate, tempSlugs, tempTitles);
+        if (cleanFallback) {
+          tempSlugs.add(cleanFallback.slug);
+          tempTitles.add(cleanFallback.title_en.toLowerCase());
+          coveredCategories.add(cleanFallback.category);
+          validCandidates.push(cleanFallback);
+        }
+      }
+    }
+
+    const insertedSummary = [];
+
+    for (const clean of validCandidates) {
 
       const insertRes = await pool.query(
         `INSERT INTO facts (
