@@ -11,6 +11,7 @@ export type { DockTabId };
 interface IosFloatingIslandDockProps {
   activeTab: DockTabId;
   lang: Language;
+  darkMode?: boolean;
   showQuizDot: boolean;
   onSelectTab: (tab: DockTabId) => void;
   /** When true, dock ignores pointer hits so overlays above remain clickable */
@@ -20,6 +21,7 @@ interface IosFloatingIslandDockProps {
 export default function IosFloatingIslandDock({
   activeTab,
   lang,
+  darkMode = true,
   showQuizDot,
   onSelectTab,
   chromeBlocked = false,
@@ -79,9 +81,14 @@ export default function IosFloatingIslandDock({
       <nav
         aria-label="iOS Floating Island Dock"
         data-testid="ios-floating-dock"
+        data-theme={darkMode ? 'dark' : 'light'}
         className={`${
           chromeBlocked ? 'pointer-events-none' : 'pointer-events-auto'
-        } flex w-full items-center justify-between rounded-full border border-white/15 bg-[#111115]/92 px-2 py-1.5 shadow-[0_8px_32px_rgba(0,0,0,0.45)] backdrop-blur-md`}
+        } flex w-full items-center justify-between rounded-full border px-2 py-1.5 backdrop-blur-md ${
+          darkMode
+            ? 'border-white/15 bg-[#111115]/92 text-white shadow-[0_8px_32px_rgba(0,0,0,0.45)]'
+            : 'border-[#1E1B2E]/12 bg-[#FFFDF9]/95 text-[#1E1B2E] shadow-[0_8px_28px_rgba(30,27,46,0.18)]'
+        }`}
       >
       {tabs.map((tab) => {
         const isActive = activeTab === tab.id;
@@ -97,18 +104,26 @@ export default function IosFloatingIslandDock({
             aria-label={tab.label}
             aria-current={isActive ? 'page' : undefined}
             className={`relative flex min-h-[44px] flex-1 flex-col items-center justify-center gap-0.5 rounded-full py-1.5 transition-colors ${
-              isActive ? 'text-white' : 'text-white/75 hover:text-white'
+              darkMode
+                ? isActive
+                  ? 'text-white'
+                  : 'text-white/75 hover:text-white'
+                : isActive
+                  ? 'text-[#1E1B2E]'
+                  : 'text-[#1E1B2E]/65 hover:text-[#1E1B2E]'
             }`}
           >
             {isActive && (
               <motion.span
                 layoutId="ios-island-pill"
                 transition={{ type: 'spring', stiffness: 420, damping: 30 }}
-                className="absolute inset-0 rounded-full border border-white/25 bg-white/15 shadow-sm"
+                className={`absolute inset-0 rounded-full border shadow-sm ${
+                  darkMode ? 'border-white/25 bg-white/15' : 'border-[#1E1B2E]/12 bg-[#1E1B2E]/8'
+                }`}
               />
             )}
 
-            <span className="relative z-10 flex items-center justify-center drop-shadow-[0_2px_4px_rgba(0,0,0,0.35)]">
+            <span className="relative z-10 flex items-center justify-center">
               <img
                 src={tab.iconSrc}
                 alt=""
@@ -123,12 +138,16 @@ export default function IosFloatingIslandDock({
                   className="absolute -right-1 -top-1 flex h-2.5 w-2.5"
                 >
                   <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-rose-400 opacity-75" />
-                  <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-rose-500 ring-2 ring-[#111115]" />
+                  <span
+                    className={`relative inline-flex h-2.5 w-2.5 rounded-full bg-rose-500 ring-2 ${
+                      darkMode ? 'ring-[#111115]' : 'ring-[#FFFDF9]'
+                    }`}
+                  />
                 </span>
               )}
             </span>
 
-            <span className="relative z-10 truncate text-[10px] font-extrabold tracking-tight text-inherit drop-shadow-[0_1px_2px_rgba(0,0,0,0.4)]">
+            <span className="relative z-10 truncate text-[10px] font-extrabold tracking-tight text-inherit">
               {tab.label}
             </span>
           </motion.button>

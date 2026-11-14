@@ -6,8 +6,14 @@ import CookieBanner from '@/components/CookieBanner';
 import DiplomaProfileModal from '@/components/DiplomaProfileModal';
 import { applyGoogleConsentChoice } from '@/utils/consent';
 import DuelModal, { type DuelChallengeConfig } from '@/components/DuelModal';
+import DesktopFeedSideRail from '@/components/DesktopFeedSideRail';
+import DesktopLeftNav from '@/components/DesktopLeftNav';
 import IosFloatingIslandDock, { type DockTabId } from '@/components/IosFloatingIslandDock';
 import LeaderboardModal from '@/components/LeaderboardModal';
+import WelcomeExploreModal, {
+  persistWelcomeDismissed,
+  readWelcomeDismissed,
+} from '@/components/WelcomeExploreModal';
 import MemoryQuizCard, { type ActiveQuizMode } from '@/components/MemoryQuizCard';
 import OfflineManager from '@/components/OfflineManager';
 import PwaInstallPrompt from '@/components/PwaInstallPrompt';
@@ -196,6 +202,8 @@ export default function HomeClient({ initialFacts }: HomeClientProps) {
     questionIds: string[];
     duelConfig?: DuelChallengeConfig | null;
   } | null>(null);
+  const [showWelcome, setShowWelcome] = useState(false);
+  const [ambientAccent, setAmbientAccent] = useState('#818CF8');
 
   useEffect(() => {
     const onChromeBlock = (event: Event) => {
@@ -224,6 +232,10 @@ export default function HomeClient({ initialFacts }: HomeClientProps) {
       duelParam = searchParams.get('duel');
       openQuizParam = searchParams.get('openQuiz');
       requestedFactSlugRef.current = requestedFactSlug;
+      // Welcome once — skip when deep-linking into a ready duel / quiz
+      if (!readWelcomeDismissed() && !duelParam && openQuizParam !== 'daily') {
+        setShowWelcome(true);
+      }
     }
 
     const baseDeck = buildPersonalizedDeck(
@@ -310,9 +322,11 @@ export default function HomeClient({ initialFacts }: HomeClientProps) {
               challengerName: decoded.name,
               targetScore: decoded.score,
               targetTimeSec: decoded.timeSec,
+              kind: decoded.kind ?? '1v1',
             },
           });
           setActiveTab('quiz');
+          setShowWelcome(false);
         }
       } else if (openQuizParam === 'daily') {
         const dailyFacts = pickSeededFacts(activePool, 5, getDailySeedKey());
@@ -725,10 +739,8 @@ export default function HomeClient({ initialFacts }: HomeClientProps) {
     feedRef.current?.scrollToTop();
   };
 
-  const cookieBannerVisible = !memory.cookieAccepted && activeModal === 'none' && !activeQuiz;
-  const [ambientAccent, setAmbientAccent] = useState<string>(
-    () => seedFact?.accentColor || '#818CF8'
-  );
+  const cookieBannerVisible =
+    !memory.cookieAccepted && activeModal === 'none' && !activeQuiz && !showWelcome;
 
   useEffect(() => {
     const onAmbient = (event: Event) => {
@@ -739,74 +751,73 @@ export default function HomeClient({ initialFacts }: HomeClientProps) {
     return () => window.removeEventListener('scrolly-ambient-accent', onAmbient as EventListener);
   }, []);
 
+  const isDark = memory.darkMode;
+
   return (
     <div
       data-testid="reels-desktop-shell"
-      className="relative flex h-[100dvh] w-screen flex-col overflow-hidden bg-[#07070C] text-white select-none"
+      data-theme={isDark ? 'dark' : 'light'}
+      className={`relative flex h-[100dvh] w-screen overflow-hidden select-none ${
+        isDark ? 'bg-black text-white' : 'bg-[#E8E6F0] text-[#1E1B2E]'
+      }`}
     >
-      {/* Desktop ambient wash — full app chrome, not phone-in-void */}
-      <div aria-hidden="true" className="pointer-events-none absolute inset-0 hidden lg:block">
+      <WelcomeExploreModal
+        open={showWelcome}
+        lang={lang}
+        onStart={() => {
+          persistWelcomeDismissed();
+          setShowWelcome(false);
+          vibrateTap(12);
+          playPop(soundEnabled);
+        }}
+      />
+
+      {/* TikTok-style left rail (desktop only) */}
+      <DesktopLeftNav
+        activeTab={activeTab}
+        lang={lang}
+        darkMode={isDark}
+        showQuizDot={showQuizDot}
+        xp={memory.xp}
+        streakDays={memory.streakDays}
+        onSelectTab={handleDockSelectTab}
+      />
+
+      {/* Main feed region — ambient fills gutters behind the stage */}
+      <div
+        data-testid="reels-main-region"
+        className="relative z-10 flex min-h-0 min-w-0 flex-1 items-stretch justify-center"
+      >
+        {/* Blurred ambient card-color fill (letterbox feel, not empty void) */}
         <div
-          className="absolute inset-0 transition-[background] duration-700"
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-0 hidden lg:block"
           style={{
-            background: `radial-gradient(ellipse 70% 80% at 50% 40%, ${ambientAccent}40 0%, ${ambientAccent}14 45%, #07070C 78%)`,
+            background: isDark
+              ? `radial-gradient(ellipse 70% 95% at 48% 50%, ${ambientAccent}66 0%, ${ambientAccent}22 38%, #000 72%)`
+              : `radial-gradient(ellipse 70% 95% at 48% 50%, ${ambientAccent}55 0%, ${ambientAccent}28 42%, #E8E6F0 78%)`,
           }}
         />
-        <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(7,7,12,0.55)_0%,transparent_22%,transparent_78%,rgba(7,7,12,0.55)_100%)]" />
-      </div>
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-0 hidden lg:block opacity-50 blur-3xl"
+          style={{
+            background: `linear-gradient(180deg, ${ambientAccent}40 0%, transparent 45%, ${ambientAccent}28 100%)`,
+          }}
+        />
 
-      {/* Real desktop top app bar (lg+) — brand + competitive entry points */}
-      <header
-        data-testid="desktop-app-bar"
-        className="relative z-20 hidden h-14 w-full shrink-0 items-center justify-between border-b border-white/10 bg-[#0B0B10]/80 px-6 backdrop-blur-md lg:flex"
-      >
-        <div className="flex items-center gap-3">
-          <span className="font-display text-xl font-black tracking-tight text-white">Scrolly</span>
-          <span className="hidden text-xs font-semibold text-white/55 xl:inline">
-            {lang === 'tr' ? 'Kaydır · Öğren · Şaşır' : 'Scroll · Learn · Wonder'}
-          </span>
-        </div>
-        <div className="flex items-center gap-2">
-          <div className="mr-2 hidden items-center gap-2 rounded-full border border-white/15 bg-white/5 px-3 py-1.5 text-[11px] font-extrabold text-white/85 xl:flex">
-            <span className="text-amber-300">{memory.streakDays}🔥</span>
-            <span className="text-white/30">|</span>
-            <span className="text-violet-200">{memory.xp} XP</span>
-          </div>
-          <button
-            type="button"
-            data-testid="desktop-nav-leaderboard"
-            onClick={() => {
-              vibrateTap(12);
-              playPop(soundEnabled);
-              setActiveTab('leaderboard');
-              setActiveModal('leaderboard');
-            }}
-            className="inline-flex h-9 items-center gap-1.5 rounded-full border border-white/15 bg-white/10 px-3.5 text-xs font-extrabold text-white hover:bg-white/15"
-          >
-            {lang === 'tr' ? 'Liderlik' : 'Leaderboard'}
-          </button>
-          <button
-            type="button"
-            data-testid="desktop-nav-duel"
-            onClick={() => {
-              vibrateTap(12);
-              playPop(soundEnabled);
-              setActiveTab('duel');
-              setActiveModal('duel');
-            }}
-            className="inline-flex h-9 items-center gap-1.5 rounded-full bg-white px-3.5 text-xs font-extrabold text-[#09090B] hover:bg-white/90"
-          >
-            {lang === 'tr' ? '1v1 Düello' : '1v1 Duel'}
-          </button>
-        </div>
-      </header>
-
-      {/* Stage row: wide centered Reels column uses remaining viewport */}
-      <div className="relative z-10 flex min-h-0 flex-1 items-stretch justify-center lg:px-8 lg:pb-4 lg:pt-3">
-      <div
-        data-testid="reels-phone-frame"
-        className="dark relative mx-auto flex h-full w-full max-w-[430px] flex-col overflow-hidden bg-[#09090B] text-white md:max-w-[520px] lg:max-w-[min(680px,52vw)] lg:rounded-[28px] lg:border lg:border-white/15 lg:shadow-[0_30px_100px_-16px_rgba(0,0,0,0.95),0_0_60px_-12px_rgba(255,255,255,0.08)]"
-      >
+        {/* Stage + attached desktop up/down rail (TikTok pattern) */}
+        <div
+          data-testid="reels-stage-row"
+          className="relative z-10 flex h-full w-full max-w-none items-stretch justify-center lg:w-auto lg:max-w-[min(720px,58vw)] lg:gap-2"
+        >
+        {/* Immersive vertical stage: full-bleed on mobile/tablet; tall center column on desktop */}
+        <div
+          data-testid="reels-phone-frame"
+          className={`relative z-10 mx-auto flex h-full w-full min-w-0 flex-1 flex-col overflow-hidden lg:mx-0 lg:max-w-[min(620px,50vw)] lg:shadow-[0_0_100px_-18px_rgba(0,0,0,0.55)] ${
+            isDark ? 'bg-[#09090B] text-white' : 'bg-[#F7F5FB] text-[#1E1B2E]'
+          }`}
+        >
         <OfflineManager lang={lang} />
 
         {activeModal === 'none' && !activeQuiz && !storyShareFact && !shareModalData && (
@@ -992,14 +1003,32 @@ export default function HomeClient({ initialFacts }: HomeClientProps) {
           }}
         />
 
-        <IosFloatingIslandDock
-          activeTab={activeTab}
-          lang={lang}
-          showQuizDot={showQuizDot}
-          onSelectTab={handleDockSelectTab}
-          chromeBlocked={chromeBlocked}
-        />
+        {/* Bottom dock: mobile + tablet only (desktop uses left nav) */}
+        <div className="lg:hidden">
+          <IosFloatingIslandDock
+            activeTab={activeTab}
+            lang={lang}
+            darkMode={isDark}
+            showQuizDot={showQuizDot}
+            onSelectTab={handleDockSelectTab}
+            chromeBlocked={chromeBlocked || showWelcome}
+          />
+        </div>
       </div>
+
+        <DesktopFeedSideRail
+          lang={lang}
+          darkMode={isDark}
+          onPrev={() => {
+            vibrateTap(10);
+            feedRef.current?.scrollToPrev();
+          }}
+          onNext={() => {
+            vibrateTap(10);
+            feedRef.current?.scrollToNext();
+          }}
+        />
+        </div>
       </div>
     </div>
   );

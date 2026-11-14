@@ -31,6 +31,7 @@ export type FeedSlideItem =
 export interface TikTokFeedHandle {
   scrollToTop: () => void;
   scrollToNext: (fromSlideIdx?: number) => void;
+  scrollToPrev: (fromSlideIdx?: number) => void;
 }
 
 interface TikTokFeedProps {
@@ -273,6 +274,10 @@ const TikTokFeed = forwardRef<TikTokFeedHandle, TikTokFeedProps>(function TikTok
         const current = typeof fromSlideIdx === 'number' ? fromSlideIdx : activeIndexRef.current;
         scrollToSlide(current + 1);
       },
+      scrollToPrev: (fromSlideIdx?: number) => {
+        const current = typeof fromSlideIdx === 'number' ? fromSlideIdx : activeIndexRef.current;
+        scrollToSlide(current - 1);
+      },
     }),
     [scrollToSlide]
   );
@@ -359,7 +364,12 @@ const TikTokFeed = forwardRef<TikTokFeedHandle, TikTokFeedProps>(function TikTok
   }, [activeIndex, slides]);
 
   return (
-    <div className="dark relative mx-auto h-full w-full overflow-hidden bg-[#09090B] text-white">
+    <div
+      data-theme={darkMode ? 'dark' : 'light'}
+      className={`relative mx-auto h-full w-full overflow-hidden ${
+        darkMode ? 'bg-[#09090B] text-white' : 'bg-[#F7F5FB] text-[#1E1B2E]'
+      }`}
+    >
       {/* Top HUD — compact, no stories/1-5 counter. overflow-visible so category drawer is not clipped. */}
       <header
         data-chrome-blocked={chromeBlocked ? 'true' : 'false'}
@@ -380,7 +390,7 @@ const TikTokFeed = forwardRef<TikTokFeedHandle, TikTokFeedProps>(function TikTok
           <div className="flex flex-wrap items-center gap-1">
             <div
               data-testid="top-streak-xp-pill"
-              className="inline-flex items-center gap-1.5 rounded-full border border-white/15 bg-white/10 px-2 py-1 text-[10px] font-extrabold text-white backdrop-blur-md"
+              className="inline-flex items-center gap-1.5 rounded-full border border-white/15 bg-white/10 px-2 py-1 text-[10px] font-extrabold text-white backdrop-blur-md lg:hidden"
             >
               <span className="inline-flex items-center gap-1 text-amber-300">
                 <img
@@ -411,7 +421,11 @@ const TikTokFeed = forwardRef<TikTokFeedHandle, TikTokFeedProps>(function TikTok
               onClick={onToggleDarkMode}
               aria-label={darkMode ? t.lightModeOn : t.darkModeOn}
               data-testid="theme-toggle-btn"
-              className="flex h-9 w-9 items-center justify-center rounded-full border border-white/15 bg-white/10 text-amber-200 backdrop-blur-md"
+              className={`flex h-9 w-9 items-center justify-center rounded-full border backdrop-blur-md ${
+                darkMode
+                  ? 'border-white/15 bg-white/10 text-amber-200'
+                  : 'border-[#1E1B2E]/12 bg-white/85 text-amber-700 shadow-sm'
+              }`}
             >
               <img
                 src={darkMode ? UI_ICON_PATHS.themeSun : UI_ICON_PATHS.themeMoon}
@@ -427,7 +441,11 @@ const TikTokFeed = forwardRef<TikTokFeedHandle, TikTokFeedProps>(function TikTok
               onClick={onToggleSound}
               aria-label={soundEnabled ? t.soundOn : t.soundOff}
               data-testid="sound-toggle-btn"
-              className="flex h-9 w-9 items-center justify-center rounded-full border border-white/15 bg-white/10 text-violet-200 backdrop-blur-md"
+              className={`flex h-9 w-9 items-center justify-center rounded-full border backdrop-blur-md ${
+                darkMode
+                  ? 'border-white/15 bg-white/10 text-violet-200'
+                  : 'border-[#1E1B2E]/12 bg-white/85 text-violet-700 shadow-sm'
+              }`}
             >
               <img
                 src={soundEnabled ? UI_ICON_PATHS.soundOn : UI_ICON_PATHS.soundOff}
@@ -440,7 +458,11 @@ const TikTokFeed = forwardRef<TikTokFeedHandle, TikTokFeedProps>(function TikTok
             <div
               role="group"
               aria-label="Language switch"
-              className="flex items-center gap-0.5 rounded-full border border-white/15 bg-white/10 p-0.5 text-[10px] font-black text-white backdrop-blur-md"
+              className={`flex items-center gap-0.5 rounded-full border p-0.5 text-[10px] font-black backdrop-blur-md ${
+                darkMode
+                  ? 'border-white/15 bg-white/10 text-white'
+                  : 'border-[#1E1B2E]/12 bg-white/85 text-[#1E1B2E] shadow-sm'
+              }`}
             >
               <img
                 src={UI_ICON_PATHS.langGlobe}
@@ -453,7 +475,13 @@ const TikTokFeed = forwardRef<TikTokFeedHandle, TikTokFeedProps>(function TikTok
                 onClick={() => onChangeLang('tr')}
                 data-testid="lang-btn-tr"
                 className={`inline-flex h-8 min-w-[32px] items-center justify-center rounded-full px-2 transition-all ${
-                  lang === 'tr' ? 'bg-white text-[#09090B]' : 'text-white/80'
+                  lang === 'tr'
+                    ? darkMode
+                      ? 'bg-white text-[#09090B]'
+                      : 'bg-[#1E1B2E] text-white'
+                    : darkMode
+                      ? 'text-white/80'
+                      : 'text-[#1E1B2E]/70'
                 }`}
               >
                 TR
@@ -463,7 +491,13 @@ const TikTokFeed = forwardRef<TikTokFeedHandle, TikTokFeedProps>(function TikTok
                 onClick={() => onChangeLang('en')}
                 data-testid="lang-btn-en"
                 className={`inline-flex h-8 min-w-[32px] items-center justify-center rounded-full px-2 transition-all ${
-                  lang === 'en' ? 'bg-white text-[#09090B]' : 'text-white/80'
+                  lang === 'en'
+                    ? darkMode
+                      ? 'bg-white text-[#09090B]'
+                      : 'bg-[#1E1B2E] text-white'
+                    : darkMode
+                      ? 'text-white/80'
+                      : 'text-[#1E1B2E]/70'
                 }`}
               >
                 EN
@@ -626,6 +660,7 @@ const TikTokFeed = forwardRef<TikTokFeedHandle, TikTokFeedProps>(function TikTok
                 <TikTokFactSlide
                   fact={slide.fact}
                   lang={lang}
+                  darkMode={darkMode}
                   isFavorite={favoriteIds.includes(slide.fact.id)}
                   isFirstCard={slide.factIndex === 0}
                   isActive={isSlideActive}
@@ -647,6 +682,7 @@ const TikTokFeed = forwardRef<TikTokFeedHandle, TikTokFeedProps>(function TikTok
                 <VocabularySlide
                   card={slide.card}
                   lang={lang}
+                  darkMode={darkMode}
                   isActive={isSlideActive}
                   cookieBannerVisible={cookieBannerVisible}
                   onButtonPop={onButtonPop}
