@@ -38,14 +38,14 @@ export default function QuizHubModal({
           aria-modal="true"
           aria-label={t.quizHubTitle}
           data-testid="quiz-hub-modal"
-          className="fixed inset-0 z-50 mx-auto flex w-full max-w-[430px] items-center justify-center bg-ink/55 px-3 pt-4 backdrop-blur-md"
+          className="fixed inset-0 z-50 flex w-full items-center justify-center bg-ink/55 px-3 pt-4 backdrop-blur-md"
         >
           <motion.div
             initial={{ opacity: 0, scale: 0.92, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.92, y: 20 }}
             transition={{ type: 'spring', stiffness: 320, damping: 24 }}
-            className="relative mb-[92px] max-h-[84dvh] w-full overflow-y-auto no-scrollbar rounded-3xl border border-white/70 bg-[#FFFDF9]/95 p-5 shadow-2xl backdrop-blur-2xl dark:border-violet-700/50 dark:bg-[#171228]/95 sm:p-6"
+            className="relative mb-[92px] max-h-[84dvh] w-full max-w-[430px] md:max-w-2xl overflow-y-auto no-scrollbar rounded-3xl border border-white/70 bg-[#FFFDF9]/95 p-5 shadow-2xl backdrop-blur-2xl dark:border-violet-700/50 dark:bg-[#171228]/95 sm:p-6"
           >
             <motion.button
               type="button"

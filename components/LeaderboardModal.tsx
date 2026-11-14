@@ -2,7 +2,7 @@
 
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { ArrowDownRight, ArrowUpRight, Crown, Radio, X } from 'lucide-react';
+import { ArrowDownRight, ArrowUpRight, Check, Crown, Radio, Swords, X } from 'lucide-react';
 import { type Language, translations } from '@/i18n/translations';
 import { DOCK_ICON_MAP, UI_ICON_PATHS } from '@/utils/icons8Assets';
 import {
@@ -22,6 +22,7 @@ interface LeaderboardModalProps {
   weeklyXp: number;
   dailyBestScore: number;
   streakDays: number;
+  onInviteDuel?: () => void;
   onClose: () => void;
 }
 
@@ -33,12 +34,29 @@ export default function LeaderboardModal({
   weeklyXp,
   dailyBestScore,
   streakDays,
+  onInviteDuel,
   onClose,
 }: LeaderboardModalProps) {
   const t = translations[lang];
   const [activeTab, setActiveTab] = useState<LeaderboardTab>('weekly');
   const [entries, setEntries] = useState<LeaderboardEntry[]>([]);
   const [isLiveSupabase, setIsLiveSupabase] = useState(false);
+  const [inviteCopied, setInviteCopied] = useState(false);
+
+  const handleInviteClick = async () => {
+    if (onInviteDuel) {
+      onInviteDuel();
+      return;
+    }
+    try {
+      const url = typeof window !== 'undefined' ? window.location.origin : 'https://scrolly.live';
+      await navigator.clipboard.writeText(url);
+      setInviteCopied(true);
+      setTimeout(() => setInviteCopied(false), 2400);
+    } catch {
+      // Ignore clipboard failure
+    }
+  };
 
   const league = getLeagueInfo(userXp, lang);
 
@@ -77,14 +95,14 @@ export default function LeaderboardModal({
           aria-modal="true"
           aria-label={t.leaderboardTitle}
           data-testid="leaderboard-modal"
-          className="fixed inset-0 z-50 mx-auto flex w-full max-w-[430px] items-center justify-center bg-ink/55 px-3 pt-4 backdrop-blur-md"
+          className="fixed inset-0 z-50 flex w-full items-center justify-center bg-ink/55 px-3 pt-4 backdrop-blur-md"
         >
           <motion.div
             initial={{ opacity: 0, scale: 0.9, y: 18 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.9, y: 18 }}
             transition={{ type: 'spring', stiffness: 320, damping: 24 }}
-            className="relative mb-[92px] flex max-h-[82dvh] w-full flex-col rounded-3xl border-2 border-amber-200 bg-[#FFFDF9] p-5 shadow-2xl dark:border-violet-700/50 dark:bg-[#1A162B]"
+            className="relative mb-[92px] flex max-h-[82dvh] w-full max-w-[430px] md:max-w-2xl flex-col rounded-3xl border-2 border-amber-200 bg-[#FFFDF9] p-5 shadow-2xl dark:border-violet-700/50 dark:bg-[#1A162B] sm:p-6"
           >
             <motion.button
               type="button"
@@ -213,7 +231,10 @@ export default function LeaderboardModal({
             </div>
 
             {/* Ranked List */}
-            <div className="no-scrollbar mt-2 flex-1 space-y-1.5 overflow-y-auto pb-5 pr-0.5">
+            <div
+              data-testid="leaderboard-list"
+              className="no-scrollbar mt-2 flex-1 space-y-1.5 overflow-y-auto pb-5 pr-0.5"
+            >
               {entries.map((row) => {
                 const zoneClass = row.isUser
                   ? 'border-violet-500 bg-pastel-lavender/75 font-extrabold text-violet-950 dark:border-violet-400 dark:bg-violet-900/55 dark:text-white'
@@ -239,9 +260,9 @@ export default function LeaderboardModal({
                       </span>
                       <span className="text-base">{row.avatar}</span>
                       <div className="flex min-w-0 items-center gap-1.5">
-                        <span className="truncate font-bold">{row.name}</span>
+                        <span className="font-bold whitespace-normal break-words">{row.name}</span>
                         {row.isUser && (
-                          <span className="rounded-full bg-violet-600 px-1.5 py-0.5 text-[9px] font-black text-white">
+                          <span className="shrink-0 rounded-full bg-violet-600 px-1.5 py-0.5 text-[9px] font-black text-white">
                             {t.youTag}
                           </span>
                         )}
@@ -265,6 +286,33 @@ export default function LeaderboardModal({
                   </div>
                 );
               })}
+
+              {/* Invite a Friend / Challenge Card */}
+              <div
+                data-testid="leaderboard-invite-card"
+                className="mt-3 rounded-2xl border-2 border-dashed border-violet-300/80 bg-gradient-to-br from-pastel-lavender/45 via-white to-amber-50/70 p-4 text-center dark:border-violet-600/50 dark:from-violet-950/40 dark:via-[#1E1933] dark:to-amber-950/30"
+              >
+                <p className="font-display text-sm sm:text-base font-bold text-ink dark:text-white whitespace-normal break-words">
+                  {t.lbInviteTitle}
+                </p>
+                <p className="mt-1 text-xs font-medium text-ink/70 dark:text-violet-200/80 whitespace-normal break-words leading-snug">
+                  {t.lbInviteSubtitle}
+                </p>
+                <motion.button
+                  type="button"
+                  whileTap={{ scale: 0.95 }}
+                  onClick={handleInviteClick}
+                  data-testid="leaderboard-invite-btn"
+                  className="mt-3 inline-flex w-full sm:w-auto min-h-[48px] items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-violet-600 to-fuchsia-600 px-5 py-2.5 text-xs sm:text-sm font-extrabold text-white shadow-md whitespace-normal break-words leading-snug"
+                >
+                  {inviteCopied ? (
+                    <Check className="h-4 w-4 shrink-0" />
+                  ) : (
+                    <Swords className="h-4 w-4 shrink-0" />
+                  )}
+                  <span>{inviteCopied ? t.copiedLink : t.lbInviteBtn}</span>
+                </motion.button>
+              </div>
             </div>
           </motion.div>
         </div>

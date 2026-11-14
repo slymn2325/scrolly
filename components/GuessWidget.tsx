@@ -130,6 +130,9 @@ export default function GuessWidget({
         ? t.guessClose
         : t.guessParticipated;
 
+  const binaryOptions = (challenge.options ?? []).slice(0, 2);
+  const useSingleColumn = binaryOptions.some((opt) => opt.length > 24);
+
   return (
     <div
       data-testid="guess-widget"
@@ -139,10 +142,13 @@ export default function GuessWidget({
       onTouchStart={stop}
       className="pointer-events-auto mt-1.5 rounded-2xl border border-white/75 bg-white/78 p-2.5 shadow-[0_8px_24px_rgba(15,23,42,0.08)] backdrop-blur-xl dark:border-white/15 dark:bg-[#141026]/80"
     >
-      <div className="mb-1.5 flex items-center justify-between gap-2">
-        <span className="inline-flex items-center gap-1 rounded-full bg-violet-100/90 px-2 py-0.5 text-[10px] font-black uppercase tracking-wide text-violet-800 dark:bg-violet-500/20 dark:text-violet-200">
-          <HelpCircle className="h-3 w-3" />
-          {t.guessBadge}
+      <div className="mb-1.5 flex flex-wrap items-center justify-between gap-2">
+        <span
+          lang={lang}
+          className="inline-flex items-center gap-1 rounded-full bg-violet-100/90 px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider text-violet-800 dark:bg-violet-500/20 dark:text-violet-200"
+        >
+          <HelpCircle className="h-3 w-3 shrink-0" />
+          <span>{t.guessBadge}</span>
         </span>
         {isSlider && !submitted && (
           <span className="rounded-full bg-ink/10 px-2 py-0.5 text-[11px] font-black tabular-nums text-ink dark:bg-white/15 dark:text-white">
@@ -152,7 +158,7 @@ export default function GuessWidget({
         )}
       </div>
 
-      <p className="mb-2 line-clamp-2 text-[12px] font-bold leading-snug text-ink dark:text-white">
+      <p className="mb-2 text-[11px] sm:text-xs md:text-sm font-bold leading-snug text-ink dark:text-white whitespace-normal break-words">
         {challenge.prompt}
       </p>
 
@@ -195,14 +201,17 @@ export default function GuessWidget({
               data-testid="guess-submit-btn"
               onClick={handleSliderSubmit}
               onDoubleClick={stop}
-              className="shrink-0 rounded-xl bg-ink px-3 py-1.5 text-[11px] font-black text-white shadow-sm dark:bg-violet-600"
+              className="shrink-0 min-h-[40px] rounded-xl bg-ink px-3.5 py-2 text-[11px] sm:text-xs font-black text-white shadow-sm dark:bg-violet-600 whitespace-normal break-words leading-snug"
             >
               {t.guessSubmitBtn}
             </motion.button>
           </div>
         ) : (
-          <div className="grid grid-cols-2 gap-1.5">
-            {(challenge.options ?? []).slice(0, 2).map((opt, idx) => (
+          <div
+            data-testid="guess-binary-grid"
+            className={`grid gap-2 ${useSingleColumn ? 'grid-cols-1' : 'grid-cols-2'}`}
+          >
+            {binaryOptions.map((opt, idx) => (
               <motion.button
                 key={`${factId}-opt-${idx}`}
                 type="button"
@@ -210,9 +219,9 @@ export default function GuessWidget({
                 data-testid={`guess-binary-${idx}`}
                 onClick={(e) => handleBinaryPick(e, idx)}
                 onDoubleClick={stop}
-                className="line-clamp-2 rounded-xl border border-ink/15 bg-white/90 px-2.5 py-1.5 text-left text-[11px] font-extrabold leading-tight text-ink shadow-xs transition hover:border-violet-400 dark:border-white/15 dark:bg-white/10 dark:text-white"
+                className="h-auto min-h-[48px] py-2.5 px-3.5 rounded-xl border border-ink/15 bg-white/90 text-[12px] sm:text-xs md:text-sm font-extrabold text-ink shadow-xs transition hover:border-violet-400 dark:border-white/15 dark:bg-white/10 dark:text-white flex items-center justify-center text-center whitespace-normal break-words leading-snug"
               >
-                {opt}
+                <span className="whitespace-normal break-words leading-snug">{opt}</span>
               </motion.button>
             ))}
           </div>
@@ -222,21 +231,21 @@ export default function GuessWidget({
           initial={{ opacity: 0, y: 4 }}
           animate={{ opacity: 1, y: 0 }}
           data-testid="guess-result-banner"
-          className="flex flex-wrap items-center justify-between gap-2 rounded-xl bg-emerald-50/90 px-2.5 py-2 dark:bg-emerald-950/50"
+          className="flex flex-wrap items-center justify-between gap-2 rounded-xl bg-emerald-50/90 px-3 py-2.5 dark:bg-emerald-950/50"
         >
           <div className="min-w-0 flex-1">
-            <div className="flex items-center gap-1 text-[11px] font-black text-emerald-800 dark:text-emerald-200">
+            <div className="flex flex-wrap items-center gap-1.5 text-[11px] font-black text-emerald-800 dark:text-emerald-200">
               {tier === 'spotOn' ? (
                 <Target className="h-3.5 w-3.5 shrink-0 text-emerald-600 dark:text-emerald-300" />
               ) : (
                 <CheckCircle2 className="h-3.5 w-3.5 shrink-0 text-amber-600 dark:text-amber-300" />
               )}
-              <span className="truncate">{tierMessage}</span>
-              <span className="ml-auto inline-flex items-center gap-0.5 rounded-full bg-amber-400/25 px-1.5 py-0.5 text-[10px] font-black text-amber-900 dark:text-amber-200">
+              <span className="whitespace-normal break-words leading-snug">{tierMessage}</span>
+              <span className="ml-auto inline-flex shrink-0 items-center gap-0.5 rounded-full bg-amber-400/25 px-1.5 py-0.5 text-[10px] font-black text-amber-900 dark:text-amber-200">
                 <Sparkles className="h-2.5 w-2.5" />+{earnedXp} XP
               </span>
             </div>
-            <p className="mt-0.5 truncate text-[10px] font-bold text-ink/75 dark:text-violet-100/80">
+            <p className="mt-1 text-[10.5px] font-bold text-ink/75 dark:text-violet-100/80 whitespace-normal break-words leading-snug">
               {t.guessReveal}: <span className="font-black text-ink dark:text-white">{correctDisplay}</span>
             </p>
           </div>
@@ -250,9 +259,9 @@ export default function GuessWidget({
               onRequestFlip();
             }}
             onDoubleClick={stop}
-            className="inline-flex shrink-0 items-center gap-1 rounded-full bg-ink px-2.5 py-1 text-[10px] font-black text-white shadow-sm dark:bg-violet-600"
+            className="inline-flex shrink-0 items-center gap-1 rounded-full bg-ink px-3 py-1.5 text-[10.5px] font-black text-white shadow-sm dark:bg-violet-600 whitespace-normal break-words leading-snug"
           >
-            <RotateCw className="h-3 w-3" />
+            <RotateCw className="h-3 w-3 shrink-0" />
             <span>{t.guessFlipCta}</span>
           </motion.button>
         </motion.div>

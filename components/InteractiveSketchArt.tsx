@@ -208,7 +208,7 @@ export default function InteractiveSketchArt({
       data-sketch-active={active ? 'true' : 'false'}
       onClick={handleInteract}
       onDoubleClick={(e) => e.stopPropagation()}
-      className="pointer-events-auto relative mx-auto flex h-full w-full max-w-[348px] cursor-pointer items-center justify-center overflow-hidden rounded-2xl border border-ink/15 bg-white/55 shadow-[0_8px_24px_rgba(15,23,42,0.08)] backdrop-blur-md transition-colors hover:bg-white/70 dark:border-violet-300/20 dark:bg-[#120F24]/65 dark:hover:bg-[#181430]/75 select-none"
+      className="pointer-events-auto relative mx-auto flex h-full w-full max-w-[348px] lg:max-w-[460px] cursor-pointer items-center justify-center overflow-hidden rounded-2xl border border-ink/15 bg-white/55 shadow-[0_8px_24px_rgba(15,23,42,0.08)] backdrop-blur-md transition-colors hover:bg-white/70 dark:border-violet-300/20 dark:bg-[#120F24]/65 dark:hover:bg-[#181430]/75 select-none"
     >
       {/* Top-Left Notebook Sketch Index Badge */}
       <div className="pointer-events-none absolute left-2.5 top-2 z-10 flex items-center gap-1 rounded-md border border-ink/10 bg-white/75 px-1.5 py-0.5 font-mono text-[9px] font-extrabold uppercase tracking-wider text-ink/70 dark:border-white/15 dark:bg-black/45 dark:text-violet-200/85">

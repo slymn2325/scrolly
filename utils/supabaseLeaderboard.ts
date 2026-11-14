@@ -73,27 +73,15 @@ export interface LeaderboardEntry {
   zone: 'promotion' | 'safe' | 'relegation';
 }
 
-const LOCAL_PEERS = [
-  { id: 'p1', name: 'AstroZeynep', avatar: '🚀', baseAll: 3420, baseWeekly: 1180, baseDaily: 920, streak: 14 },
-  { id: 'p2', name: 'KuantumMert', avatar: '⚛️', baseAll: 2940, baseWeekly: 1040, baseDaily: 860, streak: 11 },
-  { id: 'p3', name: 'BioLuna', avatar: '🧬', baseAll: 2510, baseWeekly: 920, baseDaily: 810, streak: 9 },
-  { id: 'p4', name: 'OrionAda', avatar: '🪐', baseAll: 2150, baseWeekly: 830, baseDaily: 770, streak: 8 },
-  { id: 'p5', name: 'DoğaKaşifi', avatar: '🌿', baseAll: 1860, baseWeekly: 760, baseDaily: 720, streak: 7 },
-  { id: 'p6', name: 'ZamanKaan', avatar: '🏛️', baseAll: 1620, baseWeekly: 680, baseDaily: 680, streak: 6 },
-  { id: 'p7', name: 'CurioMax', avatar: '⚡', baseAll: 1380, baseWeekly: 610, baseDaily: 640, streak: 5 },
-  { id: 'p8', name: 'NovaEge', avatar: '🌌', baseAll: 1140, baseWeekly: 540, baseDaily: 590, streak: 4 },
-  { id: 'p9', name: 'AtomElif', avatar: '🔬', baseAll: 960, baseWeekly: 490, baseDaily: 540, streak: 5 },
-  { id: 'p10', name: 'SputnikCan', avatar: '🛰️', baseAll: 820, baseWeekly: 430, baseDaily: 495, streak: 3 },
-  { id: 'p11', name: 'VegaDeniz', avatar: '✨', baseAll: 680, baseWeekly: 370, baseDaily: 440, streak: 3 },
-  { id: 'p12', name: 'HelixNehir', avatar: '🧠', baseAll: 540, baseWeekly: 310, baseDaily: 390, streak: 4 },
-  { id: 'p13', name: 'FloraAras', avatar: '🌱', baseAll: 420, baseWeekly: 260, baseDaily: 340, streak: 2 },
-  { id: 'p14', name: 'KronoMasal', avatar: '⏳', baseAll: 340, baseWeekly: 215, baseDaily: 310, streak: 2 },
-  { id: 'p15', name: 'PulsarUraz', avatar: '💫', baseAll: 260, baseWeekly: 170, baseDaily: 265, streak: 2 },
-  { id: 'p16', name: 'NebulaPera', avatar: '🌙', baseAll: 190, baseWeekly: 130, baseDaily: 210, streak: 1 },
-  { id: 'p17', name: 'FotonBora', avatar: '🔆', baseAll: 145, baseWeekly: 95, baseDaily: 175, streak: 1 },
-  { id: 'p18', name: 'DinoIpek', avatar: '🦕', baseAll: 110, baseWeekly: 70, baseDaily: 140, streak: 1 },
-  { id: 'p19', name: 'OrbitAlp', avatar: '🛸', baseAll: 75, baseWeekly: 45, baseDaily: 110, streak: 1 },
-];
+const LOCAL_PEERS: Array<{
+  id: string;
+  name: string;
+  avatar: string;
+  baseAll: number;
+  baseWeekly: number;
+  baseDaily: number;
+  streak: number;
+}> = [];
 
 export function isSupabaseConfigured(): boolean {
   return Boolean(
@@ -113,7 +101,7 @@ function assignZones(
     let zone: LeaderboardEntry['zone'] = 'safe';
     if (rank <= 10) {
       zone = 'promotion';
-    } else if (rank > total - 5) {
+    } else if (total > 10 && rank > total - 5) {
       zone = 'relegation';
     }
     return {

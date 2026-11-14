@@ -1,6 +1,6 @@
 'use client';
 
-import React, { forwardRef, useCallback, useImperativeHandle, useMemo, useRef } from 'react';
+import React, { forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useRef } from 'react';
 import { motion } from 'framer-motion';
 import NativeAdSlide from '@/components/NativeAdSlide';
 import TikTokFactSlide from '@/components/TikTokFactSlide';
@@ -119,10 +119,30 @@ const TikTokFeed = forwardRef<TikTokFeedHandle, TikTokFeedProps>(function TikTok
     [scrollToSlide]
   );
 
+  // Desktop keyboard navigation (ArrowUp / ArrowDown) between slides
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key !== 'ArrowDown' && e.key !== 'ArrowUp') return;
+      const target = e.target as HTMLElement | null;
+      if (target && ['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName)) return;
+      if (typeof document !== 'undefined' && document.querySelector('[aria-modal="true"]')) return;
+
+      const container = scrollRef.current;
+      if (!container) return;
+      e.preventDefault();
+      const h = container.clientHeight || window.innerHeight || 1;
+      const current = Math.round(container.scrollTop / h);
+      scrollToSlide(e.key === 'ArrowDown' ? current + 1 : current - 1);
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [scrollToSlide]);
+
   return (
-    <div className="relative mx-auto h-full w-full max-w-[430px] overflow-hidden">
+    <div className="relative h-full w-full overflow-hidden">
       {/* Top Floating Transparent Overlay */}
-      <header className="pointer-events-none absolute inset-x-0 top-0 z-30 mx-auto w-full max-w-[430px] bg-gradient-to-b from-black/15 via-black/5 to-transparent px-3 pb-3 pt-[calc(0.65rem+env(safe-area-inset-top))] dark:from-black/55 dark:via-black/25 dark:to-transparent">
+      <header className="pointer-events-none fixed inset-x-0 top-0 z-30 mx-auto w-full max-w-[430px] md:max-w-6xl bg-gradient-to-b from-black/15 via-black/5 to-transparent px-3 pt-[calc(env(safe-area-inset-top)+10px)] pb-3 md:px-8 md:pt-5 dark:from-black/55 dark:via-black/25 dark:to-transparent">
         {/* Top Utility Bar: Left Streak+XP | Right Controls */}
         <div className="pointer-events-auto flex items-center justify-between gap-2">
           <div className="flex items-center gap-1.5">
@@ -232,16 +252,10 @@ const TikTokFeed = forwardRef<TikTokFeedHandle, TikTokFeedProps>(function TikTok
           </div>
         </div>
 
-        {/* TikTok-Style Horizontal Floating Category Tabs with soft right fade mask */}
+        {/* TikTok-Style Horizontal Floating Category Tabs with soft right fade mask on mobile, centered row on desktop */}
         <div
           data-testid="category-bar"
-          style={{
-            WebkitMaskImage:
-              'linear-gradient(to right, black 0%, black 88%, transparent 100%)',
-            maskImage:
-              'linear-gradient(to right, black 0%, black 88%, transparent 100%)',
-          }}
-          className="no-scrollbar pointer-events-auto mt-2 flex items-center gap-1.5 overflow-x-auto pr-8"
+          className="no-scrollbar pointer-events-auto mt-1.5 md:mt-2.5 flex items-center gap-1.5 md:gap-2.5 overflow-x-auto md:overflow-visible pb-0.5 pr-4 md:pr-0 md:justify-center [-webkit-mask-image:linear-gradient(to_right,black_0%,black_88%,transparent_100%)] [mask-image:linear-gradient(to_right,black_0%,black_88%,transparent_100%)] md:[-webkit-mask-image:none] md:[mask-image:none]"
         >
           {CATEGORIES.map((cat) => {
             const isActive = activeCategory === cat.id;

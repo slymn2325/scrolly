@@ -154,6 +154,7 @@ export default function HomePage() {
     setMemory(loaded);
     hasHydratedRef.current = true;
     document.documentElement.classList.toggle('dark', loaded.darkMode);
+    document.documentElement.lang = loaded.lang === 'en' ? 'en' : 'tr';
 
     initTelemetrySync();
 
@@ -243,12 +244,13 @@ export default function HomePage() {
     );
   }, [memory.xp, memory.streakDays, memory.nickname, seedFact]);
 
-  // Keep <html> .dark class synchronized
+  // Keep <html> .dark class & lang attribute synchronized
   useEffect(() => {
     if (typeof document !== 'undefined') {
       document.documentElement.classList.toggle('dark', memory.darkMode);
+      document.documentElement.lang = memory.lang === 'en' ? 'en' : 'tr';
     }
-  }, [memory.darkMode]);
+  }, [memory.darkMode, memory.lang]);
 
   const lang: Language = memory.lang;
   const soundEnabled = memory.soundEnabled;
@@ -590,9 +592,13 @@ export default function HomePage() {
   const cookieBannerVisible = !memory.cookieAccepted && activeModal === 'none' && !activeQuiz;
 
   return (
-    <div className="relative flex h-[100dvh] w-screen items-center justify-center overflow-hidden bg-black md:bg-[#0B0915]">
-      {/* Mobile-First Full-Bleed Frame (locked 430px column on mobile & desktop) */}
-      <div className="relative mx-auto h-[100dvh] w-full max-w-[430px] overflow-hidden md:h-[96dvh] md:rounded-[2.5rem] md:border-[5px] md:border-neutral-900/90 md:shadow-2xl">
+    <div className="relative h-[100dvh] w-screen overflow-hidden bg-slate-950 select-none">
+      {/* Full-Screen Canvas on Mobile & Desktop */}
+      <div
+        className={`relative h-[100dvh] w-screen overflow-hidden transition-colors duration-300 ${
+          memory.darkMode ? 'bg-[#090D16] text-white' : 'bg-[#F8FAFC] text-slate-900'
+        }`}
+      >
         <OfflineManager lang={lang} />
 
         {activeModal === 'none' && !activeQuiz && !storyShareFact && !shareModalData && (
@@ -633,7 +639,7 @@ export default function HomePage() {
         {/* Active Quiz Overlay (Daily Sprint / Weekly Marathon / Memory Quiz / 1v1 Duel) */}
         <AnimatePresence>
           {activeQuiz && (
-            <div className="fixed inset-0 z-40 mx-auto flex w-full max-w-[430px] items-center justify-center bg-ink/55 px-3 pt-4 backdrop-blur-md">
+            <div className="fixed inset-0 z-40 flex w-full items-center justify-center bg-ink/55 px-3 pt-4 backdrop-blur-md">
               <MemoryQuizCard
                 key={activeQuiz.key}
                 questions={activeQuiz.questions}
@@ -671,6 +677,12 @@ export default function HomePage() {
           weeklyXp={memory.weeklyXp}
           dailyBestScore={memory.dailyBestScore}
           streakDays={memory.streakDays}
+          onInviteDuel={() => {
+            vibrateTap(12);
+            playPop(soundEnabled);
+            setActiveModal('duel');
+            setActiveTab('duel');
+          }}
           onClose={closeOverlayToExplore}
         />
 

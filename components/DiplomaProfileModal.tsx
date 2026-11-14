@@ -138,14 +138,14 @@ export default function DiplomaProfileModal({
           aria-modal="true"
           aria-label={t.diplomaTitle}
           data-testid="diploma-modal"
-          className="fixed inset-0 z-50 mx-auto flex w-full max-w-[430px] items-center justify-center bg-ink/55 px-3 pt-4 backdrop-blur-md"
+          className="fixed inset-0 z-50 flex w-full items-center justify-center bg-ink/55 px-3 pt-4 backdrop-blur-md"
         >
           <motion.div
             initial={{ opacity: 0, scale: 0.92, y: 18 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.92, y: 18 }}
             transition={{ type: 'spring', stiffness: 320, damping: 24 }}
-            className="relative mb-[92px] flex max-h-[82dvh] w-full flex-col overflow-hidden rounded-3xl border-2 border-amber-200 bg-[#FFFDF9] shadow-2xl dark:border-violet-700/50 dark:bg-[#171228]"
+            className="relative mb-[92px] flex max-h-[82dvh] w-full max-w-[430px] md:max-w-2xl flex-col overflow-hidden rounded-3xl border-2 border-amber-200 bg-[#FFFDF9] shadow-2xl dark:border-violet-700/50 dark:bg-[#171228]"
           >
             {/* Header */}
             <div className="flex items-center justify-between border-b border-amber-100 px-5 py-4 dark:border-white/10">
@@ -234,7 +234,7 @@ export default function DiplomaProfileModal({
                     whileTap={{ scale: 0.94 }}
                     onClick={handleCelebrate}
                     data-testid="diploma-celebrate-btn"
-                    className="inline-flex items-center gap-1.5 rounded-full bg-amber-400 px-3.5 py-1.5 text-xs font-black text-ink shadow-sm hover:bg-amber-300"
+                    className="inline-flex min-h-[42px] items-center gap-1.5 rounded-full bg-amber-400 px-3.5 py-2 text-xs font-black text-ink shadow-sm hover:bg-amber-300 whitespace-normal break-words leading-snug"
                   >
                     <span>{t.diplomaCelebrateBtn}</span>
                   </motion.button>
@@ -245,9 +245,9 @@ export default function DiplomaProfileModal({
                     disabled={exportingDiploma}
                     onClick={handleDownloadDiploma}
                     data-testid="diploma-download-btn"
-                    className="inline-flex items-center gap-1.5 rounded-full bg-ink px-3.5 py-1.5 text-xs font-black text-white shadow-sm hover:opacity-90 disabled:opacity-60 dark:bg-violet-600"
+                    className="inline-flex min-h-[42px] items-center gap-1.5 rounded-full bg-ink px-3.5 py-2 text-xs font-black text-white shadow-sm hover:opacity-90 disabled:opacity-60 dark:bg-violet-600 whitespace-normal break-words leading-snug"
                   >
-                    <Download className="h-3.5 w-3.5" />
+                    <Download className="h-3.5 w-3.5 shrink-0" />
                     <span>{t.diplomaDownloadPngBtn}</span>
                   </motion.button>
 
@@ -257,9 +257,9 @@ export default function DiplomaProfileModal({
                     disabled={exportingDiploma}
                     onClick={handleShareDiploma}
                     data-testid="diploma-share-btn"
-                    className="inline-flex items-center gap-1.5 rounded-full border border-ink/20 bg-white/85 px-3 py-1.5 text-xs font-black text-ink shadow-xs hover:bg-white disabled:opacity-60 dark:border-white/20 dark:bg-white/10 dark:text-white"
+                    className="inline-flex min-h-[42px] items-center gap-1.5 rounded-full border border-ink/20 bg-white/85 px-3.5 py-2 text-xs font-black text-ink shadow-xs hover:bg-white disabled:opacity-60 dark:border-white/20 dark:bg-white/10 dark:text-white whitespace-normal break-words leading-snug"
                   >
-                    <Share2 className="h-3.5 w-3.5" />
+                    <Share2 className="h-3.5 w-3.5 shrink-0" />
                     <span>{t.diplomaSharePngBtn}</span>
                   </motion.button>
                 </div>
@@ -437,17 +437,17 @@ export default function DiplomaProfileModal({
                   onToggleNotifications();
                 }}
                 data-testid="diploma-notifications-btn"
-                className="flex w-full items-center justify-between rounded-2xl border border-violet-200 bg-pastel-lavender/40 px-4 py-3 text-xs font-extrabold text-violet-950 dark:border-violet-700/50 dark:bg-violet-950/40 dark:text-violet-100"
+                className="flex w-full min-h-[48px] items-center justify-between gap-2 rounded-2xl border border-violet-200 bg-pastel-lavender/40 px-4 py-2.5 text-left text-xs font-extrabold text-violet-950 dark:border-violet-700/50 dark:bg-violet-950/40 dark:text-violet-100 whitespace-normal break-words leading-snug"
               >
                 <span className="inline-flex items-center gap-2">
                   {memory.notificationsEnabled ? (
-                    <Bell className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+                    <Bell className="h-4 w-4 shrink-0 text-emerald-600 dark:text-emerald-400" />
                   ) : (
-                    <BellOff className="h-4 w-4 text-ink/50 dark:text-violet-300" />
+                    <BellOff className="h-4 w-4 shrink-0 text-ink/50 dark:text-violet-300" />
                   )}
                   <span>{t.diplomaNotificationsLabel}</span>
                 </span>
-                <span className="rounded-full bg-white px-2.5 py-0.5 text-[10px] font-black text-ink shadow-sm dark:bg-white/10 dark:text-white">
+                <span className="shrink-0 rounded-full bg-white px-2.5 py-1 text-[10px] font-black text-ink shadow-sm dark:bg-white/10 dark:text-white">
                   {memory.notificationsEnabled
                     ? t.diplomaNotificationsOn
                     : t.diplomaNotificationsOff}
@@ -472,7 +472,7 @@ export default function DiplomaProfileModal({
                   setTimeout(() => setJustReset(false), 3000);
                 }}
                 data-testid="diploma-reset-btn"
-                className="flex w-full items-center justify-center gap-2 rounded-2xl border border-rose-200 bg-rose-50 py-2.5 text-xs font-extrabold text-rose-700 hover:bg-rose-100 dark:border-rose-700/50 dark:bg-rose-950/40 dark:text-rose-300"
+                className="flex w-full min-h-[48px] items-center justify-center gap-2 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-2.5 text-xs font-extrabold text-rose-700 hover:bg-rose-100 dark:border-rose-700/50 dark:bg-rose-950/40 dark:text-rose-300 whitespace-normal break-words leading-snug"
               >
                 <RotateCcw className="h-3.5 w-3.5" />
                 <span>{t.drawerReset}</span>

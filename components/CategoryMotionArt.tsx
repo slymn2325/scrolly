@@ -89,8 +89,7 @@ export default function CategoryMotionArt({
     <div
       data-testid="category-motion-art"
       data-category={category}
-      style={{ height: 'clamp(135px, 23vh, 210px)' }}
-      className="relative flex w-full items-center justify-center"
+      className="relative mx-auto flex h-[clamp(135px,23vh,210px)] lg:h-[340px] w-full max-w-[320px] lg:max-w-[460px] items-center justify-center"
     >
       <InteractiveSketchArt
         factId={factId}

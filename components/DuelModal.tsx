@@ -109,14 +109,14 @@ export default function DuelModal({
           aria-modal="true"
           aria-label={t.duelTitle}
           data-testid="duel-modal"
-          className="fixed inset-0 z-50 mx-auto flex w-full max-w-[430px] items-center justify-center bg-ink/55 px-3 pt-4 backdrop-blur-md"
+          className="fixed inset-0 z-50 flex w-full items-center justify-center bg-ink/55 px-3 pt-4 backdrop-blur-md"
         >
           <motion.div
             initial={{ opacity: 0, scale: 0.9, y: 18 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.9, y: 18 }}
             transition={{ type: 'spring', stiffness: 320, damping: 24 }}
-            className="relative mb-[92px] max-h-[84dvh] w-full overflow-y-auto no-scrollbar rounded-3xl border-2 border-amber-200 bg-[#FFFDF9] p-5 shadow-2xl dark:border-violet-700/50 dark:bg-[#1A162B] sm:p-6"
+            className="relative mb-[92px] max-h-[84dvh] w-full max-w-[430px] md:max-w-2xl overflow-y-auto no-scrollbar rounded-3xl border-2 border-amber-200 bg-[#FFFDF9] p-5 shadow-2xl dark:border-violet-700/50 dark:bg-[#1A162B] sm:p-6"
           >
             <motion.button
               type="button"
@@ -142,7 +142,7 @@ export default function DuelModal({
                 <h2 className="font-display text-xl font-bold text-ink dark:text-white">
                   {t.duelTitle}
                 </h2>
-                <p className="truncate text-xs font-semibold text-ink/60 dark:text-violet-200/70">
+                <p className="text-xs font-semibold text-ink/60 dark:text-violet-200/70 whitespace-normal break-words leading-snug">
                   {seedFact.emoji ?? '⚔️'} {seedFact[lang].title}
                 </p>
               </div>
@@ -187,13 +187,13 @@ export default function DuelModal({
                 whileTap={{ scale: 0.94 }}
                 onClick={handleCopyDuel}
                 data-testid="copy-duel-link-btn"
-                className={`flex w-full items-center justify-center gap-2 rounded-2xl py-3 text-sm font-extrabold transition-colors ${
+                className={`flex w-full min-h-[48px] items-center justify-center gap-2 rounded-2xl px-4 py-2.5 text-sm font-extrabold transition-colors whitespace-normal break-words leading-snug ${
                   copied
                     ? 'bg-emerald-600 text-white'
                     : 'border-2 border-ink bg-white text-ink hover:bg-slate-50 dark:border-violet-400 dark:bg-white/10 dark:text-white'
                 }`}
               >
-                {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                {copied ? <Check className="h-4 w-4 shrink-0" /> : <Copy className="h-4 w-4 shrink-0" />}
                 <span>{copied ? t.duelLinkCopied : t.duelCopyLinkBtn}</span>
               </motion.button>
 
@@ -204,9 +204,9 @@ export default function DuelModal({
                   rel="noopener noreferrer"
                   whileTap={{ scale: 0.94 }}
                   onClick={onButtonPop}
-                  className="flex items-center justify-center gap-1.5 rounded-2xl bg-[#25D366] py-2.5 text-xs font-extrabold text-white"
+                  className="flex min-h-[48px] items-center justify-center gap-1.5 rounded-2xl bg-[#25D366] px-3 py-2.5 text-center text-xs font-extrabold text-white whitespace-normal break-words leading-snug"
                 >
-                  <MessageCircle className="h-4 w-4" />
+                  <MessageCircle className="h-4 w-4 shrink-0" />
                   <span>{t.duelShareWhatsapp}</span>
                 </motion.a>
                 <motion.a
@@ -215,9 +215,9 @@ export default function DuelModal({
                   rel="noopener noreferrer"
                   whileTap={{ scale: 0.94 }}
                   onClick={onButtonPop}
-                  className="flex items-center justify-center gap-1.5 rounded-2xl bg-[#111827] py-2.5 text-xs font-extrabold text-white"
+                  className="flex min-h-[48px] items-center justify-center gap-1.5 rounded-2xl bg-[#111827] px-3 py-2.5 text-center text-xs font-extrabold text-white whitespace-normal break-words leading-snug"
                 >
-                  <Share2 className="h-4 w-4" />
+                  <Share2 className="h-4 w-4 shrink-0" />
                   <span>{t.duelShareX}</span>
                 </motion.a>
               </div>
@@ -235,9 +235,9 @@ export default function DuelModal({
                   });
                 }}
                 data-testid="start-duel-btn"
-                className="mt-1 flex w-full items-center justify-center gap-2 rounded-full bg-gradient-to-r from-violet-600 to-rose-500 py-3 text-sm font-extrabold text-white shadow-cozy"
+                className="mt-1 flex w-full min-h-[48px] items-center justify-center gap-2 rounded-full bg-gradient-to-r from-violet-600 to-rose-500 px-4 py-2.5 text-sm font-extrabold text-white shadow-cozy whitespace-normal break-words leading-snug"
               >
-                <Play className="h-4 w-4 fill-current" />
+                <Play className="h-4 w-4 shrink-0 fill-current" />
                 <span>{t.duelStartBtn}</span>
               </motion.button>
             </div>
