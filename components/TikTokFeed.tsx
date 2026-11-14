@@ -1,11 +1,21 @@
 'use client';
 
 import React, { forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react';
-import { motion } from 'framer-motion';
+import { AnimatePresence, motion } from 'framer-motion';
+import { ChevronDown } from 'lucide-react';
 import NativeAdSlide from '@/components/NativeAdSlide';
 import QuizCtaSlide from '@/components/QuizCtaSlide';
 import TikTokFactSlide from '@/components/TikTokFactSlide';
-import { CATEGORIES, type CategoryFilter, type CategoryId, type Language, translations } from '@/i18n/translations';
+import {
+  CATEGORIES,
+  CATEGORY_SELECTOR_OPTIONS,
+  FEED_EXPERIENCE_COPY,
+  getCategoryMeta,
+  type CategoryFilter,
+  type CategoryId,
+  type Language,
+  translations,
+} from '@/i18n/translations';
 import type { FactCard } from '@/types/fact';
 import { UI_ICON_PATHS } from '@/utils/icons8Assets';
 
@@ -45,6 +55,9 @@ interface TikTokFeedProps {
   onOpenQuizHub: () => void;
   onButtonPop: () => void;
   onSlideIndexChange?: (slideIndex: number) => void;
+  onEarnXp?: (xp: number, source?: string) => void;
+  onSuccessSound?: () => void;
+  onWrongSound?: () => void;
 }
 
 const TikTokFeed = forwardRef<TikTokFeedHandle, TikTokFeedProps>(function TikTokFeed(
@@ -74,16 +87,24 @@ const TikTokFeed = forwardRef<TikTokFeedHandle, TikTokFeedProps>(function TikTok
     onOpenQuizHub,
     onButtonPop,
     onSlideIndexChange,
+    onEarnXp,
+    onSuccessSound,
+    onWrongSound,
   },
   ref
 ) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const settleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const activeIndexRef = useRef<number>(0);
+  const wheelCooldownRef = useRef<number>(0);
   const onSlideIndexChangeRef = useRef(onSlideIndexChange);
   onSlideIndexChangeRef.current = onSlideIndexChange;
   const [activeIndex, setActiveIndex] = useState<number>(0);
+  const [isCategoryDrawerOpen, setIsCategoryDrawerOpen] = useState<boolean>(false);
   const t = translations[lang];
+  const copy = FEED_EXPERIENCE_COPY[lang];
+  const allCategoryMeta = CATEGORIES[0];
+  const activeCategoryMeta = getCategoryMeta(activeCategory);
 
   // Build slide stream: insert QuizCtaSlide every 13 fact cards, and NativeAdSlide offset at 7 + 13k so they are never adjacent
   const slides: FeedSlideItem[] = useMemo(() => {
@@ -148,6 +169,30 @@ const TikTokFeed = forwardRef<TikTokFeedHandle, TikTokFeedProps>(function TikTok
         settleTimerRef.current = setTimeout(() => {
           settleTimerRef.current = null;
           onSlideIndexChangeRef.current?.(settledIdx);
+
+          const settledSlide = slides[settledIdx];
+          if (settledSlide?.type === 'fact' && typeof window !== 'undefined') {
+            const nextSlug =
+              settledSlide.fact[lang]?.slug ||
+              settledSlide.fact.slug ||
+              settledSlide.fact.en.slug ||
+              settledSlide.fact.id;
+            if (nextSlug) {
+              try {
+                const currentUrl = new URL(window.location.href);
+                if (currentUrl.searchParams.get('fact') !== nextSlug) {
+                  currentUrl.searchParams.set('fact', nextSlug);
+                  window.history.replaceState(
+                    window.history.state,
+                    '',
+                    `${currentUrl.pathname}${currentUrl.search}${currentUrl.hash}`
+                  );
+                }
+              } catch {
+                // Ignore history API errors in restricted webviews
+              }
+            }
+          }
         }, 150);
       },
       {
@@ -165,7 +210,7 @@ const TikTokFeed = forwardRef<TikTokFeedHandle, TikTokFeedProps>(function TikTok
         settleTimerRef.current = null;
       }
     };
-  }, [slides]);
+  }, [slides, lang]);
 
   const scrollToSlide = useCallback((targetIndex: number) => {
     const container = scrollRef.current;
@@ -214,10 +259,74 @@ const TikTokFeed = forwardRef<TikTokFeedHandle, TikTokFeedProps>(function TikTok
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [scrollToSlide]);
 
+  // Single-card wheel stepping on desktop without fighting inner sheet scrolling
+  useEffect(() => {
+    const container = scrollRef.current;
+    if (!container) return;
+
+    const handleWheel = (e: WheelEvent) => {
+      if (typeof document !== 'undefined' && document.querySelector('[aria-modal="true"]')) return;
+      const targetEl = e.target as HTMLElement | null;
+      if (targetEl?.closest('[data-testid="language-lab-overlay"], [data-testid="fact-card-back"]')) {
+        return;
+      }
+      if (Math.abs(e.deltaY) < 20) return;
+
+      e.preventDefault();
+      const now = Date.now();
+      if (now - wheelCooldownRef.current < 420) {
+        return;
+      }
+      wheelCooldownRef.current = now;
+      const direction = e.deltaY > 0 ? 1 : -1;
+      scrollToSlide(activeIndexRef.current + direction);
+    };
+
+    container.addEventListener('wheel', handleWheel, { passive: false });
+    return () => container.removeEventListener('wheel', handleWheel);
+  }, [scrollToSlide]);
+
+  // Close Category Drawer on Escape key
+  useEffect(() => {
+    if (!isCategoryDrawerOpen) return;
+    const handleEsc = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setIsCategoryDrawerOpen(false);
+      }
+    };
+    window.addEventListener('keydown', handleEsc);
+    return () => window.removeEventListener('keydown', handleEsc);
+  }, [isCategoryDrawerOpen]);
+
+  const progressTotal = Math.max(1, Math.min(13, slides.length));
+  const progressSlot = activeIndex % progressTotal;
+
   return (
     <div className="relative h-full w-full overflow-hidden">
       {/* Top Floating Overlay */}
-      <header className="pointer-events-none fixed inset-x-0 top-0 z-30 mx-auto w-full max-w-[430px] md:max-w-6xl bg-gradient-to-b from-black/15 via-black/5 to-transparent px-3 pt-[calc(env(safe-area-inset-top)+10px)] pb-3 md:px-8 md:pt-5 dark:from-black/55 dark:via-black/25 dark:to-transparent">
+      <header className="pointer-events-none fixed inset-x-0 top-0 z-30 mx-auto w-full max-w-[430px] md:max-w-[600px] bg-gradient-to-b from-black/20 via-black/5 to-transparent px-3 pt-[calc(env(safe-area-inset-top)+6px)] pb-3 md:px-6 md:pt-3 dark:from-black/60 dark:via-black/25 dark:to-transparent">
+        {/* Stories-Style Segmented Deck Progress Indicator */}
+        <div
+          aria-hidden="true"
+          data-testid="stories-progress-bar"
+          className="mb-2 flex items-center gap-1"
+        >
+          {Array.from({ length: progressTotal }).map((_, idx) => {
+            const isFilled = idx <= progressSlot;
+            return (
+              <span
+                key={`seg-${idx}`}
+                className="h-[2.5px] flex-1 overflow-hidden rounded-full bg-ink/15 dark:bg-white/20"
+              >
+                <span
+                  className={`block h-full w-full rounded-full transition-all duration-300 ${
+                    isFilled ? 'bg-ink dark:bg-white opacity-90' : 'opacity-0'
+                  }`}
+                />
+              </span>
+            );
+          })}
+        </div>
         {/* Top Utility Bar: Left Streak+XP | Right Controls */}
         <div className="pointer-events-auto flex items-center justify-between gap-2">
           <div className="flex items-center gap-1.5">
@@ -334,37 +443,131 @@ const TikTokFeed = forwardRef<TikTokFeedHandle, TikTokFeedProps>(function TikTok
           </div>
         </div>
 
-        {/* TikTok-Style Horizontal Floating Category Tabs with soft right fade mask on mobile, centered row on desktop */}
+        {/* Clean Top Navigation Row: "Genel" + "Kategori Seç ▾" + Active Category Badge */}
         <div
           data-testid="category-bar"
-          className="no-scrollbar pointer-events-auto mt-1.5 md:mt-2.5 flex items-center gap-1.5 md:gap-2.5 overflow-x-auto md:overflow-visible pb-0.5 pr-4 md:pr-0 md:justify-center [-webkit-mask-image:linear-gradient(to_right,black_0%,black_88%,transparent_100%)] [mask-image:linear-gradient(to_right,black_0%,black_88%,transparent_100%)] md:[-webkit-mask-image:none] md:[mask-image:none]"
+          className="pointer-events-auto mt-1.5 md:mt-2 flex flex-wrap items-center gap-1.5 md:gap-2"
         >
-          {CATEGORIES.map((cat) => {
-            const isActive = activeCategory === cat.id;
-            return (
-              <motion.button
-                key={cat.id}
-                type="button"
-                whileTap={{ scale: 0.94 }}
-                onClick={() => onSelectCategory(cat.id)}
-                data-testid={`category-pill-${cat.id}`}
-                className={`inline-flex shrink-0 items-center gap-1.5 rounded-full px-3 py-1 text-[11px] font-extrabold transition-all ${
-                  isActive
-                    ? 'bg-ink text-white shadow-md dark:bg-white dark:text-ink'
-                    : 'border border-slate-200/90 bg-white/95 text-ink/85 hover:bg-white dark:border-white/15 dark:bg-slate-900/95 dark:text-white/85'
-                }`}
-              >
-                <img
-                  src={cat.iconPath}
-                  alt=""
-                  aria-hidden="true"
-                  className="h-4 w-4 object-contain"
-                />
-                <span>{cat.label[lang]}</span>
-              </motion.button>
-            );
-          })}
+          <motion.button
+            type="button"
+            whileTap={{ scale: 0.94 }}
+            onClick={() => {
+              onButtonPop();
+              setIsCategoryDrawerOpen(false);
+              onSelectCategory('all');
+            }}
+            data-testid="category-pill-all"
+            className={`inline-flex min-h-[34px] shrink-0 items-center gap-1.5 rounded-full px-3 py-1 text-[11px] font-extrabold transition-all ${
+              activeCategory === 'all'
+                ? 'bg-ink text-white shadow-md dark:bg-white dark:text-ink'
+                : 'border border-slate-200/90 bg-white/95 text-ink/85 hover:bg-white dark:border-white/15 dark:bg-slate-900/95 dark:text-white/85'
+            }`}
+          >
+            <img
+              src={allCategoryMeta.iconPath}
+              alt=""
+              aria-hidden="true"
+              className="h-4 w-4 object-contain"
+            />
+            <span>{copy.categoryAll}</span>
+          </motion.button>
+
+          <motion.button
+            type="button"
+            whileTap={{ scale: 0.94 }}
+            onClick={() => {
+              onButtonPop();
+              setIsCategoryDrawerOpen((prev) => !prev);
+            }}
+            aria-expanded={isCategoryDrawerOpen}
+            data-testid="choose-category-btn"
+            className={`inline-flex min-h-[34px] shrink-0 items-center gap-1 rounded-full border px-3 py-1 text-[11px] font-extrabold transition-all ${
+              isCategoryDrawerOpen
+                ? 'border-violet-500 bg-violet-600 text-white shadow-md'
+                : 'border-slate-200/90 bg-white/95 text-ink hover:bg-white dark:border-white/15 dark:bg-slate-900/95 dark:text-white'
+            }`}
+          >
+            <span>{copy.chooseCategory}</span>
+            <ChevronDown
+              className={`h-3.5 w-3.5 transition-transform duration-200 ${
+                isCategoryDrawerOpen ? 'rotate-180' : ''
+              }`}
+            />
+          </motion.button>
+
+          {activeCategory !== 'all' && (
+            <motion.button
+              type="button"
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              onClick={() => setIsCategoryDrawerOpen((prev) => !prev)}
+              data-testid="active-category-badge"
+              className={`inline-flex min-h-[34px] shrink-0 items-center gap-1.5 rounded-full border px-3 py-1 text-[11px] font-extrabold shadow-sm ${
+                activeCategory === 'language_lab'
+                  ? 'border-indigo-400 bg-indigo-600 text-white'
+                  : 'border-violet-300 bg-violet-100/95 text-violet-900 dark:border-violet-400/35 dark:bg-violet-900/80 dark:text-violet-100'
+              }`}
+            >
+              <img
+                src={activeCategoryMeta.iconPath}
+                alt=""
+                aria-hidden="true"
+                className="h-4 w-4 object-contain"
+              />
+              <span>{activeCategoryMeta.label[lang]}</span>
+            </motion.button>
+          )}
         </div>
+
+        {/* Expandable Category Picker Strip / Drawer */}
+        <AnimatePresence>
+          {isCategoryDrawerOpen && (
+            <motion.div
+              key="category-drawer"
+              initial={{ opacity: 0, y: -8, scale: 0.98 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: -8, scale: 0.98 }}
+              transition={{ duration: 0.18, ease: 'easeOut' }}
+              data-testid="category-drawer"
+              className="pointer-events-auto mt-2 rounded-2xl border border-slate-200/90 bg-white/96 p-2 shadow-xl backdrop-blur-md dark:border-white/15 dark:bg-slate-900/96"
+            >
+              <div className="flex flex-wrap items-center gap-1.5">
+                {CATEGORY_SELECTOR_OPTIONS.map((cat) => {
+                  const isActive = activeCategory === cat.id;
+                  const labelText =
+                    cat.id === 'all' ? (lang === 'tr' ? 'Tümü (Genel)' : 'All (General)') : cat.label[lang];
+                  return (
+                    <button
+                      key={cat.id}
+                      type="button"
+                      onClick={() => {
+                        onButtonPop();
+                        onSelectCategory(cat.id);
+                        setIsCategoryDrawerOpen(false);
+                      }}
+                      data-testid={`category-option-${cat.id}`}
+                      className={`inline-flex min-h-[36px] items-center gap-1.5 rounded-full border px-3 py-1.5 text-[11.5px] font-extrabold transition ${
+                        isActive
+                          ? cat.id === 'language_lab'
+                            ? 'border-indigo-600 bg-indigo-600 text-white shadow-sm'
+                            : 'border-ink bg-ink text-white shadow-sm dark:border-white dark:bg-white dark:text-ink'
+                          : 'border-slate-200/90 bg-slate-50/90 text-ink/85 hover:bg-slate-100 dark:border-white/15 dark:bg-white/5 dark:text-white/90 dark:hover:bg-white/15'
+                      }`}
+                    >
+                      <img
+                        src={cat.iconPath}
+                        alt=""
+                        aria-hidden="true"
+                        className="h-4 w-4 object-contain"
+                      />
+                      <span>{labelText}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </header>
 
       {/* Vertical Full-Bleed TikTok Snap Scroll Container (Windowed DOM Virtualization: activeIndex - 2 .. activeIndex + 2) */}
@@ -393,6 +596,7 @@ const TikTokFeed = forwardRef<TikTokFeedHandle, TikTokFeedProps>(function TikTok
                   isFirstCard={slide.factIndex === 0}
                   isActive={isSlideActive}
                   cookieBannerVisible={cookieBannerVisible}
+                  languageLabMode={activeCategory === 'language_lab'}
                   onFlip={onFlipCard}
                   onDoubleTapLike={onDoubleTapLike}
                   onDwellRead={onDwellRead}
@@ -402,6 +606,9 @@ const TikTokFeed = forwardRef<TikTokFeedHandle, TikTokFeedProps>(function TikTok
                   onGuessReward={onGuessReward}
                   onToggleFavorite={onToggleFavorite}
                   onButtonPop={onButtonPop}
+                  onEarnXp={onEarnXp}
+                  onSuccessSound={onSuccessSound}
+                  onWrongSound={onWrongSound}
                 />
               ) : slide.type === 'quizCta' ? (
                 <QuizCtaSlide

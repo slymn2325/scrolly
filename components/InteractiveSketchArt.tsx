@@ -263,10 +263,10 @@ export default function InteractiveSketchArt({
     lang === 'tr'
       ? active
         ? 'Ölçüm Aktif'
-        : 'Dokun & Canlandır'
+        : 'Dokun & Simüle Et'
       : active
       ? 'Sim Active'
-      : 'Tap to Simulate';
+      : 'Tap & Simulate';
 
   return (
     <motion.div
@@ -321,7 +321,7 @@ export default function InteractiveSketchArt({
             <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-amber-300" />
           </span>
           <span className="whitespace-nowrap">
-            {lang === 'tr' ? 'Dokun & Keşfet' : 'Tap Diagram'}
+            {lang === 'tr' ? 'Dokun & Simüle Et' : 'Tap & Simulate'}
           </span>
         </div>
       )}

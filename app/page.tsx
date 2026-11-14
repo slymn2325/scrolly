@@ -100,10 +100,10 @@ function buildPersonalizedDeck(
   categoryWeights: Record<CategoryId, number>,
   shuffle: boolean
 ): FactCardType[] {
-  const pool =
-    category === 'all'
-      ? [...allFacts]
-      : allFacts.filter((fact) => fact.category === category);
+  const isAllPool = category === 'all' || category === 'language_lab';
+  const pool = isAllPool
+    ? [...allFacts]
+    : allFacts.filter((fact) => fact.category === category);
 
   const unseen = pool.filter((f) => !seenIds.includes(f.id));
   const seen = pool.filter((f) => seenIds.includes(f.id));
@@ -115,7 +115,7 @@ function buildPersonalizedDeck(
 
   const scoreRank = (fact: FactCardType) => {
     const base = shuffle ? cryptoRandomFloat() : 0.5;
-    const priorityBoost = category === 'all' && topCats.has(fact.category) ? 0.4 : 0;
+    const priorityBoost = isAllPool && topCats.has(fact.category) ? 0.4 : 0;
     return base + priorityBoost;
   };
 
@@ -129,7 +129,7 @@ function buildPersonalizedDeck(
   const combined = [...orderedUnseen, ...orderedSeen];
   if (combined.length === 0) return allFacts;
 
-  if (category === 'all') {
+  if (isAllPool) {
     // Guarantee first 12 cards are strictly interleaved in Round-Robin order across all categories
     const openingInterleaved = interleaveFactsByCategory(combined).slice(0, 12);
     const openingIds = new Set(openingInterleaved.map((f) => f.id));
@@ -353,7 +353,10 @@ export default function HomePage() {
     setActiveCategory(cat);
 
     setMemory((prev) => {
-      const next = cat !== 'all' ? boostCategoryWeight(prev, cat, 1) : prev;
+      const next =
+        cat !== 'all' && cat !== 'language_lab'
+          ? boostCategoryWeight(prev, cat, 1)
+          : prev;
       const newDeck = buildPersonalizedDeck(
         allFacts,
         cat,
@@ -694,6 +697,11 @@ export default function HomePage() {
           onOpenQuizHub={handleOpenQuizHub}
           onButtonPop={() => playPop(soundEnabled)}
           onSlideIndexChange={(idx) => setMaxSwipedCards((prev) => Math.max(prev, idx))}
+          onEarnXp={(xpAmount) => {
+            setMemory((prev) => addUserXp(prev, xpAmount));
+          }}
+          onSuccessSound={() => playDing(soundEnabled)}
+          onWrongSound={() => playWrong(soundEnabled)}
         />
 
         {/* Active Quiz Overlay (Daily Sprint / Weekly Marathon / Memory Quiz / 1v1 Duel) */}

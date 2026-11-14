@@ -57,10 +57,10 @@ export function selectNextFactCard(
   categoryWeights: Record<CategoryId, number>,
   excludeId?: string
 ): FactCardData {
-  const categoryPool =
-    activeCategory === 'all'
-      ? allFacts
-      : allFacts.filter((fact) => fact.category === activeCategory);
+  const isAllPool = activeCategory === 'all' || activeCategory === 'language_lab';
+  const categoryPool = isAllPool
+    ? allFacts
+    : allFacts.filter((fact) => fact.category === activeCategory);
 
   const unseenInPool = categoryPool.filter(
     (fact) => !seenIds.includes(fact.id) && fact.id !== excludeId
@@ -85,7 +85,7 @@ export function selectNextFactCard(
 
   const weighted = candidates.map((fact) => {
     let weight = 1.0;
-    if (activeCategory === 'all' && topCategories.has(fact.category)) {
+    if (isAllPool && topCategories.has(fact.category)) {
       // Explicit +40% priority boost plus slight affinity scaling
       const affinityBonus = Math.min(0.3, (categoryWeights[fact.category] ?? 0) * 0.03);
       weight = 1.4 + affinityBonus;

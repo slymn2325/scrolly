@@ -2,7 +2,7 @@ import type { CategoryId } from '@/types/fact';
 
 export type Language = 'tr' | 'en';
 export type { CategoryId };
-export type CategoryFilter = 'all' | CategoryId;
+export type CategoryFilter = 'all' | CategoryId | 'language_lab';
 
 export interface CategoryMeta {
   id: CategoryFilter;
@@ -120,8 +120,73 @@ export const CATEGORIES: CategoryMeta[] = [
   },
 ];
 
+export const LANGUAGE_LAB_META: CategoryMeta = {
+  ...CATEGORIES[0],
+  id: 'language_lab',
+  label: { tr: 'Dil Öğrenme', en: 'Language Lab' },
+  emoji: '🌐',
+  iconPath: '/assets/icons8/icons/lang-globe.png',
+  accentText: 'text-indigo-700 dark:text-indigo-300',
+  bgClass: 'bg-indigo-50 dark:bg-indigo-950/60',
+  borderClass: 'border-indigo-300 dark:border-indigo-500/40',
+  ringClass: 'ring-indigo-400/50',
+};
+
+export const CATEGORY_SELECTOR_OPTIONS: CategoryMeta[] = [
+  ...CATEGORIES,
+  LANGUAGE_LAB_META,
+];
+
+export const FEED_EXPERIENCE_COPY = {
+  tr: {
+    chooseCategory: 'Kategori Seç',
+    categoryAll: 'Genel',
+    learnTrEnBtn: 'TR/EN Öğren',
+    languageLabBadge: 'Dil Öğrenme Modu',
+    vocabNotebookTitle: 'Kelime Defterim',
+    saveWordBtn: 'Kelime Defterime Kaydet',
+    savedWordBtn: 'Kaydedildi ✓',
+    listenEn: 'Dinle (EN)',
+    listenTr: 'Dinle (TR)',
+    fillBlankTitle: 'Kelimeyi Tahmin Et',
+    fillBlankCorrect: 'Harika! +{xp} XP · Kelime Serisi',
+    fillBlankTryAgain: 'Yaklaştın! Doğru kelime vurgulandı.',
+    noAudioNotice: 'Tarayıcı ses sentezi kullanılamıyor.',
+    diffAccuracyLabel: 'Fark',
+    tapSimulateHint: 'Dokun & Simüle Et',
+    detailSheetTitle: 'Bilimsel Açıklama & Kaynak',
+    closeSheetLabel: 'Kapat',
+    doubleTapLikeHint: 'Beğenmek için çift dokun · Detay için basılı tut',
+    languageLabSubtitle: 'İngilizce & Türkçe satırları karşılaştır, kelimelere dokun ve telaffuzu dinle.',
+  },
+  en: {
+    chooseCategory: 'Choose Category',
+    categoryAll: 'All',
+    learnTrEnBtn: 'TR/EN Lab',
+    languageLabBadge: 'Language Lab',
+    vocabNotebookTitle: 'Word Notebook',
+    saveWordBtn: 'Save to Word Notebook',
+    savedWordBtn: 'Saved ✓',
+    listenEn: 'Listen (EN)',
+    listenTr: 'Listen (TR)',
+    fillBlankTitle: 'Fill the Blank',
+    fillBlankCorrect: 'Spot on! +{xp} XP · Vocab Streak',
+    fillBlankTryAgain: 'Almost! Correct word highlighted.',
+    noAudioNotice: 'Speech synthesis unavailable in this browser.',
+    diffAccuracyLabel: 'Diff',
+    tapSimulateHint: 'Tap & Simulate',
+    detailSheetTitle: 'Scientific Detail & Source',
+    closeSheetLabel: 'Close',
+    doubleTapLikeHint: 'Double-tap to like · Hold for detail',
+    languageLabSubtitle: 'Compare English & Turkish side-by-side, tap highlighted words to hear & save them.',
+  },
+} as const;
+
 export function getCategoryMeta(id: CategoryFilter | string): CategoryMeta {
   const normalized = id === 'weird_records' ? 'records' : id;
+  if (normalized === 'language_lab') {
+    return LANGUAGE_LAB_META;
+  }
   return CATEGORIES.find((c) => c.id === normalized) ?? CATEGORIES[0];
 }
 

@@ -3,9 +3,10 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
 import { CheckCircle2, HelpCircle, RotateCw, Sparkles, Target } from 'lucide-react';
-import { type Language, translations } from '@/i18n/translations';
+import { FEED_EXPERIENCE_COPY, type Language, translations } from '@/i18n/translations';
 import { formatValueWithUnit } from '@/lib/formatUnit';
 import type { GuessChallenge } from '@/types/fact';
+import { vibrateTap } from '@/utils/haptics';
 
 export interface GuessAnswerDetails {
   userGuess: number | string;
@@ -35,6 +36,7 @@ export default function GuessWidget({
   onButtonPop,
 }: GuessWidgetProps) {
   const t = translations[lang];
+  const copy = FEED_EXPERIENCE_COPY[lang];
 
   const isSlider = challenge.type === 'slider';
   const minVal = challenge.min ?? 0;
@@ -50,12 +52,14 @@ export default function GuessWidget({
   const [submitted, setSubmitted] = useState(false);
   const [tier, setTier] = useState<'spotOn' | 'close' | 'participated' | null>(null);
   const [earnedXp, setEarnedXp] = useState<number>(0);
+  const [accuracyPct, setAccuracyPct] = useState<number>(100);
 
   useEffect(() => {
     setSliderValue(initialSliderValue);
     setSubmitted(false);
     setTier(null);
     setEarnedXp(0);
+    setAccuracyPct(100);
   }, [factId, initialSliderValue]);
 
   const stop = (e: React.SyntheticEvent) => {
@@ -65,6 +69,7 @@ export default function GuessWidget({
   const handleSliderSubmit = (e: React.MouseEvent) => {
     e.stopPropagation();
     if (submitted) return;
+    vibrateTap(30);
     onButtonPop();
 
     const target = challenge.correctValue ?? initialSliderValue;
@@ -87,35 +92,39 @@ export default function GuessWidget({
       isAccurate = true;
     }
 
-    const accuracyPct = Math.max(0, Math.min(100, Math.round((1 - diff / span) * 100)));
+    const computedAccuracyPct = Math.max(0, Math.min(100, Math.round((1 - diff / span) * 100)));
 
     setTier(nextTier);
     setEarnedXp(xpAwarded);
+    setAccuracyPct(computedAccuracyPct);
     setSubmitted(true);
     onGuessAnswered(xpAwarded, isAccurate, {
       userGuess: sliderValue,
       correctValue: target,
-      accuracyPct,
+      accuracyPct: computedAccuracyPct,
     });
   };
 
   const handleBinaryPick = (e: React.MouseEvent, idx: number) => {
     e.stopPropagation();
     if (submitted) return;
+    vibrateTap(30);
     onButtonPop();
 
     const correctIdx = challenge.correctOptionIndex ?? 0;
     const isCorrect = idx === correctIdx;
     const nextTier: 'spotOn' | 'participated' = isCorrect ? 'spotOn' : 'participated';
     const xpAwarded = isCorrect ? 20 : 10;
+    const computedAccuracyPct = isCorrect ? 100 : 0;
 
     setTier(nextTier);
     setEarnedXp(xpAwarded);
+    setAccuracyPct(computedAccuracyPct);
     setSubmitted(true);
     onGuessAnswered(xpAwarded, isCorrect, {
       userGuess: challenge.options?.[idx] ?? idx,
       correctValue: challenge.options?.[correctIdx] ?? correctIdx,
-      accuracyPct: isCorrect ? 100 : 0,
+      accuracyPct: computedAccuracyPct,
     });
   };
 
@@ -169,26 +178,28 @@ export default function GuessWidget({
 
       {!submitted ? (
         isSlider ? (
-          <div className="flex items-center gap-2">
-            <div className="flex flex-1 flex-col">
-              <input
-                type="range"
-                min={minVal}
-                max={maxVal}
-                step={stepVal}
-                value={sliderValue}
-                data-testid="guess-slider-input"
-                onClick={stop}
-                onDoubleClick={stop}
-                onPointerDown={stop}
-                onTouchStart={stop}
-                onChange={(e) => {
-                  e.stopPropagation();
-                  setSliderValue(Number(e.target.value));
-                }}
-                className="h-2 w-full cursor-pointer accent-violet-600 dark:accent-violet-400"
-              />
-              <div className="mt-0.5 flex justify-between text-[9px] font-bold text-ink/55 dark:text-violet-200/60">
+          <div className="flex flex-col gap-2">
+            <div className="flex w-full flex-col">
+              <div className="flex min-h-[44px] items-center">
+                <input
+                  type="range"
+                  min={minVal}
+                  max={maxVal}
+                  step={stepVal}
+                  value={sliderValue}
+                  data-testid="guess-slider-input"
+                  onClick={stop}
+                  onDoubleClick={stop}
+                  onPointerDown={stop}
+                  onTouchStart={stop}
+                  onChange={(e) => {
+                    e.stopPropagation();
+                    setSliderValue(Number(e.target.value));
+                  }}
+                  className="h-3.5 w-full cursor-pointer rounded-full accent-violet-600 dark:accent-violet-400"
+                />
+              </div>
+              <div className="flex justify-between text-[10px] font-bold text-ink/65 dark:text-violet-200/75">
                 <span>{minLabelText}</span>
                 <span>{maxLabelText}</span>
               </div>
@@ -196,11 +207,11 @@ export default function GuessWidget({
 
             <motion.button
               type="button"
-              whileTap={{ scale: 0.94 }}
+              whileTap={{ scale: 0.96 }}
               data-testid="guess-submit-btn"
               onClick={handleSliderSubmit}
               onDoubleClick={stop}
-              className="shrink-0 min-h-[40px] rounded-xl bg-ink px-3.5 py-2 text-[11px] sm:text-xs font-black text-white shadow-sm dark:bg-violet-600 whitespace-normal break-words leading-snug"
+              className="w-full min-h-[44px] rounded-xl bg-ink px-4 py-2 text-xs font-black text-white shadow-sm transition hover:bg-slate-800 dark:bg-violet-600 dark:hover:bg-violet-500 whitespace-normal break-words leading-snug"
             >
               {t.guessSubmitBtn}
             </motion.button>
@@ -227,10 +238,11 @@ export default function GuessWidget({
         )
       ) : (
         <motion.div
-          initial={{ opacity: 0, y: 4 }}
-          animate={{ opacity: 1, y: 0 }}
+          initial={{ opacity: 0, scale: 0.95, y: 6 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          transition={{ type: 'spring', stiffness: 360, damping: 22 }}
           data-testid="guess-result-banner"
-          className="flex flex-wrap items-center justify-between gap-2 rounded-xl bg-emerald-50/90 px-3 py-2.5 dark:bg-emerald-950/50"
+          className="flex flex-wrap items-center justify-between gap-2 rounded-xl bg-emerald-50/95 px-3 py-2.5 shadow-sm ring-1 ring-emerald-200 dark:bg-emerald-950/55 dark:ring-emerald-500/30"
         >
           <div className="min-w-0 flex-1">
             <div className="flex flex-wrap items-center gap-1.5 text-[11px] font-black text-emerald-800 dark:text-emerald-200">
@@ -240,12 +252,15 @@ export default function GuessWidget({
                 <CheckCircle2 className="h-3.5 w-3.5 shrink-0 text-amber-600 dark:text-amber-300" />
               )}
               <span className="whitespace-normal break-words leading-snug">{tierMessage}</span>
+              <span className="inline-flex shrink-0 items-center rounded-full bg-white/90 px-1.5 py-0.5 text-[10px] font-black text-emerald-800 dark:bg-white/10 dark:text-emerald-200">
+                {copy.diffAccuracyLabel}: %{Math.max(0, 100 - accuracyPct)}
+              </span>
               <span className="ml-auto inline-flex shrink-0 items-center gap-0.5 rounded-full bg-amber-400/25 px-1.5 py-0.5 text-[10px] font-black text-amber-900 dark:text-amber-200">
                 <Sparkles className="h-2.5 w-2.5" />+{earnedXp} XP
               </span>
             </div>
-            <p className="mt-1 text-[10.5px] font-bold text-ink/75 dark:text-violet-100/80 whitespace-normal break-words leading-snug">
-              {t.guessReveal}: <span className="font-black text-ink dark:text-white">{correctDisplay}</span>
+            <p className="mt-1 text-[11px] font-bold text-ink/80 dark:text-violet-100/85 whitespace-normal break-words leading-snug">
+              {t.guessReveal}: <span className="text-xs font-black text-ink dark:text-white">{correctDisplay}</span>
             </p>
           </div>
 
