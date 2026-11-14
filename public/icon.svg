@@ -1,13 +1,62 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" fill="none">
-  <rect width="128" height="128" rx="32" fill="#FFFDF9"/>
-  <rect x="10" y="10" width="108" height="108" rx="26" fill="url(#grad)"/>
-  <path d="M64 30L72.5 52.5L95 61L72.5 69.5L64 92L55.5 69.5L33 61L55.5 52.5L64 30Z" fill="#FFFDF9"/>
-  <circle cx="89" cy="39" r="6" fill="#FEF6D8"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" fill="none">
   <defs>
-    <linearGradient id="grad" x1="10" y1="10" x2="118" y2="118" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#F59E0B"/>
-      <stop offset="0.55" stop-color="#EC4899"/>
-      <stop offset="1" stop-color="#7C3AED"/>
+    <linearGradient id="bgGrad" x1="80" y1="60" x2="940" y2="960" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#31107A"/>
+      <stop offset="52%" stop-color="#5B21B6"/>
+      <stop offset="100%" stop-color="#7C3AED"/>
     </linearGradient>
+    <radialGradient id="topGlow" cx="0.78" cy="0.22" r="0.65">
+      <stop offset="0%" stop-color="#C4B5FD" stop-opacity="0.45"/>
+      <stop offset="100%" stop-color="#7C3AED" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="frontCardBg" x1="286" y1="226" x2="738" y2="798" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#FFFFFF"/>
+      <stop offset="100%" stop-color="#F5F3FF"/>
+    </linearGradient>
+    <linearGradient id="goldStarFill" x1="600" y1="158" x2="808" y2="390" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#FEF08A"/>
+      <stop offset="45%" stop-color="#FBBF24"/>
+      <stop offset="100%" stop-color="#F59E0B"/>
+    </linearGradient>
+    <linearGradient id="barAccent" x1="354" y1="316" x2="554" y2="316" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#7C3AED"/>
+      <stop offset="100%" stop-color="#5B21B6"/>
+    </linearGradient>
+    <radialGradient id="starGlow" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0%" stop-color="#FDE047" stop-opacity="0.65"/>
+      <stop offset="100%" stop-color="#F59E0B" stop-opacity="0"/>
+    </radialGradient>
   </defs>
+
+  <rect width="1024" height="1024" rx="224" fill="url(#bgGrad)"/>
+  <rect width="1024" height="1024" rx="224" fill="url(#topGlow)"/>
+
+  <g transform="rotate(-12 512 512) translate(-28 18)">
+    <rect x="292" y="238" width="440" height="548" rx="72" fill="#FFFFFF" fill-opacity="0.14" stroke="#FFFFFF" stroke-opacity="0.28" stroke-width="6"/>
+  </g>
+  <g transform="rotate(-5 512 512) translate(-12 8)">
+    <rect x="292" y="238" width="440" height="548" rx="72" fill="#FFFFFF" fill-opacity="0.26" stroke="#FFFFFF" stroke-opacity="0.48" stroke-width="6"/>
+  </g>
+
+  <rect x="292" y="256" width="440" height="548" rx="74" fill="#1E084D" fill-opacity="0.34"/>
+  <rect x="292" y="234" width="440" height="548" rx="74" fill="url(#frontCardBg)" stroke="#FFFFFF" stroke-width="4"/>
+
+  <rect x="352" y="302" width="164" height="44" rx="22" fill="#EDE9FE"/>
+  <circle cx="378" cy="324" r="10" fill="#7C3AED"/>
+  <rect x="400" y="316" width="88" height="16" rx="8" fill="#6D28D9"/>
+
+  <rect x="352" y="390" width="316" height="44" rx="20" fill="url(#barAccent)"/>
+  <rect x="352" y="458" width="246" height="36" rx="18" fill="#5B21B6" fill-opacity="0.86"/>
+  <rect x="352" y="534" width="316" height="24" rx="12" fill="#DDD6FE"/>
+  <rect x="352" y="576" width="268" height="24" rx="12" fill="#E9D5FF"/>
+
+  <rect x="352" y="646" width="316" height="72" rx="28" fill="#F3E8FF" stroke="#DDD6FE" stroke-width="4"/>
+  <circle cx="394" cy="682" r="16" fill="#7C3AED"/>
+  <rect x="426" y="672" width="196" height="20" rx="10" fill="#6D28D9" fill-opacity="0.65"/>
+
+  <circle cx="708" cy="264" r="156" fill="url(#starGlow)"/>
+  <path d="M708 136L737 228L829 258L737 288L708 380L679 288L587 258L679 228L708 136Z" fill="url(#goldStarFill)" stroke="#FFFFFF" stroke-width="10" stroke-linejoin="round"/>
+  <circle cx="708" cy="258" r="14" fill="#FFFBEB"/>
+  <path d="M812 154L820 176L842 184L820 192L812 214L804 192L782 184L804 176L812 154Z" fill="#FEF08A"/>
+  <circle cx="606" cy="172" r="9" fill="#FDE68A" fill-opacity="0.95"/>
 </svg>

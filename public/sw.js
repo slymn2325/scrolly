@@ -1,13 +1,16 @@
-const CACHE_VERSION = 'v1.0.8';
+const CACHE_VERSION = 'v1.0.9';
 const CACHE_NAME = `scrolly-offline-${CACHE_VERSION}`;
 
 const PRECACHE_URLS = [
   '/',
   '/manifest.webmanifest',
-  '/icon',
+  '/icon?v=3',
   '/apple-icon',
+  '/apple-touch-icon.png?v=3',
+  '/icons/icon-192.png?v=3',
+  '/icons/icon-512.png?v=3',
   '/manifest.json',
-  '/icon.svg',
+  '/icon.svg?v=3',
   '/data/facts/space.json',
   '/data/facts/nature.json',
   '/data/facts/human_body.json',
@@ -164,8 +167,10 @@ self.addEventListener('fetch', (event) => {
   // CacheFirst for Icons8 3d-fluency local assets, production hashed static assets, manifests, and icons
   if (
     url.pathname.startsWith('/assets/icons8/') ||
+    url.pathname.startsWith('/icons/') ||
     url.pathname.startsWith('/_next/static/') ||
     url.pathname === '/manifest.json' ||
+    url.pathname === '/apple-touch-icon.png' ||
     url.pathname === '/icon.svg'
   ) {
     event.respondWith(
