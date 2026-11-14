@@ -67,7 +67,7 @@ export default function IosFloatingIslandDock({
     : [allTabs[2], allTabs[1], allTabs[4]];
 
   return (
-    <div className="pointer-events-none fixed inset-x-0 bottom-[calc(0.75rem+env(safe-area-inset-bottom))] z-50 mx-auto w-full max-w-[430px] px-3 md:bottom-[calc(2dvh+0.75rem+env(safe-area-inset-bottom))]">
+    <div className="pointer-events-none fixed inset-x-0 bottom-[calc(0.75rem+env(safe-area-inset-bottom))] z-30 mx-auto w-full max-w-[440px] px-3">
       <nav
         aria-label="iOS Floating Island Dock"
         data-testid="ios-floating-dock"

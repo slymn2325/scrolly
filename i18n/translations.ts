@@ -2,7 +2,7 @@ import type { CategoryId } from '@/types/fact';
 
 export type Language = 'tr' | 'en';
 export type { CategoryId };
-export type CategoryFilter = 'all' | CategoryId | 'language_lab';
+export type CategoryFilter = 'all' | CategoryId | 'vocabulary';
 
 export interface CategoryMeta {
   id: CategoryFilter;
@@ -120,10 +120,10 @@ export const CATEGORIES: CategoryMeta[] = [
   },
 ];
 
-export const LANGUAGE_LAB_META: CategoryMeta = {
+export const VOCABULARY_META: CategoryMeta = {
   ...CATEGORIES[0],
-  id: 'language_lab',
-  label: { tr: 'Dil Öğrenme', en: 'Language Lab' },
+  id: 'vocabulary',
+  label: { tr: 'Dil Öğrenme', en: 'Language Learning' },
   emoji: '🌐',
   iconPath: '/assets/icons8/icons/lang-globe.png',
   accentText: 'text-indigo-700 dark:text-indigo-300',
@@ -132,9 +132,14 @@ export const LANGUAGE_LAB_META: CategoryMeta = {
   ringClass: 'ring-indigo-400/50',
 };
 
+/** @deprecated Use VOCABULARY_META */
+export const LANGUAGE_LAB_META = VOCABULARY_META;
+
+/** Order: Tümü, Dil Öğrenme, then science categories */
 export const CATEGORY_SELECTOR_OPTIONS: CategoryMeta[] = [
-  ...CATEGORIES,
-  LANGUAGE_LAB_META,
+  CATEGORIES[0],
+  VOCABULARY_META,
+  ...CATEGORIES.slice(1),
 ];
 
 export const FEED_EXPERIENCE_COPY = {
@@ -185,9 +190,9 @@ export const FEED_EXPERIENCE_COPY = {
 } as const;
 
 export function getCategoryMeta(id: CategoryFilter | string): CategoryMeta {
-  const normalized = id === 'weird_records' ? 'records' : id;
-  if (normalized === 'language_lab') {
-    return LANGUAGE_LAB_META;
+  const normalized = id === 'weird_records' ? 'records' : id === 'language_lab' ? 'vocabulary' : id;
+  if (normalized === 'vocabulary') {
+    return VOCABULARY_META;
   }
   return CATEGORIES.find((c) => c.id === normalized) ?? CATEGORIES[0];
 }

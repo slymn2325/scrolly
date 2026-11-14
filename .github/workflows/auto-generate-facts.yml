@@ -1,4 +1,4 @@
-name: Auto Generate Daily Facts (OpenAI-Compatible AI)
+name: Auto Generate Daily Facts + Vocabulary (gemini-4-hydrogen)
 
 on:
   schedule:
@@ -24,7 +24,7 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Generate and Insert Facts into Postgres
+      - name: Generate 5 facts + 2 vocabulary cards (gemini-4-hydrogen)
         env:
           OPENAI_API_KEY: ${{ secrets.AI_API_KEY || secrets.GEMINI_API_KEY }}
           AI_MODELS_ENDPOINT: ${{ vars.AI_MODELS_ENDPOINT || 'https://generativelanguage.googleapis.com/v1beta/openai/chat/completions' }}
@@ -33,3 +33,15 @@ jobs:
           # Rejects overused internet trivia clichés (neutron star teaspoon, diamond rain, octopus 3 hearts, honey, Eiffel Tower, etc.)
           ANTI_CLICHE_STRICT: 'true'
         run: node scripts/generateFacts.mjs
+
+      - name: Commit vocabulary file updates
+        run: |
+          if git diff --quiet -- data/vocabularyGenerated.json; then
+            echo "No vocabulary file changes to commit."
+          else
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add data/vocabularyGenerated.json
+            git commit -m "chore: append daily vocabulary cards from gemini-4-hydrogen"
+            git push
+          fi

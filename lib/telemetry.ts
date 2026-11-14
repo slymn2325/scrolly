@@ -234,7 +234,7 @@ export async function fetchPaginatedFactsFromApi(options?: {
     offset: String(offset),
     limit: String(limit),
   });
-  if (category && category !== 'all' && category !== 'language_lab') {
+  if (category && category !== 'all' && category !== 'vocabulary') {
     params.set('category', category);
   }
 

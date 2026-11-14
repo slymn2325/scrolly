@@ -8,17 +8,20 @@ import { AnimatePresence, motion } from 'framer-motion';
 import {
   Bell,
   BellOff,
+  BookMarked,
   Download,
   ExternalLink,
   Heart,
   RotateCcw,
   Share2,
+  Volume2,
   X,
 } from 'lucide-react';
 import { checkIsStandalone } from '@/components/PwaInstallPrompt';
 import TopicRadarChart from '@/components/TopicRadarChart';
 import {
   CATEGORIES,
+  FEED_EXPERIENCE_COPY,
   type CategoryId,
   getCategoryMeta,
   type Language,
@@ -32,6 +35,8 @@ import {
 } from '@/utils/factsData';
 import { DOCK_ICON_MAP, UI_ICON_PATHS } from '@/utils/icons8Assets';
 import { getLeagueInfo, type UserMemoryState } from '@/utils/userMemory';
+import type { SavedVocabularyEntry } from '@/types/vocabulary';
+import { loadSavedVocabNotebook, speakVocabularyText } from '@/utils/vocabNotebook';
 
 interface DiplomaProfileModalProps {
   open: boolean;
@@ -66,8 +71,10 @@ export default function DiplomaProfileModal({
   const [exportingDiploma, setExportingDiploma] = useState(false);
   const [diplomaStatusMsg, setDiplomaStatusMsg] = useState<string | null>(null);
   const [isStandalone, setIsStandalone] = useState(false);
+  const [savedVocab, setSavedVocab] = useState<SavedVocabularyEntry[]>([]);
   const scrollBodyRef = useRef<HTMLDivElement>(null);
   const t = translations[lang];
+  const copy = FEED_EXPERIENCE_COPY[lang];
   const league = getLeagueInfo(memory.xp, lang);
 
   useEffect(() => {
@@ -81,6 +88,14 @@ export default function DiplomaProfileModal({
     resetTop();
     const rafId = requestAnimationFrame(resetTop);
     return () => cancelAnimationFrame(rafId);
+  }, [open]);
+
+  useEffect(() => {
+    if (!open) return;
+    const sync = () => setSavedVocab(loadSavedVocabNotebook());
+    sync();
+    window.addEventListener('scrolly-vocab-updated', sync);
+    return () => window.removeEventListener('scrolly-vocab-updated', sync);
   }, [open]);
 
   useEscapeClose(open, onClose);
@@ -451,6 +466,60 @@ export default function DiplomaProfileModal({
                           </span>
                           <ExternalLink className="mt-0.5 h-3.5 w-3.5 shrink-0 text-ink/45 dark:text-violet-300" />
                         </Link>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Kelime Defteri */}
+              <div>
+                <h3 className="mb-2 flex items-center gap-1.5 text-xs font-extrabold uppercase tracking-wider text-ink/65 dark:text-violet-200/70">
+                  <BookMarked className="h-3.5 w-3.5 text-indigo-500" />
+                  <span>
+                    {copy.vocabNotebookTitle} ({savedVocab.length})
+                  </span>
+                </h3>
+                <div data-testid="diploma-vocab-notebook">
+                  {savedVocab.length === 0 ? (
+                    <p className="rounded-2xl border border-dashed border-slate-300 p-3 text-xs font-medium text-ink/60 dark:border-white/20 dark:text-violet-200/60">
+                      {lang === 'tr'
+                        ? 'Henüz kelime kaydetmedin. Dil Öğrenme kartlarında “Kelime Defterime Kaydet”e dokun.'
+                        : 'No saved words yet. Tap Save on Language Learning cards.'}
+                    </p>
+                  ) : (
+                    <div className="space-y-2">
+                      {savedVocab.map((entry) => (
+                        <div
+                          key={entry.id}
+                          className="flex items-start justify-between gap-2 rounded-2xl border border-indigo-100 bg-indigo-50/70 p-3 text-xs dark:border-indigo-400/20 dark:bg-indigo-950/40"
+                        >
+                          <div className="min-w-0">
+                            <p className="font-black text-indigo-800 dark:text-indigo-200">
+                              {entry.word}{' '}
+                              <span className="font-mono text-[10px] font-semibold text-slate-500">
+                                {entry.phonetic}
+                              </span>
+                            </p>
+                            <p className="font-bold text-emerald-700 dark:text-emerald-300">
+                              {entry.meaningTr} · {entry.partOfSpeech}
+                            </p>
+                            <p className="mt-0.5 line-clamp-2 text-[11px] text-slate-600 dark:text-slate-300">
+                              {entry.exampleEn}
+                            </p>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              onButtonPop();
+                              speakVocabularyText(entry.word, 'en-US', 0.9);
+                            }}
+                            aria-label={`${copy.listenEn}: ${entry.word}`}
+                            className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-indigo-600 text-white"
+                          >
+                            <Volume2 className="h-4 w-4" />
+                          </button>
+                        </div>
                       ))}
                     </div>
                   )}

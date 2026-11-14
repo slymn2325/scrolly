@@ -564,8 +564,7 @@ STRICT ANTI-CLICHÉ BAN LIST — NEVER generate or paraphrase these overused int
 
 Instead, write fresh, counter-intuitive, peer-reviewed scientific mechanisms and little-known empirical discoveries.`;
 
-  const userPrompt = `Create exactly 6 brand-new bilingual (TR & EN) micro-fact cards: ONE for each of these 6 categories in exact order:
-${CATEGORIES.join(', ')}
+  const userPrompt = `Create exactly 5 brand-new bilingual (TR & EN) micro-fact cards spanning science/culture categories (choose 5 distinct categories from: ${CATEGORIES.join(', ')}).
 
 Top-performing cards based on real user engagement (use their pacing/wonder style as inspiration, but choose fresh topics — zero clichés from the ban list):
 ${engagementContext}
@@ -576,7 +575,7 @@ ${recentTitlesSample.join(' | ')}
 Available visual sketch themes for \`sketch_type\` (you MUST pick one exact value from this list):
 ${SKETCH_TYPES.join(', ')}
 
-Return a JSON object with a single key \`"facts"\` containing an array of 6 items, each with EXACTLY these keys:
+Return a JSON object with a single key \`"facts"\` containing an array of 5 items, each with EXACTLY these keys:
 - "slug": lowercase ASCII kebab-case slug derived from English title (e.g. "europas-subsurface-ocean")
 - "category": one of "space" | "nature" | "human_body" | "history" | "science" | "records"
 - "title_tr": punchy Turkish headline (max 90 chars)
@@ -594,9 +593,99 @@ Return a JSON object with a single key \`"facts"\` containing an array of 6 item
 - "answer_val": exact verified numerical answer between min_val and max_val
 - "sketch_type": exact matching value from the \`sketch_type\` list above
 - "source_name": authoritative institution or journal name
-- "source_url": real, live deep https:// article/DOI verification URL (never a root domain homepage)`;
+- "source_url": real, live deep https:// article/DOI verification URL (never a root domain homepage)
+
+ALSO include a second key \`"vocabulary"\` with exactly 2 brand-new B1–C2 English vocabulary learning cards (no duplicates of common A1 words). Each vocabulary item MUST have:
+- "word": English lemma (lowercase unless proper noun)
+- "phonetic": real IPA in slashes (e.g. "/rɪˈzɪl.i.ənt/") — NEVER fake placeholders
+- "partOfSpeech": one of "isim" | "sıfat" | "fiil" | "zarf" | "edat"
+- "meaningTr": concise Turkish meaning
+- "definitionEn": one clear English definition sentence
+- "exampleEn": natural English example sentence that CONTAINS the word
+- "exampleTr": Turkish translation of that example
+- "quizOptions": array of exactly 3 Turkish meaning options
+- "correctIndex": 0 | 1 | 2 matching the correct Turkish meaning in quizOptions`;
 
   return { systemPrompt, userPrompt };
+}
+
+function slugifyVocabWord(word) {
+  return String(word || '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 48);
+}
+
+function validateVocabularyCard(raw, existingWords) {
+  if (!raw || typeof raw !== 'object') return null;
+  const word = String(raw.word || '').trim();
+  const phonetic = String(raw.phonetic || '').trim();
+  const partOfSpeech = String(raw.partOfSpeech || '').trim();
+  const meaningTr = String(raw.meaningTr || '').trim();
+  const definitionEn = String(raw.definitionEn || '').trim();
+  const exampleEn = String(raw.exampleEn || '').trim();
+  const exampleTr = String(raw.exampleTr || '').trim();
+  const quizOptions = Array.isArray(raw.quizOptions)
+    ? raw.quizOptions.map((o) => String(o || '').trim()).filter(Boolean).slice(0, 3)
+    : [];
+  const correctIndex = Number(raw.correctIndex);
+
+  if (!word || word.length < 3) return null;
+  if (existingWords.has(word.toLowerCase())) return null;
+  if (!phonetic.startsWith('/') || !phonetic.endsWith('/') || phonetic.includes('…') || phonetic.includes('mart')) {
+    return null;
+  }
+  if (!['isim', 'sıfat', 'fiil', 'zarf', 'edat'].includes(partOfSpeech)) return null;
+  if (!meaningTr || !definitionEn || !exampleEn || !exampleTr) return null;
+  const escapedWord = word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  if (!new RegExp(`\\b${escapedWord}\\b`, 'i').test(exampleEn)) {
+    return null;
+  }
+  if (quizOptions.length !== 3) return null;
+  if (![0, 1, 2].includes(correctIndex)) return null;
+
+  return {
+    id: `vocab-gen-${slugifyVocabWord(word)}-${Date.now().toString(36)}`,
+    category: 'vocabulary',
+    word,
+    phonetic,
+    partOfSpeech,
+    meaningTr,
+    definitionEn,
+    exampleEn,
+    exampleTr,
+    quizOptions: /** @type {[string, string, string]} */ ([quizOptions[0], quizOptions[1], quizOptions[2]]),
+    correctIndex: /** @type {0|1|2} */ (correctIndex),
+  };
+}
+
+async function appendGeneratedVocabulary(cards) {
+  if (!cards.length) return 0;
+  const target = path.join(ROOT_DIR, 'data', 'vocabularyGenerated.json');
+  let existing = [];
+  try {
+    const raw = await fs.readFile(target, 'utf8');
+    const parsed = JSON.parse(raw);
+    if (Array.isArray(parsed)) existing = parsed;
+  } catch {
+    existing = [];
+  }
+  const seen = new Set(
+    existing
+      .map((item) => String(item?.word || '').toLowerCase())
+      .filter(Boolean)
+  );
+  let added = 0;
+  for (const card of cards) {
+    const key = card.word.toLowerCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
+    existing.push(card);
+    added += 1;
+  }
+  await fs.writeFile(target, `${JSON.stringify(existing, null, 2)}\n`, 'utf8');
+  return added;
 }
 
 async function fetchGeneratedFactsFromModel(existingTitlesEn, topEngaged) {
@@ -672,7 +761,10 @@ async function fetchGeneratedFactsFromModel(existingTitlesEn, topEngaged) {
     process.exit(1);
   }
 
-  return parsedPayload.facts;
+  return {
+    facts: parsedPayload.facts,
+    vocabulary: Array.isArray(parsedPayload.vocabulary) ? parsedPayload.vocabulary : [],
+  };
 }
 
 async function main() {
@@ -707,10 +799,11 @@ async function main() {
 
     console.log(`[generateFacts] Loaded ${existingSlugs.size} existing facts and top ${topRes.rows.length} engagement benchmarks.`);
 
-    const rawGenerated = await fetchGeneratedFactsFromModel(
+    const modelPayload = await fetchGeneratedFactsFromModel(
       existingTitlesEn,
       topRes.rows
     );
+    const rawGenerated = modelPayload.facts;
 
     const validCandidates = [];
     const tempSlugs = new Set(existingSlugs);
@@ -731,6 +824,41 @@ async function main() {
       console.error('[generateFacts] Fatal: Zero valid verified facts survived validation from remote AI output.');
       process.exit(1);
     }
+
+    // Seed + generated vocabulary words for de-duplication
+    let seedVocabWords = new Set();
+    try {
+      const seedRaw = await fs.readFile(path.join(ROOT_DIR, 'data', 'vocabularyFacts.ts'), 'utf8');
+      const wordMatches = seedRaw.matchAll(/word:\s*'([^']+)'/g);
+      for (const match of wordMatches) {
+        seedVocabWords.add(match[1].toLowerCase());
+      }
+    } catch {
+      seedVocabWords = new Set();
+    }
+    try {
+      const genRaw = await fs.readFile(path.join(ROOT_DIR, 'data', 'vocabularyGenerated.json'), 'utf8');
+      const genParsed = JSON.parse(genRaw);
+      if (Array.isArray(genParsed)) {
+        for (const item of genParsed) {
+          if (item?.word) seedVocabWords.add(String(item.word).toLowerCase());
+        }
+      }
+    } catch {
+      // ignore missing generated file
+    }
+
+    const validVocab = [];
+    for (const candidate of modelPayload.vocabulary) {
+      const cleanVocab = validateVocabularyCard(candidate, seedVocabWords);
+      if (!cleanVocab) {
+        console.warn('[generateFacts] Skipped invalid/duplicate vocabulary candidate:', candidate?.word);
+        continue;
+      }
+      seedVocabWords.add(cleanVocab.word.toLowerCase());
+      validVocab.push(cleanVocab);
+    }
+    const vocabAdded = await appendGeneratedVocabulary(validVocab.slice(0, 2));
 
     const insertedSummary = [];
 
@@ -785,10 +913,14 @@ async function main() {
       }
     }
 
-    console.log('\n=== Scrolly OpenAI-Compatible Fact Generation Summary ===');
-    console.log(`Generated candidates: ${rawGenerated.length} | Verified: ${validCandidates.length} | Inserted into Postgres: ${insertedSummary.length}`);
+    console.log('\n=== Scrolly gemini-4-hydrogen Generation Summary ===');
+    console.log(`Facts generated: ${rawGenerated.length} | Verified: ${validCandidates.length} | Inserted into Postgres: ${insertedSummary.length}`);
+    console.log(`Vocabulary candidates: ${modelPayload.vocabulary.length} | Valid: ${validVocab.length} | Appended to data/vocabularyGenerated.json: ${vocabAdded}`);
     if (insertedSummary.length > 0) {
       console.table(insertedSummary);
+    }
+    if (validVocab.length > 0) {
+      console.table(validVocab.map((v) => ({ word: v.word, pos: v.partOfSpeech, meaningTr: v.meaningTr })));
     }
   } finally {
     await pool.end();

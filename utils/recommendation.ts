@@ -57,7 +57,7 @@ export function selectNextFactCard(
   categoryWeights: Record<CategoryId, number>,
   excludeId?: string
 ): FactCardData {
-  const isAllPool = activeCategory === 'all' || activeCategory === 'language_lab';
+  const isAllPool = activeCategory === 'all' || activeCategory === 'vocabulary';
   const categoryPool = isAllPool
     ? allFacts
     : allFacts.filter((fact) => fact.category === activeCategory);

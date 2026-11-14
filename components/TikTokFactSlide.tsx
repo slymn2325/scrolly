@@ -8,17 +8,14 @@ import {
   BookOpen,
   ExternalLink,
   Heart,
-  Languages,
   RotateCcw,
   RotateCw,
   Share2,
   Swords,
-  Volume2,
   X,
 } from 'lucide-react';
 import CategoryMotionArt from '@/components/CategoryMotionArt';
 import GuessWidget from '@/components/GuessWidget';
-import LanguageLabOverlay from '@/components/LanguageLabOverlay';
 import { FEED_EXPERIENCE_COPY, getCategoryMeta, type Language, translations } from '@/i18n/translations';
 import { ENABLE_COMPETITIVE_TABS } from '@/lib/featureFlags';
 import { trackEvent } from '@/lib/telemetry';
@@ -26,7 +23,6 @@ import type { CategoryId, FactCard, GuessChallenge } from '@/types/fact';
 import { cryptoRandomInt } from '@/utils/cryptoRandom';
 import { getFactUrl } from '@/utils/factsData';
 import { vibrateTap } from '@/utils/haptics';
-import { speakVocabularyText } from '@/utils/languageLabData';
 
 interface TikTokFactSlideProps {
   fact: FactCard;
@@ -35,7 +31,6 @@ interface TikTokFactSlideProps {
   isFirstCard?: boolean;
   isActive?: boolean;
   cookieBannerVisible?: boolean;
-  languageLabMode?: boolean;
   onFlip: (fact: FactCard) => void;
   onDoubleTapLike: (fact: FactCard) => void;
   onDwellRead: (fact: FactCard) => void;
@@ -270,7 +265,6 @@ export default function TikTokFactSlide({
   isFirstCard = false,
   isActive = true,
   cookieBannerVisible = false,
-  languageLabMode = false,
   onFlip,
   onDoubleTapLike,
   onDwellRead,
@@ -280,15 +274,11 @@ export default function TikTokFactSlide({
   onGuessReward,
   onToggleFavorite,
   onButtonPop,
-  onEarnXp,
-  onSuccessSound,
-  onWrongSound,
 }: TikTokFactSlideProps) {
   const [isFlipped, setIsFlipped] = useState(false);
   const [isFlipping, setIsFlipping] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const [isGuessLocked, setIsGuessLocked] = useState(false);
-  const [isLanguageLabOpen, setIsLanguageLabOpen] = useState(false);
   const [heartBursts, setHeartBursts] = useState<HeartBurst[]>([]);
 
   const slideRef = useRef<HTMLDivElement>(null);
@@ -330,7 +320,6 @@ export default function TikTokFactSlide({
     setIsFlipping(false);
     setIsDragging(false);
     setIsGuessLocked(false);
-    setIsLanguageLabOpen(false);
     hasCountedDwellRef.current = false;
     hasSentDwellEventRef.current = false;
     visibleEnterTimeRef.current = null;
@@ -384,7 +373,6 @@ export default function TikTokFactSlide({
       clearPendingTimers();
       setIsFlipping(false);
       setIsDragging(false);
-      setIsLanguageLabOpen(false);
       setHeartBursts([]);
       flushDwellDuration();
       return;
@@ -520,7 +508,7 @@ export default function TikTokFactSlide({
     setIsDragging(true);
     longPressTriggeredRef.current = false;
     clearLongPressTimer();
-    if (isFlipped || isLanguageLabOpen) return;
+    if (isFlipped) return;
     pointerStartRef.current = { x: e.clientX, y: e.clientY };
     longPressTimerRef.current = setTimeout(() => {
       longPressTimerRef.current = null;
@@ -694,15 +682,15 @@ export default function TikTokFactSlide({
         style={{ backgroundImage: mesh.dark }}
       />
 
-      {/* Centered Responsive 9:16 Stage Wrapper (Full-bleed 100dvh on mobile; 9:16 full-height Reels stage on tablet/desktop) */}
-      <div className="relative mx-auto h-full w-full overflow-hidden md:aspect-[9/16] md:h-full md:w-auto md:max-w-[600px] md:rounded-[28px] md:shadow-2xl md:ring-1 md:ring-white/40 dark:md:ring-white/15">
-        {/* Stage Interior Light/Dark Gradient Mesh */}
+      {/* Centered vertical stage — hard overflow boundary at 440px */}
+      <div className="relative mx-auto h-full w-full max-w-[440px] overflow-hidden md:rounded-[28px] md:shadow-2xl md:ring-1 md:ring-white/40 dark:md:ring-white/15">
+        {/* Stage Interior Light/Dark Gradient Mesh — z-10 */}
         <div
-          className="pointer-events-none absolute inset-0 h-full w-full dark:hidden"
+          className="pointer-events-none absolute inset-0 z-10 h-full w-full dark:hidden"
           style={{ backgroundImage: mesh.light }}
         />
         <div
-          className="pointer-events-none absolute inset-0 hidden h-full w-full dark:block"
+          className="pointer-events-none absolute inset-0 z-10 hidden h-full w-full dark:block"
           style={{ backgroundImage: mesh.dark }}
         />
 
@@ -711,13 +699,13 @@ export default function TikTokFactSlide({
           animate={isActive ? { x: [-14, 14, -14], y: [-10, 12, -10] } : undefined}
           transition={{ duration: 11, repeat: Infinity, ease: 'easeInOut' }}
           style={{ backgroundColor: `${fact.accentColor}26` }}
-          className="pointer-events-none absolute -left-16 top-20 h-64 w-64 lg:h-80 lg:w-80 rounded-full blur-3xl"
+          className="pointer-events-none absolute -left-16 top-20 z-10 h-64 w-64 rounded-full blur-3xl"
         />
         <motion.div
           animate={isActive ? { x: [14, -14, 14], y: [10, -14, 10] } : undefined}
           transition={{ duration: 13, repeat: Infinity, ease: 'easeInOut' }}
           style={{ backgroundColor: `${fact.accentColor}20` }}
-          className="pointer-events-none absolute -right-14 bottom-24 h-72 w-72 lg:h-80 lg:w-80 rounded-full blur-3xl"
+          className="pointer-events-none absolute -right-14 bottom-24 z-10 h-72 w-72 rounded-full blur-3xl"
         />
 
         {/* Category-Specific Micro Ambient Particle Layer */}
@@ -727,20 +715,20 @@ export default function TikTokFactSlide({
           isActive={isActive}
         />
 
-        {/* Subtle translucent readability veil */}
-        <div className="pointer-events-none absolute inset-x-0 bottom-0 h-[62%] bg-gradient-to-t from-white/25 via-white/15 to-transparent dark:from-[#0A0814]/70 dark:via-[#0A0814]/40 dark:to-transparent" />
+        {/* Opaque readability veil — blocks bleed-through under text */}
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 z-10 h-[62%] bg-gradient-to-t from-white/90 via-white/55 to-transparent dark:from-slate-950 dark:via-slate-950/80 dark:to-transparent" />
 
-        {/* ================= FRONT FACE (Full-Bleed Scene) ================= */}
+        {/* ================= FRONT FACE (Full-Bleed Scene) — diagram/content z-10 ================= */}
         <div
           data-testid="fact-card-front"
-          className={`relative z-20 mx-auto flex h-full w-full max-w-[430px] md:max-w-[600px] lg:max-w-[540px] flex-col justify-between md:justify-center md:[justify-content:safe_center] md:gap-8 overflow-y-auto no-scrollbar px-4 md:px-6 pt-[calc(5.8rem+env(safe-area-inset-top))] lg:pt-[96px] lg:pb-[100px] ${
+          className={`relative z-10 mx-auto flex h-full w-full max-w-[440px] flex-col justify-between overflow-y-auto no-scrollbar px-4 pt-[calc(5.8rem+env(safe-area-inset-top))] ${
             cookieBannerVisible
               ? 'pb-[calc(154px+env(safe-area-inset-bottom))]'
               : 'pb-[calc(94px+env(safe-area-inset-bottom))]'
-          }`}
+          } ${isFlipped ? 'invisible pointer-events-none' : ''}`}
         >
           {/* Left / Top Visual Area: Topic-Specific Interactive Sketch Diagram */}
-          <div className="relative z-20 flex w-full shrink-0 items-center justify-center">
+          <div className="relative z-10 flex w-full shrink-0 items-center justify-center">
             <CategoryMotionArt
               variant="hero"
               factId={fact.id}
@@ -757,41 +745,8 @@ export default function TikTokFactSlide({
           </div>
 
           {/* Bottom Description + Guess Overlay */}
-          <div className="pointer-events-none relative z-20 flex w-full flex-col gap-1.5 pr-[76px] md:pr-[84px]">
-            {languageLabMode && (
-              <div
-                data-testid="language-lab-banner"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  vibrateTap(12);
-                  onButtonPop();
-                  setIsLanguageLabOpen(true);
-                }}
-                className="pointer-events-auto mb-0.5 flex cursor-pointer items-center justify-between gap-2 rounded-xl border border-indigo-300/90 bg-indigo-50/95 px-2.5 py-1.5 text-[11px] font-bold text-indigo-950 shadow-sm transition hover:bg-indigo-100 dark:border-indigo-400/35 dark:bg-indigo-950/80 dark:text-indigo-100"
-              >
-                <div className="min-w-0 flex-1">
-                  <span className="inline-flex items-center gap-1 font-black text-indigo-700 dark:text-indigo-300">
-                    <Languages className="h-3.5 w-3.5 shrink-0" />
-                    EN:
-                  </span>{' '}
-                  <span className="truncate">{fact.en.title}</span>
-                </div>
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    vibrateTap(10);
-                    speakVocabularyText(`${fact.en.title}. ${fact.en.factText}`, 'en-US');
-                  }}
-                  aria-label={copy.listenEn}
-                  className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-indigo-600 text-white"
-                >
-                  <Volume2 className="h-4 w-4" />
-                </button>
-              </div>
-            )}
-
-            <div className="inline-flex w-fit items-center gap-1.5 rounded-full border border-slate-200/90 bg-white/95 px-2.5 py-0.5 text-[10.5px] font-extrabold text-ink dark:border-white/15 dark:bg-slate-900/95 dark:text-violet-100">
+          <div className="pointer-events-none relative z-10 flex w-full flex-col gap-1.5 pr-[76px]">
+            <div className="inline-flex w-fit items-center gap-1.5 rounded-full border border-slate-200 bg-white px-2.5 py-0.5 text-[10.5px] font-extrabold text-ink dark:border-white/15 dark:bg-slate-900 dark:text-violet-100">
               <img
                 src={catMeta.iconPath}
                 alt=""
@@ -861,49 +816,35 @@ export default function TikTokFactSlide({
           </div>
         </div>
 
-        {/* ================= BOTTOM SHEET DETAIL VIEW ================= */}
+        {/* ================= FULL-CARD OPAQUE DETAIL / SOURCE VIEW (z-40) ================= */}
         <AnimatePresence>
           {isFlipped && (
             <motion.div
-              key="detail-backdrop"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={(e) => {
-                e.stopPropagation();
-                executeFlip();
-              }}
+              key="detail"
+              data-testid="fact-card-back"
+              data-card-view="detail"
+              role="dialog"
+              aria-modal="true"
+              aria-label={copy.detailSheetTitle}
+              initial={{ opacity: 0, y: 24 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 24 }}
+              transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
+              onClick={(e) => e.stopPropagation()}
               onDoubleClick={(e) => e.stopPropagation()}
               onPointerDown={(e) => e.stopPropagation()}
-              className="absolute inset-0 z-30 flex flex-col justify-end bg-slate-950/50 backdrop-blur-[2px]"
+              onWheel={(e) => e.stopPropagation()}
+              className="absolute inset-0 z-40 flex h-full w-full flex-col bg-slate-50 pt-6 dark:bg-slate-950"
             >
-              <motion.div
-                key="detail"
-                data-testid="fact-card-back"
-                data-card-view="detail"
-                role="dialog"
-                aria-modal="true"
-                aria-label={copy.detailSheetTitle}
-                initial={{ y: '100%', opacity: 0.7 }}
-                animate={{ y: 0, opacity: 1 }}
-                exit={{ y: '100%', opacity: 0.7 }}
-                transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
-                onClick={(e) => e.stopPropagation()}
-                onDoubleClick={(e) => e.stopPropagation()}
-                onWheel={(e) => e.stopPropagation()}
-                style={{ willChange: 'transform' }}
-                className={`relative flex max-h-[84dvh] w-full flex-col rounded-t-3xl border-t border-slate-200/90 bg-white/98 px-4 pt-3 shadow-2xl sm:px-6 dark:border-white/15 dark:bg-slate-900/98 ${
+              <div
+                className={`no-scrollbar flex h-full w-full flex-col overflow-y-auto px-4 ${
                   cookieBannerVisible
-                    ? 'pb-[calc(146px+env(safe-area-inset-bottom))]'
-                    : 'pb-[calc(88px+env(safe-area-inset-bottom))]'
+                    ? 'pb-[calc(160px+env(safe-area-inset-bottom))]'
+                    : 'pb-24'
                 }`}
               >
-                {/* Bottom Sheet Drag Handle */}
-                <div className="mx-auto mb-2.5 h-1.5 w-12 shrink-0 rounded-full bg-slate-300/90 dark:bg-white/20" />
-
-                {/* Top Bar: Why / How Badge + Close */}
                 <div className="flex shrink-0 items-center justify-between gap-3">
-                  <div className="inline-flex w-fit items-center gap-1.5 rounded-full bg-violet-100 px-3 py-1 text-xs font-extrabold text-violet-900 dark:bg-violet-900/70 dark:text-violet-200">
+                  <div className="inline-flex w-fit items-center gap-1.5 rounded-full bg-violet-100 px-3 py-1 text-xs font-extrabold text-violet-900 dark:bg-violet-900 dark:text-violet-100">
                     <img
                       src={catMeta.iconPath}
                       alt=""
@@ -921,28 +862,27 @@ export default function TikTokFactSlide({
                       executeFlip();
                     }}
                     aria-label={t.tiktokBackFrontBtn}
-                    className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-ink/10 bg-white/95 text-ink/70 shadow-sm hover:bg-white dark:border-white/15 dark:bg-slate-800/95 dark:text-violet-200"
+                    data-testid="detail-close-btn"
+                    className="relative z-50 flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white text-ink shadow-sm dark:border-white/15 dark:bg-slate-900 dark:text-violet-100"
                   >
                     <X className="h-4 w-4" />
                   </button>
                 </div>
 
-                {/* Scrollable Middle: Title, Deep-Dive Science, Source Card & Compact Metric Pills */}
-                <div className="no-scrollbar my-3 flex-1 overflow-y-auto pr-1">
-                  <h3 className="font-display text-lg sm:text-xl md:text-2xl font-bold leading-snug text-ink dark:text-white whitespace-normal break-words">
+                <div className="my-3 flex-1 pr-1">
+                  <h3 className="font-display text-lg font-bold leading-snug text-ink dark:text-white sm:text-xl whitespace-normal break-words">
                     {localized.title}
                   </h3>
 
-                  <p className="mt-3 text-[14.5px] sm:text-[15.5px] leading-relaxed text-ink/90 dark:text-violet-100/95 whitespace-normal break-words">
+                  <p className="mt-3 text-[14.5px] leading-relaxed text-ink dark:text-slate-100 whitespace-normal break-words">
                     {localized.deepDiveDetail}
                   </p>
 
-                  {/* Verified Academic/Institutional Source Box */}
                   <div
                     data-testid="fact-source-box"
-                    className="mt-4 flex flex-col gap-2.5 rounded-2xl border border-amber-200/90 bg-white/95 px-4 py-3 text-xs shadow-sm dark:border-white/15 dark:bg-slate-900/95"
+                    className="mt-4 flex flex-col gap-2.5 rounded-2xl border border-amber-200 bg-white px-4 py-3 text-xs shadow-sm dark:border-white/15 dark:bg-slate-900"
                   >
-                    <div className="flex items-start gap-2 font-bold text-ink/85 dark:text-violet-100">
+                    <div className="flex items-start gap-2 font-bold text-ink dark:text-violet-100">
                       <BookOpen className="mt-0.5 h-4 w-4 shrink-0 text-violet-600 dark:text-violet-300" />
                       <div className="min-w-0 flex-1">
                         <span
@@ -990,7 +930,6 @@ export default function TikTokFactSlide({
                     </div>
                   </div>
 
-                  {/* Compact Metric Pills */}
                   <div className="mt-3 flex flex-wrap items-center gap-2">
                     <span
                       className={`inline-flex items-center gap-1.5 rounded-full ${catMeta.bgClass} px-3 py-1 text-[11px] font-extrabold ${catMeta.accentText}`}
@@ -998,14 +937,13 @@ export default function TikTokFactSlide({
                       <span>{catMeta.emoji}</span>
                       <span>{catMeta.label[lang]}</span>
                     </span>
-                    <span className="inline-flex items-center gap-1 rounded-full bg-amber-100/90 px-3 py-1 text-[11px] font-extrabold text-amber-900 dark:bg-amber-900/40 dark:text-amber-200">
+                    <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-3 py-1 text-[11px] font-extrabold text-amber-900 dark:bg-amber-900/40 dark:text-amber-200">
                       +15 XP
                     </span>
                   </div>
                 </div>
 
-                {/* Detail Footer Controls */}
-                <div className="relative z-20 flex shrink-0 flex-wrap items-center gap-2 pt-2">
+                <div className="relative z-50 flex shrink-0 flex-wrap items-center gap-2 pt-2">
                   <motion.button
                     type="button"
                     whileTap={{ scale: 0.94 }}
@@ -1014,10 +952,10 @@ export default function TikTokFactSlide({
                       executeFlip();
                     }}
                     data-testid="flip-back-btn"
-                    className="flex flex-1 min-h-[46px] items-center justify-center gap-2 rounded-2xl border border-slate-200/90 bg-white/95 px-4 py-2 text-xs sm:text-sm font-extrabold text-ink shadow-sm dark:border-white/20 dark:bg-slate-900/95 dark:text-white whitespace-normal break-words leading-snug"
+                    className="flex min-h-[46px] flex-1 items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-2 text-xs font-extrabold text-ink shadow-sm dark:border-white/20 dark:bg-slate-900 dark:text-white sm:text-sm"
                   >
                     <RotateCcw className="h-4 w-4 shrink-0" />
-                    <span>{t.tiktokBackFrontBtn}</span>
+                    <span>{lang === 'tr' ? 'Karta Dön' : 'Back to Card'}</span>
                   </motion.button>
 
                   <motion.button
@@ -1026,7 +964,7 @@ export default function TikTokFactSlide({
                     onClick={handleShareClick}
                     aria-label={t.shareFact}
                     data-testid="back-share-story-btn"
-                    className="flex min-h-[46px] items-center justify-center gap-1.5 rounded-2xl border border-violet-300/80 bg-violet-100/95 px-3.5 py-2 text-xs font-extrabold text-violet-900 shadow-sm dark:border-violet-400/30 dark:bg-slate-900/95 dark:text-violet-100"
+                    className="flex min-h-[46px] items-center justify-center gap-1.5 rounded-2xl border border-violet-300 bg-violet-100 px-3.5 py-2 text-xs font-extrabold text-violet-900 shadow-sm dark:border-violet-400/30 dark:bg-slate-900 dark:text-violet-100"
                   >
                     <Share2 className="h-4 w-4 shrink-0" />
                   </motion.button>
@@ -1040,23 +978,23 @@ export default function TikTokFactSlide({
                       onNextSlide();
                     }}
                     data-testid="next-card-btn"
-                    className="flex flex-1 min-h-[46px] items-center justify-center gap-2 rounded-2xl bg-ink px-4 py-2 text-xs sm:text-sm font-extrabold text-white shadow-lg dark:bg-violet-600 whitespace-normal break-words leading-snug"
+                    className="flex min-h-[46px] flex-1 items-center justify-center gap-2 rounded-2xl bg-ink px-4 py-2 text-xs font-extrabold text-white shadow-lg dark:bg-violet-600 sm:text-sm"
                   >
-                    <span>{t.tiktokNextSlideBtn}</span>
+                    <span>{lang === 'tr' ? 'Sonraki Bilgiye Kaydır' : t.tiktokNextSlideBtn}</span>
                     <ArrowDown className="h-4 w-4 shrink-0" />
                   </motion.button>
                 </div>
-              </motion.div>
+              </div>
             </motion.div>
           )}
         </AnimatePresence>
 
-      {/* Vertical TikTok Action Column Anchored to Stage Boundary (Hidden When Detail View Is Open) */}
+      {/* Right action column — z-20 (Hidden When Detail View Is Open) */}
       {!isFlipped && (
         <div
           onClick={(e) => e.stopPropagation()}
           onDoubleClick={(e) => e.stopPropagation()}
-          className={`absolute right-3 md:right-4 z-30 flex flex-col items-center gap-3 transition-[bottom] duration-200 md:bottom-1/2 md:translate-y-1/2 ${
+          className={`absolute right-3 z-20 flex flex-col items-center gap-3 transition-[bottom] duration-200 ${
             cookieBannerVisible
               ? 'bottom-[calc(154px+env(safe-area-inset-bottom))]'
               : 'bottom-[calc(94px+env(safe-area-inset-bottom))]'
@@ -1091,7 +1029,13 @@ export default function TikTokFactSlide({
               <Heart className={`h-5 w-5 ${isFavorite ? 'fill-current' : ''}`} />
             </span>
             <span className="text-[10.5px] font-extrabold text-ink/85 dark:text-white/90">
-              {displayLikes}
+              {displayLikes === 1
+                ? lang === 'tr'
+                  ? '1 beğeni'
+                  : '1 heart'
+                : lang === 'tr'
+                  ? `${displayLikes} beğeni`
+                  : `${displayLikes} hearts`}
             </span>
           </motion.button>
 
@@ -1138,35 +1082,7 @@ export default function TikTokFactSlide({
             </motion.button>
           )}
 
-          {/* 4. TR/EN Language Lab */}
-          <motion.button
-            type="button"
-            whileTap={{ scale: 0.9 }}
-            onClick={(e) => {
-              e.stopPropagation();
-              vibrateTap(12);
-              onButtonPop();
-              setIsLanguageLabOpen(true);
-            }}
-            aria-label={copy.learnTrEnBtn}
-            data-testid="language-lab-trigger"
-            className="flex flex-col items-center gap-0.5"
-          >
-            <span
-              className={`flex h-11 w-11 items-center justify-center rounded-full border transition-all ${
-                isLanguageLabOpen || languageLabMode
-                  ? 'border-indigo-400 bg-indigo-600 text-white shadow-lg shadow-indigo-500/40'
-                  : 'border-slate-200/90 bg-white/95 text-indigo-700 shadow-md dark:border-white/20 dark:bg-slate-900/95 dark:text-indigo-300'
-              }`}
-            >
-              <Languages className="h-5 w-5" />
-            </span>
-            <span className="max-w-[54px] text-center text-[10px] font-extrabold leading-tight text-ink/85 dark:text-white/90">
-              {copy.learnTrEnBtn}
-            </span>
-          </motion.button>
-
-          {/* 5. Share */}
+          {/* 4. Share */}
           <motion.button
             type="button"
             whileTap={{ scale: 0.9 }}
@@ -1175,7 +1091,7 @@ export default function TikTokFactSlide({
             data-testid="card-share-btn"
             className="flex flex-col items-center gap-0.5"
           >
-            <span className="flex h-11 w-11 items-center justify-center rounded-full border border-slate-200/90 bg-white/95 text-ink shadow-md transition-colors dark:border-white/20 dark:bg-slate-900/95 dark:text-white">
+            <span className="flex h-11 w-11 items-center justify-center rounded-full border border-slate-200 bg-white text-ink shadow-md transition-colors dark:border-white/20 dark:bg-slate-900 dark:text-white">
               <Share2 className="h-5 w-5" />
             </span>
             <span className="text-[10.5px] font-extrabold text-ink/85 dark:text-white/90">
@@ -1184,18 +1100,6 @@ export default function TikTokFactSlide({
           </motion.button>
         </div>
       )}
-
-      {/* Interactive Bilingual Language Lab Overlay */}
-      <LanguageLabOverlay
-        fact={fact}
-        lang={lang}
-        open={isLanguageLabOpen}
-        onClose={() => setIsLanguageLabOpen(false)}
-        onEarnXp={(earned) => onEarnXp?.(earned, 'language_lab')}
-        onButtonPop={onButtonPop}
-        onSuccessSound={onSuccessSound}
-        onWrongSound={onWrongSound}
-      />
       </div>
 
       {/* Double-Tap Heart Burst Animation Overlay at (x, y) */}

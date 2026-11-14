@@ -6,6 +6,7 @@ import { ChevronDown } from 'lucide-react';
 import NativeAdSlide from '@/components/NativeAdSlide';
 import QuizCtaSlide from '@/components/QuizCtaSlide';
 import TikTokFactSlide from '@/components/TikTokFactSlide';
+import VocabularySlide from '@/components/VocabularySlide';
 import {
   CATEGORIES,
   CATEGORY_SELECTOR_OPTIONS,
@@ -17,10 +18,13 @@ import {
   translations,
 } from '@/i18n/translations';
 import type { FactCard } from '@/types/fact';
+import type { VocabularyCard } from '@/types/vocabulary';
+import { getVocabularyFacts } from '@/data/vocabularyFacts';
 import { UI_ICON_PATHS } from '@/utils/icons8Assets';
 
 export type FeedSlideItem =
   | { type: 'fact'; key: string; fact: FactCard; factIndex: number }
+  | { type: 'vocabulary'; key: string; card: VocabularyCard; vocabIndex: number }
   | { type: 'quizCta'; key: string; ctaIndex: number }
   | { type: 'ad'; key: string; adIndex: number };
 
@@ -58,6 +62,7 @@ interface TikTokFeedProps {
   onEarnXp?: (xp: number, source?: string) => void;
   onSuccessSound?: () => void;
   onWrongSound?: () => void;
+  vocabularyCards?: VocabularyCard[];
 }
 
 const TikTokFeed = forwardRef<TikTokFeedHandle, TikTokFeedProps>(function TikTokFeed(
@@ -90,6 +95,7 @@ const TikTokFeed = forwardRef<TikTokFeedHandle, TikTokFeedProps>(function TikTok
     onEarnXp,
     onSuccessSound,
     onWrongSound,
+    vocabularyCards,
   },
   ref
 ) {
@@ -105,16 +111,43 @@ const TikTokFeed = forwardRef<TikTokFeedHandle, TikTokFeedProps>(function TikTok
   const copy = FEED_EXPERIENCE_COPY[lang];
   const allCategoryMeta = CATEGORIES[0];
   const activeCategoryMeta = getCategoryMeta(activeCategory);
+  const vocabPool = useMemo(
+    () => (vocabularyCards && vocabularyCards.length > 0 ? vocabularyCards : getVocabularyFacts()),
+    [vocabularyCards]
+  );
 
-  // Build slide stream: insert QuizCtaSlide every 13 fact cards, and NativeAdSlide offset at 7 + 13k so they are never adjacent
+  // Dil Öğrenme = vocab-only. Genel = facts + 1 vocab every 4–5 cards. Category = filtered facts.
   const slides: FeedSlideItem[] = useMemo(() => {
     const items: FeedSlideItem[] = [];
     let adCount = 0;
     let ctaCount = 0;
+    let vocabCursor = 0;
 
+    if (activeCategory === 'vocabulary') {
+      return vocabPool.map((card, idx) => ({
+        type: 'vocabulary' as const,
+        key: `vocab-${card.id}-${idx}`,
+        card,
+        vocabIndex: idx,
+      }));
+    }
+
+    const insertVocabEvery = 5;
     deckFacts.forEach((fact, idx) => {
       items.push({ type: 'fact', key: `fact-${fact.id}-${idx}`, fact, factIndex: idx });
       const position = idx + 1;
+
+      if (activeCategory === 'all' && vocabPool.length > 0 && position % insertVocabEvery === 0) {
+        const card = vocabPool[vocabCursor % vocabPool.length];
+        items.push({
+          type: 'vocabulary',
+          key: `vocab-mix-${card.id}-${vocabCursor}`,
+          card,
+          vocabIndex: vocabCursor,
+        });
+        vocabCursor += 1;
+      }
+
       const hasMoreFacts = idx < deckFacts.length - 1;
       if (!hasMoreFacts) return;
 
@@ -128,12 +161,16 @@ const TikTokFeed = forwardRef<TikTokFeedHandle, TikTokFeedProps>(function TikTok
     });
 
     return items;
-  }, [deckFacts]);
+  }, [deckFacts, activeCategory, vocabPool]);
 
   useEffect(() => {
     activeIndexRef.current = 0;
     setActiveIndex(0);
-  }, [deckFacts]);
+    const container = scrollRef.current;
+    if (container) {
+      container.scrollTo({ top: 0, behavior: 'auto' });
+    }
+  }, [deckFacts, activeCategory]);
 
   // Detect active card with IntersectionObserver (threshold: 0.65) and debounce telemetry callback by 150ms
   useEffect(() => {
@@ -302,14 +339,14 @@ const TikTokFeed = forwardRef<TikTokFeedHandle, TikTokFeedProps>(function TikTok
   const progressSlot = activeIndex % progressTotal;
 
   return (
-    <div className="relative h-full w-full overflow-hidden">
-      {/* Top Floating Overlay */}
-      <header className="pointer-events-none fixed inset-x-0 top-0 z-30 mx-auto w-full max-w-[430px] md:max-w-[600px] bg-gradient-to-b from-black/20 via-black/5 to-transparent px-3 pt-[calc(env(safe-area-inset-top)+6px)] pb-3 md:px-6 md:pt-3 dark:from-black/60 dark:via-black/25 dark:to-transparent">
+    <div className="relative mx-auto h-full w-full max-w-[440px] overflow-hidden">
+      {/* Top HUD — z-30, hard-capped to 440px stage */}
+      <header className="pointer-events-none absolute inset-x-0 top-0 z-30 w-full max-w-[440px] bg-gradient-to-b from-black/25 via-black/5 to-transparent px-2.5 pt-[calc(env(safe-area-inset-top)+6px)] pb-2 dark:from-black/60 dark:via-black/25 dark:to-transparent">
         {/* Stories-Style Segmented Deck Progress Indicator */}
         <div
           aria-hidden="true"
           data-testid="stories-progress-bar"
-          className="mb-2 flex items-center gap-1"
+          className="mb-1.5 flex items-center gap-1"
         >
           {Array.from({ length: progressTotal }).map((_, idx) => {
             const isFilled = idx <= progressSlot;
@@ -328,11 +365,11 @@ const TikTokFeed = forwardRef<TikTokFeedHandle, TikTokFeedProps>(function TikTok
           })}
         </div>
         {/* Top Utility Bar: Left Streak+XP | Right Controls */}
-        <div className="pointer-events-auto flex items-center justify-between gap-2">
-          <div className="flex items-center gap-1.5">
+        <div className="pointer-events-auto flex flex-wrap items-center justify-between gap-1.5">
+          <div className="flex flex-wrap items-center gap-1">
             <div
               data-testid="top-streak-xp-pill"
-              className="inline-flex items-center gap-2 rounded-full border border-slate-200/90 bg-white/95 px-3 py-1.5 text-xs font-extrabold text-ink shadow-sm dark:border-white/15 dark:bg-slate-900/95 dark:text-white"
+              className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-2.5 py-1 text-[11px] font-extrabold text-ink shadow-sm dark:border-white/15 dark:bg-slate-900 dark:text-white"
             >
               <span className="inline-flex items-center gap-1 text-amber-600 dark:text-amber-300">
                 <img
@@ -371,14 +408,14 @@ const TikTokFeed = forwardRef<TikTokFeedHandle, TikTokFeedProps>(function TikTok
             </motion.button>
           </div>
 
-          <div className="flex items-center gap-1.5">
+          <div className="flex flex-wrap items-center gap-1">
             <motion.button
               type="button"
               whileTap={{ scale: 0.92 }}
               onClick={onToggleDarkMode}
               aria-label={darkMode ? t.lightModeOn : t.darkModeOn}
               data-testid="theme-toggle-btn"
-              className="flex h-11 w-11 items-center justify-center rounded-full border border-slate-200/90 bg-white/95 text-ink shadow-sm dark:border-white/15 dark:bg-slate-900/95 dark:text-amber-300"
+              className="flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 bg-white text-ink shadow-sm dark:border-white/15 dark:bg-slate-900 dark:text-amber-300"
             >
               <img
                 src={darkMode ? UI_ICON_PATHS.themeSun : UI_ICON_PATHS.themeMoon}
@@ -394,7 +431,7 @@ const TikTokFeed = forwardRef<TikTokFeedHandle, TikTokFeedProps>(function TikTok
               onClick={onToggleSound}
               aria-label={soundEnabled ? t.soundOn : t.soundOff}
               data-testid="sound-toggle-btn"
-              className="flex h-11 w-11 items-center justify-center rounded-full border border-slate-200/90 bg-white/95 text-ink shadow-sm dark:border-white/15 dark:bg-slate-900/95 dark:text-violet-200"
+              className="flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 bg-white text-ink shadow-sm dark:border-white/15 dark:bg-slate-900 dark:text-violet-200"
             >
               <img
                 src={soundEnabled ? UI_ICON_PATHS.soundOn : UI_ICON_PATHS.soundOff}
@@ -407,19 +444,19 @@ const TikTokFeed = forwardRef<TikTokFeedHandle, TikTokFeedProps>(function TikTok
             <div
               role="group"
               aria-label="Language switch"
-              className="flex items-center gap-0.5 rounded-full border border-slate-200/90 bg-white/95 p-0.5 text-[11px] font-black dark:border-white/15 dark:bg-slate-900/95"
+              className="flex items-center gap-0.5 rounded-full border border-slate-200 bg-white p-0.5 text-[10px] font-black dark:border-white/15 dark:bg-slate-900"
             >
               <img
                 src={UI_ICON_PATHS.langGlobe}
                 alt=""
                 aria-hidden="true"
-                className="ml-1 h-4 w-4 object-contain"
+                className="ml-1 h-3.5 w-3.5 object-contain"
               />
               <button
                 type="button"
                 onClick={() => onChangeLang('tr')}
                 data-testid="lang-btn-tr"
-                className={`inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-full px-2.5 py-1 transition-all ${
+                className={`inline-flex min-h-[40px] min-w-[40px] items-center justify-center rounded-full px-2 py-1 transition-all ${
                   lang === 'tr'
                     ? 'bg-ink text-white shadow-sm dark:bg-violet-600'
                     : 'text-ink/80 dark:text-white/85'
@@ -431,7 +468,7 @@ const TikTokFeed = forwardRef<TikTokFeedHandle, TikTokFeedProps>(function TikTok
                 type="button"
                 onClick={() => onChangeLang('en')}
                 data-testid="lang-btn-en"
-                className={`inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-full px-2.5 py-1 transition-all ${
+                className={`inline-flex min-h-[40px] min-w-[40px] items-center justify-center rounded-full px-2 py-1 transition-all ${
                   lang === 'en'
                     ? 'bg-ink text-white shadow-sm dark:bg-violet-600'
                     : 'text-ink/80 dark:text-white/85'
@@ -443,10 +480,10 @@ const TikTokFeed = forwardRef<TikTokFeedHandle, TikTokFeedProps>(function TikTok
           </div>
         </div>
 
-        {/* Clean Top Navigation Row: "Genel" + "Kategori Seç ▾" + Active Category Badge */}
+        {/* Genel + Kategori Seç ▾ */}
         <div
           data-testid="category-bar"
-          className="pointer-events-auto mt-1.5 md:mt-2 flex flex-wrap items-center gap-1.5 md:gap-2"
+          className="pointer-events-auto mt-1.5 flex flex-wrap items-center gap-1.5"
         >
           <motion.button
             type="button"
@@ -457,10 +494,10 @@ const TikTokFeed = forwardRef<TikTokFeedHandle, TikTokFeedProps>(function TikTok
               onSelectCategory('all');
             }}
             data-testid="category-pill-all"
-            className={`inline-flex min-h-[44px] shrink-0 items-center gap-1.5 rounded-full px-3.5 py-1.5 text-[11px] font-extrabold transition-all ${
+            className={`inline-flex min-h-[40px] shrink-0 items-center gap-1.5 rounded-full px-3 py-1.5 text-[11px] font-extrabold transition-all ${
               activeCategory === 'all'
                 ? 'bg-ink text-white shadow-md dark:bg-white dark:text-ink'
-                : 'border border-slate-200/90 bg-white/95 text-ink/85 hover:bg-white dark:border-white/15 dark:bg-slate-900/95 dark:text-white/85'
+                : 'border border-slate-200 bg-white text-ink/85 hover:bg-white dark:border-white/15 dark:bg-slate-900 dark:text-white/85'
             }`}
           >
             <img
@@ -481,13 +518,13 @@ const TikTokFeed = forwardRef<TikTokFeedHandle, TikTokFeedProps>(function TikTok
             }}
             aria-expanded={isCategoryDrawerOpen}
             data-testid="choose-category-btn"
-            className={`inline-flex min-h-[44px] shrink-0 items-center gap-1 rounded-full border px-3.5 py-1.5 text-[11px] font-extrabold transition-all ${
+            className={`inline-flex min-h-[40px] shrink-0 items-center gap-1 rounded-full border px-3 py-1.5 text-[11px] font-extrabold transition-all ${
               isCategoryDrawerOpen
                 ? 'border-violet-500 bg-violet-600 text-white shadow-md'
-                : 'border-slate-200/90 bg-white/95 text-ink hover:bg-white dark:border-white/15 dark:bg-slate-900/95 dark:text-white'
+                : 'border border-slate-200 bg-white text-ink hover:bg-white dark:border-white/15 dark:bg-slate-900 dark:text-white'
             }`}
           >
-            <span>{copy.chooseCategory}</span>
+            <span>{copy.chooseCategory} ▾</span>
             <ChevronDown
               className={`h-3.5 w-3.5 transition-transform duration-200 ${
                 isCategoryDrawerOpen ? 'rotate-180' : ''
@@ -503,9 +540,9 @@ const TikTokFeed = forwardRef<TikTokFeedHandle, TikTokFeedProps>(function TikTok
               onClick={() => setIsCategoryDrawerOpen((prev) => !prev)}
               data-testid="active-category-badge"
               className={`inline-flex min-h-[34px] shrink-0 items-center gap-1.5 rounded-full border px-3 py-1 text-[11px] font-extrabold shadow-sm ${
-                activeCategory === 'language_lab'
+                activeCategory === 'vocabulary'
                   ? 'border-indigo-400 bg-indigo-600 text-white'
-                  : 'border-violet-300 bg-violet-100/95 text-violet-900 dark:border-violet-400/35 dark:bg-violet-900/80 dark:text-violet-100'
+                  : 'border-violet-300 bg-violet-100 text-violet-900 dark:border-violet-400/35 dark:bg-violet-900 dark:text-violet-100'
               }`}
             >
               <img
@@ -519,7 +556,7 @@ const TikTokFeed = forwardRef<TikTokFeedHandle, TikTokFeedProps>(function TikTok
           )}
         </div>
 
-        {/* Expandable Category Picker Strip / Drawer */}
+        {/* Opaque category picker — z-40 above HUD */}
         <AnimatePresence>
           {isCategoryDrawerOpen && (
             <motion.div
@@ -529,7 +566,7 @@ const TikTokFeed = forwardRef<TikTokFeedHandle, TikTokFeedProps>(function TikTok
               exit={{ opacity: 0, y: -8, scale: 0.98 }}
               transition={{ duration: 0.18, ease: 'easeOut' }}
               data-testid="category-drawer"
-              className="pointer-events-auto mt-2 rounded-2xl border border-slate-200/90 bg-white/96 p-2 shadow-xl backdrop-blur-md dark:border-white/15 dark:bg-slate-900/96"
+              className="pointer-events-auto relative z-40 mt-2 rounded-2xl border border-slate-200 bg-slate-50 p-2 shadow-xl dark:border-white/15 dark:bg-slate-950"
             >
               <div className="flex flex-wrap items-center gap-1.5">
                 {CATEGORY_SELECTOR_OPTIONS.map((cat) => {
@@ -548,10 +585,10 @@ const TikTokFeed = forwardRef<TikTokFeedHandle, TikTokFeedProps>(function TikTok
                       data-testid={`category-option-${cat.id}`}
                       className={`inline-flex min-h-[36px] items-center gap-1.5 rounded-full border px-3 py-1.5 text-[11.5px] font-extrabold transition ${
                         isActive
-                          ? cat.id === 'language_lab'
+                          ? cat.id === 'vocabulary'
                             ? 'border-indigo-600 bg-indigo-600 text-white shadow-sm'
                             : 'border-ink bg-ink text-white shadow-sm dark:border-white dark:bg-white dark:text-ink'
-                          : 'border-slate-200/90 bg-slate-50/90 text-ink/85 hover:bg-slate-100 dark:border-white/15 dark:bg-white/5 dark:text-white/90 dark:hover:bg-white/15'
+                          : 'border-slate-200 bg-white text-ink/85 hover:bg-slate-100 dark:border-white/15 dark:bg-slate-900 dark:text-white/90 dark:hover:bg-white/15'
                       }`}
                     >
                       <img
@@ -596,7 +633,6 @@ const TikTokFeed = forwardRef<TikTokFeedHandle, TikTokFeedProps>(function TikTok
                   isFirstCard={slide.factIndex === 0}
                   isActive={isSlideActive}
                   cookieBannerVisible={cookieBannerVisible}
-                  languageLabMode={activeCategory === 'language_lab'}
                   onFlip={onFlipCard}
                   onDoubleTapLike={onDoubleTapLike}
                   onDwellRead={onDwellRead}
@@ -605,6 +641,17 @@ const TikTokFeed = forwardRef<TikTokFeedHandle, TikTokFeedProps>(function TikTok
                   onOpenStoryShare={onOpenStoryShare}
                   onGuessReward={onGuessReward}
                   onToggleFavorite={onToggleFavorite}
+                  onButtonPop={onButtonPop}
+                  onEarnXp={onEarnXp}
+                  onSuccessSound={onSuccessSound}
+                  onWrongSound={onWrongSound}
+                />
+              ) : slide.type === 'vocabulary' ? (
+                <VocabularySlide
+                  card={slide.card}
+                  lang={lang}
+                  isActive={isSlideActive}
+                  cookieBannerVisible={cookieBannerVisible}
                   onButtonPop={onButtonPop}
                   onEarnXp={onEarnXp}
                   onSuccessSound={onSuccessSound}

@@ -112,7 +112,11 @@ function buildPersonalizedDeck(
   categoryWeights: Record<CategoryId, number>,
   shuffle: boolean
 ): FactCardType[] {
-  const isAllPool = category === 'all' || category === 'language_lab';
+  if (category === 'vocabulary') {
+    // Vocabulary Reels are mixed/filtered inside TikTokFeed from VOCABULARY_FACTS.
+    return [];
+  }
+  const isAllPool = category === 'all';
   const pool = isAllPool
     ? [...allFacts]
     : allFacts.filter((fact) => fact.category === category);
@@ -389,7 +393,7 @@ export default function HomeClient({ initialFacts }: HomeClientProps) {
 
     setMemory((prev) => {
       const next =
-        cat !== 'all' && cat !== 'language_lab'
+        cat !== 'all' && cat !== 'vocabulary'
           ? boostCategoryWeight(prev, cat, 1)
           : prev;
       const newDeck = buildPersonalizedDeck(
@@ -404,7 +408,9 @@ export default function HomeClient({ initialFacts }: HomeClientProps) {
       return next;
     });
 
-    if (cat !== 'all' && cat !== 'language_lab') {
+    feedRef.current?.scrollToTop();
+
+    if (cat !== 'all' && cat !== 'vocabulary') {
       const currentCount = allFactsRef.current.filter((f) => f.category === cat).length;
       if (currentCount < 10) {
         void fetchPaginatedFactsFromApi({ offset: 0, limit: 60, category: cat }).then((res) => {
@@ -712,9 +718,9 @@ export default function HomeClient({ initialFacts }: HomeClientProps) {
   const cookieBannerVisible = !memory.cookieAccepted && activeModal === 'none' && !activeQuiz;
 
   return (
-    <div className="relative h-[100dvh] w-screen overflow-hidden bg-slate-950 select-none">
+    <div className="relative flex h-[100dvh] w-screen items-center justify-center overflow-hidden bg-slate-950 select-none">
       <div
-        className={`relative h-[100dvh] w-screen overflow-hidden transition-colors duration-300 ${
+        className={`relative mx-auto h-[100dvh] w-full max-w-[440px] overflow-hidden transition-colors duration-300 ${
           memory.darkMode ? 'bg-[#090D16] text-white' : 'bg-[#F8FAFC] text-slate-900'
         }`}
       >
