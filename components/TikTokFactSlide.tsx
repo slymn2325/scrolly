@@ -3,7 +3,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import Link from 'next/link';
-import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
+import { AnimatePresence, motion, useDragControls, useReducedMotion } from 'framer-motion';
 import {
   ArrowDown,
   Bookmark,
@@ -31,6 +31,7 @@ import { buildFactDetailArticle } from '@/utils/topicMotif';
 interface TikTokFactSlideProps {
   fact: FactCard;
   lang: Language;
+  darkMode?: boolean;
   isFavorite: boolean;
   isFirstCard?: boolean;
   isActive?: boolean;
@@ -112,6 +113,7 @@ function maskHeadlineText(title: string, challenge: GuessChallenge, teaserTitle?
 export default function TikTokFactSlide({
   fact,
   lang,
+  darkMode = true,
   isFavorite,
   isFirstCard = false,
   isActive = true,
@@ -132,9 +134,11 @@ export default function TikTokFactSlide({
   const [isGuessLocked, setIsGuessLocked] = useState(false);
   const [heartBursts, setHeartBursts] = useState<HeartBurst[]>([]);
   const [portalReady, setPortalReady] = useState(false);
-  const [detailDragY, setDetailDragY] = useState(0);
-  const detailDragStartY = useRef<number | null>(null);
-  const detailDragging = useRef(false);
+  const detailDragControls = useDragControls();
+  const detailScrollRef = useRef<HTMLDivElement>(null);
+  const detailDragYRef = useRef(0);
+  const detailPullStartY = useRef<number | null>(null);
+  const detailPulling = useRef(false);
 
   useEffect(() => {
     setPortalReady(true);
@@ -378,6 +382,9 @@ export default function TikTokFactSlide({
 
   const executeFlip = () => {
     setIsFlipping(true);
+    detailDragYRef.current = 0;
+    detailPullStartY.current = null;
+    detailPulling.current = false;
     if (flipTimerRef.current) {
       clearTimeout(flipTimerRef.current);
     }
@@ -396,6 +403,15 @@ export default function TikTokFactSlide({
       return next;
     });
     onFlip(fact);
+  };
+
+  const dismissDetailFromDrag = (offsetY: number, velocityY: number) => {
+    if (offsetY > 110 || velocityY > 650) {
+      vibrateTap(14);
+      executeFlip();
+      return true;
+    }
+    return false;
   };
 
   const clearLongPressTimer = () => {
@@ -669,12 +685,13 @@ export default function TikTokFactSlide({
           </div>
         </div>
 
-        {/* Right Reels action column */}
+        {/* Right Reels action column — flush to stage edge (TikTok-attached) */}
         {!isFlipped && (
           <div
+            data-testid="reels-action-column"
             onClick={(e) => e.stopPropagation()}
             onDoubleClick={(e) => e.stopPropagation()}
-            className="absolute bottom-[104px] right-3 z-20 flex flex-col items-center gap-3"
+            className="absolute bottom-[104px] right-2 z-20 flex flex-col items-center gap-3 lg:bottom-[120px] lg:right-3"
           >
             <motion.button
               type="button"
@@ -791,7 +808,7 @@ export default function TikTokFactSlide({
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
                   transition={{ duration: 0.18 }}
-                  className="pointer-events-none fixed inset-0 z-[60] flex items-center justify-center"
+                  className="pointer-events-none fixed inset-0 z-[60] flex items-center justify-center bg-black/40"
                 >
                   <motion.div
                     key="detail"
@@ -801,50 +818,57 @@ export default function TikTokFactSlide({
                     aria-modal="true"
                     aria-label={copy.detailSheetTitle}
                     initial={{ y: '100%' }}
-                    animate={{ y: detailDragY }}
+                    animate={{ y: 0 }}
                     exit={{ y: '100%' }}
-                    transition={
-                      detailDragging.current
-                        ? { duration: 0 }
-                        : { duration: 0.28, ease: [0.22, 1, 0.36, 1] }
-                    }
+                    transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
+                    drag="y"
+                    dragControls={detailDragControls}
+                    dragListener={false}
+                    dragConstraints={{ top: 0, bottom: 0 }}
+                    dragElastic={{ top: 0, bottom: 0.92 }}
+                    dragMomentum={false}
+                    onDrag={(_e, info) => {
+                      detailDragYRef.current = Math.max(0, info.offset.y);
+                    }}
+                    onDragEnd={(_e, info) => {
+                      const closed = dismissDetailFromDrag(info.offset.y, info.velocity.y);
+                      if (!closed) detailDragYRef.current = 0;
+                    }}
                     onClick={(e) => e.stopPropagation()}
                     onDoubleClick={(e) => e.stopPropagation()}
-                    onPointerDown={(e) => {
-                      e.stopPropagation();
-                      detailDragging.current = true;
-                      detailDragStartY.current = e.clientY;
-                    }}
-                    onPointerMove={(e) => {
-                      if (!detailDragging.current || detailDragStartY.current == null) return;
-                      const dy = Math.max(0, e.clientY - detailDragStartY.current);
-                      setDetailDragY(dy);
-                    }}
-                    onPointerUp={(e) => {
-                      e.stopPropagation();
-                      const dy = detailDragY;
-                      detailDragging.current = false;
-                      detailDragStartY.current = null;
-                      if (dy > 120) {
-                        setDetailDragY(0);
-                        vibrateTap(14);
-                        executeFlip();
-                      } else {
-                        setDetailDragY(0);
-                      }
-                    }}
-                    onPointerCancel={() => {
-                      detailDragging.current = false;
-                      detailDragStartY.current = null;
-                      setDetailDragY(0);
-                    }}
                     onWheel={(e) => e.stopPropagation()}
-                    className="pointer-events-auto relative z-[60] flex h-[100dvh] w-full max-w-[430px] touch-none flex-col overflow-hidden bg-[#111115] text-white md:max-w-[520px] lg:h-[calc(100dvh-3.5rem-1rem)] lg:max-w-[min(680px,52vw)] lg:rounded-[28px] lg:border lg:border-white/10 lg:shadow-2xl"
+                    data-theme={darkMode ? 'dark' : 'light'}
+                    className={`pointer-events-auto relative z-[60] flex h-[100dvh] w-full max-w-none flex-col overflow-hidden lg:h-[100dvh] lg:max-w-[min(620px,50vw)] lg:shadow-2xl ${
+                      darkMode ? 'bg-[#111115] text-white' : 'bg-[#FFFDF9] text-[#1E1B2E]'
+                    }`}
                   >
-                    <div className="no-scrollbar flex h-full w-full flex-col overflow-y-auto px-5 pt-[104px] pb-[104px] touch-pan-y">
-                      <div className="mx-auto mb-2 h-1.5 w-12 shrink-0 rounded-full bg-white/25" data-testid="detail-drag-handle" />
+                    {/* Drag zone: handle + header — starts sheet drag on pointer/touch */}
+                    <div
+                      data-testid="detail-drag-zone"
+                      className="relative z-20 flex shrink-0 touch-none flex-col px-5 pt-[max(12px,env(safe-area-inset-top))] pb-2"
+                      onPointerDown={(e) => {
+                        // Don't steal clicks from the close button
+                        const target = e.target as HTMLElement;
+                        if (target.closest('[data-testid="detail-close-btn"]')) return;
+                        e.stopPropagation();
+                        detailDragControls.start(e);
+                      }}
+                    >
+                      <div
+                        data-testid="detail-drag-handle"
+                        className="mx-auto mb-3 flex h-8 w-full max-w-[120px] cursor-grab items-center justify-center active:cursor-grabbing"
+                        aria-label={lang === 'tr' ? 'Aşağı kaydırarak kapat' : 'Drag down to close'}
+                      >
+                        <span
+                          className={`h-1.5 w-12 rounded-full ${darkMode ? 'bg-white/35' : 'bg-[#1E1B2E]/25'}`}
+                        />
+                      </div>
                       <div className="flex shrink-0 items-center justify-between gap-3">
-                        <div className="inline-flex w-fit items-center gap-1.5 rounded-full bg-white/10 px-3 py-1 text-xs font-extrabold text-white">
+                        <div
+                          className={`inline-flex w-fit items-center gap-1.5 rounded-full px-3 py-1 text-xs font-extrabold ${
+                            darkMode ? 'bg-white/10 text-white' : 'bg-[#1E1B2E]/8 text-[#1E1B2E]'
+                          }`}
+                        >
                           <img src={catMeta.iconPath} alt="" aria-hidden="true" className="h-4 w-4 object-contain" />
                           <span>{t.whyHowHeader}</span>
                         </div>
@@ -857,32 +881,80 @@ export default function TikTokFactSlide({
                           }}
                           aria-label={t.tiktokBackFrontBtn}
                           data-testid="detail-close-btn"
-                          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-white/15 bg-white/10 text-white"
+                          className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full border ${
+                            darkMode
+                              ? 'border-white/15 bg-white/10 text-white'
+                              : 'border-[#1E1B2E]/15 bg-white text-[#1E1B2E]'
+                          }`}
                         >
                           <X className="h-4 w-4" />
                         </button>
                       </div>
+                    </div>
 
+                    <div
+                      ref={detailScrollRef}
+                      className="no-scrollbar flex min-h-0 flex-1 flex-col overflow-y-auto px-5 pb-[104px] touch-pan-y"
+                      onPointerDown={(e) => {
+                        const scroller = detailScrollRef.current;
+                        if (!scroller || scroller.scrollTop > 2) {
+                          detailPullStartY.current = null;
+                          detailPulling.current = false;
+                          return;
+                        }
+                        detailPullStartY.current = e.clientY;
+                        detailPulling.current = false;
+                      }}
+                      onPointerMove={(e) => {
+                        if (detailPullStartY.current == null) return;
+                        const scroller = detailScrollRef.current;
+                        if (!scroller || scroller.scrollTop > 2) return;
+                        const dy = e.clientY - detailPullStartY.current;
+                        if (!detailPulling.current && dy > 14) {
+                          detailPulling.current = true;
+                          detailDragControls.start(e);
+                        }
+                      }}
+                      onPointerUp={() => {
+                        detailPullStartY.current = null;
+                        detailPulling.current = false;
+                      }}
+                      onPointerCancel={() => {
+                        detailPullStartY.current = null;
+                        detailPulling.current = false;
+                      }}
+                    >
                       <div className="my-3 flex-1 pr-1">
-                        <h3 className="font-display text-xl font-bold leading-snug text-white whitespace-normal break-words">
+                        <h3 className="font-display text-xl font-bold leading-snug whitespace-normal break-words">
                           {localized.title}
                         </h3>
                         <p
                           data-testid="fact-detail-article"
                           data-differs-from-teaser={detailArticle.differsFromTeaser ? 'true' : 'false'}
-                          className="mt-3 whitespace-pre-wrap text-[14.5px] leading-relaxed text-white/90 break-words"
+                          className={`mt-3 whitespace-pre-wrap text-[14.5px] leading-relaxed break-words ${
+                            darkMode ? 'text-white/90' : 'text-[#1E1B2E]/85'
+                          }`}
                         >
                           {detailArticle.article}
                         </p>
 
                         <div
                           data-testid="fact-source-box"
-                          className="mt-4 flex flex-col gap-2.5 rounded-2xl border border-white/15 bg-white/5 px-4 py-3 text-xs"
+                          className={`mt-4 flex flex-col gap-2.5 rounded-2xl border px-4 py-3 text-xs ${
+                            darkMode
+                              ? 'border-white/15 bg-white/5'
+                              : 'border-[#1E1B2E]/12 bg-white'
+                          }`}
                         >
-                          <div className="flex items-start gap-2 font-bold text-white/90">
-                            <BookOpen className="mt-0.5 h-4 w-4 shrink-0 text-violet-300" />
+                          <div className={`flex items-start gap-2 font-bold ${darkMode ? 'text-white/90' : 'text-[#1E1B2E]'}`}>
+                            <BookOpen className={`mt-0.5 h-4 w-4 shrink-0 ${darkMode ? 'text-violet-300' : 'text-violet-600'}`} />
                             <div className="min-w-0 flex-1">
-                              <span lang={lang} className="block text-[10px] font-black uppercase tracking-wider text-white/60">
+                              <span
+                                lang={lang}
+                                className={`block text-[10px] font-black uppercase tracking-wider ${
+                                  darkMode ? 'text-white/60' : 'text-[#1E1B2E]/55'
+                                }`}
+                              >
                                 {t.sourceLabel}
                               </span>
                               <span data-testid="fact-source-name" className="text-xs font-extrabold whitespace-normal break-words">
@@ -890,7 +962,11 @@ export default function TikTokFactSlide({
                               </span>
                             </div>
                           </div>
-                          <div className="flex flex-wrap items-center justify-between gap-2 border-t border-white/10 pt-2">
+                          <div
+                            className={`flex flex-wrap items-center justify-between gap-2 border-t pt-2 ${
+                              darkMode ? 'border-white/10' : 'border-[#1E1B2E]/10'
+                            }`}
+                          >
                             {resolvedSourceUrl ? (
                               <a
                                 href={resolvedSourceUrl}
@@ -898,18 +974,26 @@ export default function TikTokFactSlide({
                                 rel="noopener noreferrer"
                                 onClick={(e) => e.stopPropagation()}
                                 data-testid="fact-source-link"
-                                className="inline-flex min-h-[36px] items-center gap-1 rounded-full bg-violet-500/25 px-3 py-1 text-[11px] font-extrabold text-violet-100"
+                                className={`inline-flex min-h-[36px] items-center gap-1 rounded-full px-3 py-1 text-[11px] font-extrabold ${
+                                  darkMode
+                                    ? 'bg-violet-500/25 text-violet-100'
+                                    : 'bg-violet-100 text-violet-800'
+                                }`}
                               >
                                 <span>{t.verifySourceCta}</span>
                                 <ExternalLink className="h-3 w-3 shrink-0" />
                               </a>
                             ) : (
-                              <span className="text-[11px] font-semibold text-white/70">{localized.sourceHint}</span>
+                              <span className={`text-[11px] font-semibold ${darkMode ? 'text-white/70' : 'text-[#1E1B2E]/65'}`}>
+                                {localized.sourceHint}
+                              </span>
                             )}
                             <Link
                               href={factUrl}
                               onClick={(e) => e.stopPropagation()}
-                              className="inline-flex min-h-[36px] items-center gap-1 font-extrabold text-white/80 hover:underline"
+                              className={`inline-flex min-h-[36px] items-center gap-1 font-extrabold hover:underline ${
+                                darkMode ? 'text-white/80' : 'text-[#1E1B2E]/75'
+                              }`}
                             >
                               <span>{t.readFullPage}</span>
                               <ExternalLink className="h-3 w-3 shrink-0" />
@@ -927,7 +1011,11 @@ export default function TikTokFactSlide({
                             executeFlip();
                           }}
                           data-testid="flip-back-btn"
-                          className="flex min-h-[46px] flex-1 items-center justify-center gap-2 rounded-2xl border border-white/15 bg-white/10 px-4 text-xs font-extrabold text-white"
+                          className={`flex min-h-[46px] flex-1 items-center justify-center gap-2 rounded-2xl border px-4 text-xs font-extrabold ${
+                            darkMode
+                              ? 'border-white/15 bg-white/10 text-white'
+                              : 'border-[#1E1B2E]/15 bg-white text-[#1E1B2E]'
+                          }`}
                         >
                           <RotateCcw className="h-4 w-4 shrink-0" />
                           <span>{lang === 'tr' ? 'Karta Dön' : 'Back to Card'}</span>
@@ -941,7 +1029,11 @@ export default function TikTokFactSlide({
                             onNextSlide();
                           }}
                           data-testid="next-card-btn"
-                          className="flex min-h-[46px] flex-1 items-center justify-center gap-2 rounded-2xl bg-white px-4 text-xs font-extrabold text-[#09090B]"
+                          className={`flex min-h-[46px] flex-1 items-center justify-center gap-2 rounded-2xl px-4 text-xs font-extrabold ${
+                            darkMode
+                              ? 'bg-white text-[#09090B]'
+                              : 'bg-[#1E1B2E] text-white'
+                          }`}
                         >
                           <span>{lang === 'tr' ? 'Sonraki Bilgiye Kaydır' : t.tiktokNextSlideBtn}</span>
                           <ArrowDown className="h-4 w-4 shrink-0" />

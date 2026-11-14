@@ -425,13 +425,377 @@ export default function FullBleedReelsCanvas({
       }
     };
 
+    const drawFishSilhouette = (cx: number, cy: number, scale: number, facing: 1 | -1) => {
+      ctx.save();
+      ctx.translate(cx, cy);
+      ctx.scale(facing * scale, scale);
+      ctx.fillStyle = `rgba(${Math.min(255, rgb.r + 40)},${Math.min(255, rgb.g + 60)},${Math.min(255, rgb.b + 80)},0.82)`;
+      ctx.beginPath();
+      ctx.moveTo(-36, 0);
+      ctx.quadraticCurveTo(-10, -18, 22, -8);
+      ctx.quadraticCurveTo(34, -4, 38, 0);
+      ctx.quadraticCurveTo(34, 4, 22, 8);
+      ctx.quadraticCurveTo(-10, 18, -36, 0);
+      ctx.closePath();
+      ctx.fill();
+      // tail
+      ctx.beginPath();
+      ctx.moveTo(-34, 0);
+      ctx.lineTo(-52, -14);
+      ctx.lineTo(-46, 0);
+      ctx.lineTo(-52, 14);
+      ctx.closePath();
+      ctx.fill();
+      // eye
+      ctx.fillStyle = 'rgba(255,255,255,0.85)';
+      ctx.beginPath();
+      ctx.arc(22, -3, 3.2, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = 'rgba(15,23,42,0.9)';
+      ctx.beginPath();
+      ctx.arc(23, -3, 1.5, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+    };
+
+    const drawAntarcticFish = (w: number, h: number, t: number, speed: number) => {
+      // cold polar wash
+      const wash = ctx.createLinearGradient(0, 0, 0, h);
+      wash.addColorStop(0, 'rgba(125, 211, 252, 0.16)');
+      wash.addColorStop(0.45, 'rgba(14, 116, 144, 0.08)');
+      wash.addColorStop(1, 'rgba(0,0,0,0)');
+      ctx.fillStyle = wash;
+      ctx.fillRect(0, 0, w, h);
+      drawIce(w, h, t, speed * 0.7);
+      // translucent icefish school
+      drawFishSilhouette(w * 0.52, h * 0.42 + Math.sin(t * speed) * 6, 1.15, 1);
+      drawFishSilhouette(w * 0.28, h * 0.55 + Math.sin(t * speed + 1) * 5, 0.7, -1);
+      drawFishSilhouette(w * 0.74, h * 0.5 + Math.cos(t * speed) * 5, 0.65, 1);
+      // clear-blood pulse near heart area of main fish
+      const pulse = 0.35 + 0.35 * Math.sin(t * 3 * speed);
+      ctx.fillStyle = `rgba(255,255,255,${pulse})`;
+      ctx.beginPath();
+      ctx.arc(w * 0.52 + 8, h * 0.42, 5 + pulse * 4, 0, Math.PI * 2);
+      ctx.fill();
+    };
+
+    const drawOctopus = (w: number, h: number, t: number, speed: number) => {
+      drawOcean(w, h, t, speed * 0.55);
+      const cx = w * 0.5;
+      const cy = h * 0.4;
+      ctx.fillStyle = `rgba(${rgb.r},${rgb.g},${rgb.b},0.75)`;
+      ctx.beginPath();
+      ctx.ellipse(cx, cy - 10, 34, 28, 0, 0, Math.PI * 2);
+      ctx.fill();
+      for (let i = 0; i < 8; i += 1) {
+        const a = (i / 8) * Math.PI - Math.PI * 0.05;
+        const len = 70 + Math.sin(t * speed + i) * 10;
+        const x2 = cx + Math.cos(a) * len;
+        const y2 = cy + 20 + Math.sin(a) * len * 0.55 + Math.sin(t * 2 + i) * 6;
+        ctx.strokeStyle = `rgba(${rgb.r},${rgb.g},${rgb.b},0.7)`;
+        ctx.lineWidth = 5;
+        ctx.beginPath();
+        ctx.moveTo(cx + Math.cos(a) * 18, cy + 8);
+        ctx.quadraticCurveTo(cx + Math.cos(a) * (len * 0.45), cy + 40 + i * 2, x2, y2);
+        ctx.stroke();
+        ctx.fillStyle = `rgba(255,255,255,${0.15 + (i % 3) * 0.08})`;
+        ctx.beginPath();
+        ctx.arc(x2, y2, 4, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      // three heart dots
+      for (let i = 0; i < 3; i += 1) {
+        const hx = cx - 12 + i * 12;
+        const beat = 0.5 + 0.5 * Math.sin(t * 4 * speed + i);
+        ctx.fillStyle = `rgba(244,63,94,${0.45 + beat * 0.4})`;
+        ctx.beginPath();
+        ctx.arc(hx, cy - 8, 3 + beat, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    };
+
+    const drawAnimal = (w: number, h: number, t: number, speed: number) => {
+      // savannah dusk wash
+      const sky = ctx.createLinearGradient(0, 0, 0, h * 0.55);
+      sky.addColorStop(0, 'rgba(251, 146, 60, 0.14)');
+      sky.addColorStop(1, 'rgba(0,0,0,0)');
+      ctx.fillStyle = sky;
+      ctx.fillRect(0, 0, w, h);
+      // ground
+      ctx.fillStyle = 'rgba(80, 55, 30, 0.35)';
+      ctx.fillRect(0, h * 0.68, w, h * 0.32);
+      // wolf/quadruped silhouette
+      const cx = w * 0.5;
+      const cy = h * 0.58 + Math.sin(t * speed) * 3;
+      ctx.fillStyle = `rgba(${Math.max(20, rgb.r - 20)},${Math.max(20, rgb.g - 20)},${Math.max(20, rgb.b - 20)},0.88)`;
+      ctx.beginPath();
+      ctx.ellipse(cx, cy, 48, 22, 0, 0, Math.PI * 2);
+      ctx.fill();
+      // head
+      ctx.beginPath();
+      ctx.ellipse(cx + 48, cy - 10, 18, 14, -0.2, 0, Math.PI * 2);
+      ctx.fill();
+      // ears
+      ctx.beginPath();
+      ctx.moveTo(cx + 42, cy - 20);
+      ctx.lineTo(cx + 38, cy - 36);
+      ctx.lineTo(cx + 50, cy - 22);
+      ctx.closePath();
+      ctx.fill();
+      ctx.beginPath();
+      ctx.moveTo(cx + 54, cy - 18);
+      ctx.lineTo(cx + 58, cy - 34);
+      ctx.lineTo(cx + 64, cy - 16);
+      ctx.closePath();
+      ctx.fill();
+      // legs
+      for (const lx of [-30, -12, 10, 28]) {
+        ctx.fillRect(cx + lx - 3, cy + 12, 6, 34 + Math.sin(t * 3 * speed + lx) * 2);
+      }
+      // tail
+      ctx.beginPath();
+      ctx.moveTo(cx - 46, cy);
+      ctx.quadraticCurveTo(cx - 70, cy - 18 + Math.sin(t * 2) * 4, cx - 78, cy - 6);
+      ctx.strokeStyle = `rgba(${rgb.r},${rgb.g},${rgb.b},0.85)`;
+      ctx.lineWidth = 5;
+      ctx.stroke();
+    };
+
+    const drawBird = (w: number, h: number, t: number, speed: number) => {
+      for (let i = 0; i < 5; i += 1) {
+        const x = w * (0.15 + i * 0.16);
+        const y = h * (0.28 + (i % 3) * 0.08) + Math.sin(t * speed + i) * 10;
+        const flap = Math.sin(t * 4 * speed + i) * 16;
+        ctx.strokeStyle = `rgba(${rgb.r},${rgb.g},${rgb.b},0.75)`;
+        ctx.lineWidth = 2.4;
+        ctx.beginPath();
+        ctx.moveTo(x - 22, y + flap * 0.3);
+        ctx.quadraticCurveTo(x - 8, y - 10 - flap, x, y);
+        ctx.quadraticCurveTo(x + 8, y - 10 - flap, x + 22, y + flap * 0.3);
+        ctx.stroke();
+      }
+      // larger center bird
+      const cx = w * 0.5;
+      const cy = h * 0.45;
+      const flap = Math.sin(t * 3 * speed) * 22;
+      ctx.fillStyle = `rgba(${rgb.r},${rgb.g},${rgb.b},0.8)`;
+      ctx.beginPath();
+      ctx.ellipse(cx, cy, 16, 10, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.beginPath();
+      ctx.moveTo(cx, cy);
+      ctx.quadraticCurveTo(cx - 30, cy - 8 - flap, cx - 55, cy + 6);
+      ctx.quadraticCurveTo(cx - 28, cy + 4, cx, cy);
+      ctx.fill();
+      ctx.beginPath();
+      ctx.moveTo(cx, cy);
+      ctx.quadraticCurveTo(cx + 30, cy - 8 - flap, cx + 55, cy + 6);
+      ctx.quadraticCurveTo(cx + 28, cy + 4, cx, cy);
+      ctx.fill();
+    };
+
+    const drawInsect = (w: number, h: number, t: number, speed: number) => {
+      const cx = w * 0.5;
+      const cy = h * 0.4;
+      // hex hive cells
+      for (let row = 0; row < 4; row += 1) {
+        for (let col = 0; col < 5; col += 1) {
+          const x = w * 0.22 + col * 40 + (row % 2) * 20;
+          const y = h * 0.22 + row * 34;
+          ctx.strokeStyle = `rgba(251, 191, 36,${0.15 + ((row + col) % 3) * 0.08})`;
+          ctx.lineWidth = 1.2;
+          ctx.beginPath();
+          for (let i = 0; i < 6; i += 1) {
+            const a = (i / 6) * Math.PI * 2 + Math.PI / 6;
+            const px = x + Math.cos(a) * 14;
+            const py = y + Math.sin(a) * 14;
+            if (i === 0) ctx.moveTo(px, py);
+            else ctx.lineTo(px, py);
+          }
+          ctx.closePath();
+          ctx.stroke();
+        }
+      }
+      // bee body
+      ctx.save();
+      ctx.translate(cx, cy + Math.sin(t * 2 * speed) * 8);
+      ctx.fillStyle = 'rgba(251, 191, 36, 0.85)';
+      ctx.beginPath();
+      ctx.ellipse(0, 0, 18, 12, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = 'rgba(15, 23, 42, 0.75)';
+      ctx.fillRect(-8, -12, 5, 24);
+      ctx.fillRect(2, -12, 5, 24);
+      ctx.fillStyle = 'rgba(255,255,255,0.35)';
+      const wing = Math.sin(t * 10 * speed) * 8;
+      ctx.beginPath();
+      ctx.ellipse(-6, -16 - wing * 0.2, 16, 8, -0.4, 0, Math.PI * 2);
+      ctx.ellipse(6, -16 + wing * 0.2, 16, 8, 0.4, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+    };
+
+    const drawWelding = (w: number, h: number, t: number, speed: number) => {
+      // vacuum / dark space
+      drawPlanet(w, h, t, speed * 0.35);
+      const y = h * 0.48;
+      const gap = 10 + Math.sin(t * speed) * 2;
+      // two metal plates
+      ctx.fillStyle = 'rgba(148, 163, 184, 0.75)';
+      roundRect(ctx, w * 0.18, y - 28, w * 0.28, 56, 6);
+      ctx.fill();
+      roundRect(ctx, w * 0.54, y - 28, w * 0.28, 56, 6);
+      ctx.fill();
+      // atomic bond sparks in the seam
+      const seamX = w * 0.5;
+      for (let i = 0; i < 12; i += 1) {
+        const py = y - 22 + i * 4;
+        const spark = 0.4 + 0.6 * Math.abs(Math.sin(t * 6 * speed + i));
+        ctx.fillStyle = `rgba(56, 189, 248,${spark})`;
+        ctx.beginPath();
+        ctx.arc(seamX + Math.sin(t + i) * gap * 0.2, py, 2 + spark * 2, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.strokeStyle = `rgba(125, 211, 252,${0.55 + 0.35 * Math.sin(t * 4 * speed)})`;
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(seamX, y - 26);
+      ctx.lineTo(seamX, y + 26);
+      ctx.stroke();
+    };
+
+    const drawVolcano = (w: number, h: number, t: number, speed: number) => {
+      const baseY = h * 0.72;
+      ctx.fillStyle = 'rgba(40, 24, 16, 0.75)';
+      ctx.beginPath();
+      ctx.moveTo(w * 0.15, baseY);
+      ctx.lineTo(w * 0.48, h * 0.32);
+      ctx.lineTo(w * 0.52, h * 0.32);
+      ctx.lineTo(w * 0.85, baseY);
+      ctx.closePath();
+      ctx.fill();
+      // lava glow
+      const glow = 0.35 + 0.35 * Math.sin(t * 2 * speed);
+      ctx.fillStyle = `rgba(249, 115, 22,${glow})`;
+      ctx.beginPath();
+      ctx.moveTo(w * 0.48, h * 0.32);
+      ctx.lineTo(w * 0.5, h * 0.28 - glow * 20);
+      ctx.lineTo(w * 0.52, h * 0.32);
+      ctx.closePath();
+      ctx.fill();
+      // embers
+      for (let i = 0; i < 14; i += 1) {
+        const x = w * 0.5 + Math.sin(t + i) * 30;
+        const y = h * 0.3 - ((t * 40 * speed + i * 20) % (h * 0.25));
+        ctx.fillStyle = `rgba(251, 146, 60,${0.4 + (i % 3) * 0.15})`;
+        ctx.beginPath();
+        ctx.arc(x, y, 2, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    };
+
+    const drawBrain = (w: number, h: number, t: number, speed: number) => {
+      const cx = w * 0.5;
+      const cy = h * 0.38;
+      ctx.strokeStyle = `rgba(${rgb.r},${rgb.g},${rgb.b},0.7)`;
+      ctx.lineWidth = 2;
+      for (let i = 0; i < 6; i += 1) {
+        ctx.beginPath();
+        ctx.ellipse(cx, cy, 50 - i * 4, 38 - i * 2, Math.sin(t * 0.2 + i) * 0.05, 0, Math.PI * 2);
+        ctx.stroke();
+      }
+      // synapses
+      for (let i = 0; i < 10; i += 1) {
+        const a = (i / 10) * Math.PI * 2 + t * 0.3 * speed;
+        const x = cx + Math.cos(a) * 70;
+        const y = cy + Math.sin(a) * 50;
+        const pulse = 0.3 + 0.7 * Math.abs(Math.sin(t * 3 + i));
+        ctx.fillStyle = `rgba(${rgb.r},${rgb.g},${rgb.b},${pulse})`;
+        ctx.beginPath();
+        ctx.arc(x, y, 3, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = `rgba(${rgb.r},${rgb.g},${rgb.b},0.25)`;
+        ctx.beginPath();
+        ctx.moveTo(cx, cy);
+        ctx.lineTo(x, y);
+        ctx.stroke();
+      }
+    };
+
+    const drawAnatomy = (w: number, h: number, t: number, speed: number) => {
+      const cx = w * 0.5;
+      // torso outline
+      ctx.strokeStyle = `rgba(${rgb.r},${rgb.g},${rgb.b},0.65)`;
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.ellipse(cx, h * 0.42, 40, 70, 0, 0, Math.PI * 2);
+      ctx.stroke();
+      // spine
+      ctx.beginPath();
+      ctx.moveTo(cx, h * 0.28);
+      ctx.lineTo(cx, h * 0.58);
+      ctx.stroke();
+      // rib hints
+      for (let i = 0; i < 5; i += 1) {
+        const y = h * 0.34 + i * 12;
+        ctx.beginPath();
+        ctx.moveTo(cx - 28, y);
+        ctx.quadraticCurveTo(cx, y + 4 + Math.sin(t + i) * 2, cx + 28, y);
+        ctx.stroke();
+      }
+      // organ glow (heart-ish)
+      const beat = 0.45 + 0.45 * Math.sin(t * 3.2 * speed);
+      ctx.fillStyle = `rgba(244, 63, 94,${beat})`;
+      ctx.beginPath();
+      ctx.arc(cx - 10, h * 0.4, 8 + beat * 3, 0, Math.PI * 2);
+      ctx.fill();
+    };
+
+    const drawCell = (w: number, h: number, t: number, speed: number) => {
+      const cx = w * 0.5;
+      const cy = h * 0.4;
+      for (let i = 0; i < 3; i += 1) {
+        ctx.strokeStyle = `rgba(${rgb.r},${rgb.g},${rgb.b},${0.25 + i * 0.15})`;
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(cx, cy, 55 + i * 18 + Math.sin(t * speed + i) * 3, 0, Math.PI * 2);
+        ctx.stroke();
+      }
+      ctx.fillStyle = `rgba(${rgb.r},${rgb.g},${rgb.b},0.55)`;
+      ctx.beginPath();
+      ctx.arc(cx, cy, 16 + Math.sin(t * 2 * speed) * 2, 0, Math.PI * 2);
+      ctx.fill();
+      for (let i = 0; i < 8; i += 1) {
+        const a = (i / 8) * Math.PI * 2 + t * 0.4 * speed;
+        ctx.fillStyle = `rgba(${rgb.r},${rgb.g},${rgb.b},0.45)`;
+        ctx.beginPath();
+        ctx.arc(cx + Math.cos(a) * 40, cy + Math.sin(a) * 40, 5, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    };
+
     const drawMotif = (w: number, h: number, t: number, speed: number) => {
       switch (motif) {
         case 'desert_cactus':
           drawDesertCactus(w, h, t, speed);
           break;
+        case 'antarctic_fish':
+          drawAntarcticFish(w, h, t, speed);
+          break;
         case 'ocean':
           drawOcean(w, h, t, speed);
+          break;
+        case 'octopus':
+          drawOctopus(w, h, t, speed);
+          break;
+        case 'animal':
+          drawAnimal(w, h, t, speed);
+          break;
+        case 'bird':
+          drawBird(w, h, t, speed);
+          break;
+        case 'insect':
+          drawInsect(w, h, t, speed);
           break;
         case 'forest':
           drawForest(w, h, t, speed);
@@ -439,14 +803,27 @@ export default function FullBleedReelsCanvas({
         case 'ice':
           drawIce(w, h, t, speed);
           break;
+        case 'volcano':
+          drawVolcano(w, h, t, speed);
+          break;
+        case 'welding':
+          drawWelding(w, h, t, speed);
+          break;
         case 'planet':
         case 'orbit':
           drawPlanet(w, h, t, speed);
           break;
         case 'heart':
-        case 'brain':
-        case 'cell':
           drawHeart(w, h, t, speed);
+          break;
+        case 'brain':
+          drawBrain(w, h, t, speed);
+          break;
+        case 'anatomy':
+          drawAnatomy(w, h, t, speed);
+          break;
+        case 'cell':
+          drawCell(w, h, t, speed);
           break;
         case 'map_borders':
           drawMap(w, h, t, speed);
@@ -464,13 +841,10 @@ export default function FullBleedReelsCanvas({
         case 'typographic':
           drawTypographic(w, h, t, speed);
           break;
-        case 'volcano':
-          drawDesertCactus(w, h, t, speed);
-          break;
         default:
           if (category === 'space') drawPlanet(w, h, t, speed);
           else if (category === 'nature') drawForest(w, h, t, speed);
-          else if (category === 'human_body') drawHeart(w, h, t, speed);
+          else if (category === 'human_body') drawAnatomy(w, h, t, speed);
           else if (category === 'history') drawAstrolabe(w, h, t, speed);
           else drawMolecule(w, h, t, speed);
       }

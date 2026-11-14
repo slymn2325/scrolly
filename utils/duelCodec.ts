@@ -1,7 +1,9 @@
 /**
- * URL-safe Base64 codec for 1v1 Friend Duel links (?duel=<CODE>)
- * Packs 5 cardIds, challenger score, elapsed duration (sec), nickname, and mode.
+ * URL-safe Base64 codec for Friend Duel links (?duel=<CODE>)
+ * Packs cardIds, challenger score, elapsed duration (sec), nickname, mode, and kind (1v1|group).
  */
+
+export type DuelKind = '1v1' | 'group';
 
 export interface DuelPayload {
   cardIds: string[];
@@ -9,6 +11,7 @@ export interface DuelPayload {
   timeSec: number;
   name: string;
   mode?: 'duel' | 'daily' | 'weekly' | 'memory';
+  kind?: DuelKind;
 }
 
 interface CompactDuelWire {
@@ -17,6 +20,7 @@ interface CompactDuelWire {
   t: number;
   n: string;
   m?: 'd' | 'da' | 'w' | 'me';
+  k?: '1' | 'g';
 }
 
 const MODE_TO_SHORT: Record<NonNullable<DuelPayload['mode']>, CompactDuelWire['m']> = {
@@ -66,6 +70,7 @@ export function encodeDuelPayload(payload: DuelPayload): string {
     t: Math.max(1, Math.round(payload.timeSec)),
     n: (payload.name || 'Player').trim().slice(0, 24),
     m: payload.mode ? MODE_TO_SHORT[payload.mode] : 'd',
+    k: payload.kind === 'group' ? 'g' : '1',
   };
 
   try {
@@ -94,6 +99,7 @@ export function decodeDuelPayload(rawParam: string): DuelPayload | null {
       score: Math.max(0, Number(rawScore) || 320),
       timeSec: Math.max(1, Number(rawTime) || 28),
       mode: 'duel',
+      kind: '1v1',
     };
   }
 
@@ -110,6 +116,7 @@ export function decodeDuelPayload(rawParam: string): DuelPayload | null {
       timeSec: typeof parsed.t === 'number' && Number.isFinite(parsed.t) ? Math.max(1, parsed.t) : 28,
       name: typeof parsed.n === 'string' && parsed.n.trim() ? parsed.n.trim().slice(0, 24) : 'Friend',
       mode: parsed.m && SHORT_TO_MODE[parsed.m] ? SHORT_TO_MODE[parsed.m] : 'duel',
+      kind: parsed.k === 'g' ? 'group' : '1v1',
     };
   } catch {
     return null;

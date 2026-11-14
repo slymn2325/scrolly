@@ -17,6 +17,7 @@ import {
 interface VocabularySlideProps {
   card: VocabularyCard;
   lang: Language;
+  darkMode?: boolean;
   isActive?: boolean;
   cookieBannerVisible?: boolean;
   onButtonPop: () => void;
