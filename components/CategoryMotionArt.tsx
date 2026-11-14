@@ -2,7 +2,7 @@
 
 import React, { useRef } from 'react';
 import { motion, useInView, useReducedMotion } from 'framer-motion';
-import InteractiveSketchArt from '@/components/InteractiveSketchArt';
+import FullBleedReelsCanvas from '@/components/FullBleedReelsCanvas';
 import type { CategoryId } from '@/types/fact';
 import { CATEGORY_ILLUSTRATION_MAP, CATEGORY_SUB_ICON_MAP } from '@/utils/icons8Assets';
 
@@ -21,13 +21,10 @@ interface CategoryMotionArtProps {
 }
 
 export default function CategoryMotionArt({
-  factId,
-  sketchType,
   category,
   accentColor,
   lang = 'tr',
   variant = 'hero',
-  isFirstCard = false,
   isActive = true,
   onButtonPop,
 }: CategoryMotionArtProps) {
@@ -90,21 +87,20 @@ export default function CategoryMotionArt({
     );
   }
 
+  // Hero = full-bleed cinematic canvas (no white FIG boxes)
   return (
     <div
+      ref={containerRef}
       data-testid="category-motion-art"
       data-category={category}
-      className="relative mx-auto flex h-[clamp(148px,22dvh,228px)] w-full max-w-[330px] md:h-[clamp(240px,30vh,380px)] md:max-w-[480px] lg:h-[clamp(148px,21dvh,215px)] lg:max-w-[320px] items-center justify-center"
+      className="absolute inset-0 z-0"
     >
-      <InteractiveSketchArt
-        factId={factId}
-        sketchType={sketchType}
+      <FullBleedReelsCanvas
         category={category}
         accentColor={accentColor}
-        lang={lang}
-        isFirstCard={isFirstCard}
         isActive={isActive}
-        onButtonPop={onButtonPop}
+        lang={lang}
+        onInteract={onButtonPop}
       />
     </div>
   );

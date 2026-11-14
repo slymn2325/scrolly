@@ -72,7 +72,7 @@ export default function IosFloatingIslandDock({
   return (
     <div
       data-testid="ios-floating-dock-shell"
-      className={`pointer-events-none fixed inset-x-0 bottom-[calc(0.75rem+env(safe-area-inset-bottom))] z-30 mx-auto w-full max-w-[440px] px-3 ${
+      className={`pointer-events-none fixed inset-x-0 bottom-[calc(0.75rem+env(safe-area-inset-bottom))] z-30 mx-auto w-full max-w-[430px] px-3 ${
         chromeBlocked ? 'opacity-40' : ''
       }`}
     >
@@ -81,7 +81,7 @@ export default function IosFloatingIslandDock({
         data-testid="ios-floating-dock"
         className={`${
           chromeBlocked ? 'pointer-events-none' : 'pointer-events-auto'
-        } flex w-full items-center justify-between rounded-full border border-slate-200/90 bg-white/90 px-2 py-1.5 shadow-[0_8px_32px_rgba(0,0,0,0.16),inset_0_1px_1px_rgba(255,255,255,0.65)] backdrop-blur-sm dark:border-white/20 dark:bg-slate-900/90 dark:shadow-[0_12px_36px_rgba(0,0,0,0.5),inset_0_1px_1px_rgba(255,255,255,0.2)]`}
+        } flex w-full items-center justify-between rounded-full border border-white/15 bg-[#111115]/92 px-2 py-1.5 shadow-[0_8px_32px_rgba(0,0,0,0.45)] backdrop-blur-md`}
       >
       {tabs.map((tab) => {
         const isActive = activeTab === tab.id;

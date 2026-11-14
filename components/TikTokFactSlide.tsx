@@ -61,48 +61,6 @@ const CATEGORY_HANDLE: Record<CategoryId, { tr: string; en: string }> = {
   records: { tr: 'GaripRekor', en: 'OddRecords' },
 };
 
-const CATEGORY_MESH_STYLE: Record<
-  CategoryId,
-  { light: string; dark: string }
-> = {
-  space: {
-    light:
-      'linear-gradient(180deg, #EDE9FE 0%, #DDD6FE 48%, #C4B5FD 100%)',
-    dark:
-      'radial-gradient(circle at 22% 18%, #3B1F6E 0%, #1C1438 48%, #0C0917 100%)',
-  },
-  nature: {
-    light:
-      'linear-gradient(180deg, #E6FAF5 0%, #A7F3D0 48%, #6EE7B7 100%)',
-    dark:
-      'radial-gradient(circle at 78% 20%, #0F4C45 0%, #0E292B 50%, #081216 100%)',
-  },
-  human_body: {
-    light:
-      'linear-gradient(180deg, #FFEAE5 0%, #FECDD3 48%, #FDA4AF 100%)',
-    dark:
-      'radial-gradient(circle at 22% 20%, #5B1E36 0%, #2B1224 50%, #0F0A14 100%)',
-  },
-  history: {
-    light:
-      'linear-gradient(180deg, #FEF6D8 0%, #FDE68A 48%, #FCD34D 100%)',
-    dark:
-      'radial-gradient(circle at 76% 20%, #4E3512 0%, #261B12 52%, #0F0C0B 100%)',
-  },
-  science: {
-    light:
-      'linear-gradient(180deg, #E5F6FF 0%, #BAE6FD 48%, #7DD3FC 100%)',
-    dark:
-      'radial-gradient(circle at 26% 20%, #0F4068 0%, #10243C 50%, #090F1B 100%)',
-  },
-  records: {
-    light:
-      'linear-gradient(180deg, #FCE8F3 0%, #FBCFE8 48%, #F472B6 100%)',
-    dark:
-      'radial-gradient(circle at 74% 20%, #56194E 0%, #281130 50%, #0F0916 100%)',
-  },
-};
-
 function escapeRegExp(value: string): string {
   return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
@@ -146,117 +104,6 @@ function maskHeadlineText(title: string, challenge: GuessChallenge, teaserTitle?
     return title.replace(pattern, '[ ??? ]');
   }
   return title;
-}
-
-function CategoryAmbientEffects({
-  category,
-  accentColor,
-  isActive,
-}: {
-  category: CategoryId;
-  accentColor: string;
-  isActive: boolean;
-}) {
-  const reduceMotion = useReducedMotion();
-  if (!isActive || reduceMotion) return null;
-
-  if (category === 'space') {
-    return (
-      <div className="pointer-events-none absolute inset-0 z-10 overflow-hidden" aria-hidden="true">
-        {[
-          { left: '14%', top: '20%', delay: 0 },
-          { left: '72%', top: '16%', delay: 1.4 },
-          { left: '48%', top: '34%', delay: 2.8 },
-        ].map((star, idx) => (
-          <motion.span
-            key={idx}
-            initial={{ opacity: 0, x: -16, y: -8, scale: 0.6 }}
-            animate={{ opacity: [0, 0.9, 0], x: [0, 38, 74], y: [0, 18, 36], scale: [0.6, 1.15, 0.4] }}
-            transition={{ duration: 4.5, repeat: Infinity, delay: star.delay, ease: 'easeInOut' }}
-            style={{ left: star.left, top: star.top }}
-            className="absolute h-1.5 w-1.5 rounded-full bg-white shadow-[0_0_10px_#fff]"
-          />
-        ))}
-      </div>
-    );
-  }
-
-  if (category === 'nature') {
-    return (
-      <motion.div
-        aria-hidden="true"
-        animate={{ y: [0, -10, 0], opacity: [0.16, 0.3, 0.16] }}
-        transition={{ duration: 6, repeat: Infinity, ease: 'easeInOut' }}
-        className="pointer-events-none absolute inset-x-0 bottom-0 z-10 h-32"
-        style={{
-          background: `radial-gradient(ellipse at 50% 100%, ${accentColor}38 0%, transparent 72%)`,
-        }}
-      />
-    );
-  }
-
-  if (category === 'human_body') {
-    return (
-      <motion.div
-        aria-hidden="true"
-        animate={{ scale: [0.95, 1.08, 0.95], opacity: [0.12, 0.28, 0.12] }}
-        transition={{ duration: 1.8, repeat: Infinity, ease: 'easeInOut' }}
-        style={{ borderColor: `${accentColor}45` }}
-        className="pointer-events-none absolute left-1/2 top-[34%] z-10 h-56 w-56 -translate-x-1/2 -translate-y-1/2 rounded-full border-2"
-      />
-    );
-  }
-
-  if (category === 'history') {
-    return (
-      <div className="pointer-events-none absolute inset-0 z-10 overflow-hidden" aria-hidden="true">
-        {[18, 46, 78].map((leftPct, idx) => (
-          <motion.span
-            key={leftPct}
-            animate={{ y: [20, -45, 20], opacity: [0.15, 0.5, 0.15] }}
-            transition={{ duration: 7 + idx * 1.5, repeat: Infinity, ease: 'easeInOut' }}
-            style={{ left: `${leftPct}%`, top: `${26 + idx * 14}%`, backgroundColor: '#F59E0B' }}
-            className="absolute h-1.5 w-1.5 rounded-full blur-[0.5px]"
-          />
-        ))}
-      </div>
-    );
-  }
-
-  if (category === 'records') {
-    return (
-      <div className="pointer-events-none absolute inset-0 z-10 overflow-hidden" aria-hidden="true">
-        {[
-          { left: '20%', color: '#EC4899', delay: 0 },
-          { left: '54%', color: '#F59E0B', delay: 0.9 },
-          { left: '80%', color: '#8B5CF6', delay: 1.7 },
-        ].map((dot, idx) => (
-          <motion.span
-            key={idx}
-            animate={{ y: [-12, 28, -12], rotate: [0, 180, 360], opacity: [0.2, 0.55, 0.2] }}
-            transition={{ duration: 5.5, repeat: Infinity, delay: dot.delay, ease: 'easeInOut' }}
-            style={{ left: dot.left, top: `${20 + idx * 11}%`, backgroundColor: dot.color }}
-            className="absolute h-2 w-1 rounded-xs"
-          />
-        ))}
-      </div>
-    );
-  }
-
-  // science subtle floating quantum particles
-  return (
-    <div className="pointer-events-none absolute inset-0 z-10 overflow-hidden" aria-hidden="true">
-      {[24, 66].map((leftPct, idx) => (
-        <motion.span
-          key={leftPct}
-          animate={{ x: [-12, 16, -12], y: [8, -16, 8], opacity: [0.2, 0.55, 0.2] }}
-          transition={{ duration: 6 + idx * 2, repeat: Infinity, ease: 'easeInOut' }}
-          style={{ left: `${leftPct}%`, top: `${24 + idx * 16}%`, backgroundColor: accentColor }}
-          className="absolute h-2 w-2 rounded-full opacity-40"
-        />
-      ))}
-    </div>
-  );
 }
 
 export default function TikTokFactSlide({
@@ -592,8 +439,6 @@ export default function TikTokFactSlide({
     void trackEvent(factSlug, fact.category, 'share');
     onOpenStoryShare(fact);
   };
-
-  const mesh = CATEGORY_MESH_STYLE[fact.category] ?? CATEGORY_MESH_STYLE.space;
   const handleName = CATEGORY_HANDLE[fact.category]?.[lang] ?? 'Scrolly';
   const resolvedSourceName =
     localized.sourceName || fact.sourceName || localized.sourceHint;
@@ -624,7 +469,7 @@ export default function TikTokFactSlide({
               <span key={`sp-${idx}`} className="inline-flex items-center gap-1 align-baseline">
                 <span
                   data-testid="spoiler-mask"
-                  className="inline-flex items-center rounded bg-ink/10 px-1.5 py-0.2 font-mono text-[11px] font-black tracking-wider text-violet-700 dark:bg-white/15 dark:text-violet-200"
+                  className="inline-flex items-center rounded bg-white/15 px-1.5 py-0.2 font-mono text-[11px] font-black tracking-wider text-white"
                 >
                   [ ??? ]
                 </span>
@@ -648,7 +493,7 @@ export default function TikTokFactSlide({
         <span>{visibleLead} </span>
         <span
           data-testid="spoiler-mask"
-          className="mr-1 inline-flex items-center rounded bg-ink/10 px-1.5 py-0.2 font-mono text-[11px] font-black tracking-wider text-violet-700 dark:bg-white/15 dark:text-violet-200"
+          className="mr-1 inline-flex items-center rounded bg-white/15 px-1.5 py-0.2 font-mono text-[11px] font-black tracking-wider text-white"
         >
           [ ??? ]
         </span>
@@ -659,7 +504,7 @@ export default function TikTokFactSlide({
     );
   }, [shouldMaskSpoiler, localized.guessChallenge, localized.factText]);
 
-  return (
+    return (
     <div
       ref={slideRef}
       data-testid="fact-card"
@@ -683,108 +528,59 @@ export default function TikTokFactSlide({
         contain: 'layout style paint',
         willChange: isFlipping || isDragging ? 'transform' : 'auto',
       }}
-      className="reels-slide relative flex h-full w-full shrink-0 cursor-pointer items-center justify-center overflow-hidden select-none"
+      className="reels-slide relative flex h-full w-full shrink-0 cursor-pointer items-center justify-center overflow-hidden select-none bg-[#09090B]"
     >
-      {/* Full-Bleed Blurred Dominant-Color Ambient Backdrop (Desktop & Tablet flanks, zero empty white borders) */}
+      {/* Soft blurred side wash from active card color */}
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute inset-0 scale-110 blur-3xl saturate-150 dark:hidden"
-        style={{ backgroundImage: mesh.light }}
-      />
-      <div
-        aria-hidden="true"
-        className="pointer-events-none absolute inset-0 hidden scale-110 blur-3xl saturate-150 dark:block"
-        style={{ backgroundImage: mesh.dark }}
+        className="pointer-events-none absolute inset-0 scale-110 blur-3xl saturate-150"
+        style={{
+          background: `radial-gradient(circle at 50% 30%, ${fact.accentColor}55 0%, transparent 55%), linear-gradient(180deg, #09090B 0%, #050508 100%)`,
+        }}
       />
 
-      {/* Centered vertical stage — hard overflow boundary at 440px */}
-      <div className="relative mx-auto h-full w-full max-w-[440px] overflow-hidden md:rounded-[28px] md:shadow-2xl md:ring-1 md:ring-white/40 dark:md:ring-white/15">
-        {/* Stage Interior Light/Dark Gradient Mesh — z-10 */}
-        <div
-          className="pointer-events-none absolute inset-0 z-10 h-full w-full dark:hidden"
-          style={{ backgroundImage: mesh.light }}
-        />
-        <div
-          className="pointer-events-none absolute inset-0 z-10 hidden h-full w-full dark:block"
-          style={{ backgroundImage: mesh.dark }}
-        />
-
-        {/* Subtle Animated Ambient Orbs (Paused off-screen via isActive) */}
-        <motion.div
-          animate={isActive ? { x: [-14, 14, -14], y: [-10, 12, -10] } : undefined}
-          transition={{ duration: 11, repeat: Infinity, ease: 'easeInOut' }}
-          style={{ backgroundColor: `${fact.accentColor}26` }}
-          className="pointer-events-none absolute -left-16 top-20 z-10 h-64 w-64 rounded-full blur-3xl"
-        />
-        <motion.div
-          animate={isActive ? { x: [14, -14, 14], y: [10, -14, 10] } : undefined}
-          transition={{ duration: 13, repeat: Infinity, ease: 'easeInOut' }}
-          style={{ backgroundColor: `${fact.accentColor}20` }}
-          className="pointer-events-none absolute -right-14 bottom-24 z-10 h-72 w-72 rounded-full blur-3xl"
-        />
-
-        {/* Category-Specific Micro Ambient Particle Layer */}
-        <CategoryAmbientEffects
+      <div className="relative mx-auto h-full w-full max-w-[430px] overflow-hidden bg-[#09090B] md:rounded-[28px] md:border md:border-white/10 md:shadow-2xl">
+        {/* Full-bleed cinematic canvas */}
+        <CategoryMotionArt
+          variant="hero"
+          factId={fact.id}
+          sketchType={fact.sketchType}
           category={fact.category}
           accentColor={fact.accentColor}
+          iconName={fact.iconName}
+          emoji={fact.emoji ?? catMeta.emoji}
+          lang={lang}
+          isFirstCard={isFirstCard}
           isActive={isActive}
+          onButtonPop={onButtonPop}
         />
 
-        {/* Opaque readability veil — blocks bleed-through under text */}
-        <div className="pointer-events-none absolute inset-x-0 bottom-0 z-10 h-[62%] bg-gradient-to-t from-white/90 via-white/55 to-transparent dark:from-slate-950 dark:via-slate-950/80 dark:to-transparent" />
+        {/* Cinematic bottom gradient */}
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 z-[5] h-[58%] bg-gradient-to-t from-[#09090B] via-[#09090B]/75 to-transparent" />
 
-        {/* ================= FRONT FACE (Full-Bleed Scene) — diagram/content z-10 ================= */}
+        {/* Front content — mandatory safe paddings */}
         <div
           data-testid="fact-card-front"
-          className={`relative z-10 mx-auto flex h-full w-full max-w-[440px] flex-col justify-between overflow-y-auto no-scrollbar px-4 pt-[calc(5.8rem+env(safe-area-inset-top))] ${
-            cookieBannerVisible
-              ? 'pb-[calc(154px+env(safe-area-inset-bottom))]'
-              : 'pb-[calc(94px+env(safe-area-inset-bottom))]'
-          } ${isFlipped ? 'invisible pointer-events-none' : ''}`}
+          className={`relative z-10 flex h-full w-full flex-col justify-end overflow-hidden px-4 pt-[108px] pb-[96px] ${
+            isFlipped ? 'invisible pointer-events-none' : ''
+          }`}
         >
-          {/* Left / Top Visual Area: Topic-Specific Interactive Sketch Diagram */}
-          <div className="relative z-10 flex w-full shrink-0 items-center justify-center">
-            <CategoryMotionArt
-              variant="hero"
-              factId={fact.id}
-              sketchType={fact.sketchType}
-              category={fact.category}
-              accentColor={fact.accentColor}
-              iconName={fact.iconName}
-              emoji={fact.emoji ?? catMeta.emoji}
-              lang={lang}
-              isFirstCard={isFirstCard}
-              isActive={isActive}
-              onButtonPop={onButtonPop}
-            />
-          </div>
-
-          {/* Bottom Description + Guess Overlay */}
-          <div className="pointer-events-none relative z-10 flex w-full flex-col gap-1.5 pr-[76px]">
-            <div className="inline-flex w-fit items-center gap-1.5 rounded-full border border-slate-200 bg-white px-2.5 py-0.5 text-[10.5px] font-extrabold text-ink dark:border-white/15 dark:bg-slate-900 dark:text-violet-100">
-              <img
-                src={catMeta.iconPath}
-                alt=""
-                aria-hidden="true"
-                className="h-3.5 w-3.5 object-contain"
-              />
-              <span>
-                @scrolly.{handleName.toLowerCase()} • {t.tiktokScientificTag}
-              </span>
+          <div className="pointer-events-none relative z-10 flex w-full flex-col gap-2 pr-16">
+            <div className="inline-flex w-fit items-center gap-1.5 rounded-full border border-white/20 bg-white/10 px-2.5 py-1 text-[10px] font-extrabold uppercase tracking-wide text-white backdrop-blur-md">
+              <img src={catMeta.iconPath} alt="" aria-hidden="true" className="h-3.5 w-3.5 object-contain" />
+              <span>{catMeta.label[lang]}</span>
             </div>
 
             <h2
               data-testid="fact-headline"
-              className="font-display text-lg font-bold leading-snug text-ink drop-shadow-sm transition-all duration-300 dark:text-white sm:text-xl lg:text-2xl whitespace-normal break-words"
+              className="font-display text-[22px] font-bold leading-snug text-white drop-shadow sm:text-2xl whitespace-normal break-words"
             >
               {displayHeadline}
             </h2>
 
             <p
               data-testid="fact-body"
-              className={`${
-                cookieBannerVisible ? 'line-clamp-2' : 'line-clamp-3'
-              } lg:line-clamp-none text-[12.5px] font-medium leading-snug text-ink/90 transition-all duration-300 dark:text-violet-100/95 sm:text-[13.5px] lg:text-base lg:leading-relaxed whitespace-normal break-words`}
+              className="line-clamp-3 text-[13px] font-medium leading-snug text-white/85 whitespace-normal break-words"
             >
               {renderedFactBody}
             </p>
@@ -820,18 +616,113 @@ export default function TikTokFactSlide({
                 }}
                 onDoubleClick={(e) => e.stopPropagation()}
                 onPointerDown={(e) => e.stopPropagation()}
-                className="inline-flex min-h-[44px] items-center gap-1.5 rounded-full border border-slate-200/90 bg-white/95 px-3.5 py-2 text-[11px] font-extrabold text-violet-900 shadow-sm transition hover:bg-white dark:border-white/20 dark:bg-slate-900/95 dark:text-violet-100 dark:hover:bg-slate-800"
+                className="inline-flex h-11 items-center gap-1.5 rounded-full border border-white/20 bg-white/10 px-3.5 text-[11px] font-extrabold text-white backdrop-blur-md"
               >
-                <span>{lang === 'tr' ? 'Detayı / Kaynağı Gör ↻' : 'See Details / Source ↻'}</span>
+                <span>{lang === 'tr' ? 'Detayı / Kaynağı Gör' : 'See Details / Source'}</span>
               </button>
-              <span className="pointer-events-none text-[10px] font-bold text-ink/80 dark:text-violet-100/85">
+              <span className="pointer-events-none text-[10px] font-bold text-white/70">
                 {copy.doubleTapLikeHint}
               </span>
             </div>
           </div>
         </div>
 
-        {/* Detail portal escapes slide contain/transform so it paints above HUD/dock */}
+        {/* Right Reels action column */}
+        {!isFlipped && (
+          <div
+            onClick={(e) => e.stopPropagation()}
+            onDoubleClick={(e) => e.stopPropagation()}
+            className="absolute bottom-[104px] right-3 z-20 flex flex-col items-center gap-3"
+          >
+            <motion.button
+              type="button"
+              whileTap={{ scale: 0.9 }}
+              onClick={(e) => {
+                e.stopPropagation();
+                if (isFavorite) {
+                  setDbLikeDelta((prev) => prev - 1);
+                  void trackEvent(factSlug, fact.category, 'unlike', { trigger: 'heart_btn' });
+                } else {
+                  setDbLikeDelta((prev) => prev + 1);
+                  void trackEvent(factSlug, fact.category, 'like', { trigger: 'heart_btn' });
+                }
+                onToggleFavorite(fact);
+              }}
+              aria-label={t.favorite}
+              data-testid="card-favorite-btn"
+              className="flex flex-col items-center gap-0.5"
+            >
+              <span
+                className={`flex h-11 w-11 items-center justify-center rounded-full border border-white/20 backdrop-blur-md transition-all ${
+                  isFavorite ? 'bg-rose-500 text-white' : 'bg-white/10 text-white'
+                }`}
+              >
+                <Heart className={`h-5 w-5 ${isFavorite ? 'fill-current' : ''}`} />
+              </span>
+              <span className="text-[10px] font-extrabold text-white/90">
+                {displayLikes === 1
+                  ? lang === 'tr'
+                    ? '1 beğeni'
+                    : '1 heart'
+                  : lang === 'tr'
+                    ? `${displayLikes} beğeni`
+                    : `${displayLikes} hearts`}
+              </span>
+            </motion.button>
+
+            <motion.button
+              type="button"
+              whileTap={{ scale: 0.9 }}
+              onClick={(e) => {
+                e.stopPropagation();
+                executeFlip();
+              }}
+              aria-label={t.flipToBack}
+              data-testid="flip-card-btn"
+              className="flex flex-col items-center gap-0.5"
+            >
+              <span className="flex h-11 w-11 items-center justify-center rounded-full border border-white/20 bg-white/10 text-white backdrop-blur-md">
+                <RotateCw className="h-5 w-5" />
+              </span>
+              <span className="text-[10px] font-extrabold text-white/90">{t.tiktokDetailBtn}</span>
+            </motion.button>
+
+            {ENABLE_COMPETITIVE_TABS && (
+              <motion.button
+                type="button"
+                whileTap={{ scale: 0.9 }}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  void trackEvent(factSlug, fact.category, 'duel');
+                  onOpenDuel(fact);
+                }}
+                aria-label={t.dockDuel}
+                data-testid="card-duel-btn"
+                className="flex flex-col items-center gap-0.5"
+              >
+                <span className="flex h-11 w-11 items-center justify-center rounded-full border border-white/20 bg-white/10 text-amber-300 backdrop-blur-md">
+                  <Swords className="h-5 w-5" />
+                </span>
+                <span className="text-[10px] font-extrabold text-white/90">{t.dockDuel}</span>
+              </motion.button>
+            )}
+
+            <motion.button
+              type="button"
+              whileTap={{ scale: 0.9 }}
+              onClick={handleShareClick}
+              aria-label={t.shareFact}
+              data-testid="card-share-btn"
+              className="flex flex-col items-center gap-0.5"
+            >
+              <span className="flex h-11 w-11 items-center justify-center rounded-full border border-white/20 bg-white/10 text-white backdrop-blur-md">
+                <Share2 className="h-5 w-5" />
+              </span>
+              <span className="text-[10px] font-extrabold text-white/90">{t.shareFact}</span>
+            </motion.button>
+          </div>
+        )}
+
         {portalReady &&
           createPortal(
             <AnimatePresence>
@@ -844,293 +735,133 @@ export default function TikTokFactSlide({
                   transition={{ duration: 0.18 }}
                   className="pointer-events-none fixed inset-0 z-[60] flex justify-center"
                 >
-                <motion.div
-                  key="detail"
-                  data-testid="fact-card-back"
-                  data-card-view="detail"
-                  role="dialog"
-                  aria-modal="true"
-                  aria-label={copy.detailSheetTitle}
-                  initial={{ opacity: 0, y: 24 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: 24 }}
-                  transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
-                  onClick={(e) => e.stopPropagation()}
-                  onDoubleClick={(e) => e.stopPropagation()}
-                  onPointerDown={(e) => e.stopPropagation()}
-                  onWheel={(e) => e.stopPropagation()}
-                  className="pointer-events-auto relative z-[60] flex h-[100dvh] w-full max-w-[440px] flex-col bg-slate-50 pt-[calc(1.5rem+env(safe-area-inset-top))] dark:bg-slate-950"
-                >
-                  <div
-                    className={`no-scrollbar flex h-full w-full flex-col overflow-y-auto px-4 ${
-                      cookieBannerVisible
-                        ? 'pb-[calc(160px+env(safe-area-inset-bottom))]'
-                        : 'pb-24'
-                    }`}
+                  <motion.div
+                    key="detail"
+                    data-testid="fact-card-back"
+                    data-card-view="detail"
+                    role="dialog"
+                    aria-modal="true"
+                    aria-label={copy.detailSheetTitle}
+                    initial={{ y: '100%' }}
+                    animate={{ y: 0 }}
+                    exit={{ y: '100%' }}
+                    transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
+                    onClick={(e) => e.stopPropagation()}
+                    onDoubleClick={(e) => e.stopPropagation()}
+                    onPointerDown={(e) => e.stopPropagation()}
+                    onWheel={(e) => e.stopPropagation()}
+                    className="pointer-events-auto relative z-[60] flex h-[100dvh] w-full max-w-[430px] flex-col bg-[#111115] text-white"
                   >
-                    <div className="flex shrink-0 items-center justify-between gap-3">
-                      <div className="inline-flex w-fit items-center gap-1.5 rounded-full bg-violet-100 px-3 py-1 text-xs font-extrabold text-violet-900 dark:bg-violet-900 dark:text-violet-100">
-                        <img
-                          src={catMeta.iconPath}
-                          alt=""
-                          aria-hidden="true"
-                          className="h-4 w-4 object-contain"
-                        />
-                        <span>{t.whyHowHeader}</span>
+                    <div className="no-scrollbar flex h-full w-full flex-col overflow-y-auto px-5 pt-[104px] pb-[104px]">
+                      <div className="flex shrink-0 items-center justify-between gap-3">
+                        <div className="inline-flex w-fit items-center gap-1.5 rounded-full bg-white/10 px-3 py-1 text-xs font-extrabold text-white">
+                          <img src={catMeta.iconPath} alt="" aria-hidden="true" className="h-4 w-4 object-contain" />
+                          <span>{t.whyHowHeader}</span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onButtonPop();
+                            executeFlip();
+                          }}
+                          aria-label={t.tiktokBackFrontBtn}
+                          data-testid="detail-close-btn"
+                          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-white/15 bg-white/10 text-white"
+                        >
+                          <X className="h-4 w-4" />
+                        </button>
                       </div>
 
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onButtonPop();
-                          executeFlip();
-                        }}
-                        aria-label={t.tiktokBackFrontBtn}
-                        data-testid="detail-close-btn"
-                        className="relative z-50 flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white text-ink shadow-sm dark:border-white/15 dark:bg-slate-900 dark:text-violet-100"
-                      >
-                        <X className="h-4 w-4" />
-                      </button>
-                    </div>
+                      <div className="my-3 flex-1 pr-1">
+                        <h3 className="font-display text-xl font-bold leading-snug text-white whitespace-normal break-words">
+                          {localized.title}
+                        </h3>
+                        <p className="mt-3 text-[14.5px] leading-relaxed text-white/85 whitespace-normal break-words">
+                          {localized.deepDiveDetail}
+                        </p>
 
-                    <div className="my-3 flex-1 pr-1">
-                      <h3 className="font-display text-lg font-bold leading-snug text-ink dark:text-white sm:text-xl whitespace-normal break-words">
-                        {localized.title}
-                      </h3>
-
-                      <p className="mt-3 text-[14.5px] leading-relaxed text-ink dark:text-slate-100 whitespace-normal break-words">
-                        {localized.deepDiveDetail}
-                      </p>
-
-                      <div
-                        data-testid="fact-source-box"
-                        className="mt-4 flex flex-col gap-2.5 rounded-2xl border border-amber-200 bg-white px-4 py-3 text-xs shadow-sm dark:border-white/15 dark:bg-slate-900"
-                      >
-                        <div className="flex items-start gap-2 font-bold text-ink dark:text-violet-100">
-                          <BookOpen className="mt-0.5 h-4 w-4 shrink-0 text-violet-600 dark:text-violet-300" />
-                          <div className="min-w-0 flex-1">
-                            <span
-                              lang={lang}
-                              className="block text-[10px] font-black uppercase tracking-wider text-ink/80 dark:text-violet-200"
+                        <div
+                          data-testid="fact-source-box"
+                          className="mt-4 flex flex-col gap-2.5 rounded-2xl border border-white/15 bg-white/5 px-4 py-3 text-xs"
+                        >
+                          <div className="flex items-start gap-2 font-bold text-white/90">
+                            <BookOpen className="mt-0.5 h-4 w-4 shrink-0 text-violet-300" />
+                            <div className="min-w-0 flex-1">
+                              <span lang={lang} className="block text-[10px] font-black uppercase tracking-wider text-white/60">
+                                {t.sourceLabel}
+                              </span>
+                              <span data-testid="fact-source-name" className="text-xs font-extrabold whitespace-normal break-words">
+                                {resolvedSourceName}
+                              </span>
+                            </div>
+                          </div>
+                          <div className="flex flex-wrap items-center justify-between gap-2 border-t border-white/10 pt-2">
+                            {resolvedSourceUrl ? (
+                              <a
+                                href={resolvedSourceUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                onClick={(e) => e.stopPropagation()}
+                                data-testid="fact-source-link"
+                                className="inline-flex min-h-[36px] items-center gap-1 rounded-full bg-violet-500/25 px-3 py-1 text-[11px] font-extrabold text-violet-100"
+                              >
+                                <span>{t.verifySourceCta}</span>
+                                <ExternalLink className="h-3 w-3 shrink-0" />
+                              </a>
+                            ) : (
+                              <span className="text-[11px] font-semibold text-white/70">{localized.sourceHint}</span>
+                            )}
+                            <Link
+                              href={factUrl}
+                              onClick={(e) => e.stopPropagation()}
+                              className="inline-flex min-h-[36px] items-center gap-1 font-extrabold text-white/80 hover:underline"
                             >
-                              {t.sourceLabel}
-                            </span>
-                            <span
-                              data-testid="fact-source-name"
-                              className="text-xs font-extrabold whitespace-normal break-words"
-                            >
-                              {resolvedSourceName}
-                            </span>
+                              <span>{t.readFullPage}</span>
+                              <ExternalLink className="h-3 w-3 shrink-0" />
+                            </Link>
                           </div>
                         </div>
-
-                        <div className="flex flex-wrap items-center justify-between gap-2 border-t border-black/5 pt-2 dark:border-white/10">
-                          {resolvedSourceUrl ? (
-                            <a
-                              href={resolvedSourceUrl}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              onClick={(e) => e.stopPropagation()}
-                              data-testid="fact-source-link"
-                              className="inline-flex min-h-[36px] items-center gap-1 rounded-full bg-violet-100 px-3 py-1 text-[11px] font-extrabold text-violet-800 hover:bg-violet-200 dark:bg-violet-500/25 dark:text-violet-200"
-                            >
-                              <span>{t.verifySourceCta}</span>
-                              <ExternalLink className="h-3 w-3 shrink-0" />
-                            </a>
-                          ) : (
-                            <span className="text-[11px] font-semibold text-ink/80 dark:text-violet-100/85">
-                              {localized.sourceHint}
-                            </span>
-                          )}
-
-                          <Link
-                            href={factUrl}
-                            onClick={(e) => e.stopPropagation()}
-                            className="inline-flex min-h-[36px] items-center gap-1 font-extrabold text-ink/70 hover:underline dark:text-violet-200"
-                          >
-                            <span>{t.readFullPage}</span>
-                            <ExternalLink className="h-3 w-3 shrink-0" />
-                          </Link>
-                        </div>
                       </div>
 
-                      <div className="mt-3 flex flex-wrap items-center gap-2">
-                        <span
-                          className={`inline-flex items-center gap-1.5 rounded-full ${catMeta.bgClass} px-3 py-1 text-[11px] font-extrabold ${catMeta.accentText}`}
+                      <div className="relative z-50 flex shrink-0 flex-wrap items-center gap-2 pt-2">
+                        <motion.button
+                          type="button"
+                          whileTap={{ scale: 0.94 }}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            executeFlip();
+                          }}
+                          data-testid="flip-back-btn"
+                          className="flex min-h-[46px] flex-1 items-center justify-center gap-2 rounded-2xl border border-white/15 bg-white/10 px-4 text-xs font-extrabold text-white"
                         >
-                          <span>{catMeta.emoji}</span>
-                          <span>{catMeta.label[lang]}</span>
-                        </span>
-                        <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-3 py-1 text-[11px] font-extrabold text-amber-900 dark:bg-amber-900/40 dark:text-amber-200">
-                          +15 XP
-                        </span>
+                          <RotateCcw className="h-4 w-4 shrink-0" />
+                          <span>{lang === 'tr' ? 'Karta Dön' : 'Back to Card'}</span>
+                        </motion.button>
+                        <motion.button
+                          type="button"
+                          whileTap={{ scale: 0.94 }}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onButtonPop();
+                            onNextSlide();
+                          }}
+                          data-testid="next-card-btn"
+                          className="flex min-h-[46px] flex-1 items-center justify-center gap-2 rounded-2xl bg-white px-4 text-xs font-extrabold text-[#09090B]"
+                        >
+                          <span>{lang === 'tr' ? 'Sonraki Bilgiye Kaydır' : t.tiktokNextSlideBtn}</span>
+                          <ArrowDown className="h-4 w-4 shrink-0" />
+                        </motion.button>
                       </div>
                     </div>
-
-                    <div className="relative z-50 flex shrink-0 flex-wrap items-center gap-2 pt-2">
-                      <motion.button
-                        type="button"
-                        whileTap={{ scale: 0.94 }}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          executeFlip();
-                        }}
-                        data-testid="flip-back-btn"
-                        className="flex min-h-[46px] flex-1 items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-2 text-xs font-extrabold text-ink shadow-sm dark:border-white/20 dark:bg-slate-900 dark:text-white sm:text-sm"
-                      >
-                        <RotateCcw className="h-4 w-4 shrink-0" />
-                        <span>{lang === 'tr' ? 'Karta Dön' : 'Back to Card'}</span>
-                      </motion.button>
-
-                      <motion.button
-                        type="button"
-                        whileTap={{ scale: 0.94 }}
-                        onClick={handleShareClick}
-                        aria-label={t.shareFact}
-                        data-testid="back-share-story-btn"
-                        className="flex min-h-[46px] items-center justify-center gap-1.5 rounded-2xl border border-violet-300 bg-violet-100 px-3.5 py-2 text-xs font-extrabold text-violet-900 shadow-sm dark:border-violet-400/30 dark:bg-slate-900 dark:text-violet-100"
-                      >
-                        <Share2 className="h-4 w-4 shrink-0" />
-                      </motion.button>
-
-                      <motion.button
-                        type="button"
-                        whileTap={{ scale: 0.94 }}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onButtonPop();
-                          onNextSlide();
-                        }}
-                        data-testid="next-card-btn"
-                        className="flex min-h-[46px] flex-1 items-center justify-center gap-2 rounded-2xl bg-ink px-4 py-2 text-xs font-extrabold text-white shadow-lg dark:bg-violet-600 sm:text-sm"
-                      >
-                        <span>{lang === 'tr' ? 'Sonraki Bilgiye Kaydır' : t.tiktokNextSlideBtn}</span>
-                        <ArrowDown className="h-4 w-4 shrink-0" />
-                      </motion.button>
-                    </div>
-                  </div>
-                </motion.div>
+                  </motion.div>
                 </motion.div>
               )}
             </AnimatePresence>,
             document.body
           )}
-
-      {/* Right action column — z-20 (Hidden When Detail View Is Open) */}
-      {!isFlipped && (
-        <div
-          onClick={(e) => e.stopPropagation()}
-          onDoubleClick={(e) => e.stopPropagation()}
-          className={`absolute right-3 z-20 flex flex-col items-center gap-3 transition-[bottom] duration-200 ${
-            cookieBannerVisible
-              ? 'bottom-[calc(154px+env(safe-area-inset-bottom))]'
-              : 'bottom-[calc(94px+env(safe-area-inset-bottom))]'
-          }`}
-        >
-          {/* 1. Heart / Like */}
-          <motion.button
-            type="button"
-            whileTap={{ scale: 0.9 }}
-            onClick={(e) => {
-              e.stopPropagation();
-              if (isFavorite) {
-                setDbLikeDelta((prev) => prev - 1);
-                void trackEvent(factSlug, fact.category, 'unlike', { trigger: 'heart_btn' });
-              } else {
-                setDbLikeDelta((prev) => prev + 1);
-                void trackEvent(factSlug, fact.category, 'like', { trigger: 'heart_btn' });
-              }
-              onToggleFavorite(fact);
-            }}
-            aria-label={t.favorite}
-            data-testid="card-favorite-btn"
-            className="flex flex-col items-center gap-0.5"
-          >
-            <span
-              className={`flex h-11 w-11 items-center justify-center rounded-full border transition-all ${
-                isFavorite
-                  ? 'border-rose-400 bg-rose-500 text-white shadow-lg shadow-rose-500/40'
-                  : 'border-slate-200/90 bg-white/95 text-ink shadow-md dark:border-white/20 dark:bg-slate-900/95 dark:text-white'
-              }`}
-            >
-              <Heart className={`h-5 w-5 ${isFavorite ? 'fill-current' : ''}`} />
-            </span>
-            <span className="text-[10.5px] font-extrabold text-ink/85 dark:text-white/90">
-              {displayLikes === 1
-                ? lang === 'tr'
-                  ? '1 beğeni'
-                  : '1 heart'
-                : lang === 'tr'
-                  ? `${displayLikes} beğeni`
-                  : `${displayLikes} hearts`}
-            </span>
-          </motion.button>
-
-          {/* 2. Detail */}
-          <motion.button
-            type="button"
-            whileTap={{ scale: 0.9 }}
-            onClick={(e) => {
-              e.stopPropagation();
-              executeFlip();
-            }}
-            aria-label={t.flipToBack}
-            data-testid="flip-card-btn"
-            className="flex flex-col items-center gap-0.5"
-          >
-            <span className="flex h-11 w-11 items-center justify-center rounded-full border border-slate-200/90 bg-white/95 text-ink shadow-md dark:border-white/20 dark:bg-slate-900/95 dark:text-white">
-              <RotateCw className="h-5 w-5" />
-            </span>
-            <span className="text-[10.5px] font-extrabold text-ink/85 dark:text-white/90">
-              {t.tiktokDetailBtn}
-            </span>
-          </motion.button>
-
-          {/* 3. 1v1 Duel (hidden when competitive tabs are disabled) */}
-          {ENABLE_COMPETITIVE_TABS && (
-            <motion.button
-              type="button"
-              whileTap={{ scale: 0.9 }}
-              onClick={(e) => {
-                e.stopPropagation();
-                void trackEvent(factSlug, fact.category, 'duel');
-                onOpenDuel(fact);
-              }}
-              aria-label={t.dockDuel}
-              data-testid="card-duel-btn"
-              className="flex flex-col items-center gap-0.5"
-            >
-              <span className="flex h-11 w-11 items-center justify-center rounded-full border border-slate-200/90 bg-white/95 text-amber-700 shadow-md dark:border-white/20 dark:bg-slate-900/95 dark:text-amber-300">
-                <Swords className="h-5 w-5" />
-              </span>
-              <span className="text-[10.5px] font-extrabold text-ink/85 dark:text-white/90">
-                {t.dockDuel}
-              </span>
-            </motion.button>
-          )}
-
-          {/* 4. Share */}
-          <motion.button
-            type="button"
-            whileTap={{ scale: 0.9 }}
-            onClick={handleShareClick}
-            aria-label={t.shareFact}
-            data-testid="card-share-btn"
-            className="flex flex-col items-center gap-0.5"
-          >
-            <span className="flex h-11 w-11 items-center justify-center rounded-full border border-slate-200 bg-white text-ink shadow-md transition-colors dark:border-white/20 dark:bg-slate-900 dark:text-white">
-              <Share2 className="h-5 w-5" />
-            </span>
-            <span className="text-[10.5px] font-extrabold text-ink/85 dark:text-white/90">
-              {t.shareFact}
-            </span>
-          </motion.button>
-        </div>
-      )}
       </div>
 
-      {/* Double-Tap Heart Burst Animation Overlay at (x, y) */}
       <AnimatePresence>
         {heartBursts.map((burst) => (
           <motion.div

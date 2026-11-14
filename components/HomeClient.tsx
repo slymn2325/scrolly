@@ -728,12 +728,8 @@ export default function HomeClient({ initialFacts }: HomeClientProps) {
   const cookieBannerVisible = !memory.cookieAccepted && activeModal === 'none' && !activeQuiz;
 
   return (
-    <div className="relative flex h-[100dvh] w-screen items-center justify-center overflow-hidden bg-slate-950 select-none">
-      <div
-        className={`relative mx-auto h-[100dvh] w-full max-w-[440px] overflow-hidden transition-colors duration-300 ${
-          memory.darkMode ? 'bg-[#090D16] text-white' : 'bg-[#F8FAFC] text-slate-900'
-        }`}
-      >
+    <div className="relative flex h-[100dvh] w-screen items-center justify-center overflow-hidden bg-[#050508] select-none">
+      <div className="relative mx-auto h-[100dvh] w-full max-w-[430px] overflow-hidden bg-[#09090B] text-white md:rounded-[28px] md:border md:border-white/10 md:shadow-2xl">
         <OfflineManager lang={lang} />
 
         {activeModal === 'none' && !activeQuiz && !storyShareFact && !shareModalData && (

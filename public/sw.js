@@ -1,4 +1,4 @@
-const CACHE_VERSION = 'v5';
+const CACHE_VERSION = 'v6';
 const CACHE_NAME = `scrolly-offline-${CACHE_VERSION}`;
 const MAX_RUNTIME_ENTRIES = 60;
 
