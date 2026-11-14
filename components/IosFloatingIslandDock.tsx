@@ -72,7 +72,7 @@ export default function IosFloatingIslandDock({
   return (
     <div
       data-testid="ios-floating-dock-shell"
-      className={`pointer-events-none absolute inset-x-0 bottom-[calc(0.75rem+env(safe-area-inset-bottom))] z-30 mx-auto w-full max-w-[430px] px-3 ${
+      className={`pointer-events-none absolute inset-x-0 bottom-[calc(0.75rem+env(safe-area-inset-bottom))] z-30 mx-auto w-full px-3 ${
         chromeBlocked ? 'opacity-40' : ''
       }`}
     >

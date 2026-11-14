@@ -742,31 +742,49 @@ export default function HomeClient({ initialFacts }: HomeClientProps) {
   return (
     <div
       data-testid="reels-desktop-shell"
-      className="relative flex h-[100dvh] w-screen items-center justify-center overflow-hidden bg-[#07070C] select-none"
+      className="relative flex h-[100dvh] w-screen items-stretch justify-center overflow-hidden bg-[#07070C] select-none md:items-center md:gap-8 md:px-6 lg:gap-12 lg:px-10"
     >
-      {/* Soft blurred ambient sides (desktop cinematic stage) */}
+      {/* Full-bleed ambient: designed stage wash, not empty void */}
       <div aria-hidden="true" className="pointer-events-none absolute inset-0 hidden md:block">
         <div
-          className="absolute left-1/2 top-1/2 h-[140%] w-[min(1100px,96vw)] -translate-x-1/2 -translate-y-1/2 rounded-full blur-3xl transition-[background] duration-700"
+          className="absolute inset-0 opacity-90 transition-[background] duration-700"
           style={{
-            background: `radial-gradient(ellipse at center, ${ambientAccent}66 0%, ${ambientAccent}28 38%, transparent 68%)`,
+            background: `radial-gradient(ellipse 55% 70% at 50% 45%, ${ambientAccent}55 0%, ${ambientAccent}22 42%, #07070C 72%)`,
           }}
         />
         <div
-          className="absolute left-[8%] top-[12%] h-[22rem] w-[22rem] rounded-full blur-3xl"
-          style={{ background: `${ambientAccent}40` }}
+          className="absolute inset-y-[8%] left-[4%] w-[18%] rounded-[32px] opacity-70 blur-2xl"
+          style={{ background: `linear-gradient(180deg, ${ambientAccent}40, transparent)` }}
         />
         <div
-          className="absolute right-[6%] bottom-[10%] h-[26rem] w-[26rem] rounded-full blur-3xl"
-          style={{ background: `${ambientAccent}36` }}
+          className="absolute inset-y-[8%] right-[4%] w-[18%] rounded-[32px] opacity-70 blur-2xl"
+          style={{ background: `linear-gradient(180deg, ${ambientAccent}40, transparent)` }}
         />
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_28%,#07070C_82%)]" />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_40%,#07070C_88%)]" />
       </div>
 
-      {/* Centered 9:16 phone frame — rounded corners visible on md+ */}
+      {/* Left brand rail — fills desktop margin intentionally */}
+      <aside
+        data-testid="desktop-left-rail"
+        className="relative z-10 hidden w-[160px] shrink-0 flex-col justify-center gap-4 text-white/80 lg:flex xl:w-[200px]"
+      >
+        <div className="space-y-2">
+          <p className="font-display text-3xl font-black tracking-tight text-white">Scrolly</p>
+          <p className="text-sm font-semibold leading-snug text-white/70">
+            {lang === 'tr' ? 'Kaydır. Öğren. Şaşır.' : 'Scroll. Learn. Wonder.'}
+          </p>
+        </div>
+        <div className="rounded-2xl border border-white/15 bg-white/5 px-3 py-3 text-[11px] font-bold leading-relaxed text-white/75 backdrop-blur-md">
+          {lang === 'tr'
+            ? '↑↓ ile kartlar arasında kaydır. Detay için basılı tut veya Detay’a dokun.'
+            : '↑↓ to move between cards. Hold or tap Detail for the deep dive.'}
+        </div>
+      </aside>
+
+      {/* Centered cinematic stage — larger on desktop, still 9:16 feel */}
       <div
         data-testid="reels-phone-frame"
-        className="dark relative z-10 mx-auto flex h-[100dvh] w-full max-w-[430px] flex-col overflow-hidden bg-[#09090B] text-white md:h-[calc(100dvh-2.5rem)] md:max-h-[920px] md:rounded-[28px] md:border md:border-white/15 md:shadow-[0_30px_100px_-16px_rgba(0,0,0,0.95),0_0_60px_-12px_rgba(255,255,255,0.08)]"
+        className="dark relative z-10 mx-auto flex h-[100dvh] w-full max-w-[430px] flex-col overflow-hidden bg-[#09090B] text-white md:h-[min(100dvh-1.25rem,960px)] md:max-w-[min(520px,46vw)] md:rounded-[28px] md:border md:border-white/15 md:shadow-[0_30px_100px_-16px_rgba(0,0,0,0.95),0_0_60px_-12px_rgba(255,255,255,0.08)]"
       >
         <OfflineManager lang={lang} />
 
@@ -961,6 +979,27 @@ export default function HomeClient({ initialFacts }: HomeClientProps) {
           chromeBlocked={chromeBlocked}
         />
       </div>
+
+      {/* Right session rail */}
+      <aside
+        data-testid="desktop-right-rail"
+        className="relative z-10 hidden w-[160px] shrink-0 flex-col justify-center gap-3 text-white/80 lg:flex xl:w-[200px]"
+      >
+        <div className="rounded-2xl border border-white/15 bg-white/5 px-3 py-3 backdrop-blur-md">
+          <p className="text-[10px] font-black uppercase tracking-wider text-white/50">
+            {lang === 'tr' ? 'Oturum' : 'Session'}
+          </p>
+          <p className="mt-1 text-2xl font-black text-white">{memory.xp} XP</p>
+          <p className="mt-1 text-[11px] font-semibold text-white/65">
+            {lang === 'tr' ? `${memory.streakDays} gün seri` : `${memory.streakDays} day streak`}
+          </p>
+        </div>
+        <div className="rounded-2xl border border-white/15 bg-white/5 px-3 py-3 text-[11px] font-bold leading-relaxed text-white/70 backdrop-blur-md">
+          {lang === 'tr'
+            ? 'Her kartın arka planı konuya özel ipucu verir — rastgele GIF değil.'
+            : 'Each card’s backdrop is a topic hint — not a random GIF.'}
+        </div>
+      </aside>
     </div>
   );
 }

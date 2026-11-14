@@ -359,11 +359,11 @@ const TikTokFeed = forwardRef<TikTokFeedHandle, TikTokFeedProps>(function TikTok
   }, [activeIndex, slides]);
 
   return (
-    <div className="dark relative mx-auto h-full w-full max-w-[430px] overflow-hidden bg-[#09090B] text-white">
+    <div className="dark relative mx-auto h-full w-full overflow-hidden bg-[#09090B] text-white">
       {/* Top HUD — compact, no stories/1-5 counter. overflow-visible so category drawer is not clipped. */}
       <header
         data-chrome-blocked={chromeBlocked ? 'true' : 'false'}
-        className={`pointer-events-none absolute inset-x-0 top-0 z-30 w-full max-w-[430px] px-2.5 pt-[max(8px,env(safe-area-inset-top))] pb-1.5 ${
+        className={`pointer-events-none absolute inset-x-0 top-0 z-30 w-full px-2.5 pt-[max(8px,env(safe-area-inset-top))] pb-1.5 ${
           chromeBlocked ? 'opacity-40' : ''
         }`}
       >

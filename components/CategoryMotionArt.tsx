@@ -18,6 +18,8 @@ interface CategoryMotionArtProps {
   isFirstCard?: boolean;
   isActive?: boolean;
   onButtonPop?: () => void;
+  topicText?: string;
+  tag?: string;
 }
 
 export default function CategoryMotionArt({
@@ -27,6 +29,9 @@ export default function CategoryMotionArt({
   variant = 'hero',
   isActive = true,
   onButtonPop,
+  sketchType,
+  topicText,
+  tag,
 }: CategoryMotionArtProps) {
   const reduceMotion = useReducedMotion();
   const containerRef = useRef<HTMLDivElement>(null);
@@ -101,6 +106,9 @@ export default function CategoryMotionArt({
         isActive={isActive}
         lang={lang}
         onInteract={onButtonPop}
+        topicText={topicText}
+        sketchType={sketchType}
+        tag={tag}
       />
     </div>
   );

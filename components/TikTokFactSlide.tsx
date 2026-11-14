@@ -26,6 +26,7 @@ import { cryptoRandomInt } from '@/utils/cryptoRandom';
 import { getFactUrl } from '@/utils/factsData';
 import { vibrateTap } from '@/utils/haptics';
 import { isFactLiked, toggleLikedFact } from '@/utils/likedFacts';
+import { buildFactDetailArticle } from '@/utils/topicMotif';
 
 interface TikTokFactSlideProps {
   fact: FactCard;
@@ -131,6 +132,9 @@ export default function TikTokFactSlide({
   const [isGuessLocked, setIsGuessLocked] = useState(false);
   const [heartBursts, setHeartBursts] = useState<HeartBurst[]>([]);
   const [portalReady, setPortalReady] = useState(false);
+  const [detailDragY, setDetailDragY] = useState(0);
+  const detailDragStartY = useRef<number | null>(null);
+  const detailDragging = useRef(false);
 
   useEffect(() => {
     setPortalReady(true);
@@ -157,6 +161,21 @@ export default function TikTokFactSlide({
   const catMeta = getCategoryMeta(fact.category);
   const factUrl = getFactUrl(fact, lang);
   const factSlug = fact.slug || fact.en.slug || fact.tr.slug || fact.id;
+  const detailArticle = useMemo(
+    () =>
+      buildFactDetailArticle({
+        factText: localized.factText,
+        deepDiveDetail: localized.deepDiveDetail,
+        tag: localized.tag,
+        sourceHint: localized.sourceHint,
+        quiz: localized.quiz,
+      }),
+    [localized.factText, localized.deepDiveDetail, localized.tag, localized.sourceHint, localized.quiz]
+  );
+  const topicText = useMemo(
+    () => [localized.title, localized.factText, localized.tag, fact.sketchType].filter(Boolean).join(' '),
+    [localized.title, localized.factText, localized.tag, fact.sketchType]
+  );
 
   // Deterministic fallback likes when running completely offline without DB counts
   const baseLikesCount = useMemo(() => {
@@ -560,7 +579,7 @@ export default function TikTokFactSlide({
         }}
       />
 
-      <div className="relative mx-auto h-full w-full max-w-[430px] overflow-hidden bg-[#09090B]">
+      <div className="relative mx-auto h-full w-full overflow-hidden bg-[#09090B]">
         {/* Full-bleed cinematic canvas */}
         <CategoryMotionArt
           variant="hero"
@@ -574,6 +593,8 @@ export default function TikTokFactSlide({
           isFirstCard={isFirstCard}
           isActive={isActive}
           onButtonPop={onButtonPop}
+          topicText={topicText}
+          tag={localized.tag}
         />
 
         {/* Cinematic bottom gradient */}
@@ -780,16 +801,48 @@ export default function TikTokFactSlide({
                     aria-modal="true"
                     aria-label={copy.detailSheetTitle}
                     initial={{ y: '100%' }}
-                    animate={{ y: 0 }}
+                    animate={{ y: detailDragY }}
                     exit={{ y: '100%' }}
-                    transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
+                    transition={
+                      detailDragging.current
+                        ? { duration: 0 }
+                        : { duration: 0.28, ease: [0.22, 1, 0.36, 1] }
+                    }
                     onClick={(e) => e.stopPropagation()}
                     onDoubleClick={(e) => e.stopPropagation()}
-                    onPointerDown={(e) => e.stopPropagation()}
+                    onPointerDown={(e) => {
+                      e.stopPropagation();
+                      detailDragging.current = true;
+                      detailDragStartY.current = e.clientY;
+                    }}
+                    onPointerMove={(e) => {
+                      if (!detailDragging.current || detailDragStartY.current == null) return;
+                      const dy = Math.max(0, e.clientY - detailDragStartY.current);
+                      setDetailDragY(dy);
+                    }}
+                    onPointerUp={(e) => {
+                      e.stopPropagation();
+                      const dy = detailDragY;
+                      detailDragging.current = false;
+                      detailDragStartY.current = null;
+                      if (dy > 120) {
+                        setDetailDragY(0);
+                        vibrateTap(14);
+                        executeFlip();
+                      } else {
+                        setDetailDragY(0);
+                      }
+                    }}
+                    onPointerCancel={() => {
+                      detailDragging.current = false;
+                      detailDragStartY.current = null;
+                      setDetailDragY(0);
+                    }}
                     onWheel={(e) => e.stopPropagation()}
-                    className="pointer-events-auto relative z-[60] flex h-[100dvh] w-full max-w-[430px] flex-col overflow-hidden bg-[#111115] text-white md:h-[calc(100dvh-2.5rem)] md:max-h-[920px] md:rounded-[28px] md:border md:border-white/10 md:shadow-2xl"
+                    className="pointer-events-auto relative z-[60] flex h-[100dvh] w-full max-w-[430px] touch-none flex-col overflow-hidden bg-[#111115] text-white md:h-[min(100dvh-1.25rem,960px)] md:max-w-[min(520px,46vw)] md:rounded-[28px] md:border md:border-white/10 md:shadow-2xl"
                   >
-                    <div className="no-scrollbar flex h-full w-full flex-col overflow-y-auto px-5 pt-[104px] pb-[104px]">
+                    <div className="no-scrollbar flex h-full w-full flex-col overflow-y-auto px-5 pt-[104px] pb-[104px] touch-pan-y">
+                      <div className="mx-auto mb-2 h-1.5 w-12 shrink-0 rounded-full bg-white/25" data-testid="detail-drag-handle" />
                       <div className="flex shrink-0 items-center justify-between gap-3">
                         <div className="inline-flex w-fit items-center gap-1.5 rounded-full bg-white/10 px-3 py-1 text-xs font-extrabold text-white">
                           <img src={catMeta.iconPath} alt="" aria-hidden="true" className="h-4 w-4 object-contain" />
@@ -814,8 +867,12 @@ export default function TikTokFactSlide({
                         <h3 className="font-display text-xl font-bold leading-snug text-white whitespace-normal break-words">
                           {localized.title}
                         </h3>
-                        <p className="mt-3 text-[14.5px] leading-relaxed text-white/85 whitespace-normal break-words">
-                          {localized.deepDiveDetail}
+                        <p
+                          data-testid="fact-detail-article"
+                          data-differs-from-teaser={detailArticle.differsFromTeaser ? 'true' : 'false'}
+                          className="mt-3 whitespace-pre-wrap text-[14.5px] leading-relaxed text-white/90 break-words"
+                        >
+                          {detailArticle.article}
                         </p>
 
                         <div

@@ -25,24 +25,54 @@ interface VocabularySlideProps {
   onWrongSound?: () => void;
 }
 
-function highlightWord(sentence: string, word: string): React.ReactNode {
-  if (!sentence || !word) return sentence;
-  const escaped = word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-  const regex = new RegExp(`(\\b${escaped}\\b)`, 'gi');
-  const parts = sentence.split(regex);
-  return parts.map((part, idx) => {
-    if (part.toLowerCase() === word.toLowerCase()) {
-      return (
-        <mark
-          key={`hw-${idx}`}
-          className="rounded bg-indigo-400/40 px-1 font-extrabold text-white"
-        >
-          {part}
-        </mark>
-      );
-    }
-    return <React.Fragment key={`tx-${idx}`}>{part}</React.Fragment>;
-  });
+/** Build educational 2-option quiz: meanings only, never the English headword as a choice. */
+function buildVocabQuizPair(card: VocabularyCard): { opts: [string, string]; correctIdx: number; prompt: string } {
+  const rawCorrect = (card.quizOptions[card.correctIndex] || card.meaningTr || '').trim();
+  const wordLower = card.word.trim().toLowerCase();
+  const meaningLower = card.meaningTr.trim().toLowerCase();
+
+  const pool = card.quizOptions
+    .map((o) => o.trim())
+    .filter((o) => {
+      const low = o.toLowerCase();
+      if (!o) return false;
+      // never offer the English word itself as an answer chip
+      if (low === wordLower) return false;
+      return true;
+    });
+
+  let correct = pool.includes(rawCorrect) ? rawCorrect : card.meaningTr;
+  if (correct.toLowerCase() === wordLower) correct = card.meaningTr;
+
+  const distractors = pool.filter((o) => o.toLowerCase() !== correct.toLowerCase());
+  // Prefer antonym-like distractors that aren't the meaning
+  let distractor =
+    distractors.find((o) => o.toLowerCase() !== meaningLower) ??
+    distractors[0] ??
+    (langFallbackDistractor(card));
+
+  if (distractor.toLowerCase() === correct.toLowerCase()) {
+    distractor = langFallbackDistractor(card);
+  }
+
+  let hash = 0;
+  for (let i = 0; i < card.id.length; i += 1) hash += card.id.charCodeAt(i);
+  const swap = hash % 2 === 0;
+  const opts: [string, string] = swap ? [correct, distractor] : [distractor, correct];
+  const correctIdx = opts[0].toLowerCase() === correct.toLowerCase() ? 0 : 1;
+  return {
+    opts,
+    correctIdx,
+    prompt: `"${card.word}" kelimesinin Türkçe karşılığı hangisi?`,
+  };
+}
+
+function langFallbackDistractor(card: VocabularyCard): string {
+  const fallbacks = ['yanlış anlam', 'alakasız', 'zıt anlam', 'nadir kullanım'];
+  const idx = card.id.length % fallbacks.length;
+  const pick = fallbacks[idx];
+  if (pick.toLowerCase() === card.meaningTr.toLowerCase()) return fallbacks[(idx + 1) % fallbacks.length];
+  return pick;
 }
 
 export default function VocabularySlide({
@@ -76,23 +106,7 @@ export default function VocabularySlide({
     return () => window.removeEventListener('scrolly-vocab-updated', sync);
   }, [card.word]);
 
-  const quizPrompt = useMemo(
-    () => (lang === 'tr' ? `"${card.word}" ne demek?` : `What does "${card.word}" mean?`),
-    [card.word, lang]
-  );
-
-  // 2-option quiz from 3 options: correct + one distractor (deterministic by card id)
-  const quizPair = useMemo(() => {
-    const correct = card.quizOptions[card.correctIndex];
-    const distractor =
-      card.quizOptions.find((_, i) => i !== card.correctIndex) ?? card.quizOptions[0];
-    let hash = 0;
-    for (let i = 0; i < card.id.length; i += 1) hash += card.id.charCodeAt(i);
-    const swap = hash % 2 === 0;
-    const opts: [string, string] = swap ? [correct, distractor] : [distractor, correct];
-    const correctIdx = opts[0] === correct ? 0 : 1;
-    return { opts, correctIdx };
-  }, [card.id, card.quizOptions, card.correctIndex]);
+  const quizPair = useMemo(() => buildVocabQuizPair(card), [card]);
 
   const handleSpeak = (text: string, locale: 'en-US' | 'tr-TR', rate = 0.9) => {
     vibrateTap(12);
@@ -133,13 +147,15 @@ export default function VocabularySlide({
       data-active={isActive ? 'true' : 'false'}
       className="reels-slide relative flex h-full w-full shrink-0 items-center justify-center overflow-hidden select-none bg-[#09090B]"
     >
-      <div className="relative z-10 mx-auto flex h-full w-full max-w-[430px] flex-col overflow-hidden">
+      <div className="relative z-10 mx-auto flex h-full w-full flex-col overflow-hidden">
         <FullBleedReelsCanvas
-          category="science"
+          category="vocabulary"
           accentColor="#818CF8"
           isActive={isActive}
           lang={lang}
           onInteract={onButtonPop}
+          topicText={`${card.word} ${card.definitionEn} typography audio`}
+          tag="vocabulary"
         />
         <div className="pointer-events-none absolute inset-x-0 bottom-0 z-[5] h-[58%] bg-gradient-to-t from-[#09090B] via-[#09090B]/75 to-transparent" />
 
@@ -175,31 +191,13 @@ export default function VocabularySlide({
                 <Volume2 className="h-4 w-4" />
                 <span>{copy.listenEn}</span>
               </button>
-              <button
-                type="button"
-                onClick={() => handleSpeak(card.exampleEn, 'en-US', 0.9)}
-                data-testid="vocab-listen-example-btn"
-                className="inline-flex h-11 items-center gap-1.5 rounded-full border border-white/20 bg-white/10 px-3.5 text-xs font-extrabold text-white backdrop-blur-md"
-              >
-                <Volume2 className="h-4 w-4" />
-                <span>{lang === 'tr' ? 'Örneği Dinle' : 'Listen example'}</span>
-              </button>
             </div>
 
             {audioUnavailable && (
               <p className="text-[11px] font-semibold text-amber-200">{copy.noAudioNotice}</p>
             )}
 
-            <div className="space-y-2 rounded-2xl border border-white/15 bg-white/10 px-3.5 py-3 backdrop-blur-md">
-              <p className="text-base font-black text-emerald-300">{card.meaningTr}</p>
-              <p className="text-sm font-semibold leading-snug text-white/85">{card.definitionEn}</p>
-              <div className="h-px w-full bg-white/15" />
-              <p className="text-[13px] font-bold leading-snug text-white">
-                EN: {highlightWord(card.exampleEn, card.word)}
-              </p>
-              <p className="text-[13px] font-semibold leading-snug text-white/70">TR: {card.exampleTr}</p>
-            </div>
-
+            {/* Quiz BEFORE revealing meaning — educational, not trivial spoiler */}
             <div
               data-testid="vocab-quick-guess"
               className="rounded-2xl border border-amber-300/30 bg-amber-400/10 px-3.5 py-3 backdrop-blur-md"
@@ -207,7 +205,9 @@ export default function VocabularySlide({
               <p className="mb-2 text-[11px] font-black uppercase tracking-wider text-amber-200">
                 Quick Guess · +15 XP
               </p>
-              <p className="mb-2.5 text-sm font-extrabold text-white">{quizPrompt}</p>
+              <p className="mb-2.5 text-sm font-extrabold text-white">
+                {lang === 'tr' ? quizPair.prompt : `Which Turkish meaning matches "${card.word}"?`}
+              </p>
               <div className="grid grid-cols-2 gap-2">
                 {quizPair.opts.map((opt, idx) => {
                   const picked = selectedOption === idx;
@@ -221,6 +221,7 @@ export default function VocabularySlide({
                       type="button"
                       onClick={() => handleQuizPick(idx)}
                       data-testid={`vocab-quiz-option-${idx}`}
+                      data-option-text={opt}
                       className={`flex h-11 items-center justify-center rounded-xl border px-2 text-sm font-extrabold transition active:scale-[0.98] ${style}`}
                     >
                       {opt}
@@ -229,6 +230,35 @@ export default function VocabularySlide({
                 })}
               </div>
             </div>
+
+            {/* Reveal meaning + examples only after a correct answer (or always show examples without spoiling meaning) */}
+            {solved ? (
+              <div
+                data-testid="vocab-meaning-reveal"
+                className="space-y-2 rounded-2xl border border-white/15 bg-white/10 px-3.5 py-3 backdrop-blur-md"
+              >
+                <p className="text-base font-black text-emerald-300">{card.meaningTr}</p>
+                <p className="text-sm font-semibold leading-snug text-white/85">{card.definitionEn}</p>
+                <div className="h-px w-full bg-white/15" />
+                <p className="text-[13px] font-bold leading-snug text-white">EN: {card.exampleEn}</p>
+                <p className="text-[13px] font-semibold leading-snug text-white/70">TR: {card.exampleTr}</p>
+                <button
+                  type="button"
+                  onClick={() => handleSpeak(card.exampleEn, 'en-US', 0.9)}
+                  data-testid="vocab-listen-example-btn"
+                  className="inline-flex h-10 items-center gap-1.5 rounded-full border border-white/20 bg-white/10 px-3 text-xs font-extrabold text-white"
+                >
+                  <Volume2 className="h-4 w-4" />
+                  <span>{lang === 'tr' ? 'Örneği Dinle' : 'Listen example'}</span>
+                </button>
+              </div>
+            ) : (
+              <p className="text-[12px] font-semibold text-white/55">
+                {lang === 'tr'
+                  ? 'Anlamı görmek için doğru şıkkı seç — kart spoiler vermez.'
+                  : 'Pick the right meaning to reveal the definition — no spoilers.'}
+              </p>
+            )}
           </div>
         </div>
 
