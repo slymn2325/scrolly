@@ -2,7 +2,6 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import pg from 'pg';
-import { selectAutonomousSixFacts } from './scientificFactReservoir.mjs';
 
 const { Pool } = pg;
 
@@ -11,78 +10,117 @@ const __dirname = path.dirname(__filename);
 const ROOT_DIR = path.resolve(__dirname, '..');
 
 const CATEGORIES = ['space', 'nature', 'human_body', 'history', 'science', 'records'];
+const SKETCH_ID_PATTERN = /^(space|nature|human|history|science|weird)-(0[1-9]|10)$/;
 const SKETCH_TYPES = [
+  'venus',
   'orbit',
-  'wave',
-  'heartbeat',
-  'hourglass',
-  'atom',
-  'trophy',
-  'blackhole',
-  'black_hole',
-  'dna',
-  'brain',
-  'compass',
-  'prism',
-  'flame',
-  'telescope',
-  'leaf',
-  'muscle',
-  'scroll',
-  'magnet',
-  'crown',
-  'galaxy',
-  'voyager',
+  'magnetar',
+  'titan',
+  'footprint',
+  'moon',
+  'sun_mass',
+  'cold_weld',
+  'sagittarius',
+  'saturn',
+  'mars_sunset',
   'mars',
+  'voyager',
+  'black_hole',
+  'blackhole',
   'olympus_mons',
   'iss',
-  'footprint',
-  'tardigrade',
+  'station',
+  'icefish',
+  'mycelium',
+  'wood_wide_web',
   'shark',
   'honeybee',
-  'flamingo',
+  'bee',
+  'swift',
+  'koala',
+  'dolphin',
+  'otter',
+  'fungus',
+  'cactus',
   'immortal_jellyfish',
-  'sloth',
+  'tardigrade',
   'whale',
   'bones',
+  'skeleton',
+  'brain',
   'vessels',
+  'circulation',
   'stomach',
-  'eye',
+  'acid',
+  'cornea',
+  'dna',
+  'helix',
+  'tongue',
   'heart',
+  'heartbeat',
+  'pulse',
+  'stapes',
+  'eye',
+  'vision',
   'sweat',
   'liver',
-  'fingerprint',
-  'gobeklitepe',
+  'cleopatra',
   'oxford',
-  'timeline',
-  'printing',
-  'olympics',
-  'viking',
+  'war',
+  'hourglass',
+  'purple_snail',
+  'mammoth',
+  'pompeii',
+  'steam_turbine',
+  'knocker_upper',
+  'pineapple',
+  'piri_reis',
+  'compass',
+  'gobeklitepe',
   'treaty',
+  'kadesh',
+  'viking',
+  'printing',
   'triple_point',
-  'lightning',
-  'photon',
-  'supernova',
+  'water',
   'superfluid',
-  'entanglement',
+  'helium',
+  'time_dilation',
+  'sonoluminescence',
+  'cloud',
+  'sound_water',
+  'rainbow',
+  'trees_stars',
   'sun_photon',
   'glass',
+  'lightning',
+  'plasma',
+  'atom',
+  'photon',
+  'prism',
+  'entanglement',
   'protein',
-  'thermal',
-  'cloud',
-  'chess',
-  'cube',
+  'titin',
+  'pitch',
   'wombat',
+  'mailbox',
+  'stubbs',
+  'norway',
+  'bromelain',
+  'duck',
+  'organ',
+  'cheese',
   'antarctica',
-  'cards',
-  'saturn',
   'decibel',
+  'cards',
+  'chess',
 ];
 const VALID_SKETCH_TYPES = new Set(SKETCH_TYPES);
 
 const AI_MODELS_ENDPOINT =
-  process.env.AI_MODELS_ENDPOINT || 'https://api.groq.com/openai/v1/chat/completions';
-const DEFAULT_AI_MODEL_NAME = process.env.AI_MODEL_NAME || 'llama-3.3-70b-versatile';
+  process.env.AI_MODELS_ENDPOINT ||
+  'https://generativelanguage.googleapis.com/v1beta/openai/chat/completions';
+const DEFAULT_AI_MODEL_NAME = process.env.AI_MODEL_NAME || 'gemini-4-hydrogen';
 
 async function loadSeedFactsFromDisk() {
   const shardFiles = ['space.json', 'nature.json', 'human_body.json', 'history.json', 'science.json', 'records.json'];
@@ -334,7 +372,9 @@ function normalizeSlug(rawSlug, titleEn) {
 }
 
 function getGenerationToken() {
-  return String(process.env.AI_API_KEY || process.env.OPENAI_API_KEY || '').trim();
+  return String(
+    process.env.OPENAI_API_KEY || process.env.AI_API_KEY || process.env.GEMINI_API_KEY || ''
+  ).trim();
 }
 
 function isRootOrGenericUrl(urlStr) {
@@ -366,7 +406,6 @@ async function verifyPrimarySourceUrl(urlStr) {
     return { ok: false, reason: 'root-or-invalid-url' };
   }
 
-  const parsed = new URL(urlStr);
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), 8000);
   const headers = {
@@ -389,16 +428,8 @@ async function verifyPrimarySourceUrl(urlStr) {
         headers,
       });
     }
-    if (res.ok) {
+    if (res.status === 200) {
       return { ok: true, status: res.status };
-    }
-    // Academic DOI / PubMed resolvers sometimes block automated TLS handshakes with 403 while valid; require strict 200 for all other domains
-    if (
-      (res.status === 403 || res.status === 405) &&
-      (parsed.hostname === 'doi.org' || parsed.hostname.endsWith('.doi.org') || parsed.hostname === 'pubmed.ncbi.nlm.nih.gov') &&
-      parsed.pathname.length > 6
-    ) {
-      return { ok: true, status: res.status, academicIdentifier: true };
     }
     return { ok: false, reason: `http-${res.status}` };
   } catch (err) {
@@ -469,7 +500,7 @@ async function validateGeneratedFact(item, existingSlugs, existingTitlesEn) {
   const answerVal = Math.min(maxVal, Math.max(minVal, rawAnswer));
 
   const sketchTypeRaw = String(item.sketch_type || '').trim().toLowerCase();
-  if (!VALID_SKETCH_TYPES.has(sketchTypeRaw)) {
+  if (!VALID_SKETCH_TYPES.has(sketchTypeRaw) && !SKETCH_ID_PATTERN.test(sketchTypeRaw)) {
     console.warn(
       `[generateFacts] Rejected candidate "${titleEn}" due to invalid sketch_type "${sketchTypeRaw}".`
     );
@@ -568,17 +599,12 @@ Return a JSON object with a single key \`"facts"\` containing an array of 6 item
   return { systemPrompt, userPrompt };
 }
 
-async function fetchGeneratedFactsFromModel(existingSlugs, existingTitlesEn, topEngaged) {
-  const useOfflineReservoir = process.argv.includes('--offline-reservoir');
+async function fetchGeneratedFactsFromModel(existingTitlesEn, topEngaged) {
   const token = getGenerationToken();
 
   if (!token) {
-    if (useOfflineReservoir) {
-      console.warn('[generateFacts] --offline-reservoir active — selecting verified reservoir candidates.');
-      return selectAutonomousSixFacts(existingSlugs, existingTitlesEn, topEngaged);
-    }
     console.error(
-      '[generateFacts] Fatal: Missing AI_API_KEY or OPENAI_API_KEY environment variable.'
+      '[generateFacts] Fatal: Missing OPENAI_API_KEY, AI_API_KEY, or GEMINI_API_KEY environment variable.'
     );
     process.exit(1);
   }
@@ -598,7 +624,7 @@ async function fetchGeneratedFactsFromModel(existingSlugs, existingTitlesEn, top
         model: DEFAULT_AI_MODEL_NAME,
         response_format: { type: 'json_object' },
         temperature: 0.7,
-        max_tokens: 3200,
+        max_tokens: 8192,
         messages: [
           { role: 'system', content: systemPrompt },
           { role: 'user', content: userPrompt },
@@ -682,7 +708,6 @@ async function main() {
     console.log(`[generateFacts] Loaded ${existingSlugs.size} existing facts and top ${topRes.rows.length} engagement benchmarks.`);
 
     const rawGenerated = await fetchGeneratedFactsFromModel(
-      existingSlugs,
       existingTitlesEn,
       topRes.rows
     );
@@ -702,7 +727,7 @@ async function main() {
       validCandidates.push(clean);
     }
 
-    if (validCandidates.length === 0 && !process.argv.includes('--offline-reservoir')) {
+    if (validCandidates.length === 0) {
       console.error('[generateFacts] Fatal: Zero valid verified facts survived validation from remote AI output.');
       process.exit(1);
     }

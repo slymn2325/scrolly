@@ -26,10 +26,9 @@ jobs:
 
       - name: Generate and Insert Facts into Postgres
         env:
-          OPENAI_API_KEY: ${{ secrets.AI_API_KEY }}
-          AI_API_KEY: ${{ secrets.AI_API_KEY }}
-          AI_MODELS_ENDPOINT: ${{ vars.AI_MODELS_ENDPOINT || 'https://api.groq.com/openai/v1/chat/completions' }}
-          AI_MODEL_NAME: ${{ vars.AI_MODEL_NAME || 'llama-3.3-70b-versatile' }}
+          OPENAI_API_KEY: ${{ secrets.AI_API_KEY || secrets.GEMINI_API_KEY }}
+          AI_MODELS_ENDPOINT: ${{ vars.AI_MODELS_ENDPOINT || 'https://generativelanguage.googleapis.com/v1beta/openai/chat/completions' }}
+          AI_MODEL_NAME: ${{ vars.AI_MODEL_NAME || 'gemini-4-hydrogen' }}
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           # Rejects overused internet trivia clichés (neutron star teaspoon, diamond rain, octopus 3 hearts, honey, Eiffel Tower, etc.)
           ANTI_CLICHE_STRICT: 'true'

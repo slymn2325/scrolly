@@ -130,10 +130,11 @@ DATABASE_URL=postgres://user:password@host:5432/scrolly
 DATABASE_CA_CERT=                          # Opsiyonel: Üretim Postgres sunucusu için PEM CA sertifikası (reddedilmeyen TLS doğrulama)
 
 # Günlük Otomatik Kart Üretimi (scripts/generateFacts.mjs & GitHub Actions)
-OPENAI_API_KEY=                            # Veya AI_API_KEY
+OPENAI_API_KEY=                            # Veya AI_API_KEY / GEMINI_API_KEY
 AI_API_KEY=                                # Alternatif API anahtarı (OPENAI_API_KEY yerine kullanılabilir)
-AI_MODELS_ENDPOINT=https://api.groq.com/openai/v1/chat/completions
-AI_MODEL_NAME=llama-3.3-70b-versatile
+GEMINI_API_KEY=                            # Google Gemini OpenAI-uyumlu uç nokta için alternatif anahtar
+AI_MODELS_ENDPOINT=https://generativelanguage.googleapis.com/v1beta/openai/chat/completions
+AI_MODEL_NAME=gemini-4-hydrogen
 
 # Google Tag Manager & AdSense (Consent Mode v2 uyumlu)
 NEXT_PUBLIC_GTM_ID=GTM-N746KK52
@@ -145,7 +146,7 @@ NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
 ```
 
-> **Not:** `.env` ve `.env*.local` dosyaları `.gitignore` ile hariç tutulmuştur; gizli anahtarları (`DATABASE_URL`, `DATABASE_CA_CERT`, `OPENAI_API_KEY`, `AI_API_KEY`) asla `NEXT_PUBLIC_*` önekli istemci değişkenlerine koymayın.
+> **Not:** `.env` ve `.env*.local` dosyaları `.gitignore` ile hariç tutulmuştur; gizli anahtarları (`DATABASE_URL`, `DATABASE_CA_CERT`, `OPENAI_API_KEY`, `AI_API_KEY`, `GEMINI_API_KEY`) asla `NEXT_PUBLIC_*` önekli istemci değişkenlerine koymayın.
 
 ---
 
