@@ -5,6 +5,7 @@ import { LEAGUE_SHIELD_MAP, type LeagueTierId } from '@/utils/icons8Assets';
 const LOCAL_STORAGE_KEY = 'merak_user_state_v1';
 const COOKIE_NAME = 'merak_user_summary';
 export const TOTAL_CARDS_VIEWED_STORAGE_KEY = 'scrolly_total_cards_viewed';
+let lastSyncedThemeDark: boolean | null = null;
 
 export function getTotalCardsViewed(): number {
   if (typeof window === 'undefined') return 0;
@@ -43,6 +44,7 @@ export interface UserMemoryState {
   nickname: string;
   lang: Language;
   darkMode: boolean;
+  themeCustomized?: boolean;
   xp: number;
   weeklyXp: number;
   dailyBestScore: number;
@@ -288,7 +290,8 @@ export function getDefaultUserState(lang: Language = 'tr'): UserMemoryState {
     playerId: ssrPlayerId,
     nickname: getDefaultNickname(safeLang, deriveExplorerTagFromId(ssrPlayerId)),
     lang: safeLang,
-    darkMode: false,
+    darkMode: true,
+    themeCustomized: false,
     xp: 0,
     weeklyXp: 0,
     dailyBestScore: 0,
@@ -426,11 +429,16 @@ export function loadUserMemory(): UserMemoryState {
       ? parsedNickname
       : getDefaultNickname(resolvedLang, deriveExplorerTagFromId(resolvedPlayerId));
 
+  const hasCustomTheme = parsed?.themeCustomized === true;
+  const resolvedDarkMode =
+    hasCustomTheme && typeof parsed?.darkMode === 'boolean' ? parsed.darkMode : true;
+
   const state: UserMemoryState = {
     playerId: resolvedPlayerId,
     nickname: resolvedNickname,
     lang: resolvedLang,
-    darkMode: Boolean(parsed?.darkMode),
+    darkMode: resolvedDarkMode,
+    themeCustomized: hasCustomTheme,
     xp: resolvedXp,
     weeklyXp: typeof parsed?.weeklyXp === 'number' ? parsed.weeklyXp : resolvedXp,
     dailyBestScore: typeof parsed?.dailyBestScore === 'number' ? parsed.dailyBestScore : 0,
@@ -458,29 +466,38 @@ export function loadUserMemory(): UserMemoryState {
     unlimitedRewindsUnlocked: Boolean(parsed?.unlimitedRewindsUnlocked),
   };
 
+  lastSyncedThemeDark = resolvedDarkMode;
   saveUserMemory(state);
   return state;
 }
 
 export function saveUserMemory(state: UserMemoryState): void {
   if (typeof window === 'undefined') return;
+  const hasChangedDarkMode =
+    lastSyncedThemeDark !== null && state.darkMode !== lastSyncedThemeDark;
+  const persistedState: UserMemoryState =
+    state.themeCustomized === true || hasChangedDarkMode
+      ? { ...state, themeCustomized: true }
+      : state;
+  lastSyncedThemeDark = persistedState.darkMode;
+
   try {
-    window.localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(state));
+    window.localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(persistedState));
   } catch {
     // Ignore storage quota errors
   }
 
   const cookieSummary = {
-    lang: state.lang,
-    darkMode: state.darkMode,
-    xp: state.xp,
-    seenIds: state.seenIds.slice(-40),
-    categoryWeights: state.categoryWeights,
-    streakDays: state.streakDays,
-    lastVisitDate: state.lastVisitDate,
-    badges: state.badges,
-    cookieAccepted: state.cookieAccepted,
-    isReturningUser: state.seenIds.length > 0 || state.isReturningUser,
+    lang: persistedState.lang,
+    darkMode: persistedState.darkMode,
+    xp: persistedState.xp,
+    seenIds: persistedState.seenIds.slice(-40),
+    categoryWeights: persistedState.categoryWeights,
+    streakDays: persistedState.streakDays,
+    lastVisitDate: persistedState.lastVisitDate,
+    badges: persistedState.badges,
+    cookieAccepted: persistedState.cookieAccepted,
+    isReturningUser: persistedState.seenIds.length > 0 || persistedState.isReturningUser,
   };
 
   try {
@@ -726,6 +743,7 @@ export function resetUserMemory(): UserMemoryState {
   fresh.weeklyXp = 0;
   fresh.streakDays = 1;
   fresh.badges = [];
+  lastSyncedThemeDark = fresh.darkMode;
   saveUserMemory(fresh);
   if (typeof window !== 'undefined') {
     try {

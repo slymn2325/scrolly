@@ -3,8 +3,11 @@ import { getDuelRoomDb, mutateDuelRoomDb } from '@/lib/dbActions';
 import {
   isShortRoomCode,
   normalizeRoomCode,
+  sanitizeAnswersArray,
+  sanitizeElapsedSec,
   sanitizePlayerEmoji,
   sanitizePlayerName,
+  sanitizeReactionGifUrl,
 } from '@/lib/duelStore';
 import { checkRateLimit, extractClientIp } from '@/lib/rateLimit';
 
@@ -124,6 +127,9 @@ export async function POST(request: Request, context: RouteContext) {
           score: null,
           finishedAt: null,
           joinedAt: nowIso,
+          elapsedSec: null,
+          answers: null,
+          reactionGif: null,
         });
         return { next: room };
       }
@@ -208,8 +214,40 @@ export async function POST(request: Request, context: RouteContext) {
           Number.isFinite(rawScore) && rawScore >= 0
             ? Math.min(50_000, Math.floor(rawScore))
             : 0;
+        const cleanElapsed = sanitizeElapsedSec(body.elapsedSec);
+        if (cleanElapsed !== null) {
+          self.elapsedSec = cleanElapsed;
+        }
+        const cleanAnswers = sanitizeAnswersArray(body.answers);
+        if (cleanAnswers !== null) {
+          self.answers = cleanAnswers;
+        }
         self.finishedAt = nowIso;
         room.status = 'started';
+        return { next: room };
+      }
+
+      if (action === 'reaction') {
+        if (room.kickedIds.includes(playerId)) {
+          return { next: room, errorStatus: 403, errorCode: 'kicked_by_host' };
+        }
+        const self = room.players.find((p) => p.id === playerId);
+        if (!self) {
+          return { next: room, errorStatus: 403, errorCode: 'not_in_room' };
+        }
+        const cleanUrl = sanitizeReactionGifUrl(body.gifUrl);
+        if (!cleanUrl) {
+          return { next: room, errorStatus: 400, errorCode: 'invalid_gif_url' };
+        }
+        const cleanTitle =
+          typeof body.title === 'string'
+            ? body.title.trim().replace(/\s+/g, ' ').slice(0, 80)
+            : '';
+        self.reactionGif = {
+          url: cleanUrl,
+          ...(cleanTitle ? { title: cleanTitle } : {}),
+          sentAt: nowIso,
+        };
         return { next: room };
       }
 

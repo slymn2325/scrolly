@@ -25,6 +25,12 @@ export function normalizeDuelCategory(raw: unknown): CategoryFilter {
     : 'all';
 }
 
+export interface ScrollaReactionGif {
+  url: string;
+  title?: string;
+  sentAt: string;
+}
+
 export interface ScrollaPlayer {
   id: string;
   name: string;
@@ -33,6 +39,9 @@ export interface ScrollaPlayer {
   score: number | null;
   finishedAt: string | null;
   joinedAt: string;
+  elapsedSec?: number | null;
+  answers?: boolean[] | null;
+  reactionGif?: ScrollaReactionGif | null;
 }
 
 export type ScrollaRoomStatus = 'lobby' | 'countdown' | 'started';
@@ -101,6 +110,34 @@ export function sanitizePlayerName(name?: string | null): string {
 export function sanitizePlayerEmoji(emoji?: string | null): string {
   const clean = String(emoji || '').trim();
   return clean && clean.length <= 12 ? clean : '⚡';
+}
+
+export function sanitizeElapsedSec(raw: unknown): number | null {
+  if (raw === undefined || raw === null || raw === '') return null;
+  const num = Number(raw);
+  if (!Number.isFinite(num) || num < 0) return null;
+  return Math.min(3600, Math.round(num));
+}
+
+export function sanitizeAnswersArray(raw: unknown): boolean[] | null {
+  if (!Array.isArray(raw)) return null;
+  return raw.slice(0, 20).map((entry) => Boolean(entry));
+}
+
+export function sanitizeReactionGifUrl(raw: unknown): string | null {
+  if (typeof raw !== 'string') return null;
+  const trimmed = raw.trim();
+  if (!trimmed || trimmed.length > 500) return null;
+  if (/[\s"'<>]/.test(trimmed)) return null;
+
+  try {
+    const parsed = new URL(trimmed);
+    if (parsed.protocol !== 'https:') return null;
+    if (parsed.username || parsed.password) return null;
+    return parsed.toString();
+  } catch {
+    return null;
+  }
 }
 
 /**

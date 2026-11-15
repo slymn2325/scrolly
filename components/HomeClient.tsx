@@ -184,6 +184,19 @@ function buildPersonalizedDeck(
 
 const useIsomorphicLayoutEffect = typeof window !== 'undefined' ? useLayoutEffect : useEffect;
 
+function syncDocumentTheme(darkMode: boolean, lang: Language) {
+  if (typeof document === 'undefined') return;
+  document.documentElement.classList.toggle('dark', darkMode);
+  document.documentElement.lang = lang === 'en' ? 'en' : 'tr';
+  let themeMeta = document.querySelector<HTMLMetaElement>('meta[name="theme-color"]');
+  if (!themeMeta) {
+    themeMeta = document.createElement('meta');
+    themeMeta.name = 'theme-color';
+    document.head.appendChild(themeMeta);
+  }
+  themeMeta.content = darkMode ? '#0A0A0E' : '#FAF9F5';
+}
+
 function hasFactSlugMatch(pool: FactCardType[], targetSlug: string | null): boolean {
   if (!targetSlug) return false;
   return pool.some(
@@ -264,8 +277,7 @@ export default function HomeClient({ initialFacts, initialVocabulary }: HomeClie
     const loaded = loadUserMemory();
     setMemory(loaded);
     hasHydratedRef.current = true;
-    document.documentElement.classList.toggle('dark', loaded.darkMode);
-    document.documentElement.lang = loaded.lang === 'en' ? 'en' : 'tr';
+    syncDocumentTheme(loaded.darkMode, loaded.lang);
 
     let requestedFactSlug: string | null = null;
     let duelParam: string | null = null;
@@ -560,10 +572,7 @@ export default function HomeClient({ initialFacts, initialVocabulary }: HomeClie
   ]);
 
   useEffect(() => {
-    if (typeof document !== 'undefined') {
-      document.documentElement.classList.toggle('dark', memory.darkMode);
-      document.documentElement.lang = memory.lang === 'en' ? 'en' : 'tr';
-    }
+    syncDocumentTheme(memory.darkMode, memory.lang);
   }, [memory.darkMode, memory.lang]);
 
   const lang: Language = memory.lang;
@@ -587,7 +596,7 @@ export default function HomeClient({ initialFacts, initialVocabulary }: HomeClie
     vibrateTap(12);
     playPop(soundEnabled);
     setMemory((prev) => {
-      const updated = { ...prev, darkMode: !prev.darkMode };
+      const updated = { ...prev, darkMode: !prev.darkMode, themeCustomized: true };
       saveUserMemory(updated);
       return updated;
     });
@@ -820,7 +829,11 @@ export default function HomeClient({ initialFacts, initialVocabulary }: HomeClie
     const finishedSession = activeQuiz;
     const quizMode = finishedSession?.mode ?? 'memory';
     const duelConfig = finishedSession?.duelConfig ?? null;
-    const isDuelWin = duelConfig && earnedXp > duelConfig.targetScore;
+    const isRealServerDuel = Boolean(
+      duelConfig?.duelId && isShortRoomCode(duelConfig.duelId) && !duelConfig.isBotPractice
+    );
+    const isDuelWin =
+      duelConfig && !isRealServerDuel ? earnedXp > duelConfig.targetScore : false;
 
     const categoryCounts: Record<string, number> = {};
     sourceCategories.forEach((c) => {
@@ -863,8 +876,12 @@ export default function HomeClient({ initialFacts, initialVocabulary }: HomeClie
       questionCount: results.length,
     });
 
-    if (duelConfig?.duelId && isShortRoomCode(duelConfig.duelId)) {
-      void completeScrollaRoom(duelConfig.duelId, updated.playerId, totalBonusXp);
+    const duelPlayerId = duelConfig?.myPlayerId || updated.playerId;
+    if (isRealServerDuel && duelConfig?.duelId) {
+      void completeScrollaRoom(duelConfig.duelId, duelPlayerId, totalBonusXp, {
+        elapsedSec,
+        answers: results,
+      });
     }
 
     setActiveQuiz(null);
@@ -1097,7 +1114,7 @@ export default function HomeClient({ initialFacts, initialVocabulary }: HomeClie
         data-testid="reels-desktop-shell"
         data-theme={isDark ? 'dark' : 'light'}
         className={`relative flex h-[100dvh] w-screen overflow-hidden select-none ${
-          isDark ? 'bg-black text-white' : 'bg-[#E8E6F0] text-[#1E1B2E]'
+          isDark ? 'bg-[#0A0A0E] text-white' : 'bg-[#E8E6F0] text-[#1E1B2E]'
         }`}
       >
         <WelcomeExploreModal
@@ -1137,7 +1154,7 @@ export default function HomeClient({ initialFacts, initialVocabulary }: HomeClie
           className="pointer-events-none absolute inset-0 hidden transition-[background] duration-500 lg:block"
           style={{
             background: isDark
-              ? `radial-gradient(ellipse 70% 95% at 48% 50%, ${ambientAccent}66 0%, ${ambientAccent}22 38%, #000 72%)`
+              ? `radial-gradient(ellipse 70% 95% at 48% 50%, ${ambientAccent}66 0%, ${ambientAccent}22 38%, #0A0A0E 72%)`
               : `radial-gradient(ellipse 70% 95% at 48% 50%, ${ambientAccent}55 0%, ${ambientAccent}28 42%, #E8E6F0 78%)`,
           }}
         />
@@ -1162,7 +1179,7 @@ export default function HomeClient({ initialFacts, initialVocabulary }: HomeClie
               ? 'lg:w-[min(480px,46vw)] lg:max-w-[500px] xl:w-[min(500px,38vw)] xl:max-w-[520px]'
               : 'lg:w-[min(600px,54vw)] lg:max-w-[620px]'
           } ${
-            isDark ? 'bg-[#09090B] text-white' : 'bg-[#F7F5FB] text-[#1E1B2E]'
+            isDark ? 'bg-[#0A0A0E] text-white' : 'bg-[#F7F5FB] text-[#1E1B2E]'
           }`}
         >
         <OfflineManager lang={lang} />
@@ -1362,6 +1379,7 @@ export default function HomeClient({ initialFacts, initialVocabulary }: HomeClie
             earnedXp={shareModalData.earnedXp}
             elapsedSec={shareModalData.elapsedSec}
             challengerNickname={memory.nickname}
+            playerId={shareModalData.duelConfig?.myPlayerId || memory.playerId}
             questionIds={shareModalData.questionIds}
             duelConfig={shareModalData.duelConfig}
             onButtonPop={() => playPop(soundEnabled)}

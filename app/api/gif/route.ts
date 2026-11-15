@@ -1,6 +1,12 @@
 import { NextResponse } from 'next/server';
 import { getFactGifUrlDb, updateFactGifUrlDb } from '@/lib/dbActions';
-import { isRenderableGifImageUrl, sanitizeVisualQuery, searchTopicGif } from '@/lib/gifService';
+import {
+  isRenderableGifImageUrl,
+  sanitizeReactionQuery,
+  sanitizeVisualQuery,
+  searchReactionGifs,
+  searchTopicGif,
+} from '@/lib/gifService';
 import { checkRateLimit, extractClientIp } from '@/lib/rateLimit';
 
 export const dynamic = 'force-dynamic';
@@ -16,7 +22,37 @@ export async function GET(request: Request) {
   }
 
   const url = new URL(request.url);
+  const mode = (url.searchParams.get('mode') || '').trim().toLowerCase();
   const rawQuery = url.searchParams.get('query') || '';
+
+  if (mode === 'reactions') {
+    const rawLimit = Number(url.searchParams.get('limit') || '6');
+    const limit = Number.isFinite(rawLimit) ? Math.max(1, Math.min(12, Math.floor(rawLimit))) : 6;
+    const cleanReactionQuery = sanitizeReactionQuery(rawQuery);
+    const result = await searchReactionGifs(rawQuery, limit);
+    const shouldNoStore = Boolean(result.rateLimited) || result.gifs.length === 0;
+
+    return NextResponse.json(
+      {
+        ok: true,
+        mode: 'reactions',
+        query: cleanReactionQuery,
+        gifs: result.gifs,
+        provider: result.provider,
+        cached: result.cached,
+        quotaExhausted: Boolean(result.quotaExhausted),
+        rateLimited: Boolean(result.rateLimited),
+      },
+      {
+        headers: {
+          'Cache-Control': shouldNoStore
+            ? 'no-store, max-age=0'
+            : 'public, max-age=300, s-maxage=300',
+        },
+      }
+    );
+  }
+
   const slug = (url.searchParams.get('slug') || '').trim();
   const category = (url.searchParams.get('category') || '').trim() || undefined;
   const cleanQuery = sanitizeVisualQuery(rawQuery);

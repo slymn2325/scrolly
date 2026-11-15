@@ -2,11 +2,13 @@
 
 import React, { useEffect, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { Check, Copy, Download, Loader2, Share2, Sparkles, X } from 'lucide-react';
+import { Check, Copy, Download, Film, Loader2, MessageCircle, Share2, Sparkles, X } from 'lucide-react';
+import PoweredByGiphyBadge from '@/components/PoweredByGiphyBadge';
 import { type Language, translations } from '@/i18n/translations';
 import type { FactCard } from '@/types/fact';
-import { getFactUrl } from '@/utils/factsData';
+import { getFactPrimarySlug, getFactUrl } from '@/utils/factsData';
 import {
+  fetchProxiedMediaFile,
   type GeneratedCanvasAsset,
   generateStoryCardImage,
 } from '@/utils/storyCanvasGenerator';
@@ -31,6 +33,9 @@ export default function StoryShareModal({
   const [generating, setGenerating] = useState(false);
   const [copiedLink, setCopiedLink] = useState(false);
   const [downloadedFeedback, setDownloadedFeedback] = useState(false);
+  const [downloadingGif, setDownloadingGif] = useState(false);
+  const [gifStatusMsg, setGifStatusMsg] = useState<string | null>(null);
+  const [showQuickShareMenu, setShowQuickShareMenu] = useState(false);
 
   const t = translations[lang];
 
@@ -39,11 +44,15 @@ export default function StoryShareModal({
   useEffect(() => {
     if (!open || !fact) {
       setAsset(null);
+      setShowQuickShareMenu(false);
+      setGifStatusMsg(null);
       return;
     }
 
     let cancelled = false;
     setGenerating(true);
+    setShowQuickShareMenu(false);
+    setGifStatusMsg(null);
 
     generateStoryCardImage(fact, lang)
       .then((res) => {
@@ -63,25 +72,33 @@ export default function StoryShareModal({
     };
   }, [open, fact, lang]);
 
-  const triggerDownload = (dataUrl: string, fileName: string) => {
+  const triggerDownload = (dataUrl: string, fileName: string, showPngToast = true) => {
     const link = document.createElement('a');
     link.href = dataUrl;
     link.download = fileName;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-    setDownloadedFeedback(true);
-    setTimeout(() => setDownloadedFeedback(false), 2400);
+    if (showPngToast) {
+      setDownloadedFeedback(true);
+      setTimeout(() => setDownloadedFeedback(false), 2400);
+    }
+  };
+
+  const buildSharePayload = (targetFact: FactCard) => {
+    const localized = targetFact[lang];
+    const origin =
+      typeof window !== 'undefined' ? window.location.origin : 'https://scrolly.live';
+    const shareUrl = `${origin}${getFactUrl(targetFact, lang)}`;
+    const shareText = `${localized.title} — ${t.brandName}`;
+    return { localized, shareUrl, shareText };
   };
 
   const handleNativeShare = async () => {
     if (!asset || !fact) return;
     onButtonPop();
 
-    const localized = fact[lang];
-    const origin =
-      typeof window !== 'undefined' ? window.location.origin : 'https://scrolly.live';
-    const shareUrl = `${origin}${getFactUrl(fact, lang)}`;
+    const { localized, shareUrl, shareText } = buildSharePayload(fact);
 
     if (
       typeof navigator !== 'undefined' &&
@@ -93,38 +110,105 @@ export default function StoryShareModal({
         await navigator.share({
           files: [asset.file],
           title: localized.title,
-          text: `${localized.title} — ${t.brandName}`,
+          text: shareText,
           url: shareUrl,
         });
         return;
-      } catch {
-        // User cancelled or file-share blocked; fallback gracefully to download
+      } catch (err) {
+        if (err instanceof Error && err.name === 'AbortError') {
+          return;
+        }
+        // Non-abort share rejection falls through to PNG download + quick-share menu
       }
     }
 
-    triggerDownload(asset.dataUrl, `scrolly-story-${fact.id}.png`);
+    triggerDownload(asset.dataUrl, `scrolly-story-${getFactPrimarySlug(fact)}.png`);
+    setShowQuickShareMenu(true);
   };
 
   const handleDownloadPng = () => {
     if (!asset || !fact) return;
     onButtonPop();
-    triggerDownload(asset.dataUrl, `scrolly-story-${fact.id}.png`);
+    triggerDownload(asset.dataUrl, `scrolly-story-${getFactPrimarySlug(fact)}.png`);
+  };
+
+  const handleShareOrDownloadAnimatedGif = async () => {
+    if (!fact?.gifUrl || downloadingGif) return;
+    onButtonPop();
+    setDownloadingGif(true);
+    setGifStatusMsg(null);
+    const { localized, shareUrl, shareText } = buildSharePayload(fact);
+    const slug = getFactPrimarySlug(fact);
+
+    try {
+      const media = await fetchProxiedMediaFile(fact.gifUrl, slug);
+      try {
+        if (
+          typeof navigator !== 'undefined' &&
+          typeof navigator.canShare === 'function' &&
+          typeof navigator.share === 'function' &&
+          navigator.canShare({ files: [media.file] })
+        ) {
+          try {
+            await navigator.share({
+              files: [media.file],
+              title: localized.title,
+              text: shareText,
+              url: shareUrl,
+            });
+            setGifStatusMsg(
+              lang === 'tr' ? 'Hareketli GIF paylaşıldı ✓' : 'Animated GIF shared ✓'
+            );
+            return;
+          } catch (err) {
+            if (err instanceof Error && err.name === 'AbortError') {
+              return;
+            }
+          }
+        }
+
+        triggerDownload(media.objectUrl, media.filename, false);
+        setGifStatusMsg(
+          lang === 'tr'
+            ? `İndirildi: ${media.filename} ✓`
+            : `Downloaded: ${media.filename} ✓`
+        );
+      } finally {
+        window.setTimeout(() => URL.revokeObjectURL(media.objectUrl), 1500);
+      }
+    } catch {
+      setGifStatusMsg(
+        lang === 'tr'
+          ? 'GIF indirilemedi, hikaye kartı PNG ile paylaşabilirsin.'
+          : 'Could not fetch animated GIF; use Story PNG share above.'
+      );
+    } finally {
+      setDownloadingGif(false);
+    }
   };
 
   const handleCopyLink = async () => {
     if (!fact) return;
     onButtonPop();
-    const origin =
-      typeof window !== 'undefined' ? window.location.origin : 'https://scrolly.live';
-    const url = `${origin}${getFactUrl(fact, lang)}`;
+    const { shareUrl } = buildSharePayload(fact);
     try {
-      await navigator.clipboard.writeText(url);
+      await navigator.clipboard.writeText(shareUrl);
     } catch {
       // Ignore clipboard failures in restricted environments
     }
     setCopiedLink(true);
     setTimeout(() => setCopiedLink(false), 2400);
   };
+
+  const { shareUrl, shareText } = fact
+    ? buildSharePayload(fact)
+    : { shareUrl: 'https://scrolly.live', shareText: t.brandName };
+  const primaryShareLabel =
+    lang === 'tr'
+      ? "GIF'li Hikaye Kartını Paylaş / İndir"
+      : 'Share / Download GIF Story Card';
+  const animatedGifBtnLabel =
+    lang === 'tr' ? "Hareketli GIF'i İndir / Paylaş" : 'Download / Share Animated GIF';
 
   return (
     <AnimatePresence>
@@ -135,14 +219,14 @@ export default function StoryShareModal({
           aria-label={t.storyModalTitle}
           data-testid="story-share-modal"
           onClick={(e) => e.stopPropagation()}
-          className="fixed inset-0 z-50 mx-auto flex w-full max-w-[430px] items-center justify-center bg-ink/60 px-3 pt-4 backdrop-blur-md"
+          className="fixed inset-0 z-50 mx-auto flex w-full max-w-[430px] items-center justify-center bg-black/70 px-3 pt-4 backdrop-blur-md"
         >
           <motion.div
             initial={{ opacity: 0, scale: 0.92, y: 18 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.92, y: 18 }}
             transition={{ type: 'spring', stiffness: 320, damping: 24 }}
-            className="relative mb-[92px] flex max-h-[84dvh] w-full flex-col overflow-y-auto no-scrollbar rounded-3xl border-2 border-violet-200 bg-[#FFFDF9] p-5 shadow-2xl dark:border-violet-700/60 dark:bg-[#171228]"
+            className="relative mb-[92px] flex max-h-[84dvh] w-full flex-col overflow-y-auto no-scrollbar rounded-3xl border border-violet-300/60 bg-[#FFFDF9] p-4 shadow-2xl dark:border-violet-700/60 dark:bg-[#141122] sm:p-5"
           >
             <motion.button
               type="button"
@@ -158,7 +242,7 @@ export default function StoryShareModal({
               <X className="h-4 w-4" />
             </motion.button>
 
-            <div className="flex items-center gap-2.5 pr-8">
+            <div className="flex items-center gap-2.5 pr-10">
               <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-fuchsia-500 to-violet-600 text-white shadow-sm">
                 <Sparkles className="h-5 w-5" />
               </div>
@@ -173,8 +257,8 @@ export default function StoryShareModal({
             </div>
 
             {/* 9:16 Live Story Preview */}
-            <div className="mt-4 flex justify-center">
-              <div className="relative aspect-[9/16] w-48 overflow-hidden rounded-2xl border-2 border-white/80 bg-neutral-900 shadow-xl dark:border-white/20 sm:w-52">
+            <div className="mt-3.5 flex flex-col items-center">
+              <div className="relative aspect-[9/16] w-44 overflow-hidden rounded-2xl border-2 border-white/80 bg-[#0A0A0E] shadow-xl dark:border-white/20 sm:w-48">
                 {generating || !asset ? (
                   <div className="flex h-full w-full flex-col items-center justify-center gap-2 text-center text-xs font-bold text-white/80">
                     <Loader2 className="h-6 w-6 animate-spin text-violet-400" />
@@ -190,27 +274,60 @@ export default function StoryShareModal({
                   />
                 )}
               </div>
+
+              {fact.gifUrl && (
+                <div className="mt-2 flex justify-center">
+                  <PoweredByGiphyBadge compact lang={lang} />
+                </div>
+              )}
             </div>
 
             {downloadedFeedback && (
-              <p className="mt-2.5 text-center text-xs font-extrabold text-emerald-600 dark:text-emerald-400">
+              <p className="mt-2 text-center text-xs font-extrabold text-emerald-600 dark:text-emerald-400">
                 {t.storyDownloadSavedToast}
               </p>
             )}
 
-            {/* 3 Story Action Buttons */}
-            <div className="mt-4 flex flex-col gap-2">
+            {gifStatusMsg && (
+              <p
+                data-testid="story-gif-status"
+                className="mt-1.5 text-center text-[11px] font-extrabold text-violet-700 dark:text-violet-300"
+              >
+                {gifStatusMsg}
+              </p>
+            )}
+
+            {/* Primary Story CTA + GIF Download + PNG / Copy Actions */}
+            <div className="mt-3.5 flex flex-col gap-2">
               <motion.button
                 type="button"
                 whileTap={{ scale: 0.95 }}
                 disabled={!asset}
                 onClick={handleNativeShare}
                 data-testid="story-share-native-btn"
-                className="flex w-full items-center justify-center gap-2 rounded-full bg-gradient-to-r from-fuchsia-600 via-violet-600 to-indigo-600 py-3 text-sm font-extrabold text-white shadow-cozy disabled:opacity-50"
+                className="flex w-full items-center justify-center gap-2 rounded-full bg-gradient-to-r from-fuchsia-600 via-violet-600 to-indigo-600 px-4 py-3 text-xs font-extrabold text-white shadow-cozy disabled:opacity-50 sm:text-sm"
               >
-                <Share2 className="h-4 w-4" />
-                <span>{t.storyShareNativeBtn}</span>
+                <Share2 className="h-4 w-4 shrink-0" />
+                <span>{primaryShareLabel}</span>
               </motion.button>
+
+              {fact.gifUrl && (
+                <motion.button
+                  type="button"
+                  whileTap={{ scale: 0.95 }}
+                  disabled={downloadingGif}
+                  onClick={() => void handleShareOrDownloadAnimatedGif()}
+                  data-testid="story-animated-gif-btn"
+                  className="flex w-full items-center justify-center gap-2 rounded-2xl border border-violet-400/60 bg-violet-100/80 px-3 py-2.5 text-xs font-extrabold text-violet-950 transition hover:bg-violet-200/80 disabled:opacity-60 dark:border-violet-500/45 dark:bg-violet-950/60 dark:text-violet-100"
+                >
+                  {downloadingGif ? (
+                    <Loader2 className="h-4 w-4 shrink-0 animate-spin" />
+                  ) : (
+                    <Film className="h-4 w-4 shrink-0" />
+                  )}
+                  <span>{animatedGifBtnLabel}</span>
+                </motion.button>
+              )}
 
               <div className="grid grid-cols-2 gap-2">
                 <motion.button
@@ -221,7 +338,7 @@ export default function StoryShareModal({
                   data-testid="story-download-btn"
                   className="flex items-center justify-center gap-1.5 rounded-2xl border-2 border-ink bg-white py-2.5 text-xs font-extrabold text-ink hover:bg-slate-50 disabled:opacity-50 dark:border-violet-400 dark:bg-white/10 dark:text-white"
                 >
-                  <Download className="h-4 w-4" />
+                  <Download className="h-4 w-4 shrink-0" />
                   <span>{t.storyDownloadBtn}</span>
                 </motion.button>
 
@@ -236,10 +353,56 @@ export default function StoryShareModal({
                       : 'border border-amber-300 bg-amber-50 text-amber-950 dark:border-white/20 dark:bg-white/10 dark:text-violet-100'
                   }`}
                 >
-                  {copiedLink ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                  {copiedLink ? <Check className="h-4 w-4 shrink-0" /> : <Copy className="h-4 w-4 shrink-0" />}
                   <span>{copiedLink ? t.copiedLink : t.storyCopyLinkBtn}</span>
                 </motion.button>
               </div>
+
+              {showQuickShareMenu && (
+                <div
+                  data-testid="story-quick-share-menu"
+                  className="mt-1 rounded-2xl border border-violet-300/80 bg-violet-50/90 p-2.5 dark:border-violet-500/40 dark:bg-violet-950/50"
+                >
+                  <p className="mb-2 text-center text-[11px] font-black text-violet-900 dark:text-violet-200">
+                    {lang === 'tr'
+                      ? 'Görsel indirildi! Hemen paylaş:'
+                      : 'Story image saved! Quick share:'}
+                  </p>
+                  <div className="grid grid-cols-3 gap-1.5">
+                    <a
+                      href={`https://wa.me/?text=${encodeURIComponent(`${shareText}\n${shareUrl}`)}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      onClick={onButtonPop}
+                      data-testid="story-quick-whatsapp"
+                      className="flex min-h-[38px] items-center justify-center gap-1 rounded-xl bg-[#25D366] px-2 text-[11px] font-extrabold text-white"
+                    >
+                      <MessageCircle className="h-3.5 w-3.5 shrink-0" />
+                      <span>WhatsApp</span>
+                    </a>
+                    <a
+                      href={`https://x.com/intent/post?text=${encodeURIComponent(shareText)}&url=${encodeURIComponent(shareUrl)}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      onClick={onButtonPop}
+                      data-testid="story-quick-x"
+                      className="flex min-h-[38px] items-center justify-center gap-1 rounded-xl bg-[#111827] px-2 text-[11px] font-extrabold text-white"
+                    >
+                      <Share2 className="h-3.5 w-3.5 shrink-0" />
+                      <span>X</span>
+                    </a>
+                    <button
+                      type="button"
+                      onClick={() => void handleCopyLink()}
+                      data-testid="story-quick-copy"
+                      className="flex min-h-[38px] items-center justify-center gap-1 rounded-xl bg-violet-600 px-2 text-[11px] font-extrabold text-white"
+                    >
+                      <Copy className="h-3.5 w-3.5 shrink-0" />
+                      <span>{copiedLink ? '✓' : lang === 'tr' ? 'Kopyala' : 'Copy'}</span>
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           </motion.div>
         </div>

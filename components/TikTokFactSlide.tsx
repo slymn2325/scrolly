@@ -22,6 +22,7 @@ import {
 import CategoryMotionArt from '@/components/CategoryMotionArt';
 import FactIcon from '@/components/FactIcon';
 import GuessWidget from '@/components/GuessWidget';
+import PoweredByGiphyBadge from '@/components/PoweredByGiphyBadge';
 import { FEED_EXPERIENCE_COPY, getCategoryMeta, type Language, translations } from '@/i18n/translations';
 import { ENABLE_COMPETITIVE_TABS } from '@/lib/featureFlags';
 import { trackEvent, fetchTopicGifFromApi } from '@/lib/telemetry';
@@ -759,7 +760,7 @@ export default function TikTokFactSlide({
               />
             )}
 
-            <div className="pointer-events-auto mt-1 flex flex-wrap items-center gap-2">
+            <div className="pointer-events-auto mt-1 flex flex-wrap items-center gap-2 pb-7 lg:pb-0 lg:pr-36">
               <button
                 type="button"
                 data-testid="front-see-details-btn"
@@ -780,6 +781,19 @@ export default function TikTokFactSlide({
             </div>
           </div>
         </div>
+
+        {/* Official GIPHY attribution in bottom-right corner of active GIF card */}
+        {!isFlipped && resolvedGifUrl && !gifFailed && (
+          <div
+            className={`pointer-events-auto absolute right-16 z-20 lg:bottom-3 lg:right-3 ${
+              cookieBannerVisible
+                ? 'bottom-[calc(env(safe-area-inset-bottom,16px)+204px)]'
+                : 'bottom-[calc(env(safe-area-inset-bottom,16px)+84px)]'
+            }`}
+          >
+            <PoweredByGiphyBadge compact lang={lang} />
+          </div>
+        )}
 
         {/* Right Reels action column — mobile/tablet only (desktop moves rail beside stage) */}
         {!isFlipped && (
@@ -1388,6 +1402,22 @@ export default function TikTokFactSlide({
                               <ExternalLink className="h-3 w-3 shrink-0" />
                             </Link>
                           </div>
+                          {resolvedGifUrl && !gifFailed && (
+                            <div
+                              className={`flex items-center justify-between gap-2 border-t pt-2 ${
+                                darkMode ? 'border-white/10' : 'border-[#1E1B2E]/10'
+                              }`}
+                            >
+                              <span
+                                className={`text-[10px] font-bold uppercase tracking-wider ${
+                                  darkMode ? 'text-white/55' : 'text-[#1E1B2E]/55'
+                                }`}
+                              >
+                                {lang === 'tr' ? 'Görsel GIF Kaynağı' : 'GIF Media Attribution'}
+                              </span>
+                              <PoweredByGiphyBadge compact lang={lang} />
+                            </div>
+                          )}
                         </div>
                       </div>
                     </div>

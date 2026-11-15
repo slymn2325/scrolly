@@ -10,8 +10,8 @@
 
 html,
 body {
-  background-color: #FFFDF9;
-  color: #1E1B2E;
+  background-color: #0A0A0E;
+  color: #F5F3FF;
   overflow-x: hidden;
   overscroll-behavior: none;
   -webkit-touch-callout: none;
@@ -35,7 +35,7 @@ textarea {
 
 html.dark,
 html.dark body {
-  background-color: #0F0D1A;
+  background-color: #0A0A0E;
   color: #F5F3FF;
   --sketch-pill-bg: rgba(18, 15, 36, 0.9);
 }

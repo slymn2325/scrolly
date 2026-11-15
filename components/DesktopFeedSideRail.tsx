@@ -14,6 +14,7 @@ import {
   Sparkles,
   Swords,
 } from 'lucide-react';
+import PoweredByGiphyBadge from '@/components/PoweredByGiphyBadge';
 import type { FeedSlideItem } from '@/components/TikTokFeed';
 import { getCategoryMeta, type Language } from '@/i18n/translations';
 import type { FactCard } from '@/types/fact';
@@ -416,6 +417,13 @@ export default function DesktopFeedSideRail({
               ) : (
                 <p className="mt-1 text-xs font-bold">{sourceName}</p>
               )}
+              <div
+                className={`mt-2.5 flex items-center justify-between gap-2 border-t pt-2 ${
+                  darkMode ? 'border-white/10' : 'border-[#1E1B2E]/10'
+                }`}
+              >
+                <PoweredByGiphyBadge compact lang={lang} />
+              </div>
             </div>
           )}
 

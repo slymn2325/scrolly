@@ -5,12 +5,13 @@ import type { VocabularyCard } from '@/types/vocabulary';
 import {
   normalizeRoomCode,
   type ScrollaPlayer,
+  type ScrollaReactionGif,
   type ScrollaRoom,
   type ScrollaRoomStatus,
 } from '@/lib/duelStore';
 import { pickSeededFacts } from '@/utils/seededRandom';
 
-export type { ScrollaPlayer, ScrollaRoom, ScrollaRoomStatus };
+export type { ScrollaPlayer, ScrollaReactionGif, ScrollaRoom, ScrollaRoomStatus };
 
 export const DUEL_QUESTION_COUNTS = [3, 5, 7, 10] as const;
 export type DuelQuestionCount = (typeof DUEL_QUESTION_COUNTS)[number];
@@ -380,9 +381,29 @@ export function startScrollaRoom(
 export function completeScrollaRoom(
   code: string,
   playerId: string,
-  score: number
+  score: number,
+  options?: { elapsedSec?: number; answers?: boolean[] }
 ): Promise<ScrollaApiResult> {
-  return postScrollaAction(code, { action: 'complete', playerId, score });
+  return postScrollaAction(code, {
+    action: 'complete',
+    playerId,
+    score,
+    ...(options?.elapsedSec !== undefined ? { elapsedSec: options.elapsedSec } : {}),
+    ...(options?.answers !== undefined ? { answers: options.answers } : {}),
+  });
+}
+
+export function sendScrollaReaction(
+  code: string,
+  playerId: string,
+  gif: { url: string; title?: string }
+): Promise<ScrollaApiResult> {
+  return postScrollaAction(code, {
+    action: 'reaction',
+    playerId,
+    gifUrl: gif.url,
+    ...(gif.title ? { title: gif.title } : {}),
+  });
 }
 
 export async function leaveScrollaRoom(code: string, playerId: string): Promise<void> {

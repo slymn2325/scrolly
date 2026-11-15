@@ -73,6 +73,7 @@ export interface RawGifCandidate {
 
 export interface GiphyImageVariants {
   fixed_height?: { url?: string; webp?: string; mp4?: string };
+  fixed_height_small?: { url?: string; webp?: string };
   downsized_medium?: { url?: string };
   original?: { url?: string; webp?: string; mp4?: string };
 }
@@ -560,4 +561,313 @@ export async function searchTopicGif(
     cached: false,
     ...(blockedByQuota ? { quotaExhausted: true } : {}),
   };
+}
+
+export interface ReactionGifItem {
+  id: string;
+  url: string;
+  previewUrl: string;
+  title: string;
+}
+
+export interface ReactionGifSearchResult {
+  gifs: ReactionGifItem[];
+  provider: 'giphy' | 'curated' | 'none';
+  cached: boolean;
+  rateLimited?: boolean;
+  quotaExhausted?: boolean;
+}
+
+interface CuratedReactionGifEntry extends ReactionGifItem {
+  keywords: string[];
+}
+
+const BANNED_REACTION_GIF_PATTERN =
+  /(?:^|[^a-z0-9])(sticker|stickers|caption|subtitles|typography|wordart|word\s*art|text\s*meme|quote|quotes|nsfw|gore)(?:$|[^a-z0-9])/i;
+
+const REACTION_CACHE_TTL_MS = 1000 * 60 * 5; // 5 minutes
+const reactionQueryCache = new Map<string, { gifs: ReactionGifItem[]; expiresAt: number }>();
+
+// Live-verified HTTPS media.giphy.com fallback reaction GIFs used only when
+// GIPHY_API_KEY is absent, quota is exhausted, or upstream errors/429s occur.
+const CURATED_REACTION_GIFS: CuratedReactionGifEntry[] = [
+  {
+    id: 'blSTtZehjAZ8I',
+    title: 'GG!',
+    keywords: ['gg', 'good', 'game', 'cool', 'nice', 'respect'],
+    url: 'https://media.giphy.com/media/blSTtZehjAZ8I/giphy.gif',
+    previewUrl: 'https://media.giphy.com/media/blSTtZehjAZ8I/200.gif',
+  },
+  {
+    id: '26ufdipQqU2lhNA4g',
+    title: 'Mind Blown',
+    keywords: ['mind', 'blown', 'wow', 'shock', 'amazed', 'brain'],
+    url: 'https://media.giphy.com/media/26ufdipQqU2lhNA4g/giphy.gif',
+    previewUrl: 'https://media.giphy.com/media/26ufdipQqU2lhNA4g/200.gif',
+  },
+  {
+    id: '3o7btNa0RUYa5E7iiQ',
+    title: 'Fire',
+    keywords: ['fire', 'hot', 'lit', 'fast', 'speed', 'streak'],
+    url: 'https://media.giphy.com/media/3o7btNa0RUYa5E7iiQ/giphy.gif',
+    previewUrl: 'https://media.giphy.com/media/3o7btNa0RUYa5E7iiQ/200.gif',
+  },
+  {
+    id: 'd3mlE7uhX8KFgEmY',
+    title: 'Genius',
+    keywords: ['genius', 'smart', 'brain', 'iq', 'clever', 'think'],
+    url: 'https://media.giphy.com/media/d3mlE7uhX8KFgEmY/giphy.gif',
+    previewUrl: 'https://media.giphy.com/media/d3mlE7uhX8KFgEmY/200.gif',
+  },
+  {
+    id: 'artj92V8o75VPL7AeQ',
+    title: 'Victory',
+    keywords: ['victory', 'win', 'winner', 'champion', 'trophy', 'celebrate'],
+    url: 'https://media.giphy.com/media/artj92V8o75VPL7AeQ/giphy.gif',
+    previewUrl: 'https://media.giphy.com/media/artj92V8o75VPL7AeQ/200.gif',
+  },
+  {
+    id: 'g9582DNuQppxC',
+    title: 'Applause',
+    keywords: ['applause', 'clap', 'bravo', 'cheers', 'congrats', 'fast'],
+    url: 'https://media.giphy.com/media/g9582DNuQppxC/giphy.gif',
+    previewUrl: 'https://media.giphy.com/media/g9582DNuQppxC/200.gif',
+  },
+];
+
+export function sanitizeReactionQuery(rawQuery?: string | null): string {
+  if (!rawQuery) return '';
+  return String(rawQuery)
+    .replace(/[^\x20-\x7E]/g, ' ')
+    .replace(/[^a-zA-Z0-9\s-]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .split(' ')
+    .filter(Boolean)
+    .slice(0, 4)
+    .join(' ')
+    .slice(0, 40)
+    .toLowerCase();
+}
+
+function pickGiphyReactionPreviewUrl(
+  images: GiphyImageVariants | undefined,
+  fallbackUrl: string
+): string {
+  const ordered = [
+    images?.fixed_height_small?.webp,
+    images?.fixed_height_small?.url,
+    images?.fixed_height?.webp,
+    images?.fixed_height?.url,
+    fallbackUrl,
+  ];
+  for (const candidate of ordered) {
+    if (isRenderableGifImageUrl(candidate)) {
+      return String(candidate).trim();
+    }
+  }
+  return fallbackUrl;
+}
+
+function pickCuratedReactionGifs(cleanQuery: string, limit: number): ReactionGifItem[] {
+  const safeLimit = Math.max(1, Math.min(12, limit));
+  if (!cleanQuery) {
+    return CURATED_REACTION_GIFS.slice(0, safeLimit).map(({ id, url, previewUrl, title }) => ({
+      id,
+      url,
+      previewUrl,
+      title,
+    }));
+  }
+
+  const terms = cleanQuery.split(' ').filter(Boolean);
+  const scored = CURATED_REACTION_GIFS.map((entry, idx) => {
+    const titleLower = entry.title.toLowerCase();
+    let score = 0;
+    for (const term of terms) {
+      if (titleLower.includes(term)) score += 3;
+      if (entry.keywords.some((kw) => kw.includes(term) || term.includes(kw))) score += 2;
+    }
+    return { entry, score, idx };
+  });
+
+  scored.sort((a, b) => (b.score !== a.score ? b.score - a.score : a.idx - b.idx));
+  return scored.slice(0, safeLimit).map(({ entry }) => ({
+    id: entry.id,
+    url: entry.url,
+    previewUrl: entry.previewUrl,
+    title: entry.title,
+  }));
+}
+
+function setCachedReactionGifs(key: string, gifs: ReactionGifItem[], now: number): void {
+  if (reactionQueryCache.size >= MAX_CACHE_ENTRIES) {
+    const oldestKey = reactionQueryCache.keys().next().value;
+    if (oldestKey) reactionQueryCache.delete(oldestKey);
+  }
+  reactionQueryCache.set(key, { gifs, expiresAt: now + REACTION_CACHE_TTL_MS });
+}
+
+/**
+ * Searches GIPHY reaction GIFs (live API first when GIPHY_API_KEY + hourly quota allow)
+ * with curated safe HTTPS fallbacks when unconfigured or rate-limited.
+ */
+export async function searchReactionGifs(
+  rawQuery = '',
+  limit = 6,
+  options?: { bypassCache?: boolean }
+): Promise<ReactionGifSearchResult> {
+  const safeLimit = Math.max(1, Math.min(12, Math.floor(Number.isFinite(limit) ? limit : 6)));
+  const cleanQuery = sanitizeReactionQuery(rawQuery);
+  const giphyKey = process.env.GIPHY_API_KEY?.trim() || '';
+
+  if (!giphyKey) {
+    return {
+      gifs: pickCuratedReactionGifs(cleanQuery, safeLimit),
+      provider: 'curated',
+      cached: false,
+    };
+  }
+
+  const now = Date.now();
+  const cacheKey = `${cleanQuery || '__trending__'}::${safeLimit}`;
+  if (!options?.bypassCache) {
+    const cached = reactionQueryCache.get(cacheKey);
+    if (cached && cached.expiresAt > now) {
+      return {
+        gifs: cached.gifs,
+        provider: 'giphy',
+        cached: true,
+      };
+    }
+  }
+
+  const quotaStatus = await getHourlyGifQuotaStatusServer();
+  if (quotaStatus.exhausted) {
+    return {
+      gifs: pickCuratedReactionGifs(cleanQuery, safeLimit),
+      provider: 'curated',
+      cached: false,
+      quotaExhausted: true,
+    };
+  }
+
+  const allowed = await consumeHourlyGifQuotaServer();
+  if (!allowed) {
+    return {
+      gifs: pickCuratedReactionGifs(cleanQuery, safeLimit),
+      provider: 'curated',
+      cached: false,
+      quotaExhausted: true,
+    };
+  }
+
+  try {
+    const endpoint = cleanQuery
+      ? 'https://api.giphy.com/v1/gifs/search'
+      : 'https://api.giphy.com/v1/gifs/trending';
+    const params = new URLSearchParams({
+      api_key: giphyKey,
+      limit: '12',
+      offset: '0',
+      rating: 'pg',
+      ...(cleanQuery ? { q: cleanQuery, lang: 'en' } : {}),
+    });
+
+    const res = await fetch(`${endpoint}?${params.toString()}`, {
+      signal: AbortSignal.timeout(3500),
+      headers: { Accept: 'application/json' },
+    });
+
+    if (res.status === 429) {
+      await markGifHourlyQuotaExhaustedServer();
+      return {
+        gifs: pickCuratedReactionGifs(cleanQuery, safeLimit),
+        provider: 'curated',
+        cached: false,
+        rateLimited: true,
+        quotaExhausted: true,
+      };
+    }
+
+    if (!res.ok) {
+      return {
+        gifs: pickCuratedReactionGifs(cleanQuery, safeLimit),
+        provider: 'curated',
+        cached: false,
+      };
+    }
+
+    const json = (await res.json()) as {
+      data?: Array<{
+        id?: string;
+        title?: string;
+        slug?: string;
+        url?: string;
+        is_sticker?: number | boolean;
+        tags?: string[];
+        images?: GiphyImageVariants;
+      }>;
+    };
+
+    const rows = Array.isArray(json.data) ? json.data : [];
+    const seenUrls = new Set<string>();
+    const items: ReactionGifItem[] = [];
+
+    for (const row of rows) {
+      if (!row || row.is_sticker) continue;
+      const url = pickBestGiphyImageUrl(row.images);
+      if (!url || seenUrls.has(url) || !isRenderableGifImageUrl(url)) continue;
+
+      const metaCombined = [
+        url,
+        row.title || '',
+        row.slug || '',
+        row.url || '',
+        ...(Array.isArray(row.tags) ? row.tags : []),
+      ]
+        .filter(Boolean)
+        .join(' ');
+      if (BANNED_REACTION_GIF_PATTERN.test(metaCombined)) continue;
+
+      seenUrls.add(url);
+      items.push({
+        id: String(row.id || `giphy-${items.length + 1}`).trim(),
+        url,
+        previewUrl: pickGiphyReactionPreviewUrl(row.images, url),
+        title: String(row.title || cleanQuery || 'Reaction GIF').trim().slice(0, 80),
+      });
+
+      if (items.length >= safeLimit) break;
+    }
+
+    if (items.length > 0) {
+      setCachedReactionGifs(cacheKey, items, now);
+      return {
+        gifs: items,
+        provider: 'giphy',
+        cached: false,
+      };
+    }
+
+    if (!cleanQuery) {
+      return {
+        gifs: pickCuratedReactionGifs('', safeLimit),
+        provider: 'curated',
+        cached: false,
+      };
+    }
+
+    return {
+      gifs: [],
+      provider: 'none',
+      cached: false,
+    };
+  } catch {
+    return {
+      gifs: pickCuratedReactionGifs(cleanQuery, safeLimit),
+      provider: 'curated',
+      cached: false,
+    };
+  }
 }

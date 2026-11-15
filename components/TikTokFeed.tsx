@@ -484,10 +484,10 @@ const TikTokFeed = forwardRef<TikTokFeedHandle, TikTokFeedProps>(function TikTok
     <div
       data-theme={darkMode ? 'dark' : 'light'}
       className={`relative mx-auto h-full w-full overflow-hidden ${
-        darkMode ? 'bg-[#09090B] text-white' : 'bg-[#F7F5FB] text-[#1E1B2E]'
+        darkMode ? 'bg-[#0A0A0E] text-white' : 'bg-[#F7F5FB] text-[#1E1B2E]'
       }`}
     >
-      {/* Top HUD — compact, z-40 crisp controls with safe-area notch clearance (no full-header blur wash). */}
+      {/* Top HUD — compact, z-40 crisp controls with safe-area notch clearance (no white mist). */}
       <header
         data-chrome-blocked={chromeBlocked ? 'true' : 'false'}
         className={`pointer-events-none absolute inset-x-0 top-0 z-40 w-full px-2.5 pt-[max(env(safe-area-inset-top,12px),12px)] pb-1.5 ${
@@ -496,7 +496,7 @@ const TikTokFeed = forwardRef<TikTokFeedHandle, TikTokFeedProps>(function TikTok
       >
         <div
           aria-hidden="true"
-          className="pointer-events-none absolute inset-x-0 top-0 h-[env(safe-area-inset-top,0px)] bg-black/55"
+          className="pointer-events-none absolute inset-x-0 top-0 h-[calc(env(safe-area-inset-top,0px)+16px)] bg-gradient-to-b from-black/60 via-black/35 to-transparent"
         />
         {/* Top Utility Bar: Left Streak+XP | Right Controls */}
         <div

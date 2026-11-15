@@ -18,6 +18,10 @@ import {
   Users,
   X,
 } from 'lucide-react';
+import GiphyReactionPicker, {
+  type GiphyReactionItemDisplay,
+  type ReactionGifSelection,
+} from '@/components/GiphyReactionPicker';
 import {
   CATEGORIES,
   CATEGORY_SELECTOR_OPTIONS,
@@ -43,6 +47,7 @@ import {
   leaveScrollaRoom,
   pickDuelQuestionIds,
   resolveDuelPackItems,
+  sendScrollaReaction,
   setSelfScrollaReady,
   startScrollaRoom,
   joinScrollaRoom,
@@ -59,6 +64,8 @@ export interface DuelChallengeConfig {
   duelId?: string;
   category?: CategoryFilter;
   questionCount?: number;
+  isBotPractice?: boolean;
+  myPlayerId?: string;
 }
 
 interface DuelModalProps {
@@ -136,6 +143,8 @@ export default function DuelModal({
   const [busyAction, setBusyAction] = useState<string | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [countdownSec, setCountdownSec] = useState<number | null>(null);
+  const [showReactionDrawer, setShowReactionDrawer] = useState(false);
+  const [sendingReaction, setSendingReaction] = useState(false);
 
   const serverOffsetMsRef = useRef<number>(0);
   const matchLaunchedRef = useRef<string | null>(null);
@@ -239,6 +248,8 @@ export default function DuelModal({
       setErrorMsg(null);
       setIsBotPractice(false);
       setBotLocalRoom(null);
+      setShowReactionDrawer(false);
+      setSendingReaction(false);
     }
   }, [open, defaultNickname, t.duelDefaultName]);
 
@@ -347,12 +358,14 @@ export default function DuelModal({
       onStartDuel({
         factIds: activeRoom.cardIds,
         challengerName: opponent?.name || activeRoom.players[0]?.name || cleanName,
-        targetScore: estimateTargetScore(activeRoom.questionCount),
-        targetTimeSec: estimateTargetTime(activeRoom.questionCount),
+        targetScore: isBotMatch ? estimateTargetScore(activeRoom.questionCount) : 0,
+        targetTimeSec: isBotMatch ? estimateTargetTime(activeRoom.questionCount) : undefined,
         kind: '1v1',
         duelId: hasServerRoom ? activeRoom.code : undefined,
         category: activeRoom.category,
         questionCount: activeRoom.questionCount,
+        isBotPractice: isBotMatch,
+        myPlayerId,
       });
     };
 
@@ -583,6 +596,58 @@ export default function DuelModal({
     }
   };
 
+  const lobbyReactions = useMemo<GiphyReactionItemDisplay[]>(() => {
+    if (!activeRoom) return [];
+    return activeRoom.players
+      .filter((player) => Boolean(player.reactionGif?.url))
+      .map((player) => ({
+        senderName: player.name,
+        url: player.reactionGif!.url,
+        title: player.reactionGif?.title,
+        isSelf: player.id === myPlayerId,
+      }));
+  }, [activeRoom, myPlayerId]);
+
+  const handleSendReaction = async (gif: ReactionGifSelection) => {
+    if (!activeRoom || sendingReaction) return;
+    onButtonPop();
+    const sentAt = new Date().toISOString();
+
+    if (botLocalRoom || !room || !isShortRoomCode(activeRoom.code)) {
+      setBotLocalRoom((prev) =>
+        prev
+          ? {
+              ...prev,
+              players: prev.players.map((player) =>
+                player.id === myPlayerId
+                  ? {
+                      ...player,
+                      reactionGif: {
+                        url: gif.url,
+                        title: gif.title,
+                        sentAt,
+                      },
+                    }
+                  : player
+              ),
+              updatedAt: sentAt,
+            }
+          : prev
+      );
+      return;
+    }
+
+    setSendingReaction(true);
+    const res = await sendScrollaReaction(activeRoom.code, myPlayerId, {
+      url: gif.url,
+      title: gif.title,
+    });
+    setSendingReaction(false);
+    if (res.ok && res.room) {
+      applyRoomSync(res.room, res.serverNowMs);
+    }
+  };
+
   const handleLeaveLobby = async () => {
     onButtonPop();
     const code = room?.code;
@@ -591,6 +656,8 @@ export default function DuelModal({
     setBotLocalRoom(null);
     setIsBotPractice(false);
     setCountdownSec(null);
+    setShowReactionDrawer(false);
+    setSendingReaction(false);
     autoJoinedCodeRef.current = null;
     onClearRoomCode?.();
     if (code) {
@@ -1013,6 +1080,19 @@ export default function DuelModal({
                         </div>
 
                         <div className="flex shrink-0 items-center gap-1.5">
+                          {player.reactionGif?.url && (
+                            <div
+                              data-testid={`duel-player-reaction-${player.id}`}
+                              title={player.reactionGif.title || player.name}
+                              className="flex shrink-0 items-center overflow-hidden rounded-xl border border-violet-300/70 bg-white/90 p-0.5 shadow-sm dark:border-violet-500/40 dark:bg-black/40"
+                            >
+                              <img
+                                src={player.reactionGif.url}
+                                alt={player.reactionGif.title || player.name}
+                                className="h-8 w-11 rounded-lg object-cover bg-[#0A0A0E]"
+                              />
+                            </div>
+                          )}
                           {isMe ? (
                             <button
                               type="button"
@@ -1116,6 +1196,42 @@ export default function DuelModal({
                     ? `Hazır oyuncular: ${readyCount}/2`
                     : `Players ready: ${readyCount}/2`}
                 </p>
+
+                {/* Collapsible GIPHY Reaction Drawer */}
+                <div className="space-y-2">
+                  <button
+                    type="button"
+                    data-testid="duel-reaction-drawer-toggle"
+                    onClick={() => {
+                      onButtonPop();
+                      setShowReactionDrawer((prev) => !prev);
+                    }}
+                    className="flex w-full items-center justify-between gap-2 rounded-2xl border border-violet-300/70 bg-violet-50/80 px-3.5 py-2 text-xs font-extrabold text-violet-900 transition hover:bg-violet-100/80 dark:border-violet-600/50 dark:bg-violet-950/45 dark:text-violet-100"
+                  >
+                    <span>
+                      {lang === 'tr' ? '🎬 GIF ile Tepki Gönder' : '🎬 Send Reaction GIF'}
+                    </span>
+                    <span className="text-[11px] font-black text-violet-600 dark:text-violet-300">
+                      {showReactionDrawer
+                        ? lang === 'tr'
+                          ? 'Gizle'
+                          : 'Hide'
+                        : lang === 'tr'
+                          ? 'Aç'
+                          : 'Open'}
+                    </span>
+                  </button>
+
+                  {showReactionDrawer && (
+                    <GiphyReactionPicker
+                      compact
+                      lang={lang}
+                      onSelectGif={handleSendReaction}
+                      recentReactions={lobbyReactions}
+                      sending={sendingReaction}
+                    />
+                  )}
+                </div>
 
                 {/* Host-only Start Button (requires 2 seated & both ready) */}
                 {isHost ? (

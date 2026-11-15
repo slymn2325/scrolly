@@ -71,6 +71,15 @@ try {
   if (window.location.pathname === '/en' || window.location.pathname.indexOf('/en/') === 0) {
     document.documentElement.lang = 'en';
   }
+  var root = document.documentElement;
+  root.classList.add('dark');
+  var rawMem = window.localStorage ? window.localStorage.getItem('merak_user_state_v1') : null;
+  if (rawMem) {
+    var parsedMem = JSON.parse(rawMem);
+    if (parsedMem && parsedMem.themeCustomized === true && parsedMem.darkMode === false) {
+      root.classList.remove('dark');
+    }
+  }
 } catch (e) {}
 try {
   var savedConsent = window.localStorage.getItem('scrolly_consent_v2');
@@ -92,7 +101,7 @@ interface RootHtmlShellProps {
 
 export default function RootHtmlShell({ lang, children }: RootHtmlShellProps) {
   return (
-    <html lang={lang}>
+    <html lang={lang} className="dark" suppressHydrationWarning>
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
@@ -112,7 +121,7 @@ export default function RootHtmlShell({ lang, children }: RootHtmlShellProps) {
           }}
         />
       </head>
-      <body className="min-h-screen bg-[#FFFDF9] font-sans text-ink antialiased selection:bg-amber-200 selection:text-ink">
+      <body className="min-h-screen bg-[#0A0A0E] font-sans text-white antialiased selection:bg-amber-200 selection:text-[#09090B]">
         {children}
         <Script id="google-tag-manager" strategy="afterInteractive">
           {`

@@ -571,9 +571,18 @@ export default function MemoryQuizCard({
               </span>
             )}
             {duelConfig && (
-              <span className="rounded-full bg-white px-2.5 py-0.5 text-[11px] font-black text-rose-700 shadow-sm dark:bg-white/10 dark:text-amber-200">
-                {t.duelChallengerScore}: {duelConfig.targetScore}
-              </span>
+              duelConfig.isBotPractice || !duelConfig.duelId ? (
+                <span className="rounded-full bg-white px-2.5 py-0.5 text-[11px] font-black text-rose-700 shadow-sm dark:bg-white/10 dark:text-amber-200">
+                  {t.duelChallengerScore}: {duelConfig.targetScore}
+                </span>
+              ) : (
+                <span
+                  data-testid="duel-live-pill"
+                  className="rounded-full bg-emerald-600 px-2.5 py-0.5 text-[11px] font-black text-white shadow-sm"
+                >
+                  {lang === 'tr' ? 'CANLI 1v1' : 'LIVE 1v1'}
+                </span>
+              )
             )}
           </div>
         </div>
