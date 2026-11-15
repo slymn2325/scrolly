@@ -557,6 +557,67 @@ export async function ensureSchema(): Promise<void> {
       `);
 
       await pool.query(`
+        CREATE TABLE IF NOT EXISTS scheduler_state (
+          id INTEGER PRIMARY KEY DEFAULT 1 CHECK (id = 1),
+          last_card_generation_at TIMESTAMPTZ,
+          gif_hour_window_start TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+          gif_requests_in_window INTEGER NOT NULL DEFAULT 0,
+          is_generating_cards BOOLEAN NOT NULL DEFAULT FALSE,
+          is_matching_gifs BOOLEAN NOT NULL DEFAULT FALSE,
+          card_lock_started_at TIMESTAMPTZ,
+          gif_lock_started_at TIMESTAMPTZ,
+          updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+        );
+      `);
+
+      await pool.query(`
+        INSERT INTO scheduler_state (
+          id,
+          gif_hour_window_start,
+          gif_requests_in_window,
+          is_generating_cards,
+          is_matching_gifs
+        ) VALUES (1, NOW(), 0, FALSE, FALSE)
+        ON CONFLICT (id) DO NOTHING;
+      `);
+
+      // Auto-recover crashed dyno locks left behind after unexpected restarts
+      await pool.query(`
+        UPDATE scheduler_state
+        SET
+          is_generating_cards = CASE
+            WHEN is_generating_cards = TRUE
+              AND (card_lock_started_at IS NULL OR card_lock_started_at <= NOW() - INTERVAL '30 minutes')
+            THEN FALSE
+            ELSE is_generating_cards
+          END,
+          card_lock_started_at = CASE
+            WHEN is_generating_cards = TRUE
+              AND (card_lock_started_at IS NULL OR card_lock_started_at <= NOW() - INTERVAL '30 minutes')
+            THEN NULL
+            ELSE card_lock_started_at
+          END,
+          is_matching_gifs = CASE
+            WHEN is_matching_gifs = TRUE
+              AND (gif_lock_started_at IS NULL OR gif_lock_started_at <= NOW() - INTERVAL '10 minutes')
+            THEN FALSE
+            ELSE is_matching_gifs
+          END,
+          gif_lock_started_at = CASE
+            WHEN is_matching_gifs = TRUE
+              AND (gif_lock_started_at IS NULL OR gif_lock_started_at <= NOW() - INTERVAL '10 minutes')
+            THEN NULL
+            ELSE gif_lock_started_at
+          END,
+          updated_at = NOW()
+        WHERE id = 1
+          AND (
+            (is_generating_cards = TRUE AND (card_lock_started_at IS NULL OR card_lock_started_at <= NOW() - INTERVAL '30 minutes'))
+            OR (is_matching_gifs = TRUE AND (gif_lock_started_at IS NULL OR gif_lock_started_at <= NOW() - INTERVAL '10 minutes'))
+          );
+      `);
+
+      await pool.query(`
         CREATE OR REPLACE VIEW fact_engagement_summary AS
         SELECT
           f.id,
@@ -1315,16 +1376,63 @@ export async function fetchVocabularyWithSourceServer(): Promise<ServerVocabular
 // Database Status Report (`GET /api/db-status`)
 // =========================================================================
 
+const GIF_HOURLY_LIMIT_DISPLAY = 90;
+const GIF_API_HARD_LIMIT_DISPLAY = 100;
+const CARD_GENERATION_INTERVAL_HOURS = 12;
+
+export interface GifQuotaReport {
+  used: number;
+  limit: number;
+  apiHardLimit: number;
+  remaining: number;
+  windowStartedAt: string | null;
+  nextResetAt: string | null;
+}
+
+export interface SchedulerReport {
+  isGeneratingCards: boolean;
+  isMatchingGifs: boolean;
+  cardGenerationIntervalHours: number;
+}
+
 export interface DatabaseStatusReport {
   ok: boolean;
   databaseConfigured: boolean;
   source: 'postgres' | 'local';
   factsCount: number;
   vocabularyCount: number;
+  totalCards: number;
+  cardsWithGif: number;
+  cardsMissingGif: number;
+  hourlyGifQuotaUsed: string;
+  gifQuota: GifQuotaReport;
+  nextGifWindowResetAt: string | null;
+  last100CardRunAt: string | null;
+  next100CardRunAt: string | null;
+  scheduler: SchedulerReport;
   byCategory: Record<string, number>;
   latestFacts: Array<{ slug: string; category: string; created_at: string | null }>;
   checkedAt: string;
   error?: string;
+}
+
+function readLocalMemoryGifQuota(): GifQuotaReport {
+  const now = Date.now();
+  const cutoff = now - 3_600_000;
+  const g = globalThis as typeof globalThis & { __scrollyGifQuotaTimestamps?: number[] };
+  const raw = Array.isArray(g.__scrollyGifQuotaTimestamps) ? g.__scrollyGifQuotaTimestamps : [];
+  const active = raw.filter((ts) => typeof ts === 'number' && ts > cutoff && ts <= now + 60_000);
+  const used = Math.min(GIF_HOURLY_LIMIT_DISPLAY, active.length);
+  const remaining = Math.max(0, GIF_HOURLY_LIMIT_DISPLAY - used);
+  const oldest = active.length > 0 ? active[0] : null;
+  return {
+    used,
+    limit: GIF_HOURLY_LIMIT_DISPLAY,
+    apiHardLimit: GIF_API_HARD_LIMIT_DISPLAY,
+    remaining,
+    windowStartedAt: oldest !== null ? new Date(oldest).toISOString() : null,
+    nextResetAt: oldest !== null ? new Date(oldest + 3_600_000).toISOString() : null,
+  };
 }
 
 export async function getDatabaseStatusReport(): Promise<DatabaseStatusReport> {
@@ -1332,16 +1440,35 @@ export async function getDatabaseStatusReport(): Promise<DatabaseStatusReport> {
 
   const buildLocalReport = (error?: string): DatabaseStatusReport => {
     const seedFacts = loadSeedFactsFromDisk();
+    const vocabCount = getVocabularyFacts().length;
     const byCategory: Record<string, number> = {};
+    let cardsWithGif = 0;
     for (const fact of seedFacts) {
       byCategory[fact.category] = (byCategory[fact.category] ?? 0) + 1;
+      if (fact.gifUrl && fact.gifUrl.trim().length > 0) {
+        cardsWithGif += 1;
+      }
     }
+    const gifQuota = readLocalMemoryGifQuota();
     return {
       ok: !error,
       databaseConfigured: hasDatabaseUrl(),
       source: 'local',
       factsCount: seedFacts.length,
-      vocabularyCount: getVocabularyFacts().length,
+      vocabularyCount: vocabCount,
+      totalCards: seedFacts.length + vocabCount,
+      cardsWithGif,
+      cardsMissingGif: Math.max(0, seedFacts.length - cardsWithGif),
+      hourlyGifQuotaUsed: `${gifQuota.used} / ${GIF_HOURLY_LIMIT_DISPLAY}`,
+      gifQuota,
+      nextGifWindowResetAt: gifQuota.nextResetAt,
+      last100CardRunAt: null,
+      next100CardRunAt: null,
+      scheduler: {
+        isGeneratingCards: false,
+        isMatchingGifs: false,
+        cardGenerationIntervalHours: CARD_GENERATION_INTERVAL_HOURS,
+      },
       byCategory,
       latestFacts: [],
       checkedAt,
@@ -1356,8 +1483,13 @@ export async function getDatabaseStatusReport(): Promise<DatabaseStatusReport> {
   try {
     await ensureSchema();
     const pool = getPool();
-    const [factsRes, vocabRes, categoryRes, latestRes] = await Promise.all([
-      pool.query<{ count: number }>('SELECT COUNT(*)::INT AS count FROM facts'),
+    const [factsRes, vocabRes, categoryRes, latestRes, schedulerRes] = await Promise.all([
+      pool.query<{ total: number; with_gif: number }>(
+        `SELECT
+           COUNT(*)::INT AS total,
+           COUNT(*) FILTER (WHERE gif_url IS NOT NULL AND TRIM(gif_url) <> '')::INT AS with_gif
+         FROM facts`
+      ),
       pool.query<{ count: number }>('SELECT COUNT(*)::INT AS count FROM vocabulary_cards'),
       pool.query<{ category: string; count: number }>(
         `SELECT category, COUNT(*)::INT AS count
@@ -1371,6 +1503,24 @@ export async function getDatabaseStatusReport(): Promise<DatabaseStatusReport> {
          ORDER BY created_at DESC NULLS LAST, id DESC
          LIMIT 10`
       ),
+      pool.query<{
+        last_card_generation_at: Date | string | null;
+        gif_hour_window_start: Date | string | null;
+        gif_requests_in_window: number;
+        window_expired: boolean;
+        card_lock_active: boolean;
+        gif_lock_active: boolean;
+      }>(
+        `SELECT
+           last_card_generation_at,
+           gif_hour_window_start,
+           gif_requests_in_window,
+           (gif_hour_window_start IS NULL OR gif_hour_window_start <= NOW() - INTERVAL '1 hour') AS window_expired,
+           (is_generating_cards = TRUE AND (card_lock_started_at IS NULL OR card_lock_started_at > NOW() - INTERVAL '30 minutes')) AS card_lock_active,
+           (is_matching_gifs = TRUE AND (gif_lock_started_at IS NULL OR gif_lock_started_at > NOW() - INTERVAL '10 minutes')) AS gif_lock_active
+         FROM scheduler_state
+         WHERE id = 1`
+      ),
     ]);
 
     const byCategory: Record<string, number> = {};
@@ -1378,12 +1528,62 @@ export async function getDatabaseStatusReport(): Promise<DatabaseStatusReport> {
       byCategory[row.category] = Number(row.count ?? 0);
     }
 
+    const factsCount = Number(factsRes.rows[0]?.total ?? 0);
+    const vocabularyCount = Number(vocabRes.rows[0]?.count ?? 0);
+    const cardsWithGif = Number(factsRes.rows[0]?.with_gif ?? 0);
+    const cardsMissingGif = Math.max(0, factsCount - cardsWithGif);
+
+    const schedRow = schedulerRes.rows[0];
+    const windowExpired = Boolean(schedRow?.window_expired ?? true);
+    const rawUsed = Number(schedRow?.gif_requests_in_window ?? 0);
+    const used = windowExpired
+      ? 0
+      : Math.min(GIF_HOURLY_LIMIT_DISPLAY, Math.max(0, Math.floor(rawUsed)));
+    const remaining = Math.max(0, GIF_HOURLY_LIMIT_DISPLAY - used);
+
+    const windowStartIso =
+      !windowExpired && schedRow?.gif_hour_window_start
+        ? new Date(schedRow.gif_hour_window_start).toISOString()
+        : null;
+    const nextResetAt = windowStartIso
+      ? new Date(Date.parse(windowStartIso) + 3_600_000).toISOString()
+      : null;
+
+    const lastRunIso = schedRow?.last_card_generation_at
+      ? new Date(schedRow.last_card_generation_at).toISOString()
+      : null;
+    const nextRunIso = lastRunIso
+      ? new Date(Date.parse(lastRunIso) + CARD_GENERATION_INTERVAL_HOURS * 3_600_000).toISOString()
+      : null;
+
+    const gifQuota: GifQuotaReport = {
+      used,
+      limit: GIF_HOURLY_LIMIT_DISPLAY,
+      apiHardLimit: GIF_API_HARD_LIMIT_DISPLAY,
+      remaining,
+      windowStartedAt: windowStartIso,
+      nextResetAt,
+    };
+
     return {
       ok: true,
       databaseConfigured: true,
       source: 'postgres',
-      factsCount: Number(factsRes.rows[0]?.count ?? 0),
-      vocabularyCount: Number(vocabRes.rows[0]?.count ?? 0),
+      factsCount,
+      vocabularyCount,
+      totalCards: factsCount + vocabularyCount,
+      cardsWithGif,
+      cardsMissingGif,
+      hourlyGifQuotaUsed: `${used} / ${GIF_HOURLY_LIMIT_DISPLAY}`,
+      gifQuota,
+      nextGifWindowResetAt: nextResetAt,
+      last100CardRunAt: lastRunIso,
+      next100CardRunAt: nextRunIso,
+      scheduler: {
+        isGeneratingCards: Boolean(schedRow?.card_lock_active),
+        isMatchingGifs: Boolean(schedRow?.gif_lock_active),
+        cardGenerationIntervalHours: CARD_GENERATION_INTERVAL_HOURS,
+      },
       byCategory,
       latestFacts: latestRes.rows.map((row) => ({
         slug: row.slug,

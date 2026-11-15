@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
-import { fetchFactsWithSourceServer, fetchVocabularyWithSourceServer } from '@/lib/db';
-import { scheduleMissingFactGifsBackfill } from '@/lib/serverGifMatcher';
+import { fetchFactsWithSourceServer, fetchVocabularyWithSourceServer, hasDatabaseUrl } from '@/lib/db';
+import { triggerSchedulerTickNonBlocking } from '@/lib/herokuCardScheduler';
 import type { CategoryId } from '@/types/fact';
 import { interleaveFactsByCategory } from '@/utils/factsData';
 
@@ -49,9 +49,9 @@ export async function GET(request: Request) {
     fetchFactsWithSourceServer(),
     fetchVocabularyWithSourceServer(),
   ]);
-  if (source === 'postgres') {
-    // Non-blocking, throttled background backfill bounded by the shared 80/hr GIF quota
-    scheduleMissingFactGifsBackfill(entries);
+  if (hasDatabaseUrl()) {
+    // Non-blocking throttled check for overdue 12h card runs & pending 90/hr GIF queue
+    triggerSchedulerTickNonBlocking();
   }
   const allFacts = entries.map((entry) => entry.fact);
 

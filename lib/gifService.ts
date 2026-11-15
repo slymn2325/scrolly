@@ -1,4 +1,8 @@
-import { canConsumeGifQuota, consumeGifQuota } from '@/lib/serverGifMatcher';
+import {
+  consumeHourlyGifQuotaServer,
+  getHourlyGifQuotaStatusServer,
+  markGifHourlyQuotaExhaustedServer,
+} from '@/lib/serverGifMatcher';
 import type { CategoryId, FactCard } from '@/types/fact';
 
 const BANNED_GIF_PATTERN =
@@ -83,6 +87,12 @@ export interface TenorMediaFormats {
 export interface PickGifOptions {
   expectedTerms?: string[];
   category?: CategoryId | string;
+}
+
+interface ProviderFetchResult {
+  candidates: RawGifCandidate[];
+  hadError: boolean;
+  rateLimited: boolean;
 }
 
 export function hasConfiguredGifProviderKeys(): boolean {
@@ -172,7 +182,6 @@ export function resolveCardVisualQuery(fact: FactCard): string | null {
   const direct = sanitizeVisualQuery(fact.gifQuery || fact.visualQuery);
   if (direct) return direct;
 
-  // Fallback: extract up to 3 concrete English keywords from en.title (ignore stopwords)
   const stopWords = new Set([
     'the', 'a', 'an', 'and', 'or', 'of', 'in', 'on', 'at', 'to', 'for', 'from', 'by',
     'with', 'is', 'are', 'was', 'were', 'can', 'than', 'that', 'this', 'your', 'only',
@@ -253,8 +262,6 @@ export function scoreGifCandidateRelevance(
     }
   }
 
-  // Only reject as off-topic when candidate has descriptive metadata tokens (>= 2 words)
-  // that completely miss every topic and category keyword.
   if (metaTokens.length >= 2 && score === 0) {
     return { relevant: false, score: 0 };
   }
@@ -296,10 +303,7 @@ export function pickFirstCleanGifUrl(
   return bestUrl;
 }
 
-async function fetchFromGiphy(
-  query: string,
-  apiKey: string
-): Promise<{ candidates: RawGifCandidate[]; hadError: boolean }> {
+async function fetchFromGiphy(query: string, apiKey: string): Promise<ProviderFetchResult> {
   const params = new URLSearchParams({
     api_key: apiKey,
     q: query,
@@ -313,7 +317,8 @@ async function fetchFromGiphy(
     signal: AbortSignal.timeout(3500),
     headers: { Accept: 'application/json' },
   });
-  if (!res.ok) return { candidates: [], hadError: true };
+  if (res.status === 429) return { candidates: [], hadError: true, rateLimited: true };
+  if (!res.ok) return { candidates: [], hadError: true, rateLimited: false };
 
   const json = (await res.json()) as {
     data?: Array<{
@@ -326,9 +331,10 @@ async function fetchFromGiphy(
     }>;
   };
 
-  if (!Array.isArray(json.data)) return { candidates: [], hadError: false };
+  if (!Array.isArray(json.data)) return { candidates: [], hadError: false, rateLimited: false };
   return {
     hadError: false,
+    rateLimited: false,
     candidates: json.data.map((row) => ({
       url: pickBestGiphyImageUrl(row.images),
       title: row.title || '',
@@ -339,10 +345,7 @@ async function fetchFromGiphy(
   };
 }
 
-async function fetchFromTenor(
-  query: string,
-  apiKey: string
-): Promise<{ candidates: RawGifCandidate[]; hadError: boolean }> {
+async function fetchFromTenor(query: string, apiKey: string): Promise<ProviderFetchResult> {
   const params = new URLSearchParams({
     key: apiKey,
     q: query,
@@ -356,7 +359,8 @@ async function fetchFromTenor(
     signal: AbortSignal.timeout(3500),
     headers: { Accept: 'application/json' },
   });
-  if (!res.ok) return { candidates: [], hadError: true };
+  if (res.status === 429) return { candidates: [], hadError: true, rateLimited: true };
+  if (!res.ok) return { candidates: [], hadError: true, rateLimited: false };
 
   const json = (await res.json()) as {
     results?: Array<{
@@ -371,9 +375,10 @@ async function fetchFromTenor(
     }>;
   };
 
-  if (!Array.isArray(json.results)) return { candidates: [], hadError: false };
+  if (!Array.isArray(json.results)) return { candidates: [], hadError: false, rateLimited: false };
   return {
     hadError: false,
+    rateLimited: false,
     candidates: json.results.map((row) => ({
       url: pickBestTenorImageUrl(row.media_formats),
       title: [row.content_description, row.title, row.h1_title].filter(Boolean).join(' '),
@@ -392,11 +397,57 @@ function setCachedQuery(key: string, entry: CacheEntry) {
   gifQueryCache.set(key, entry);
 }
 
+interface ProviderAttemptOutcome {
+  gifUrl: string | null;
+  hadError: boolean;
+  rateLimited: boolean;
+  quotaBlocked: boolean;
+  madeRequest: boolean;
+}
+
+async function queryGifProviderWithQuota(
+  fetcher: (q: string, key: string) => Promise<ProviderFetchResult>,
+  query: string,
+  apiKey: string,
+  relevanceOptions: PickGifOptions
+): Promise<ProviderAttemptOutcome> {
+  const allowed = await consumeHourlyGifQuotaServer();
+  if (!allowed) {
+    return {
+      gifUrl: null,
+      hadError: false,
+      rateLimited: false,
+      quotaBlocked: true,
+      madeRequest: false,
+    };
+  }
+
+  const { candidates, hadError, rateLimited } = await fetcher(query, apiKey);
+  if (rateLimited) {
+    await markGifHourlyQuotaExhaustedServer();
+    return {
+      gifUrl: null,
+      hadError: true,
+      rateLimited: true,
+      quotaBlocked: true,
+      madeRequest: true,
+    };
+  }
+
+  const url = pickFirstCleanGifUrl(candidates, relevanceOptions);
+  return {
+    gifUrl: url,
+    hadError,
+    rateLimited: false,
+    quotaBlocked: false,
+    madeRequest: true,
+  };
+}
+
 /**
  * Searches configured GIF providers using a concise semantic `visualQuery`.
- * Enforces the shared 80/hr sliding-window quota guard before every upstream HTTP call.
- * Never throws; returns `null` cleanly whenever no key is configured, quota is exhausted,
- * an API error occurs, or all candidates fail topic/cleanliness filtering.
+ * Enforces the shared Postgres/memory 90/hr quota guard before every outbound HTTP call
+ * and handles HTTP 429 cleanly by locking quota until the next hour window.
  */
 export async function searchTopicGif(
   rawQuery: string,
@@ -406,6 +457,7 @@ export async function searchTopicGif(
   provider: 'giphy' | 'tenor' | 'none';
   cached: boolean;
   quotaExhausted?: boolean;
+  rateLimited?: boolean;
 }> {
   const cleanQuery = sanitizeVisualQuery(rawQuery);
   if (!cleanQuery) {
@@ -429,7 +481,8 @@ export async function searchTopicGif(
     }
   }
 
-  if (!canConsumeGifQuota(1, now)) {
+  const currentQuota = await getHourlyGifQuotaStatusServer();
+  if (currentQuota.exhausted) {
     return { gifUrl: null, provider: 'none', cached: false, quotaExhausted: true };
   }
 
@@ -444,51 +497,53 @@ export async function searchTopicGif(
   let sawUpstreamError = false;
   let madeUpstreamRequest = false;
   let blockedByQuota = false;
+  let sawRateLimit = false;
+
+  const providers: Array<{
+    name: 'giphy' | 'tenor';
+    key: string;
+    fetcher: (q: string, key: string) => Promise<ProviderFetchResult>;
+  }> = [
+    ...(giphyKey ? [{ name: 'giphy' as const, key: giphyKey, fetcher: fetchFromGiphy }] : []),
+    ...(tenorKey ? [{ name: 'tenor' as const, key: tenorKey, fetcher: fetchFromTenor }] : []),
+  ];
 
   try {
-    if (giphyKey) {
-      if (!consumeGifQuota(1)) {
+    for (const provider of providers) {
+      const outcome = await queryGifProviderWithQuota(
+        provider.fetcher,
+        cleanQuery,
+        provider.key,
+        relevanceOptions
+      );
+      if (outcome.madeRequest) madeUpstreamRequest = true;
+      if (outcome.hadError) sawUpstreamError = true;
+      if (outcome.rateLimited) sawRateLimit = true;
+      if (outcome.quotaBlocked) {
         blockedByQuota = true;
-      } else {
-        madeUpstreamRequest = true;
-        const { candidates, hadError } = await fetchFromGiphy(cleanQuery, giphyKey);
-        sawUpstreamError = sawUpstreamError || hadError;
-        const url = pickFirstCleanGifUrl(candidates, relevanceOptions);
-        if (url) {
-          setCachedQuery(cacheKey, {
-            url,
-            provider: 'giphy',
-            expiresAt: now + CACHE_TTL_MS,
-          });
-          return { gifUrl: url, provider: 'giphy', cached: false };
-        }
+        break;
       }
-    }
-
-    if (tenorKey && !blockedByQuota) {
-      if (!consumeGifQuota(1)) {
-        blockedByQuota = true;
-      } else {
-        madeUpstreamRequest = true;
-        const { candidates, hadError } = await fetchFromTenor(cleanQuery, tenorKey);
-        sawUpstreamError = sawUpstreamError || hadError;
-        const url = pickFirstCleanGifUrl(candidates, relevanceOptions);
-        if (url) {
-          setCachedQuery(cacheKey, {
-            url,
-            provider: 'tenor',
-            expiresAt: now + CACHE_TTL_MS,
-          });
-          return { gifUrl: url, provider: 'tenor', cached: false };
-        }
+      if (outcome.gifUrl) {
+        setCachedQuery(cacheKey, {
+          url: outcome.gifUrl,
+          provider: provider.name,
+          expiresAt: now + CACHE_TTL_MS,
+        });
+        return { gifUrl: outcome.gifUrl, provider: provider.name, cached: false };
       }
     }
   } catch {
     sawUpstreamError = true;
   }
 
-  if (blockedByQuota && !madeUpstreamRequest) {
-    return { gifUrl: null, provider: 'none', cached: false, quotaExhausted: true };
+  if ((blockedByQuota && !madeUpstreamRequest) || sawRateLimit) {
+    return {
+      gifUrl: null,
+      provider: 'none',
+      cached: false,
+      quotaExhausted: true,
+      ...(sawRateLimit ? { rateLimited: true } : {}),
+    };
   }
 
   if (madeUpstreamRequest) {

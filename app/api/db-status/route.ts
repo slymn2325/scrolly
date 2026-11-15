@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getDatabaseStatusReport } from '@/lib/db';
+import { triggerCardGenerationJob, triggerGifQueueJob } from '@/lib/herokuCardScheduler';
 import { checkRateLimit, extractClientIp } from '@/lib/rateLimit';
 
 export const dynamic = 'force-dynamic';
@@ -18,8 +19,22 @@ export async function GET(request: Request) {
     );
   }
 
+  const url = new URL(request.url);
+  const runCardsRequested = url.searchParams.get('runCards') === '1';
+  const runGifsRequested = url.searchParams.get('runGifs') === '1';
+
+  const triggered =
+    runCardsRequested || runGifsRequested
+      ? {
+          cards: runCardsRequested ? triggerCardGenerationJob({ force: true }) : false,
+          gifs: runGifsRequested ? triggerGifQueueJob({ force: true }) : false,
+        }
+      : undefined;
+
   const report = await getDatabaseStatusReport();
-  return NextResponse.json(report, {
+  const payload = triggered ? { ...report, triggered } : report;
+
+  return NextResponse.json(payload, {
     status: report.ok ? 200 : 503,
     headers: NO_STORE_HEADERS,
   });

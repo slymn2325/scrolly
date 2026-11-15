@@ -133,7 +133,7 @@ const CATEGORY_VISUAL_DEFAULTS = {
   statistics: { accentColor: '#6366F1', iconName: 'Percent', emoji: '📊' },
 };
 
-const MAX_GIF_REQUESTS_PER_HOUR = 80;
+const MAX_GIF_REQUESTS_PER_HOUR = 90;
 const GIF_QUOTA_WINDOW_MS = 60 * 60 * 1000;
 const GIF_FETCH_TIMEOUT_MS = 4000;
 const BANNED_GIF_PATTERN =
@@ -187,6 +187,13 @@ function consumeGifQuota(now = Date.now()) {
   }
   gifRequestTimestamps.push(now);
   return true;
+}
+
+function lockGifQuotaForWindow(now = Date.now()) {
+  pruneGifQuotaWindow(now);
+  while (gifRequestTimestamps.length < MAX_GIF_REQUESTS_PER_HOUR) {
+    gifRequestTimestamps.push(now);
+  }
 }
 
 function resetGifQuotaForTest() {
@@ -317,6 +324,30 @@ function pickTenorCandidateUrl(row) {
   return '';
 }
 
+async function fetchGifCandidate(url, gifQuery, category, extractCandidates) {
+  try {
+    const res = await fetch(url, {
+      signal: AbortSignal.timeout(GIF_FETCH_TIMEOUT_MS),
+      headers: { Accept: 'application/json' },
+    });
+    if (res.status === 429) {
+      lockGifQuotaForWindow();
+      return { gifUrl: null, rateLimited: true };
+    }
+    if (!res.ok) {
+      return { gifUrl: null, rateLimited: false };
+    }
+    const json = await res.json();
+    const candidates = extractCandidates(json);
+    return {
+      gifUrl: selectTopicRelevantCleanGif(candidates, gifQuery, category),
+      rateLimited: false,
+    };
+  } catch {
+    return { gifUrl: null, rateLimited: false };
+  }
+}
+
 async function fetchGiphyCleanGif(gifQuery, category, apiKey) {
   const params = new URLSearchParams({
     api_key: apiKey,
@@ -327,25 +358,21 @@ async function fetchGiphyCleanGif(gifQuery, category, apiKey) {
     lang: 'en',
   });
 
-  try {
-    const res = await fetch(`https://api.giphy.com/v1/gifs/search?${params.toString()}`, {
-      signal: AbortSignal.timeout(GIF_FETCH_TIMEOUT_MS),
-      headers: { Accept: 'application/json' },
-    });
-    if (!res.ok) return null;
-    const json = await res.json();
-    const rows = Array.isArray(json?.data) ? json.data : [];
-    const candidates = rows.map((row) => ({
-      url: pickGiphyCandidateUrl(row),
-      title: row?.title || '',
-      slug: `${row?.slug || ''} ${row?.url || ''}`.trim(),
-      tags: Array.isArray(row?.tags) ? row.tags : [],
-      isSticker: Boolean(row?.is_sticker),
-    }));
-    return selectTopicRelevantCleanGif(candidates, gifQuery, category);
-  } catch {
-    return null;
-  }
+  return fetchGifCandidate(
+    `https://api.giphy.com/v1/gifs/search?${params.toString()}`,
+    gifQuery,
+    category,
+    (json) => {
+      const rows = Array.isArray(json?.data) ? json.data : [];
+      return rows.map((row) => ({
+        url: pickGiphyCandidateUrl(row),
+        title: row?.title || '',
+        slug: `${row?.slug || ''} ${row?.url || ''}`.trim(),
+        tags: Array.isArray(row?.tags) ? row.tags : [],
+        isSticker: Boolean(row?.is_sticker),
+      }));
+    }
+  );
 }
 
 async function fetchTenorCleanGif(gifQuery, category, apiKey) {
@@ -358,25 +385,21 @@ async function fetchTenorCleanGif(gifQuery, category, apiKey) {
     locale: 'en_US',
   });
 
-  try {
-    const res = await fetch(`https://tenor.googleapis.com/v2/search?${params.toString()}`, {
-      signal: AbortSignal.timeout(GIF_FETCH_TIMEOUT_MS),
-      headers: { Accept: 'application/json' },
-    });
-    if (!res.ok) return null;
-    const json = await res.json();
-    const rows = Array.isArray(json?.results) ? json.results : [];
-    const candidates = rows.map((row) => ({
-      url: pickTenorCandidateUrl(row),
-      title: [row?.content_description, row?.title, row?.h1_title].filter(Boolean).join(' '),
-      slug: [row?.itemurl, row?.url].filter(Boolean).join(' '),
-      tags: Array.isArray(row?.tags) ? row.tags : [],
-      isSticker: Array.isArray(row?.flags) && row.flags.includes('sticker'),
-    }));
-    return selectTopicRelevantCleanGif(candidates, gifQuery, category);
-  } catch {
-    return null;
-  }
+  return fetchGifCandidate(
+    `https://tenor.googleapis.com/v2/search?${params.toString()}`,
+    gifQuery,
+    category,
+    (json) => {
+      const rows = Array.isArray(json?.results) ? json.results : [];
+      return rows.map((row) => ({
+        url: pickTenorCandidateUrl(row),
+        title: [row?.content_description, row?.title, row?.h1_title].filter(Boolean).join(' '),
+        slug: [row?.itemurl, row?.url].filter(Boolean).join(' '),
+        tags: Array.isArray(row?.tags) ? row.tags : [],
+        isSticker: Array.isArray(row?.flags) && row.flags.includes('sticker'),
+      }));
+    }
+  );
 }
 
 async function resolveServerGifForFact({
@@ -411,10 +434,13 @@ async function resolveServerGifForFact({
     if (!consumeGifQuota()) {
       return { gifQuery, gifUrl: null, source: 'none', skippedReason: 'quota_exhausted' };
     }
-    const giphyUrl = await fetchGiphyCleanGif(gifQuery, category, giphyKey);
-    if (giphyUrl) {
-      sessionGifQueryCache.set(gifQuery, giphyUrl);
-      return { gifQuery, gifUrl: giphyUrl, source: 'giphy', skippedReason: null };
+    const giphyRes = await fetchGiphyCleanGif(gifQuery, category, giphyKey);
+    if (giphyRes.rateLimited) {
+      return { gifQuery, gifUrl: null, source: 'none', skippedReason: 'rate_limited' };
+    }
+    if (giphyRes.gifUrl) {
+      sessionGifQueryCache.set(gifQuery, giphyRes.gifUrl);
+      return { gifQuery, gifUrl: giphyRes.gifUrl, source: 'giphy', skippedReason: null };
     }
   }
 
@@ -422,10 +448,13 @@ async function resolveServerGifForFact({
     if (!consumeGifQuota()) {
       return { gifQuery, gifUrl: null, source: 'none', skippedReason: 'quota_exhausted' };
     }
-    const tenorUrl = await fetchTenorCleanGif(gifQuery, category, tenorKey);
-    if (tenorUrl) {
-      sessionGifQueryCache.set(gifQuery, tenorUrl);
-      return { gifQuery, gifUrl: tenorUrl, source: 'tenor', skippedReason: null };
+    const tenorRes = await fetchTenorCleanGif(gifQuery, category, tenorKey);
+    if (tenorRes.rateLimited) {
+      return { gifQuery, gifUrl: null, source: 'none', skippedReason: 'rate_limited' };
+    }
+    if (tenorRes.gifUrl) {
+      sessionGifQueryCache.set(gifQuery, tenorRes.gifUrl);
+      return { gifQuery, gifUrl: tenorRes.gifUrl, source: 'tenor', skippedReason: null };
     }
   }
 
@@ -458,11 +487,11 @@ async function backfillMissingFactGifs(pool, { maxPerRun = 30 } = {}) {
   let attempted = 0;
   let updated = 0;
   let queryUpdated = 0;
-  let stoppedForQuota = false;
+  let stopReason = null;
 
   for (const row of pendingRes.rows) {
     if (!canConsumeGifQuota()) {
-      stoppedForQuota = true;
+      stopReason = 'quota_exhausted';
       break;
     }
 
@@ -494,8 +523,8 @@ async function backfillMissingFactGifs(pool, { maxPerRun = 30 } = {}) {
       queryUpdated += 1;
     }
 
-    if (resolved.skippedReason === 'quota_exhausted') {
-      stoppedForQuota = true;
+    if (resolved.skippedReason === 'quota_exhausted' || resolved.skippedReason === 'rate_limited') {
+      stopReason = resolved.skippedReason;
       break;
     }
   }
@@ -504,7 +533,7 @@ async function backfillMissingFactGifs(pool, { maxPerRun = 30 } = {}) {
     attempted,
     updated,
     queryUpdated,
-    skippedReason: stoppedForQuota ? 'quota_exhausted' : null,
+    skippedReason: stopReason,
   };
 }
 
@@ -617,6 +646,28 @@ async function ensureSchemaAndSeed(pool) {
       correct_index INT NOT NULL DEFAULT 0,
       created_at TIMESTAMPTZ DEFAULT NOW()
     );
+  `);
+
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS scheduler_state (
+      id INTEGER PRIMARY KEY DEFAULT 1 CHECK (id = 1),
+      last_card_generation_at TIMESTAMPTZ,
+      gif_hour_window_start TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      gif_requests_in_window INTEGER NOT NULL DEFAULT 0,
+      is_generating_cards BOOLEAN NOT NULL DEFAULT FALSE,
+      is_matching_gifs BOOLEAN NOT NULL DEFAULT FALSE,
+      card_lock_started_at TIMESTAMPTZ,
+      gif_lock_started_at TIMESTAMPTZ,
+      updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    );
+  `);
+
+  await pool.query(`
+    INSERT INTO scheduler_state (
+      id, gif_hour_window_start, gif_requests_in_window, is_generating_cards, is_matching_gifs
+    )
+    VALUES (1, NOW(), 0, FALSE, FALSE)
+    ON CONFLICT (id) DO NOTHING;
   `);
 
   await pool.query(`
@@ -2050,7 +2101,9 @@ export {
   consumeGifQuota,
   extractJsonCandidate,
   fetchGeneratedFactsFromModel,
+  fetchGifCandidate,
   getHourlyGifQuotaStatus,
+  lockGifQuotaForWindow,
   pickGiphyCandidateUrl,
   pickTenorCandidateUrl,
   resetGifQuotaForTest,

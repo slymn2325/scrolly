@@ -151,6 +151,27 @@ create table if not exists public.vocabulary_cards (
 
 create index if not exists idx_vocabulary_cards_created on public.vocabulary_cards (created_at desc);
 
+create table if not exists public.scheduler_state (
+  id integer primary key default 1 check (id = 1),
+  last_card_generation_at timestamptz,
+  gif_hour_window_start timestamptz not null default now(),
+  gif_requests_in_window integer not null default 0,
+  is_generating_cards boolean not null default false,
+  is_matching_gifs boolean not null default false,
+  card_lock_started_at timestamptz,
+  gif_lock_started_at timestamptz,
+  updated_at timestamptz not null default now()
+);
+
+insert into public.scheduler_state (
+  id,
+  gif_hour_window_start,
+  gif_requests_in_window,
+  is_generating_cards,
+  is_matching_gifs
+) values (1, now(), 0, false, false)
+on conflict (id) do nothing;
+
 create table if not exists public.contact_messages (
   id bigserial primary key,
   name text not null,

@@ -1,5 +1,9 @@
 import { ensureSchema, getPool, hasDatabaseUrl } from '@/lib/db';
-import { getFactGifUrlDb, updateFactGifUrlDb } from '@/lib/dbActions';
+import {
+  getFactGifUrlDb,
+  updateFactGifQueryOnlyDb,
+  updateFactGifUrlDb,
+} from '@/lib/dbActions';
 import {
   hasConfiguredGifProviderKeys,
   isRenderableGifImageUrl,
@@ -9,15 +13,13 @@ import {
 import type { CategoryId, FactCard } from '@/types/fact';
 
 /**
- * Shared safety limit under typical 100 req/hr free/beta GIF API tier limits
- * (leaves a 20 req/hr headroom buffer across all endpoints and background backfill).
+ * Shared safety ceiling strictly under 100 req/hr GIF API tier limits
+ * (tracked persistently in Postgres `scheduler_state` with 10-req/hr safety headroom).
  */
-export const GIF_HOURLY_QUOTA_LIMIT = 80;
+export const GIF_HOURLY_QUOTA_LIMIT = 90;
 export const GIF_QUOTA_WINDOW_MS = 60 * 60 * 1000;
 
 const BACKFILL_THROTTLE_MS = 60 * 1000;
-const DEFAULT_BACKFILL_MAX_PER_RUN = 6;
-const HARD_BACKFILL_MAX_PER_RUN = 20;
 
 const ABSTRACT_VISUAL_STOPWORDS = new Set([
   'the', 'a', 'an', 'and', 'or', 'of', 'in', 'on', 'at', 'to', 'for', 'from', 'by',
@@ -83,6 +85,7 @@ export interface MatchFactGifResult {
   provider: 'postgres' | 'giphy' | 'tenor' | 'none';
   persisted: boolean;
   cached?: boolean;
+  rateLimited?: boolean;
   skippedReason?:
     | 'already_cached'
     | 'no_api_key'
@@ -96,6 +99,7 @@ export interface BackfillGifOptions {
   maxPerRun?: number;
   minRemainingQuota?: number;
   allowMemoryOnly?: boolean;
+  force?: boolean;
 }
 
 export interface BackfillGifResult {
@@ -103,6 +107,7 @@ export interface BackfillGifResult {
   matched: number;
   persisted: number;
   quotaStatus: HourlyGifQuotaStatus;
+  rateLimited?: boolean;
   skippedReason?: string;
 }
 
@@ -134,9 +139,13 @@ function pruneQuotaWindow(now = Date.now()): number[] {
   return raw;
 }
 
+/**
+ * Synchronous in-memory sliding-window status (used when `DATABASE_URL` is absent
+ * and in unit tests). Authoritative production tracking lives in Postgres `scheduler_state`.
+ */
 export function getHourlyGifQuotaStatus(now = Date.now()): HourlyGifQuotaStatus {
   const windowHits = pruneQuotaWindow(now);
-  const used = windowHits.length;
+  const used = Math.min(GIF_HOURLY_QUOTA_LIMIT, windowHits.length);
   const remaining = Math.max(0, GIF_HOURLY_QUOTA_LIMIT - used);
   const oldest = windowHits.length > 0 ? windowHits[0] : null;
   return {
@@ -165,6 +174,141 @@ export function consumeGifQuota(count = 1, now = Date.now()): boolean {
     windowHits.push(now);
   }
   return true;
+}
+
+/**
+ * Reads the authoritative hourly GIF quota from Postgres `scheduler_state` (automatically
+ * resetting stale windows older than 1 hour), or falls back to in-memory tracking offline.
+ */
+export async function getHourlyGifQuotaStatusServer(): Promise<HourlyGifQuotaStatus> {
+  if (!hasDatabaseUrl()) {
+    return getHourlyGifQuotaStatus();
+  }
+  try {
+    await ensureSchema();
+    const pool = getPool();
+    const res = await pool.query<{
+      gif_hour_window_start: Date | string | null;
+      gif_requests_in_window: number;
+      window_expired: boolean;
+    }>(
+      `SELECT
+         gif_hour_window_start,
+         gif_requests_in_window,
+         (gif_hour_window_start IS NULL OR gif_hour_window_start <= NOW() - INTERVAL '1 hour') AS window_expired
+       FROM scheduler_state
+       WHERE id = 1`
+    );
+    const row = res.rows[0];
+    if (!row || row.window_expired) {
+      return {
+        limit: GIF_HOURLY_QUOTA_LIMIT,
+        windowMs: GIF_QUOTA_WINDOW_MS,
+        used: 0,
+        remaining: GIF_HOURLY_QUOTA_LIMIT,
+        exhausted: false,
+        resetsAt: null,
+      };
+    }
+
+    const used = Math.min(
+      GIF_HOURLY_QUOTA_LIMIT,
+      Math.max(0, Math.floor(Number(row.gif_requests_in_window ?? 0)))
+    );
+    const remaining = Math.max(0, GIF_HOURLY_QUOTA_LIMIT - used);
+    const windowMs = row.gif_hour_window_start
+      ? new Date(row.gif_hour_window_start).getTime()
+      : Date.now();
+    return {
+      limit: GIF_HOURLY_QUOTA_LIMIT,
+      windowMs: GIF_QUOTA_WINDOW_MS,
+      used,
+      remaining,
+      exhausted: remaining <= 0,
+      resetsAt: Number.isFinite(windowMs)
+        ? new Date(windowMs + GIF_QUOTA_WINDOW_MS).toISOString()
+        : null,
+    };
+  } catch (err) {
+    console.warn('[serverGifMatcher] Postgres quota read fell back to memory:', err);
+    return getHourlyGifQuotaStatus();
+  }
+}
+
+/**
+ * Atomically resets an expired 1-hour window (if needed) and increments
+ * `scheduler_state.gif_requests_in_window` BEFORE any outbound GIF API HTTP call.
+ * Returns `false` cleanly once the 90/hr cap is reached.
+ */
+export async function consumeHourlyGifQuotaServer(): Promise<boolean> {
+  if (!hasDatabaseUrl()) {
+    return consumeGifQuota(1);
+  }
+  try {
+    await ensureSchema();
+    const pool = getPool();
+    const res = await pool.query<{
+      gif_hour_window_start: Date | string;
+      gif_requests_in_window: number;
+    }>(
+      `UPDATE scheduler_state
+       SET
+         gif_hour_window_start = CASE
+           WHEN gif_hour_window_start IS NULL
+             OR gif_hour_window_start <= NOW() - INTERVAL '1 hour'
+           THEN NOW()
+           ELSE gif_hour_window_start
+         END,
+         gif_requests_in_window = CASE
+           WHEN gif_hour_window_start IS NULL
+             OR gif_hour_window_start <= NOW() - INTERVAL '1 hour'
+           THEN 1
+           ELSE gif_requests_in_window + 1
+         END,
+         updated_at = NOW()
+       WHERE id = 1
+         AND (
+           gif_hour_window_start IS NULL
+           OR gif_hour_window_start <= NOW() - INTERVAL '1 hour'
+           OR gif_requests_in_window < $1
+         )
+       RETURNING gif_hour_window_start, gif_requests_in_window`,
+      [GIF_HOURLY_QUOTA_LIMIT]
+    );
+    return (res.rowCount ?? 0) > 0;
+  } catch (err) {
+    console.warn('[serverGifMatcher] Postgres quota increment failed, falling back cleanly:', err);
+    return consumeGifQuota(1);
+  }
+}
+
+/**
+ * Locks remaining quota for the active 1-hour window whenever an upstream GIF provider
+ * returns HTTP 429 so neither queue workers nor `/api/gif` keep retrying until reset.
+ */
+export async function markGifHourlyQuotaExhaustedServer(): Promise<void> {
+  const now = Date.now();
+  const mem = pruneQuotaWindow(now);
+  while (mem.length < GIF_HOURLY_QUOTA_LIMIT) {
+    mem.push(now);
+  }
+
+  if (!hasDatabaseUrl()) return;
+  try {
+    await ensureSchema();
+    const pool = getPool();
+    await pool.query(
+      `UPDATE scheduler_state
+       SET
+         gif_hour_window_start = COALESCE(gif_hour_window_start, NOW()),
+         gif_requests_in_window = $1,
+         updated_at = NOW()
+       WHERE id = 1`,
+      [GIF_HOURLY_QUOTA_LIMIT]
+    );
+  } catch (err) {
+    console.warn('[serverGifMatcher] Failed marking 429 quota lock in Postgres:', err);
+  }
 }
 
 function extractVisualTokens(text?: string | null): string[] {
@@ -272,7 +416,6 @@ export async function matchAndPersistFactGifServer(
   const existingInlineUrl = String(input.gifUrl || '').trim();
   const gifQuery = buildSpecificGifQuery(input) || '';
 
-  // Strict DB-first rule: never re-query external APIs if card already has a GIF URL
   if (existingInlineUrl && isRenderableGifImageUrl(existingInlineUrl)) {
     return {
       slug,
@@ -322,7 +465,8 @@ export async function matchAndPersistFactGifServer(
     };
   }
 
-  if (!canConsumeGifQuota(1)) {
+  const quotaNow = await getHourlyGifQuotaStatusServer();
+  if (quotaNow.exhausted) {
     return {
       slug,
       gifUrl: null,
@@ -333,7 +477,7 @@ export async function matchAndPersistFactGifServer(
     };
   }
 
-  const relevanceTerms = Array.from(
+  const expectedTerms = Array.from(
     new Set([
       ...gifQuery.split(' '),
       ...extractVisualTokens(input.en?.title || input.titleEn || input.title).slice(0, 4),
@@ -342,10 +486,13 @@ export async function matchAndPersistFactGifServer(
 
   const searchResult = await searchTopicGif(gifQuery, {
     category: input.category,
-    expectedTerms: relevanceTerms,
+    expectedTerms,
   });
 
   if (!searchResult.gifUrl) {
+    if (slug && hasDatabaseUrl() && !searchResult.quotaExhausted && !searchResult.rateLimited) {
+      await updateFactGifQueryOnlyDb(slug, gifQuery);
+    }
     return {
       slug,
       gifUrl: null,
@@ -353,6 +500,7 @@ export async function matchAndPersistFactGifServer(
       provider: 'none',
       persisted: false,
       cached: searchResult.cached,
+      rateLimited: searchResult.rateLimited,
       skippedReason: searchResult.quotaExhausted ? 'quota_exceeded' : 'no_clean_match',
     };
   }
@@ -373,6 +521,47 @@ export async function matchAndPersistFactGifServer(
   };
 }
 
+async function acquirePostgresGifMatchingLock(): Promise<boolean> {
+  if (!hasDatabaseUrl()) return true;
+  try {
+    await ensureSchema();
+    const pool = getPool();
+    const res = await pool.query<{ id: number }>(
+      `UPDATE scheduler_state
+       SET is_matching_gifs = TRUE,
+           gif_lock_started_at = NOW(),
+           updated_at = NOW()
+       WHERE id = 1
+         AND (
+           is_matching_gifs = FALSE
+           OR gif_lock_started_at IS NULL
+           OR gif_lock_started_at <= NOW() - INTERVAL '10 minutes'
+         )
+       RETURNING id`
+    );
+    return (res.rowCount ?? 0) > 0;
+  } catch (err) {
+    console.warn('[serverGifMatcher] Failed to acquire Postgres GIF matching lock:', err);
+    return false;
+  }
+}
+
+async function releasePostgresGifMatchingLock(): Promise<void> {
+  if (!hasDatabaseUrl()) return;
+  try {
+    const pool = getPool();
+    await pool.query(
+      `UPDATE scheduler_state
+       SET is_matching_gifs = FALSE,
+           gif_lock_started_at = NULL,
+           updated_at = NOW()
+       WHERE id = 1`
+    );
+  } catch (err) {
+    console.warn('[serverGifMatcher] Failed releasing Postgres GIF matching lock:', err);
+  }
+}
+
 async function queryMissingGifRowsFromPostgres(limit: number): Promise<GifMatchInput[]> {
   if (!hasDatabaseUrl()) return [];
   try {
@@ -391,7 +580,9 @@ async function queryMissingGifRowsFromPostgres(limit: number): Promise<GifMatchI
       `SELECT slug, category, title_en, title_tr, summary_en, visual_query, gif_query, gif_url
        FROM facts
        WHERE gif_url IS NULL OR TRIM(gif_url) = ''
-       ORDER BY created_at DESC, id DESC
+       ORDER BY CASE WHEN gif_query IS NULL OR TRIM(gif_query) = '' THEN 0 ELSE 1 END ASC,
+                created_at DESC,
+                id DESC
        LIMIT $1`,
       [limit]
     );
@@ -412,8 +603,9 @@ async function queryMissingGifRowsFromPostgres(limit: number): Promise<GifMatchI
 }
 
 /**
- * Bounded single-flight backfill pass that populates missing `facts.gif_url` / `gif_query`
- * rows while strictly obeying the 80 req/hr shared quota guard.
+ * Postgres-locked GIF queue worker that selects up to remaining hourly quota missing-GIF cards
+ * (prioritizing rows with empty `gif_query` first, then newest `created_at`) and populates
+ * permanent HTTPS image URLs strictly under the 90 req/hr limit.
  */
 export async function backfillMissingFactGifsServer(
   options?: BackfillGifOptions
@@ -423,7 +615,7 @@ export async function backfillMissingFactGifsServer(
   }
 
   const run = (async (): Promise<BackfillGifResult> => {
-    const quotaBefore = getHourlyGifQuotaStatus();
+    const quotaBefore = await getHourlyGifQuotaStatusServer();
 
     if (!hasConfiguredGifProviderKeys()) {
       return {
@@ -445,7 +637,7 @@ export async function backfillMissingFactGifsServer(
       };
     }
 
-    const minRemaining = Math.max(0, options?.minRemainingQuota ?? 5);
+    const minRemaining = Math.max(0, options?.minRemainingQuota ?? 0);
     if (quotaBefore.remaining <= minRemaining) {
       return {
         attempted: 0,
@@ -456,53 +648,78 @@ export async function backfillMissingFactGifsServer(
       };
     }
 
-    const maxPerRun = Math.min(
-      HARD_BACKFILL_MAX_PER_RUN,
-      Math.max(1, Math.floor(options?.maxPerRun ?? DEFAULT_BACKFILL_MAX_PER_RUN)),
-      quotaBefore.remaining - minRemaining
-    );
-
-    const rawCandidates = options?.entries
-      ? options.entries.map(normalizeMatchInput)
-      : await queryMissingGifRowsFromPostgres(maxPerRun * 2);
-
-    const seenSlugs = new Set<string>();
-    const missingCandidates: GifMatchInput[] = [];
-    for (const item of rawCandidates) {
-      const slug = resolveSlugFromInput(item);
-      if (!slug || seenSlugs.has(slug)) continue;
-      if (item.gifUrl && String(item.gifUrl).trim().length > 0) continue;
-      seenSlugs.add(slug);
-      missingCandidates.push(item);
-      if (missingCandidates.length >= maxPerRun) break;
+    const acquiredLock = options?.allowMemoryOnly && !hasDatabaseUrl()
+      ? true
+      : await acquirePostgresGifMatchingLock();
+    if (!acquiredLock) {
+      return {
+        attempted: 0,
+        matched: 0,
+        persisted: 0,
+        quotaStatus: quotaBefore,
+        skippedReason: 'lock_busy',
+      };
     }
 
-    let attempted = 0;
-    let matched = 0;
-    let persisted = 0;
+    try {
+      const budget = Math.max(1, quotaBefore.remaining - minRemaining);
+      const maxPerRun = Math.min(
+        GIF_HOURLY_QUOTA_LIMIT,
+        Math.max(1, Math.floor(options?.maxPerRun ?? budget)),
+        budget
+      );
 
-    for (const candidate of missingCandidates) {
-      const statusNow = getHourlyGifQuotaStatus();
-      if (statusNow.remaining <= minRemaining) {
-        break;
+      const rawCandidates = options?.entries
+        ? options.entries.map(normalizeMatchInput)
+        : await queryMissingGifRowsFromPostgres(maxPerRun);
+
+      const seenSlugs = new Set<string>();
+      const missingCandidates: GifMatchInput[] = [];
+      for (const item of rawCandidates) {
+        const slug = resolveSlugFromInput(item);
+        if (!slug || seenSlugs.has(slug)) continue;
+        if (item.gifUrl && String(item.gifUrl).trim().length > 0) continue;
+        seenSlugs.add(slug);
+        missingCandidates.push(item);
+        if (missingCandidates.length >= maxPerRun) break;
       }
 
-      attempted += 1;
-      const result = await matchAndPersistFactGifServer(candidate);
-      if (result.gifUrl) {
-        matched += 1;
-        if (result.persisted) persisted += 1;
-      } else if (result.skippedReason === 'quota_exceeded') {
-        break;
+      let attempted = 0;
+      let matched = 0;
+      let persisted = 0;
+      let rateLimited = false;
+
+      for (const candidate of missingCandidates) {
+        const statusNow = await getHourlyGifQuotaStatusServer();
+        if (statusNow.remaining <= minRemaining || statusNow.exhausted) {
+          break;
+        }
+
+        attempted += 1;
+        const result = await matchAndPersistFactGifServer(candidate);
+        if (result.gifUrl) {
+          matched += 1;
+          if (result.persisted) persisted += 1;
+        } else if (result.rateLimited) {
+          rateLimited = true;
+          break;
+        } else if (result.skippedReason === 'quota_exceeded') {
+          break;
+        }
+      }
+
+      return {
+        attempted,
+        matched,
+        persisted,
+        quotaStatus: await getHourlyGifQuotaStatusServer(),
+        ...(rateLimited ? { rateLimited: true } : {}),
+      };
+    } finally {
+      if (!(options?.allowMemoryOnly && !hasDatabaseUrl())) {
+        await releasePostgresGifMatchingLock();
       }
     }
-
-    return {
-      attempted,
-      matched,
-      persisted,
-      quotaStatus: getHourlyGifQuotaStatus(),
-    };
   })().finally(() => {
     globalThis.__scrollyGifBackfillInFlight = undefined;
   });
@@ -512,11 +729,10 @@ export async function backfillMissingFactGifsServer(
 }
 
 /**
- * Throttled, non-blocking backfill trigger invoked by `/api/facts` when Postgres rows
- * are missing `gif_url`. Never blocks or slows the API response.
+ * Throttled, non-blocking backfill trigger for callers wanting direct GIF queue execution.
  */
 export function scheduleMissingFactGifsBackfill(
-  entries: Array<GifMatchInput | FactCard | { fact: FactCard }>
+  entries?: Array<GifMatchInput | FactCard | { fact: FactCard }>
 ): boolean {
   if (!hasDatabaseUrl() || !hasConfiguredGifProviderKeys()) {
     return false;
@@ -531,26 +747,21 @@ export function scheduleMissingFactGifsBackfill(
     return false;
   }
 
-  if (!canConsumeGifQuota(1, now)) {
-    return false;
-  }
-
-  const normalized = entries.map(normalizeMatchInput);
-  const missing = normalized.filter(
-    (item) => resolveSlugFromInput(item).length > 0 && !(item.gifUrl && String(item.gifUrl).trim())
-  );
-  if (missing.length === 0) {
+  const normalized = entries ? entries.map(normalizeMatchInput) : null;
+  const missing = normalized
+    ? normalized.filter(
+        (item) => resolveSlugFromInput(item).length > 0 && !(item.gifUrl && String(item.gifUrl).trim())
+      )
+    : null;
+  if (missing && missing.length === 0) {
     return false;
   }
 
   globalThis.__scrollyGifBackfillLastRunAt = now;
 
-  // Detached execution after current turn so GET /api/facts returns immediately
   queueMicrotask(() => {
     void backfillMissingFactGifsServer({
-      entries: missing,
-      maxPerRun: DEFAULT_BACKFILL_MAX_PER_RUN,
-      minRemainingQuota: 10,
+      ...(missing ? { entries: missing } : {}),
     }).catch((err) => {
       console.warn('[serverGifMatcher] Scheduled backfill error ignored:', err);
     });

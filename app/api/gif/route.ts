@@ -78,6 +78,7 @@ export async function GET(request: Request) {
       provider: result.provider,
       cached: result.cached,
       quotaExhausted: Boolean(result.quotaExhausted),
+      rateLimited: Boolean(result.rateLimited),
       fallback: result.gifUrl ? 'gif' : 'motion_canvas',
     },
     {

@@ -276,6 +276,28 @@ export async function updateFactGifUrlDb(
   }
 }
 
+export async function updateFactGifQueryOnlyDb(
+  slugOrId: string,
+  gifQuery: string
+): Promise<void> {
+  if (!hasDatabaseUrl() || !slugOrId || !gifQuery) return;
+  const cleanQuery = gifQuery.trim().slice(0, 120);
+  if (!cleanQuery) return;
+  try {
+    await ensureSchema();
+    const pool = getPool();
+    await pool.query(
+      `UPDATE facts
+       SET gif_query = $2
+       WHERE (slug = $1 OR sketch_type = $1)
+         AND (gif_query IS NULL OR TRIM(gif_query) = '')`,
+      [slugOrId.trim().slice(0, 160), cleanQuery]
+    );
+  } catch (err) {
+    console.warn('[dbActions] updateFactGifQueryOnlyDb skipped:', err);
+  }
+}
+
 export async function getProfileByDeviceId(
   deviceId: string
 ): Promise<{ persisted: boolean; profile: PersistedProfileDto | null }> {
