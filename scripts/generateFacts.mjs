@@ -216,40 +216,51 @@ function extractCleanEnglishKeywords(rawText) {
     );
 }
 
-function buildGifSearchQuery({ visualQuery = '', titleEn = '', category = 'science' } = {}) {
-  const visualTokens = extractCleanEnglishKeywords(visualQuery);
-  const titleTokens = extractCleanEnglishKeywords(titleEn);
-  const categoryTokens = extractCleanEnglishKeywords(
-    CATEGORY_GIF_FALLBACK_QUERY[category] || 'science nature'
-  );
-
+function mergeKeywordSources(sources, maxWords = 3, fallback = 'science discovery') {
   const combined = [];
   const seen = new Set();
-  const pushToken = (token) => {
-    if (!seen.has(token) && combined.length < 3) {
-      seen.add(token);
-      combined.push(token);
-    }
-  };
 
-  for (const token of visualTokens) {
-    pushToken(token);
-  }
-  if (combined.length < 2) {
-    for (const token of titleTokens) {
-      pushToken(token);
+  for (const tokens of sources) {
+    for (const token of tokens) {
+      if (!seen.has(token) && combined.length < maxWords) {
+        seen.add(token);
+        combined.push(token);
+      }
     }
-  }
-  if (combined.length < 2) {
-    for (const token of categoryTokens) {
-      pushToken(token);
-    }
+    if (combined.length >= 2) break;
   }
 
-  if (combined.length === 0) {
-    return 'science discovery';
-  }
-  return combined.slice(0, 3).join(' ');
+  return combined.length > 0 ? combined.slice(0, maxWords).join(' ') : fallback;
+}
+
+function buildGifSearchQuery({ visualQuery = '', titleEn = '', category = 'science' } = {}) {
+  return mergeKeywordSources(
+    [
+      extractCleanEnglishKeywords(visualQuery),
+      extractCleanEnglishKeywords(titleEn),
+      extractCleanEnglishKeywords(CATEGORY_GIF_FALLBACK_QUERY[category] || 'science nature'),
+    ],
+    3,
+    'science discovery'
+  );
+}
+
+function buildVocabularyGifQuery({
+  gifQuery = '',
+  word = '',
+  exampleEn = '',
+  definitionEn = '',
+} = {}) {
+  return mergeKeywordSources(
+    [
+      extractCleanEnglishKeywords(gifQuery),
+      extractCleanEnglishKeywords(exampleEn),
+      extractCleanEnglishKeywords(definitionEn),
+      extractCleanEnglishKeywords(word),
+    ],
+    3,
+    'english learning'
+  );
 }
 
 function isCleanGifCandidateUrl(url, metaParts = []) {
@@ -638,14 +649,32 @@ async function ensureSchemaAndSeed(pool) {
       word TEXT UNIQUE NOT NULL,
       phonetic TEXT DEFAULT '',
       part_of_speech TEXT DEFAULT '',
+      cefr_level TEXT DEFAULT 'B2',
+      synonyms JSONB DEFAULT '[]'::jsonb,
       meaning_tr TEXT NOT NULL,
       definition_en TEXT NOT NULL,
       example_en TEXT NOT NULL,
       example_tr TEXT NOT NULL,
       quiz_options JSONB NOT NULL,
       correct_index INT NOT NULL DEFAULT 0,
+      gif_url TEXT,
+      gif_query TEXT,
       created_at TIMESTAMPTZ DEFAULT NOW()
     );
+  `);
+
+  await pool.query(`
+    ALTER TABLE vocabulary_cards
+      ADD COLUMN IF NOT EXISTS gif_url TEXT,
+      ADD COLUMN IF NOT EXISTS gif_query TEXT,
+      ADD COLUMN IF NOT EXISTS cefr_level TEXT DEFAULT 'B2',
+      ADD COLUMN IF NOT EXISTS synonyms JSONB DEFAULT '[]'::jsonb;
+  `);
+
+  await pool.query(`
+    CREATE INDEX IF NOT EXISTS idx_vocabulary_cards_missing_gif
+      ON vocabulary_cards (created_at DESC)
+      WHERE gif_url IS NULL OR TRIM(gif_url) = '';
   `);
 
   await pool.query(`
@@ -1133,12 +1162,15 @@ ALSO include a second key \`"vocabulary"\` with exactly ${vocabCount} brand-new 
 - "word": English lemma (lowercase unless proper noun)
 - "phonetic": real IPA in slashes (e.g. "/rɪˈzɪl.i.ənt/") — NEVER fake placeholders
 - "partOfSpeech": one of "isim" | "sıfat" | "fiil" | "zarf" | "edat"
+- "cefrLevel": one of "B1" | "B2" | "C1" | "C2" | "B2/C1"
+- "synonyms": array of 2 concise accurate English synonyms (e.g. ["adaptable", "tough"])
 - "meaningTr": concise Turkish meaning
 - "definitionEn": one clear English definition sentence
 - "exampleEn": natural English example sentence that CONTAINS the word
 - "exampleTr": Turkish translation of that example
 - "quizOptions": array of exactly 3 Turkish meaning options
-- "correctIndex": 0 | 1 | 2 matching the correct Turkish meaning in quizOptions`
+- "correctIndex": 0 | 1 | 2 matching the correct Turkish meaning in quizOptions
+- "gifQuery": strictly 2-4 concrete visual English words depicting a real scene/action for GIF search (e.g. "strong storm comeback", "magnifying glass inspect") — NEVER Turkish and NEVER meme/reaction/anime words`
       : `\n\nInclude \`"vocabulary": []\` (0 vocabulary items in this batch).`;
 
   const userPrompt = `Create exactly ${factsCount} brand-new bilingual (TR & EN) micro-fact card${factsCount === 1 ? '' : 's'} distributed across ALL 7 categories in balanced rotation (${targetCategories.join(', ')} — cover every listed category before repeating any).
@@ -1186,6 +1218,8 @@ function slugifyVocabWord(word) {
     .slice(0, 48);
 }
 
+const VALID_CEFR_LEVELS = new Set(['A2', 'B1', 'B2', 'C1', 'C2', 'B1/B2', 'B2/C1']);
+
 function validateVocabularyCard(raw, existingWords) {
   if (!raw || typeof raw !== 'object') return null;
   const word = String(raw.word || '').trim();
@@ -1214,18 +1248,54 @@ function validateVocabularyCard(raw, existingWords) {
   if (quizOptions.length !== 3) return null;
   if (![0, 1, 2].includes(correctIndex)) return null;
 
+  const rawCefr = String(raw.cefrLevel || '').trim().toUpperCase();
+  const cefrLevel = VALID_CEFR_LEVELS.has(rawCefr) ? rawCefr : 'B2';
+
+  const seenSynonyms = new Set([word.toLowerCase()]);
+  const synonyms = [];
+  if (Array.isArray(raw.synonyms)) {
+    for (const entry of raw.synonyms) {
+      const cleaned = String(entry || '')
+        .replace(/[^a-zA-Z\s-]/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim()
+        .toLowerCase();
+      if (cleaned.length >= 2 && !seenSynonyms.has(cleaned)) {
+        seenSynonyms.add(cleaned);
+        synonyms.push(cleaned);
+        if (synonyms.length >= 3) break;
+      }
+    }
+  }
+
+  const gifQuery = buildVocabularyGifQuery({
+    gifQuery: raw.gifQuery || '',
+    word,
+    exampleEn,
+    definitionEn,
+  });
+  const rawGifUrl = String(raw.gifUrl || '').trim();
+  const gifUrl =
+    rawGifUrl.startsWith('https://') && !DISALLOWED_VIDEO_EXT_PATTERN.test(rawGifUrl)
+      ? rawGifUrl
+      : '';
+
   return {
     id: `vocab-gen-${slugifyVocabWord(word)}-${Date.now().toString(36)}`,
     category: 'vocabulary',
     word,
     phonetic,
     partOfSpeech,
+    cefrLevel,
+    synonyms,
     meaningTr,
     definitionEn,
     exampleEn,
     exampleTr,
     quizOptions: /** @type {[string, string, string]} */ ([quizOptions[0], quizOptions[1], quizOptions[2]]),
     correctIndex: /** @type {0|1|2} */ (correctIndex),
+    gifQuery,
+    ...(gifUrl ? { gifUrl } : {}),
   };
 }
 
@@ -1812,7 +1882,7 @@ async function runDryRun() {
     },
     new Set()
   );
-  if (!vocabTest) {
+  if (!vocabTest || !vocabTest.cefrLevel || !Array.isArray(vocabTest.synonyms) || !vocabTest.gifQuery) {
     throw new Error('Dry-run failed: validateVocabularyCard rejected valid sample');
   }
 
@@ -2012,13 +2082,26 @@ async function main() {
       }
 
       for (const vocab of validVocab.slice(0, batch.vocabCount)) {
+        const vocabGifResolved = await resolveServerGifForFact({
+          visualQuery: vocab.gifQuery || '',
+          titleEn: `${vocab.word} ${vocab.exampleEn}`,
+          category: 'science',
+          existingGifUrl: vocab.gifUrl || '',
+        });
+        vocab.gifQuery = vocab.gifQuery || vocabGifResolved.gifQuery;
+        if (vocabGifResolved.gifUrl) {
+          vocab.gifUrl = vocabGifResolved.gifUrl;
+        }
+
         const insertVocabRes = await pool.query(
           `INSERT INTO vocabulary_cards (
-            id, word, phonetic, part_of_speech, meaning_tr,
-            definition_en, example_en, example_tr, quiz_options, correct_index
+            id, word, phonetic, part_of_speech, cefr_level, synonyms,
+            meaning_tr, definition_en, example_en, example_tr,
+            quiz_options, correct_index, gif_query, gif_url
           ) VALUES (
-            $1, $2, $3, $4, $5,
-            $6, $7, $8, $9::jsonb, $10
+            $1, $2, $3, $4, $5, $6::jsonb,
+            $7, $8, $9, $10,
+            $11::jsonb, $12, $13, $14
           )
           ON CONFLICT (word) DO NOTHING
           RETURNING id, word`,
@@ -2027,12 +2110,16 @@ async function main() {
             vocab.word,
             vocab.phonetic,
             vocab.partOfSpeech,
+            vocab.cefrLevel || 'B2',
+            JSON.stringify(Array.isArray(vocab.synonyms) ? vocab.synonyms : []),
             vocab.meaningTr,
             vocab.definitionEn,
             vocab.exampleEn,
             vocab.exampleTr,
             JSON.stringify(vocab.quizOptions),
             vocab.correctIndex,
+            vocab.gifQuery || null,
+            vocab.gifUrl || null,
           ]
         );
 
@@ -2042,6 +2129,7 @@ async function main() {
             id: insertVocabRes.rows[0].id,
             word: vocab.word,
             pos: vocab.partOfSpeech,
+            cefr: vocab.cefrLevel || 'B2',
             meaningTr: vocab.meaningTr,
           });
         }
@@ -2097,6 +2185,7 @@ export {
   backfillMissingFactGifs,
   buildBatchPlan,
   buildGifSearchQuery,
+  buildVocabularyGifQuery,
   canConsumeGifQuota,
   consumeGifQuota,
   extractJsonCandidate,

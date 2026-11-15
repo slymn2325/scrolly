@@ -11,6 +11,7 @@ import {
   CheckCircle2,
   ExternalLink,
   Heart,
+  Info,
   RotateCcw,
   RotateCw,
   Share2,
@@ -652,85 +653,120 @@ export default function TikTokFactSlide({
         contain: 'layout style paint',
         willChange: isFlipping || isDragging ? 'transform' : 'auto',
       }}
-      className="reels-slide relative flex h-full w-full shrink-0 cursor-pointer items-center justify-center overflow-hidden select-none bg-[#09090B]"
+      className="reels-slide relative flex h-full w-full shrink-0 cursor-pointer items-center justify-center overflow-hidden select-none bg-[#0A0A0E]"
     >
       {/* Soft blurred side wash from active card color */}
       <div
         aria-hidden="true"
         className="pointer-events-none absolute inset-0 scale-110 blur-3xl saturate-150"
         style={{
-          background: `radial-gradient(circle at 50% 30%, ${fact.accentColor}55 0%, transparent 55%), linear-gradient(180deg, #09090B 0%, #050508 100%)`,
+          background: `radial-gradient(circle at 50% 30%, ${fact.accentColor}55 0%, transparent 55%), linear-gradient(180deg, #0A0A0E 0%, #050508 100%)`,
         }}
       />
 
-      <div className="relative mx-auto h-full w-full overflow-hidden bg-[#09090B]">
-        {/* Full-bleed cinematic canvas (always present as seamless backdrop & fallback) */}
-        <CategoryMotionArt
-          variant="hero"
-          factId={fact.id}
-          sketchType={fact.sketchType}
-          category={fact.category}
-          accentColor={fact.accentColor}
-          iconName={fact.iconName}
-          emoji={fact.emoji ?? catMeta.emoji}
-          lang={lang}
-          isFirstCard={isFirstCard}
-          isActive={isActive}
-          onButtonPop={onButtonPop}
-          topicText={topicText}
-          tag={localized.tag}
-        />
-
-        {/* Topic-relevant GIF media layer (only when cleanly matched via visualQuery) */}
-        {resolvedGifUrl && !gifFailed && (
-          <img
-            ref={gifImgRef}
-            src={resolvedGifUrl}
-            alt={localized.title}
-            loading="eager"
-            decoding="async"
-            data-testid="card-topic-gif"
-            onLoad={() => setGifLoaded(true)}
-            onError={() => setGifFailed(true)}
-            className={`pointer-events-none absolute inset-0 z-[2] h-full w-full object-cover transition-opacity duration-500 ${
-              gifLoaded ? 'opacity-75' : 'opacity-0'
-            }`}
+      <div className="relative mx-auto flex h-full w-full flex-col overflow-hidden bg-[#0A0A0E]">
+        {/* Upper 43-45% live media stage — bright, vivid GIF or ambient category art */}
+        <div className="relative h-[43%] sm:h-[45%] w-full shrink-0 overflow-hidden bg-[#0A0A0E]">
+          {/* Seamless category canvas fallback / backdrop */}
+          <CategoryMotionArt
+            variant="hero"
+            factId={fact.id}
+            sketchType={fact.sketchType}
+            category={fact.category}
+            accentColor={fact.accentColor}
+            iconName={fact.iconName}
+            emoji={fact.emoji ?? catMeta.emoji}
+            lang={lang}
+            isFirstCard={isFirstCard}
+            isActive={isActive}
+            onButtonPop={onButtonPop}
+            topicText={topicText}
+            tag={localized.tag}
           />
-        )}
 
-        {/* Readability dark gradient scrim so title & slider stay crisp over GIF/canvas */}
-        <div
-          aria-hidden="true"
-          className="pointer-events-none absolute inset-0 z-[5] bg-gradient-to-t from-black/90 via-black/55 to-black/70"
-        />
+          {/* Topic-relevant bright GIF media layer (only when cleanly matched via visualQuery) */}
+          {resolvedGifUrl && !gifFailed && (
+            <img
+              ref={gifImgRef}
+              src={resolvedGifUrl}
+              alt={localized.title}
+              loading="eager"
+              decoding="async"
+              data-testid="card-topic-gif"
+              onLoad={() => setGifLoaded(true)}
+              onError={() => setGifFailed(true)}
+              className={`pointer-events-none absolute inset-0 z-[2] h-full w-full object-cover brightness-105 contrast-105 transition-opacity duration-500 ${
+                gifLoaded ? 'opacity-95' : 'opacity-0'
+              }`}
+            />
+          )}
 
-        {/* Front content — mandatory safe paddings; full headline & short fact readable immediately */}
+          {/* Top edge gradient only for top HUD readability */}
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute inset-x-0 top-0 z-[5] h-16 bg-gradient-to-b from-black/65 to-transparent"
+          />
+
+          {/* Bottom edge gradient blending into the #0A0A0E lower body surface */}
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute inset-x-0 bottom-0 z-[5] h-20 bg-gradient-to-t from-[#0A0A0E] via-[#0A0A0E]/80 to-transparent"
+          />
+
+          {/* Micro GIPHY attribution tucked cleanly in bottom-right corner of the GIF stage */}
+          {!isFlipped && resolvedGifUrl && !gifFailed && (
+            <div className="pointer-events-auto absolute bottom-2 right-3 z-20">
+              <PoweredByGiphyBadge micro lang={lang} />
+            </div>
+          )}
+        </div>
+
+        {/* Lower ~55% compact fact text + interactive guess widget */}
         <div
           data-testid="fact-card-front"
-          className={`relative z-10 flex h-full w-full flex-col justify-end overflow-hidden px-4 pt-[calc(env(safe-area-inset-top,12px)+92px)] lg:pt-[88px] ${
+          className={`relative z-10 flex min-h-0 flex-1 flex-col justify-start overflow-hidden bg-[#0A0A0E] px-4 pt-1 pr-14 sm:pr-16 lg:pr-4 ${
             cookieBannerVisible
-              ? 'pb-[calc(env(safe-area-inset-bottom,16px)+204px)] lg:pb-7'
-              : 'pb-[calc(env(safe-area-inset-bottom,16px)+84px)] lg:pb-7'
+              ? 'pb-[calc(env(safe-area-inset-bottom,16px)+200px)] lg:pb-6'
+              : 'pb-[calc(env(safe-area-inset-bottom,16px)+84px)] lg:pb-6'
           } ${isFlipped ? 'invisible pointer-events-none' : ''}`}
         >
-          <div className="pointer-events-none relative z-10 flex max-h-full w-full flex-col gap-2 overflow-y-auto no-scrollbar pr-16 lg:pr-2">
-            <div className="inline-flex w-fit items-center gap-1.5 rounded-full border border-white/20 bg-white/10 px-2.5 py-1 text-[10px] font-extrabold uppercase tracking-wide text-white backdrop-blur-md">
-              <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-white/95 p-0.5">
-                <img src={catMeta.iconPath} alt="" aria-hidden="true" className="h-3 w-3 object-contain" />
-              </span>
-              <span>{catMeta.label[lang]}</span>
+          <div className="pointer-events-none relative z-10 flex max-h-full w-full flex-col overflow-y-auto no-scrollbar">
+            <div className="mb-1.5 flex flex-wrap items-center gap-2">
+              <div className="inline-flex w-fit items-center gap-1.5 rounded-full border border-white/15 bg-white/10 px-2.5 py-0.5 text-[10px] font-extrabold uppercase tracking-wide text-white">
+                <span className="flex h-3.5 w-3.5 shrink-0 items-center justify-center rounded-full bg-white/95 p-0.5">
+                  <img src={catMeta.iconPath} alt="" aria-hidden="true" className="h-2.5 w-2.5 object-contain" />
+                </span>
+                <span>{catMeta.label[lang]}</span>
+              </div>
+
+              <button
+                type="button"
+                data-testid="front-see-details-btn"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onButtonPop();
+                  executeFlip();
+                }}
+                onDoubleClick={(e) => e.stopPropagation()}
+                onPointerDown={(e) => e.stopPropagation()}
+                onTouchStart={(e) => e.stopPropagation()}
+                className="pointer-events-auto inline-flex min-h-[26px] items-center gap-1 rounded-full border border-white/15 bg-white/10 px-2.5 py-0.5 text-[10px] font-extrabold text-white/90 transition hover:bg-white/20 hover:text-white"
+              >
+                <Info className="h-3 w-3 shrink-0" aria-hidden="true" />
+                <span>{lang === 'tr' ? 'Kaynak' : 'Source'}</span>
+              </button>
             </div>
 
             <h2
               data-testid="fact-headline"
-              className="font-display text-[21px] font-bold leading-snug text-white drop-shadow sm:text-2xl whitespace-normal break-words"
+              className="mb-1.5 font-display text-lg font-bold leading-snug text-white whitespace-normal break-words sm:text-xl"
             >
               {localized.title}
             </h2>
 
             <p
               data-testid="fact-body"
-              className="text-[13.5px] font-semibold leading-relaxed text-white/95 drop-shadow-sm sm:text-sm whitespace-normal break-words"
+              className="mb-2.5 text-xs font-medium leading-relaxed text-white/85 line-clamp-2 whitespace-normal break-words sm:text-sm sm:line-clamp-3"
             >
               {maskedFactText}
             </p>
@@ -759,41 +795,8 @@ export default function TikTokFactSlide({
                 onButtonPop={onButtonPop}
               />
             )}
-
-            <div className="pointer-events-auto mt-1 flex flex-wrap items-center gap-2 pb-7 lg:pb-0 lg:pr-36">
-              <button
-                type="button"
-                data-testid="front-see-details-btn"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onButtonPop();
-                  executeFlip();
-                }}
-                onDoubleClick={(e) => e.stopPropagation()}
-                onPointerDown={(e) => e.stopPropagation()}
-                className="inline-flex h-11 items-center gap-1.5 rounded-full border border-white/20 bg-white/10 px-3.5 text-[11px] font-extrabold text-white backdrop-blur-md"
-              >
-                <span>{lang === 'tr' ? 'Detayı / Kaynağı Gör' : 'See Details / Source'}</span>
-              </button>
-              <span className="pointer-events-none text-[10px] font-bold text-white/70">
-                {copy.doubleTapLikeHint}
-              </span>
-            </div>
           </div>
         </div>
-
-        {/* Official GIPHY attribution in bottom-right corner of active GIF card */}
-        {!isFlipped && resolvedGifUrl && !gifFailed && (
-          <div
-            className={`pointer-events-auto absolute right-16 z-20 lg:bottom-3 lg:right-3 ${
-              cookieBannerVisible
-                ? 'bottom-[calc(env(safe-area-inset-bottom,16px)+204px)]'
-                : 'bottom-[calc(env(safe-area-inset-bottom,16px)+84px)]'
-            }`}
-          >
-            <PoweredByGiphyBadge compact lang={lang} />
-          </div>
-        )}
 
         {/* Right Reels action column — mobile/tablet only (desktop moves rail beside stage) */}
         {!isFlipped && (

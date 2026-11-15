@@ -172,35 +172,18 @@ export default function GuessWidget({
       onDoubleClick={stop}
       onPointerDown={stop}
       onTouchStart={stop}
-      className="pointer-events-auto mt-2 rounded-2xl border border-white/15 bg-white/10 p-3 shadow-lg backdrop-blur-md"
+      className="pointer-events-auto mt-1 rounded-xl border border-white/15 bg-white/[0.08] p-3 shadow-lg backdrop-blur-md"
     >
-      <div className="mb-1.5 flex flex-wrap items-center justify-between gap-2">
-        <span
-          lang={lang}
-          className="inline-flex items-center gap-1 rounded-full bg-white/10 px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider text-white/90"
-        >
-          <HelpCircle className="h-3 w-3 shrink-0" />
-          <span>{t.guessBadge}</span>
-        </span>
-        {isSlider && !submitted && (
-          <span
-            data-testid="guess-live-value"
-            className="rounded-full bg-white/15 px-2 py-0.5 text-[11px] font-black tabular-nums text-white"
-          >
-            {sliderValueText}
-          </span>
-        )}
-      </div>
-
-      <p className="mb-2 text-xs font-bold leading-snug text-white whitespace-normal break-words">
-        {challenge.prompt}
+      <p className="mb-2 flex items-start gap-1.5 text-xs font-medium leading-snug text-white whitespace-normal break-words sm:text-sm">
+        <HelpCircle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-violet-300" aria-hidden="true" />
+        <span className="min-w-0 flex-1">{challenge.prompt}</span>
       </p>
 
       {!submitted ? (
         isSlider ? (
-          <div className="flex flex-col gap-2">
+          <div className="flex flex-col gap-1.5">
             <div className="flex w-full flex-col">
-              <div className="flex min-h-[44px] items-center">
+              <div className="flex min-h-[36px] items-center py-0.5">
                 <input
                   type="range"
                   min={minVal}
@@ -221,9 +204,15 @@ export default function GuessWidget({
                   className="h-2 w-full cursor-pointer rounded-full accent-violet-400"
                 />
               </div>
-              <div className="flex justify-between text-[10px] font-bold text-white/60">
-                <span>{minLabelText}</span>
-                <span>{maxLabelText}</span>
+              <div className="flex items-center justify-between gap-2 text-[10px] font-bold text-white/60">
+                <span className="truncate">{minLabelText}</span>
+                <span
+                  data-testid="guess-live-value"
+                  className="shrink-0 rounded-full border border-white/15 bg-white/15 px-2 py-0.5 text-[11px] font-black tabular-nums text-white"
+                >
+                  {sliderValueText}
+                </span>
+                <span className="truncate text-right">{maxLabelText}</span>
               </div>
             </div>
 
@@ -233,7 +222,7 @@ export default function GuessWidget({
               data-testid="guess-submit-btn"
               onClick={handleSliderSubmit}
               onDoubleClick={stop}
-              className="h-11 w-full rounded-xl bg-white px-4 text-xs font-black text-[#09090B] shadow-sm"
+              className="flex min-h-[40px] w-full items-center justify-center rounded-xl bg-white px-4 py-2 text-xs font-black text-[#09090B] shadow-sm"
             >
               {lang === 'tr' ? 'Kilitle' : t.guessSubmitBtn}
             </motion.button>
@@ -248,9 +237,9 @@ export default function GuessWidget({
                 data-testid={`guess-binary-${idx}`}
                 onClick={(e) => handleBinaryPick(e, idx)}
                 onDoubleClick={stop}
-                className="flex h-11 items-center justify-center rounded-xl border border-white/25 bg-white/15 px-2 text-[11px] font-extrabold text-white transition hover:bg-white/25"
+                className="flex min-h-[42px] h-auto items-center justify-center rounded-xl border border-white/25 bg-white/15 px-3 py-2 text-center text-xs font-extrabold leading-snug text-white whitespace-normal break-words transition hover:bg-white/25"
               >
-                <span className="line-clamp-2 text-center leading-snug">{opt}</span>
+                <span>{opt}</span>
               </motion.button>
             ))}
           </div>
@@ -261,7 +250,7 @@ export default function GuessWidget({
           animate={{ opacity: 1, scale: 1, y: 0 }}
           transition={{ type: 'spring', stiffness: 360, damping: 22 }}
           data-testid="guess-result-banner"
-          className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-emerald-400/30 bg-emerald-500/20 px-3 py-2.5"
+          className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-emerald-400/30 bg-emerald-500/20 px-3 py-2"
         >
           <div className="min-w-0 flex-1">
             <div className="flex flex-wrap items-center gap-1.5 text-[11px] font-black text-emerald-100">
@@ -289,7 +278,7 @@ export default function GuessWidget({
               onRequestFlip();
             }}
             onDoubleClick={stop}
-            className="inline-flex h-11 shrink-0 items-center gap-1 rounded-full bg-white px-3 text-[10.5px] font-black text-[#09090B]"
+            className="inline-flex min-h-[38px] shrink-0 items-center gap-1 rounded-full bg-white px-3 py-1.5 text-[10.5px] font-black text-[#09090B]"
           >
             <RotateCw className="h-3 w-3 shrink-0" />
             <span>{t.guessFlipCta}</span>

@@ -140,16 +140,28 @@ create table if not exists public.vocabulary_cards (
   word text unique not null,
   phonetic text default '',
   part_of_speech text default '',
+  cefr_level text default 'B2',
+  synonyms jsonb default '[]'::jsonb,
   meaning_tr text not null,
   definition_en text not null,
   example_en text not null,
   example_tr text not null,
   quiz_options jsonb not null,
   correct_index int not null default 0,
+  gif_url text,
+  gif_query text,
   created_at timestamptz default now()
 );
 
+alter table public.vocabulary_cards add column if not exists cefr_level text default 'B2';
+alter table public.vocabulary_cards add column if not exists synonyms jsonb default '[]'::jsonb;
+alter table public.vocabulary_cards add column if not exists gif_url text;
+alter table public.vocabulary_cards add column if not exists gif_query text;
+
 create index if not exists idx_vocabulary_cards_created on public.vocabulary_cards (created_at desc);
+create index if not exists idx_vocabulary_cards_missing_gif
+  on public.vocabulary_cards (created_at desc)
+  where gif_url is null or trim(gif_url) = '';
 
 create table if not exists public.scheduler_state (
   id integer primary key default 1 check (id = 1),

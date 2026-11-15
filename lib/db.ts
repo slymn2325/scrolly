@@ -519,19 +519,34 @@ export async function ensureSchema(): Promise<void> {
           word TEXT UNIQUE NOT NULL,
           phonetic TEXT DEFAULT '',
           part_of_speech TEXT DEFAULT '',
+          cefr_level TEXT DEFAULT 'B2',
+          synonyms JSONB DEFAULT '[]'::jsonb,
           meaning_tr TEXT NOT NULL,
           definition_en TEXT NOT NULL,
           example_en TEXT NOT NULL,
           example_tr TEXT NOT NULL,
           quiz_options JSONB NOT NULL,
           correct_index INT NOT NULL DEFAULT 0,
+          gif_url TEXT,
+          gif_query TEXT,
           created_at TIMESTAMPTZ DEFAULT NOW()
         );
       `);
 
+      await pool.query(`ALTER TABLE vocabulary_cards ADD COLUMN IF NOT EXISTS cefr_level TEXT DEFAULT 'B2';`);
+      await pool.query(`ALTER TABLE vocabulary_cards ADD COLUMN IF NOT EXISTS synonyms JSONB DEFAULT '[]'::jsonb;`);
+      await pool.query(`ALTER TABLE vocabulary_cards ADD COLUMN IF NOT EXISTS gif_url TEXT;`);
+      await pool.query(`ALTER TABLE vocabulary_cards ADD COLUMN IF NOT EXISTS gif_query TEXT;`);
+
       await pool.query(`
         CREATE INDEX IF NOT EXISTS idx_vocabulary_cards_created
           ON vocabulary_cards (created_at DESC);
+      `);
+
+      await pool.query(`
+        CREATE INDEX IF NOT EXISTS idx_vocabulary_cards_missing_gif
+          ON vocabulary_cards (created_at DESC)
+          WHERE gif_url IS NULL OR TRIM(gif_url) = '';
       `);
 
       await pool.query(`
@@ -665,6 +680,7 @@ export async function ensureSchema(): Promise<void> {
       `);
 
       await seedInitialFactsIfEmpty(pool);
+      await seedInitialVocabularyIfMissing(pool);
     })().catch((err) => {
       global.__scrollySchemaReadyPromise = undefined;
       throw err;
@@ -1253,12 +1269,16 @@ interface DbVocabularyRow {
   word: string;
   phonetic: string | null;
   part_of_speech: string | null;
+  cefr_level: string | null;
+  synonyms: unknown;
   meaning_tr: string;
   definition_en: string;
   example_en: string;
   example_tr: string;
   quiz_options: unknown;
   correct_index: number | null;
+  gif_url: string | null;
+  gif_query: string | null;
   created_at: Date | string | null;
 }
 
@@ -1299,6 +1319,119 @@ function parseVocabQuizOptions(raw: unknown): [string, string, string] | null {
   return [opts[0], opts[1], opts[2]];
 }
 
+function parseVocabSynonyms(raw: unknown): string[] {
+  let candidate = raw;
+  if (typeof raw === 'string') {
+    try {
+      candidate = JSON.parse(raw);
+    } catch {
+      return [];
+    }
+  }
+  if (!Array.isArray(candidate)) return [];
+  const seen = new Set<string>();
+  const out: string[] = [];
+  for (const item of candidate) {
+    if (typeof item !== 'string') continue;
+    const clean = item.trim().slice(0, 48);
+    if (!clean) continue;
+    const key = clean.toLowerCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
+    out.push(clean);
+    if (out.length >= 4) break;
+  }
+  return out;
+}
+
+function normalizeCefrLevel(raw: unknown): string | undefined {
+  if (typeof raw !== 'string') return undefined;
+  const clean = raw.trim().toUpperCase();
+  if (/^(A1|A2|B1|B2|C1|C2|B1\/B2|B2\/C1|C1\/C2)$/.test(clean)) {
+    return clean;
+  }
+  return undefined;
+}
+
+function sanitizeVocabGifUrl(url?: string | null): string | undefined {
+  if (!url) return undefined;
+  const clean = url.trim();
+  if (!clean.startsWith('https://')) return undefined;
+  if (/\.(mp4|webm|mov|m4v)(?:$|[?#])/i.test(clean)) return undefined;
+  return clean;
+}
+
+async function seedInitialVocabularyIfMissing(pool: Pool): Promise<void> {
+  const staticCards = getVocabularyFacts();
+  if (staticCards.length === 0) return;
+
+  const words = staticCards.map((c) => c.word.trim().toLowerCase()).filter(Boolean);
+  const checkRes = await pool.query<{
+    seeded_count: number;
+    missing_v2_fields: number;
+  }>(
+    `SELECT
+       COUNT(*) FILTER (WHERE LOWER(word) = ANY($1::text[]))::INT AS seeded_count,
+       COUNT(*) FILTER (
+         WHERE LOWER(word) = ANY($1::text[])
+           AND (
+             cefr_level IS NULL
+             OR TRIM(cefr_level) = ''
+             OR synonyms IS NULL
+             OR synonyms = '[]'::jsonb
+             OR gif_query IS NULL
+             OR TRIM(gif_query) = ''
+           )
+       )::INT AS missing_v2_fields
+     FROM vocabulary_cards`,
+    [words]
+  );
+
+  const { seeded_count = 0, missing_v2_fields = 0 } = checkRes.rows[0] ?? {};
+  if (seeded_count >= words.length && missing_v2_fields === 0) {
+    return;
+  }
+
+  for (const card of staticCards) {
+    await pool.query(
+      `INSERT INTO vocabulary_cards (
+        id, word, phonetic, part_of_speech, cefr_level, synonyms,
+        meaning_tr, definition_en, example_en, example_tr,
+        quiz_options, correct_index, gif_url, gif_query
+      ) VALUES (
+        $1, $2, $3, $4, $5, $6::jsonb,
+        $7, $8, $9, $10,
+        $11::jsonb, $12, $13, $14
+      )
+      ON CONFLICT (word) DO UPDATE SET
+        cefr_level = COALESCE(NULLIF(TRIM(vocabulary_cards.cefr_level), ''), EXCLUDED.cefr_level),
+        synonyms = CASE
+          WHEN vocabulary_cards.synonyms IS NULL OR vocabulary_cards.synonyms = '[]'::jsonb
+            THEN EXCLUDED.synonyms
+          ELSE vocabulary_cards.synonyms
+        END,
+        gif_query = COALESCE(NULLIF(TRIM(vocabulary_cards.gif_query), ''), EXCLUDED.gif_query),
+        gif_url = COALESCE(NULLIF(TRIM(vocabulary_cards.gif_url), ''), EXCLUDED.gif_url)`,
+      [
+        card.id,
+        card.word,
+        card.phonetic || '',
+        card.partOfSpeech,
+        card.cefrLevel || 'B2',
+        JSON.stringify(Array.isArray(card.synonyms) ? card.synonyms.slice(0, 4) : []),
+        card.meaningTr,
+        card.definitionEn,
+        card.exampleEn,
+        card.exampleTr,
+        JSON.stringify(card.quizOptions),
+        card.correctIndex,
+        card.gifUrl || null,
+        card.gifQuery || null,
+      ]
+    );
+  }
+}
+
 export function mapDbVocabularyRow(row: DbVocabularyRow): VocabularyCard | null {
   const word = String(row.word || '').trim();
   const meaningTr = String(row.meaning_tr || '').trim();
@@ -1306,18 +1439,27 @@ export function mapDbVocabularyRow(row: DbVocabularyRow): VocabularyCard | null 
   if (!word || !meaningTr || !quizOptions) return null;
   const rawIndex = Number(row.correct_index ?? 0);
   const correctIndex: 0 | 1 | 2 = rawIndex === 1 ? 1 : rawIndex === 2 ? 2 : 0;
+  const cefrLevel = normalizeCefrLevel(row.cefr_level) ?? 'B2';
+  const synonyms = parseVocabSynonyms(row.synonyms);
+  const gifUrl = sanitizeVocabGifUrl(row.gif_url);
+  const gifQuery = typeof row.gif_query === 'string' && row.gif_query.trim() ? row.gif_query.trim() : undefined;
+
   return {
     id: String(row.id || `vocab-db-${word.toLowerCase()}`).trim(),
     category: 'vocabulary',
     word,
     phonetic: String(row.phonetic || '').trim(),
     partOfSpeech: normalizePartOfSpeech(row.part_of_speech),
+    cefrLevel,
+    ...(synonyms.length > 0 ? { synonyms } : { synonyms: [] }),
     meaningTr,
     definitionEn: String(row.definition_en || '').trim(),
     exampleEn: String(row.example_en || '').trim(),
     exampleTr: String(row.example_tr || '').trim(),
     quizOptions,
     correctIndex,
+    ...(gifUrl ? { gifUrl } : {}),
+    ...(gifQuery ? { gifQuery } : {}),
   };
 }
 
@@ -1333,17 +1475,38 @@ export interface ServerVocabularyFetchResult {
  */
 export async function fetchVocabularyWithSourceServer(): Promise<ServerVocabularyFetchResult> {
   const staticCards = getVocabularyFacts();
+  const staticByWord = new Map<string, VocabularyCard>();
+  for (const card of staticCards) {
+    staticByWord.set(card.word.trim().toLowerCase(), card);
+  }
 
   const mergeCards = (primary: VocabularyCard[]): VocabularyCard[] => {
     const seenWords = new Set<string>();
     const seenIds = new Set<string>();
     const merged: VocabularyCard[] = [];
-    for (const card of [...primary, ...staticCards]) {
-      const wordKey = card.word.trim().toLowerCase();
-      if (!wordKey || seenWords.has(wordKey) || seenIds.has(card.id)) continue;
+    for (const rawCard of [...primary, ...staticCards]) {
+      const wordKey = rawCard.word.trim().toLowerCase();
+      if (!wordKey || seenWords.has(wordKey) || seenIds.has(rawCard.id)) continue;
       seenWords.add(wordKey);
-      seenIds.add(card.id);
-      merged.push(card);
+      seenIds.add(rawCard.id);
+
+      const staticMatch = staticByWord.get(wordKey);
+      const synonyms =
+        Array.isArray(rawCard.synonyms) && rawCard.synonyms.length > 0
+          ? rawCard.synonyms
+          : staticMatch?.synonyms;
+      const gifQuery = rawCard.gifQuery || staticMatch?.gifQuery;
+      const cefrLevel =
+        rawCard.cefrLevel && rawCard.cefrLevel !== 'B2'
+          ? rawCard.cefrLevel
+          : staticMatch?.cefrLevel || rawCard.cefrLevel || 'B2';
+
+      merged.push({
+        ...rawCard,
+        cefrLevel,
+        ...(Array.isArray(synonyms) ? { synonyms } : {}),
+        ...(gifQuery ? { gifQuery } : {}),
+      });
     }
     return merged;
   };
@@ -1356,8 +1519,9 @@ export async function fetchVocabularyWithSourceServer(): Promise<ServerVocabular
     await ensureSchema();
     const pool = getPool();
     const res = await pool.query<DbVocabularyRow>(
-      `SELECT id, word, phonetic, part_of_speech, meaning_tr, definition_en,
-              example_en, example_tr, quiz_options, correct_index, created_at
+      `SELECT id, word, phonetic, part_of_speech, cefr_level, synonyms,
+              meaning_tr, definition_en, example_en, example_tr,
+              quiz_options, correct_index, gif_url, gif_query, created_at
        FROM vocabulary_cards
        ORDER BY created_at DESC, word ASC
        LIMIT 1000`
@@ -1440,7 +1604,8 @@ export async function getDatabaseStatusReport(): Promise<DatabaseStatusReport> {
 
   const buildLocalReport = (error?: string): DatabaseStatusReport => {
     const seedFacts = loadSeedFactsFromDisk();
-    const vocabCount = getVocabularyFacts().length;
+    const staticVocab = getVocabularyFacts();
+    const vocabCount = staticVocab.length;
     const byCategory: Record<string, number> = {};
     let cardsWithGif = 0;
     for (const fact of seedFacts) {
@@ -1449,16 +1614,22 @@ export async function getDatabaseStatusReport(): Promise<DatabaseStatusReport> {
         cardsWithGif += 1;
       }
     }
+    for (const vocab of staticVocab) {
+      if (vocab.gifUrl && vocab.gifUrl.trim().length > 0) {
+        cardsWithGif += 1;
+      }
+    }
     const gifQuota = readLocalMemoryGifQuota();
+    const totalCards = seedFacts.length + vocabCount;
     return {
       ok: !error,
       databaseConfigured: hasDatabaseUrl(),
       source: 'local',
       factsCount: seedFacts.length,
       vocabularyCount: vocabCount,
-      totalCards: seedFacts.length + vocabCount,
+      totalCards,
       cardsWithGif,
-      cardsMissingGif: Math.max(0, seedFacts.length - cardsWithGif),
+      cardsMissingGif: Math.max(0, totalCards - cardsWithGif),
       hourlyGifQuotaUsed: `${gifQuota.used} / ${GIF_HOURLY_LIMIT_DISPLAY}`,
       gifQuota,
       nextGifWindowResetAt: gifQuota.nextResetAt,
@@ -1490,7 +1661,12 @@ export async function getDatabaseStatusReport(): Promise<DatabaseStatusReport> {
            COUNT(*) FILTER (WHERE gif_url IS NOT NULL AND TRIM(gif_url) <> '')::INT AS with_gif
          FROM facts`
       ),
-      pool.query<{ count: number }>('SELECT COUNT(*)::INT AS count FROM vocabulary_cards'),
+      pool.query<{ total: number; with_gif: number }>(
+        `SELECT
+           COUNT(*)::INT AS total,
+           COUNT(*) FILTER (WHERE gif_url IS NOT NULL AND TRIM(gif_url) <> '')::INT AS with_gif
+         FROM vocabulary_cards`
+      ),
       pool.query<{ category: string; count: number }>(
         `SELECT category, COUNT(*)::INT AS count
          FROM facts
@@ -1529,9 +1705,11 @@ export async function getDatabaseStatusReport(): Promise<DatabaseStatusReport> {
     }
 
     const factsCount = Number(factsRes.rows[0]?.total ?? 0);
-    const vocabularyCount = Number(vocabRes.rows[0]?.count ?? 0);
-    const cardsWithGif = Number(factsRes.rows[0]?.with_gif ?? 0);
-    const cardsMissingGif = Math.max(0, factsCount - cardsWithGif);
+    const vocabularyCount = Number(vocabRes.rows[0]?.total ?? 0);
+    const totalCards = factsCount + vocabularyCount;
+    const cardsWithGif =
+      Number(factsRes.rows[0]?.with_gif ?? 0) + Number(vocabRes.rows[0]?.with_gif ?? 0);
+    const cardsMissingGif = Math.max(0, totalCards - cardsWithGif);
 
     const schedRow = schedulerRes.rows[0];
     const windowExpired = Boolean(schedRow?.window_expired ?? true);

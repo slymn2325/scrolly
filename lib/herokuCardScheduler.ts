@@ -2,10 +2,15 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import { getVocabularyFacts } from '@/data/vocabularyFacts';
 import { ensureSchema, getPool, hasDatabaseUrl, loadSeedFactsFromDisk } from '@/lib/db';
-import { hasConfiguredGifProviderKeys } from '@/lib/gifService';
+import {
+  hasConfiguredGifProviderKeys,
+  isRenderableGifImageUrl,
+  sanitizeVisualQuery,
+} from '@/lib/gifService';
 import {
   backfillMissingFactGifsServer,
   buildSpecificGifQuery,
+  buildVocabularyGifQuery,
   getHourlyGifQuotaStatusServer,
   type BackfillGifResult,
 } from '@/lib/serverGifMatcher';
@@ -126,12 +131,16 @@ export interface ValidatedVocabularyCard {
   word: string;
   phonetic: string;
   partOfSpeech: 'isim' | 'sıfat' | 'fiil' | 'zarf' | 'edat';
+  cefrLevel: string;
+  synonyms: string[];
   meaningTr: string;
   definitionEn: string;
   exampleEn: string;
   exampleTr: string;
   quizOptions: [string, string, string];
   correctIndex: 0 | 1 | 2;
+  gifQuery: string;
+  gifUrl: string | null;
 }
 
 export interface CardGenerationJobResult {
@@ -479,18 +488,74 @@ export function validateVocabularyCard(
     .replace(/^-+|-+$/g, '')
     .slice(0, 48);
 
+  const rawCefr = String(item.cefrLevel || item.cefr_level || '')
+    .trim()
+    .toUpperCase();
+  const cefrLevel = /^(A1|A2|B1|B2|C1|C2|B1\/B2|B2\/C1|C1\/C2)$/.test(rawCefr)
+    ? rawCefr
+    : 'B2';
+
+  const wordLower = word.toLowerCase();
+  const seenSyns = new Set<string>([wordLower]);
+  const synonyms: string[] = [];
+  if (Array.isArray(item.synonyms)) {
+    for (const rawSyn of item.synonyms) {
+      const cleanSyn = String(rawSyn || '')
+        .trim()
+        .toLowerCase()
+        .replace(/[^a-z-\s]/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim()
+        .slice(0, 32);
+      if (!cleanSyn || seenSyns.has(cleanSyn)) continue;
+      seenSyns.add(cleanSyn);
+      synonyms.push(cleanSyn);
+      if (synonyms.length >= 3) break;
+    }
+  }
+
+  const rawGifQuery =
+    typeof item.gifQuery === 'string'
+      ? item.gifQuery
+      : typeof item.gif_query === 'string'
+        ? item.gif_query
+        : '';
+  const sanitizedGifQuery = sanitizeVisualQuery(rawGifQuery);
+  const gifQuery =
+    sanitizedGifQuery && sanitizedGifQuery.split(' ').length >= 2
+      ? sanitizedGifQuery
+      : buildVocabularyGifQuery({
+          word,
+          partOfSpeech: partOfSpeechRaw,
+          definitionEn,
+          exampleEn,
+          gifQuery: sanitizedGifQuery || undefined,
+        });
+
+  const rawGifUrl =
+    typeof item.gifUrl === 'string'
+      ? item.gifUrl.trim()
+      : typeof item.gif_url === 'string'
+        ? item.gif_url.trim()
+        : '';
+  const gifUrl = rawGifUrl && isRenderableGifImageUrl(rawGifUrl) ? rawGifUrl : null;
+
   return {
     id: `vocab-gen-${slugWord}-${Date.now().toString(36)}`,
     category: 'vocabulary',
     word,
     phonetic,
     partOfSpeech: partOfSpeechRaw as ValidatedVocabularyCard['partOfSpeech'],
+    cefrLevel,
+    synonyms,
     meaningTr,
     definitionEn,
     exampleEn,
     exampleTr,
     quizOptions: [quizOptions[0], quizOptions[1], quizOptions[2]],
     correctIndex: correctIndex as 0 | 1 | 2,
+    gifQuery,
+    gifUrl,
   };
 }
 
@@ -565,6 +630,9 @@ STRICT ANTI-CLICHÉ BAN LIST — NEVER generate or paraphrase these overused int
 - "word": English lemma (lowercase unless proper noun)
 - "phonetic": real IPA in slashes (e.g. "/rɪˈzɪl.i.ənt/")
 - "partOfSpeech": one of "isim" | "sıfat" | "fiil" | "zarf" | "edat"
+- "cefrLevel": one of "B1" | "B2" | "C1" | "C2"
+- "synonyms": array of exactly 2 concise English synonym words (lowercase single words)
+- "gifQuery": strictly 2-4 concrete English words for GIPHY visual search representing the word's meaning (never meme/reaction/text/quote)
 - "meaningTr": concise Turkish meaning
 - "definitionEn": one clear English definition sentence
 - "exampleEn": natural English example sentence that CONTAINS the word
@@ -1056,11 +1124,13 @@ export async function runCardGenerationJob(options?: {
           for (const vocab of validVocab.slice(0, batch.vocabCount)) {
             const res = await pool.query<{ id: string }>(
               `INSERT INTO vocabulary_cards (
-                id, word, phonetic, part_of_speech, meaning_tr,
-                definition_en, example_en, example_tr, quiz_options, correct_index
+                id, word, phonetic, part_of_speech, cefr_level, synonyms,
+                meaning_tr, definition_en, example_en, example_tr,
+                quiz_options, correct_index, gif_url, gif_query
               ) VALUES (
-                $1, $2, $3, $4, $5,
-                $6, $7, $8, $9::jsonb, $10
+                $1, $2, $3, $4, $5, $6::jsonb,
+                $7, $8, $9, $10,
+                $11::jsonb, $12, $13, $14
               )
               ON CONFLICT (word) DO NOTHING
               RETURNING id`,
@@ -1069,12 +1139,16 @@ export async function runCardGenerationJob(options?: {
                 vocab.word,
                 vocab.phonetic,
                 vocab.partOfSpeech,
+                vocab.cefrLevel,
+                JSON.stringify(vocab.synonyms),
                 vocab.meaningTr,
                 vocab.definitionEn,
                 vocab.exampleEn,
                 vocab.exampleTr,
                 JSON.stringify(vocab.quizOptions),
                 vocab.correctIndex,
+                vocab.gifUrl,
+                vocab.gifQuery,
               ]
             );
             existingVocabWords.add(vocab.word.toLowerCase());
@@ -1094,7 +1168,7 @@ export async function runCardGenerationJob(options?: {
         }
       }
 
-      if (insertedFacts > 0 && hasConfiguredGifProviderKeys()) {
+      if ((insertedFacts > 0 || insertedVocab > 0) && hasConfiguredGifProviderKeys()) {
         triggerGifQueueJob({ force: false });
       }
 
@@ -1200,8 +1274,10 @@ export async function runSchedulerTick(): Promise<{
            WHERE id = 1`
         ),
         pool.query<{ has_missing: boolean }>(
-          `SELECT EXISTS (
-             SELECT 1 FROM facts WHERE gif_url IS NULL OR TRIM(gif_url) = ''
+          `SELECT (
+             EXISTS (SELECT 1 FROM facts WHERE gif_url IS NULL OR TRIM(gif_url) = '')
+             OR
+             EXISTS (SELECT 1 FROM vocabulary_cards WHERE gif_url IS NULL OR TRIM(gif_url) = '')
            ) AS has_missing`
         ),
         getHourlyGifQuotaStatusServer(),

@@ -98,15 +98,23 @@ export default function DesktopFeedSideRail({
       };
     }
     if (activeSlide?.type === 'vocabulary') {
+      const cefr = (activeSlide.card.cefrLevel || 'B2/C1').trim().toUpperCase();
+      const synonyms = (activeSlide.card.synonyms || [])
+        .map((s) => s.trim())
+        .filter(Boolean)
+        .slice(0, 2);
       return {
         kind: 'other' as const,
         badge: lang === 'tr' ? '📚 İngilizce Kelime' : '📚 Vocabulary Card',
         badgeColor: '#6366F1',
-        subLabel: [activeSlide.card.partOfSpeech, activeSlide.card.phonetic].filter(Boolean).join(' · '),
+        subLabel: [cefr, activeSlide.card.partOfSpeech, activeSlide.card.phonetic]
+          .filter(Boolean)
+          .join(' · '),
+        synonyms,
         note:
           lang === 'tr'
-            ? 'Bağlamdaki boşluğu tamamla, telaffuzu dinle ve kelimeyi kişisel defterine kaydet.'
-            : 'Complete the contextual fill-in, listen to pronunciation, and save to your notebook.',
+            ? 'İngilizce bağlam cümlesini incele, 1.0x/0.75x telaffuzu dinle ve doğru Türkçe anlamı seç.'
+            : 'Read the context sentence, listen at 1.0x or 0.75x speed, and pick the matching meaning.',
         xpLabel: '+15 XP',
       };
     }
@@ -383,6 +391,29 @@ export default function DesktopFeedSideRail({
                 >
                   {slideSummary.note}
                 </p>
+                {slideSummary.synonyms && slideSummary.synonyms.length > 0 && (
+                  <div className="mt-2.5 flex flex-wrap items-center gap-1.5">
+                    <span
+                      className={`text-[10px] font-black uppercase tracking-wider ${
+                        darkMode ? 'text-white/50' : 'text-[#1E1B2E]/55'
+                      }`}
+                    >
+                      {lang === 'tr' ? 'Eş Anlam:' : 'Synonyms:'}
+                    </span>
+                    {slideSummary.synonyms.map((syn) => (
+                      <span
+                        key={syn}
+                        className={`rounded-full border px-2 py-0.5 text-[10px] font-bold ${
+                          darkMode
+                            ? 'border-indigo-400/30 bg-indigo-500/20 text-indigo-200'
+                            : 'border-indigo-300 bg-indigo-50 text-indigo-800'
+                        }`}
+                      >
+                        ≈ {syn}
+                      </span>
+                    ))}
+                  </div>
+                )}
               </div>
             )}
           </div>

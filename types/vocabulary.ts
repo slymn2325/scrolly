@@ -6,12 +6,16 @@ export interface VocabularyCard {
   word: string;
   phonetic: string;
   partOfSpeech: VocabPartOfSpeech;
+  cefrLevel?: string;
+  synonyms?: string[];
   meaningTr: string;
   definitionEn: string;
   exampleEn: string;
   exampleTr: string;
   quizOptions: [string, string, string];
   correctIndex: 0 | 1 | 2;
+  gifUrl?: string;
+  gifQuery?: string;
 }
 
 export interface SavedVocabularyEntry {

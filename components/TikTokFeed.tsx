@@ -459,13 +459,19 @@ const TikTokFeed = forwardRef<TikTokFeedHandle, TikTokFeedProps>(function TikTok
     );
   }, [activeIndex, slides]);
 
-  // Eagerly preload next 2 card GIF URLs in browser cache + head preload hints
+  // Eagerly preload next 2 card & vocabulary GIF URLs in browser cache + head preload hints
   useEffect(() => {
     if (typeof window === 'undefined' || slides.length === 0) return;
     const candidates = [slides[activeIndex + 1], slides[activeIndex + 2]];
     for (const slide of candidates) {
-      if (!slide || slide.type !== 'fact') continue;
-      const url = slide.fact.gifUrl?.trim();
+      if (!slide) continue;
+      const rawUrl =
+        slide.type === 'fact'
+          ? slide.fact.gifUrl
+          : slide.type === 'vocabulary'
+            ? slide.card.gifUrl
+            : undefined;
+      const url = rawUrl?.trim();
       if (!url || !url.startsWith('https://') || PRELOADED_GIF_CACHE.has(url)) continue;
       PRELOADED_GIF_CACHE.add(url);
       const img = new window.Image();

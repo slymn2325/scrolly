@@ -298,6 +298,101 @@ export async function updateFactGifQueryOnlyDb(
   }
 }
 
+export async function getVocabularyGifUrlDb(
+  idOrWord: string,
+  fallbackWord?: string
+): Promise<string | null> {
+  if (!hasDatabaseUrl() || (!idOrWord && !fallbackWord)) return null;
+  const primary = String(idOrWord || '').trim().slice(0, 160);
+  const secondary = String(fallbackWord || idOrWord || '').trim().slice(0, 160);
+  if (!primary && !secondary) return null;
+  try {
+    await ensureSchema();
+    const pool = getPool();
+    const res = await pool.query<{ gif_url: string | null }>(
+      `SELECT gif_url
+       FROM vocabulary_cards
+       WHERE (
+         id = $1
+         OR LOWER(word) = LOWER($1)
+         OR ($2 <> '' AND LOWER(word) = LOWER($2))
+       )
+         AND gif_url IS NOT NULL
+         AND TRIM(gif_url) <> ''
+       LIMIT 1`,
+      [primary || secondary, secondary]
+    );
+    const url = res.rows[0]?.gif_url?.trim() || '';
+    return url.length > 0 ? url : null;
+  } catch (err) {
+    console.warn('[dbActions] getVocabularyGifUrlDb skipped:', err);
+    return null;
+  }
+}
+
+export async function updateVocabularyGifUrlDb(
+  idOrWord: string,
+  gifUrl: string,
+  gifQuery = '',
+  fallbackWord?: string
+): Promise<void> {
+  if (!hasDatabaseUrl() || (!idOrWord && !fallbackWord) || !gifUrl) return;
+  const cleanUrl = gifUrl.trim().slice(0, 500);
+  if (!cleanUrl.startsWith('https://') || /\.(mp4|webm|mov|m4v)(?:$|[?#])/i.test(cleanUrl)) {
+    return;
+  }
+  const primary = String(idOrWord || '').trim().slice(0, 160);
+  const secondary = String(fallbackWord || idOrWord || '').trim().slice(0, 160);
+  const cleanQuery = gifQuery ? gifQuery.trim().slice(0, 120) : '';
+  try {
+    await ensureSchema();
+    const pool = getPool();
+    await pool.query(
+      `UPDATE vocabulary_cards
+       SET gif_url = $2,
+           gif_query = COALESCE(NULLIF($3, ''), gif_query)
+       WHERE (
+         id = $1
+         OR LOWER(word) = LOWER($1)
+         OR ($4 <> '' AND LOWER(word) = LOWER($4))
+       )
+         AND (gif_url IS NULL OR TRIM(gif_url) = '')`,
+      [primary || secondary, cleanUrl, cleanQuery, secondary]
+    );
+  } catch (err) {
+    console.warn('[dbActions] updateVocabularyGifUrlDb skipped:', err);
+  }
+}
+
+export async function updateVocabularyGifQueryOnlyDb(
+  idOrWord: string,
+  gifQuery: string,
+  fallbackWord?: string
+): Promise<void> {
+  if (!hasDatabaseUrl() || (!idOrWord && !fallbackWord) || !gifQuery) return;
+  const cleanQuery = gifQuery.trim().slice(0, 120);
+  if (!cleanQuery) return;
+  const primary = String(idOrWord || '').trim().slice(0, 160);
+  const secondary = String(fallbackWord || idOrWord || '').trim().slice(0, 160);
+  try {
+    await ensureSchema();
+    const pool = getPool();
+    await pool.query(
+      `UPDATE vocabulary_cards
+       SET gif_query = $2
+       WHERE (
+         id = $1
+         OR LOWER(word) = LOWER($1)
+         OR ($3 <> '' AND LOWER(word) = LOWER($3))
+       )
+         AND (gif_query IS NULL OR TRIM(gif_query) = '')`,
+      [primary || secondary, cleanQuery, secondary]
+    );
+  } catch (err) {
+    console.warn('[dbActions] updateVocabularyGifQueryOnlyDb skipped:', err);
+  }
+}
+
 export async function getProfileByDeviceId(
   deviceId: string
 ): Promise<{ persisted: boolean; profile: PersistedProfileDto | null }> {

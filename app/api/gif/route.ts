@@ -1,5 +1,10 @@
 import { NextResponse } from 'next/server';
-import { getFactGifUrlDb, updateFactGifUrlDb } from '@/lib/dbActions';
+import {
+  getFactGifUrlDb,
+  getVocabularyGifUrlDb,
+  updateFactGifUrlDb,
+  updateVocabularyGifUrlDb,
+} from '@/lib/dbActions';
 import {
   isRenderableGifImageUrl,
   sanitizeReactionQuery,
@@ -8,6 +13,7 @@ import {
   searchTopicGif,
 } from '@/lib/gifService';
 import { checkRateLimit, extractClientIp } from '@/lib/rateLimit';
+import { buildVocabularyGifQuery } from '@/lib/serverGifMatcher';
 
 export const dynamic = 'force-dynamic';
 
@@ -54,8 +60,36 @@ export async function GET(request: Request) {
   }
 
   const slug = (url.searchParams.get('slug') || '').trim();
-  const category = (url.searchParams.get('category') || '').trim() || undefined;
+  const vocabId = (url.searchParams.get('vocabId') || '').trim();
+  const word = (url.searchParams.get('word') || '').trim();
+  const hasVocabLookup = Boolean(vocabId || word);
+  const categoryParam = (url.searchParams.get('category') || '').trim();
+  const category =
+    categoryParam && categoryParam.toLowerCase() !== 'vocabulary' ? categoryParam : undefined;
   const cleanQuery = sanitizeVisualQuery(rawQuery);
+
+  // Strict DB-first rule for vocabulary_cards.gif_url
+  if (hasVocabLookup) {
+    const dbVocabUrl = await getVocabularyGifUrlDb(vocabId || word, word);
+    if (dbVocabUrl) {
+      const renderableUrl = isRenderableGifImageUrl(dbVocabUrl) ? dbVocabUrl : null;
+      return NextResponse.json(
+        {
+          ok: true,
+          query: cleanQuery || word || '',
+          gifUrl: renderableUrl,
+          provider: renderableUrl ? 'postgres' : 'none',
+          cached: true,
+          fallback: renderableUrl ? 'gif' : 'motion_canvas',
+        },
+        {
+          headers: {
+            'Cache-Control': 'public, max-age=3600, s-maxage=3600',
+          },
+        }
+      );
+    }
+  }
 
   // Strict DB-first rule: if Postgres facts.gif_url is non-empty, return it directly
   // and NEVER hit an external GIF API again.
@@ -81,7 +115,16 @@ export async function GET(request: Request) {
     }
   }
 
-  if (!cleanQuery) {
+  const effectiveQuery = hasVocabLookup
+    ? !cleanQuery || (word && cleanQuery === word.toLowerCase())
+      ? buildVocabularyGifQuery({
+          word: word || vocabId,
+          gifQuery: cleanQuery || undefined,
+        })
+      : cleanQuery
+    : cleanQuery;
+
+  if (!effectiveQuery) {
     return NextResponse.json(
       {
         ok: true,
@@ -97,19 +140,30 @@ export async function GET(request: Request) {
     );
   }
 
-  const result = await searchTopicGif(cleanQuery, {
+  const expectedTerms = Array.from(
+    new Set([
+      ...effectiveQuery.split(' '),
+      ...(word ? [word.toLowerCase()] : []),
+    ])
+  ).filter(Boolean);
+
+  const result = await searchTopicGif(effectiveQuery, {
     category,
-    expectedTerms: cleanQuery.split(' '),
+    expectedTerms,
   });
-  if (result.gifUrl && slug) {
-    // Persist gif_url + gif_query onto Postgres facts so future requests never hit GIF APIs
-    await updateFactGifUrlDb(slug, result.gifUrl, cleanQuery);
+  if (result.gifUrl) {
+    if (hasVocabLookup) {
+      await updateVocabularyGifUrlDb(vocabId || word, result.gifUrl, effectiveQuery, word);
+    } else if (slug) {
+      // Persist gif_url + gif_query onto Postgres facts so future requests never hit GIF APIs
+      await updateFactGifUrlDb(slug, result.gifUrl, effectiveQuery);
+    }
   }
 
   return NextResponse.json(
     {
       ok: true,
-      query: cleanQuery,
+      query: effectiveQuery,
       gifUrl: result.gifUrl,
       provider: result.provider,
       cached: result.cached,

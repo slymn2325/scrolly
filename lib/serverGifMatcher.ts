@@ -1,8 +1,11 @@
 import { ensureSchema, getPool, hasDatabaseUrl } from '@/lib/db';
 import {
   getFactGifUrlDb,
+  getVocabularyGifUrlDb,
   updateFactGifQueryOnlyDb,
   updateFactGifUrlDb,
+  updateVocabularyGifQueryOnlyDb,
+  updateVocabularyGifUrlDb,
 } from '@/lib/dbActions';
 import {
   hasConfiguredGifProviderKeys,
@@ -381,6 +384,133 @@ export function buildSpecificGifQuery(input: GifMatchInput): string | null {
   return sanitizeVisualQuery(catFallback);
 }
 
+const VOCAB_VISUAL_QUERY_OVERRIDES: Record<string, string> = {
+  resilient: 'strong storm comeback',
+  substantiate: 'detective evidence proof',
+  ambiguous: 'foggy crossroads question',
+  ephemeral: 'sunset fading light',
+  ubiquitous: 'city crowd smartphone',
+  mitigate: 'calm ocean shelter',
+  lucid: 'crystal clear water',
+  scrutinize: 'magnifying glass inspect',
+  flourish: 'flower blooming timelapse',
+  pragmatic: 'gears working tool',
+  candor: 'honest open talk',
+  tenacious: 'mountain climber summit',
+  serendipity: 'sparkling lucky discovery',
+  catalyst: 'spark chemical reaction',
+  eloquent: 'public speaker stage',
+  paradox: 'illusion mirror puzzle',
+  altruistic: 'helping hand kindness',
+  meticulous: 'watchmaker precision gears',
+  perseverance: 'runner mountain finish',
+  coherent: 'puzzle pieces connecting',
+  versatile: 'swiss knife tool',
+  plausible: 'chess strategy think',
+  intricate: 'clockwork mechanism gears',
+  inevitable: 'dominoes falling chain',
+  empathy: 'warm hug comfort',
+  immerse: 'deep ocean diving',
+};
+
+const VOCAB_META_STOPWORDS = new Set([
+  'someone', 'something', 'person', 'people', 'thing', 'things', 'making',
+  'showing', 'having', 'doing', 'being', 'able', 'manner', 'quality', 'state',
+  'action', 'process', 'express', 'describes', 'related', 'meaning', 'word',
+]);
+
+/**
+ * Synthesizes a concise 2–4 word concrete English visual search query for vocabulary GIF lookup
+ * (never emits Turkish tokens).
+ */
+export function buildVocabularyGifQuery(card: {
+  word: string;
+  partOfSpeech?: string;
+  definitionEn?: string;
+  exampleEn?: string;
+  gifQuery?: string;
+}): string {
+  const explicit = sanitizeVisualQuery(card.gifQuery);
+  if (explicit && explicit.split(' ').length >= 2) {
+    return explicit.split(' ').slice(0, 4).join(' ');
+  }
+
+  const wordKey = String(card.word || '')
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z-]/g, '');
+  if (wordKey && VOCAB_VISUAL_QUERY_OVERRIDES[wordKey]) {
+    return VOCAB_VISUAL_QUERY_OVERRIDES[wordKey];
+  }
+
+  const contextTokens = [
+    ...extractVisualTokens(card.definitionEn),
+    ...extractVisualTokens(card.exampleEn),
+  ].filter((tok) => !VOCAB_META_STOPWORDS.has(tok) && tok !== wordKey);
+
+  const selected: string[] = [];
+  const seen = new Set<string>();
+  for (const tok of contextTokens) {
+    if (!seen.has(tok)) {
+      seen.add(tok);
+      selected.push(tok);
+      if (selected.length >= 3) break;
+    }
+  }
+
+  if (selected.length >= 2) {
+    const query = sanitizeVisualQuery(selected.join(' '));
+    if (query) return query;
+  }
+
+  const cleanWord = sanitizeVisualQuery(wordKey);
+  if (cleanWord && selected.length === 1) {
+    const combined = sanitizeVisualQuery(`${cleanWord} ${selected[0]}`);
+    if (combined) return combined;
+  }
+
+  if (cleanWord) {
+    const modifier =
+      card.partOfSpeech === 'fiil'
+        ? 'motion action'
+        : card.partOfSpeech === 'sıfat'
+          ? 'vivid light'
+          : 'concept spark';
+    const combined = sanitizeVisualQuery(`${cleanWord} ${modifier}`);
+    if (combined) return combined;
+  }
+
+  return 'light spark discovery';
+}
+
+export interface VocabGifMatchInput {
+  id?: string;
+  word: string;
+  partOfSpeech?: string;
+  definitionEn?: string;
+  exampleEn?: string;
+  gifQuery?: string | null;
+  gifUrl?: string | null;
+}
+
+/**
+ * Resolves a topic/concept GIF for a sanitized query inside the shared 90/hr quota guard.
+ */
+export async function resolveServerGifForQuery(
+  gifQuery: string,
+  options?: { category?: string; expectedTerms?: string[] }
+) {
+  const expectedTerms =
+    options?.expectedTerms && options.expectedTerms.length > 0
+      ? options.expectedTerms
+      : gifQuery.split(' ').filter(Boolean);
+
+  return searchTopicGif(gifQuery, {
+    ...(options?.category ? { category: options.category } : {}),
+    expectedTerms,
+  });
+}
+
 function resolveSlugFromInput(input: GifMatchInput): string {
   return String(input.slug || input.en?.slug || input.id || '').trim().slice(0, 160);
 }
@@ -484,8 +614,8 @@ export async function matchAndPersistFactGifServer(
     ])
   );
 
-  const searchResult = await searchTopicGif(gifQuery, {
-    category: input.category,
+  const searchResult = await resolveServerGifForQuery(gifQuery, {
+    category: input.category ? String(input.category) : undefined,
     expectedTerms,
   });
 
@@ -513,6 +643,125 @@ export async function matchAndPersistFactGifServer(
 
   return {
     slug,
+    gifUrl: searchResult.gifUrl,
+    gifQuery,
+    provider: searchResult.provider,
+    persisted,
+    cached: searchResult.cached,
+  };
+}
+
+/**
+ * Matches and permanently caches a GIPHY visual GIF for one `vocabulary_cards` row
+ * using the shared 90/hr Postgres quota ceiling.
+ */
+export async function matchAndPersistVocabularyGifServer(
+  input: VocabGifMatchInput
+): Promise<MatchFactGifResult> {
+  const cleanWord = String(input.word || '').trim().slice(0, 120);
+  const lookupKey = String(input.id || cleanWord).trim().slice(0, 160);
+  const existingInlineUrl = String(input.gifUrl || '').trim();
+  const gifQuery = buildVocabularyGifQuery({
+    word: cleanWord,
+    partOfSpeech: input.partOfSpeech,
+    definitionEn: input.definitionEn,
+    exampleEn: input.exampleEn,
+    gifQuery: input.gifQuery || undefined,
+  });
+
+  if (existingInlineUrl && isRenderableGifImageUrl(existingInlineUrl)) {
+    return {
+      slug: lookupKey,
+      gifUrl: existingInlineUrl,
+      gifQuery: String(input.gifQuery || '').trim() || gifQuery,
+      provider: 'postgres',
+      persisted: true,
+      cached: true,
+      skippedReason: 'already_cached',
+    };
+  }
+
+  if (lookupKey && hasDatabaseUrl()) {
+    const dbCachedUrl = await getVocabularyGifUrlDb(lookupKey, cleanWord);
+    if (dbCachedUrl) {
+      return {
+        slug: lookupKey,
+        gifUrl: dbCachedUrl,
+        gifQuery: String(input.gifQuery || '').trim() || gifQuery,
+        provider: 'postgres',
+        persisted: true,
+        cached: true,
+        skippedReason: 'already_cached',
+      };
+    }
+  }
+
+  if (!hasConfiguredGifProviderKeys()) {
+    return {
+      slug: lookupKey,
+      gifUrl: null,
+      gifQuery,
+      provider: 'none',
+      persisted: false,
+      skippedReason: 'no_api_key',
+    };
+  }
+
+  if (!gifQuery) {
+    return {
+      slug: lookupKey,
+      gifUrl: null,
+      gifQuery: '',
+      provider: 'none',
+      persisted: false,
+      skippedReason: 'invalid_query',
+    };
+  }
+
+  const quotaNow = await getHourlyGifQuotaStatusServer();
+  if (quotaNow.exhausted) {
+    return {
+      slug: lookupKey,
+      gifUrl: null,
+      gifQuery,
+      provider: 'none',
+      persisted: false,
+      skippedReason: 'quota_exceeded',
+    };
+  }
+
+  const expectedTerms = Array.from(
+    new Set([
+      ...gifQuery.split(' '),
+      ...extractVisualTokens(`${cleanWord} ${input.definitionEn || ''}`).slice(0, 4),
+    ])
+  );
+
+  const searchResult = await resolveServerGifForQuery(gifQuery, { expectedTerms });
+  if (!searchResult.gifUrl) {
+    if (lookupKey && hasDatabaseUrl() && !searchResult.quotaExhausted && !searchResult.rateLimited) {
+      await updateVocabularyGifQueryOnlyDb(lookupKey, gifQuery, cleanWord);
+    }
+    return {
+      slug: lookupKey,
+      gifUrl: null,
+      gifQuery,
+      provider: 'none',
+      persisted: false,
+      cached: searchResult.cached,
+      rateLimited: searchResult.rateLimited,
+      skippedReason: searchResult.quotaExhausted ? 'quota_exceeded' : 'no_clean_match',
+    };
+  }
+
+  let persisted = false;
+  if (lookupKey && hasDatabaseUrl()) {
+    await updateVocabularyGifUrlDb(lookupKey, searchResult.gifUrl, gifQuery, cleanWord);
+    persisted = true;
+  }
+
+  return {
+    slug: lookupKey,
     gifUrl: searchResult.gifUrl,
     gifQuery,
     provider: searchResult.provider,
@@ -602,10 +851,48 @@ async function queryMissingGifRowsFromPostgres(limit: number): Promise<GifMatchI
   }
 }
 
+async function queryMissingVocabRowsFromPostgres(limit: number): Promise<VocabGifMatchInput[]> {
+  if (!hasDatabaseUrl() || limit <= 0) return [];
+  try {
+    await ensureSchema();
+    const pool = getPool();
+    const res = await pool.query<{
+      id: string;
+      word: string;
+      part_of_speech: string | null;
+      definition_en: string | null;
+      example_en: string | null;
+      gif_query: string | null;
+      gif_url: string | null;
+    }>(
+      `SELECT id, word, part_of_speech, definition_en, example_en, gif_query, gif_url
+       FROM vocabulary_cards
+       WHERE gif_url IS NULL OR TRIM(gif_url) = ''
+       ORDER BY CASE WHEN gif_query IS NULL OR TRIM(gif_query) = '' THEN 0 ELSE 1 END ASC,
+                created_at DESC,
+                word ASC
+       LIMIT $1`,
+      [limit]
+    );
+    return res.rows.map((row) => ({
+      id: row.id,
+      word: row.word,
+      partOfSpeech: row.part_of_speech || undefined,
+      definitionEn: row.definition_en || undefined,
+      exampleEn: row.example_en || undefined,
+      gifQuery: row.gif_query,
+      gifUrl: row.gif_url,
+    }));
+  } catch (err) {
+    console.warn('[serverGifMatcher] Postgres missing vocabulary GIF query skipped:', err);
+    return [];
+  }
+}
+
 /**
- * Postgres-locked GIF queue worker that selects up to remaining hourly quota missing-GIF cards
- * (prioritizing rows with empty `gif_query` first, then newest `created_at`) and populates
- * permanent HTTPS image URLs strictly under the 90 req/hr limit.
+ * Postgres-locked GIF queue worker that selects up to remaining hourly quota missing-GIF
+ * `facts` AND `vocabulary_cards` (prioritizing empty `gif_query` first, then newest `created_at`)
+ * and populates permanent HTTPS image URLs strictly under the 90 req/hr limit.
  */
 export async function backfillMissingFactGifsServer(
   options?: BackfillGifOptions
@@ -688,10 +975,12 @@ export async function backfillMissingFactGifsServer(
       let matched = 0;
       let persisted = 0;
       let rateLimited = false;
+      let hitQuotaCeiling = false;
 
       for (const candidate of missingCandidates) {
         const statusNow = await getHourlyGifQuotaStatusServer();
         if (statusNow.remaining <= minRemaining || statusNow.exhausted) {
+          hitQuotaCeiling = true;
           break;
         }
 
@@ -704,8 +993,44 @@ export async function backfillMissingFactGifsServer(
           rateLimited = true;
           break;
         } else if (result.skippedReason === 'quota_exceeded') {
+          hitQuotaCeiling = true;
           break;
         }
+      }
+
+      if (!options?.entries && !rateLimited && !hitQuotaCeiling && hasDatabaseUrl()) {
+        const statusBeforeVocab = await getHourlyGifQuotaStatusServer();
+        const remainingSlots = Math.min(
+          maxPerRun - attempted,
+          Math.max(0, statusBeforeVocab.remaining - minRemaining)
+        );
+        if (remainingSlots > 0 && !statusBeforeVocab.exhausted) {
+          const vocabRows = await queryMissingVocabRowsFromPostgres(remainingSlots);
+          for (const vocab of vocabRows) {
+            const statusNow = await getHourlyGifQuotaStatusServer();
+            if (statusNow.remaining <= minRemaining || statusNow.exhausted) {
+              break;
+            }
+            attempted += 1;
+            const vocabResult = await matchAndPersistVocabularyGifServer(vocab);
+            if (vocabResult.gifUrl) {
+              matched += 1;
+              if (vocabResult.persisted) persisted += 1;
+            } else if (vocabResult.rateLimited) {
+              rateLimited = true;
+              break;
+            } else if (vocabResult.skippedReason === 'quota_exceeded') {
+              break;
+            }
+          }
+        }
+      }
+
+      if (attempted > 0 || rateLimited) {
+        const endQuota = await getHourlyGifQuotaStatusServer();
+        console.info(
+          `[serverGifMatcher] GIF backfill done: attempted=${attempted} matched=${matched} persisted=${persisted} quotaUsed=${endQuota.used}/${endQuota.limit}${rateLimited ? ' (rateLimited)' : ''}`
+        );
       }
 
       return {
