@@ -1,0 +1,164 @@
+{
+  "schemaVersion": "1.0.0",
+  "project": "Scrolly",
+  "mcpServer": "icons8mcp",
+  "styles": {
+    "illustrationStyle": {
+      "prettyId": "3d-fluency",
+      "title": "3D Fluency",
+      "format": "png",
+      "dimensions": {
+        "width": 456,
+        "height": 456
+      },
+      "storage": "local",
+      "directory": "/assets/icons8/illustrations"
+    },
+    "uiIconPlatform": {
+      "apiCode": "fluent",
+      "title": "Windows 11 Color",
+      "format": "png",
+      "size": 64,
+      "storage": "local",
+      "directory": "/assets/icons8/icons",
+      "note": "Cohesive glossy color icon pack used for semantic spot labels and status cues alongside Lucide action strokes."
+    },
+    "legacyNavigationAndBadges": {
+      "style": "Icons8 3D Fluency",
+      "storage": "local",
+      "directory": "/assets/icons8/icons"
+    }
+  },
+  "attribution": {
+    "required": true,
+    "provider": "Icons8",
+    "url": "https://icons8.com",
+    "placement": "components/SiteTrustFooter.tsx"
+  },
+  "assets": {
+    "illustrations": [
+      {
+        "key": "notFound",
+        "icons8Id": "65cbd7639bc56c0001a59585",
+        "prettyId": "3d-fluency-binoculars-with-blue-eyepiece-caps",
+        "style": "3d-fluency",
+        "localPath": "/assets/icons8/illustrations/not-found-binoculars.png",
+        "width": 456,
+        "height": 456,
+        "usedIn": ["components/NotFoundView.tsx"]
+      },
+      {
+        "key": "errorWarning",
+        "icons8Id": "673ceb2cdecfeb00011271e4",
+        "prettyId": "3d-fluency-warning-shield",
+        "style": "3d-fluency",
+        "localPath": "/assets/icons8/illustrations/error-warning.png",
+        "width": 456,
+        "height": 456,
+        "usedIn": ["components/ErrorFallbackView.tsx", "app/global-error.tsx"]
+      },
+      {
+        "key": "welcomeTelescope",
+        "icons8Id": "651c1835d5a3890001158200",
+        "prettyId": "3d-fluency-telescope",
+        "style": "3d-fluency",
+        "localPath": "/assets/icons8/illustrations/welcome-telescope.png",
+        "width": 456,
+        "height": 456,
+        "usedIn": ["components/WelcomeExploreModal.tsx"]
+      },
+      {
+        "key": "emptyBookmark",
+        "icons8Id": "621c5a944aa9460001fc744b",
+        "prettyId": "red-bookmark-in-notepad",
+        "style": "3d-fluency",
+        "localPath": "/assets/icons8/illustrations/empty-bookmark.png",
+        "width": 456,
+        "height": 456,
+        "usedIn": ["components/DiplomaProfileModal.tsx"]
+      }
+    ],
+    "icons": [
+      {
+        "key": "bookmark",
+        "icons8Id": "iBJpnJfF62fn",
+        "name": "Bookmark",
+        "platform": "fluent",
+        "isFree": true,
+        "size": 64,
+        "localPath": "/assets/icons8/icons/ui-bookmark.png",
+        "usedIn": ["components/DiplomaProfileModal.tsx"]
+      },
+      {
+        "key": "target",
+        "icons8Id": "Yt084riMRP1m",
+        "name": "Goal",
+        "platform": "fluent",
+        "isFree": false,
+        "size": 64,
+        "localPath": "/assets/icons8/icons/ui-target.png",
+        "usedIn": ["components/FactDetailPage.tsx"]
+      },
+      {
+        "key": "microscope",
+        "icons8Id": "AjHChwtr6ww5",
+        "name": "Microscope",
+        "platform": "fluent",
+        "isFree": false,
+        "size": 64,
+        "localPath": "/assets/icons8/icons/ui-microscope.png",
+        "usedIn": ["components/FactDetailPage.tsx"]
+      },
+      {
+        "key": "openBook",
+        "icons8Id": "39FLspc26r4c",
+        "name": "Open Book",
+        "platform": "fluent",
+        "isFree": false,
+        "size": 64,
+        "localPath": "/assets/icons8/icons/ui-open-book.png",
+        "usedIn": ["components/FactDetailPage.tsx"]
+      },
+      {
+        "key": "lock",
+        "icons8Id": "znpDNZWhQe6p",
+        "name": "Lock",
+        "platform": "fluent",
+        "isFree": false,
+        "size": 64,
+        "localPath": "/assets/icons8/icons/ui-lock.png",
+        "usedIn": ["utils/icons8Assets.ts"]
+      },
+      {
+        "key": "lightning",
+        "icons8Id": "GtgqQIYSqT50",
+        "name": "Lightning Bolt",
+        "platform": "fluent",
+        "isFree": false,
+        "size": 64,
+        "localPath": "/assets/icons8/icons/ui-lightning.png",
+        "usedIn": ["components/SingleFactView.tsx"]
+      },
+      {
+        "key": "tap",
+        "icons8Id": "D32NQwyzsZaK",
+        "name": "Tap",
+        "platform": "fluent",
+        "isFree": false,
+        "size": 64,
+        "localPath": "/assets/icons8/icons/ui-tap.png",
+        "usedIn": ["components/TikTokFactSlide.tsx", "components/VocabularySlide.tsx"]
+      },
+      {
+        "key": "slowSpeed",
+        "icons8Id": "NqHVIKFpZF9c",
+        "name": "Speed",
+        "platform": "fluent",
+        "isFree": false,
+        "size": 64,
+        "localPath": "/assets/icons8/icons/ui-slow-speed.png",
+        "usedIn": ["components/VocabularySlide.tsx"]
+      }
+    ]
+  }
+}

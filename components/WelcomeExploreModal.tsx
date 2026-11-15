@@ -2,8 +2,9 @@
 
 import React, { useEffect, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { Dices, Sparkles, UserCheck } from 'lucide-react';
+import { Dices, UserCheck } from 'lucide-react';
 import { type Language } from '@/i18n/translations';
+import { STATE_ILLUSTRATION_PATHS, UI_ICON_PATHS } from '@/utils/icons8Assets';
 import { isGenericDefaultNickname } from '@/utils/userMemory';
 
 export const WELCOME_DISMISS_KEY = 'scrolly_welcome_dismissed_v1';
@@ -113,10 +114,36 @@ export default function WelcomeExploreModal({
               aria-hidden="true"
               className="pointer-events-none absolute -right-10 -top-10 h-40 w-40 rounded-full bg-violet-500/30 blur-3xl"
             />
-            <div className="flex items-center justify-between">
-              <p className="font-display text-3xl font-black tracking-tight">Scrolly</p>
-              <span className="inline-flex items-center gap-1 rounded-full border border-violet-400/30 bg-violet-500/15 px-2.5 py-1 text-[10px] font-black uppercase tracking-wider text-violet-200">
-                <Sparkles className="h-3 w-3" />
+            <div className="mb-3 flex items-center justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl border border-violet-400/25 bg-gradient-to-br from-violet-500/20 via-indigo-500/15 to-sky-400/15 p-1.5 shadow-lg shadow-violet-950/50">
+                  <img
+                    src={STATE_ILLUSTRATION_PATHS.welcomeTelescope}
+                    alt=""
+                    aria-hidden="true"
+                    width={44}
+                    height={44}
+                    decoding="async"
+                    className="h-11 w-11 object-contain drop-shadow"
+                  />
+                </div>
+                <div>
+                  <p className="font-display text-3xl font-black tracking-tight leading-none">Scrolly</p>
+                  <p className="mt-1 text-[11px] font-semibold tracking-wide text-violet-200/75">
+                    {lang === 'tr' ? 'Kaydır · Öğren · Merak Et' : 'Scroll · Learn · Wonder'}
+                  </p>
+                </div>
+              </div>
+              <span className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-violet-400/30 bg-violet-500/15 px-2.5 py-1 text-[10px] font-black uppercase tracking-wider text-violet-200">
+                <img
+                  src={UI_ICON_PATHS.xpSparkles}
+                  alt=""
+                  aria-hidden="true"
+                  width={12}
+                  height={12}
+                  decoding="async"
+                  className="h-3 w-3 object-contain"
+                />
                 <span>{lang === 'tr' ? 'Kâşif Modu' : 'Explorer Pass'}</span>
               </span>
             </div>

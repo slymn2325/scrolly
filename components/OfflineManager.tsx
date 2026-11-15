@@ -124,7 +124,9 @@ export default function OfflineManager({ lang }: OfflineManagerProps) {
                 src={STATE_ILLUSTRATION_PATHS.offlineState}
                 alt=""
                 aria-hidden="true"
-                loading="lazy"
+                width={16}
+                height={16}
+                decoding="async"
                 className="h-4 w-4 shrink-0 object-contain"
               />
               <span>{t.offlineReadyBanner}</span>
@@ -133,9 +135,9 @@ export default function OfflineManager({ lang }: OfflineManagerProps) {
                 onClick={() => setDismissed(true)}
                 aria-label={lang === 'tr' ? 'Kapat' : 'Dismiss'}
                 data-testid="offline-banner-close-btn"
-                className="ml-0.5 flex h-5 w-5 items-center justify-center rounded-full bg-white/10 text-emerald-100 transition hover:bg-white/20"
+                className="ml-0.5 flex h-7 w-7 items-center justify-center rounded-full bg-white/10 text-emerald-100 transition hover:bg-white/20"
               >
-                <X className="h-3 w-3" />
+                <X className="h-3.5 w-3.5" aria-hidden="true" />
               </button>
             </div>
           </motion.div>

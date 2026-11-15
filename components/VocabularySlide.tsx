@@ -8,6 +8,7 @@ import PoweredByGiphyBadge from '@/components/PoweredByGiphyBadge';
 import { FEED_EXPERIENCE_COPY, type Language } from '@/i18n/translations';
 import type { VocabPartOfSpeech, VocabularyCard } from '@/types/vocabulary';
 import { vibrateTap } from '@/utils/haptics';
+import { UI_ICON_PATHS } from '@/utils/icons8Assets';
 import {
   isVocabWordSaved,
   loadSavedVocabNotebook,
@@ -449,9 +450,17 @@ export default function VocabularySlide({
                 onDoubleClick={(e) => e.stopPropagation()}
                 onPointerDown={(e) => e.stopPropagation()}
                 data-testid="vocab-listen-slow-btn"
-                className="inline-flex h-8 items-center gap-1 rounded-full border border-white/20 bg-white/10 px-2.5 text-[11px] font-extrabold text-white transition hover:bg-white/15 active:scale-95"
+                className="inline-flex h-8 items-center gap-1.5 rounded-full border border-white/20 bg-white/10 px-2.5 text-[11px] font-extrabold text-white transition hover:bg-white/15 active:scale-95"
               >
-                <span aria-hidden="true">🐢</span>
+                <img
+                  src={UI_ICON_PATHS.slowSpeed}
+                  alt=""
+                  aria-hidden="true"
+                  width={14}
+                  height={14}
+                  decoding="async"
+                  className="h-3.5 w-3.5 shrink-0 object-contain"
+                />
                 <span>{lang === 'tr' ? 'Yavaş (0.75x)' : 'Slow (0.75x)'}</span>
               </button>
             </div>
@@ -474,10 +483,21 @@ export default function VocabularySlide({
               onPointerDown={(e) => e.stopPropagation()}
               className="flex w-full items-center justify-between gap-2 rounded-xl border border-white/15 bg-white/10 px-3 py-2 text-left text-xs font-bold text-white/90 backdrop-blur-md transition hover:bg-white/15 active:scale-[0.99]"
             >
-              <span>
-                {lang === 'tr'
-                  ? '👆 Örnek cümle ve anlam tahmini için dokun ▾'
-                  : '👆 Tap for example sentence & meaning quiz ▾'}
+              <span className="inline-flex items-center gap-1.5">
+                <img
+                  src={UI_ICON_PATHS.tap}
+                  alt=""
+                  aria-hidden="true"
+                  width={14}
+                  height={14}
+                  decoding="async"
+                  className="h-3.5 w-3.5 shrink-0 object-contain"
+                />
+                <span>
+                  {lang === 'tr'
+                    ? 'Örnek cümle ve anlam tahmini için dokun ▾'
+                    : 'Tap for example sentence & meaning quiz ▾'}
+                </span>
               </span>
               <ChevronDown className="h-4 w-4 shrink-0 text-indigo-300" />
             </button>

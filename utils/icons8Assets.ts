@@ -41,6 +41,14 @@ export const UI_ICON_PATHS = {
   themeMoon: '/assets/icons8/icons/theme-moon.png',
   verifiedSeal: '/assets/icons8/icons/verified-seal.png',
   badgeStar: '/assets/icons8/icons/badge-star.png',
+  bookmark: '/assets/icons8/icons/ui-bookmark.png',
+  target: '/assets/icons8/icons/ui-target.png',
+  microscope: '/assets/icons8/icons/ui-microscope.png',
+  openBook: '/assets/icons8/icons/ui-open-book.png',
+  lock: '/assets/icons8/icons/ui-lock.png',
+  lightning: '/assets/icons8/icons/ui-lightning.png',
+  tap: '/assets/icons8/icons/ui-tap.png',
+  slowSpeed: '/assets/icons8/icons/ui-slow-speed.png',
 } as const;
 
 export const LEAGUE_SHIELD_MAP: Record<LeagueTierId, string> = {
@@ -55,6 +63,10 @@ export const STATE_ILLUSTRATION_PATHS = {
   quizCelebration: '/assets/icons8/illustrations/quiz-celebration.png',
   duelArena: '/assets/icons8/illustrations/duel-arena.png',
   offlineState: '/assets/icons8/illustrations/offline-state.png',
+  notFound: '/assets/icons8/illustrations/not-found-binoculars.png',
+  errorWarning: '/assets/icons8/illustrations/error-warning.png',
+  welcomeTelescope: '/assets/icons8/illustrations/welcome-telescope.png',
+  emptyBookmark: '/assets/icons8/illustrations/empty-bookmark.png',
 } as const;
 
 /**

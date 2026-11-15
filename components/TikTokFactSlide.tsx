@@ -22,6 +22,7 @@ import { cryptoRandomInt } from '@/utils/cryptoRandom';
 import { maskFactAnswerSpoiler } from '@/utils/factsData';
 import { vibrateTap } from '@/utils/haptics';
 import { isFactLiked, toggleLikedFact } from '@/utils/likedFacts';
+import { UI_ICON_PATHS } from '@/utils/icons8Assets';
 import { markFactSeenInStorage } from '@/utils/seenFacts';
 import { resolveFallbackVisualQuery } from '@/utils/topicMotif';
 
@@ -684,7 +685,15 @@ export default function TikTokFactSlide({
               <div className="flex flex-wrap items-center gap-2">
                 <div className="inline-flex w-fit items-center gap-1.5 rounded-full border border-white/15 bg-white/10 px-2.5 py-0.5 text-[10px] font-extrabold uppercase tracking-wide text-white">
                   <span className="flex h-3.5 w-3.5 shrink-0 items-center justify-center rounded-full bg-white/95 p-0.5">
-                    <img src={catMeta.iconPath} alt="" aria-hidden="true" className="h-2.5 w-2.5 object-contain" />
+                    <img
+                      src={catMeta.iconPath}
+                      alt=""
+                      aria-hidden="true"
+                      width={10}
+                      height={10}
+                      decoding="async"
+                      className="h-2.5 w-2.5 object-contain"
+                    />
                   </span>
                   <span>{catMeta.label[lang]}</span>
                 </div>
@@ -735,10 +744,21 @@ export default function TikTokFactSlide({
                 {localized.title}
               </h2>
               {!isDetailsOpen && (
-                <span className="mt-1.5 inline-flex items-center gap-1 text-[11px] font-bold text-white/75 transition group-hover:text-white">
-                  {lang === 'tr'
-                    ? '👆 Hikaye ve tahmin için başlığa dokun ▾'
-                    : '👆 Tap headline for story & quiz ▾'}
+                <span className="mt-1.5 inline-flex items-center gap-1.5 text-[11px] font-bold text-white/75 transition group-hover:text-white">
+                  <img
+                    src={UI_ICON_PATHS.tap}
+                    alt=""
+                    aria-hidden="true"
+                    width={14}
+                    height={14}
+                    decoding="async"
+                    className="h-3.5 w-3.5 shrink-0 object-contain"
+                  />
+                  <span>
+                    {lang === 'tr'
+                      ? 'Hikaye ve tahmin için başlığa dokun ▾'
+                      : 'Tap headline for story & quiz ▾'}
+                  </span>
                 </span>
               )}
             </button>

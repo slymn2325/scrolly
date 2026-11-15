@@ -8,6 +8,7 @@ import {
   ArrowUpRight,
   Check,
   Crown,
+  Medal,
   Radio,
   RefreshCw,
   Swords,
@@ -421,6 +422,15 @@ export default function LeaderboardModal({
                   data-testid="leaderboard-empty-state"
                   className="rounded-2xl border border-dashed border-slate-200 bg-white/80 p-6 text-center dark:border-white/15 dark:bg-white/5"
                 >
+                  <img
+                    src={DOCK_ICON_MAP.leaderboard}
+                    alt=""
+                    aria-hidden="true"
+                    width={44}
+                    height={44}
+                    decoding="async"
+                    className="mx-auto mb-2.5 h-11 w-11 object-contain"
+                  />
                   <p className="font-display text-sm font-bold text-ink dark:text-white">
                     {lang === 'tr'
                       ? 'Bu kategoride henüz skor yok!'
@@ -483,11 +493,20 @@ export default function LeaderboardModal({
                           <div className="flex min-w-0 items-center gap-2.5">
                             <span className="w-6 text-center font-black text-ink/60 dark:text-violet-300">
                               {row.rank === 1 ? (
-                                <Crown className="mx-auto h-4 w-4 text-amber-500" />
+                                <>
+                                  <Crown className="mx-auto h-4 w-4 text-amber-500" aria-hidden="true" />
+                                  <span className="sr-only">#1</span>
+                                </>
                               ) : row.rank === 2 ? (
-                                '🥈'
+                                <>
+                                  <Medal className="mx-auto h-4 w-4 text-slate-400 dark:text-slate-300" aria-hidden="true" />
+                                  <span className="sr-only">#2</span>
+                                </>
                               ) : row.rank === 3 ? (
-                                '🥉'
+                                <>
+                                  <Medal className="mx-auto h-4 w-4 text-amber-700 dark:text-amber-500" aria-hidden="true" />
+                                  <span className="sr-only">#3</span>
+                                </>
                               ) : (
                                 `#${row.rank}`
                               )}

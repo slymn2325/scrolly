@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { WifiOff } from 'lucide-react';
 import { type Language } from '@/i18n/translations';
-import { DOCK_ICON_MAP, type DockTabId } from '@/utils/icons8Assets';
+import { DOCK_ICON_MAP, UI_ICON_PATHS, type DockTabId } from '@/utils/icons8Assets';
 
 interface DesktopLeftNavProps {
   activeTab: DockTabId;
@@ -107,6 +107,9 @@ export default function DesktopLeftNav({
                   src={DOCK_ICON_MAP[item.icon]}
                   alt=""
                   aria-hidden="true"
+                  width={24}
+                  height={24}
+                  decoding="async"
                   className="h-6 w-6 object-contain"
                 />
                 {item.id === 'quiz' && showQuizDot && (
@@ -154,8 +157,18 @@ export default function DesktopLeftNav({
           >
             {lang === 'tr' ? 'Oturum' : 'Session'}
           </p>
-          <p className="mt-1 text-sm font-extrabold">
-            {streakDays}🔥 · {xp} XP
+          <p className="mt-1 flex items-center gap-1.5 text-sm font-extrabold">
+            <span>{streakDays}</span>
+            <img
+              src={UI_ICON_PATHS.streakFire}
+              alt=""
+              aria-hidden="true"
+              width={16}
+              height={16}
+              decoding="async"
+              className="h-4 w-4 shrink-0 object-contain"
+            />
+            <span>· {xp} XP</span>
           </p>
         </div>
         <p

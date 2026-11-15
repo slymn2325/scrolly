@@ -6,6 +6,13 @@
   --bg-cream: #FFFDF9;
   --text-ink: #1E1B2E;
   --sketch-pill-bg: rgba(255, 255, 255, 0.88);
+  --scrolly-surface-reel: #0A0A0E;
+  --scrolly-surface-light: #FFFDF9;
+  --scrolly-surface-dark-card: #17122B;
+  --scrolly-accent-primary: #7C3AED;
+  --scrolly-accent-gold: #F59E0B;
+  --scrolly-radius-card: 1.5rem;
+  --scrolly-focus-ring: #7C3AED;
 }
 
 html,
@@ -102,9 +109,25 @@ html.dark [data-fact-surface='true'] p {
 
 /* Accessible keyboard focus indicator (WCAG 2.4.7) */
 :focus-visible {
-  outline: 2px solid #7C3AED;
+  outline: 2px solid var(--scrolly-focus-ring, #7C3AED);
   outline-offset: 2px;
   border-radius: 6px;
+}
+
+/* Respect reduced motion preferences for accessibility */
+@media (prefers-reduced-motion: reduce) {
+  html:focus-within {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
 
 /* iOS Home Screen PWA (standalone): keep charging/clock status-bar strip sharp black, zero scroll-edge blur */

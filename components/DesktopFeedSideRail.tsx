@@ -104,7 +104,7 @@ export default function DesktopFeedSideRail({
     if (activeFact && localized) {
       return {
         kind: 'fact' as const,
-        badge: `${catMeta?.emoji || activeFact.emoji || '✨'} ${catMeta?.label[lang] || activeFact.category}`,
+        badge: `${catMeta?.label[lang] || activeFact.category}`,
         badgeColor: activeFact.accentColor || '#7C3AED',
         xpLabel: '+15 XP',
       };
@@ -120,7 +120,7 @@ export default function DesktopFeedSideRail({
         .slice(0, 2);
       return {
         kind: 'other' as const,
-        badge: lang === 'tr' ? '🇬🇧 Kelime Laboratuvarı' : '🇬🇧 Word Lab',
+        badge: lang === 'tr' ? 'Kelime Laboratuvarı' : 'Word Lab',
         badgeColor: '#6366F1',
         subLabel: [cefr, localizedPos, card.phonetic].filter(Boolean).join(' · '),
         definitionEn: card.definitionEn,
@@ -136,7 +136,7 @@ export default function DesktopFeedSideRail({
     if (activeSlide?.type === 'quizCta') {
       return {
         kind: 'other' as const,
-        badge: lang === 'tr' ? '⚡ Hızlı Quiz' : '⚡ Quick Quiz',
+        badge: lang === 'tr' ? 'Hızlı Quiz' : 'Quick Quiz',
         badgeColor: '#F59E0B',
         subLabel: lang === 'tr' ? '5 Soruluk Hafıza Tekrarı' : '5-Question Memory Recall',
         note:
@@ -149,7 +149,7 @@ export default function DesktopFeedSideRail({
     if (activeSlide?.type === 'ad') {
       return {
         kind: 'other' as const,
-        badge: lang === 'tr' ? '✨ Bilgi Molası' : '✨ Quick Break',
+        badge: lang === 'tr' ? 'Bilgi Molası' : 'Quick Break',
         badgeColor: '#0EA5E9',
         subLabel: lang === 'tr' ? 'Akış & Düello' : 'Feed & Scrolla',
         note:
@@ -353,8 +353,8 @@ export default function DesktopFeedSideRail({
                     <Lock className={`mt-0.5 h-4 w-4 shrink-0 ${darkMode ? 'text-violet-300' : 'text-violet-600'}`} />
                     <p className="text-xs font-semibold leading-relaxed">
                       {lang === 'tr'
-                        ? '🔒 Tahminini kilitle — derin analiz ve bilimsel arka plan burada açılacak'
-                        : '🔒 Lock your guess — deep analysis & scientific context will unlock here'}
+                        ? 'Tahminini kilitle — derin analiz ve bilimsel arka plan burada açılacak'
+                        : 'Lock your guess — deep analysis & scientific context will unlock here'}
                     </p>
                   </div>
                   <div className="mt-2.5 flex items-center justify-between gap-2">

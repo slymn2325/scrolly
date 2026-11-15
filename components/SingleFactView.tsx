@@ -818,16 +818,34 @@ export default function SingleFactView({
                   <Flame className="h-3.5 w-3.5" />
                   <span>{lang === 'tr' ? 'Keşif Özeti' : 'Discovery Snapshot'}</span>
                 </span>
-                <p className="mt-2 font-display text-base font-bold text-ink dark:text-white">
-                  {catMeta.emoji} {catMeta.label[lang]}
+                <p className="mt-2 flex items-center gap-2 font-display text-base font-bold text-ink dark:text-white">
+                  <img
+                    src={catMeta.iconPath}
+                    alt=""
+                    aria-hidden="true"
+                    width={18}
+                    height={18}
+                    decoding="async"
+                    className="h-[18px] w-[18px] shrink-0 object-contain"
+                  />
+                  <span>{catMeta.label[lang]}</span>
                 </p>
                 <p className="mt-1 text-xs font-semibold text-ink/70 dark:text-violet-200/75">
                   {detailHighlights.topicTag}
                 </p>
               </div>
               <div className="mt-3 flex flex-wrap items-center gap-1.5 border-t border-slate-100 pt-2.5 text-[11px] font-extrabold text-ink/75 dark:border-white/10 dark:text-violet-200">
-                <span className="rounded-full bg-teal-50 px-2 py-0.5 text-teal-800 dark:bg-teal-900/50 dark:text-teal-200">
-                  ⚡ {fact.readingTimeSec ?? 20}s
+                <span className="inline-flex items-center gap-1 rounded-full bg-teal-50 px-2 py-0.5 text-teal-800 dark:bg-teal-900/50 dark:text-teal-200">
+                  <img
+                    src={UI_ICON_PATHS.lightning}
+                    alt=""
+                    aria-hidden="true"
+                    width={12}
+                    height={12}
+                    decoding="async"
+                    className="h-3 w-3 shrink-0 object-contain"
+                  />
+                  <span>{fact.readingTimeSec ?? 20}s</span>
                 </span>
                 <span className="rounded-full bg-violet-50 px-2 py-0.5 text-violet-800 dark:bg-violet-900/50 dark:text-violet-200">
                   {detailArticle.wordCount} {lang === 'tr' ? 'kelime' : 'words'}
@@ -898,6 +916,9 @@ export default function SingleFactView({
                     src={UI_ICON_PATHS.verifiedSeal}
                     alt=""
                     aria-hidden="true"
+                    width={24}
+                    height={24}
+                    decoding="async"
                     className="h-6 w-6 object-contain"
                   />
                 </div>
@@ -943,8 +964,17 @@ export default function SingleFactView({
 
         {/* Gamified Primary CTAs: Scrolla Challenge + Open in Feed */}
         <div className="mt-6 rounded-3xl border-2 border-violet-200 bg-gradient-to-r from-violet-50 via-fuchsia-50 to-amber-50 p-5 text-center shadow-sm dark:border-violet-600/40 dark:from-violet-950/60 dark:via-fuchsia-950/40 dark:to-amber-950/30 sm:p-6">
-          <p className="text-xs font-black uppercase tracking-wider text-violet-700 dark:text-violet-300">
-            {lang === 'tr' ? '⚡ Scrolla Arena & Etkileşimli Akış' : '⚡ Scrolla Arena & Interactive Feed'}
+          <p className="inline-flex items-center justify-center gap-1.5 text-xs font-black uppercase tracking-wider text-violet-700 dark:text-violet-300">
+            <img
+              src={UI_ICON_PATHS.lightning}
+              alt=""
+              aria-hidden="true"
+              width={14}
+              height={14}
+              decoding="async"
+              className="h-3.5 w-3.5 shrink-0 object-contain"
+            />
+            <span>{lang === 'tr' ? 'Scrolla Arena & Etkileşimli Akış' : 'Scrolla Arena & Interactive Feed'}</span>
           </p>
           <p className="mt-1 text-sm font-medium text-ink/80 dark:text-violet-100/85">
             {lang === 'tr'
@@ -1287,9 +1317,11 @@ export default function SingleFactView({
                             src={relSubIcon}
                             alt=""
                             aria-hidden="true"
+                            width={24}
+                            height={24}
+                            decoding="async"
                             className="h-6 w-6 object-contain"
                           />
-                          <span className="text-xl">{rel.emoji ?? '✨'}</span>
                         </div>
                         <span className={`text-[11px] font-extrabold ${relMeta.accentText}`}>
                           {relMeta.label[lang]}

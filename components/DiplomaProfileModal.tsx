@@ -37,7 +37,7 @@ import {
   type FactCard,
   getFactPrimarySlug,
 } from '@/utils/factsData';
-import { DOCK_ICON_MAP, UI_ICON_PATHS } from '@/utils/icons8Assets';
+import { DOCK_ICON_MAP, STATE_ILLUSTRATION_PATHS, UI_ICON_PATHS } from '@/utils/icons8Assets';
 import { loadLikedFactIds, removeLikedFact } from '@/utils/likedFacts';
 import {
   loadSavedFactIds,
@@ -97,12 +97,26 @@ function FactArchiveSection({
       </h3>
       <div data-testid={testId}>
         {facts.length === 0 ? (
-          <p className="rounded-2xl border border-dashed border-slate-300 p-3 text-xs font-medium text-ink/60 dark:border-white/20 dark:text-violet-200/60">
-            {emptyText}
-          </p>
+          <div className="flex items-center gap-3 rounded-2xl border border-dashed border-slate-300 bg-white/50 p-3 dark:border-white/20 dark:bg-white/[0.02]">
+            <img
+              src={STATE_ILLUSTRATION_PATHS.emptyBookmark}
+              alt=""
+              aria-hidden="true"
+              width={40}
+              height={40}
+              loading="lazy"
+              decoding="async"
+              className="h-10 w-10 shrink-0 object-contain opacity-90"
+            />
+            <p className="text-xs font-medium text-ink/65 dark:text-violet-200/70">
+              {emptyText}
+            </p>
+          </div>
         ) : (
           <div className="space-y-2">
-            {facts.map((fact) => (
+            {facts.map((fact) => {
+              const catMeta = getCategoryMeta(fact.category);
+              return (
               <div
                 key={fact.id}
                 className="flex items-start justify-between gap-2 rounded-2xl border border-slate-100 bg-white p-3 text-xs font-bold text-ink shadow-sm dark:border-white/10 dark:bg-white/5 dark:text-white"
@@ -110,9 +124,18 @@ function FactArchiveSection({
                 <Link
                   href={buildFactHref(getFactPrimarySlug(fact), lang)}
                   onClick={onButtonPop}
-                  className="min-w-0 flex-1 line-clamp-2 transition hover:text-violet-700 dark:hover:text-violet-200"
+                  className="flex min-w-0 flex-1 items-start gap-2 transition hover:text-violet-700 dark:hover:text-violet-200"
                 >
-                  {fact.emoji} {fact[lang].title}
+                  <img
+                    src={catMeta.iconPath}
+                    alt=""
+                    aria-hidden="true"
+                    width={16}
+                    height={16}
+                    decoding="async"
+                    className="mt-0.5 h-4 w-4 shrink-0 object-contain"
+                  />
+                  <span className="line-clamp-2">{fact[lang].title}</span>
                 </Link>
                 <div className="flex shrink-0 items-center gap-1">
                   <ExternalLink className="h-3.5 w-3.5 text-ink/45 dark:text-violet-300" aria-hidden />
@@ -132,7 +155,8 @@ function FactArchiveSection({
                   </button>
                 </div>
               </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>
@@ -634,11 +658,25 @@ export default function DiplomaProfileModal({
                 </h3>
                 <div data-testid="diploma-vocab-notebook">
                   {savedVocab.length === 0 ? (
-                    <p className="rounded-2xl border border-dashed border-slate-300 p-3 text-xs font-medium text-ink/60 dark:border-white/20 dark:text-violet-200/60">
-                      {lang === 'tr'
-                        ? 'Henüz kelime kaydetmedin. Kelime kartlarında sağdaki Kaydet (🔖) butonuna dokun.'
-                        : 'No saved words yet. Tap Save (🔖) on Vocabulary cards.'}
-                    </p>
+                    <div className="flex items-center gap-3 rounded-2xl border border-dashed border-slate-300 bg-white/50 p-3 dark:border-white/20 dark:bg-white/[0.02]">
+                      <img
+                        src={STATE_ILLUSTRATION_PATHS.emptyBookmark}
+                        alt=""
+                        aria-hidden="true"
+                        width={40}
+                        height={40}
+                        loading="lazy"
+                        decoding="async"
+                        className="h-10 w-10 shrink-0 object-contain opacity-90"
+                      />
+                      <p className="flex items-center gap-1.5 text-xs font-medium text-ink/65 dark:text-violet-200/70">
+                        <span>
+                          {lang === 'tr'
+                            ? 'Henüz kelime kaydetmedin. Kelime kartlarında sağdaki Kaydet butonuna dokun.'
+                            : 'No saved words yet. Tap Save on Vocabulary cards.'}
+                        </span>
+                      </p>
+                    </div>
                   ) : (
                     <div className="space-y-2">
                       {savedVocab.map((entry) => (

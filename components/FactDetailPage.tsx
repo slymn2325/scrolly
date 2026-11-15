@@ -258,11 +258,20 @@ export default function FactDetailPage({
               }`}
             >
               <p
-                className={`text-[10px] font-black uppercase tracking-wider ${
+                className={`flex items-center gap-1.5 text-[10px] font-black uppercase tracking-wider ${
                   darkMode ? 'text-violet-300' : 'text-violet-700'
                 }`}
               >
-                {lang === 'tr' ? '🎯 Hızlı Özet' : '🎯 Core Takeaway'}
+                <img
+                  src={UI_ICON_PATHS.target}
+                  alt=""
+                  aria-hidden="true"
+                  width={14}
+                  height={14}
+                  decoding="async"
+                  className="h-3.5 w-3.5 shrink-0 object-contain"
+                />
+                <span>{lang === 'tr' ? 'Hızlı Özet' : 'Core Takeaway'}</span>
               </p>
               <p
                 className={`mt-1 text-xs font-semibold leading-relaxed ${
@@ -280,11 +289,20 @@ export default function FactDetailPage({
               }`}
             >
               <p
-                className={`text-[10px] font-black uppercase tracking-wider ${
+                className={`flex items-center gap-1.5 text-[10px] font-black uppercase tracking-wider ${
                   darkMode ? 'text-sky-300' : 'text-sky-700'
                 }`}
               >
-                {lang === 'tr' ? '🔬 Bilimsel Odak' : '🔬 Focus Question'}
+                <img
+                  src={UI_ICON_PATHS.microscope}
+                  alt=""
+                  aria-hidden="true"
+                  width={14}
+                  height={14}
+                  decoding="async"
+                  className="h-3.5 w-3.5 shrink-0 object-contain"
+                />
+                <span>{lang === 'tr' ? 'Bilimsel Odak' : 'Focus Question'}</span>
               </p>
               <p
                 className={`mt-1 text-xs font-semibold leading-relaxed ${
@@ -305,11 +323,20 @@ export default function FactDetailPage({
             }`}
           >
             <p
-              className={`mb-2 text-[10px] font-black uppercase tracking-wider ${
+              className={`mb-2 flex items-center gap-1.5 text-[10px] font-black uppercase tracking-wider ${
                 darkMode ? 'text-white/55' : 'text-[#1E1B2E]/55'
               }`}
             >
-              {lang === 'tr' ? '📖 Derinlemesine Bilim Analizi' : '📖 Deep-Dive Science'}
+              <img
+                src={UI_ICON_PATHS.openBook}
+                alt=""
+                aria-hidden="true"
+                width={14}
+                height={14}
+                decoding="async"
+                className="h-3.5 w-3.5 shrink-0 object-contain"
+              />
+              <span>{lang === 'tr' ? 'Derinlemesine Bilim Analizi' : 'Deep-Dive Science'}</span>
             </p>
             <p
               data-testid="fact-detail-article"

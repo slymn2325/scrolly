@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { STATE_ILLUSTRATION_PATHS } from '@/utils/icons8Assets';
 import './globals.css';
 
 interface GlobalErrorProps {
@@ -47,8 +48,15 @@ export default function GlobalError({ error, reset, retry }: GlobalErrorProps) {
           }}
           className="w-full max-w-md rounded-3xl border border-white/15 bg-white/5 p-6 text-center shadow-2xl backdrop-blur-xl"
         >
-          <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-violet-500/20 text-2xl">
-            ⚡
+          <div className="mx-auto mb-4 flex h-20 w-20 items-center justify-center rounded-3xl border border-amber-400/25 bg-amber-500/15 p-2.5 shadow-inner">
+            <img
+              src={STATE_ILLUSTRATION_PATHS.errorWarning}
+              alt="Bağlantı uyarısı"
+              width={64}
+              height={64}
+              decoding="async"
+              className="h-16 w-16 object-contain drop-shadow"
+            />
           </div>
           <h1 className="text-xl font-black tracking-tight">
             Bir Bağlantı Aksaklığı Yaşandı
@@ -62,7 +70,7 @@ export default function GlobalError({ error, reset, retry }: GlobalErrorProps) {
             <button
               type="button"
               onClick={handleRecover}
-              className="rounded-full bg-violet-600 px-5 py-2.5 text-sm font-extrabold text-white shadow-lg hover:bg-violet-500"
+              className="min-h-[44px] rounded-full bg-violet-600 px-5 py-2.5 text-sm font-extrabold text-white shadow-lg transition hover:bg-violet-500"
             >
               Tekrar Dene
             </button>
@@ -71,7 +79,7 @@ export default function GlobalError({ error, reset, retry }: GlobalErrorProps) {
               onClick={() => {
                 if (typeof window !== 'undefined') window.location.href = '/';
               }}
-              className="rounded-full border border-white/20 bg-white/10 px-5 py-2.5 text-sm font-bold text-white hover:bg-white/15"
+              className="min-h-[44px] rounded-full border border-white/20 bg-white/10 px-5 py-2.5 text-sm font-bold text-white transition hover:bg-white/15"
             >
               Ana Sayfa
             </button>

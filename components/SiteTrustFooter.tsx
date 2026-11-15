@@ -7,6 +7,7 @@ import {
   CATEGORY_ROUTE_SLUGS,
   categoryRouteSlugToId,
 } from '@/utils/factsData';
+import { UI_ICON_PATHS } from '@/utils/icons8Assets';
 
 interface SiteTrustFooterProps {
   lang?: Language;
@@ -42,8 +43,17 @@ export default function SiteTrustFooter({
       <div className="mx-auto max-w-4xl space-y-5">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div className="max-w-lg space-y-1.5">
-            <div className="inline-flex items-center gap-1.5 font-display text-sm font-bold text-ink dark:text-white">
-              <ShieldCheck className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+            <div className="inline-flex items-center gap-2 font-display text-sm font-bold text-ink dark:text-white">
+              <img
+                src={UI_ICON_PATHS.verifiedSeal}
+                alt=""
+                aria-hidden="true"
+                width={18}
+                height={18}
+                decoding="async"
+                className="h-[18px] w-[18px] object-contain"
+              />
+              <ShieldCheck className="h-4 w-4 text-emerald-600 dark:text-emerald-400" aria-hidden="true" />
               <span>Scrolly • scrolly.live</span>
             </div>
             <p className="leading-relaxed text-ink/70 dark:text-violet-200/75">
@@ -90,9 +100,17 @@ export default function SiteTrustFooter({
               <Link
                 key={slug}
                 href={buildCategoryHref(slug, isEn ? 'en' : 'tr')}
-                className="inline-flex items-center gap-1 rounded-full border border-slate-200/80 bg-[#FFFDF9] px-2.5 py-1 font-bold text-ink/80 transition hover:border-violet-300 hover:text-violet-700 dark:border-white/15 dark:bg-white/5 dark:text-violet-100"
+                className="inline-flex min-h-[36px] items-center gap-1.5 rounded-full border border-slate-200/80 bg-[#FFFDF9] px-3 py-1.5 font-bold text-ink/80 transition hover:border-violet-300 hover:text-violet-700 dark:border-white/15 dark:bg-white/5 dark:text-violet-100"
               >
-                <span>{meta.emoji}</span>
+                <img
+                  src={meta.iconPath}
+                  alt=""
+                  aria-hidden="true"
+                  width={14}
+                  height={14}
+                  decoding="async"
+                  className="h-3.5 w-3.5 shrink-0 object-contain"
+                />
                 <span>{meta.label[lang]}</span>
               </Link>
             );
@@ -104,15 +122,28 @@ export default function SiteTrustFooter({
             © 2026 Scrolly (scrolly.live) —{' '}
             {isEn ? 'All rights reserved.' : 'Tüm hakları saklıdır.'}
           </span>
-          <span>
-            {isEn ? 'Editorial Contact:' : 'Editöryal İletişim:'}{' '}
-            <a
-              href="mailto:contact@scrolly.live"
-              className="font-bold text-violet-700 hover:underline dark:text-violet-300"
-            >
-              contact@scrolly.live
-            </a>
-          </span>
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
+            <span>
+              {isEn ? 'Icons & 3D art by' : 'İkonlar ve 3D çizimler:'}{' '}
+              <a
+                href="https://icons8.com"
+                target="_blank"
+                rel="noopener noreferrer nofollow"
+                className="font-bold text-ink/75 underline decoration-ink/25 underline-offset-2 hover:text-violet-700 dark:text-violet-200/80 dark:hover:text-violet-300"
+              >
+                Icons8
+              </a>
+            </span>
+            <span>
+              {isEn ? 'Editorial Contact:' : 'Editöryal İletişim:'}{' '}
+              <a
+                href="mailto:contact@scrolly.live"
+                className="font-bold text-violet-700 hover:underline dark:text-violet-300"
+              >
+                contact@scrolly.live
+              </a>
+            </span>
+          </div>
         </div>
       </div>
     </footer>
