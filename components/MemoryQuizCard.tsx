@@ -569,6 +569,16 @@ export default function MemoryQuizCard({
     highlights?.keyInsight ||
     localized.factText;
   const resolvedSource = localized.sourceName || currentEntry.sourceName || localized.sourceHint;
+  const resolvedVocabPos = currentEntry.vocabMeta
+    ? resolveVocabPosLabel(currentEntry.vocabMeta.partOfSpeech as VocabPartOfSpeech, lang)
+    : '';
+  const hideVocabTargetBeforeAnswer = Boolean(
+    currentEntry.vocabMeta &&
+      !hasAnswered &&
+      !localized.quiz.question
+        .toLowerCase()
+        .includes(currentEntry.vocabMeta.word.toLowerCase())
+  );
 
   return (
     <motion.div
@@ -577,7 +587,7 @@ export default function MemoryQuizCard({
       exit={{ opacity: 0, scale: 0.94, y: -12 }}
       transition={{ type: 'spring', stiffness: 280, damping: 24 }}
       data-testid="memory-quiz-card"
-      className="mx-auto mb-[92px] flex max-h-[84dvh] w-full max-w-[430px] md:max-w-2xl flex-col justify-between overflow-y-auto no-scrollbar rounded-3xl border-2 border-violet-200 bg-white/95 p-5 shadow-2xl backdrop-blur-xl dark:border-violet-700/60 dark:bg-[#1A162B]/95 sm:p-6"
+      className="mx-auto my-auto flex max-h-[calc(100dvh-110px)] lg:max-h-[calc(88dvh-48px)] w-full max-w-[430px] md:max-w-2xl flex-col overflow-y-auto no-scrollbar rounded-3xl border-2 border-violet-200 bg-white/95 p-3.5 pb-6 shadow-2xl backdrop-blur-xl dark:border-violet-700/60 dark:bg-[#1A162B]/95 sm:p-5 sm:pb-6"
     >
       {/* Incoming 1v1 Scrolla Duel Banner */}
       {isDuelMode && (
@@ -664,7 +674,7 @@ export default function MemoryQuizCard({
       </div>
 
       {/* Timer Bar */}
-      <div className="mt-3 h-2 w-full overflow-hidden rounded-full bg-slate-100 dark:bg-white/10">
+      <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-slate-100 dark:bg-white/10">
         <motion.div
           animate={{ width: `${timerPct}%` }}
           transition={{ duration: 0.4, ease: 'linear' }}
@@ -675,7 +685,7 @@ export default function MemoryQuizCard({
       </div>
 
       {/* Progress Dots + Score + Category Row */}
-      <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
+      <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
         <div className="flex items-center gap-2">
           <span className="inline-flex items-center gap-1 rounded-full bg-violet-50 px-2.5 py-0.5 text-xs font-black text-violet-700 dark:bg-violet-900/50 dark:text-violet-200">
             <img src={UI_ICON_PATHS.xpSparkles} alt="" aria-hidden="true" className="h-3.5 w-3.5 object-contain" />
@@ -699,42 +709,54 @@ export default function MemoryQuizCard({
       </div>
 
       {/* Topic Anchor Card + Question */}
-      <div className="my-4 rounded-2xl border border-slate-100 bg-slate-50/75 p-3.5 dark:border-white/10 dark:bg-white/5">
+      <div className="my-2.5 rounded-2xl border border-slate-100 bg-slate-50/75 p-3 dark:border-white/10 dark:bg-white/5">
         <div className="flex flex-wrap items-center justify-between gap-1.5">
           <p className="text-[11px] font-black uppercase tracking-wider text-violet-700 dark:text-violet-300">
             {currentEntry.emoji || catMeta.emoji} {localized.tag || catMeta.label[lang]}
           </p>
           {currentEntry.vocabMeta ? (
-            <button
-              type="button"
-              onClick={() => {
-                onButtonPop();
-                speakVocabularyText(currentEntry.vocabMeta!.word, 'en-US');
-              }}
-              className="inline-flex items-center gap-1 rounded-full border border-indigo-200 bg-indigo-50 px-2.5 py-0.5 text-[10px] font-extrabold text-indigo-700 hover:bg-indigo-100 dark:border-indigo-500/40 dark:bg-indigo-950/60 dark:text-indigo-200"
-            >
-              <Volume2 className="h-3 w-3" />
-              <span>{lang === 'tr' ? 'Telaffuzu Dinle' : 'Listen'}</span>
-            </button>
+            !hideVocabTargetBeforeAnswer ? (
+              <button
+                type="button"
+                data-testid="quiz-vocab-listen-btn"
+                onClick={() => {
+                  onButtonPop();
+                  speakVocabularyText(currentEntry.vocabMeta!.word, 'en-US');
+                }}
+                className="inline-flex items-center gap-1 rounded-full border border-indigo-200 bg-indigo-50 px-2.5 py-0.5 text-[10px] font-extrabold text-indigo-700 hover:bg-indigo-100 dark:border-indigo-500/40 dark:bg-indigo-950/60 dark:text-indigo-200"
+              >
+                <Volume2 className="h-3 w-3" />
+                <span>{lang === 'tr' ? 'Telaffuzu Dinle' : 'Listen'}</span>
+              </button>
+            ) : null
           ) : (
             <span className="text-[10px] font-bold text-ink/55 dark:text-violet-200/60">
               {lang === 'tr' ? 'Konu Kartı' : 'Topic Card'}
             </span>
           )}
         </div>
-        <p className="mt-1 text-xs font-bold text-ink/75 dark:text-violet-100/80">
-          {localized.title}
-        </p>
+        {hideVocabTargetBeforeAnswer ? (
+          <p
+            data-testid="quiz-mystery-word-badge"
+            className="mt-1 text-xs font-black uppercase tracking-wider text-indigo-700 dark:text-indigo-300"
+          >
+            ❓ {lang === 'tr' ? 'GİZLİ KELİME' : 'MYSTERY WORD'} • {resolvedVocabPos.toUpperCase()}
+          </p>
+        ) : (
+          <p data-testid="quiz-anchor-title" className="mt-1 text-xs font-bold text-ink/75 dark:text-violet-100/80">
+            {localized.title}
+          </p>
+        )}
         <h2
           data-testid="quiz-question-text"
-          className="mt-2 font-display text-lg font-bold leading-snug text-ink dark:text-white sm:text-xl"
+          className="mt-1.5 font-display text-base font-bold leading-snug text-ink dark:text-white sm:text-lg"
         >
           {localized.quiz.question}
         </h2>
       </div>
 
       {/* Options */}
-      <div className="flex flex-col gap-2.5">
+      <div className="flex flex-col gap-2">
         {prepared.options.map((optText, idx) => {
           const isThisSelected = selectedOption === idx;
           const isThisCorrect = idx === prepared.correctIndex;
@@ -763,7 +785,7 @@ export default function MemoryQuizCard({
               disabled={hasAnswered || rewardWatching}
               onClick={() => handleSelectOption(idx)}
               data-testid={`quiz-option-${idx}`}
-              className={`w-full h-auto min-h-[48px] py-2.5 px-3.5 rounded-2xl border-2 text-left text-xs sm:text-sm font-semibold transition-all flex items-center justify-between gap-3 whitespace-normal break-words leading-snug ${btnStyle}`}
+              className={`w-full h-auto min-h-[44px] py-2 px-3 rounded-2xl border-2 text-left text-xs sm:text-sm font-semibold transition-all flex items-center justify-between gap-2.5 whitespace-normal break-words leading-snug ${btnStyle}`}
             >
               <div className="flex items-center gap-2.5">
                 <span
@@ -808,9 +830,9 @@ export default function MemoryQuizCard({
       <AnimatePresence>
         {hasAnswered && (
           <motion.div
-            initial={{ opacity: 0, y: 8 }}
+            initial={{ opacity: 0, y: 6 }}
             animate={{ opacity: 1, y: 0 }}
-            className={`mt-3 rounded-2xl p-3.5 text-xs leading-relaxed ${
+            className={`mt-2.5 rounded-2xl p-3 text-xs leading-snug ${
               isCorrect
                 ? 'border border-emerald-200 bg-emerald-50/95 text-emerald-950 dark:border-emerald-700/60 dark:bg-emerald-950/50 dark:text-emerald-100'
                 : 'border border-rose-200 bg-rose-50/95 text-rose-950 dark:border-rose-700/60 dark:bg-rose-950/50 dark:text-rose-100'
@@ -834,10 +856,10 @@ export default function MemoryQuizCard({
               </span>
             </div>
 
-            <p className="mt-1.5 opacity-95">{topicExplanation}</p>
+            <p className="mt-1 opacity-95">{topicExplanation}</p>
 
             {resolvedSource && (
-              <p className="mt-2 inline-flex items-center gap-1 text-[10px] font-bold opacity-75">
+              <p className="mt-1.5 inline-flex items-center gap-1 text-[10px] font-bold opacity-75">
                 <BookOpen className="h-3 w-3 shrink-0" />
                 <span>{resolvedSource}</span>
               </p>
@@ -846,8 +868,24 @@ export default function MemoryQuizCard({
         )}
       </AnimatePresence>
 
-      {/* Footer Actions */}
-      <div className="mt-4 flex items-center justify-between border-t border-slate-100 pt-3.5 dark:border-white/10">
+      {/* Primary Unclipped Next Question CTA directly beneath explanation box */}
+      {hasAnswered && (
+        <motion.button
+          type="button"
+          initial={{ opacity: 0, y: 6 }}
+          animate={{ opacity: 1, y: 0 }}
+          whileTap={{ scale: 0.97 }}
+          onClick={handleContinue}
+          data-testid="quiz-next-btn"
+          className="mt-3 flex w-full shrink-0 items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-violet-600 to-fuchsia-600 px-4 py-3 text-sm font-semibold text-white shadow-pill transition hover:brightness-110"
+        >
+          <span>{isLastQuestion || timedOut ? t.quizFinish : t.quizNextQ}</span>
+          <ArrowRight className="h-4 w-4" />
+        </motion.button>
+      )}
+
+      {/* Footer Back-to-Feed Action */}
+      <div className="mt-2.5 flex shrink-0 items-center justify-center border-t border-slate-100 pt-2.5 dark:border-white/10">
         <motion.button
           type="button"
           whileTap={{ scale: 0.94 }}
@@ -856,21 +894,6 @@ export default function MemoryQuizCard({
         >
           {t.quizSkip}
         </motion.button>
-
-        {hasAnswered && (
-          <motion.button
-            type="button"
-            initial={{ opacity: 0, scale: 0.92 }}
-            animate={{ opacity: 1, scale: 1 }}
-            whileTap={{ scale: 0.94 }}
-            onClick={handleContinue}
-            data-testid="quiz-next-btn"
-            className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-violet-600 to-fuchsia-600 px-5 py-2.5 text-xs font-extrabold text-white shadow-pill hover:brightness-110"
-          >
-            <span>{isLastQuestion || timedOut ? t.quizFinish : t.quizNextQ}</span>
-            <ArrowRight className="h-4 w-4" />
-          </motion.button>
-        )}
       </div>
     </motion.div>
   );

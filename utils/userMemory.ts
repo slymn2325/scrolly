@@ -576,6 +576,25 @@ export function recordCardRead(
   return nextState;
 }
 
+export function markFactIdSeen(
+  state: UserMemoryState,
+  factId: string
+): UserMemoryState {
+  if (state.seenIds.includes(factId)) {
+    return state;
+  }
+  const seenIds = [...state.seenIds, factId];
+  const recentFiveIds = [...state.recentFiveIds.filter((id) => id !== factId), factId].slice(-5);
+  const nextState: UserMemoryState = {
+    ...state,
+    seenIds,
+    recentFiveIds,
+    isReturningUser: true,
+  };
+  saveUserMemory(nextState);
+  return nextState;
+}
+
 export function boostCategoryWeight(
   state: UserMemoryState,
   category: WeightCategoryId,

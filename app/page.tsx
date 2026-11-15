@@ -20,7 +20,7 @@ export default async function HomePage() {
     getAllFactsServer(),
     fetchVocabularyWithSourceServer(),
   ]);
-  const initialFacts = interleaveFactsByCategory(allFacts).slice(0, 14);
+  const initialFacts = interleaveFactsByCategory(allFacts).slice(0, 36);
 
   return (
     <>

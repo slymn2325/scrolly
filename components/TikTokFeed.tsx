@@ -1,6 +1,6 @@
 'use client';
 
-import React, { forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react';
+import React, { forwardRef, useCallback, useEffect, useImperativeHandle, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { ChevronDown } from 'lucide-react';
 import NativeAdSlide from '@/components/NativeAdSlide';
@@ -19,8 +19,10 @@ import type { FactCard } from '@/types/fact';
 import type { VocabularyCard } from '@/types/vocabulary';
 import { getVocabularyFacts } from '@/data/vocabularyFacts';
 import { UI_ICON_PATHS } from '@/utils/icons8Assets';
+import { markFactSeenInStorage } from '@/utils/seenFacts';
 
 const PRELOADED_GIF_CACHE = new Set<string>();
+const useIsomorphicLayoutEffect = typeof window !== 'undefined' ? useLayoutEffect : useEffect;
 
 export type FeedSlideItem =
   | { type: 'fact'; key: string; fact: FactCard; factIndex: number }
@@ -48,6 +50,7 @@ interface TikTokFeedProps {
   cookieBannerVisible?: boolean;
   isExploreVisible?: boolean;
   suppressUrlSync?: boolean;
+  initialSlideIndex?: number;
   onSelectCategory: (cat: CategoryFilter) => void;
   onChangeLang: (lang: Language) => void;
   onToggleDarkMode: () => void;
@@ -55,6 +58,7 @@ interface TikTokFeedProps {
   onFlipCard: (fact: FactCard) => void;
   onDoubleTapLike: (fact: FactCard) => void;
   onDwellRead: (fact: FactCard) => void;
+  onMarkFactSeen?: (fact: FactCard) => void;
   onOpenDuelFromCard: (fact: FactCard) => void;
   onOpenStoryShare: (fact: FactCard) => void;
   onGuessReward: (xp: number, accurate: boolean, category?: CategoryId, accuracyPct?: number) => void;
@@ -85,6 +89,7 @@ const TikTokFeed = forwardRef<TikTokFeedHandle, TikTokFeedProps>(function TikTok
     cookieBannerVisible = false,
     isExploreVisible = true,
     suppressUrlSync = false,
+    initialSlideIndex = 0,
     onSelectCategory,
     onChangeLang,
     onToggleDarkMode,
@@ -92,6 +97,7 @@ const TikTokFeed = forwardRef<TikTokFeedHandle, TikTokFeedProps>(function TikTok
     onFlipCard,
     onDoubleTapLike,
     onDwellRead,
+    onMarkFactSeen,
     onOpenDuelFromCard,
     onOpenStoryShare,
     onGuessReward,
@@ -112,7 +118,10 @@ const TikTokFeed = forwardRef<TikTokFeedHandle, TikTokFeedProps>(function TikTok
 ) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const settleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const activeIndexRef = useRef<number>(0);
+  const safeInitialIndex = Math.max(0, initialSlideIndex);
+  const activeIndexRef = useRef<number>(safeInitialIndex);
+  const hasRestoredInitialScrollRef = useRef<boolean>(false);
+  const prevTrackedSlideIdxRef = useRef<number | null>(null);
   const lastProgrammaticStepRef = useRef<{ index: number; at: number } | null>(null);
   const prevCategoryRef = useRef<CategoryFilter>(activeCategory);
   const wheelCooldownRef = useRef<number>(0);
@@ -122,11 +131,13 @@ const TikTokFeed = forwardRef<TikTokFeedHandle, TikTokFeedProps>(function TikTok
   onActiveFactChangeRef.current = onActiveFactChange;
   const onActiveSlideChangeRef = useRef(onActiveSlideChange);
   onActiveSlideChangeRef.current = onActiveSlideChange;
+  const onMarkFactSeenRef = useRef(onMarkFactSeen);
+  onMarkFactSeenRef.current = onMarkFactSeen;
   const isExploreVisibleRef = useRef(isExploreVisible);
   isExploreVisibleRef.current = isExploreVisible;
   const suppressUrlSyncRef = useRef(suppressUrlSync);
   suppressUrlSyncRef.current = suppressUrlSync;
-  const [activeIndex, setActiveIndex] = useState<number>(0);
+  const [activeIndex, setActiveIndex] = useState<number>(safeInitialIndex);
   const [isCategoryDrawerOpen, setIsCategoryDrawerOpen] = useState<boolean>(false);
   const [chromeBlocked, setChromeBlocked] = useState<boolean>(false);
   const t = translations[lang];
@@ -200,12 +211,47 @@ const TikTokFeed = forwardRef<TikTokFeedHandle, TikTokFeedProps>(function TikTok
     return items;
   }, [deckFacts, activeCategory, vocabPool]);
 
+  // Synchronously restore exact scrollTop when returning to Explore tab before first paint
+  useIsomorphicLayoutEffect(() => {
+    if (hasRestoredInitialScrollRef.current) return;
+    const container = scrollRef.current;
+    if (!container || slides.length === 0) return;
+    hasRestoredInitialScrollRef.current = true;
+    const clamped = Math.max(0, Math.min(safeInitialIndex, slides.length - 1));
+    if (clamped > 0) {
+      activeIndexRef.current = clamped;
+      prevTrackedSlideIdxRef.current = clamped;
+      setActiveIndex(clamped);
+      const targetNode = container.querySelector<HTMLElement>(`[data-slide-index="${clamped}"]`);
+      const slideHeight = container.clientHeight || window.innerHeight;
+      const targetTop = targetNode ? targetNode.offsetTop : clamped * slideHeight;
+      const prevBehavior = container.style.scrollBehavior;
+      container.style.scrollBehavior = 'auto';
+      container.scrollTop = targetTop;
+      container.style.scrollBehavior = prevBehavior;
+    }
+  }, [safeInitialIndex, slides.length]);
+
+  // Immediately record any swiped-past fact card in scrolly_seen_slugs_v1 without waiting for dwell or Guess Lock
+  useEffect(() => {
+    const prevIdx = prevTrackedSlideIdxRef.current;
+    prevTrackedSlideIdxRef.current = activeIndex;
+    if (prevIdx !== null && prevIdx !== activeIndex) {
+      const prevSlide = slides[prevIdx];
+      if (prevSlide?.type === 'fact') {
+        markFactSeenInStorage(prevSlide.fact);
+        onMarkFactSeenRef.current?.(prevSlide.fact);
+      }
+    }
+  }, [activeIndex, slides]);
+
   useEffect(() => {
     const categoryChanged = prevCategoryRef.current !== activeCategory;
     prevCategoryRef.current = activeCategory;
 
     if (categoryChanged) {
       activeIndexRef.current = 0;
+      prevTrackedSlideIdxRef.current = 0;
       lastProgrammaticStepRef.current = null;
       setActiveIndex(0);
       const container = scrollRef.current;
@@ -493,18 +539,13 @@ const TikTokFeed = forwardRef<TikTokFeedHandle, TikTokFeedProps>(function TikTok
         darkMode ? 'bg-[#0A0A0E] text-white' : 'bg-[#F7F5FB] text-[#1E1B2E]'
       }`}
     >
-      {/* Top HUD — sleek single horizontal row: Left Category Picker | Right Controls */}
+      {/* Top HUD — sharp unblurred single horizontal row sitting above cards cleanly (z-[60]) */}
       <header
         data-chrome-blocked={chromeBlocked ? 'true' : 'false'}
-        className={`pointer-events-none absolute inset-x-0 top-0 z-30 flex items-center justify-between gap-2 px-4 pt-[max(env(safe-area-inset-top,14px),14px)] pb-2 ${
+        className={`pointer-events-none absolute inset-x-0 top-0 z-[60] flex items-center justify-between gap-2 px-4 pt-[max(env(safe-area-inset-top,14px),14px)] pb-2 ${
           chromeBlocked ? 'opacity-40' : ''
         }`}
       >
-        <div
-          aria-hidden="true"
-          className="pointer-events-none absolute inset-x-0 top-0 h-20 bg-gradient-to-b from-black/60 via-black/30 to-transparent"
-        />
-
         <div
           className={`relative z-10 min-w-0 flex-1 ${
             chromeBlocked ? 'pointer-events-none' : 'pointer-events-auto'
@@ -519,12 +560,12 @@ const TikTokFeed = forwardRef<TikTokFeedHandle, TikTokFeedProps>(function TikTok
             }}
             aria-expanded={isCategoryDrawerOpen}
             data-testid="choose-category-btn"
-            className={`inline-flex h-9 max-w-full items-center gap-1.5 rounded-full border px-2.5 sm:px-3 text-xs font-extrabold backdrop-blur-md transition ${
+            className={`inline-flex h-9 max-w-full items-center gap-1.5 rounded-full border px-2.5 sm:px-3 text-xs font-extrabold transition ${
               isCategoryDrawerOpen
                 ? 'border-violet-400 bg-violet-600 text-white'
                 : darkMode
-                  ? 'border-white/15 bg-black/50 text-white hover:bg-black/65'
-                  : 'border-[#1E1B2E]/15 bg-white/90 text-[#1E1B2E] shadow-sm hover:bg-white'
+                  ? 'border-white/20 bg-[#12121A]/90 text-white hover:bg-[#1C1C28]'
+                  : 'border-[#1E1B2E]/15 bg-white/95 text-[#1E1B2E] shadow-sm hover:bg-white'
             }`}
           >
             <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-white/95 p-0.5">
@@ -555,10 +596,10 @@ const TikTokFeed = forwardRef<TikTokFeedHandle, TikTokFeedProps>(function TikTok
             onClick={onToggleDarkMode}
             aria-label={darkMode ? t.lightModeOn : t.darkModeOn}
             data-testid="theme-toggle-btn"
-            className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full border backdrop-blur-md transition ${
+            className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full border transition ${
               darkMode
-                ? 'border-white/15 bg-black/50 text-amber-200 hover:bg-black/65'
-                : 'border-[#1E1B2E]/15 bg-white/90 text-amber-700 shadow-sm hover:bg-white'
+                ? 'border-white/20 bg-[#12121A]/90 text-amber-200 hover:bg-[#1C1C28]'
+                : 'border-[#1E1B2E]/15 bg-white/95 text-amber-700 shadow-sm hover:bg-white'
             }`}
           >
             <img
@@ -575,10 +616,10 @@ const TikTokFeed = forwardRef<TikTokFeedHandle, TikTokFeedProps>(function TikTok
             onClick={onToggleSound}
             aria-label={soundEnabled ? t.soundOn : t.soundOff}
             data-testid="sound-toggle-btn"
-            className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full border backdrop-blur-md transition ${
+            className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full border transition ${
               darkMode
-                ? 'border-white/15 bg-black/50 text-violet-200 hover:bg-black/65'
-                : 'border-[#1E1B2E]/15 bg-white/90 text-violet-700 shadow-sm hover:bg-white'
+                ? 'border-white/20 bg-[#12121A]/90 text-violet-200 hover:bg-[#1C1C28]'
+                : 'border-[#1E1B2E]/15 bg-white/95 text-violet-700 shadow-sm hover:bg-white'
             }`}
           >
             <img
@@ -592,10 +633,10 @@ const TikTokFeed = forwardRef<TikTokFeedHandle, TikTokFeedProps>(function TikTok
           <div
             role="group"
             aria-label="Language switch"
-            className={`flex h-9 shrink-0 items-center gap-0.5 rounded-full border p-0.5 text-[10px] font-black backdrop-blur-md transition ${
+            className={`flex h-9 shrink-0 items-center gap-0.5 rounded-full border p-0.5 text-[10px] font-black transition ${
               darkMode
-                ? 'border-white/15 bg-black/50 text-white'
-                : 'border-[#1E1B2E]/15 bg-white/90 text-[#1E1B2E] shadow-sm'
+                ? 'border-white/20 bg-[#12121A]/90 text-white'
+                : 'border-[#1E1B2E]/15 bg-white/95 text-[#1E1B2E] shadow-sm'
             }`}
           >
             <img
@@ -650,7 +691,7 @@ const TikTokFeed = forwardRef<TikTokFeedHandle, TikTokFeedProps>(function TikTok
             exit={{ opacity: 0, y: -8, scale: 0.98 }}
             transition={{ duration: 0.18, ease: 'easeOut' }}
             data-testid="category-drawer"
-            className={`pointer-events-auto absolute inset-x-4 top-[calc(env(safe-area-inset-top,14px)+54px)] z-40 max-h-[50dvh] overflow-y-auto rounded-2xl border border-white/20 bg-[#111115] p-2.5 text-white shadow-2xl ${
+            className={`pointer-events-auto absolute inset-x-4 top-[calc(env(safe-area-inset-top,14px)+54px)] z-[65] max-h-[50dvh] overflow-y-auto rounded-2xl border border-white/20 bg-[#111115] p-2.5 text-white shadow-2xl ${
               chromeBlocked ? 'opacity-40 pointer-events-none' : ''
             }`}
           >

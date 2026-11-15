@@ -264,7 +264,7 @@ export async function fetchPaginatedFactsFromApi(options?: {
 }): Promise<PaginatedFactsResult | null> {
   if (typeof window === 'undefined') return null;
   const offset = Math.max(0, options?.offset ?? 0);
-  const limit = Math.max(1, Math.min(200, options?.limit ?? 25));
+  const limit = Math.max(1, Math.min(500, options?.limit ?? 25));
   const category = options?.category;
 
   const params = new URLSearchParams({

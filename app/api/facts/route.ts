@@ -8,7 +8,8 @@ import { interleaveFactsByCategory } from '@/utils/factsData';
 export const dynamic = 'force-dynamic';
 
 const NO_STORE_HEADERS = {
-  'Cache-Control': 'no-store, max-age=0',
+  'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0',
+  Pragma: 'no-cache',
 };
 
 const VALID_CATEGORIES = new Set<CategoryId>([
@@ -42,8 +43,8 @@ export async function GET(request: Request) {
   const parsedLimit = rawLimitParam !== null ? Number(rawLimitParam) : NaN;
   const limit =
     Number.isFinite(parsedLimit) && parsedLimit > 0
-      ? Math.min(200, Math.floor(parsedLimit))
-      : 200;
+      ? Math.min(500, Math.floor(parsedLimit))
+      : 500;
 
   const [{ source, entries }, { vocabulary }] = await Promise.all([
     fetchFactsWithSourceServer(),

@@ -6,7 +6,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { ArrowUp, Share, Smartphone, Sparkles, X } from 'lucide-react';
 import { type Language, translations } from '@/i18n/translations';
 
-interface BeforeInstallPromptEvent extends Event {
+export interface BeforeInstallPromptEvent extends Event {
   prompt: () => Promise<void>;
   userChoice: Promise<{ outcome: 'accepted' | 'dismissed'; platform: string }>;
 }
@@ -17,7 +17,10 @@ interface PwaInstallPromptProps {
   lang: Language;
   swipedCount: number;
   forceOpen?: boolean;
+  autoPromptEnabled?: boolean;
   onCloseForceOpen?: () => void;
+  onOpenInstallGuide?: () => void;
+  onDeferredPromptChange?: (promptEvent: BeforeInstallPromptEvent | null) => void;
   onButtonPop: () => void;
 }
 
@@ -62,7 +65,10 @@ export default function PwaInstallPrompt({
   lang,
   swipedCount,
   forceOpen = false,
+  autoPromptEnabled = true,
   onCloseForceOpen,
+  onOpenInstallGuide,
+  onDeferredPromptChange,
   onButtonPop,
 }: PwaInstallPromptProps) {
   const [portalReady, setPortalReady] = useState(false);
@@ -132,6 +138,10 @@ export default function PwaInstallPrompt({
   }, []);
 
   useEffect(() => {
+    onDeferredPromptChange?.(deferredPrompt);
+  }, [deferredPrompt, onDeferredPromptChange]);
+
+  useEffect(() => {
     if (forceOpen) {
       setClosedThisSession(false);
       setDismissed(false);
@@ -161,12 +171,17 @@ export default function PwaInstallPrompt({
         }
       } catch {
         setShowIosHint(true);
+        onOpenInstallGuide?.();
       }
       setDeferredPrompt(null);
-    } else {
-      setShowIosHint(true);
+      dismissNow();
+      return;
     }
-    dismissNow();
+    setShowIosHint(true);
+    if (onOpenInstallGuide) {
+      dismissNow();
+      onOpenInstallGuide();
+    }
   };
 
   const storageDismissed = hydrated && readDismissedFromStorage();
@@ -175,7 +190,8 @@ export default function PwaInstallPrompt({
     hydrated &&
     !isStandalone &&
     !closedThisSession &&
-    (forceOpen || (!storageDismissed && !dismissed && swipedCount >= 2));
+    (forceOpen ||
+      (autoPromptEnabled && !storageDismissed && !dismissed && swipedCount >= 2));
 
   if (!portalReady) return null;
 

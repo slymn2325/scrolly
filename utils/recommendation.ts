@@ -19,7 +19,7 @@ function hashSeed(seed: string): number {
   return hash || 1;
 }
 
-function fisherYatesShuffle<T>(items: T[], seed?: string): T[] {
+export function fisherYatesShuffle<T>(items: T[], seed?: string): T[] {
   const copy = [...items];
   let state = seed ? hashSeed(seed) : 0;
   for (let i = copy.length - 1; i > 0; i -= 1) {

@@ -752,18 +752,21 @@ export default function DiplomaProfileModal({
                 </motion.button>
 
               <div className="mt-2.5 flex flex-wrap items-center justify-center gap-x-4 gap-y-1.5">
-                {!isStandalone && onRequestPwaInstall && (
+                {onRequestPwaInstall && (
                   <button
                     type="button"
                     onClick={() => {
                       onButtonPop();
-                      onClose();
                       onRequestPwaInstall();
                     }}
                     data-testid="diploma-pwa-install-link"
-                    className="text-[11px] font-extrabold text-violet-700 underline decoration-violet-400/40 underline-offset-4 transition hover:text-violet-900 dark:text-violet-300 dark:hover:text-white"
+                    className={`cursor-pointer text-[11px] font-extrabold underline underline-offset-4 transition ${
+                      isStandalone
+                        ? 'text-emerald-600 decoration-emerald-400/50 hover:text-emerald-700 dark:text-emerald-300 dark:hover:text-emerald-200'
+                        : 'text-violet-700 decoration-violet-400/40 hover:text-violet-900 dark:text-violet-300 dark:hover:text-white'
+                    }`}
                   >
-                    {t.pwaManualInstallLink}
+                    {isStandalone ? t.pwaInstalledBtn : t.pwaManualInstallLink}
                   </button>
                 )}
 

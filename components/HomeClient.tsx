@@ -18,13 +18,19 @@ import WelcomeExploreModal, {
 } from '@/components/WelcomeExploreModal';
 import MemoryQuizCard, { type ActiveQuizMode } from '@/components/MemoryQuizCard';
 import OfflineManager from '@/components/OfflineManager';
-import PwaInstallPrompt, { clearPwaDismissed } from '@/components/PwaInstallPrompt';
+import PwaInstallGuideModal from '@/components/PwaInstallGuideModal';
+import PwaInstallPrompt, {
+  checkIsStandalone,
+  clearPwaDismissed,
+  type BeforeInstallPromptEvent,
+} from '@/components/PwaInstallPrompt';
 import QuizHubModal, { type QuizModeChoice } from '@/components/QuizHubModal';
 import ShareResultModal from '@/components/ShareResultModal';
 import StoryShareModal from '@/components/StoryShareModal';
 import TikTokFeed, { type FeedSlideItem, type TikTokFeedHandle } from '@/components/TikTokFeed';
 import { DIAGRAM_INTERACTED_STORAGE_KEY } from '@/components/InteractiveSketchArt';
 import {
+  translations,
   type CategoryFilter,
   type CategoryId,
   type Language,
@@ -69,7 +75,6 @@ import {
   loadSavedVocabNotebook,
   toggleSaveVocabularyCard,
 } from '@/utils/vocabNotebook';
-import { cryptoRandomFloat } from '@/utils/cryptoRandom';
 import {
   vibrateDoubleTap,
   vibrateFlip,
@@ -78,9 +83,16 @@ import {
   vibrateTap,
 } from '@/utils/haptics';
 import {
+  fisherYatesShuffle,
   generateMemoryQuizFromRecent,
   type QuizQuestionItem,
 } from '@/utils/recommendation';
+import {
+  buildSeenLookup,
+  clearSeenSlugsStorage,
+  getFactSeenTimestamp,
+  isFactSeen,
+} from '@/utils/seenFacts';
 import {
   getDailySeedKey,
   getWeeklySeedKey,
@@ -107,6 +119,7 @@ import {
   getTopCategory,
   getTotalCardsViewed,
   loadUserMemory,
+  markFactIdSeen,
   mergeRemoteProfileIntoMemory,
   recordCardRead,
   recordCategoryGuessAccuracy,
@@ -143,6 +156,119 @@ function mergeFactsById(base: FactCardType[], incoming: FactCardType[]): FactCar
   return merged;
 }
 
+const FEED_SESSION_STORAGE_KEY = 'scrolly_feed_session_v1';
+
+interface StoredFeedSession {
+  category: CategoryFilter;
+  deckIds: string[];
+  slideIndex: number;
+}
+
+function readFeedSession(): StoredFeedSession | null {
+  if (typeof window === 'undefined') return null;
+  try {
+    const navEntry = performance.getEntriesByType?.('navigation')?.[0] as
+      | PerformanceNavigationTiming
+      | undefined;
+    if (navEntry?.type !== 'back_forward') {
+      return null;
+    }
+    const raw = window.sessionStorage.getItem(FEED_SESSION_STORAGE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as Partial<StoredFeedSession>;
+    if (!Array.isArray(parsed.deckIds) || parsed.deckIds.length === 0) return null;
+    return {
+      category: (parsed.category as CategoryFilter) ?? 'all',
+      deckIds: parsed.deckIds.filter((id): id is string => typeof id === 'string'),
+      slideIndex:
+        typeof parsed.slideIndex === 'number' && parsed.slideIndex >= 0
+          ? Math.floor(parsed.slideIndex)
+          : 0,
+    };
+  } catch {
+    return null;
+  }
+}
+
+function persistFeedSession(
+  category: CategoryFilter,
+  deck: FactCardType[],
+  slideIndex: number
+): void {
+  if (typeof window === 'undefined') return;
+  try {
+    const payload: StoredFeedSession = {
+      category,
+      deckIds: deck.map((item) => item.id),
+      slideIndex: Math.max(0, Math.floor(slideIndex)),
+    };
+    window.sessionStorage.setItem(FEED_SESSION_STORAGE_KEY, JSON.stringify(payload));
+  } catch {
+    // Ignore storage failures in private mode
+  }
+}
+
+function clearFeedSession(): void {
+  if (typeof window === 'undefined') return;
+  try {
+    window.sessionStorage.removeItem(FEED_SESSION_STORAGE_KEY);
+  } catch {
+    // Ignore storage failures
+  }
+}
+
+function blendPreferredUnseenFacts(
+  unseen: FactCardType[],
+  topCats: Set<CategoryId>,
+  shuffle: boolean
+): FactCardType[] {
+  const shuffledUnseen = shuffle ? fisherYatesShuffle(unseen) : [...unseen];
+  if (!shuffle || topCats.size === 0) {
+    return shuffledUnseen;
+  }
+
+  const preferred = shuffledUnseen.filter((fact) => topCats.has(fact.category));
+  const rest = shuffledUnseen.filter((fact) => !topCats.has(fact.category));
+  if (preferred.length === 0 || rest.length === 0) {
+    return shuffledUnseen;
+  }
+
+  // Blend in 2 preferred + 1 general cadence so preferred categories rise gently
+  // without producing a deterministic opening card across sessions.
+  const blended: FactCardType[] = [];
+  let p = 0;
+  let r = 0;
+  const startWithRest = (preferred.length + rest.length) % 5 === 0 || fisherYatesShuffle([0, 1, 2])[0] === 0;
+  if (startWithRest && r < rest.length) {
+    blended.push(rest[r++]);
+  }
+  while (p < preferred.length || r < rest.length) {
+    if (p < preferred.length) blended.push(preferred[p++]);
+    if (p < preferred.length) blended.push(preferred[p++]);
+    if (r < rest.length) blended.push(rest[r++]);
+  }
+  return blended;
+}
+
+function buildRecycledSeenDeck(
+  seen: FactCardType[],
+  timestampByToken: Map<string, number>,
+  shuffle: boolean
+): FactCardType[] {
+  if (seen.length === 0) return [];
+  const oldestFirst = [...seen].sort(
+    (a, b) => getFactSeenTimestamp(a, timestampByToken) - getFactSeenTimestamp(b, timestampByToken)
+  );
+  if (!shuffle) return oldestFirst;
+
+  const cohortSize = 10;
+  const result: FactCardType[] = [];
+  for (let i = 0; i < oldestFirst.length; i += cohortSize) {
+    result.push(...fisherYatesShuffle(oldestFirst.slice(i, i + cohortSize)));
+  }
+  return result;
+}
+
 function buildPersonalizedDeck(
   allFacts: FactCardType[],
   category: CategoryFilter,
@@ -159,42 +285,25 @@ function buildPersonalizedDeck(
     ? [...allFacts]
     : allFacts.filter((fact) => fact.category === category);
 
-  const unseen = pool.filter((f) => !seenIds.includes(f.id));
-  const seen = pool.filter((f) => seenIds.includes(f.id));
+  const { tokenSet, timestampByToken } = buildSeenLookup(seenIds);
+  const unseen = pool.filter((f) => !isFactSeen(f, tokenSet));
+  const seen = pool.filter((f) => isFactSeen(f, tokenSet));
 
   const sortedCategories = (Object.keys(categoryWeights) as CategoryId[])
     .filter((cat) => categoryWeights[cat] > 0)
     .sort((a, b) => categoryWeights[b] - categoryWeights[a]);
   const topCats = new Set(sortedCategories.slice(0, 2));
 
-  const scoreRank = (fact: FactCardType) => {
-    const base = shuffle ? cryptoRandomFloat() : 0.5;
-    const priorityBoost = isAllPool && topCats.has(fact.category) ? 0.4 : 0;
-    return base + priorityBoost;
-  };
-
-  const orderedUnseen = shuffle
-    ? [...unseen].sort((a, b) => scoreRank(b) - scoreRank(a))
-    : unseen;
-  const orderedSeen = shuffle
-    ? [...seen].sort((a, b) => scoreRank(b) - scoreRank(a))
-    : seen;
-
-  // Never repeat already-seen cards ahead of unseen cards; only cycle seen cards after all unseen are exhausted.
-  const primaryPool = orderedUnseen.length > 0 ? orderedUnseen : orderedSeen;
-  if (primaryPool.length === 0) return allFacts;
-
-  if (isAllPool) {
-    const interleavedPrimary = interleaveFactsByCategory(primaryPool);
-    if (orderedUnseen.length > 0 && orderedSeen.length > 0) {
-      return [...interleavedPrimary, ...interleaveFactsByCategory(orderedSeen)];
-    }
-    return interleavedPrimary;
+  // Strict Zero-Repeat rule: while ANY unseen card exists, never deal already-seen cards.
+  if (unseen.length > 0) {
+    const orderedUnseen = blendPreferredUnseenFacts(unseen, isAllPool ? topCats : new Set(), shuffle);
+    return isAllPool ? interleaveFactsByCategory(orderedUnseen) : orderedUnseen;
   }
 
-  return orderedUnseen.length > 0 && orderedSeen.length > 0
-    ? [...orderedUnseen, ...orderedSeen]
-    : primaryPool;
+  // Only once every card in the active pool is exhausted, recycle oldest-seen cohorts shuffled.
+  const recycledSeen = buildRecycledSeenDeck(seen, timestampByToken, shuffle);
+  if (recycledSeen.length === 0) return allFacts;
+  return isAllPool ? interleaveFactsByCategory(recycledSeen) : recycledSeen;
 }
 
 const useIsomorphicLayoutEffect = typeof window !== 'undefined' ? useLayoutEffect : useEffect;
@@ -248,8 +357,13 @@ export default function HomeClient({ initialFacts, initialVocabulary }: HomeClie
   const memoryRef = useRef<UserMemoryState>(memory);
   memoryRef.current = memory;
   const activeSlideIndexRef = useRef(0);
+  const [exploreSlideIndex, setExploreSlideIndex] = useState(0);
   const [activeCategory, setActiveCategory] = useState<CategoryFilter>('all');
   const [deckFacts, setDeckFacts] = useState<FactCardType[]>(() => initialFacts);
+  const deckFactsRef = useRef<FactCardType[]>(deckFacts);
+  deckFactsRef.current = deckFacts;
+  const restoredFeedSessionRef = useRef<StoredFeedSession | null>(null);
+  const deferredPwaPromptRef = useRef<BeforeInstallPromptEvent | null>(null);
   const [seedFact, setSeedFact] = useState<FactCardType>(initialFacts[0]);
   const [activeFact, setActiveFact] = useState<FactCardType | null>(initialFacts[0] ?? null);
   const [activeSlide, setActiveSlide] = useState<FeedSlideItem | null>(null);
@@ -269,6 +383,7 @@ export default function HomeClient({ initialFacts, initialVocabulary }: HomeClie
   const [storyShareFact, setStoryShareFact] = useState<FactCardType | null>(null);
   const [maxSwipedCards, setMaxSwipedCards] = useState(0);
   const [manualPwaOpen, setManualPwaOpen] = useState(false);
+  const [showPwaGuideModal, setShowPwaGuideModal] = useState(false);
   const [clientResetEpoch, setClientResetEpoch] = useState(0);
 
   const [shareModalData, setShareModalData] = useState<{
@@ -326,18 +441,59 @@ export default function HomeClient({ initialFacts, initialVocabulary }: HomeClie
       }
     }
 
-    const baseDeck = buildPersonalizedDeck(
-      initialFacts,
-      'all',
-      loaded.seenIds,
-      loaded.categoryWeights,
-      false
-    );
-    const initialDeck = promoteFactToFront(baseDeck, initialFacts, requestedFactSlug);
-    setDeckFacts(initialDeck);
-    if (initialDeck[0]) {
-      setSeedFact(initialDeck[0]);
-      setActiveFact(initialDeck[0]);
+    const restoredSession =
+      !duelParam && openQuizParam !== 'daily' && !requestedFactSlug && !resolvedTab
+        ? readFeedSession()
+        : null;
+
+    if (restoredSession && restoredSession.category !== 'vocabulary') {
+      restoredFeedSessionRef.current = restoredSession;
+      activeCategoryRef.current = restoredSession.category;
+      setActiveCategory(restoredSession.category);
+      const byId = new Map(initialFacts.map((fact) => [fact.id, fact]));
+      const restoredSubset = restoredSession.deckIds
+        .map((id) => byId.get(id))
+        .filter((fact): fact is FactCardType => Boolean(fact));
+      const fallbackTail = buildPersonalizedDeck(
+        initialFacts,
+        restoredSession.category,
+        loaded.seenIds,
+        loaded.categoryWeights,
+        true
+      );
+      const seenInRestored = new Set(restoredSubset.map((f) => f.id));
+      const initialDeck =
+        restoredSubset.length > 0
+          ? [...restoredSubset, ...fallbackTail.filter((f) => !seenInRestored.has(f.id))]
+          : fallbackTail;
+      const clampedIdx = Math.max(
+        0,
+        Math.min(restoredSession.slideIndex, Math.max(0, initialDeck.length - 1))
+      );
+      activeSlideIndexRef.current = clampedIdx;
+      setExploreSlideIndex(clampedIdx);
+      setDeckFacts(initialDeck);
+      if (initialDeck[clampedIdx]) {
+        setSeedFact(initialDeck[clampedIdx]);
+        setActiveFact(initialDeck[clampedIdx]);
+      }
+    } else {
+      restoredFeedSessionRef.current = null;
+      const baseDeck = buildPersonalizedDeck(
+        initialFacts,
+        'all',
+        loaded.seenIds,
+        loaded.categoryWeights,
+        !requestedFactSlug
+      );
+      const initialDeck = promoteFactToFront(baseDeck, initialFacts, requestedFactSlug);
+      activeSlideIndexRef.current = 0;
+      setExploreSlideIndex(0);
+      setDeckFacts(initialDeck);
+      if (initialDeck[0]) {
+        setSeedFact(initialDeck[0]);
+        setActiveFact(initialDeck[0]);
+      }
     }
 
     const matchedInInitial = hasFactSlugMatch(initialFacts, requestedFactSlug);
@@ -371,36 +527,94 @@ export default function HomeClient({ initialFacts, initialVocabulary }: HomeClie
       const targetSlug =
         activeCategoryRef.current === 'all' ? requestedFactSlugRef.current : null;
 
+      if (restoredFeedSessionRef.current && !targetSlug) {
+        const session = restoredFeedSessionRef.current;
+        const byId = new Map(merged.map((fact) => [fact.id, fact]));
+        const restoredFacts = session.deckIds
+          .map((id) => byId.get(id))
+          .filter((fact): fact is FactCardType => Boolean(fact));
+        const restoredIds = new Set(restoredFacts.map((fact) => fact.id));
+        const unseenExtras = buildPersonalizedDeck(
+          merged.filter((fact) => !restoredIds.has(fact.id)),
+          session.category,
+          currentMem.seenIds,
+          currentMem.categoryWeights,
+          true
+        );
+        const rebuiltDeck =
+          restoredFacts.length > 0 ? [...restoredFacts, ...unseenExtras] : unseenExtras;
+        const clampedIdx = Math.max(
+          0,
+          Math.min(session.slideIndex, Math.max(0, rebuiltDeck.length - 1))
+        );
+        setDeckFacts(rebuiltDeck);
+        activeSlideIndexRef.current = clampedIdx;
+        setExploreSlideIndex(clampedIdx);
+        if (rebuiltDeck[clampedIdx]) {
+          setSeedFact(rebuiltDeck[clampedIdx]);
+          setActiveFact(rebuiltDeck[clampedIdx]);
+        }
+        return merged;
+      }
+
       if (activeSlideIndexRef.current > 0 && !targetSlug) {
-        // User has already swiped down — preserve their current card positions and append unseen arrivals
+        // User has already swiped down — preserve cards up to activeSlideIndexRef and rebuild unseen tail
         setDeckFacts((prevDeck) => {
-          const existingIds = new Set(prevDeck.map((f) => f.id));
           const category = activeCategoryRef.current;
-          const extras = incoming.filter(
-            (f) => !existingIds.has(f.id) && (category === 'all' || f.category === category)
+          const pinnedPrefix = prevDeck.slice(0, activeSlideIndexRef.current + 1);
+          const pinnedIds = new Set(pinnedPrefix.map((f) => f.id));
+          const { tokenSet } = buildSeenLookup(currentMem.seenIds);
+          const remainingPool = merged.filter(
+            (f) =>
+              !pinnedIds.has(f.id) &&
+              (category === 'all' || f.category === category)
           );
-          if (extras.length === 0) return prevDeck;
+          const remainingUnseen = remainingPool.filter((f) => !isFactSeen(f, tokenSet));
+          if (remainingUnseen.length === 0) {
+            return prevDeck;
+          }
           const orderedExtras = buildPersonalizedDeck(
-            extras,
+            remainingUnseen,
             category,
             currentMem.seenIds,
             currentMem.categoryWeights,
-            false
+            true
           );
-          return [...prevDeck, ...orderedExtras];
+          const nextDeck = [...pinnedPrefix, ...orderedExtras];
+          persistFeedSession(category, nextDeck, activeSlideIndexRef.current);
+          return nextDeck;
         });
         return merged;
       }
 
+      const category = activeCategoryRef.current;
       const baseLiveDeck = buildPersonalizedDeck(
         merged,
-        activeCategoryRef.current,
+        category,
         currentMem.seenIds,
         currentMem.categoryWeights,
-        false
+        !targetSlug
       );
+
+      if (!targetSlug && deckFactsRef.current.length > 0) {
+        const currentHead = deckFactsRef.current[0];
+        const { tokenSet } = buildSeenLookup(currentMem.seenIds);
+        const headMatchesCategory =
+          category === 'all' || currentHead.category === category;
+        if (headMatchesCategory && !isFactSeen(currentHead, tokenSet)) {
+          const stabilized = [
+            currentHead,
+            ...baseLiveDeck.filter((f) => f.id !== currentHead.id),
+          ];
+          setDeckFacts(stabilized);
+          persistFeedSession(category, stabilized, activeSlideIndexRef.current);
+          return merged;
+        }
+      }
+
       const updatedDeck = promoteFactToFront(baseLiveDeck, merged, targetSlug);
       setDeckFacts(updatedDeck);
+      persistFeedSession(category, updatedDeck, 0);
       if (updatedDeck[0]) {
         setSeedFact(updatedDeck[0]);
         setActiveFact(updatedDeck[0]);
@@ -428,22 +642,31 @@ export default function HomeClient({ initialFacts, initialVocabulary }: HomeClie
         }
       }
 
-      const page1 = await fetchPaginatedFactsFromApi({ offset: 0, limit: 80 });
+      const PAGE_SIZE = 200;
+      const MAX_PAGES = 20;
       let workingPool: FactCardType[] | undefined;
+      let loadedAnyPage = false;
 
-      if (page1 && page1.facts.length > 0) {
-        setUsingLocalFallback(false);
-        if (page1.vocabulary && page1.vocabulary.length > 0) {
-          setDbVocabulary(page1.vocabulary);
+      for (let page = 0; page < MAX_PAGES && !cancelled; page += 1) {
+        const offset = page * PAGE_SIZE;
+        const pageRes = await fetchPaginatedFactsFromApi({ offset, limit: PAGE_SIZE });
+        if (!pageRes || pageRes.facts.length === 0 || cancelled) {
+          break;
         }
-        workingPool = applyFactBatch(page1.facts);
-        if (page1.hasMore && !cancelled) {
-          const page2 = await fetchPaginatedFactsFromApi({ offset: 80, limit: 120 });
-          if (page2 && page2.facts.length > 0) {
-            workingPool = applyFactBatch(page2.facts) ?? workingPool;
+        if (!loadedAnyPage) {
+          loadedAnyPage = true;
+          setUsingLocalFallback(false);
+          if (pageRes.vocabulary && pageRes.vocabulary.length > 0) {
+            setDbVocabulary(pageRes.vocabulary);
           }
         }
-      } else {
+        workingPool = applyFactBatch(pageRes.facts) ?? workingPool;
+        if (!pageRes.hasMore) {
+          break;
+        }
+      }
+
+      if (!loadedAnyPage) {
         const offlineOrCached = await fetchFactsFromApiWithCache();
         if (offlineOrCached && offlineOrCached.length > 0) {
           workingPool = applyFactBatch(offlineOrCached);
@@ -686,8 +909,10 @@ export default function HomeClient({ initialFacts, initialVocabulary }: HomeClie
   const handleSelectCategory = (cat: CategoryFilter) => {
     vibrateTap(12);
     playPop(soundEnabled);
+    restoredFeedSessionRef.current = null;
     activeCategoryRef.current = cat;
     activeSlideIndexRef.current = 0;
+    setExploreSlideIndex(0);
     setActiveCategory(cat);
 
     const prevMem = memoryRef.current;
@@ -704,9 +929,10 @@ export default function HomeClient({ initialFacts, initialVocabulary }: HomeClie
       cat,
       nextMem.seenIds,
       nextMem.categoryWeights,
-      false
+      true
     );
     setDeckFacts(newDeck);
+    persistFeedSession(cat, newDeck, 0);
     if (newDeck[0]) setSeedFact(newDeck[0]);
 
     feedRef.current?.scrollToTop();
@@ -726,9 +952,10 @@ export default function HomeClient({ initialFacts, initialVocabulary }: HomeClie
               cat,
               mem.seenIds,
               mem.categoryWeights,
-              false
+              true
             );
             setDeckFacts(refreshed);
+            persistFeedSession(cat, refreshed, 0);
             if (refreshed[0]) setSeedFact(refreshed[0]);
           }
         });
@@ -1010,7 +1237,8 @@ export default function HomeClient({ initialFacts, initialVocabulary }: HomeClie
     });
   };
 
-  const refreshExploreDeck = useCallback((shuffle = false) => {
+  const refreshExploreDeck = useCallback((shuffle = true) => {
+    restoredFeedSessionRef.current = null;
     const refreshed = buildPersonalizedDeck(
       allFactsRef.current,
       activeCategoryRef.current,
@@ -1021,6 +1249,8 @@ export default function HomeClient({ initialFacts, initialVocabulary }: HomeClie
     setDeckFacts(refreshed);
     if (refreshed[0]) setSeedFact(refreshed[0]);
     activeSlideIndexRef.current = 0;
+    setExploreSlideIndex(0);
+    persistFeedSession(activeCategoryRef.current, refreshed, 0);
     requestAnimationFrame(() => feedRef.current?.scrollToTop());
   }, []);
 
@@ -1033,7 +1263,9 @@ export default function HomeClient({ initialFacts, initialVocabulary }: HomeClie
       setActiveQuiz(null);
       setIncomingDuel(null);
       setActiveTab('explore');
-      refreshExploreDeck(alreadyExploring);
+      if (alreadyExploring) {
+        refreshExploreDeck(true);
+      }
       return;
     }
 
@@ -1050,7 +1282,6 @@ export default function HomeClient({ initialFacts, initialVocabulary }: HomeClie
     setIncomingRoomCode(null);
     setActiveQuiz(null);
     setActiveTab('explore');
-    refreshExploreDeck(false);
   };
 
   const handleToggleNotifications = async () => {
@@ -1068,6 +1299,8 @@ export default function HomeClient({ initialFacts, initialVocabulary }: HomeClie
     skipNextProfileSyncRef.current = true;
 
     // Wipe every client-side progress bucket Reset Memory is documented to clear.
+    clearSeenSlugsStorage();
+    clearFeedSession();
     clearSavedFacts();
     clearLikedFacts();
     clearVocabNotebook();
@@ -1098,12 +1331,17 @@ export default function HomeClient({ initialFacts, initialVocabulary }: HomeClie
     setShareModalData(null);
     setStoryShareFact(null);
     setManualPwaOpen(false);
+    setShowPwaGuideModal(false);
     setShowWelcome(true);
+    restoredFeedSessionRef.current = null;
     activeCategoryRef.current = 'all';
+    activeSlideIndexRef.current = 0;
+    setExploreSlideIndex(0);
     setActiveCategory('all');
     setActiveTab('explore');
-    const cleanDeck = buildPersonalizedDeck(allFactsRef.current, 'all', [], fresh.categoryWeights, false);
+    const cleanDeck = buildPersonalizedDeck(allFactsRef.current, 'all', [], fresh.categoryWeights, true);
     setDeckFacts(cleanDeck);
+    persistFeedSession('all', cleanDeck, 0);
     if (cleanDeck[0]) {
       setSeedFact(cleanDeck[0]);
       setActiveFact(cleanDeck[0]);
@@ -1139,6 +1377,38 @@ export default function HomeClient({ initialFacts, initialVocabulary }: HomeClie
     }
     void syncProfileToApi(zeroedProfile);
   };
+
+  const handleDeferredPromptChange = useCallback(
+    (promptEvt: BeforeInstallPromptEvent | null) => {
+      deferredPwaPromptRef.current = promptEvt;
+    },
+    []
+  );
+
+  const handleRequestPwaInstall = useCallback(() => {
+    const activeLang = memoryRef.current.lang === 'en' ? 'en' : 'tr';
+    if (checkIsStandalone()) {
+      showToast(translations[activeLang].pwaAlreadyInstalledToast);
+      return;
+    }
+    const promptEvt = deferredPwaPromptRef.current;
+    if (promptEvt) {
+      deferredPwaPromptRef.current = null;
+      void promptEvt
+        .prompt()
+        .then(() => promptEvt.userChoice)
+        .then((choice) => {
+          if (choice.outcome !== 'accepted') {
+            setShowPwaGuideModal(true);
+          }
+        })
+        .catch(() => {
+          setShowPwaGuideModal(true);
+        });
+      return;
+    }
+    setShowPwaGuideModal(true);
+  }, [showToast]);
 
   const cookieBannerVisible =
     !memory.cookieAccepted && activeTab === 'explore' && !activeQuiz && !showWelcome;
@@ -1288,7 +1558,7 @@ export default function HomeClient({ initialFacts, initialVocabulary }: HomeClie
         />
         <div
           aria-hidden="true"
-          className="pointer-events-none absolute inset-0 hidden opacity-50 blur-3xl transition-[background] duration-500 lg:block"
+          className="pointer-events-none absolute inset-0 hidden opacity-50 transition-[background] duration-500 lg:block"
           style={{
             background: `linear-gradient(180deg, ${ambientAccent}40 0%, transparent 45%, ${ambientAccent}28 100%)`,
           }}
@@ -1312,16 +1582,24 @@ export default function HomeClient({ initialFacts, initialVocabulary }: HomeClie
         >
         <OfflineManager lang={lang} />
 
-        {showExploreFeed && !storyShareFact && !shareModalData && (
-          <PwaInstallPrompt
-            key={`pwa-${clientResetEpoch}`}
-            lang={lang}
-            swipedCount={maxSwipedCards}
-            forceOpen={manualPwaOpen}
-            onCloseForceOpen={() => setManualPwaOpen(false)}
-            onButtonPop={() => playPop(soundEnabled)}
-          />
-        )}
+        <PwaInstallPrompt
+          key={`pwa-${clientResetEpoch}`}
+          lang={lang}
+          swipedCount={maxSwipedCards}
+          forceOpen={manualPwaOpen}
+          autoPromptEnabled={showExploreFeed && !storyShareFact && !shareModalData && !showWelcome}
+          onCloseForceOpen={() => setManualPwaOpen(false)}
+          onOpenInstallGuide={() => setShowPwaGuideModal(true)}
+          onDeferredPromptChange={handleDeferredPromptChange}
+          onButtonPop={() => playPop(soundEnabled)}
+        />
+
+        <PwaInstallGuideModal
+          open={showPwaGuideModal}
+          lang={lang}
+          onClose={() => setShowPwaGuideModal(false)}
+          onButtonPop={() => playPop(soundEnabled)}
+        />
 
         {showExploreFeed && (
           <TikTokFeed
@@ -1339,6 +1617,7 @@ export default function HomeClient({ initialFacts, initialVocabulary }: HomeClie
             cookieBannerVisible={cookieBannerVisible}
             isExploreVisible={showExploreFeed}
             suppressUrlSync={suppressInitialFactSync}
+            initialSlideIndex={exploreSlideIndex}
             onSelectCategory={handleSelectCategory}
             onChangeLang={handleChangeLang}
             onToggleDarkMode={handleToggleDarkMode}
@@ -1346,6 +1625,9 @@ export default function HomeClient({ initialFacts, initialVocabulary }: HomeClie
             onFlipCard={handleFlipCard}
             onDoubleTapLike={handleDoubleTapLike}
             onDwellRead={handleDwellRead}
+            onMarkFactSeen={(fact) => {
+              setMemory((prev) => markFactIdSeen(prev, fact.id));
+            }}
             onOpenDuelFromCard={handleOpenDuelFromCard}
             onOpenStoryShare={handleOpenStoryShare}
             onGuessReward={handleGuessReward}
@@ -1357,7 +1639,9 @@ export default function HomeClient({ initialFacts, initialVocabulary }: HomeClie
             onButtonPop={() => playPop(soundEnabled)}
             onSlideIndexChange={(idx) => {
               activeSlideIndexRef.current = idx;
+              setExploreSlideIndex(idx);
               setMaxSwipedCards((prev) => Math.max(prev, idx));
+              persistFeedSession(activeCategoryRef.current, deckFactsRef.current, idx);
             }}
             onActiveFactChange={setActiveFact}
             onActiveSlideChange={setActiveSlide}
@@ -1490,7 +1774,7 @@ export default function HomeClient({ initialFacts, initialVocabulary }: HomeClie
             });
           }}
           onResetMemory={handleResetMemory}
-          onRequestPwaInstall={() => setManualPwaOpen(true)}
+          onRequestPwaInstall={handleRequestPwaInstall}
           onClose={closeOverlayToExplore}
           onButtonPop={() => playPop(soundEnabled)}
           onCelebrateLeague={() => playLeagueCelebration(soundEnabled)}
@@ -1519,7 +1803,6 @@ export default function HomeClient({ initialFacts, initialVocabulary }: HomeClie
             onClose={() => {
               setShareModalData(null);
               setActiveTab('explore');
-              refreshExploreDeck(false);
             }}
           />
         )}
@@ -1691,7 +1974,7 @@ export default function HomeClient({ initialFacts, initialVocabulary }: HomeClie
             role="status"
             aria-live="polite"
             data-testid="feed-action-toast"
-            className="pointer-events-none fixed left-1/2 top-[calc(env(safe-area-inset-top,14px)+56px)] z-50 -translate-x-1/2 whitespace-nowrap rounded-full border border-white/15 bg-[#0A0A0E]/90 px-4 py-2 text-xs font-extrabold text-white shadow-xl backdrop-blur-md dark:border-amber-300/30 dark:bg-[#171326]/95"
+            className="pointer-events-none fixed left-1/2 top-[calc(env(safe-area-inset-top,14px)+56px)] z-[95] -translate-x-1/2 whitespace-nowrap rounded-full border border-white/15 bg-[#0A0A0E]/90 px-4 py-2 text-xs font-extrabold text-white shadow-xl backdrop-blur-md dark:border-amber-300/30 dark:bg-[#171326]/95"
           >
             {toastMessage}
           </motion.div>

@@ -32,6 +32,7 @@ import { cryptoRandomInt } from '@/utils/cryptoRandom';
 import { getFactUrl, maskFactAnswerSpoiler } from '@/utils/factsData';
 import { vibrateTap } from '@/utils/haptics';
 import { isFactLiked, toggleLikedFact } from '@/utils/likedFacts';
+import { markFactSeenInStorage } from '@/utils/seenFacts';
 import {
   buildFactDetailArticle,
   buildStructuredDetailHighlights,
@@ -386,7 +387,7 @@ export default function TikTokFactSlide({
       return;
     }
 
-    // Wait 150ms for swipe momentum to settle before writing dwell timestamps/telemetry
+    // Wait 150ms for swipe momentum to settle, then count card seen/read after 1.2s total view
     settleTimerRef.current = setTimeout(() => {
       settleTimerRef.current = null;
       if (visibleEnterTimeRef.current === null) {
@@ -397,9 +398,10 @@ export default function TikTokFactSlide({
           dwellTimerRef.current = null;
           if (!hasCountedDwellRef.current) {
             hasCountedDwellRef.current = true;
+            markFactSeenInStorage(fact);
             onDwellRead(fact);
           }
-        }, 1500);
+        }, 1050);
       }
     }, 150);
 
@@ -495,6 +497,7 @@ export default function TikTokFactSlide({
 
   const handleToggleLikeClick = (e: React.MouseEvent) => {
     e.stopPropagation();
+    markFactSeenInStorage(fact);
     const nextLiked = toggleLikedFact(fact.id);
     setIsLiked(nextLiked);
     void trackEvent(factSlug, fact.category, nextLiked ? 'like' : 'unlike', {
@@ -521,6 +524,7 @@ export default function TikTokFactSlide({
 
     setIsFlipped(next);
     if (next) {
+      markFactSeenInStorage(fact);
       void trackEvent(factSlug, fact.category, 'detail_open', {
         source: resolvedSourceName,
       });
@@ -666,17 +670,17 @@ export default function TikTokFactSlide({
       }}
       className="reels-slide relative flex h-full w-full shrink-0 cursor-pointer items-center justify-center overflow-hidden select-none bg-[#0A0A0E]"
     >
-      {/* Soft blurred side wash from active card color */}
+      {/* Subtle unblurred dark stage glow */}
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute inset-0 scale-110 blur-3xl saturate-150"
+        className="pointer-events-none absolute inset-0"
         style={{
-          background: `radial-gradient(circle at 50% 30%, ${fact.accentColor}55 0%, transparent 55%), linear-gradient(180deg, #0A0A0E 0%, #050508 100%)`,
+          background: `radial-gradient(circle at 50% 34%, ${fact.accentColor}26 0%, #0A0A0E 58%, #0A0A0E 100%)`,
         }}
       />
 
       <div className="relative mx-auto h-full w-full overflow-hidden bg-[#0A0A0E]">
-        {/* Full-bleed live visual backdrop (animated canvas fallback + bright GIF layer) */}
+        {/* Full-bleed live visual backdrop + framed upper/mid GIF media stage */}
         <div className="pointer-events-none absolute inset-0 overflow-hidden bg-[#0A0A0E]">
           <CategoryMotionArt
             variant="hero"
@@ -694,29 +698,31 @@ export default function TikTokFactSlide({
             tag={localized.tag}
           />
 
-          {/* Topic-relevant bright GIF media layer (only when cleanly matched via visualQuery) */}
+          {/* Topic-relevant bright GIF framed cleanly below top HUD so light GIFs never bleach header */}
           {resolvedGifUrl && !gifFailed && (
-            <img
-              ref={gifImgRef}
-              src={resolvedGifUrl}
-              alt={localized.title}
-              loading="eager"
-              decoding="async"
-              data-testid="card-topic-gif"
-              onLoad={() => setGifLoaded(true)}
-              onError={() => setGifFailed(true)}
-              className={`pointer-events-none absolute inset-0 z-[2] h-full w-full object-cover brightness-105 contrast-105 transition-opacity duration-500 ${
-                gifLoaded ? 'opacity-95' : 'opacity-0'
-              }`}
-            />
+            <div className="pointer-events-none absolute inset-x-0 top-0 z-[2] flex justify-center px-4 pt-[calc(env(safe-area-inset-top,14px)+58px)] pr-16 sm:pr-[72px] lg:pr-4">
+              <div className="relative flex w-full items-center justify-center overflow-hidden rounded-2xl bg-[#0A0A0E] shadow-xl">
+                <img
+                  ref={gifImgRef}
+                  src={resolvedGifUrl}
+                  alt={localized.title}
+                  loading="eager"
+                  decoding="async"
+                  data-testid="card-topic-gif"
+                  onLoad={() => setGifLoaded(true)}
+                  onError={() => setGifFailed(true)}
+                  className={`pointer-events-none max-h-[58dvh] w-full rounded-2xl object-contain sm:object-cover brightness-105 contrast-105 transition-opacity duration-500 ${
+                    gifLoaded ? 'opacity-95' : 'opacity-0'
+                  }`}
+                />
+                <div className="pointer-events-auto absolute bottom-2.5 left-4 z-[6]">
+                  <PoweredByGiphyBadge micro lang={lang} />
+                </div>
+              </div>
+            </div>
           )}
 
-          {/* Edge-only gradients so top HUD & bottom title/drawer stay legible without dimming center */}
-          <div
-            aria-hidden="true"
-            className="pointer-events-none absolute inset-x-0 top-0 z-[5] h-20 bg-gradient-to-b from-black/65 to-transparent"
-          />
-
+          {/* Bottom legibility gradient */}
           <div
             aria-hidden="true"
             className={`pointer-events-none absolute inset-x-0 bottom-0 z-[5] transition-all duration-300 ${
@@ -741,9 +747,9 @@ export default function TikTokFactSlide({
               isDetailsOpen ? 'max-h-[min(100%,calc(100dvh-140px))] overflow-y-auto' : ''
             }`}
           >
-            <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+            <div className="mb-2 flex flex-wrap items-center gap-2">
               <div className="flex flex-wrap items-center gap-2">
-                <div className="inline-flex w-fit items-center gap-1.5 rounded-full border border-white/15 bg-white/10 px-2.5 py-0.5 text-[10px] font-extrabold uppercase tracking-wide text-white backdrop-blur-sm">
+                <div className="inline-flex w-fit items-center gap-1.5 rounded-full border border-white/15 bg-white/10 px-2.5 py-0.5 text-[10px] font-extrabold uppercase tracking-wide text-white">
                   <span className="flex h-3.5 w-3.5 shrink-0 items-center justify-center rounded-full bg-white/95 p-0.5">
                     <img src={catMeta.iconPath} alt="" aria-hidden="true" className="h-2.5 w-2.5 object-contain" />
                   </span>
@@ -761,18 +767,12 @@ export default function TikTokFactSlide({
                   onDoubleClick={(e) => e.stopPropagation()}
                   onPointerDown={(e) => e.stopPropagation()}
                   onTouchStart={(e) => e.stopPropagation()}
-                  className="pointer-events-auto inline-flex min-h-[26px] items-center gap-1 rounded-full border border-white/15 bg-white/10 px-2.5 py-0.5 text-[10px] font-extrabold text-white/90 backdrop-blur-sm transition hover:bg-white/20 hover:text-white"
+                  className="pointer-events-auto inline-flex min-h-[26px] items-center gap-1 rounded-full border border-white/15 bg-white/10 px-2.5 py-0.5 text-[10px] font-extrabold text-white/90 transition hover:bg-white/20 hover:text-white"
                 >
                   <Info className="h-3 w-3 shrink-0" aria-hidden="true" />
                   <span>{lang === 'tr' ? 'Kaynak' : 'Source'}</span>
                 </button>
               </div>
-
-              {resolvedGifUrl && !gifFailed && (
-                <div className="pointer-events-auto shrink-0">
-                  <PoweredByGiphyBadge micro lang={lang} />
-                </div>
-              )}
             </div>
 
             <button
@@ -851,6 +851,7 @@ export default function TikTokFactSlide({
                         lang={lang}
                         initialAnsweredState={savedGuessResult}
                         onGuessLocked={(id) => {
+                          markFactSeenInStorage(fact);
                           setLocalGuessLocked(true);
                           onGuessLocked?.(id);
                         }}
@@ -1011,7 +1012,7 @@ export default function TikTokFactSlide({
                   exit={{ opacity: 0 }}
                   transition={{ duration: 0.18 }}
                   onClick={() => executeFlip()}
-                  className="pointer-events-auto fixed inset-0 z-[60] flex items-center justify-center bg-black/55 backdrop-blur-sm"
+                  className="pointer-events-auto fixed inset-0 z-[70] flex items-center justify-center bg-black/55 backdrop-blur-sm"
                 >
                   <motion.div
                     key="detail"
@@ -1041,7 +1042,7 @@ export default function TikTokFactSlide({
                     onDoubleClick={(e) => e.stopPropagation()}
                     onWheel={(e) => e.stopPropagation()}
                     data-theme={darkMode ? 'dark' : 'light'}
-                    className={`pointer-events-auto relative z-[60] flex h-[100dvh] w-full max-w-none flex-col overflow-hidden lg:my-auto lg:h-[min(90dvh,820px)] lg:max-w-[min(620px,54vw)] lg:rounded-[28px] lg:border lg:shadow-2xl ${
+                    className={`pointer-events-auto relative z-[70] flex h-[100dvh] w-full max-w-none flex-col overflow-hidden lg:my-auto lg:h-[min(90dvh,820px)] lg:max-w-[min(620px,54vw)] lg:rounded-[28px] lg:border lg:shadow-2xl ${
                       darkMode
                         ? 'bg-[#111115] text-white lg:border-white/15'
                         : 'bg-[#FFFDF9] text-[#1E1B2E] lg:border-[#1E1B2E]/10'
