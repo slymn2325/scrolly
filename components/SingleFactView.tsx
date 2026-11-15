@@ -1085,7 +1085,7 @@ export default function SingleFactView({
                   whileTap={!hasAnswered ? { scale: 0.97 } : undefined}
                   disabled={hasAnswered}
                   onClick={() => handleSelectQuizOption(idx)}
-                  className={`flex min-h-[48px] items-center justify-between gap-3 rounded-2xl border-2 px-4 py-3 text-left text-sm font-semibold transition-all whitespace-normal break-words leading-snug ${style}`}
+                  className={`flex min-h-[48px] items-center justify-between gap-3 rounded-2xl border-2 px-4 py-3 text-left text-sm font-semibold transition-[background-color,border-color,color,transform] duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400 whitespace-normal break-words leading-snug ${style}`}
                 >
                   <div className="flex items-center gap-3">
                     <span

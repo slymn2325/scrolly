@@ -4,6 +4,8 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import {
   Bookmark,
+  ChevronDown,
+  ChevronUp,
   Heart,
   Info,
   RotateCw,
@@ -659,7 +661,7 @@ export default function TikTokFactSlide({
           {/* Bottom legibility gradient */}
           <div
             aria-hidden="true"
-            className={`pointer-events-none absolute inset-x-0 bottom-0 z-[5] transition-all duration-300 ${
+            className={`pointer-events-none absolute inset-x-0 bottom-0 z-[5] transition-[height,opacity] duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] ${
               isDetailsOpen
                 ? 'h-[78%] bg-gradient-to-t from-[#0A0A0E] via-[#0A0A0E]/95 to-transparent'
                 : 'h-[52%] bg-gradient-to-t from-[#0A0A0E] via-[#0A0A0E]/85 to-transparent'
@@ -735,7 +737,7 @@ export default function TikTokFactSlide({
               onDoubleClick={(e) => e.stopPropagation()}
               onPointerDown={(e) => e.stopPropagation()}
               onTouchStart={(e) => e.stopPropagation()}
-              className="pointer-events-auto group w-full text-left focus:outline-none"
+              className="pointer-events-auto group w-full rounded-xl text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0A0A0E]"
             >
               <h2
                 data-testid="fact-headline"
@@ -744,7 +746,7 @@ export default function TikTokFactSlide({
                 {localized.title}
               </h2>
               {!isDetailsOpen && (
-                <span className="mt-1.5 inline-flex items-center gap-1.5 text-[11px] font-bold text-white/75 transition group-hover:text-white">
+                <span className="mt-2 inline-flex min-h-[34px] items-center gap-1.5 rounded-full border border-white/15 bg-white/10 px-3 py-1 text-[11px] font-bold text-white/90 backdrop-blur-sm transition-colors duration-200 group-hover:border-white/25 group-hover:bg-white/15 group-hover:text-white">
                   <img
                     src={UI_ICON_PATHS.tap}
                     alt=""
@@ -756,9 +758,10 @@ export default function TikTokFactSlide({
                   />
                   <span>
                     {lang === 'tr'
-                      ? 'Hikaye ve tahmin için başlığa dokun ▾'
-                      : 'Tap headline for story & quiz ▾'}
+                      ? 'Hikaye ve tahmin için başlığa dokun'
+                      : 'Tap headline for story & quiz'}
                   </span>
+                  <ChevronDown className="h-3.5 w-3.5 shrink-0 text-violet-300" aria-hidden="true" />
                 </span>
               )}
             </button>
@@ -771,7 +774,7 @@ export default function TikTokFactSlide({
                   initial={{ opacity: 0, height: 0, y: 8 }}
                   animate={{ opacity: 1, height: 'auto', y: 0 }}
                   exit={{ opacity: 0, height: 0, y: 8 }}
-                  transition={{ duration: 0.24, ease: 'easeOut' }}
+                  transition={{ duration: 0.24, ease: [0.32, 0.72, 0, 1] }}
                   className="pointer-events-auto overflow-hidden"
                 >
                   <div
@@ -779,7 +782,7 @@ export default function TikTokFactSlide({
                     onDoubleClick={(e) => e.stopPropagation()}
                     onPointerDown={(e) => e.stopPropagation()}
                     onTouchStart={(e) => e.stopPropagation()}
-                    className="mt-2 rounded-2xl border border-white/15 bg-[#0A0A0E]/90 p-3.5 backdrop-blur-md"
+                    className="mt-2 rounded-3xl border border-white/15 bg-[#13131A]/95 p-4 shadow-xl backdrop-blur-md"
                   >
                     <div className="mb-1.5 flex items-center justify-end">
                       <button
@@ -790,9 +793,10 @@ export default function TikTokFactSlide({
                           onButtonPop();
                           setIsDetailsOpen(false);
                         }}
-                        className="inline-flex min-h-[26px] items-center gap-1 rounded-full border border-white/15 bg-white/10 px-2.5 py-0.5 text-[10px] font-extrabold text-white/85 transition hover:bg-white/20 hover:text-white"
+                        className="inline-flex min-h-[28px] items-center gap-1 rounded-full border border-white/15 bg-white/10 px-2.5 py-0.5 text-[10px] font-extrabold text-white/90 transition-colors duration-150 hover:bg-white/20 hover:text-white"
                       >
-                        {lang === 'tr' ? '▴ Daralt' : '▴ Collapse'}
+                        <ChevronUp className="h-3 w-3 shrink-0" aria-hidden="true" />
+                        <span>{lang === 'tr' ? 'Daralt' : 'Collapse'}</span>
                       </button>
                     </div>
 
@@ -866,13 +870,13 @@ export default function TikTokFactSlide({
               className="flex flex-col items-center gap-0.5"
             >
               <span
-                className={`flex h-11 w-11 items-center justify-center rounded-full border border-white/20 backdrop-blur-md transition-all ${
+                className={`flex h-11 w-11 items-center justify-center rounded-full border border-white/20 backdrop-blur-md transition-[background-color,color,transform] duration-200 ${
                   isLiked ? 'bg-rose-500 text-white' : 'bg-white/10 text-rose-300'
                 }`}
               >
                 <Heart className={`h-5 w-5 ${isLiked ? 'fill-current' : ''}`} />
               </span>
-              <span className="text-[10px] font-extrabold text-white/90">
+              <span className="tabular-nums text-[10px] font-extrabold text-white/90">
                 {displayLikes === 1
                   ? lang === 'tr'
                     ? '1 beğeni'
@@ -896,7 +900,7 @@ export default function TikTokFactSlide({
               className="flex flex-col items-center gap-0.5"
             >
               <span
-                className={`flex h-11 w-11 items-center justify-center rounded-full border border-white/20 backdrop-blur-md transition-all ${
+                className={`flex h-11 w-11 items-center justify-center rounded-full border border-white/20 backdrop-blur-md transition-[background-color,color,transform] duration-200 ${
                   isFavorite ? 'bg-amber-400 text-[#09090B]' : 'bg-white/10 text-amber-200'
                 }`}
               >

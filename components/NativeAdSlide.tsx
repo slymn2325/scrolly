@@ -51,7 +51,7 @@ const LAB_GUIDE_TIPS = [
       badge: 'Lab Guide • Pro Tip',
       brand: 'Scrolly Discovery Tip',
       title: 'Filter by Discipline & Explore Offline Anywhere',
-      body: 'Use the top discipline pills to focus on Space, Nature, or Physics—and keep swiping cards or reviewing your Explorer Radar even offline as a PWA.',
+      body: 'Use the top discipline pills to focus on Space, Nature, or Physics, and keep swiping cards or reviewing your Explorer Radar even offline as a PWA.',
     },
   },
 ];

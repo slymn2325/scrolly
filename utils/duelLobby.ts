@@ -114,9 +114,9 @@ export function vocabCardToFactCard(
     tr: {
       slug: vocab.id,
       title: `${vocab.word} (${vocab.partOfSpeech})`,
-      teaserTitle: `🌐 ${vocab.word}`,
+      teaserTitle: vocab.word,
       factText: `"${vocab.word}" ${vocab.phonetic}: ${vocab.meaningTr}`,
-      deepDiveDetail: `${vocab.exampleEn} — ${vocab.exampleTr}`,
+      deepDiveDetail: `${vocab.exampleEn} · ${vocab.exampleTr}`,
       sourceHint: 'Scrolly Dil Laboratuvarı',
       tag: 'Dil Öğrenme',
       quiz: {
@@ -129,7 +129,7 @@ export function vocabCardToFactCard(
     en: {
       slug: vocab.id,
       title: `${vocab.word} (${vocab.phonetic})`,
-      teaserTitle: `🌐 ${vocab.word}`,
+      teaserTitle: vocab.word,
       factText: `"${vocab.word}": ${vocab.definitionEn}`,
       deepDiveDetail: `Example: "${vocab.exampleEn}"`,
       sourceHint: 'Scrolly Language Lab',
@@ -216,7 +216,7 @@ export function resolveDuelPackItems(
       (v) => v.id === id || v.word.toLowerCase() === id.toLowerCase()
     );
     if (vocab) {
-      return `🌐 ${vocab.word}`;
+      return vocab.word;
     }
 
     const fact = allFacts.find(

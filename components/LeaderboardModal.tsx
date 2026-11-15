@@ -278,7 +278,7 @@ export default function LeaderboardModal({
                     type="button"
                     onClick={() => setActiveTab(tab.id)}
                     data-testid={`lb-tab-${tab.id}`}
-                    className={`rounded-xl py-1.5 text-[11px] font-extrabold transition-all ${
+                    className={`rounded-xl py-1.5 text-[11px] font-extrabold transition-[background-color,color,box-shadow] duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400 ${
                       isActive
                         ? 'bg-white text-ink shadow-sm dark:bg-violet-600 dark:text-white'
                         : 'text-ink/60 hover:text-ink dark:text-violet-200/70'
@@ -491,7 +491,7 @@ export default function LeaderboardModal({
                           className={`flex items-center justify-between rounded-2xl border px-3 py-2 text-xs ${zoneClass}`}
                         >
                           <div className="flex min-w-0 items-center gap-2.5">
-                            <span className="w-6 text-center font-black text-ink/60 dark:text-violet-300">
+                            <span className="w-6 text-center font-black tabular-nums text-ink/65 dark:text-violet-200">
                               {row.rank === 1 ? (
                                 <>
                                   <Crown className="mx-auto h-4 w-4 text-amber-500" aria-hidden="true" />
@@ -524,7 +524,7 @@ export default function LeaderboardModal({
                             </div>
                           </div>
 
-                          <div className="flex shrink-0 items-center gap-2 font-bold">
+                          <div className="flex shrink-0 items-center gap-2 font-bold tabular-nums">
                             <span className="inline-flex items-center gap-1 text-amber-600 dark:text-amber-300">
                               <img
                                 src={UI_ICON_PATHS.streakFire}
@@ -535,7 +535,7 @@ export default function LeaderboardModal({
                               {row.streak}
                             </span>
                             <span className="rounded-full bg-white/80 px-2 py-0.5 text-ink dark:bg-black/30 dark:text-white">
-                              {row.score} XP
+                              {row.score.toLocaleString()} XP
                             </span>
                           </div>
                         </div>

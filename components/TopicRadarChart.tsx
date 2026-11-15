@@ -267,7 +267,7 @@ export default function TopicRadarChart({
                   onClick={() => handleSelectAxis(catId)}
                   data-testid={`radar-table-col-${catId}`}
                   aria-label={meta.label[lang]}
-                  className={`flex flex-col items-center justify-center rounded-lg px-0.5 py-1 transition-all ${
+                  className={`flex flex-col items-center justify-center rounded-lg px-0.5 py-1 transition-[background-color,border-color,color] duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400 ${
                     isSelected
                       ? 'bg-blue-500/15 text-blue-700 ring-1 ring-blue-500/50 dark:bg-blue-500/25 dark:text-blue-200'
                       : 'text-slate-600 hover:bg-slate-200/60 dark:text-violet-200/80 dark:hover:bg-white/10'
@@ -524,7 +524,7 @@ export default function TopicRadarChart({
                 data-testid={`constellation-node-${catId}`}
                 aria-label={meta.label[lang]}
                 style={placement.style}
-                className={`absolute flex max-w-[94px] sm:max-w-[130px] items-center gap-1 rounded-full border px-2 py-1 text-[10px] sm:text-[11px] font-extrabold leading-tight transition-all focus:outline-none ${placement.className} ${
+                className={`absolute flex max-w-[94px] sm:max-w-[130px] items-center gap-1 rounded-full border px-2 py-1 text-[10px] sm:text-[11px] font-extrabold leading-tight transition-[background-color,border-color,color,transform,box-shadow] duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400 ${placement.className} ${
                   isSelected
                     ? 'border-blue-500 bg-blue-50 text-blue-800 shadow-sm ring-2 ring-blue-500/40 dark:border-blue-400 dark:bg-blue-950/85 dark:text-blue-100'
                     : 'border-slate-200/90 bg-white/95 text-slate-700 hover:border-blue-300 dark:border-white/15 dark:bg-[#26203E]/95 dark:text-violet-100'

@@ -66,7 +66,7 @@ export async function buildCategoryMetadata(
   const categoryId = categoryRouteSlugToId(categorySlug);
   if (!categoryId) {
     return {
-      title: lang === 'tr' ? 'Kategori Bulunamadı — Scrolly' : 'Category Not Found — Scrolly',
+      title: lang === 'tr' ? 'Kategori Bulunamadı | Scrolly' : 'Category Not Found | Scrolly',
     };
   }
 
@@ -80,8 +80,8 @@ export async function buildCategoryMetadata(
   return {
     title:
       lang === 'tr'
-        ? `${catMeta.label.tr} Bilgi Kartları & Quiz — Scrolly`
-        : `${catMeta.label.en} Fact Cards & Micro-Learning — Scrolly`,
+        ? `${catMeta.label.tr} Bilgi Kartları & Quiz | Scrolly`
+        : `${catMeta.label.en} Fact Cards & Micro-Learning | Scrolly`,
     description,
     alternates: {
       canonical: canonicalUrl,
@@ -92,7 +92,7 @@ export async function buildCategoryMetadata(
       },
     },
     openGraph: {
-      title: `${catMeta.emoji} ${catMeta.label[lang]} — Scrolly`,
+      title: `${catMeta.emoji} ${catMeta.label[lang]} | Scrolly`,
       description,
       url: canonicalUrl,
       siteName: 'Scrolly',
@@ -101,7 +101,7 @@ export async function buildCategoryMetadata(
     },
     twitter: {
       card: 'summary_large_image',
-      title: `${catMeta.emoji} ${catMeta.label[lang]} — Scrolly`,
+      title: `${catMeta.emoji} ${catMeta.label[lang]} | Scrolly`,
       description,
     },
   };
@@ -139,7 +139,7 @@ export default async function CategoryArchiveView({
       {
         '@type': 'CollectionPage',
         '@id': `${canonicalUrl}#collection`,
-        name: `${catMeta.label[lang]} — Scrolly`,
+        name: `${catMeta.label[lang]} | Scrolly`,
         description,
         url: canonicalUrl,
         inLanguage: lang,

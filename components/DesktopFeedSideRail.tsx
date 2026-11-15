@@ -230,7 +230,7 @@ export default function DesktopFeedSideRail({
               onClick={onDetail}
               disabled={!canDetail}
               aria-label={lang === 'tr' ? 'Detay' : 'Detail'}
-              className={`flex h-11 w-11 items-center justify-center rounded-full border backdrop-blur-md transition ${actionBtn} ${
+              className={`flex h-11 w-11 items-center justify-center rounded-full border backdrop-blur-md transition-[transform,background-color,border-color,color] duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400 ${actionBtn} ${
                 !canDetail ? 'cursor-not-allowed opacity-35' : ''
               }`}
             >
@@ -249,7 +249,7 @@ export default function DesktopFeedSideRail({
               data-testid="desktop-action-duel"
               onClick={onDuel}
               aria-label="Scrolla"
-              className="flex h-11 w-11 items-center justify-center rounded-full border border-violet-400/50 bg-gradient-to-br from-violet-600 to-fuchsia-600 text-white shadow-lg shadow-violet-500/30 transition hover:scale-105"
+              className="flex h-11 w-11 items-center justify-center rounded-full border border-violet-400/50 bg-gradient-to-br from-violet-600 to-fuchsia-600 text-white shadow-lg shadow-violet-500/30 transition-transform duration-150 hover:scale-105 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400"
             >
               <Swords className="h-5 w-5" />
             </button>
@@ -265,7 +265,7 @@ export default function DesktopFeedSideRail({
               onClick={onShare}
               disabled={!hasFact}
               aria-label={lang === 'tr' ? 'Paylaş' : 'Share'}
-              className={`flex h-11 w-11 items-center justify-center rounded-full border backdrop-blur-md transition ${actionBtn} ${
+              className={`flex h-11 w-11 items-center justify-center rounded-full border backdrop-blur-md transition-[transform,background-color,border-color,color] duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400 ${actionBtn} ${
                 !hasFact ? 'cursor-not-allowed opacity-35' : ''
               }`}
             >
@@ -287,7 +287,7 @@ export default function DesktopFeedSideRail({
           data-testid="desktop-feed-prev"
           onClick={onPrev}
           aria-label={lang === 'tr' ? 'Önceki kart' : 'Previous card'}
-          className={`flex h-10 w-10 items-center justify-center rounded-full border backdrop-blur-md transition ${stepBtn}`}
+          className={`flex h-10 w-10 items-center justify-center rounded-full border backdrop-blur-md transition-[transform,background-color,border-color,color] duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400 ${stepBtn}`}
         >
           <ChevronUp className="h-5 w-5" />
         </button>
@@ -296,7 +296,7 @@ export default function DesktopFeedSideRail({
           data-testid="desktop-feed-next"
           onClick={onNext}
           aria-label={lang === 'tr' ? 'Sonraki kart' : 'Next card'}
-          className={`flex h-10 w-10 items-center justify-center rounded-full border backdrop-blur-md transition ${stepBtn}`}
+          className={`flex h-10 w-10 items-center justify-center rounded-full border backdrop-blur-md transition-[transform,background-color,border-color,color] duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400 ${stepBtn}`}
         >
           <ChevronDown className="h-5 w-5" />
         </button>
@@ -308,8 +308,8 @@ export default function DesktopFeedSideRail({
           data-testid="desktop-info-shortcut-panel"
           className={`hidden w-[300px] shrink-0 flex-col gap-3 rounded-3xl border p-4 backdrop-blur-xl xl:flex ${
             darkMode
-              ? 'border-white/15 bg-black/45 text-white shadow-2xl'
-              : 'border-[#1E1B2E]/10 bg-white/90 text-[#1E1B2E] shadow-xl'
+              ? 'border-white/15 bg-[#13131A]/90 text-white shadow-2xl'
+              : 'border-[#1E1B2E]/10 bg-white/95 text-[#1E1B2E] shadow-xl'
           }`}
         >
           <div className="flex items-center justify-between gap-2">
@@ -320,7 +320,7 @@ export default function DesktopFeedSideRail({
               <span>{slideSummary.badge}</span>
             </span>
             <span
-              className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[10px] font-black ${
+              className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[10px] font-black tabular-nums ${
                 darkMode ? 'bg-amber-400/15 text-amber-300' : 'bg-amber-100 text-amber-800'
               }`}
             >
@@ -333,7 +333,7 @@ export default function DesktopFeedSideRail({
             <p
               data-testid="desktop-insight-heading"
               className={`text-[10px] font-black uppercase tracking-wider ${
-                darkMode ? 'text-white/50' : 'text-[#1E1B2E]/55'
+                darkMode ? 'text-white/65' : 'text-[#1E1B2E]/65'
               }`}
             >
               {lang === 'tr' ? 'KART DETAYI & KAYNAK' : 'INSIGHT & SOURCE'}
@@ -353,8 +353,8 @@ export default function DesktopFeedSideRail({
                     <Lock className={`mt-0.5 h-4 w-4 shrink-0 ${darkMode ? 'text-violet-300' : 'text-violet-600'}`} />
                     <p className="text-xs font-semibold leading-relaxed">
                       {lang === 'tr'
-                        ? 'Tahminini kilitle — derin analiz ve bilimsel arka plan burada açılacak'
-                        : 'Lock your guess — deep analysis & scientific context will unlock here'}
+                        ? 'Tahminini kilitle: derin analiz ve bilimsel arka plan burada açılacak'
+                        : 'Lock your guess: deep analysis & scientific context will unlock here'}
                     </p>
                   </div>
                   <div className="mt-2.5 flex items-center justify-between gap-2">
@@ -493,7 +493,7 @@ export default function DesktopFeedSideRail({
             >
               <p
                 className={`text-[10px] font-black uppercase tracking-wider ${
-                  darkMode ? 'text-white/45' : 'text-[#1E1B2E]/50'
+                  darkMode ? 'text-white/65' : 'text-[#1E1B2E]/65'
                 }`}
               >
                 {lang === 'tr' ? 'Kaynak' : 'Source'}

@@ -180,7 +180,7 @@ export default function WelcomeExploreModal({
                 value={nicknameInput}
                 onChange={(e) => setNicknameInput(e.target.value)}
                 placeholder={systemSuggested}
-                className="mt-2 w-full rounded-xl border border-white/15 bg-black/40 px-3 py-2.5 text-sm font-bold text-white placeholder:text-white/45 focus:border-violet-400 focus:outline-none focus:ring-2 focus:ring-violet-500/30"
+                className="mt-2 w-full rounded-xl border border-white/15 bg-black/40 px-3 py-2.5 text-sm font-bold text-white placeholder:text-white/60 focus:border-violet-400 focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-400"
               />
 
               <p className="mt-1.5 text-[11px] font-semibold text-white/55">

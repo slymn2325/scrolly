@@ -5,11 +5,15 @@ import { AnimatePresence, motion } from 'framer-motion';
 import {
   Bot,
   Check,
+  CheckCircle2,
+  Clock,
   Copy,
   Crown,
+  Film,
   LogIn,
   MessageCircle,
   Play,
+  Rocket,
   Share2,
   ShieldAlert,
   Sparkles,
@@ -17,6 +21,7 @@ import {
   UserMinus,
   Users,
   X,
+  Zap,
 } from 'lucide-react';
 import GiphyReactionPicker, {
   type GiphyReactionItemDisplay,
@@ -843,13 +848,19 @@ export default function DuelModal({
                             onButtonPop();
                             setCategory(cat.id);
                           }}
-                          className={`rounded-full border px-2.5 py-1.5 text-[11px] font-extrabold transition ${
+                          className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1.5 text-[11px] font-extrabold transition-[background-color,border-color,color] duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400 ${
                             active
                               ? 'border-ink bg-ink text-white dark:border-violet-300 dark:bg-violet-600'
                               : 'border-amber-200 bg-white text-ink dark:border-white/15 dark:bg-white/10 dark:text-white'
                           }`}
                         >
-                          {cat.emoji} {cat.label[lang]}
+                          <img
+                            src={cat.iconPath}
+                            alt=""
+                            aria-hidden="true"
+                            className="h-3.5 w-3.5 shrink-0 object-contain"
+                          />
+                          <span>{cat.label[lang]}</span>
                         </button>
                       );
                     })}
@@ -1045,7 +1056,13 @@ export default function DuelModal({
                       >
                         <div className="flex min-w-0 items-center gap-2.5">
                           <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-lg dark:bg-black/30">
-                            {player.emoji || '⚡'}
+                            {player.id === BOT_PLAYER_ID || player.emoji === '🤖' ? (
+                              <Bot className="h-5 w-5 text-violet-600 dark:text-violet-300" aria-hidden="true" />
+                            ) : player.emoji && player.emoji !== '⚡' ? (
+                              player.emoji
+                            ) : (
+                              <Zap className="h-4 w-4 text-violet-600 dark:text-violet-300" aria-hidden="true" />
+                            )}
                           </span>
                           <div className="min-w-0">
                             <div className="flex flex-wrap items-center gap-1.5">
@@ -1067,14 +1084,18 @@ export default function DuelModal({
                                 </span>
                               )}
                             </div>
-                            <p className="text-[11px] font-bold text-ink/60 dark:text-violet-200/75">
-                              {player.ready
-                                ? lang === 'tr'
-                                  ? '✅ Hazır'
-                                  : '✅ Ready'
-                                : lang === 'tr'
-                                  ? '⏳ Hazırlanıyor'
-                                  : '⏳ Getting ready'}
+                            <p className="inline-flex items-center gap-1 text-[11px] font-bold text-ink/65 dark:text-violet-200/80">
+                              {player.ready ? (
+                                <>
+                                  <CheckCircle2 className="h-3.5 w-3.5 shrink-0 text-emerald-500" aria-hidden="true" />
+                                  <span>{lang === 'tr' ? 'Hazır' : 'Ready'}</span>
+                                </>
+                              ) : (
+                                <>
+                                  <Clock className="h-3.5 w-3.5 shrink-0 text-amber-500" aria-hidden="true" />
+                                  <span>{lang === 'tr' ? 'Hazırlanıyor' : 'Getting ready'}</span>
+                                </>
+                              )}
                             </p>
                           </div>
                         </div>
@@ -1208,8 +1229,9 @@ export default function DuelModal({
                     }}
                     className="flex w-full items-center justify-between gap-2 rounded-2xl border border-violet-300/70 bg-violet-50/80 px-3.5 py-2 text-xs font-extrabold text-violet-900 transition hover:bg-violet-100/80 dark:border-violet-600/50 dark:bg-violet-950/45 dark:text-violet-100"
                   >
-                    <span>
-                      {lang === 'tr' ? '🎬 GIF ile Tepki Gönder' : '🎬 Send Reaction GIF'}
+                    <span className="inline-flex items-center gap-1.5">
+                      <Film className="h-3.5 w-3.5 shrink-0 text-violet-600 dark:text-violet-300" aria-hidden="true" />
+                      <span>{lang === 'tr' ? 'GIF ile Tepki Gönder' : 'Send Reaction GIF'}</span>
                     </span>
                     <span className="text-[11px] font-black text-violet-600 dark:text-violet-300">
                       {showReactionDrawer
@@ -1267,17 +1289,29 @@ export default function DuelModal({
                     data-testid="duel-guest-wait-banner"
                     className="rounded-full border border-violet-300/70 bg-violet-50 px-4 py-3 text-center text-xs font-extrabold text-violet-900 dark:border-violet-700/60 dark:bg-violet-950/50 dark:text-violet-200"
                   >
-                    {activeRoom.status === 'countdown'
-                      ? lang === 'tr'
-                        ? `🚀 Lobi Lideri maçı başlattı! (${countdownSec ?? 5})`
-                        : `🚀 Room Leader started the match! (${countdownSec ?? 5})`
-                      : allReady
-                        ? lang === 'tr'
-                          ? '👑 Lobi Liderinin oyunu başlatması bekleniyor...'
-                          : '👑 Waiting for Room Leader to start...'
-                        : lang === 'tr'
-                          ? 'Başlamak için "Hazır Ol" butonuna bas'
-                          : 'Tap "Ready Up" to signal readiness'}
+                    {activeRoom.status === 'countdown' ? (
+                      <span className="inline-flex items-center justify-center gap-1.5 tabular-nums">
+                        <Rocket className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+                        <span>
+                          {lang === 'tr'
+                            ? `Lobi Lideri maçı başlattı! (${countdownSec ?? 5})`
+                            : `Room Leader started the match! (${countdownSec ?? 5})`}
+                        </span>
+                      </span>
+                    ) : allReady ? (
+                      <span className="inline-flex items-center justify-center gap-1.5">
+                        <Crown className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+                        <span>
+                          {lang === 'tr'
+                            ? 'Lobi Liderinin oyunu başlatması bekleniyor...'
+                            : 'Waiting for Room Leader to start...'}
+                        </span>
+                      </span>
+                    ) : lang === 'tr' ? (
+                      'Başlamak için "Hazır Ol" butonuna bas'
+                    ) : (
+                      'Tap "Ready Up" to signal readiness'
+                    )}
                   </div>
                 )}
 
@@ -1338,9 +1372,14 @@ export default function DuelModal({
                     data-testid="duel-bot-mode-note"
                     className="rounded-2xl border border-violet-200/80 bg-violet-50/70 px-3.5 py-2.5 text-center text-[11px] font-bold text-violet-900 dark:border-violet-700/50 dark:bg-violet-950/40 dark:text-violet-200"
                   >
-                    {lang === 'tr'
-                      ? '🤖 Yerel Test / Bot modu aktif — arkadaş davet linki için normal oda kurabilirsin.'
-                      : '🤖 Local Bot Practice active — switch off Bot mode to invite a friend online.'}
+                    <span className="inline-flex items-center justify-center gap-1.5">
+                      <Bot className="h-3.5 w-3.5 shrink-0 text-violet-600 dark:text-violet-300" aria-hidden="true" />
+                      <span>
+                        {lang === 'tr'
+                          ? 'Yerel Test / Bot modu aktif: arkadaş davet linki için normal oda kurabilirsin.'
+                          : 'Local Bot Practice active: switch off Bot mode to invite a friend online.'}
+                      </span>
+                    </span>
                   </div>
                 )}
 

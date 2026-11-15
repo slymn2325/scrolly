@@ -304,7 +304,7 @@ export default function InteractiveSketchArt({
         onDoubleClick={(e) => e.stopPropagation()}
         data-testid="sketch-interact-btn"
         aria-pressed={active}
-        className={`absolute right-2 top-2 z-10 inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[9.5px] font-extrabold transition-all ${
+        className={`absolute right-2 top-2 z-10 inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[9.5px] font-extrabold transition-[background-color,border-color,color,transform] duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400 ${
           active
             ? 'border-amber-400 bg-amber-400/90 text-ink shadow-sm'
             : 'border-ink/15 bg-white/80 text-ink/80 hover:bg-white dark:border-white/20 dark:bg-white/15 dark:text-violet-100'

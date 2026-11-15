@@ -69,7 +69,7 @@ export default function DesktopLeftNav({
     >
       <div className="mb-6 px-2">
         <p className="font-display text-2xl font-black tracking-tight">Scrolly</p>
-        <p className={`mt-1 text-[11px] font-semibold ${darkMode ? 'text-white/50' : 'text-[#1E1B2E]/55'}`}>
+        <p className={`mt-1 text-[11px] font-semibold ${darkMode ? 'text-white/65' : 'text-[#1E1B2E]/65'}`}>
           {lang === 'tr' ? 'Kaydır · Öğren · Şaşır' : 'Scroll · Learn · Wonder'}
         </p>
       </div>
@@ -84,15 +84,15 @@ export default function DesktopLeftNav({
               type="button"
               data-testid={`desktop-nav-${item.id}`}
               onClick={() => onSelectTab(item.id)}
-              className={`relative flex h-12 items-center gap-3 rounded-xl border px-3 text-sm font-extrabold transition ${
+              className={`relative flex h-12 items-center gap-3 rounded-xl border px-3 text-sm font-extrabold transition-[background-color,border-color,color,box-shadow,transform] duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400 ${
                 active
                   ? isDuel
                     ? darkMode
-                      ? 'border-violet-400/40 bg-violet-500/20 text-white shadow-sm shadow-violet-500/20'
-                      : 'border-violet-300/70 bg-violet-50 text-violet-950 shadow-sm'
+                      ? 'border-violet-400/45 bg-violet-500/20 text-white shadow-sm shadow-violet-500/20 before:absolute before:left-0 before:top-2.5 before:bottom-2.5 before:w-1 before:rounded-r-full before:bg-violet-400'
+                      : 'border-violet-300/80 bg-violet-50 text-violet-950 shadow-sm before:absolute before:left-0 before:top-2.5 before:bottom-2.5 before:w-1 before:rounded-r-full before:bg-violet-600'
                     : darkMode
-                      ? 'border-white/10 bg-white/10 text-white'
-                      : 'border-[#1E1B2E]/10 bg-[#1E1B2E]/[0.08] text-[#1E1B2E]'
+                      ? 'border-white/15 bg-white/10 text-white before:absolute before:left-0 before:top-2.5 before:bottom-2.5 before:w-1 before:rounded-r-full before:bg-white'
+                      : 'border-[#1E1B2E]/15 bg-[#1E1B2E]/[0.08] text-[#1E1B2E] before:absolute before:left-0 before:top-2.5 before:bottom-2.5 before:w-1 before:rounded-r-full before:bg-[#1E1B2E]'
                   : isDuel
                     ? darkMode
                       ? 'border-violet-500/20 bg-violet-500/[0.06] text-white/85 hover:border-violet-400/40 hover:bg-violet-500/15 hover:text-white'
@@ -152,12 +152,12 @@ export default function DesktopLeftNav({
         >
           <p
             className={`text-[10px] font-black uppercase tracking-wider ${
-              darkMode ? 'text-white/45' : 'text-[#1E1B2E]/45'
+              darkMode ? 'text-white/65' : 'text-[#1E1B2E]/65'
             }`}
           >
             {lang === 'tr' ? 'Oturum' : 'Session'}
           </p>
-          <p className="mt-1 flex items-center gap-1.5 text-sm font-extrabold">
+          <p className="mt-1 flex items-center gap-1.5 text-sm font-extrabold tabular-nums">
             <span>{streakDays}</span>
             <img
               src={UI_ICON_PATHS.streakFire}
@@ -168,12 +168,12 @@ export default function DesktopLeftNav({
               decoding="async"
               className="h-4 w-4 shrink-0 object-contain"
             />
-            <span>· {xp} XP</span>
+            <span>· {xp.toLocaleString()} XP</span>
           </p>
         </div>
         <p
           data-testid="desktop-nav-status"
-          className={`px-1 text-[10px] font-semibold leading-snug ${darkMode ? 'text-white/40' : 'text-[#1E1B2E]/45'}`}
+          className={`px-1 text-[10px] font-semibold leading-snug ${darkMode ? 'text-white/65' : 'text-[#1E1B2E]/65'}`}
         >
           {statusText}
         </p>

@@ -309,7 +309,7 @@ export default function DiplomaProfileModal({
         try {
           await navigator.share({
             files: [asset.file],
-            title: `${t.brandName} — ${t.diplomaTitle}`,
+            title: `${t.brandName} · ${t.diplomaTitle}`,
             text: `${memory.nickname} • ${league.label} (${memory.xp} XP)`,
           });
           return;

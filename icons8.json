@@ -35,6 +35,11 @@
     "url": "https://icons8.com",
     "placement": "components/SiteTrustFooter.tsx"
   },
+  "tokens": {
+    "iconColor": "--foreground",
+    "accent": "--primary",
+    "radius": "--radius-card"
+  },
   "assets": {
     "illustrations": [
       {

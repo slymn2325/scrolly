@@ -10,6 +10,7 @@ import {
   Check,
   Clock,
   Copy,
+  Film,
   MessageCircle,
   Share2,
   Swords,
@@ -376,15 +377,16 @@ export default function ShareResultModal({
               data-testid="duel-vs-card"
               className="rounded-2xl border-2 border-amber-300 bg-gradient-to-r from-amber-50 via-white to-rose-50 p-3 shadow-sm dark:border-amber-600/60 dark:from-amber-950/40 dark:via-[#231D3A] dark:to-rose-950/40"
             >
-              <p className="mb-1.5 text-center text-[11px] font-black uppercase tracking-wider text-amber-800 dark:text-amber-300">
-                ⚔️ {t.vsComparisonTitle}
+              <p className="mb-1.5 flex items-center justify-center gap-1.5 text-center text-[11px] font-black uppercase tracking-wider text-amber-800 dark:text-amber-300">
+                <Swords className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+                <span>{t.vsComparisonTitle}</span>
               </p>
               <div className="grid grid-cols-3 items-center gap-2 text-center">
                 <div className="rounded-xl bg-white/90 p-2 shadow-sm dark:bg-white/10">
                   <p className="truncate text-[10px] font-bold text-ink/60 dark:text-violet-200">
                     {t.yourResult}
                   </p>
-                  <p className="mt-0.5 text-lg font-black text-emerald-600 dark:text-emerald-400">
+                  <p className="mt-0.5 text-lg font-black tabular-nums text-emerald-600 dark:text-emerald-400">
                     {earnedXp}
                   </p>
                   <p className="inline-flex items-center gap-0.5 text-[10px] font-bold text-ink/60 dark:text-violet-200/80">
@@ -420,15 +422,15 @@ export default function ShareResultModal({
                       data-testid="duel-opponent-waiting"
                       className="mt-1 inline-flex items-center justify-center gap-1 rounded-lg bg-amber-100/90 px-1.5 py-1 text-[10px] font-bold leading-tight text-amber-900 animate-pulse dark:bg-amber-900/40 dark:text-amber-200"
                     >
-                      <span>⏳</span>
+                      <Clock className="h-3 w-3 shrink-0" aria-hidden="true" />
                       <span>{t.duelWaitingOpponentScore}</span>
                     </p>
                   ) : (
                     <>
-                      <p className="mt-0.5 text-lg font-black text-violet-700 dark:text-violet-300">
+                      <p className="mt-0.5 text-lg font-black tabular-nums text-violet-700 dark:text-violet-300">
                         {isRealServerDuel ? opponentScore : duelConfig.targetScore}
                       </p>
-                      <p className="inline-flex items-center gap-0.5 text-[10px] font-bold text-ink/60 dark:text-violet-200/80">
+                      <p className="inline-flex items-center gap-0.5 text-[10px] font-bold tabular-nums text-ink/65 dark:text-violet-200/80">
                         <Clock className="h-3 w-3" />{' '}
                         {isRealServerDuel
                           ? typeof opponentElapsed === 'number'
@@ -463,8 +465,9 @@ export default function ShareResultModal({
               }}
               className="flex w-full items-center justify-between gap-2 rounded-2xl border border-violet-300/70 bg-violet-50/80 px-3.5 py-2 text-xs font-extrabold text-violet-900 transition hover:bg-violet-100/80 dark:border-violet-600/50 dark:bg-violet-950/45 dark:text-violet-100"
             >
-              <span>
-                {lang === 'tr' ? '🎬 GIF ile Tepki Gönder' : '🎬 Send Reaction GIF'}
+              <span className="inline-flex items-center gap-1.5">
+                <Film className="h-3.5 w-3.5 shrink-0 text-violet-600 dark:text-violet-300" aria-hidden="true" />
+                <span>{lang === 'tr' ? 'GIF ile Tepki Gönder' : 'Send Reaction GIF'}</span>
               </span>
               <span className="text-[11px] font-black text-violet-600 dark:text-violet-300">
                 {showReactionDrawer

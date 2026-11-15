@@ -119,7 +119,7 @@ export default function SiteTrustFooter({
 
         <div className="flex flex-wrap items-center justify-between gap-2 text-[11px] text-ink/55 dark:text-violet-200/60">
           <span>
-            © 2026 Scrolly (scrolly.live) —{' '}
+            © 2026 Scrolly (scrolly.live) ·{' '}
             {isEn ? 'All rights reserved.' : 'Tüm hakları saklıdır.'}
           </span>
           <div className="flex flex-wrap items-center gap-x-4 gap-y-1">

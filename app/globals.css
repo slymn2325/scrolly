@@ -3,16 +3,46 @@
 @tailwind utilities;
 
 :root {
-  --bg-cream: #FFFDF9;
-  --text-ink: #1E1B2E;
+  /* Semantic Brand & Surface Tokens (Stitch Design System + design-tokens) */
+  --background: #FFFDF9;
+  --foreground: #1E1B2E;
+  --card: #FFFFFF;
+  --card-elevated: #F4F1FA;
+  --border: oklch(0 0 0 / 0.1);
+  --outline-image: oklch(0 0 0 / 0.1);
+  --primary: #7C3AED;
+  --secondary: #F59E0B;
+  --success: #10B981;
+  --destructive: #F43F5E;
+
+  /* Radii Scale (Concentric: 24px -> 16px -> 12px) */
+  --radius: 1rem;
+  --radius-lg: 1.5rem;
+  --radius-md: 1rem;
+  --radius-sm: 0.75rem;
+
+  /* Motion Timing Tokens */
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
+  --ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);
+
+  /* Named Z-Index Layers */
+  --z-dock: 30;
+  --z-hud: 60;
+  --z-toast: 95;
+  --z-statusbar: 9999;
+
+  /* Legacy / Component Aliases */
+  --bg-cream: var(--background);
+  --text-ink: var(--foreground);
   --sketch-pill-bg: rgba(255, 255, 255, 0.88);
   --scrolly-surface-reel: #0A0A0E;
   --scrolly-surface-light: #FFFDF9;
   --scrolly-surface-dark-card: #17122B;
-  --scrolly-accent-primary: #7C3AED;
-  --scrolly-accent-gold: #F59E0B;
-  --scrolly-radius-card: 1.5rem;
-  --scrolly-focus-ring: #7C3AED;
+  --scrolly-accent-primary: var(--primary);
+  --scrolly-accent-gold: var(--secondary);
+  --scrolly-radius-card: var(--radius-lg);
+  --scrolly-focus-ring: var(--primary);
 }
 
 html,
@@ -42,8 +72,14 @@ textarea {
 
 html.dark,
 html.dark body {
-  background-color: #0A0A0E;
-  color: #F5F3FF;
+  --background: #0A0A0E;
+  --foreground: #F5F3FF;
+  --card: #13131A;
+  --card-elevated: #1B1926;
+  --border: oklch(1 0 0 / 0.12);
+  --outline-image: oklch(1 0 0 / 0.1);
+  background-color: var(--background);
+  color: var(--foreground);
   --sketch-pill-bg: rgba(18, 15, 36, 0.9);
 }
 
@@ -114,7 +150,7 @@ html.dark [data-fact-surface='true'] p {
   border-radius: 6px;
 }
 
-/* Respect reduced motion preferences for accessibility */
+/* Respect reduced motion preferences: keep subtle opacity/color cues, remove displacement & continuous pings */
 @media (prefers-reduced-motion: reduce) {
   html:focus-within {
     scroll-behavior: auto;
@@ -125,7 +161,8 @@ html.dark [data-fact-surface='true'] p {
   *::after {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
+    transition-property: opacity, color, background-color, border-color !important;
+    transition-duration: 120ms !important;
     scroll-behavior: auto !important;
   }
 }
@@ -145,6 +182,6 @@ html.dark [data-fact-surface='true'] p {
     height: env(safe-area-inset-top, 0px);
     background-color: #000000;
     pointer-events: none;
-    z-index: 9999;
+    z-index: var(--z-statusbar, 9999);
   }
 }

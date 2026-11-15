@@ -273,7 +273,7 @@ export const translations = {
     duelBtn: 'Scrolla 1v1',
     duelTitle: 'Scrolla Arena 1v1',
     duelSubtitle:
-      'Kısa oda koduyla arkadaşına meydan oku — aynı sorularla gerçek zamanlı yarış!',
+      'Kısa oda koduyla arkadaşına meydan oku: aynı sorularla gerçek zamanlı yarış!',
     duelNameLabel: 'Arena Takma Adın',
     duelDefaultName: 'Merak Avcısı',
     duelCopyLinkBtn: 'Scrolla Davet Linkini Kopyala',
@@ -296,7 +296,7 @@ export const translations = {
     rewardedTitle: 'Sınırsız Geri Sarma Paketi Kazan!',
     rewardedSubtitle:
       'Kısa sponsor tanıtımını 3 saniye incele, tüm oturum boyunca sınırsız "Geri Sar" hakkı kazan.',
-    rewardedSponsorName: 'Merak Akademi — Günlük 2 Dakikalık Mikro Bilim Dersleri',
+    rewardedSponsorName: 'Merak Akademi · Günlük 2 Dakikalık Mikro Bilim Dersleri',
     rewardedSponsorDesc:
       'Astrofizik, evrim ve beyin bilimi konularını görsel kartlarla reklamsız keşfet.',
     rewardedCountdown: 'Ödül hazırlanıyor',
@@ -333,7 +333,7 @@ export const translations = {
     adSkipBtn: 'Geç',
     adLearnMore: 'Keşfet',
     // Sticky Ad
-    stickyAdTitle: 'Bilim & Merak Bülteni — Haftada 1 kez en şaşırtıcı 5 keşif gelen kutunda.',
+    stickyAdTitle: 'Bilim & Merak Bülteni: haftada 1 kez en şaşırtıcı 5 keşif gelen kutunda.',
     stickyAdCta: 'Ücretsiz İncele',
     // Cookie Banner
     cookieText:
@@ -348,7 +348,7 @@ export const translations = {
     drawerNoBadges: 'İlk 5 kartlık quizini tamamlayarak rozet kazan!',
     drawerAffinity: 'İlgi Alanı Ağırlıkların (+%40 Öncelik)',
     drawerFavorites: 'Kaydedilen Kartlar',
-    drawerNoFavorites: 'Henüz kart kaydetmedin. Kartlarda sağdaki Kaydet (🔖) butonuna dokun!',
+    drawerNoFavorites: 'Henüz kart kaydetmedin. Kartlarda sağdaki Kaydet butonuna dokun!',
     drawerReset: 'Hafızayı Sıfırla',
     drawerResetConfirm: 'Tüm okuma geçmişin ve favorilerin temizlendi.',
     // Single SEO Page
@@ -404,14 +404,14 @@ export const translations = {
     diplomaTitle: 'Kaşif Diploması & Profil',
     diplomaNickLabel: 'Kaşif Takma Adın',
     diplomaWeeklyCert: 'Haftalık Lig Diploması',
-    diplomaCelebrateBtn: 'Lig Kutlaması Yap 🎉',
+    diplomaCelebrateBtn: 'Lig Kutlaması Yap',
     diplomaSavedArchive: 'Kaydedilen Kartlar',
-    diplomaNoSavedFacts: 'Henüz kart kaydetmedin. Kartlarda sağdaki Kaydet (🔖) butonuna dokun!',
+    diplomaNoSavedFacts: 'Henüz kart kaydetmedin. Kartlarda sağdaki Kaydet butonuna dokun!',
     diplomaLikedArchive: 'Beğenilen Gönderiler',
-    diplomaNoLikedFacts: 'Henüz beğendiğin gönderi yok. Kartlara çift dokun veya ❤️ ikonuna bas!',
+    diplomaNoLikedFacts: 'Henüz beğendiğin gönderi yok. Kartlara çift dokun veya Beğen butonuna bas!',
     diplomaNotificationsLabel: 'Günlük Akıllı Hatırlatma',
-    diplomaNotificationsOn: 'Bildirimler Açık 🔔',
-    diplomaNotificationsOff: 'Bildirimleri Aç 🔕',
+    diplomaNotificationsOn: 'Bildirimler Açık',
+    diplomaNotificationsOff: 'Bildirimleri Aç',
     // Offline Banner
     offlineReadyBanner: 'Çevrimdışı Mod • Kartlar & Quiz Hazır',
     // 9:16 Story Share Modal
@@ -448,15 +448,15 @@ export const translations = {
     // PWA Standalone Install Prompt
     pwaPromptTitle: 'Tam Ekran Uygulama Deneyimi',
     pwaPromptSubtitle: 'Adres çubuğu olmadan, çevrimdışı ve anında açılan uygulama modu',
-    pwaInstallBtn: 'Uygulamayı Yükle 📲',
+    pwaInstallBtn: 'Uygulamayı Yükle',
     pwaIosInstruction: "Uygulama gibi tam ekran kullanmak için: Paylaş → Ana Ekrana Ekle'ye dokun",
     pwaDismissLabel: 'Kapat',
-    pwaManualInstallLink: '📲 Ana Ekrana Ekle',
-    pwaInstalledBtn: '✅ Ana Ekranda Kurulu',
+    pwaManualInstallLink: 'Ana Ekrana Ekle',
+    pwaInstalledBtn: 'Ana Ekranda Kurulu',
     pwaAlreadyInstalledToast: 'Scrolly zaten ana ekranına ekli!',
-    pwaGuideTitle: "📲 Scrolly'yi Ana Ekranına Ekle",
-    pwaGuideStep1: 'Tarayıcı menüsündeki Paylaş (⬆️) simgesine dokun.',
-    pwaGuideStep2: 'Aşağı kaydırıp "➕ Ana Ekrana Ekle" seçeneğini seç.',
+    pwaGuideTitle: "Scrolly'yi Ana Ekranına Ekle",
+    pwaGuideStep1: 'Tarayıcı menüsündeki Paylaş simgesine dokun.',
+    pwaGuideStep2: 'Aşağı kaydırıp "Ana Ekrana Ekle" seçeneğini seç.',
     pwaGuideStep3: 'Sağ üstten "Ekle"ye dokun ve tam ekran başlat.',
     pwaGuideCloseBtn: 'Anladım, Tamam',
     // In-Feed Quiz CTA Slide
@@ -520,7 +520,7 @@ export const translations = {
     duelBtn: 'Scrolla 1v1',
     duelTitle: 'Scrolla 1v1 Arena',
     duelSubtitle:
-      'Challenge a friend with a short room code — race live on the exact same questions!',
+      'Challenge a friend with a short room code and race live on the exact same questions!',
     duelNameLabel: 'Arena Nickname',
     duelDefaultName: 'Curiosity Ace',
     duelCopyLinkBtn: 'Copy Scrolla Invite Link',
@@ -543,7 +543,7 @@ export const translations = {
     rewardedTitle: 'Unlock Unlimited Rewinds!',
     rewardedSubtitle:
       'View this 3-second sponsor spotlight to unlock unlimited card Rewinds for your entire session.',
-    rewardedSponsorName: 'Wonder Academy — 2-Minute Daily Micro-Science',
+    rewardedSponsorName: 'Wonder Academy · 2-Minute Daily Micro-Science',
     rewardedSponsorDesc:
       'Explore astrophysics, evolution, and neuroscience with interactive visual cards.',
     rewardedCountdown: 'Unlocking reward',
@@ -580,7 +580,7 @@ export const translations = {
     adSkipBtn: 'Next',
     adLearnMore: 'Explore',
     // Sticky Ad
-    stickyAdTitle: 'Curiosity Weekly Digest — 5 mind-bending discoveries delivered once a week.',
+    stickyAdTitle: 'Curiosity Weekly Digest: 5 mind-bending discoveries delivered once a week.',
     stickyAdCta: 'Explore Free',
     // Cookie Banner
     cookieText:
@@ -595,7 +595,7 @@ export const translations = {
     drawerNoBadges: 'Finish your first 5-card memory quiz to unlock badges!',
     drawerAffinity: 'Topic Affinity (+40% Feed Priority)',
     drawerFavorites: 'Saved Facts',
-    drawerNoFavorites: 'No saved facts yet. Tap the Save (🔖) button on any card to keep it!',
+    drawerNoFavorites: 'No saved facts yet. Tap the Save button on any card to keep it!',
     drawerReset: 'Reset Memory',
     drawerResetConfirm: 'Your reading history and saved cards have been cleared.',
     // Single SEO Page
@@ -651,14 +651,14 @@ export const translations = {
     diplomaTitle: 'Explorer Diploma & Profile',
     diplomaNickLabel: 'Explorer Nickname',
     diplomaWeeklyCert: 'Weekly League Diploma',
-    diplomaCelebrateBtn: 'Celebrate Rank 🎉',
+    diplomaCelebrateBtn: 'Celebrate Rank',
     diplomaSavedArchive: 'Saved Facts',
-    diplomaNoSavedFacts: 'No saved facts yet. Tap the bookmark (🔖) button on any card to keep it!',
+    diplomaNoSavedFacts: 'No saved facts yet. Tap the Save button on any card to keep it!',
     diplomaLikedArchive: 'Liked Facts',
-    diplomaNoLikedFacts: 'No liked facts yet. Double-tap a card or tap ❤️ on the feed!',
+    diplomaNoLikedFacts: 'No liked facts yet. Double-tap a card or tap Like on the feed!',
     diplomaNotificationsLabel: 'Daily Smart Reminder',
-    diplomaNotificationsOn: 'Notifications On 🔔',
-    diplomaNotificationsOff: 'Enable Reminders 🔕',
+    diplomaNotificationsOn: 'Notifications On',
+    diplomaNotificationsOff: 'Enable Reminders',
     // Offline Banner
     offlineReadyBanner: 'Offline Mode • Cards & Quiz Ready',
     // 9:16 Story Share Modal
@@ -695,15 +695,15 @@ export const translations = {
     // PWA Standalone Install Prompt
     pwaPromptTitle: 'Full-Screen App Experience',
     pwaPromptSubtitle: 'No address bar, instant launch, and offline access on your home screen',
-    pwaInstallBtn: 'Install App 📲',
+    pwaInstallBtn: 'Install App',
     pwaIosInstruction: 'For full-screen app mode: Tap Share → Add to Home Screen',
     pwaDismissLabel: 'Dismiss',
-    pwaManualInstallLink: '📲 Add to Home Screen',
-    pwaInstalledBtn: '✅ Installed on Home Screen',
+    pwaManualInstallLink: 'Add to Home Screen',
+    pwaInstalledBtn: 'Installed on Home Screen',
     pwaAlreadyInstalledToast: 'Scrolly is already on your home screen!',
-    pwaGuideTitle: '📲 Add Scrolly to Home Screen',
-    pwaGuideStep1: 'Tap the Share (⬆️) icon in your browser bar.',
-    pwaGuideStep2: 'Scroll down and choose "➕ Add to Home Screen".',
+    pwaGuideTitle: 'Add Scrolly to Home Screen',
+    pwaGuideStep1: 'Tap the Share icon in your browser bar.',
+    pwaGuideStep2: 'Scroll down and choose "Add to Home Screen".',
     pwaGuideStep3: 'Tap "Add" in the top right and launch full-screen.',
     pwaGuideCloseBtn: 'Got It, Close',
     // In-Feed Quiz CTA Slide

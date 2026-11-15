@@ -8,6 +8,7 @@ import {
   Brain,
   CheckCircle2,
   Flame,
+  HelpCircle,
   Sparkles,
   Swords,
   Timer,
@@ -207,7 +208,7 @@ function buildVocabQuizEntry(
     tr: {
       title: `${card.word} · ${card.phonetic}`,
       tag: `Dil Öğrenme · ${posTr}`,
-      factText: `${card.exampleEn} — "${card.exampleTr}"`,
+      factText: `${card.exampleEn} · "${card.exampleTr}"`,
       deepDiveDetail: `${card.word} (${posTr}): ${card.meaningTr}. Tanım: ${card.definitionEn}`,
       sourceName: 'Scrolly Dil Laboratuvarı',
       quiz: {
@@ -220,7 +221,7 @@ function buildVocabQuizEntry(
     en: {
       title: `${card.word} · ${card.phonetic}`,
       tag: `Language Lab · ${posEn}`,
-      factText: `${card.definitionEn} — "${card.exampleEn}"`,
+      factText: `${card.definitionEn} · "${card.exampleEn}"`,
       deepDiveDetail: `${card.word} (${posEn}, ${card.phonetic}): ${card.definitionEn}`,
       sourceName: 'Scrolly Language Lab',
       quiz: {
@@ -738,9 +739,12 @@ export default function MemoryQuizCard({
         {hideVocabTargetBeforeAnswer ? (
           <p
             data-testid="quiz-mystery-word-badge"
-            className="mt-1 text-xs font-black uppercase tracking-wider text-indigo-700 dark:text-indigo-300"
+            className="mt-1 inline-flex items-center gap-1 text-xs font-black uppercase tracking-wider text-indigo-700 dark:text-indigo-300"
           >
-            ❓ {lang === 'tr' ? 'GİZLİ KELİME' : 'MYSTERY WORD'} • {resolvedVocabPos.toUpperCase()}
+            <HelpCircle className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+            <span>
+              {lang === 'tr' ? 'GİZLİ KELİME' : 'MYSTERY WORD'} • {resolvedVocabPos.toUpperCase()}
+            </span>
           </p>
         ) : (
           <p data-testid="quiz-anchor-title" className="mt-1 text-xs font-bold text-ink/75 dark:text-violet-100/80">
@@ -785,7 +789,7 @@ export default function MemoryQuizCard({
               disabled={hasAnswered || rewardWatching}
               onClick={() => handleSelectOption(idx)}
               data-testid={`quiz-option-${idx}`}
-              className={`w-full h-auto min-h-[44px] py-2 px-3 rounded-2xl border-2 text-left text-xs sm:text-sm font-semibold transition-all flex items-center justify-between gap-2.5 whitespace-normal break-words leading-snug ${btnStyle}`}
+              className={`w-full h-auto min-h-[44px] py-2 px-3 rounded-2xl border-2 text-left text-xs sm:text-sm font-semibold transition-[background-color,border-color,color,transform] duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400 flex items-center justify-between gap-2.5 whitespace-normal break-words leading-snug ${btnStyle}`}
             >
               <div className="flex items-center gap-2.5">
                 <span
@@ -839,16 +843,21 @@ export default function MemoryQuizCard({
             }`}
           >
             <div className="flex flex-wrap items-center justify-between gap-2">
-              <p className="font-extrabold">
-                {timedOut
-                  ? t.quizTimeUp
-                  : isCorrect
-                    ? comboStreak >= 2
-                      ? lang === 'tr'
-                        ? `🔥 ${comboStreak}x Seri Kombo! Harika! (+${lastGainedXp} XP)`
-                        : `🔥 ${comboStreak}x Combo Streak! Spot on! (+${lastGainedXp} XP)`
-                      : `${t.quizCorrect} (+${lastGainedXp} XP)`
-                    : t.quizWrong}
+              <p className="inline-flex items-center gap-1.5 font-extrabold tabular-nums">
+                {!timedOut && isCorrect && comboStreak >= 2 && (
+                  <Flame className="h-4 w-4 shrink-0 text-amber-500" aria-hidden="true" />
+                )}
+                <span>
+                  {timedOut
+                    ? t.quizTimeUp
+                    : isCorrect
+                      ? comboStreak >= 2
+                        ? lang === 'tr'
+                          ? `${comboStreak}x Seri Kombo! Harika! (+${lastGainedXp} XP)`
+                          : `${comboStreak}x Combo Streak! Spot on! (+${lastGainedXp} XP)`
+                        : `${t.quizCorrect} (+${lastGainedXp} XP)`
+                      : t.quizWrong}
+                </span>
               </p>
               <span className="inline-flex items-center gap-1 rounded-full bg-white/80 px-2 py-0.5 text-[10px] font-black text-ink/75 dark:bg-black/25 dark:text-white/85">
                 <Sparkles className="h-3 w-3 text-violet-600 dark:text-violet-300" />

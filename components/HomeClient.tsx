@@ -1065,11 +1065,11 @@ export default function HomeClient({ initialFacts, initialVocabulary }: HomeClie
       showToast(
         nextSaved
           ? lang === 'tr'
-            ? '🔖 Kaydedilenlere eklendi'
-            : '🔖 Added to Saved Facts'
+            ? 'Kaydedilenlere eklendi'
+            : 'Added to Saved Facts'
           : lang === 'tr'
-            ? '🔖 Kaydedilenlerden çıkarıldı'
-            : '🔖 Removed from Saved Facts'
+            ? 'Kaydedilenlerden çıkarıldı'
+            : 'Removed from Saved Facts'
       );
     },
     [soundEnabled, lang, showToast]
@@ -1937,11 +1937,11 @@ export default function HomeClient({ initialFacts, initialVocabulary }: HomeClie
                 showToast(
                   saved
                     ? lang === 'tr'
-                      ? '🔖 Kelime defterine eklendi'
-                      : '🔖 Saved to Word Notebook'
+                      ? 'Kelime defterine eklendi'
+                      : 'Saved to Word Notebook'
                     : lang === 'tr'
-                      ? '🔖 Kelime defterinden çıkarıldı'
-                      : '🔖 Removed from Word Notebook'
+                      ? 'Kelime defterinden çıkarıldı'
+                      : 'Removed from Word Notebook'
                 );
               }
             }}

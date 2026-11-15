@@ -38,7 +38,7 @@ export async function buildFactMetadata(slug: string, lang: Language): Promise<M
   const { fact } = await resolveFactFromServer(slug);
   if (!fact) {
     return {
-      title: lang === 'tr' ? 'Kart Bulunamadı — Scrolly' : 'Fact Not Found — Scrolly',
+      title: lang === 'tr' ? 'Kart Bulunamadı | Scrolly' : 'Fact Not Found | Scrolly',
     };
   }
 
@@ -52,7 +52,7 @@ export async function buildFactMetadata(slug: string, lang: Language): Promise<M
   const catMeta = getCategoryMeta(fact.category);
 
   return {
-    title: `${title} — Scrolly`,
+    title: `${title} | Scrolly`,
     description,
     keywords: [catMeta.label[lang], fact[lang].tag, 'Scrolly', 'Scrolla'].filter(
       (item): item is string => Boolean(item)

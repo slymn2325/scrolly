@@ -2,7 +2,7 @@
 
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { BookMarked, Check, ChevronDown, ChevronUp, Sparkles, Volume2 } from 'lucide-react';
+import { BookMarked, Check, ChevronDown, ChevronUp, Globe, Sparkles, Volume2 } from 'lucide-react';
 import FullBleedReelsCanvas from '@/components/FullBleedReelsCanvas';
 import PoweredByGiphyBadge from '@/components/PoweredByGiphyBadge';
 import { FEED_EXPERIENCE_COPY, type Language } from '@/i18n/translations';
@@ -274,11 +274,11 @@ export default function VocabularySlide({
     void loadSavedVocabNotebook();
     const toastText = res.saved
       ? lang === 'tr'
-        ? '🔖 Kelime defterine eklendi'
-        : '🔖 Saved to Word Notebook'
+        ? 'Kelime defterine eklendi'
+        : 'Saved to Word Notebook'
       : lang === 'tr'
-        ? '🔖 Kelime defterinden çıkarıldı'
-        : '🔖 Removed from Word Notebook';
+        ? 'Kelime defterinden çıkarıldı'
+        : 'Removed from Word Notebook';
     window.dispatchEvent(new CustomEvent('scrolly-toast', { detail: { text: toastText } }));
   };
 
@@ -364,7 +364,7 @@ export default function VocabularySlide({
         {/* Smooth bottom contrast gradient deepening cleanly when drawer opens */}
         <div
           aria-hidden="true"
-          className={`pointer-events-none absolute inset-x-0 bottom-0 z-[5] transition-all duration-300 ${
+          className={`pointer-events-none absolute inset-x-0 bottom-0 z-[5] transition-[height,opacity] duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] ${
             isDetailsOpen
               ? 'h-[82%] bg-gradient-to-t from-[#0A0A0E] via-[#0A0A0E]/95 to-transparent'
               : 'h-[54%] bg-gradient-to-t from-[#0A0A0E] via-[#0A0A0E]/85 to-transparent'
@@ -388,7 +388,7 @@ export default function VocabularySlide({
               data-testid="vocab-badge"
               className="inline-flex w-fit items-center gap-1.5 rounded-full border border-indigo-300/40 bg-indigo-500/25 px-3 py-0.5 text-[10px] font-black uppercase tracking-wider text-white"
             >
-              <span>🇬🇧</span>
+              <Globe className="h-3 w-3 shrink-0 text-indigo-200" aria-hidden="true" />
               <span>
                 {lang === 'tr' ? 'DİL ÖĞRENME' : 'WORD LAB'} • {posLabel.toUpperCase()} • {cefrLabel}
               </span>
@@ -410,7 +410,7 @@ export default function VocabularySlide({
               }}
               onDoubleClick={(e) => e.stopPropagation()}
               onPointerDown={(e) => e.stopPropagation()}
-              className="min-w-0 text-left focus:outline-none"
+              className="min-w-0 rounded-xl text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0A0A0E]"
             >
               <div className="flex flex-wrap items-baseline gap-2.5">
                 <h2
@@ -495,8 +495,8 @@ export default function VocabularySlide({
                 />
                 <span>
                   {lang === 'tr'
-                    ? 'Örnek cümle ve anlam tahmini için dokun ▾'
-                    : 'Tap for example sentence & meaning quiz ▾'}
+                    ? 'Örnek cümle ve anlam tahmini için dokun'
+                    : 'Tap for example sentence & meaning quiz'}
                 </span>
               </span>
               <ChevronDown className="h-4 w-4 shrink-0 text-indigo-300" />
@@ -516,7 +516,7 @@ export default function VocabularySlide({
                 onClick={(e) => e.stopPropagation()}
                 className="overflow-hidden"
               >
-                <div className="mt-1 space-y-2.5 rounded-2xl border border-white/15 bg-[#0A0A0E]/90 p-3.5 backdrop-blur-md">
+                <div className="mt-1 space-y-2.5 rounded-3xl border border-white/15 bg-[#13131A]/95 p-4 shadow-xl backdrop-blur-md">
                   <div className="flex items-center justify-between gap-2">
                     <span className="text-[10px] font-black uppercase tracking-wider text-indigo-200/80">
                       {lang === 'tr' ? 'Bağlam & Anlam Tahmini' : 'Context & Meaning Quiz'}

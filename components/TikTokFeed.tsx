@@ -677,14 +677,14 @@ const TikTokFeed = forwardRef<TikTokFeedHandle, TikTokFeedProps>(function TikTok
               type="button"
               onClick={() => onChangeLang('tr')}
               data-testid="lang-btn-tr"
-              className={`inline-flex h-7 min-w-[30px] items-center justify-center rounded-full px-2 transition-all ${
+              className={`inline-flex h-7 min-w-[30px] items-center justify-center rounded-full px-2 transition-[background-color,color,transform] duration-200 ${
                 lang === 'tr'
                   ? darkMode
                     ? 'bg-white text-[#09090B]'
                     : 'bg-[#1E1B2E] text-white'
                   : darkMode
-                    ? 'text-white/80'
-                    : 'text-[#1E1B2E]/70'
+                    ? 'text-white/80 hover:text-white'
+                    : 'text-[#1E1B2E]/75 hover:text-[#1E1B2E]'
               }`}
             >
               TR
@@ -693,14 +693,14 @@ const TikTokFeed = forwardRef<TikTokFeedHandle, TikTokFeedProps>(function TikTok
               type="button"
               onClick={() => onChangeLang('en')}
               data-testid="lang-btn-en"
-              className={`inline-flex h-7 min-w-[30px] items-center justify-center rounded-full px-2 transition-all ${
+              className={`inline-flex h-7 min-w-[30px] items-center justify-center rounded-full px-2 transition-[background-color,color,transform] duration-200 ${
                 lang === 'en'
                   ? darkMode
                     ? 'bg-white text-[#09090B]'
                     : 'bg-[#1E1B2E] text-white'
                   : darkMode
-                    ? 'text-white/80'
-                    : 'text-[#1E1B2E]/70'
+                    ? 'text-white/80 hover:text-white'
+                    : 'text-[#1E1B2E]/75 hover:text-[#1E1B2E]'
               }`}
             >
               EN

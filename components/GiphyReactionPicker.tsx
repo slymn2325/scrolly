@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { Loader2, Search, Send } from 'lucide-react';
+import { Brain, Film, Flame, Loader2, Search, Send, Sparkles, Trophy, Zap } from 'lucide-react';
 import PoweredByGiphyBadge from '@/components/PoweredByGiphyBadge';
 
 export interface ReactionGifSelection {
@@ -34,11 +34,11 @@ interface MoodChip {
 
 const REACTION_MOOD_CHIPS: readonly MoodChip[] = [
   { id: 'gg', label: 'GG', query: 'gg' },
-  { id: 'fire', label: '🔥 Fire', query: 'fire' },
-  { id: 'genius', label: '🧠 Genius', query: 'genius' },
-  { id: 'mind-blown', label: '🤯 Mind Blown', query: 'mind blown' },
-  { id: 'fast', label: '⚡ Fast', query: 'fast' },
-  { id: 'victory', label: '🎉 Victory', query: 'victory' },
+  { id: 'fire', label: 'Fire', query: 'fire' },
+  { id: 'genius', label: 'Genius', query: 'genius' },
+  { id: 'mind-blown', label: 'Mind Blown', query: 'mind blown' },
+  { id: 'fast', label: 'Fast', query: 'fast' },
+  { id: 'victory', label: 'Victory', query: 'victory' },
 ] as const;
 
 export default function GiphyReactionPicker({
@@ -132,7 +132,7 @@ export default function GiphyReactionPicker({
     void onSelectGif(gif);
   };
 
-  const heading = lang === 'tr' ? '🎬 GIF ile Tepki Gönder' : '🎬 Send Reaction GIF';
+  const heading = lang === 'tr' ? 'GIF ile Tepki Gönder' : 'Send Reaction GIF';
   const placeholder = lang === 'tr' ? "GIPHY'de ara..." : 'Search GIPHY...';
 
   return (
@@ -143,8 +143,9 @@ export default function GiphyReactionPicker({
       }`}
     >
       <div className="flex items-center justify-between gap-2">
-        <p className="text-xs font-black tracking-tight text-ink dark:text-white">
-          {heading}
+        <p className="inline-flex items-center gap-1.5 text-xs font-black tracking-tight text-ink dark:text-white">
+          <Film className="h-3.5 w-3.5 shrink-0 text-violet-600 dark:text-violet-300" aria-hidden="true" />
+          <span>{heading}</span>
         </p>
         {sending && (
           <span className="inline-flex items-center gap-1 text-[10px] font-bold text-violet-600 dark:text-violet-300">
@@ -165,7 +166,7 @@ export default function GiphyReactionPicker({
             placeholder={placeholder}
             aria-label={placeholder}
             data-testid="giphy-reaction-search-input"
-            className="w-full rounded-xl border border-violet-200/90 bg-white py-1.5 pl-8 pr-2.5 text-xs font-semibold text-ink placeholder:text-ink/45 focus:border-violet-500 focus:outline-none dark:border-white/15 dark:bg-[#1A1A28] dark:text-white dark:placeholder:text-white/45"
+            className="w-full rounded-xl border border-violet-200/90 bg-white py-1.5 pl-8 pr-2.5 text-xs font-semibold text-ink placeholder:text-ink/60 focus:border-violet-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-400 dark:border-white/15 dark:bg-[#1A1A28] dark:text-white dark:placeholder:text-white/60"
           />
         </div>
         <button
@@ -182,19 +183,32 @@ export default function GiphyReactionPicker({
       <div className="mt-2 flex flex-wrap items-center gap-1.5">
         {REACTION_MOOD_CHIPS.map((chip) => {
           const active = activeMoodId === chip.id;
+          const chipIcon =
+            chip.id === 'fire' ? (
+              <Flame className="h-3 w-3 shrink-0" aria-hidden="true" />
+            ) : chip.id === 'genius' ? (
+              <Brain className="h-3 w-3 shrink-0" aria-hidden="true" />
+            ) : chip.id === 'mind-blown' ? (
+              <Sparkles className="h-3 w-3 shrink-0" aria-hidden="true" />
+            ) : chip.id === 'fast' ? (
+              <Zap className="h-3 w-3 shrink-0" aria-hidden="true" />
+            ) : chip.id === 'victory' ? (
+              <Trophy className="h-3 w-3 shrink-0" aria-hidden="true" />
+            ) : null;
           return (
             <button
               key={chip.id}
               type="button"
               onClick={() => handleMoodClick(chip)}
               data-testid={`giphy-mood-chip-${chip.id}`}
-              className={`rounded-full px-2.5 py-1 text-[10px] font-extrabold transition ${
+              className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[10px] font-extrabold transition-[background-color,color,border-color,box-shadow] duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400 ${
                 active
                   ? 'bg-violet-600 text-white shadow-sm'
                   : 'border border-violet-200/80 bg-white/90 text-ink/80 hover:border-violet-400 dark:border-white/15 dark:bg-white/10 dark:text-violet-100'
               }`}
             >
-              {chip.label}
+              {chipIcon}
+              <span>{chip.label}</span>
             </button>
           );
         })}
@@ -226,7 +240,7 @@ export default function GiphyReactionPicker({
                   onClick={() => handlePickGif(gif)}
                   title={gif.title}
                   data-testid={`giphy-reaction-tile-${idx}`}
-                  className={`group relative aspect-[4/3] overflow-hidden rounded-xl border transition focus:outline-none ${
+                  className={`group relative aspect-[4/3] overflow-hidden rounded-xl border transition-[border-color,transform,box-shadow] duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-400 ${
                     isSelected
                       ? 'border-emerald-400 ring-2 ring-emerald-400/60'
                       : 'border-white/20 hover:border-violet-400'
