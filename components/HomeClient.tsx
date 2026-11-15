@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { AnimatePresence } from 'framer-motion';
 import CookieBanner from '@/components/CookieBanner';
 import DiplomaProfileModal from '@/components/DiplomaProfileModal';
@@ -12,27 +12,32 @@ import DesktopLeftNav from '@/components/DesktopLeftNav';
 import IosFloatingIslandDock, { type DockTabId } from '@/components/IosFloatingIslandDock';
 import LeaderboardModal from '@/components/LeaderboardModal';
 import WelcomeExploreModal, {
+  clearWelcomeDismissed,
   persistWelcomeDismissed,
   readWelcomeDismissed,
 } from '@/components/WelcomeExploreModal';
 import MemoryQuizCard, { type ActiveQuizMode } from '@/components/MemoryQuizCard';
 import OfflineManager from '@/components/OfflineManager';
-import PwaInstallPrompt from '@/components/PwaInstallPrompt';
+import PwaInstallPrompt, { clearPwaDismissed } from '@/components/PwaInstallPrompt';
 import QuizHubModal, { type QuizModeChoice } from '@/components/QuizHubModal';
 import ShareResultModal from '@/components/ShareResultModal';
 import StoryShareModal from '@/components/StoryShareModal';
 import TikTokFeed, { type FeedSlideItem, type TikTokFeedHandle } from '@/components/TikTokFeed';
+import { DIAGRAM_INTERACTED_STORAGE_KEY } from '@/components/InteractiveSketchArt';
 import {
   type CategoryFilter,
   type CategoryId,
   type Language,
 } from '@/i18n/translations';
+import { getVocabularyFacts } from '@/data/vocabularyFacts';
+import type { VocabularyCard } from '@/types/vocabulary';
 import { isShortRoomCode, normalizeRoomCode } from '@/lib/duelStore';
 import {
   fetchFactsFromApiWithCache,
   fetchPaginatedFactsFromApi,
   fetchProfileFromApi,
   initTelemetrySync,
+  resetTelemetryClientState,
   syncProfileToApi,
   trackEvent,
 } from '@/lib/telemetry';
@@ -41,8 +46,14 @@ import {
   interleaveFactsByCategory,
 } from '@/utils/factsData';
 import { decodeDuelPayload, type DuelPayload } from '@/utils/duelCodec';
-import { completeScrollaRoom, resolveFactsByIds } from '@/utils/duelLobby';
-import { isFactLiked } from '@/utils/likedFacts';
+import {
+  clearScrollaPlayerId,
+  completeScrollaRoom,
+  getOrCreateScrollaPlayerId,
+  resolveFactsByIds,
+} from '@/utils/duelLobby';
+import { clearLikedFacts, isFactLiked } from '@/utils/likedFacts';
+import { clearVocabNotebook } from '@/utils/vocabNotebook';
 import { cryptoRandomFloat } from '@/utils/cryptoRandom';
 import {
   vibrateDoubleTap,
@@ -101,6 +112,7 @@ interface ActiveQuizSession {
 
 interface HomeClientProps {
   initialFacts: FactCardType[];
+  initialVocabulary?: VocabularyCard[];
 }
 
 function mergeFactsById(base: FactCardType[], incoming: FactCardType[]): FactCardType[] {
@@ -192,14 +204,17 @@ function promoteFactToFront(
   return [match, ...deck.filter((f) => f.id !== match.id)];
 }
 
-export default function HomeClient({ initialFacts }: HomeClientProps) {
+export default function HomeClient({ initialFacts, initialVocabulary }: HomeClientProps) {
   const allFactsRef = useRef<FactCardType[]>(initialFacts);
   const [allFacts, setAllFacts] = useState<FactCardType[]>(initialFacts);
+  const [dbVocabulary, setDbVocabulary] = useState<VocabularyCard[]>(() => initialVocabulary ?? []);
+  const [lockedFactIds, setLockedFactIds] = useState<Record<string, boolean>>({});
   const feedRef = useRef<TikTokFeedHandle>(null);
   const activeCategoryRef = useRef<CategoryFilter>('all');
   const requestedFactSlugRef = useRef<string | null>(null);
   const hasHydratedRef = useRef(false);
   const profileHydratedRef = useRef(false);
+  const skipNextProfileSyncRef = useRef(false);
 
   const [memory, setMemory] = useState<UserMemoryState>(() => getDefaultUserState('tr'));
   const memoryRef = useRef<UserMemoryState>(memory);
@@ -222,6 +237,7 @@ export default function HomeClient({ initialFacts }: HomeClientProps) {
   const [storyShareFact, setStoryShareFact] = useState<FactCardType | null>(null);
   const [maxSwipedCards, setMaxSwipedCards] = useState(0);
   const [manualPwaOpen, setManualPwaOpen] = useState(false);
+  const [clientResetEpoch, setClientResetEpoch] = useState(0);
 
   const [shareModalData, setShareModalData] = useState<{
     results: boolean[];
@@ -383,6 +399,9 @@ export default function HomeClient({ initialFacts }: HomeClientProps) {
 
       if (page1 && page1.facts.length > 0) {
         setUsingLocalFallback(false);
+        if (page1.vocabulary && page1.vocabulary.length > 0) {
+          setDbVocabulary(page1.vocabulary);
+        }
         workingPool = applyFactBatch(page1.facts);
         if (page1.hasMore && !cancelled) {
           const page2 = await fetchPaginatedFactsFromApi({ offset: 80, limit: 120 });
@@ -493,6 +512,10 @@ export default function HomeClient({ initialFacts }: HomeClientProps) {
 
   useEffect(() => {
     if (!hasHydratedRef.current || !profileHydratedRef.current) return;
+    if (skipNextProfileSyncRef.current) {
+      skipNextProfileSyncRef.current = false;
+      return;
+    }
 
     const activeSlug = seedFact?.slug || seedFact?.en.slug || seedFact?.tr.slug || seedFact?.id || 'profile';
     const syncTimer = setTimeout(() => {
@@ -657,6 +680,10 @@ export default function HomeClient({ initialFacts }: HomeClientProps) {
     },
     [soundEnabled]
   );
+
+  const handleGuessLocked = useCallback((factId: string) => {
+    setLockedFactIds((prev) => (prev[factId] ? prev : { ...prev, [factId]: true }));
+  }, []);
 
   const handleGuessReward = useCallback(
     (xpAmount: number, accurate: boolean, category?: CategoryId, accuracyPct?: number) => {
@@ -906,10 +933,40 @@ export default function HomeClient({ initialFacts }: HomeClientProps) {
   };
 
   const handleResetMemory = () => {
+    skipNextProfileSyncRef.current = true;
+
+    // Wipe every client-side progress bucket Reset Memory is documented to clear.
+    clearLikedFacts();
+    clearVocabNotebook();
+    clearPwaDismissed();
+    clearWelcomeDismissed();
+    clearScrollaPlayerId();
+    try {
+      window.localStorage.removeItem(DIAGRAM_INTERACTED_STORAGE_KEY);
+    } catch {
+      // Ignore private-mode storage failures
+    }
+    const { previousDeviceId } = resetTelemetryClientState();
+
     const fresh = resetUserMemory();
+    // Keep Scrolla / duel identity aligned with the fresh player id.
+    getOrCreateScrollaPlayerId(fresh.playerId);
+
     setMemory(fresh);
+    setLikedRevision((prev) => prev + 1);
+    setClientResetEpoch((prev) => prev + 1);
+    setLockedFactIds({});
+    setMaxSwipedCards(0);
+    setIncomingDuel(null);
+    setIncomingRoomCode(null);
+    setActiveQuiz(null);
+    setShareModalData(null);
+    setStoryShareFact(null);
+    setManualPwaOpen(false);
+    setShowWelcome(true);
     activeCategoryRef.current = 'all';
     setActiveCategory('all');
+    setActiveTab('explore');
     const cleanDeck = buildPersonalizedDeck(allFactsRef.current, 'all', [], fresh.categoryWeights, false);
     setDeckFacts(cleanDeck);
     if (cleanDeck[0]) {
@@ -917,7 +974,35 @@ export default function HomeClient({ initialFacts }: HomeClientProps) {
       setActiveFact(cleanDeck[0]);
     }
     feedRef.current?.scrollToTop();
-    void syncProfileToApi({ reset: true, username: fresh.nickname });
+
+    const zeroedProfile = {
+      reset: true as const,
+      username: fresh.nickname,
+      xp: 0,
+      weeklyXp: 0,
+      dailyBestScore: 0,
+      lastDailyQuizDate: '',
+      streak: 1,
+      lastVisitDate: fresh.lastVisitDate,
+      seenIds: [] as string[],
+      favoriteIds: [] as string[],
+      categoryWeights: fresh.categoryWeights,
+      categoryAccuracy: fresh.categoryAccuracy,
+      badges: [] as string[],
+    };
+
+    // Zero the previous device profile (if any), then persist the fresh anonymous id.
+    if (previousDeviceId && previousDeviceId !== 'server') {
+      void fetch('/api/profile', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ deviceId: previousDeviceId, ...zeroedProfile }),
+        keepalive: true,
+      }).catch(() => {
+        // Best-effort remote wipe; local clear already succeeded.
+      });
+    }
+    void syncProfileToApi(zeroedProfile);
   };
 
   const cookieBannerVisible =
@@ -973,6 +1058,21 @@ export default function HomeClient({ initialFacts }: HomeClientProps) {
   }, []);
 
   const isDark = memory.darkMode;
+  const mergedVocabulary = useMemo(() => {
+    const staticVocab = getVocabularyFacts();
+    if (dbVocabulary.length === 0) return staticVocab;
+    const seenWords = new Set<string>();
+    const seenIds = new Set<string>();
+    const merged: VocabularyCard[] = [];
+    for (const card of [...dbVocabulary, ...staticVocab]) {
+      const wordKey = card.word.trim().toLowerCase();
+      if (!wordKey || seenWords.has(wordKey) || seenIds.has(card.id)) continue;
+      seenWords.add(wordKey);
+      seenIds.add(card.id);
+      merged.push(card);
+    }
+    return merged;
+  }, [dbVocabulary]);
   const activeFactLiked = activeFact ? (likedRevision >= 0 && isFactLiked(activeFact.id)) : false;
   const activeFactLikesCount = activeFact
     ? typeof activeFact.likesCount === 'number'
@@ -1069,6 +1169,7 @@ export default function HomeClient({ initialFacts }: HomeClientProps) {
 
         {showExploreFeed && !storyShareFact && !shareModalData && (
           <PwaInstallPrompt
+            key={`pwa-${clientResetEpoch}`}
             lang={lang}
             swipedCount={maxSwipedCards}
             forceOpen={manualPwaOpen}
@@ -1103,6 +1204,9 @@ export default function HomeClient({ initialFacts }: HomeClientProps) {
             onOpenDuelFromCard={handleOpenDuelFromCard}
             onOpenStoryShare={handleOpenStoryShare}
             onGuessReward={handleGuessReward}
+            onGuessLocked={handleGuessLocked}
+            lockedFactIds={lockedFactIds}
+            vocabularyCards={mergedVocabulary}
             onToggleFavorite={handleToggleFavorite}
             onOpenQuizHub={handleOpenQuizHub}
             onButtonPop={() => playPop(soundEnabled)}
@@ -1220,6 +1324,21 @@ export default function HomeClient({ initialFacts }: HomeClientProps) {
             handleSelectCategory(cat);
             setActiveTab('explore');
           }}
+          onRemoveFavorite={(factId) => {
+            const fact = allFacts.find((f) => f.id === factId);
+            if (!fact) {
+              setMemory((prev) => {
+                const next = {
+                  ...prev,
+                  favoriteIds: prev.favoriteIds.filter((id) => id !== factId),
+                };
+                saveUserMemory(next);
+                return next;
+              });
+              return;
+            }
+            setMemory((prev) => toggleFavoriteFact(prev, fact.id, fact.category));
+          }}
           onResetMemory={handleResetMemory}
           onRequestPwaInstall={() => setManualPwaOpen(true)}
           onClose={closeOverlayToExplore}
@@ -1286,6 +1405,7 @@ export default function HomeClient({ initialFacts }: HomeClientProps) {
             darkMode={isDark}
             activeFact={activeFact}
             activeSlide={activeSlide}
+            isGuessLocked={activeFact ? Boolean(lockedFactIds[activeFact.id]) : false}
             isLiked={activeFactLiked}
             isSaved={activeFact ? memory.favoriteIds.includes(activeFact.id) : false}
             likesCount={activeFactLikesCount}

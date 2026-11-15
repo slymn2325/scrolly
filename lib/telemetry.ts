@@ -1,6 +1,7 @@
 'use client';
 
 import type { FactCard } from '@/types/fact';
+import type { VocabularyCard } from '@/types/vocabulary';
 import { cryptoRandomUuid } from '@/utils/cryptoRandom';
 
 export type TelemetryEventType =
@@ -63,6 +64,25 @@ export function getOrCreateDeviceId(): string {
   } catch {
     return generateUuid();
   }
+}
+
+/** Wipe telemetry-side client caches and mint a fresh anonymous device id. */
+export function resetTelemetryClientState(): { previousDeviceId: string | null; deviceId: string } {
+  if (typeof window === 'undefined') {
+    return { previousDeviceId: null, deviceId: 'server' };
+  }
+
+  let previousDeviceId: string | null = null;
+  try {
+    previousDeviceId = window.localStorage.getItem(DEVICE_ID_STORAGE_KEY);
+    window.localStorage.removeItem(DEVICE_ID_STORAGE_KEY);
+    window.localStorage.removeItem(OFFLINE_QUEUE_STORAGE_KEY);
+    window.localStorage.removeItem(CACHED_FACTS_STORAGE_KEY);
+  } catch {
+    // Ignore storage failures in private mode
+  }
+
+  return { previousDeviceId, deviceId: getOrCreateDeviceId() };
 }
 
 function readOfflineQueue(): TelemetryEventRecord[] {
@@ -214,10 +234,27 @@ export async function trackEvent(
 
 export interface PaginatedFactsResult {
   facts: FactCard[];
+  /** Live Postgres `vocabulary_cards` merged with static cards (present when the API returns it). */
+  vocabulary?: VocabularyCard[];
+  source?: 'postgres' | 'local';
   total: number;
   offset: number;
   limit: number;
   hasMore: boolean;
+}
+
+function sanitizeApiVocabulary(raw: unknown): VocabularyCard[] | undefined {
+  if (!Array.isArray(raw)) return undefined;
+  return raw.filter(
+    (item): item is VocabularyCard =>
+      Boolean(item) &&
+      typeof item === 'object' &&
+      typeof (item as VocabularyCard).id === 'string' &&
+      typeof (item as VocabularyCard).word === 'string' &&
+      typeof (item as VocabularyCard).meaningTr === 'string' &&
+      Array.isArray((item as VocabularyCard).quizOptions) &&
+      (item as VocabularyCard).quizOptions.length === 3
+  );
 }
 
 export async function fetchPaginatedFactsFromApi(options?: {
@@ -241,12 +278,16 @@ export async function fetchPaginatedFactsFromApi(options?: {
   try {
     const res = await fetch(`/api/facts?${params.toString()}`, {
       method: 'GET',
+      cache: 'no-store',
     });
     if (res.ok) {
-      const data = (await res.json()) as Partial<PaginatedFactsResult>;
+      const data = (await res.json()) as Partial<PaginatedFactsResult> & { vocabulary?: unknown };
       if (Array.isArray(data.facts)) {
+        const vocabulary = sanitizeApiVocabulary(data.vocabulary);
         return {
           facts: data.facts,
+          ...(vocabulary ? { vocabulary } : {}),
+          ...(data.source === 'postgres' || data.source === 'local' ? { source: data.source } : {}),
           total: typeof data.total === 'number' ? data.total : data.facts.length,
           offset: typeof data.offset === 'number' ? data.offset : offset,
           limit: typeof data.limit === 'number' ? data.limit : limit,

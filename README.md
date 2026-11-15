@@ -27,7 +27,8 @@
 - **GIF + Etkileşimli Canvas Görsel Motoru (`lib/gifService.ts`, `FullBleedReelsCanvas`, `InteractiveSketchArt`):** Her karttaki `visualQuery` alanından `/api/gif` üzerinden Giphy/Tenor destekli temiz GIF araması; API anahtarı yoksa veya ağ kesilirse sıfır kırık görüntü için Canvas 2D + SVG vektör sahne motoruna otomatik düşüş.
 - **Etkileşimli Tahminler & Kavramsal Quizler (`GuessWidget`, `MemoryQuizCard`, `QuizHubModal`):** Her kartta sayısal/ikili tahmin etkileşimi ve neden-nasıl odaklı 3 seçenekli kavramsal quiz; 13 kartlık hafıza kontrol noktaları, XP/seri kazanımı ve Canvas 2D Story/Diploma görsel paylaşımı.
 - **Scrolla 1v1 Gerçek Zamanlı Düello (`DuelModal`, `/api/duels`, `/api/duels/[code]`):** Oda koduyla (`duelStore.ts` + Postgres kalıcılığı) iki oyuncunun eşzamanlı soru seti üzerinde yarıştığı 1v1 bilgi düellosu.
-- **Postgres Kalıcılığı & Küresel Liderlik Tablosu (`lib/db.ts`, `/api/profile`, `/api/leaderboard`, `/api/events`):** Çoklu cihaz profil senkronizasyonu, XP/seri/rozet kaydı, liderlik sıralaması ve `DATABASE_URL` tanımlı olmadığında yerel JSON (`public/data/facts/*.json`) geri dönüşü.
+- **Postgres Kalıcılığı & Küresel Liderlik Tablosu (`lib/db.ts`, `/api/profile`, `/api/leaderboard`, `/api/events`):** Çoklu cihaz profil senkronizasyonu, XP/seri/rozet kaydı, liderlik sıralaması ve `DATABASE_URL` tanımlı olmadığında yerel seed JSON (`public/data/facts/*.json`) geri dönüşü.
+- **Heroku Postgres Kart Üretimi (`scripts/generateFacts.mjs`, `auto-generate-facts.yml`):** Üretilen kartlar **repoya JSON commit edilmez**; doğrudan `DATABASE_URL` ile Heroku Postgres’e yazılır. Cron her 6 saatte bir (`0 */6 * * *`), her koşuda varsayılan ~25 kart (10’luk batch’ler, batch arası 2 sn) → günde ~100 kart. Canlı site facts/vocab’ı Postgres’ten okur; seed JSON yalnızca boş DB / seed birleşimi içindir. Durum için `/api/db-status` (`Cache-Control: no-store`).
 - **Çok Dilli SEO & GEO:** `/fact/[slug]`, `/en/fact/[slug]`, `/category/[category]`, `/en/category/[category]` ISR sayfaları, karşılıklı `hreflang` etiketleri, `/sitemap.xml`, `/llms.txt`, `/llms-full.txt` ve `/opengraph-image`.
 
 ---
@@ -42,7 +43,8 @@
 - **Hybrid GIF + Interactive Canvas Visual Engine (`lib/gifService.ts`, `/api/gif`):** Looks up clean, family-safe animated GIFs via Giphy/Tenor using each card's concrete English `visualQuery`, with zero-flicker fallback to bespoke procedural Canvas 2D & interactive SVG scenes.
 - **Interactive Estimation & Conceptual Quizzes:** Spoiler-protected estimation sliders/binary challenges paired with conceptual 3-option "why/how" quizzes, spaced memory checkpoints, XP streaks, and downloadable Canvas 2D Story & Diploma cards.
 - **Scrolla Real-Time 1v1 Duels (`/api/duels`, `/api/duels/[code]`):** Room-code 1v1 trivia duels backed by PostgreSQL (`lib/duelStore.ts`) with synchronized card rounds and instant scoreboards.
-- **Postgres Persistence & Leaderboard (`/api/profile`, `/api/leaderboard`, `/api/events`):** Multi-device XP/streak persistence, event telemetry, and automatic graceful fallback to local JSON shards (`public/data/facts/*.json`) when `DATABASE_URL` is not configured.
+- **Postgres Persistence & Leaderboard (`/api/profile`, `/api/leaderboard`, `/api/events`):** Multi-device XP/streak persistence, event telemetry, and automatic graceful fallback to local seed JSON shards (`public/data/facts/*.json`) when `DATABASE_URL` is not configured.
+- **Heroku Postgres Card Generation (`scripts/generateFacts.mjs`, `auto-generate-facts.yml`):** Generated cards are **never committed as JSON** to the repo; they insert straight into Heroku Postgres via `DATABASE_URL`. Cron runs every 6 hours (`0 */6 * * *`), default ~25 cards/run in batches of 10 (2s between batches) → ~100 cards/day. The live site reads facts/vocab from Postgres first; seed JSON is only for empty-DB seeding/merge. Inspect counts at `/api/db-status` (`Cache-Control: no-store`).
 - **Multilingual SEO & AI Readability (GEO):** ISR-backed pages at `/fact/[slug]`, `/en/fact/[slug]`, `/category/[category]`, `/en/category/[category]` with reciprocal `hreflang` links, `sitemap.xml`, `llms.txt`, `llms-full.txt`, and dynamic OpenGraph images.
 
 ---
@@ -55,7 +57,7 @@
 | Styling & Motion | Tailwind CSS 3.4, Framer Motion 11 |
 | Visuals & Audio | Giphy/Tenor GIF API (`/api/gif`), HTML5 Canvas 2D, SVG illustrations, Web Audio & Web Speech API |
 | Database & Cache | PostgreSQL (`pg`) with optional `DATABASE_CA_CERT` + JSON fallback & `React.cache()` |
-| Automation & CI | GitHub Actions CI (`ci.yml`), daily LLM + reservoir generator (`auto-generate-facts.yml`) |
+| Automation & CI | GitHub Actions CI (`ci.yml`), Postgres-only LLM generator every 6h (`auto-generate-facts.yml`, no JSON commits) |
 | Deployment | Heroku (`Procfile`) or any Node.js `22+` host |
 
 ---
@@ -73,17 +75,17 @@ scrolly/
 │   ├── en/fact/[slug]/page.tsx        # EN fact detail page (ISR)
 │   ├── category/[category]/page.tsx   # TR category archive (ISR)
 │   ├── en/category/[category]/page.tsx# EN category archive (ISR)
-│   └── api/                           # `/facts`, `/gif`, `/duels`, `/duels/[code]`, `/profile`, `/leaderboard`, `/events`, `/contact`
+│   └── api/                           # `/facts`, `/gif`, `/duels`, `/duels/[code]`, `/profile`, `/leaderboard`, `/events`, `/db-status`, `/contact`
 ├── components/                        # Reels feed, Canvas scenes, Language Lab, Quiz Hub, Scrolla Duel UI, Trust pages
-├── data/                              # Vocabulary seed & generated vocabulary JSON
+├── data/                              # Vocabulary seed JSON (runtime prefers Postgres)
 ├── i18n/translations.ts               # TR / EN translations
 ├── lib/                               # Postgres pool (`db.ts`), duels (`duelStore.ts`), GIF service (`gifService.ts`), rate limiting
 ├── scripts/
-│   ├── generateFacts.mjs              # Daily LLM fact + vocabulary generator & Postgres seeder
+│   ├── generateFacts.mjs              # Batch LLM → Heroku Postgres writer (`DATABASE_URL` required; optional `--local-json` for offline/dev only)
 │   ├── scientificFactReservoir.mjs    # Curated 7-category fallback reservoir & parametric templates
 │   └── seedVocabularyFacts.mjs        # Static vocabulary card generator (`data/vocabularyFacts.ts`)
 ├── public/
-│   ├── data/facts/                    # 7 category shards (`space`, `nature`, `human_body`, `history`, `science`, `records`, `statistics`) + `facts.json`
+│   ├── data/facts/                    # Seed shards only (`space`, `nature`, `human_body`, `history`, `science`, `records`, `statistics`) + `facts.json` — not the live write path
 │   ├── assets/                        # Local vector/illustration category assets & favicons
 │   ├── sw.js                          # Offline-ready Service Worker
 │   └── ads.txt                        # Google AdSense verification
@@ -108,7 +110,7 @@ npm ci
 npm run dev
 ```
 
-Tarayıcıda `http://localhost:3000` adresini açın. Uygulama `DATABASE_URL` olmadan da yerel JSON veri setiyle çalışır.
+Tarayıcıda `http://localhost:3000` adresini açın. Uygulama `DATABASE_URL` olmadan da yerel **seed** JSON ile çalışır; canlı içerik yolu Postgres’tir.
 
 ### Doğrulama & Betikler / Verification & Scripts
 
@@ -119,10 +121,14 @@ npm run lint
 npm run build
 npm run start
 
-# Fact & vocabulary generation scripts
-node scripts/generateFacts.mjs        # Requires DATABASE_URL + AI key (GEMINI_API_KEY / OPENAI_API_KEY / AI_API_KEY)
-node scripts/seedVocabularyFacts.mjs  # Regenerates data/vocabularyFacts.ts
+# Fact & vocabulary generation (Postgres-first)
+node scripts/generateFacts.mjs              # Requires DATABASE_URL + AI key; inserts batches of 10 (default TARGET_CARDS_PER_RUN=25)
+node scripts/generateFacts.mjs --local-json # Optional offline/dev: also append data/*.json (not used by CI)
+node scripts/generateFacts.mjs --dry-run    # Schema/prompt check without DB writes
+node scripts/seedVocabularyFacts.mjs        # Regenerates data/vocabularyFacts.ts
 ```
+
+> **GitHub Actions:** `auto-generate-facts.yml` yalnızca Postgres’e yazar (`contents: read`). `DATABASE_URL` ve AI anahtarları Actions secrets/vars olarak gerekir; üretilen kartlar commit/push edilmez.
 
 ---
 
@@ -139,12 +145,13 @@ DATABASE_CA_CERT=                          # Opsiyonel: Üretim TLS için PEM CA
 GIPHY_API_KEY=                             # Tercih edilen Giphy v1 Search API anahtarı
 TENOR_API_KEY=                             # Yedek Tenor v2 Search API anahtarı
 
-# Günlük Otomatik Kart Üretimi / Automated Fact & Vocabulary Generation
+# Günlük Otomatik Kart Üretimi / Automated Fact & Vocabulary Generation (Postgres only)
 GEMINI_API_KEY=                            # Veya OPENAI_API_KEY / AI_API_KEY
 OPENAI_API_KEY=
 AI_API_KEY=
 AI_MODELS_ENDPOINT=https://generativelanguage.googleapis.com/v1beta/openai/chat/completions
 AI_MODEL_NAME=gemini-4-hydrogen
+TARGET_CARDS_PER_RUN=25                    # Opsiyonel: Actions vars / workflow_dispatch (10’luk batch’ler)
 
 # Google Tag Manager & AdSense (Consent Mode v2)
 NEXT_PUBLIC_GTM_ID=GTM-N746KK52

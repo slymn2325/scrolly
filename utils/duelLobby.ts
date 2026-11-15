@@ -71,6 +71,15 @@ export function createPlayerId(): string {
   return `p${Date.now().toString(36)}${Math.floor(Math.random() * 1e6).toString(36)}`;
 }
 
+export function clearScrollaPlayerId(): void {
+  if (typeof window === 'undefined') return;
+  try {
+    window.localStorage.removeItem(SCROLLA_PLAYER_KEY);
+  } catch {
+    // Ignore storage failures
+  }
+}
+
 /** Converts a VocabularyCard into a playable FactCard quiz item for Scrolla/Quiz modes. */
 export function vocabCardToFactCard(
   vocab: VocabularyCard,

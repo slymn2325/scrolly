@@ -77,3 +77,28 @@ export function toggleSaveVocabularyCard(card: VocabularyCard): {
 
   return { saved: !exists, entries: next };
 }
+
+export function removeSavedVocabWord(word: string): SavedVocabularyEntry[] {
+  if (typeof window === 'undefined') return [];
+  const target = word.trim().toLowerCase();
+  const next = loadSavedVocabNotebook().filter(
+    (item) => item.word.trim().toLowerCase() !== target
+  );
+  try {
+    window.localStorage.setItem(VOCAB_NOTEBOOK_KEY, JSON.stringify(next));
+    window.dispatchEvent(new Event('scrolly-vocab-updated'));
+  } catch {
+    // Ignore storage quota errors
+  }
+  return next;
+}
+
+export function clearVocabNotebook(): void {
+  if (typeof window === 'undefined') return;
+  try {
+    window.localStorage.removeItem(VOCAB_NOTEBOOK_KEY);
+    window.dispatchEvent(new Event('scrolly-vocab-updated'));
+  } catch {
+    // Ignore storage quota errors
+  }
+}

@@ -58,6 +58,8 @@ interface TikTokFeedProps {
   onOpenDuelFromCard: (fact: FactCard) => void;
   onOpenStoryShare: (fact: FactCard) => void;
   onGuessReward: (xp: number, accurate: boolean, category?: CategoryId, accuracyPct?: number) => void;
+  onGuessLocked?: (factId: string) => void;
+  lockedFactIds?: Record<string, boolean>;
   onToggleFavorite: (fact: FactCard) => void;
   onOpenQuizHub: () => void;
   onButtonPop: () => void;
@@ -95,6 +97,8 @@ const TikTokFeed = forwardRef<TikTokFeedHandle, TikTokFeedProps>(function TikTok
     onOpenDuelFromCard,
     onOpenStoryShare,
     onGuessReward,
+    onGuessLocked,
+    lockedFactIds,
     onToggleFavorite,
     onOpenQuizHub,
     onButtonPop,
@@ -131,10 +135,21 @@ const TikTokFeed = forwardRef<TikTokFeedHandle, TikTokFeedProps>(function TikTok
   const copy = FEED_EXPERIENCE_COPY[lang];
   const allCategoryMeta = CATEGORIES[0];
   const activeCategoryMeta = getCategoryMeta(activeCategory);
-  const vocabPool = useMemo(
-    () => (vocabularyCards && vocabularyCards.length > 0 ? vocabularyCards : getVocabularyFacts()),
-    [vocabularyCards]
-  );
+  const vocabPool = useMemo(() => {
+    const staticVocab = getVocabularyFacts();
+    if (!vocabularyCards || vocabularyCards.length === 0) return staticVocab;
+    const seenWords = new Set<string>();
+    const seenIds = new Set<string>();
+    const merged: VocabularyCard[] = [];
+    for (const card of [...vocabularyCards, ...staticVocab]) {
+      const wordKey = card.word.trim().toLowerCase();
+      if (!wordKey || seenWords.has(wordKey) || seenIds.has(card.id)) continue;
+      seenWords.add(wordKey);
+      seenIds.add(card.id);
+      merged.push(card);
+    }
+    return merged;
+  }, [vocabularyCards]);
 
   // Dil Öğrenme = vocab-only. Genel = facts + 1 vocab every 4–5 cards. Category = filtered facts.
   const slides: FeedSlideItem[] = useMemo(() => {
@@ -769,6 +784,7 @@ const TikTokFeed = forwardRef<TikTokFeedHandle, TikTokFeedProps>(function TikTok
                   isFavorite={favoriteIds.includes(slide.fact.id)}
                   isFirstCard={slide.factIndex === 0}
                   isActive={effectiveSlideActive}
+                  isGuessLocked={Boolean(lockedFactIds?.[slide.fact.id])}
                   cookieBannerVisible={cookieBannerVisible}
                   onFlip={onFlipCard}
                   onDoubleTapLike={onDoubleTapLike}
@@ -777,6 +793,7 @@ const TikTokFeed = forwardRef<TikTokFeedHandle, TikTokFeedProps>(function TikTok
                   onOpenDuel={onOpenDuelFromCard}
                   onOpenStoryShare={onOpenStoryShare}
                   onGuessReward={onGuessReward}
+                  onGuessLocked={onGuessLocked}
                   onToggleFavorite={onToggleFavorite}
                   onButtonPop={onButtonPop}
                   onEarnXp={onEarnXp}

@@ -23,6 +23,7 @@ interface GuessWidgetProps {
     isAccurate: boolean,
     details: GuessAnswerDetails
   ) => void;
+  onGuessLocked?: (factId: string) => void;
   onRequestFlip: () => void;
   onButtonPop: () => void;
 }
@@ -45,6 +46,7 @@ export default function GuessWidget({
   challenge,
   lang,
   onGuessAnswered,
+  onGuessLocked,
   onRequestFlip,
   onButtonPop,
 }: GuessWidgetProps) {
@@ -111,6 +113,7 @@ export default function GuessWidget({
     setEarnedXp(xpAwarded);
     setAccuracyPct(computedAccuracyPct);
     setSubmitted(true);
+    onGuessLocked?.(factId);
     onGuessAnswered(xpAwarded, isAccurate, {
       userGuess: sliderValue,
       correctValue: target,
@@ -134,6 +137,7 @@ export default function GuessWidget({
     setEarnedXp(xpAwarded);
     setAccuracyPct(computedAccuracyPct);
     setSubmitted(true);
+    onGuessLocked?.(factId);
     onGuessAnswered(xpAwarded, isCorrect, {
       userGuess: challenge.options?.[idx] ?? idx,
       correctValue: challenge.options?.[correctIdx] ?? correctIdx,

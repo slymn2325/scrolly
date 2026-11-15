@@ -132,6 +132,23 @@ alter table public.duel_rooms add column if not exists kicked_ids jsonb default 
 alter table public.duel_rooms add column if not exists starts_at timestamptz;
 alter table public.duel_rooms add column if not exists updated_at timestamptz default now();
 
+-- Generated English vocabulary cards (mirrors types/vocabulary.ts VocabularyCard 1:1)
+create table if not exists public.vocabulary_cards (
+  id text primary key,
+  word text unique not null,
+  phonetic text default '',
+  part_of_speech text default '',
+  meaning_tr text not null,
+  definition_en text not null,
+  example_en text not null,
+  example_tr text not null,
+  quiz_options jsonb not null,
+  correct_index int not null default 0,
+  created_at timestamptz default now()
+);
+
+create index if not exists idx_vocabulary_cards_created on public.vocabulary_cards (created_at desc);
+
 create table if not exists public.contact_messages (
   id bigserial primary key,
   name text not null,

@@ -27,7 +27,7 @@ import { ENABLE_COMPETITIVE_TABS } from '@/lib/featureFlags';
 import { trackEvent, fetchTopicGifFromApi } from '@/lib/telemetry';
 import type { CategoryId, FactCard } from '@/types/fact';
 import { cryptoRandomInt } from '@/utils/cryptoRandom';
-import { getFactUrl } from '@/utils/factsData';
+import { getFactUrl, maskFactAnswerSpoiler } from '@/utils/factsData';
 import { vibrateTap } from '@/utils/haptics';
 import { isFactLiked, toggleLikedFact } from '@/utils/likedFacts';
 import {
@@ -45,6 +45,7 @@ interface TikTokFactSlideProps {
   isFavorite: boolean;
   isFirstCard?: boolean;
   isActive?: boolean;
+  isGuessLocked?: boolean;
   cookieBannerVisible?: boolean;
   onFlip: (fact: FactCard) => void;
   onDoubleTapLike: (fact: FactCard) => void;
@@ -53,6 +54,7 @@ interface TikTokFactSlideProps {
   onOpenDuel: (fact: FactCard) => void;
   onOpenStoryShare: (fact: FactCard) => void;
   onGuessReward: (xp: number, accurate: boolean, category?: CategoryId, accuracyPct?: number) => void;
+  onGuessLocked?: (factId: string) => void;
   onToggleFavorite: (fact: FactCard) => void;
   onButtonPop: () => void;
   onEarnXp?: (xp: number, source?: string) => void;
@@ -73,6 +75,7 @@ export default function TikTokFactSlide({
   isFavorite,
   isFirstCard = false,
   isActive = true,
+  isGuessLocked = false,
   cookieBannerVisible = false,
   onFlip,
   onDoubleTapLike,
@@ -81,6 +84,7 @@ export default function TikTokFactSlide({
   onOpenDuel,
   onOpenStoryShare,
   onGuessReward,
+  onGuessLocked,
   onToggleFavorite,
   onButtonPop,
   onEarnXp,
@@ -94,6 +98,7 @@ export default function TikTokFactSlide({
   const [portalReady, setPortalReady] = useState(false);
   const [miniQuizChoice, setMiniQuizChoice] = useState<number | null>(null);
   const [miniQuizAwarded, setMiniQuizAwarded] = useState(false);
+  const [localGuessLocked, setLocalGuessLocked] = useState(false);
   const detailDragControls = useDragControls();
   const detailScrollRef = useRef<HTMLDivElement>(null);
   const detailDragYRef = useRef(0);
@@ -105,6 +110,10 @@ export default function TikTokFactSlide({
   useEffect(() => {
     setPortalReady(true);
   }, []);
+
+  useEffect(() => {
+    setLocalGuessLocked(false);
+  }, [fact.id]);
 
   const slideRef = useRef<HTMLDivElement>(null);
   const singleTapTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -127,6 +136,17 @@ export default function TikTokFactSlide({
   const catMeta = getCategoryMeta(fact.category);
   const factUrl = getFactUrl(fact, lang);
   const factSlug = fact.slug || fact.en.slug || fact.tr.slug || fact.id;
+  const isSpoilerRevealed = isGuessLocked || localGuessLocked || isFlipped;
+  const maskedFactText = useMemo(
+    () =>
+      maskFactAnswerSpoiler(
+        localized.factText,
+        localized.guessChallenge,
+        isSpoilerRevealed,
+        lang
+      ),
+    [localized.factText, localized.guessChallenge, isSpoilerRevealed, lang]
+  );
   const detailArticle = useMemo(
     () =>
       buildFactDetailArticle(
@@ -697,7 +717,7 @@ export default function TikTokFactSlide({
               data-testid="fact-body"
               className="text-[13.5px] font-semibold leading-relaxed text-white/95 drop-shadow-sm sm:text-sm whitespace-normal break-words"
             >
-              {localized.factText}
+              {maskedFactText}
             </p>
 
             {localized.guessChallenge && (
@@ -705,7 +725,13 @@ export default function TikTokFactSlide({
                 factId={fact.id}
                 challenge={localized.guessChallenge}
                 lang={lang}
+                onGuessLocked={(id) => {
+                  setLocalGuessLocked(true);
+                  onGuessLocked?.(id);
+                }}
                 onGuessAnswered={(xpAwarded, accurate, details) => {
+                  setLocalGuessLocked(true);
+                  onGuessLocked?.(fact.id);
                   onGuessReward(xpAwarded, accurate, fact.category, details.accuracyPct);
                   void trackEvent(factSlug, fact.category, 'quick_guess', {
                     guess: details.userGuess,

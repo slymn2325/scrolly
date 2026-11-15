@@ -40,3 +40,23 @@ export function toggleLikedFact(factId: string): boolean {
   writeIds(next);
   return !exists;
 }
+
+/** Remove a liked fact. Returns true when an id was removed. */
+export function removeLikedFact(factId: string): boolean {
+  if (typeof window === 'undefined' || !factId) return false;
+  const current = readIds();
+  if (!current.includes(factId)) return false;
+  writeIds(current.filter((id) => id !== factId));
+  return true;
+}
+
+export function clearLikedFacts(): void {
+  if (typeof window === 'undefined') return;
+  writeIds([]);
+  try {
+    window.localStorage.removeItem(LIKED_FACTS_KEY);
+  } catch {
+    // Ignore quota / private mode failures
+  }
+  window.dispatchEvent(new CustomEvent('scrolly-liked-facts-updated'));
+}

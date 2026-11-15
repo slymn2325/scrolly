@@ -14,6 +14,7 @@ import {
   Heart,
   RotateCcw,
   Share2,
+  Trash2,
   Volume2,
   X,
 } from 'lucide-react';
@@ -36,9 +37,14 @@ import {
   getFactPrimarySlug,
 } from '@/utils/factsData';
 import { DOCK_ICON_MAP, UI_ICON_PATHS } from '@/utils/icons8Assets';
+import { loadLikedFactIds, removeLikedFact } from '@/utils/likedFacts';
 import { getLeagueInfo, type UserMemoryState } from '@/utils/userMemory';
 import type { SavedVocabularyEntry } from '@/types/vocabulary';
-import { loadSavedVocabNotebook, speakVocabularyText } from '@/utils/vocabNotebook';
+import {
+  loadSavedVocabNotebook,
+  removeSavedVocabWord,
+  speakVocabularyText,
+} from '@/utils/vocabNotebook';
 
 interface DiplomaProfileModalProps {
   open: boolean;
@@ -49,6 +55,7 @@ interface DiplomaProfileModalProps {
   onUpdateNickname: (nick: string) => void;
   onToggleNotifications: () => void;
   onSelectCategoryFromConstellation: (category: CategoryId) => void;
+  onRemoveFavorite: (factId: string) => void;
   onResetMemory: () => void;
   onRequestPwaInstall?: () => void;
   onClose: () => void;
@@ -65,6 +72,7 @@ export default function DiplomaProfileModal({
   onUpdateNickname,
   onToggleNotifications,
   onSelectCategoryFromConstellation,
+  onRemoveFavorite,
   onResetMemory,
   onRequestPwaInstall,
   onClose,
@@ -77,6 +85,7 @@ export default function DiplomaProfileModal({
   const [diplomaStatusMsg, setDiplomaStatusMsg] = useState<string | null>(null);
   const [isStandalone, setIsStandalone] = useState(false);
   const [savedVocab, setSavedVocab] = useState<SavedVocabularyEntry[]>([]);
+  const [likedIds, setLikedIds] = useState<string[]>([]);
   const scrollBodyRef = useRef<HTMLDivElement>(null);
   const t = translations[lang];
   const copy = FEED_EXPERIENCE_COPY[lang];
@@ -97,15 +106,22 @@ export default function DiplomaProfileModal({
 
   useEffect(() => {
     if (!open) return;
-    const sync = () => setSavedVocab(loadSavedVocabNotebook());
-    sync();
-    window.addEventListener('scrolly-vocab-updated', sync);
-    return () => window.removeEventListener('scrolly-vocab-updated', sync);
+    const syncVocab = () => setSavedVocab(loadSavedVocabNotebook());
+    const syncLikes = () => setLikedIds(loadLikedFactIds());
+    syncVocab();
+    syncLikes();
+    window.addEventListener('scrolly-vocab-updated', syncVocab);
+    window.addEventListener('scrolly-liked-facts-updated', syncLikes);
+    return () => {
+      window.removeEventListener('scrolly-vocab-updated', syncVocab);
+      window.removeEventListener('scrolly-liked-facts-updated', syncLikes);
+    };
   }, [open]);
 
   useEscapeClose(open && !isPage, onClose);
 
-  const favoriteFacts = allFacts.filter((f) => memory.favoriteIds.includes(f.id));
+  const archivedFactIds = Array.from(new Set([...likedIds, ...memory.favoriteIds]));
+  const favoriteFacts = allFacts.filter((f) => archivedFactIds.includes(f.id));
   const categoryList = CATEGORIES.filter((c) => c.id !== 'all');
   const affinityCategories = [...categoryList, VOCABULARY_META];
   const getAffinityWeight = (catId: CategoryFilter): number => {
@@ -245,7 +261,9 @@ export default function DiplomaProfileModal({
             <div
               ref={scrollBodyRef}
               data-testid="diploma-scroll-body"
-              className="no-scrollbar min-h-0 flex-1 space-y-4 overflow-y-auto px-5 pb-5 pt-4"
+              className={`no-scrollbar min-h-0 flex-1 space-y-4 overflow-y-auto px-5 pt-4 ${
+                isPage ? 'pb-36' : 'pb-5'
+              }`}
             >
               {/* Explorer Nickname */}
               <div>
@@ -478,17 +496,43 @@ export default function DiplomaProfileModal({
                   ) : (
                     <div className="space-y-2">
                       {favoriteFacts.map((fact) => (
-                        <Link
+                        <div
                           key={fact.id}
-                          href={buildFactHref(getFactPrimarySlug(fact), lang)}
-                          onClick={onButtonPop}
-                          className="flex items-start justify-between gap-2 rounded-2xl border border-slate-100 bg-white p-3 text-xs font-bold text-ink shadow-sm transition hover:border-violet-300 dark:border-white/10 dark:bg-white/5 dark:text-white"
+                          className="flex items-start justify-between gap-2 rounded-2xl border border-slate-100 bg-white p-3 text-xs font-bold text-ink shadow-sm dark:border-white/10 dark:bg-white/5 dark:text-white"
                         >
-                          <span className="line-clamp-2">
+                          <Link
+                            href={buildFactHref(getFactPrimarySlug(fact), lang)}
+                            onClick={onButtonPop}
+                            className="min-w-0 flex-1 line-clamp-2 transition hover:text-violet-700 dark:hover:text-violet-200"
+                          >
                             {fact.emoji} {fact[lang].title}
-                          </span>
-                          <ExternalLink className="mt-0.5 h-3.5 w-3.5 shrink-0 text-ink/45 dark:text-violet-300" />
-                        </Link>
+                          </Link>
+                          <div className="flex shrink-0 items-center gap-1">
+                            <ExternalLink className="h-3.5 w-3.5 text-ink/45 dark:text-violet-300" aria-hidden />
+                            <button
+                              type="button"
+                              data-testid={`diploma-unlike-${fact.id}`}
+                              onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                onButtonPop();
+                                removeLikedFact(fact.id);
+                                setLikedIds(loadLikedFactIds());
+                                if (memory.favoriteIds.includes(fact.id)) {
+                                  onRemoveFavorite(fact.id);
+                                }
+                              }}
+                              aria-label={
+                                lang === 'tr'
+                                  ? `${fact[lang].title} beğenisini kaldır`
+                                  : `Remove ${fact[lang].title} from likes`
+                              }
+                              className="relative z-10 inline-flex h-9 w-9 items-center justify-center rounded-full bg-rose-50 text-rose-600 transition hover:bg-rose-100 dark:bg-rose-950/50 dark:text-rose-300 dark:hover:bg-rose-900/60"
+                            >
+                              <Trash2 className="h-3.5 w-3.5" />
+                            </button>
+                          </div>
+                        </div>
                       ))}
                     </div>
                   )}
@@ -531,17 +575,35 @@ export default function DiplomaProfileModal({
                               {entry.exampleEn}
                             </p>
                           </div>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              onButtonPop();
-                              speakVocabularyText(entry.word, 'en-US', 0.9);
-                            }}
-                            aria-label={`${copy.listenEn}: ${entry.word}`}
-                            className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-indigo-600 text-white"
-                          >
-                            <Volume2 className="h-4 w-4" />
-                          </button>
+                          <div className="flex shrink-0 items-center gap-1">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                onButtonPop();
+                                speakVocabularyText(entry.word, 'en-US', 0.9);
+                              }}
+                              aria-label={`${copy.listenEn}: ${entry.word}`}
+                              className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-indigo-600 text-white"
+                            >
+                              <Volume2 className="h-4 w-4" />
+                            </button>
+                            <button
+                              type="button"
+                              data-testid={`diploma-vocab-remove-${entry.id}`}
+                              onClick={() => {
+                                onButtonPop();
+                                setSavedVocab(removeSavedVocabWord(entry.word));
+                              }}
+                              aria-label={
+                                lang === 'tr'
+                                  ? `${entry.word} kelimesini defterden sil`
+                                  : `Remove ${entry.word} from notebook`
+                              }
+                              className="relative z-10 inline-flex h-9 w-9 items-center justify-center rounded-full bg-rose-50 text-rose-600 transition hover:bg-rose-100 dark:bg-rose-950/50 dark:text-rose-300 dark:hover:bg-rose-900/60"
+                            >
+                              <Trash2 className="h-3.5 w-3.5" />
+                            </button>
+                          </div>
                         </div>
                       ))}
                     </div>
@@ -585,18 +647,22 @@ export default function DiplomaProfileModal({
                 <motion.button
                   type="button"
                   whileTap={{ scale: 0.94 }}
-                  onClick={() => {
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
                     onButtonPop();
                     onResetMemory();
+                    setLikedIds([]);
+                    setSavedVocab([]);
                     setJustReset(true);
                     setTimeout(() => setJustReset(false), 3000);
                   }}
                   data-testid="diploma-reset-btn"
-                className="flex w-full min-h-[48px] items-center justify-center gap-2 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-2.5 text-xs font-extrabold text-rose-700 hover:bg-rose-100 dark:border-rose-700/50 dark:bg-rose-950/40 dark:text-rose-300 whitespace-normal break-words leading-snug"
-              >
-                <RotateCcw className="h-3.5 w-3.5" />
-                <span>{t.drawerReset}</span>
-              </motion.button>
+                  className="relative z-20 flex w-full min-h-[48px] items-center justify-center gap-2 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-2.5 text-xs font-extrabold text-rose-700 hover:bg-rose-100 dark:border-rose-700/50 dark:bg-rose-950/40 dark:text-rose-300 whitespace-normal break-words leading-snug"
+                >
+                  <RotateCcw className="h-3.5 w-3.5" />
+                  <span>{t.drawerReset}</span>
+                </motion.button>
 
               <div className="mt-2.5 flex flex-wrap items-center justify-center gap-x-4 gap-y-1.5">
                 {!isStandalone && onRequestPwaInstall && (

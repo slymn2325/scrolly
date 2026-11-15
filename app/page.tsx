@@ -2,7 +2,7 @@ import React from 'react';
 import Link from 'next/link';
 import HomeClient from '@/components/HomeClient';
 import { getCategoryMeta } from '@/i18n/translations';
-import { getAllFactsServer } from '@/lib/db';
+import { fetchVocabularyWithSourceServer, getAllFactsServer } from '@/lib/db';
 import {
   buildCategoryHref,
   buildFactHref,
@@ -12,10 +12,14 @@ import {
   interleaveFactsByCategory,
 } from '@/utils/factsData';
 
-export const revalidate = 3600;
+// Always render fresh Postgres facts and vocabulary on demand without stale ISR caching.
+export const dynamic = 'force-dynamic';
 
 export default async function HomePage() {
-  const allFacts = await getAllFactsServer();
+  const [allFacts, { vocabulary: initialVocabulary }] = await Promise.all([
+    getAllFactsServer(),
+    fetchVocabularyWithSourceServer(),
+  ]);
   const initialFacts = interleaveFactsByCategory(allFacts).slice(0, 14);
 
   return (
@@ -23,7 +27,7 @@ export default async function HomePage() {
       <h1 className="sr-only">
         Scrolly — Doğrulanmış İki Dilli Mikro Bilim, Uzay, Tarih ve Kültür Kartları
       </h1>
-      <HomeClient initialFacts={initialFacts} />
+      <HomeClient initialFacts={initialFacts} initialVocabulary={initialVocabulary} />
       <nav aria-label="Site Directory" className="sr-only">
         <h2>Scrolly Platform &amp; Editorial Index</h2>
         <ul>

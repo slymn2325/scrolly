@@ -687,10 +687,19 @@ export function resetUserMemory(): UserMemoryState {
   fresh.nickname = getDefaultNickname(detectedLang, Math.floor(100 + Math.random() * 900));
   fresh.lastVisitDate = getTodayDateString();
   fresh.cookieAccepted = true;
+  fresh.isReturningUser = false;
+  fresh.seenIds = [];
+  fresh.favoriteIds = [];
+  fresh.xp = 0;
+  fresh.weeklyXp = 0;
+  fresh.streakDays = 1;
+  fresh.badges = [];
   saveUserMemory(fresh);
   if (typeof window !== 'undefined') {
     try {
       window.localStorage.removeItem(TOTAL_CARDS_VIEWED_STORAGE_KEY);
+      // Drop the compact summary cookie so XP/streak chips cannot revive stale progress.
+      document.cookie = `${COOKIE_NAME}=; Max-Age=0; path=/; SameSite=Lax`;
     } catch {
       // Ignore storage removal errors in restricted environments
     }

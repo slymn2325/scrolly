@@ -1,12 +1,23 @@
-name: Auto Generate Daily Facts + Vocabulary (gemini-4-hydrogen)
+name: Auto Generate Daily Facts + Vocabulary (Heroku Postgres)
 
 on:
   schedule:
-    - cron: '0 6,17 * * *'
+    - cron: '0 */6 * * *'
   workflow_dispatch:
+    inputs:
+      target_cards_per_run:
+        description: 'Total target cards to generate in this run (max 100)'
+        required: false
+        default: '25'
+        type: choice
+        options:
+          - '25'
+          - '50'
+          - '100'
+          - '10'
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   generate-facts:
@@ -24,7 +35,7 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Generate 5 facts + 2 vocabulary cards (Native Gemini / fallback)
+      - name: Generate facts + vocabulary cards directly to Heroku Postgres
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           AI_API_KEY: ${{ secrets.AI_API_KEY }}
@@ -32,18 +43,7 @@ jobs:
           AI_MODELS_ENDPOINT: ${{ vars.AI_MODELS_ENDPOINT }}
           AI_MODEL_NAME: ${{ vars.AI_MODEL_NAME || 'gemini-4-hydrogen' }}
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          TARGET_CARDS_PER_RUN: ${{ github.event.inputs.target_cards_per_run || vars.TARGET_CARDS_PER_RUN || '25' }}
           # Rejects overused internet trivia clichés (neutron star teaspoon, diamond rain, octopus 3 hearts, honey, Eiffel Tower, etc.)
           ANTI_CLICHE_STRICT: 'true'
         run: node scripts/generateFacts.mjs
-
-      - name: Commit generated facts and vocabulary updates
-        run: |
-          if [ -z "$(git status --porcelain -- data/vocabularyGenerated.json data/factsGenerated.json)" ]; then
-            echo "No generated fact or vocabulary changes to commit."
-          else
-            git config user.name "github-actions[bot]"
-            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-            git add data/vocabularyGenerated.json data/factsGenerated.json
-            git commit -m "chore: append daily facts and vocabulary cards"
-            git push
-          fi

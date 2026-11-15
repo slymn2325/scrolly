@@ -1,7 +1,14 @@
 import { NextResponse } from 'next/server';
-import { fetchFactsWithSourceServer } from '@/lib/db';
+import { fetchFactsWithSourceServer, fetchVocabularyWithSourceServer } from '@/lib/db';
 import type { CategoryId } from '@/types/fact';
 import { interleaveFactsByCategory } from '@/utils/factsData';
+
+// Always read fresh Postgres rows so generated cards appear without a redeploy.
+export const dynamic = 'force-dynamic';
+
+const NO_STORE_HEADERS = {
+  'Cache-Control': 'no-store, max-age=0',
+};
 
 const VALID_CATEGORIES = new Set<CategoryId>([
   'space',
@@ -37,11 +44,10 @@ export async function GET(request: Request) {
       ? Math.min(200, Math.floor(parsedLimit))
       : 200;
 
-  const cacheHeaders = {
-    'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=600',
-  };
-
-  const { source, entries } = await fetchFactsWithSourceServer();
+  const [{ source, entries }, { vocabulary }] = await Promise.all([
+    fetchFactsWithSourceServer(),
+    fetchVocabularyWithSourceServer(),
+  ]);
   const allFacts = entries.map((entry) => entry.fact);
 
   const ordered =
@@ -57,11 +63,12 @@ export async function GET(request: Request) {
     {
       source,
       facts: sliced,
+      vocabulary,
       total,
       offset,
       limit,
       hasMore,
     },
-    { status: 200, headers: cacheHeaders }
+    { status: 200, headers: NO_STORE_HEADERS }
   );
 }

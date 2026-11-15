@@ -9,6 +9,7 @@ import {
   ExternalLink,
   Heart,
   Keyboard,
+  Lock,
   Share2,
   Sparkles,
   Swords,
@@ -24,6 +25,7 @@ interface DesktopFeedSideRailProps {
   darkMode: boolean;
   activeFact?: FactCard | null;
   activeSlide?: FeedSlideItem | null;
+  isGuessLocked?: boolean;
   isLiked?: boolean;
   isSaved?: boolean;
   likesCount?: number;
@@ -36,7 +38,7 @@ interface DesktopFeedSideRailProps {
 
 /**
  * Desktop vertical action column + up/down steppers immediately adjacent to the card,
- * paired on wide screens (`xl:`) with a sleek Card Summary / Source & Keyboard Shortcuts panel.
+ * paired on wide screens (`xl:`) with a non-duplicating Insight / Source & Keyboard Shortcuts panel.
  */
 export default function DesktopFeedSideRail({
   onPrev,
@@ -45,6 +47,7 @@ export default function DesktopFeedSideRail({
   darkMode,
   activeFact,
   activeSlide,
+  isGuessLocked = false,
   isLiked = false,
   isSaved = false,
   likesCount = 0,
@@ -72,47 +75,63 @@ export default function DesktopFeedSideRail({
     localized?.sourceHint ||
     (lang === 'tr' ? 'Doğrulanmış Bilimsel Kaynak' : 'Verified Scientific Source');
   const sourceUrl = localized?.sourceUrl || activeFact?.sourceUrl;
+  const hasGuessChallenge = Boolean(localized?.guessChallenge);
+  const isAnalysisUnlocked = !hasGuessChallenge || isGuessLocked;
+  const deepAnalysisText =
+    localized?.deepDiveDetail ||
+    localized?.quiz?.explanation ||
+    (lang === 'tr'
+      ? 'Bu kart için doğrulanmış bilimsel arka plan ve ek açıklamalar detay ekranında yer alır.'
+      : 'Verified scientific context and deeper notes for this discovery are available in detail view.');
+  const estimatedReadSec =
+    activeFact?.readingTimeSec ??
+    Math.max(15, Math.round((deepAnalysisText.split(/\s+/).filter(Boolean).length || 45) / 3));
 
   const slideSummary = (() => {
     if (activeFact && localized) {
       return {
+        kind: 'fact' as const,
         badge: `${catMeta?.emoji || activeFact.emoji || '✨'} ${catMeta?.label[lang] || activeFact.category}`,
         badgeColor: activeFact.accentColor || '#7C3AED',
-        title: localized.title,
-        body: localized.factText,
         xpLabel: '+15 XP',
       };
     }
     if (activeSlide?.type === 'vocabulary') {
       return {
+        kind: 'other' as const,
         badge: lang === 'tr' ? '📚 İngilizce Kelime' : '📚 Vocabulary Card',
         badgeColor: '#6366F1',
-        title: `${activeSlide.card.word} · ${activeSlide.card.meaningTr}`,
-        body: activeSlide.card.exampleEn,
+        subLabel: [activeSlide.card.partOfSpeech, activeSlide.card.phonetic].filter(Boolean).join(' · '),
+        note:
+          lang === 'tr'
+            ? 'Bağlamdaki boşluğu tamamla, telaffuzu dinle ve kelimeyi kişisel defterine kaydet.'
+            : 'Complete the contextual fill-in, listen to pronunciation, and save to your notebook.',
         xpLabel: '+15 XP',
       };
     }
     if (activeSlide?.type === 'quizCta') {
       return {
+        kind: 'other' as const,
         badge: lang === 'tr' ? '⚡ Hızlı Quiz' : '⚡ Quick Quiz',
         badgeColor: '#F59E0B',
-        title: lang === 'tr' ? 'Hafıza ve Bilim Testi' : 'Memory & Science Challenge',
-        body:
+        subLabel: lang === 'tr' ? '5 Soruluk Hafıza Tekrarı' : '5-Question Memory Recall',
+        note:
           lang === 'tr'
-            ? 'Az önce okuduğun kartları 5 soruluk mini quiz ile pekiştir.'
-            : 'Lock in what you just discovered with a quick 5-question challenge.',
+            ? 'Az önce incelediğin kartları hızlı tekrar ile pekiştirerek serini ve lig puanını yükselt.'
+            : 'Reinforce the cards you just explored to boost your streak and league standing.',
         xpLabel: '+50 XP',
       };
     }
     if (activeSlide?.type === 'ad') {
       return {
+        kind: 'other' as const,
         badge: lang === 'tr' ? '✨ Bilgi Molası' : '✨ Quick Break',
         badgeColor: '#0EA5E9',
-        title: lang === 'tr' ? 'Keşfetmeye Devam Et' : 'Keep Exploring',
-        body:
+        subLabel: lang === 'tr' ? 'Akış & Düello' : 'Feed & Scrolla',
+        note:
           lang === 'tr'
-            ? 'Yeni kategori kartları için aşağı kaydır veya Scrolla 1v1 odası kur.'
-            : 'Scroll down for fresh facts or jump into a Scrolla 1v1 duel.',
+            ? 'Yeni kategori kartları için aşağı kaydırabilir veya Scrolla 1v1 odası başlatabilirsin.'
+            : 'Scroll down for more verified cards or launch a Scrolla 1v1 duel.',
         xpLabel: '1v1',
       };
     }
@@ -259,11 +278,11 @@ export default function DesktopFeedSideRail({
         </button>
       </aside>
 
-      {/* 2. Large Desktop Right Panel (xl:): Card Summary / Source & Keyboard Shortcuts */}
+      {/* 2. Large Desktop Right Panel (xl:): Non-Duplicating Insight / Source & Keyboard Shortcuts */}
       {slideSummary && (
         <aside
           data-testid="desktop-info-shortcut-panel"
-          className={`hidden w-[290px] shrink-0 flex-col gap-3 rounded-3xl border p-4 backdrop-blur-xl xl:flex ${
+          className={`hidden w-[300px] shrink-0 flex-col gap-3 rounded-3xl border p-4 backdrop-blur-xl xl:flex ${
             darkMode
               ? 'border-white/15 bg-black/45 text-white shadow-2xl'
               : 'border-[#1E1B2E]/10 bg-white/90 text-[#1E1B2E] shadow-xl'
@@ -288,22 +307,83 @@ export default function DesktopFeedSideRail({
 
           <div>
             <p
+              data-testid="desktop-insight-heading"
               className={`text-[10px] font-black uppercase tracking-wider ${
-                darkMode ? 'text-white/45' : 'text-[#1E1B2E]/50'
+                darkMode ? 'text-white/50' : 'text-[#1E1B2E]/55'
               }`}
             >
-              {lang === 'tr' ? 'Kart Özeti' : 'Card Summary'}
+              {lang === 'tr' ? 'KART DETAYI & KAYNAK' : 'INSIGHT & SOURCE'}
             </p>
-            <h3 className="mt-1 font-display text-sm font-black leading-snug">
-              {slideSummary.title}
-            </h3>
-            <p
-              className={`mt-1.5 line-clamp-4 text-xs font-medium leading-relaxed ${
-                darkMode ? 'text-white/75' : 'text-[#1E1B2E]/75'
-              }`}
-            >
-              {slideSummary.body}
-            </p>
+
+            {slideSummary.kind === 'fact' ? (
+              !isAnalysisUnlocked ? (
+                <div
+                  data-testid="desktop-insight-locked"
+                  className={`mt-2 rounded-2xl border p-3.5 backdrop-blur-md ${
+                    darkMode
+                      ? 'border-white/15 bg-white/[0.06] text-white/85'
+                      : 'border-[#1E1B2E]/10 bg-[#1E1B2E]/[0.04] text-[#1E1B2E]/85'
+                  }`}
+                >
+                  <div className="flex items-start gap-2">
+                    <Lock className={`mt-0.5 h-4 w-4 shrink-0 ${darkMode ? 'text-violet-300' : 'text-violet-600'}`} />
+                    <p className="text-xs font-semibold leading-relaxed">
+                      {lang === 'tr'
+                        ? '🔒 Tahminini kilitle — derin analiz ve bilimsel arka plan burada açılacak'
+                        : '🔒 Lock your guess — deep analysis & scientific context will unlock here'}
+                    </p>
+                  </div>
+                  <div className="mt-2.5 flex items-center justify-between gap-2">
+                    <span
+                      className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-bold ${
+                        darkMode ? 'bg-white/10 text-white/70' : 'bg-white text-[#1E1B2E]/70 shadow-sm'
+                      }`}
+                    >
+                      {lang === 'tr' ? `~${estimatedReadSec} sn derin okuma` : `~${estimatedReadSec}s deep read`}
+                    </span>
+                  </div>
+                </div>
+              ) : (
+                <div
+                  data-testid="desktop-insight-unlocked"
+                  className={`mt-2 rounded-2xl border p-3 ${
+                    darkMode
+                      ? 'border-emerald-400/20 bg-emerald-500/[0.08]'
+                      : 'border-emerald-600/15 bg-emerald-50/70'
+                  }`}
+                >
+                  <p
+                    className={`text-[10px] font-black uppercase tracking-wider ${
+                      darkMode ? 'text-emerald-300' : 'text-emerald-700'
+                    }`}
+                  >
+                    {lang === 'tr' ? 'Bilimsel Arka Plan' : 'Scientific Context'}
+                  </p>
+                  <p
+                    className={`mt-1.5 max-h-[210px] overflow-y-auto pr-1 text-xs font-medium leading-relaxed ${
+                      darkMode ? 'text-white/85' : 'text-[#1E1B2E]/85'
+                    }`}
+                  >
+                    {deepAnalysisText}
+                  </p>
+                </div>
+              )
+            ) : (
+              <div className="mt-2">
+                {slideSummary.subLabel && (
+                  <p className={`text-[11px] font-bold ${darkMode ? 'text-indigo-300' : 'text-indigo-700'}`}>
+                    {slideSummary.subLabel}
+                  </p>
+                )}
+                <p
+                  className={`mt-1 text-xs font-medium leading-relaxed ${
+                    darkMode ? 'text-white/75' : 'text-[#1E1B2E]/75'
+                  }`}
+                >
+                  {slideSummary.note}
+                </p>
+              </div>
+            )}
           </div>
 
           {hasFact && (

@@ -227,6 +227,22 @@ async function ensureSchemaAndSeed(pool) {
   `);
 
   await pool.query(`
+    CREATE TABLE IF NOT EXISTS vocabulary_cards (
+      id TEXT PRIMARY KEY,
+      word TEXT UNIQUE NOT NULL,
+      phonetic TEXT DEFAULT '',
+      part_of_speech TEXT DEFAULT '',
+      meaning_tr TEXT NOT NULL,
+      definition_en TEXT NOT NULL,
+      example_en TEXT NOT NULL,
+      example_tr TEXT NOT NULL,
+      quiz_options JSONB NOT NULL,
+      correct_index INT NOT NULL DEFAULT 0,
+      created_at TIMESTAMPTZ DEFAULT NOW()
+    );
+  `);
+
+  await pool.query(`
     CREATE OR REPLACE VIEW fact_engagement_summary AS
     SELECT
       f.id,
@@ -634,8 +650,15 @@ async function validateGeneratedFact(item, existingSlugs, existingTitlesEn, opti
   };
 }
 
-function buildPrompts(existingTitlesEn, topEngaged) {
-  const recentTitlesSample = Array.from(existingTitlesEn).slice(0, 90);
+function buildPrompts(existingTitlesEn, topEngaged, batchOptions = {}) {
+  const factsCount = Math.max(1, Number(batchOptions.factsCount) || 5);
+  const vocabCount = Math.max(0, Number.isFinite(Number(batchOptions.vocabCount)) ? Number(batchOptions.vocabCount) : 2);
+  const targetCategories =
+    Array.isArray(batchOptions.targetCategories) && batchOptions.targetCategories.length > 0
+      ? batchOptions.targetCategories
+      : CATEGORIES;
+  const recentTitlesSample = Array.from(existingTitlesEn).slice(-120);
+  const existingVocabSample = Array.from(batchOptions.existingVocabWords || []).slice(-120);
   const engagementContext =
     topEngaged.length > 0
       ? topEngaged
@@ -661,7 +684,23 @@ STRICT ANTI-CLICHÉ BAN LIST — NEVER generate or paraphrase these overused int
 
 Instead, write fresh, counter-intuitive, peer-reviewed scientific mechanisms and little-known empirical discoveries.`;
 
-  const userPrompt = `Create exactly 5 brand-new bilingual (TR & EN) micro-fact cards spanning science/culture categories (choose 5 distinct categories from: ${CATEGORIES.join(', ')}).
+  const vocabBlock =
+    vocabCount > 0
+      ? `
+
+ALSO include a second key \`"vocabulary"\` with exactly ${vocabCount} brand-new B1–C2 English vocabulary learning card${vocabCount === 1 ? '' : 's'} (no duplicates of common A1 words or these existing words: ${existingVocabSample.join(', ') || 'none'}). Each vocabulary item MUST have:
+- "word": English lemma (lowercase unless proper noun)
+- "phonetic": real IPA in slashes (e.g. "/rɪˈzɪl.i.ənt/") — NEVER fake placeholders
+- "partOfSpeech": one of "isim" | "sıfat" | "fiil" | "zarf" | "edat"
+- "meaningTr": concise Turkish meaning
+- "definitionEn": one clear English definition sentence
+- "exampleEn": natural English example sentence that CONTAINS the word
+- "exampleTr": Turkish translation of that example
+- "quizOptions": array of exactly 3 Turkish meaning options
+- "correctIndex": 0 | 1 | 2 matching the correct Turkish meaning in quizOptions`
+      : `\n\nInclude \`"vocabulary": []\` (0 vocabulary items in this batch).`;
+
+  const userPrompt = `Create exactly ${factsCount} brand-new bilingual (TR & EN) micro-fact card${factsCount === 1 ? '' : 's'} distributed across ALL 7 categories in balanced rotation (${targetCategories.join(', ')} — cover every listed category before repeating any).
 
 Top-performing cards based on real user engagement (use their pacing/wonder style as inspiration, but choose fresh topics — zero clichés from the ban list):
 ${engagementContext}
@@ -672,7 +711,7 @@ ${recentTitlesSample.join(' | ')}
 Available visual sketch themes for \`sketch_type\` (you MUST pick one exact value from this list):
 ${SKETCH_TYPES.join(', ')}
 
-Return a JSON object with a single key \`"facts"\` containing an array of 5 items, each with EXACTLY these keys:
+Return a JSON object with a key \`"facts"\` containing an array of exactly ${factsCount} items, each with EXACTLY these keys:
 - "slug": lowercase ASCII kebab-case slug derived from English title (e.g. "europas-subsurface-ocean")
 - "category": one of "space" | "nature" | "human_body" | "history" | "science" | "records" | "statistics"
 - "visual_query": strictly 2-3 concrete English words depicting the real physical/natural/historical/statistical subject for GIF & media lookup (e.g. "swift bird sky", "colorful space nebula", "probability dice roll") — NEVER a full sentence and NEVER meme/reaction/funny/anime/text/quote words
@@ -689,22 +728,11 @@ Return a JSON object with a single key \`"facts"\` containing an array of 5 item
 - "min_val": realistic minimum slider integer/number strictly less than max_val
 - "max_val": realistic maximum slider integer/number strictly greater than min_val
 - "answer_val": exact verified numerical answer between min_val and max_val
-- "quiz_tr": { "question": fascinating conceptual WHY/HOW/MECHANISM question in Turkish (NEVER a +/-30% number-guessing clone of the slider!), "options": [3 short distinct conceptual strings, never plain numbers], "correctIndex": 0|1|2 (vary evenly across 0, 1, 2 across the 5 items!), "explanation": "concise TR scientific takeaway" }
-- "quiz_en": { "question": fascinating conceptual WHY/HOW/MECHANISM question in English (NEVER a +/-30% number-guessing clone!), "options": [3 short distinct conceptual strings, never plain numbers], "correctIndex": 0|1|2 (vary evenly across 0, 1, 2 across the 5 items!), "explanation": "concise EN scientific takeaway" }
+- "quiz_tr": { "question": fascinating conceptual WHY/HOW/MECHANISM question in Turkish (NEVER a +/-30% number-guessing clone of the slider!), "options": [3 short distinct conceptual strings, never plain numbers], "correctIndex": 0|1|2 (vary evenly across 0, 1, 2 across items!), "explanation": "concise TR scientific takeaway" }
+- "quiz_en": { "question": fascinating conceptual WHY/HOW/MECHANISM question in English (NEVER a +/-30% number-guessing clone!), "options": [3 short distinct conceptual strings, never plain numbers], "correctIndex": 0|1|2 (vary evenly across 0, 1, 2 across items!), "explanation": "concise EN scientific takeaway" }
 - "sketch_type": exact matching value from the \`sketch_type\` list above
 - "source_name": authoritative institution or journal name
-- "source_url": real, live deep https:// article/DOI verification URL (never a root domain homepage)
-
-ALSO include a second key \`"vocabulary"\` with exactly 2 brand-new B1–C2 English vocabulary learning cards (no duplicates of common A1 words). Each vocabulary item MUST have:
-- "word": English lemma (lowercase unless proper noun)
-- "phonetic": real IPA in slashes (e.g. "/rɪˈzɪl.i.ənt/") — NEVER fake placeholders
-- "partOfSpeech": one of "isim" | "sıfat" | "fiil" | "zarf" | "edat"
-- "meaningTr": concise Turkish meaning
-- "definitionEn": one clear English definition sentence
-- "exampleEn": natural English example sentence that CONTAINS the word
-- "exampleTr": Turkish translation of that example
-- "quizOptions": array of exactly 3 Turkish meaning options
-- "correctIndex": 0 | 1 | 2 matching the correct Turkish meaning in quizOptions`;
+- "source_url": real, live deep https:// article/DOI verification URL (never a root domain homepage)${vocabBlock}`;
 
   return { systemPrompt, userPrompt };
 }
@@ -1094,7 +1122,7 @@ async function requestOpenAICompat({ endpoint, modelName, token, systemPrompt, u
   };
 }
 
-async function fetchGeneratedFactsFromModel(existingTitlesEn, topEngaged) {
+async function fetchGeneratedFactsFromModel(existingTitlesEn, topEngaged, batchOptions = {}) {
   const token = getGenerationToken();
 
   if (!token) {
@@ -1103,7 +1131,16 @@ async function fetchGeneratedFactsFromModel(existingTitlesEn, topEngaged) {
     );
   }
 
-  const { systemPrompt, userPrompt } = buildPrompts(existingTitlesEn, topEngaged);
+  const factsTarget = Math.max(1, Number(batchOptions.factsCount) || 5);
+  const vocabTarget = Math.max(
+    0,
+    Number.isFinite(Number(batchOptions.vocabCount)) ? Number(batchOptions.vocabCount) : 2
+  );
+  const { systemPrompt, userPrompt } = buildPrompts(existingTitlesEn, topEngaged, {
+    ...batchOptions,
+    factsCount: factsTarget,
+    vocabCount: vocabTarget,
+  });
   const customEndpoint = String(process.env.AI_MODELS_ENDPOINT || CUSTOM_AI_MODELS_ENDPOINT).trim();
   const preferredModel =
     String(process.env.AI_MODEL_NAME || DEFAULT_AI_MODEL_NAME).trim() || 'gemini-4-hydrogen';
@@ -1137,19 +1174,19 @@ async function fetchGeneratedFactsFromModel(existingTitlesEn, topEngaged) {
         const vocabArr = Array.isArray(payload?.vocabulary) ? payload.vocabulary : [];
 
         if (result.ok && factsArr.length > 0) {
-          if (factsArr.length < 5 || vocabArr.length < 2) {
+          if (factsArr.length < factsTarget || vocabArr.length < vocabTarget) {
             console.warn(
-              `[generateFacts] Partial counts from ${modelName} (attempt ${attempt}/${maxAttempts}): facts=${factsArr.length}, vocabulary=${vocabArr.length}, finishReason=${result.finishReason}, usageMetadata=${JSON.stringify(result.usageMetadata)}`
+              `[generateFacts] Partial counts from ${modelName} (attempt ${attempt}/${maxAttempts}): facts=${factsArr.length}/${factsTarget}, vocabulary=${vocabArr.length}/${vocabTarget}, finishReason=${result.finishReason}, usageMetadata=${JSON.stringify(result.usageMetadata)}`
             );
-            if (factsArr.length < 5 && attempt < maxAttempts) {
+            if (factsArr.length < factsTarget && attempt < maxAttempts) {
               await sleep(1000 * 2 ** (attempt - 1));
               continue;
             }
           }
           return {
             model: modelName,
-            facts: factsArr.slice(0, 5),
-            vocabulary: vocabArr.slice(0, 2),
+            facts: factsArr.slice(0, factsTarget),
+            vocabulary: vocabTarget > 0 ? vocabArr.slice(0, vocabTarget) : [],
           };
         }
 
@@ -1216,6 +1253,54 @@ async function loadLocalBaselineState() {
   return { seedFacts, generatedFacts, existingSlugs, existingIds, existingTitlesEn, seedVocabWords };
 }
 
+function resolveTargetCardsPerRun(argv = process.argv, env = process.env) {
+  let rawCount = env?.TARGET_CARDS_PER_RUN;
+  for (let i = 0; i < argv.length; i += 1) {
+    const arg = String(argv[i] || '');
+    if (arg.startsWith('--count=')) {
+      rawCount = arg.slice('--count='.length);
+      break;
+    }
+    if (arg === '--count' && argv[i + 1]) {
+      rawCount = argv[i + 1];
+      break;
+    }
+  }
+  const parsed = Number.parseInt(String(rawCount ?? '25'), 10);
+  if (!Number.isFinite(parsed) || parsed <= 0) return 25;
+  return Math.min(100, Math.max(1, parsed));
+}
+
+function buildBatchPlan(targetTotal) {
+  const BATCH_SIZE = 10;
+  const plan = [];
+  let remaining = Math.min(100, Math.max(1, Number(targetTotal) || 25));
+  let batchIndex = 0;
+
+  while (remaining > 0) {
+    const batchSize = Math.min(BATCH_SIZE, remaining);
+    const vocabCount = batchSize >= 2 ? Math.max(1, Math.round(batchSize * 0.2)) : 0;
+    const factsCount = batchSize - vocabCount;
+    const startOffset = (batchIndex * 3) % CATEGORIES.length;
+    const targetCategories = [];
+    for (let i = 0; i < Math.min(factsCount, CATEGORIES.length); i += 1) {
+      targetCategories.push(CATEGORIES[(startOffset + i) % CATEGORIES.length]);
+    }
+
+    plan.push({
+      batchNumber: batchIndex + 1,
+      batchSize,
+      factsCount,
+      vocabCount,
+      targetCategories,
+    });
+    remaining -= batchSize;
+    batchIndex += 1;
+  }
+
+  return plan;
+}
+
 async function runDryRun() {
   const baseline = await loadLocalBaselineState();
   const { VERIFIED_FACT_RESERVOIR, selectAutonomousSixFacts } = await import('./scientificFactReservoir.mjs');
@@ -1252,7 +1337,14 @@ async function runDryRun() {
     validatedSampleCards.push(toFactCardSchema(clean));
   }
 
-  const prompts = buildPrompts(baseline.existingTitlesEn, []);
+  const targetTotal = resolveTargetCardsPerRun();
+  const plan = buildBatchPlan(targetTotal);
+  const prompts = buildPrompts(baseline.existingTitlesEn, [], {
+    factsCount: plan[0]?.factsCount || 8,
+    vocabCount: plan[0]?.vocabCount || 2,
+    targetCategories: plan[0]?.targetCategories || CATEGORIES,
+    existingVocabWords: baseline.seedVocabWords,
+  });
   if (!prompts.systemPrompt || !prompts.userPrompt) {
     throw new Error('Dry-run failed: empty prompt template');
   }
@@ -1276,7 +1368,7 @@ async function runDryRun() {
   }
 
   console.log(
-    `[generateFacts] Dry-run OK: seedFacts=${baseline.seedFacts.length}, factsGenerated=${baseline.generatedFacts.length}, reservoirTotal=${VERIFIED_FACT_RESERVOIR.length}, validatedSample=${validatedSampleCards.length}, vocabWordsTracked=${baseline.seedVocabWords.size}`
+    `[generateFacts] Dry-run OK: seedFacts=${baseline.seedFacts.length}, reservoirTotal=${VERIFIED_FACT_RESERVOIR.length}, validatedSample=${validatedSampleCards.length}, vocabWordsTracked=${baseline.seedVocabWords.size}, targetTotal=${targetTotal}, batches=${plan.length}`
   );
 }
 
@@ -1286,183 +1378,253 @@ async function main() {
     return;
   }
 
+  if (!process.env.DATABASE_URL) {
+    console.error(
+      '[generateFacts] Fatal: DATABASE_URL is required in Postgres-first mode (pass --dry-run for offline schema verification).'
+    );
+    process.exit(1);
+  }
+
+  const writeLocalJson = process.argv.includes('--local-json');
+  const targetTotal = resolveTargetCardsPerRun();
+  const batchPlan = buildBatchPlan(targetTotal);
+
   const baseline = await loadLocalBaselineState();
   const { existingSlugs, existingIds, existingTitlesEn, seedVocabWords } = baseline;
   const seedSlugs = new Set(existingSlugs);
   const seedIds = new Set(existingIds);
 
-  let pool = null;
-  let topEngaged = [];
-
-  if (process.env.DATABASE_URL) {
-    try {
-      pool = new Pool({
-        connectionString: process.env.DATABASE_URL,
-        ssl: process.env.DATABASE_CA_CERT
-          ? { rejectUnauthorized: true, ca: process.env.DATABASE_CA_CERT }
-          : { rejectUnauthorized: false },
-      });
-      await ensureSchemaAndSeed(pool);
-
-      const existingRes = await pool.query('SELECT slug, title_en FROM facts');
-      for (const r of existingRes.rows) {
-        if (r.slug) existingSlugs.add(String(r.slug));
-        const t = String(r.title_en || '').trim().toLowerCase();
-        if (t) existingTitlesEn.add(t);
-      }
-
-      const topRes = await pool.query(`
-        SELECT slug, category, title_en, likes_count, detail_opens, guess_attempts, avg_accuracy, avg_dwell_sec, shares_count
-        FROM fact_engagement_summary
-        ORDER BY likes_count DESC, avg_dwell_sec DESC, detail_opens DESC
-        LIMIT 5
-      `);
-      topEngaged = topRes.rows;
-    } catch (dbErr) {
-      console.warn(
-        '[generateFacts] Warning: Postgres unavailable; continuing with JSON-only persistence:',
-        dbErr instanceof Error ? dbErr.message : String(dbErr)
-      );
-      if (pool) {
-        await pool.end().catch(() => {});
-        pool = null;
-      }
-    }
-  } else {
-    console.warn('[generateFacts] Notice: DATABASE_URL not set; updating local JSON files only.');
-  }
+  const pool = new Pool({
+    connectionString: process.env.DATABASE_URL,
+    ssl: process.env.DATABASE_CA_CERT
+      ? { rejectUnauthorized: true, ca: process.env.DATABASE_CA_CERT }
+      : { rejectUnauthorized: false },
+  });
 
   try {
+    await ensureSchemaAndSeed(pool);
+
+    const existingRes = await pool.query('SELECT slug, title_en FROM facts');
+    for (const r of existingRes.rows) {
+      if (r.slug) existingSlugs.add(String(r.slug));
+      const t = String(r.title_en || '').trim().toLowerCase();
+      if (t) existingTitlesEn.add(t);
+    }
+
+    const existingVocabRes = await pool.query('SELECT word FROM vocabulary_cards');
+    for (const r of existingVocabRes.rows) {
+      if (r.word) seedVocabWords.add(String(r.word).trim().toLowerCase());
+    }
+
+    const topRes = await pool.query(`
+      SELECT slug, category, title_en, likes_count, detail_opens, guess_attempts, avg_accuracy, avg_dwell_sec, shares_count
+      FROM fact_engagement_summary
+      ORDER BY likes_count DESC, avg_dwell_sec DESC, detail_opens DESC
+      LIMIT 5
+    `);
+    const topEngaged = topRes.rows;
+
     console.log(
-      `[generateFacts] Loaded ${existingSlugs.size} existing facts and top ${topEngaged.length} engagement benchmarks.`
+      `[generateFacts] Postgres connected: existingFacts=${existingSlugs.size}, existingVocab=${seedVocabWords.size}, targetCards=${targetTotal}, batches=${batchPlan.length}, localJson=${writeLocalJson}`
     );
 
-    const modelPayload = await fetchGeneratedFactsFromModel(existingTitlesEn, topEngaged);
-    const rawGenerated = modelPayload.facts;
+    const insertedFactsSummary = [];
+    const insertedVocabSummary = [];
+    let totalGeneratedFacts = 0;
+    let totalGeneratedVocab = 0;
+    let lastModelUsed = DEFAULT_AI_MODEL_NAME;
 
-    const validCandidates = [];
-    const tempSlugs = new Set(existingSlugs);
-    const tempTitles = new Set(existingTitlesEn);
+    for (let i = 0; i < batchPlan.length; i += 1) {
+      const batch = batchPlan[i];
+      console.log(
+        `[generateFacts] Batch ${batch.batchNumber}/${batchPlan.length}: requesting ${batch.factsCount} facts + ${batch.vocabCount} vocab across [${batch.targetCategories.join(', ')}]...`
+      );
 
-    for (const candidate of rawGenerated) {
-      const clean = await validateGeneratedFact(candidate, tempSlugs, tempTitles);
-      if (!clean) {
-        console.warn('[generateFacts] Skipped invalid or duplicate candidate:', candidate?.title_en || candidate?.slug);
-        continue;
-      }
-      tempSlugs.add(clean.slug);
-      tempTitles.add(clean.title_en.toLowerCase());
-      validCandidates.push(clean);
-    }
-
-    if (validCandidates.length === 0) {
-      throw new Error('Zero valid verified facts survived validation from remote AI output.');
-    }
-
-    const validVocab = [];
-    for (const candidate of modelPayload.vocabulary) {
-      const cleanVocab = validateVocabularyCard(candidate, seedVocabWords);
-      if (!cleanVocab) {
-        console.warn('[generateFacts] Skipped invalid/duplicate vocabulary candidate:', candidate?.word);
-        continue;
-      }
-      seedVocabWords.add(cleanVocab.word.toLowerCase());
-      validVocab.push(cleanVocab);
-    }
-
-    const factsAddedJson = await appendGeneratedFacts(validCandidates.slice(0, 5), seedSlugs, seedIds);
-    const vocabAdded = await appendGeneratedVocabulary(validVocab.slice(0, 2));
-
-    const insertedSummary = [];
-    if (pool) {
+      let modelPayload;
       try {
-        for (const clean of validCandidates.slice(0, 5)) {
-          const insertRes = await pool.query(
-            `INSERT INTO facts (
-              slug, category, title_tr, title_en, summary_tr, summary_en,
-              detail_tr, detail_en, question_tr, question_en,
-              unit_tr, unit_en, min_val, max_val, answer_val,
-              sketch_type, visual_query, quiz_tr, quiz_en,
-              source_name, source_url, likes_count
-            ) VALUES (
-              $1, $2, $3, $4, $5, $6,
-              $7, $8, $9, $10,
-              $11, $12, $13, $14, $15,
-              $16, $17, $18::jsonb, $19::jsonb,
-              $20, $21, 0
-            )
-            ON CONFLICT (slug) DO NOTHING
-            RETURNING id, slug, category`,
-            [
-              clean.slug,
-              clean.category,
-              clean.title_tr,
-              clean.title_en,
-              clean.summary_tr,
-              clean.summary_en,
-              clean.detail_tr,
-              clean.detail_en,
-              clean.question_tr,
-              clean.question_en,
-              clean.unit_tr,
-              clean.unit_en,
-              clean.min_val,
-              clean.max_val,
-              clean.answer_val,
-              clean.sketch_type,
-              clean.visual_query || null,
-              clean.quiz_tr ? JSON.stringify(clean.quiz_tr) : null,
-              clean.quiz_en ? JSON.stringify(clean.quiz_en) : null,
-              clean.source_name,
-              clean.source_url,
-            ]
-          );
-
-          if (insertRes.rows[0]) {
-            existingSlugs.add(clean.slug);
-            existingTitlesEn.add(clean.title_en.toLowerCase());
-            insertedSummary.push({
-              id: insertRes.rows[0].id,
-              category: clean.category,
-              slug: clean.slug,
-              title_tr: clean.title_tr,
-              sketch: clean.sketch_type,
-              source: clean.source_name,
-            });
-          }
-        }
-      } catch (dbWriteErr) {
+        modelPayload = await fetchGeneratedFactsFromModel(existingTitlesEn, topEngaged, {
+          factsCount: batch.factsCount,
+          vocabCount: batch.vocabCount,
+          targetCategories: batch.targetCategories,
+          existingVocabWords: seedVocabWords,
+        });
+      } catch (batchErr) {
         console.warn(
-          '[generateFacts] Warning: Postgres upsert failed after JSON persistence succeeded:',
-          dbWriteErr instanceof Error ? dbWriteErr.message : String(dbWriteErr)
+          `[generateFacts] Batch ${batch.batchNumber}/${batchPlan.length} generation failed:`,
+          batchErr instanceof Error ? batchErr.message : String(batchErr)
         );
+        if (insertedFactsSummary.length + insertedVocabSummary.length === 0 && i === batchPlan.length - 1) {
+          throw batchErr;
+        }
+        if (i < batchPlan.length - 1) {
+          await sleep(2000);
+        }
+        continue;
+      }
+
+      lastModelUsed = modelPayload.model;
+      const rawGenerated = modelPayload.facts;
+      totalGeneratedFacts += rawGenerated.length;
+      totalGeneratedVocab += modelPayload.vocabulary.length;
+
+      const validCandidates = [];
+      const tempSlugs = new Set(existingSlugs);
+      const tempTitles = new Set(existingTitlesEn);
+
+      for (const candidate of rawGenerated) {
+        const clean = await validateGeneratedFact(candidate, tempSlugs, tempTitles);
+        if (!clean) {
+          console.warn('[generateFacts] Skipped invalid or duplicate candidate:', candidate?.title_en || candidate?.slug);
+          continue;
+        }
+        tempSlugs.add(clean.slug);
+        tempTitles.add(clean.title_en.toLowerCase());
+        validCandidates.push(clean);
+      }
+
+      const validVocab = [];
+      for (const candidate of modelPayload.vocabulary) {
+        const cleanVocab = validateVocabularyCard(candidate, seedVocabWords);
+        if (!cleanVocab) {
+          console.warn('[generateFacts] Skipped invalid/duplicate vocabulary candidate:', candidate?.word);
+          continue;
+        }
+        seedVocabWords.add(cleanVocab.word.toLowerCase());
+        validVocab.push(cleanVocab);
+      }
+
+      // Immediate Postgres persistence for this batch so subsequent batches dedup accurately
+      for (const clean of validCandidates.slice(0, batch.factsCount)) {
+        const insertRes = await pool.query(
+          `INSERT INTO facts (
+            slug, category, title_tr, title_en, summary_tr, summary_en,
+            detail_tr, detail_en, question_tr, question_en,
+            unit_tr, unit_en, min_val, max_val, answer_val,
+            sketch_type, visual_query, quiz_tr, quiz_en,
+            source_name, source_url, likes_count
+          ) VALUES (
+            $1, $2, $3, $4, $5, $6,
+            $7, $8, $9, $10,
+            $11, $12, $13, $14, $15,
+            $16, $17, $18::jsonb, $19::jsonb,
+            $20, $21, 0
+          )
+          ON CONFLICT (slug) DO NOTHING
+          RETURNING id, slug, category`,
+          [
+            clean.slug,
+            clean.category,
+            clean.title_tr,
+            clean.title_en,
+            clean.summary_tr,
+            clean.summary_en,
+            clean.detail_tr,
+            clean.detail_en,
+            clean.question_tr,
+            clean.question_en,
+            clean.unit_tr,
+            clean.unit_en,
+            clean.min_val,
+            clean.max_val,
+            clean.answer_val,
+            clean.sketch_type,
+            clean.visual_query || null,
+            clean.quiz_tr ? JSON.stringify(clean.quiz_tr) : null,
+            clean.quiz_en ? JSON.stringify(clean.quiz_en) : null,
+            clean.source_name,
+            clean.source_url,
+          ]
+        );
+
+        existingSlugs.add(clean.slug);
+        existingTitlesEn.add(clean.title_en.toLowerCase());
+        if (insertRes.rows[0]) {
+          insertedFactsSummary.push({
+            id: insertRes.rows[0].id,
+            category: clean.category,
+            slug: clean.slug,
+            title_tr: clean.title_tr,
+            sketch: clean.sketch_type,
+            source: clean.source_name,
+          });
+        }
+      }
+
+      for (const vocab of validVocab.slice(0, batch.vocabCount)) {
+        const insertVocabRes = await pool.query(
+          `INSERT INTO vocabulary_cards (
+            id, word, phonetic, part_of_speech, meaning_tr,
+            definition_en, example_en, example_tr, quiz_options, correct_index
+          ) VALUES (
+            $1, $2, $3, $4, $5,
+            $6, $7, $8, $9::jsonb, $10
+          )
+          ON CONFLICT (word) DO NOTHING
+          RETURNING id, word`,
+          [
+            vocab.id,
+            vocab.word,
+            vocab.phonetic,
+            vocab.partOfSpeech,
+            vocab.meaningTr,
+            vocab.definitionEn,
+            vocab.exampleEn,
+            vocab.exampleTr,
+            JSON.stringify(vocab.quizOptions),
+            vocab.correctIndex,
+          ]
+        );
+
+        seedVocabWords.add(vocab.word.toLowerCase());
+        if (insertVocabRes.rows[0]) {
+          insertedVocabSummary.push({
+            id: insertVocabRes.rows[0].id,
+            word: vocab.word,
+            pos: vocab.partOfSpeech,
+            meaningTr: vocab.meaningTr,
+          });
+        }
+      }
+
+      if (writeLocalJson) {
+        await appendGeneratedFacts(validCandidates.slice(0, batch.factsCount), seedSlugs, seedIds);
+        await appendGeneratedVocabulary(validVocab.slice(0, batch.vocabCount));
+      }
+
+      console.log(
+        `[generateFacts] Batch ${batch.batchNumber}/${batchPlan.length} committed to Postgres: factsInsertedTotal=${insertedFactsSummary.length}, vocabInsertedTotal=${insertedVocabSummary.length}`
+      );
+
+      if (i < batchPlan.length - 1) {
+        await sleep(2000);
       }
     }
 
-    console.log(`\n=== Scrolly ${modelPayload.model} Generation Summary ===`);
-    console.log(
-      `Facts generated: ${rawGenerated.length} | Verified: ${validCandidates.length} | Appended to data/factsGenerated.json: ${factsAddedJson} | Inserted into Postgres: ${insertedSummary.length}`
-    );
-    console.log(
-      `Vocabulary candidates: ${modelPayload.vocabulary.length} | Valid: ${validVocab.length} | Appended to data/vocabularyGenerated.json: ${vocabAdded}`
-    );
-    if (insertedSummary.length > 0) {
-      console.table(insertedSummary);
+    if (insertedFactsSummary.length + insertedVocabSummary.length === 0) {
+      throw new Error('Zero verified facts or vocabulary cards were inserted into Postgres.');
     }
-    if (validVocab.length > 0) {
-      console.table(validVocab.map((v) => ({ word: v.word, pos: v.partOfSpeech, meaningTr: v.meaningTr })));
+
+    console.log(`\n=== Scrolly ${lastModelUsed} Postgres Batch Generation Summary ===`);
+    console.log(
+      `Facts generated: ${totalGeneratedFacts} | Inserted into Postgres: ${insertedFactsSummary.length} | Vocab generated: ${totalGeneratedVocab} | Inserted into Postgres: ${insertedVocabSummary.length}`
+    );
+    if (insertedFactsSummary.length > 0) {
+      console.table(insertedFactsSummary.slice(0, 20));
+    }
+    if (insertedVocabSummary.length > 0) {
+      console.table(insertedVocabSummary.slice(0, 10));
     }
   } finally {
-    if (pool) {
-      await pool.end().catch(() => {});
-    }
+    await pool.end().catch(() => {});
   }
 }
 
 export {
   appendGeneratedFacts,
+  buildBatchPlan,
   extractJsonCandidate,
   fetchGeneratedFactsFromModel,
+  resolveTargetCardsPerRun,
   toFactCardSchema,
   validateGeneratedFact,
   validateVocabularyCard,

@@ -199,3 +199,12 @@ export function persistWelcomeDismissed(): void {
     // ignore quota / private mode
   }
 }
+
+export function clearWelcomeDismissed(): void {
+  if (typeof window === 'undefined') return;
+  try {
+    window.localStorage.removeItem(WELCOME_DISMISS_KEY);
+  } catch {
+    // ignore quota / private mode
+  }
+}

@@ -3,8 +3,10 @@ import path from 'node:path';
 import { cache } from 'react';
 import { Pool } from 'pg';
 import type { Language } from '@/i18n/translations';
+import { getVocabularyFacts } from '@/data/vocabularyFacts';
 import { formatValueWithUnit } from '@/lib/formatUnit';
 import type { CategoryId, FactCard, FactQuizContent, GuessChallenge } from '@/types/fact';
+import type { VocabPartOfSpeech, VocabularyCard } from '@/types/vocabulary';
 import { enrichFactWithGuessChallenge, getFactPrimarySlug } from '@/utils/factsData';
 import { getAllFacts, LEGACY_SLUG_TO_FACT_ID } from '@/utils/factsServerData';
 
@@ -502,6 +504,27 @@ export async function ensureSchema(): Promise<void> {
       await pool.query(`ALTER TABLE duel_rooms ADD COLUMN IF NOT EXISTS kicked_ids JSONB DEFAULT '[]'::jsonb;`);
       await pool.query(`ALTER TABLE duel_rooms ADD COLUMN IF NOT EXISTS starts_at TIMESTAMPTZ;`);
       await pool.query(`ALTER TABLE duel_rooms ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT NOW();`);
+
+      await pool.query(`
+        CREATE TABLE IF NOT EXISTS vocabulary_cards (
+          id TEXT PRIMARY KEY,
+          word TEXT UNIQUE NOT NULL,
+          phonetic TEXT DEFAULT '',
+          part_of_speech TEXT DEFAULT '',
+          meaning_tr TEXT NOT NULL,
+          definition_en TEXT NOT NULL,
+          example_en TEXT NOT NULL,
+          example_tr TEXT NOT NULL,
+          quiz_options JSONB NOT NULL,
+          correct_index INT NOT NULL DEFAULT 0,
+          created_at TIMESTAMPTZ DEFAULT NOW()
+        );
+      `);
+
+      await pool.query(`
+        CREATE INDEX IF NOT EXISTS idx_vocabulary_cards_created
+          ON vocabulary_cards (created_at DESC);
+      `);
 
       await pool.query(`
         CREATE TABLE IF NOT EXISTS contact_messages (
@@ -1149,6 +1172,226 @@ export const getAllFactsWithTimestampsServer = cache(
     return result.entries;
   }
 );
+
+// =========================================================================
+// Live Vocabulary Cards (Postgres `vocabulary_cards` + static fallback)
+// =========================================================================
+
+interface DbVocabularyRow {
+  id: string;
+  word: string;
+  phonetic: string | null;
+  part_of_speech: string | null;
+  meaning_tr: string;
+  definition_en: string;
+  example_en: string;
+  example_tr: string;
+  quiz_options: unknown;
+  correct_index: number | null;
+  created_at: Date | string | null;
+}
+
+const VALID_PARTS_OF_SPEECH = new Set<VocabPartOfSpeech>(['isim', 'sıfat', 'fiil', 'zarf', 'edat']);
+
+const PART_OF_SPEECH_ALIASES: Record<string, VocabPartOfSpeech> = {
+  noun: 'isim',
+  adjective: 'sıfat',
+  adj: 'sıfat',
+  sifat: 'sıfat',
+  verb: 'fiil',
+  adverb: 'zarf',
+  adv: 'zarf',
+  preposition: 'edat',
+  prep: 'edat',
+};
+
+function normalizePartOfSpeech(raw: unknown): VocabPartOfSpeech {
+  const clean = String(raw || '').trim().toLowerCase();
+  if (VALID_PARTS_OF_SPEECH.has(clean as VocabPartOfSpeech)) {
+    return clean as VocabPartOfSpeech;
+  }
+  return PART_OF_SPEECH_ALIASES[clean] ?? 'isim';
+}
+
+function parseVocabQuizOptions(raw: unknown): [string, string, string] | null {
+  let candidate = raw;
+  if (typeof raw === 'string') {
+    try {
+      candidate = JSON.parse(raw);
+    } catch {
+      return null;
+    }
+  }
+  if (!Array.isArray(candidate) || candidate.length !== 3) return null;
+  const opts = candidate.map((opt) => (typeof opt === 'string' ? opt.trim() : ''));
+  if (opts.some((opt) => opt.length === 0)) return null;
+  return [opts[0], opts[1], opts[2]];
+}
+
+export function mapDbVocabularyRow(row: DbVocabularyRow): VocabularyCard | null {
+  const word = String(row.word || '').trim();
+  const meaningTr = String(row.meaning_tr || '').trim();
+  const quizOptions = parseVocabQuizOptions(row.quiz_options);
+  if (!word || !meaningTr || !quizOptions) return null;
+  const rawIndex = Number(row.correct_index ?? 0);
+  const correctIndex: 0 | 1 | 2 = rawIndex === 1 ? 1 : rawIndex === 2 ? 2 : 0;
+  return {
+    id: String(row.id || `vocab-db-${word.toLowerCase()}`).trim(),
+    category: 'vocabulary',
+    word,
+    phonetic: String(row.phonetic || '').trim(),
+    partOfSpeech: normalizePartOfSpeech(row.part_of_speech),
+    meaningTr,
+    definitionEn: String(row.definition_en || '').trim(),
+    exampleEn: String(row.example_en || '').trim(),
+    exampleTr: String(row.example_tr || '').trim(),
+    quizOptions,
+    correctIndex,
+  };
+}
+
+export interface ServerVocabularyFetchResult {
+  source: 'postgres' | 'local';
+  vocabulary: VocabularyCard[];
+}
+
+/**
+ * Reads fresh vocabulary cards on every call (no cross-request cache) so cards written by the
+ * scheduled generator appear without redeploying. Postgres rows win over static cards that share
+ * the same lowercase word or id.
+ */
+export async function fetchVocabularyWithSourceServer(): Promise<ServerVocabularyFetchResult> {
+  const staticCards = getVocabularyFacts();
+
+  const mergeCards = (primary: VocabularyCard[]): VocabularyCard[] => {
+    const seenWords = new Set<string>();
+    const seenIds = new Set<string>();
+    const merged: VocabularyCard[] = [];
+    for (const card of [...primary, ...staticCards]) {
+      const wordKey = card.word.trim().toLowerCase();
+      if (!wordKey || seenWords.has(wordKey) || seenIds.has(card.id)) continue;
+      seenWords.add(wordKey);
+      seenIds.add(card.id);
+      merged.push(card);
+    }
+    return merged;
+  };
+
+  if (!hasDatabaseUrl()) {
+    return { source: 'local', vocabulary: mergeCards([]) };
+  }
+
+  try {
+    await ensureSchema();
+    const pool = getPool();
+    const res = await pool.query<DbVocabularyRow>(
+      `SELECT id, word, phonetic, part_of_speech, meaning_tr, definition_en,
+              example_en, example_tr, quiz_options, correct_index, created_at
+       FROM vocabulary_cards
+       ORDER BY created_at DESC, word ASC
+       LIMIT 1000`
+    );
+    const dbCards = res.rows
+      .map(mapDbVocabularyRow)
+      .filter((card): card is VocabularyCard => card !== null);
+    return { source: 'postgres', vocabulary: mergeCards(dbCards) };
+  } catch (err) {
+    console.error('[lib/db] fetchVocabularyWithSourceServer fallback to static vocabulary:', err);
+    return { source: 'local', vocabulary: mergeCards([]) };
+  }
+}
+
+// =========================================================================
+// Database Status Report (`GET /api/db-status`)
+// =========================================================================
+
+export interface DatabaseStatusReport {
+  ok: boolean;
+  databaseConfigured: boolean;
+  source: 'postgres' | 'local';
+  factsCount: number;
+  vocabularyCount: number;
+  byCategory: Record<string, number>;
+  latestFacts: Array<{ slug: string; category: string; created_at: string | null }>;
+  checkedAt: string;
+  error?: string;
+}
+
+export async function getDatabaseStatusReport(): Promise<DatabaseStatusReport> {
+  const checkedAt = new Date().toISOString();
+
+  const buildLocalReport = (error?: string): DatabaseStatusReport => {
+    const seedFacts = loadSeedFactsFromDisk();
+    const byCategory: Record<string, number> = {};
+    for (const fact of seedFacts) {
+      byCategory[fact.category] = (byCategory[fact.category] ?? 0) + 1;
+    }
+    return {
+      ok: !error,
+      databaseConfigured: hasDatabaseUrl(),
+      source: 'local',
+      factsCount: seedFacts.length,
+      vocabularyCount: getVocabularyFacts().length,
+      byCategory,
+      latestFacts: [],
+      checkedAt,
+      ...(error ? { error } : {}),
+    };
+  };
+
+  if (!hasDatabaseUrl()) {
+    return buildLocalReport();
+  }
+
+  try {
+    await ensureSchema();
+    const pool = getPool();
+    const [factsRes, vocabRes, categoryRes, latestRes] = await Promise.all([
+      pool.query<{ count: number }>('SELECT COUNT(*)::INT AS count FROM facts'),
+      pool.query<{ count: number }>('SELECT COUNT(*)::INT AS count FROM vocabulary_cards'),
+      pool.query<{ category: string; count: number }>(
+        `SELECT category, COUNT(*)::INT AS count
+         FROM facts
+         GROUP BY category
+         ORDER BY category ASC`
+      ),
+      pool.query<{ slug: string; category: string; created_at: Date | string | null }>(
+        `SELECT slug, category, created_at
+         FROM facts
+         ORDER BY created_at DESC NULLS LAST, id DESC
+         LIMIT 10`
+      ),
+    ]);
+
+    const byCategory: Record<string, number> = {};
+    for (const row of categoryRes.rows) {
+      byCategory[row.category] = Number(row.count ?? 0);
+    }
+
+    return {
+      ok: true,
+      databaseConfigured: true,
+      source: 'postgres',
+      factsCount: Number(factsRes.rows[0]?.count ?? 0),
+      vocabularyCount: Number(vocabRes.rows[0]?.count ?? 0),
+      byCategory,
+      latestFacts: latestRes.rows.map((row) => ({
+        slug: row.slug,
+        category: row.category,
+        created_at:
+          row.created_at instanceof Date
+            ? row.created_at.toISOString()
+            : row.created_at
+              ? String(row.created_at)
+              : null,
+      })),
+      checkedAt,
+    };
+  } catch (err) {
+    console.error('[lib/db] getDatabaseStatusReport failed:', err);
+    return buildLocalReport('database_unreachable');
+  }
+}
 
 export const getAllFactsServer = cache(async (): Promise<FactCard[]> => {
   const entries = await getAllFactsWithTimestampsServer();

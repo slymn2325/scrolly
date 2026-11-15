@@ -49,6 +49,15 @@ function writeDismissedToStorage(): void {
   }
 }
 
+export function clearPwaDismissed(): void {
+  if (typeof window === 'undefined') return;
+  try {
+    window.localStorage.removeItem(PWA_DISMISSED_KEY);
+  } catch {
+    // private mode / quota
+  }
+}
+
 export default function PwaInstallPrompt({
   lang,
   swipedCount,
