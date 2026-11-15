@@ -639,7 +639,7 @@ export default function DuelModal({
     : 'fixed inset-0 z-50 flex w-full items-center justify-center bg-ink/55 px-3 pt-4 backdrop-blur-md';
 
   const panelClass = isPage
-    ? 'relative flex h-full w-full flex-col overflow-y-auto no-scrollbar px-4 pb-[108px] pt-4 lg:pb-6'
+    ? 'relative flex h-full w-full flex-col overflow-y-auto no-scrollbar px-4 pb-[calc(env(safe-area-inset-bottom,16px)+100px)] pt-[calc(env(safe-area-inset-top,20px)+16px)] lg:pb-6 lg:pt-6'
     : 'relative mb-[92px] max-h-[84dvh] w-full max-w-[440px] overflow-y-auto no-scrollbar rounded-3xl border-2 border-amber-200 bg-[#FFFDF9] p-5 shadow-2xl dark:border-violet-700/50 dark:bg-[#171228] sm:p-6 md:max-w-2xl';
 
   return (

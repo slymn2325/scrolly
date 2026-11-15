@@ -50,6 +50,7 @@ export interface FactCard {
   sketchType?: string;
   visualQuery?: string;
   gifUrl?: string;
+  gifQuery?: string;
   likesCount?: number;
   createdAt?: string;
   readingTimeSec?: number;

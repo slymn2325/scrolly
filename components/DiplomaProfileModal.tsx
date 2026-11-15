@@ -220,12 +220,16 @@ export default function DiplomaProfileModal({
             transition={{ type: 'spring', stiffness: 320, damping: 26 }}
             className={
               isPage
-                ? 'relative flex h-full w-full flex-col overflow-hidden pb-[96px] lg:pb-0'
+                ? 'relative flex h-full w-full flex-col overflow-hidden pb-[calc(env(safe-area-inset-bottom,16px)+100px)] lg:pb-0'
                 : 'relative mb-[92px] flex max-h-[82dvh] w-full max-w-[430px] md:max-w-2xl flex-col overflow-hidden rounded-3xl border-2 border-amber-200 bg-[#FFFDF9] shadow-2xl dark:border-violet-700/50 dark:bg-[#171228]'
             }
           >
             {/* Header */}
-            <div className="flex shrink-0 items-center justify-between border-b border-amber-100 px-5 py-4 dark:border-white/10">
+            <div
+              className={`flex shrink-0 items-center justify-between border-b border-amber-100 px-5 pb-4 dark:border-white/10 ${
+                isPage ? 'pt-[calc(env(safe-area-inset-top,20px)+16px)] lg:pt-4' : 'pt-4'
+              }`}
+            >
               <div className="flex items-center gap-2.5">
                 <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-violet-100 p-1.5 dark:bg-violet-900/60">
                   <img
@@ -262,7 +266,7 @@ export default function DiplomaProfileModal({
               ref={scrollBodyRef}
               data-testid="diploma-scroll-body"
               className={`no-scrollbar min-h-0 flex-1 space-y-4 overflow-y-auto px-5 pt-4 ${
-                isPage ? 'pb-36' : 'pb-5'
+                isPage ? 'pb-8 lg:pb-6' : 'pb-5'
               }`}
             >
               {/* Explorer Nickname */}

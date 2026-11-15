@@ -1228,7 +1228,7 @@ export default function HomeClient({ initialFacts, initialVocabulary }: HomeClie
           {activeQuiz && (
             <div
               data-testid="active-quiz-page"
-              className="absolute inset-0 z-30 flex h-full w-full flex-col overflow-y-auto bg-[#FFFDF9] px-3 pb-[108px] pt-4 dark:bg-[#171228] lg:pb-6"
+              className="absolute inset-0 z-30 flex h-full w-full flex-col overflow-y-auto bg-[#FFFDF9] px-3 pt-[calc(env(safe-area-inset-top,20px)+16px)] pb-[calc(env(safe-area-inset-bottom,16px)+100px)] dark:bg-[#171228] lg:pt-6 lg:pb-6"
             >
               <MemoryQuizCard
                 key={activeQuiz.key}
@@ -1376,7 +1376,7 @@ export default function HomeClient({ initialFacts, initialVocabulary }: HomeClie
         {showExploreFeed && usingLocalFallback && (
           <div
             data-testid="local-fallback-notice"
-            className="pointer-events-none absolute inset-x-0 top-[92px] z-20 flex justify-center px-4"
+            className="pointer-events-none absolute inset-x-0 top-[calc(env(safe-area-inset-top,0px)+96px)] z-20 flex justify-center px-4"
           >
             <span className="rounded-full border border-white/15 bg-black/55 px-3 py-1 text-[10px] font-bold text-white/85 backdrop-blur-md">
               {lang === 'tr'

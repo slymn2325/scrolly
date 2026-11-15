@@ -38,6 +38,13 @@ import {
 
 const CLIENT_GIF_CACHE = new Map<string, string | null>();
 
+function isImageCachedInBrowser(url: string | null): boolean {
+  if (!url || typeof window === 'undefined') return false;
+  const probe = new window.Image();
+  probe.src = url;
+  return probe.complete && probe.naturalWidth > 0;
+}
+
 interface TikTokFactSlideProps {
   fact: FactCard;
   lang: Language;
@@ -181,11 +188,10 @@ export default function TikTokFactSlide({
     [localized.factText, localized.deepDiveDetail, localized.tag, localized.sourceHint, localized.quiz, lang]
   );
 
-  const [resolvedGifUrl, setResolvedGifUrl] = useState<string | null>(
-    () => fact.gifUrl || CLIENT_GIF_CACHE.get(fact.id) || null
-  );
+  const initialGifUrl = fact.gifUrl || CLIENT_GIF_CACHE.get(fact.id) || null;
+  const [resolvedGifUrl, setResolvedGifUrl] = useState<string | null>(initialGifUrl);
   const [gifFailed, setGifFailed] = useState(false);
-  const [gifLoaded, setGifLoaded] = useState(false);
+  const [gifLoaded, setGifLoaded] = useState(() => isImageCachedInBrowser(initialGifUrl));
   const gifImgRef = useRef<HTMLImageElement>(null);
 
   const effectiveVisualQuery = useMemo(
@@ -203,16 +209,19 @@ export default function TikTokFactSlide({
   // Lazy-fetch & cache topic-relevant GIF once when slide becomes active
   useEffect(() => {
     setGifFailed(false);
-    setGifLoaded(false);
     if (fact.gifUrl) {
       CLIENT_GIF_CACHE.set(fact.id, fact.gifUrl);
       setResolvedGifUrl(fact.gifUrl);
+      setGifLoaded(isImageCachedInBrowser(fact.gifUrl));
       return;
     }
     if (CLIENT_GIF_CACHE.has(fact.id)) {
-      setResolvedGifUrl(CLIENT_GIF_CACHE.get(fact.id) ?? null);
+      const cached = CLIENT_GIF_CACHE.get(fact.id) ?? null;
+      setResolvedGifUrl(cached);
+      setGifLoaded(isImageCachedInBrowser(cached));
       return;
     }
+    setGifLoaded(false);
     setResolvedGifUrl(null);
     if (!isActive || !effectiveVisualQuery) return;
 
@@ -220,7 +229,10 @@ export default function TikTokFactSlide({
     void fetchTopicGifFromApi(effectiveVisualQuery, factSlug).then((url) => {
       if (cancelled) return;
       CLIENT_GIF_CACHE.set(fact.id, url);
-      if (url) setResolvedGifUrl(url);
+      if (url) {
+        setResolvedGifUrl(url);
+        if (isImageCachedInBrowser(url)) setGifLoaded(true);
+      }
     });
     return () => {
       cancelled = true;
@@ -694,8 +706,10 @@ export default function TikTokFactSlide({
         {/* Front content — mandatory safe paddings; full headline & short fact readable immediately */}
         <div
           data-testid="fact-card-front"
-          className={`relative z-10 flex h-full w-full flex-col justify-end overflow-hidden px-4 pt-[96px] lg:pt-[88px] ${
-            cookieBannerVisible ? 'pb-[210px] lg:pb-7' : 'pb-[94px] lg:pb-7'
+          className={`relative z-10 flex h-full w-full flex-col justify-end overflow-hidden px-4 pt-[calc(env(safe-area-inset-top,12px)+92px)] lg:pt-[88px] ${
+            cookieBannerVisible
+              ? 'pb-[calc(env(safe-area-inset-bottom,16px)+204px)] lg:pb-7'
+              : 'pb-[calc(env(safe-area-inset-bottom,16px)+84px)] lg:pb-7'
           } ${isFlipped ? 'invisible pointer-events-none' : ''}`}
         >
           <div className="pointer-events-none relative z-10 flex max-h-full w-full flex-col gap-2 overflow-y-auto no-scrollbar pr-16 lg:pr-2">
@@ -774,8 +788,10 @@ export default function TikTokFactSlide({
             onClick={(e) => e.stopPropagation()}
             onDoubleClick={(e) => e.stopPropagation()}
             className={`absolute ${
-              cookieBannerVisible ? 'bottom-[218px]' : 'bottom-[104px]'
-            } right-2 z-20 flex flex-col items-center gap-3 lg:hidden`}
+              cookieBannerVisible
+                ? 'bottom-[calc(env(safe-area-inset-bottom,16px)+204px)]'
+                : 'bottom-[calc(env(safe-area-inset-bottom,16px)+84px)]'
+            } right-2 z-20 flex flex-col items-center gap-2.5 lg:hidden`}
           >
             <motion.button
               type="button"

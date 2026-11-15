@@ -112,7 +112,7 @@ export default function OfflineManager({ lang }: OfflineManagerProps) {
   return (
     <AnimatePresence>
       {isOffline && !dismissed && (
-        <div className="pointer-events-none fixed inset-x-0 top-[calc(5.2rem+env(safe-area-inset-top))] z-[19] mx-auto flex w-full max-w-[360px] justify-center px-3 lg:hidden">
+        <div className="pointer-events-none fixed inset-x-0 top-[calc(env(safe-area-inset-top,12px)+98px)] z-[19] mx-auto flex w-full max-w-[360px] justify-center px-3 lg:hidden">
           <motion.div
             initial={{ opacity: 0, y: -12 }}
             animate={{ opacity: 1, y: 0 }}

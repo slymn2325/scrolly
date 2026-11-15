@@ -30,6 +30,7 @@ export interface DbFactRow {
   sketch_type: string | null;
   visual_query?: string | null;
   gif_url?: string | null;
+  gif_query?: string | null;
   quiz_tr?: FactQuizContent | null;
   quiz_en?: FactQuizContent | null;
   source_name: string | null;
@@ -283,18 +284,20 @@ async function seedInitialFactsIfEmpty(pool: Pool): Promise<void> {
         slug, category, title_tr, title_en, summary_tr, summary_en,
         detail_tr, detail_en, question_tr, question_en,
         unit_tr, unit_en, min_val, max_val, answer_val,
-        sketch_type, visual_query, quiz_tr, quiz_en,
+        sketch_type, visual_query, gif_url, gif_query, quiz_tr, quiz_en,
         source_name, source_url, likes_count, created_at
       ) VALUES (
         $1, $2, $3, $4, $5, $6,
         $7, $8, $9, $10,
         $11, $12, $13, $14, $15,
-        $16, $17, $18::jsonb, $19::jsonb,
-        $20, $21, 0, COALESCE($23::timestamptz, NOW() - ($22 * INTERVAL '1 second'))
+        $16, $17, $18, $19, $20::jsonb, $21::jsonb,
+        $22, $23, 0, COALESCE($25::timestamptz, NOW() - ($24 * INTERVAL '1 second'))
       )
       ON CONFLICT (slug) DO UPDATE SET
         category = EXCLUDED.category,
         visual_query = COALESCE(facts.visual_query, EXCLUDED.visual_query),
+        gif_url = COALESCE(facts.gif_url, EXCLUDED.gif_url),
+        gif_query = COALESCE(facts.gif_query, EXCLUDED.gif_query),
         quiz_tr = COALESCE(EXCLUDED.quiz_tr, facts.quiz_tr),
         quiz_en = COALESCE(EXCLUDED.quiz_en, facts.quiz_en)`,
       [
@@ -315,6 +318,8 @@ async function seedInitialFactsIfEmpty(pool: Pool): Promise<void> {
         answerVal,
         fact.id,
         fact.visualQuery || null,
+        fact.gifUrl || null,
+        fact.gifQuery || fact.visualQuery || null,
         fact.tr.quiz ? JSON.stringify(fact.tr.quiz) : null,
         fact.en.quiz ? JSON.stringify(fact.en.quiz) : null,
         fact.en.sourceName || fact.sourceName || fact.en.sourceHint || '',
@@ -354,6 +359,7 @@ export async function ensureSchema(): Promise<void> {
           sketch_type TEXT,
           visual_query TEXT,
           gif_url TEXT,
+          gif_query TEXT,
           quiz_tr JSONB,
           quiz_en JSONB,
           source_name TEXT,
@@ -364,7 +370,9 @@ export async function ensureSchema(): Promise<void> {
       `);
 
       await pool.query(`ALTER TABLE facts ADD COLUMN IF NOT EXISTS visual_query TEXT;`);
-      await pool.query(`ALTER TABLE facts ADD COLUMN IF NOT EXISTS gif_url TEXT;`);
+      await pool.query(
+        `ALTER TABLE facts ADD COLUMN IF NOT EXISTS gif_url TEXT, ADD COLUMN IF NOT EXISTS gif_query TEXT;`
+      );
       await pool.query(`ALTER TABLE facts ADD COLUMN IF NOT EXISTS quiz_tr JSONB;`);
       await pool.query(`ALTER TABLE facts ADD COLUMN IF NOT EXISTS quiz_en JSONB;`);
 
@@ -940,6 +948,7 @@ export function mapDbRowToFactCard(row: DbFactRow, preloadedSeedFacts?: FactCard
       sketchType: row.sketch_type || staticMatch.id,
       visualQuery: row.visual_query?.trim() || staticMatch.visualQuery,
       gifUrl: row.gif_url?.trim() || staticMatch.gifUrl,
+      gifQuery: row.gif_query?.trim() || staticMatch.gifQuery,
       likesCount,
       createdAt,
       sourceName: safeSourceName || staticMatch.sourceName,
@@ -1014,6 +1023,7 @@ export function mapDbRowToFactCard(row: DbFactRow, preloadedSeedFacts?: FactCard
     sketchType: row.sketch_type || undefined,
     visualQuery: deriveFallbackVisualQuery(row),
     gifUrl: row.gif_url?.trim() || undefined,
+    gifQuery: row.gif_query?.trim() || undefined,
     likesCount,
     createdAt,
     readingTimeSec: 20,

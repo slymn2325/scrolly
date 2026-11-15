@@ -1,5 +1,10 @@
 import { LEAGUE_SHIELD_MAP, type LeagueTierId } from '@/utils/icons8Assets';
 import { getOrCreateDeviceId } from '@/lib/telemetry';
+import {
+  deriveExplorerTagFromId,
+  isGenericDefaultNickname,
+  isLegacyUntaggedOrTag42Nickname,
+} from '@/utils/userMemory';
 
 export type LeaderboardTab = 'daily' | 'weekly' | 'alltime';
 
@@ -105,15 +110,157 @@ const SEEDED_EXPLORER_POOL: SeededExplorerTemplate[] = [
   { id: 'npc-kaan-fosil', name: 'FosilKaan', streak: 1, dailyScore: 5, weeklyScore: 10, alltimeScore: 15 },
 ];
 
-function padLeagueWithSeededExplorers(
-  realRows: Omit<LeaderboardEntry, 'rank' | 'zone'>[],
-  tab: LeaderboardTab
-): Omit<LeaderboardEntry, 'rank' | 'zone'>[] {
-  if (realRows.length >= TARGET_LEAGUE_PLAYER_COUNT) {
-    return realRows;
+const DISTINCT_EXPLORER_ALIASES = [
+  'NovaKaşif',
+  'Kuantumİzci',
+  'KozmikBilgin',
+  'VeriGezgini',
+  'FotonAvcısı',
+  'NöronYolcu',
+  'AtomGözcü',
+  'YıldızAnalist',
+  'GalaksiYolcusu',
+  'EvrenGözlemci',
+  'Kutupİzci',
+  'BulutsuGezgin',
+  'OrbitalBilgin',
+  'ZamanAnalist',
+  'BiyomKaşif',
+  'Spektrumİzci',
+  'AstroMerak',
+  'DerinVeri',
+] as const;
+
+type UnrankedLeaderboardRow = Omit<LeaderboardEntry, 'rank' | 'zone'>;
+
+function buildUniqueExplorerAlias(
+  rowId: string,
+  rowIndex: number,
+  usedNames: Set<string>
+): string {
+  const baseTag = deriveExplorerTagFromId(`${rowId}:${rowIndex}`);
+  const startIdx = (baseTag + rowIndex) % DISTINCT_EXPLORER_ALIASES.length;
+  for (let attempt = 0; attempt < 64; attempt += 1) {
+    const alias =
+      DISTINCT_EXPLORER_ALIASES[(startIdx + attempt) % DISTINCT_EXPLORER_ALIASES.length];
+    const tag =
+      attempt === 0
+        ? baseTag
+        : deriveExplorerTagFromId(`${rowId}:${rowIndex}:${attempt}`);
+    const candidate = `${alias} #${tag}`;
+    if (!usedNames.has(candidate.toLowerCase())) {
+      return candidate;
+    }
+  }
+  return `Kaşif #${baseTag}-${rowIndex + 1}`;
+}
+
+function buildUniqueCustomName(
+  baseName: string,
+  rowId: string,
+  rowIndex: number,
+  usedNames: Set<string>
+): string {
+  const trimmed = baseName.trim().slice(0, 20);
+  if (trimmed && !usedNames.has(trimmed.toLowerCase())) {
+    return trimmed;
+  }
+  for (let attempt = 0; attempt < 24; attempt += 1) {
+    const tag = deriveExplorerTagFromId(`${rowId}:${rowIndex}:${attempt}`);
+    const candidate = `${trimmed || 'Kaşif'} #${tag}`;
+    if (!usedNames.has(candidate.toLowerCase())) {
+      return candidate;
+    }
+  }
+  return buildUniqueExplorerAlias(rowId, rowIndex, usedNames);
+}
+
+function resolveViewerNickname(rawName: string, rowId: string): string {
+  const clean = rawName.trim().slice(0, 24);
+  if (clean && !isLegacyUntaggedOrTag42Nickname(clean)) {
+    return clean;
+  }
+  const tag = deriveExplorerTagFromId(rowId);
+  const useEnglishPrefix = /curiosity|explorer/i.test(clean);
+  return useEnglishPrefix ? `Curiosity Explorer #${tag}` : `Merak Kaşifi #${tag}`;
+}
+
+/**
+ * Aggressively deduplicates leaderboard rows by ID and case-insensitive name so
+ * legacy generic names like `Curiosity Explorer #42` / `Merak Kaşifi #42` never repeat.
+ */
+export function deduplicateLeaderboardRows(
+  rows: UnrankedLeaderboardRow[],
+  fallbackDeviceId = 'local-device'
+): UnrankedLeaderboardRow[] {
+  const byId = new Map<string, UnrankedLeaderboardRow>();
+  for (const row of rows) {
+    const id = String(row.id || '').trim() || `anon-${byId.size}`;
+    const existing = byId.get(id);
+    if (!existing) {
+      byId.set(id, { ...row, id });
+      continue;
+    }
+    const pickIncoming =
+      (row.isUser && !existing.isUser) ||
+      (row.isUser === existing.isUser && row.score > existing.score);
+    if (pickIncoming) {
+      byId.set(id, { ...row, id });
+    }
   }
 
-  const combined = [...realRows];
+  const dedupedById = Array.from(byId.values());
+  const usedNames = new Set<string>();
+  const resolved = new Map<string, UnrankedLeaderboardRow>();
+
+  // Reserve viewer row(s) first so the active user's own name never gets altered by NPC/DB duplicates
+  for (const row of dedupedById) {
+    if (!row.isUser) continue;
+    const viewerName = resolveViewerNickname(row.name || '', row.id || fallbackDeviceId);
+    const uniqueName = !usedNames.has(viewerName.toLowerCase())
+      ? viewerName
+      : buildUniqueCustomName(viewerName, row.id || fallbackDeviceId, 0, usedNames);
+    usedNames.add(uniqueName.toLowerCase());
+    resolved.set(row.id, { ...row, name: uniqueName });
+  }
+
+  const nonUsers = dedupedById
+    .filter((row) => !row.isUser)
+    .sort((a, b) => b.score - a.score || b.streak - a.streak || a.id.localeCompare(b.id));
+
+  nonUsers.forEach((row, idx) => {
+    const rawName = (row.name || '').trim();
+    const isGeneric =
+      !rawName ||
+      isGenericDefaultNickname(rawName) ||
+      isLegacyUntaggedOrTag42Nickname(rawName);
+
+    let finalName: string;
+    if (isGeneric) {
+      finalName = buildUniqueExplorerAlias(row.id, idx, usedNames);
+    } else if (!usedNames.has(rawName.toLowerCase())) {
+      finalName = rawName;
+    } else {
+      finalName = buildUniqueCustomName(rawName, row.id, idx, usedNames);
+    }
+
+    usedNames.add(finalName.toLowerCase());
+    resolved.set(row.id, { ...row, name: finalName });
+  });
+
+  return dedupedById.map((row) => resolved.get(row.id) ?? row);
+}
+
+function padLeagueWithSeededExplorers(
+  realRows: UnrankedLeaderboardRow[],
+  tab: LeaderboardTab,
+  fallbackDeviceId = 'local-device'
+): UnrankedLeaderboardRow[] {
+  const combined = deduplicateLeaderboardRows(realRows, fallbackDeviceId);
+  if (combined.length >= TARGET_LEAGUE_PLAYER_COUNT) {
+    return combined;
+  }
+
   const existingIds = new Set(combined.map((r) => r.id));
   const existingNames = new Set(combined.map((r) => r.name.trim().toLowerCase()));
 
@@ -137,8 +284,9 @@ function padLeagueWithSeededExplorers(
           ? npc.weeklyScore
           : npc.alltimeScore;
 
-    if (existingIds.has(npc.id)) continue;
+    if (existingIds.has(npc.id) || existingNames.has(npc.name.toLowerCase())) continue;
     existingIds.add(npc.id);
+    existingNames.add(npc.name.toLowerCase());
 
     combined.push({
       id: npc.id,
@@ -190,7 +338,7 @@ export async function fetchLeaderboardEntries(
 
   const myFallbackRow: Omit<LeaderboardEntry, 'rank' | 'zone'> = {
     id: myDeviceId,
-    name: (nickname || 'Merak Kâşifi').trim(),
+    name: resolveViewerNickname(nickname || '', myDeviceId),
     avatar: avatarForScore(userXp, streakDays),
     score: Math.max(0, Math.floor(myScore)),
     streak: Math.max(1, Math.floor(streakDays)),
@@ -199,7 +347,9 @@ export async function fetchLeaderboardEntries(
 
   if (typeof window === 'undefined') {
     return {
-      entries: assignRanksAndZones(padLeagueWithSeededExplorers([myFallbackRow], tab)),
+      entries: assignRanksAndZones(
+        padLeagueWithSeededExplorers([myFallbackRow], tab, myDeviceId)
+      ),
       isLiveSupabase: false,
       isLiveBackend: false,
     };
@@ -213,7 +363,9 @@ export async function fetchLeaderboardEntries(
 
     if (!res.ok) {
       return {
-        entries: assignRanksAndZones(padLeagueWithSeededExplorers([myFallbackRow], tab)),
+        entries: assignRanksAndZones(
+          padLeagueWithSeededExplorers([myFallbackRow], tab, myDeviceId)
+        ),
         isLiveSupabase: false,
         isLiveBackend: false,
       };
@@ -237,7 +389,9 @@ export async function fetchLeaderboardEntries(
 
     if (serverRows.length === 0) {
       return {
-        entries: assignRanksAndZones(padLeagueWithSeededExplorers([myFallbackRow], tab)),
+        entries: assignRanksAndZones(
+          padLeagueWithSeededExplorers([myFallbackRow], tab, myDeviceId)
+        ),
         isLiveSupabase: isPostgresLive,
         isLiveBackend: isPostgresLive,
       };
@@ -249,7 +403,7 @@ export async function fetchLeaderboardEntries(
       const rowStreak = Math.max(1, Number(row.streak || 1));
       return {
         id: row.deviceId,
-        name: isMe ? myFallbackRow.name : (row.username || 'Kâşif').trim(),
+        name: isMe ? myFallbackRow.name : (row.username || '').trim(),
         avatar: avatarForScore(isMe ? userXp : rowXp, rowStreak),
         score: isMe ? Math.max(myFallbackRow.score, Number(row.score || 0)) : Math.max(0, Number(row.score || 0)),
         streak: isMe ? Math.max(myFallbackRow.streak, rowStreak) : rowStreak,
@@ -262,13 +416,17 @@ export async function fetchLeaderboardEntries(
     }
 
     return {
-      entries: assignRanksAndZones(padLeagueWithSeededExplorers(mapped, tab)),
+      entries: assignRanksAndZones(
+        padLeagueWithSeededExplorers(mapped, tab, myDeviceId)
+      ),
       isLiveSupabase: isPostgresLive,
       isLiveBackend: isPostgresLive,
     };
   } catch {
     return {
-      entries: assignRanksAndZones(padLeagueWithSeededExplorers([myFallbackRow], tab)),
+      entries: assignRanksAndZones(
+        padLeagueWithSeededExplorers([myFallbackRow], tab, myDeviceId)
+      ),
       isLiveSupabase: false,
       isLiveBackend: false,
     };
@@ -290,12 +448,16 @@ export async function submitQuizScoreToLeaderboard(params: {
   if (typeof window === 'undefined') return;
   try {
     const deviceId = getOrCreateDeviceId();
+    const safeUsername = resolveViewerNickname(
+      params.username || params.nickname || '',
+      deviceId
+    );
     await fetch('/api/leaderboard', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         deviceId,
-        username: (params.username || params.nickname || 'Merak Kâşifi').trim(),
+        username: safeUsername,
         mode: params.mode || params.quizMode || 'daily',
         score: params.score,
         correctCount: params.correctCount,

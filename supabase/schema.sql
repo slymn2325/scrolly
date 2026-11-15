@@ -21,6 +21,7 @@ create table if not exists public.facts (
   sketch_type text,
   visual_query text,
   gif_url text,
+  gif_query text,
   quiz_tr jsonb,
   quiz_en jsonb,
   source_name text,
@@ -31,6 +32,7 @@ create table if not exists public.facts (
 
 alter table public.facts add column if not exists visual_query text;
 alter table public.facts add column if not exists gif_url text;
+alter table public.facts add column if not exists gif_query text;
 alter table public.facts add column if not exists quiz_tr jsonb;
 alter table public.facts add column if not exists quiz_en jsonb;
 

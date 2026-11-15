@@ -133,6 +133,381 @@ const CATEGORY_VISUAL_DEFAULTS = {
   statistics: { accentColor: '#6366F1', iconName: 'Percent', emoji: '📊' },
 };
 
+const MAX_GIF_REQUESTS_PER_HOUR = 80;
+const GIF_QUOTA_WINDOW_MS = 60 * 60 * 1000;
+const GIF_FETCH_TIMEOUT_MS = 4000;
+const BANNED_GIF_PATTERN =
+  /(?:^|[^a-z0-9])(meme|memes|reaction|reactions|funny|anime|text|quote|quotes|caption|lol|wtf|mrw|mfw|subtitles|sticker|stickers|gif\s*text|giphy\s*clips)(?:$|[^a-z0-9])/i;
+const DISALLOWED_VIDEO_EXT_PATTERN = /\.(mp4|webm|mov|m4v)(?:$|[?#])/i;
+const GIF_STOP_WORDS = new Set([
+  'the', 'a', 'an', 'and', 'or', 'of', 'in', 'on', 'at', 'to', 'for', 'from', 'by',
+  'with', 'is', 'are', 'was', 'were', 'can', 'than', 'that', 'this', 'your', 'only',
+  'more', 'most', 'nearly', 'over', 'about', 'just', 'into', 'like', 'its', 'not',
+  'how', 'why', 'what', 'when', 'where', 'have', 'has', 'had', 'actually', 'really',
+]);
+const CATEGORY_GIF_FALLBACK_QUERY = {
+  space: 'planet cosmos',
+  nature: 'ocean wildlife',
+  human_body: 'human anatomy',
+  history: 'ancient monument',
+  science: 'physics experiment',
+  records: 'world record',
+  statistics: 'data chart',
+};
+
+const gifRequestTimestamps = [];
+const sessionGifQueryCache = new Map();
+
+function pruneGifQuotaWindow(now = Date.now()) {
+  const cutoff = now - GIF_QUOTA_WINDOW_MS;
+  while (gifRequestTimestamps.length > 0 && gifRequestTimestamps[0] <= cutoff) {
+    gifRequestTimestamps.shift();
+  }
+}
+
+function getHourlyGifQuotaStatus(now = Date.now()) {
+  pruneGifQuotaWindow(now);
+  const used = gifRequestTimestamps.length;
+  return {
+    limit: MAX_GIF_REQUESTS_PER_HOUR,
+    used,
+    remaining: Math.max(0, MAX_GIF_REQUESTS_PER_HOUR - used),
+    windowMs: GIF_QUOTA_WINDOW_MS,
+  };
+}
+
+function canConsumeGifQuota(now = Date.now()) {
+  return getHourlyGifQuotaStatus(now).remaining > 0;
+}
+
+function consumeGifQuota(now = Date.now()) {
+  pruneGifQuotaWindow(now);
+  if (gifRequestTimestamps.length >= MAX_GIF_REQUESTS_PER_HOUR) {
+    return false;
+  }
+  gifRequestTimestamps.push(now);
+  return true;
+}
+
+function resetGifQuotaForTest() {
+  gifRequestTimestamps.length = 0;
+  sessionGifQueryCache.clear();
+}
+
+function extractCleanEnglishKeywords(rawText) {
+  return String(rawText || '')
+    .replace(/[^\x20-\x7E]/g, ' ')
+    .replace(/[^a-zA-Z0-9\s-]/g, ' ')
+    .toLowerCase()
+    .split(/[\s-]+/)
+    .filter(
+      (token) =>
+        token.length >= 3 &&
+        !/^\d+$/.test(token) &&
+        !GIF_STOP_WORDS.has(token) &&
+        !BANNED_GIF_PATTERN.test(token)
+    );
+}
+
+function buildGifSearchQuery({ visualQuery = '', titleEn = '', category = 'science' } = {}) {
+  const visualTokens = extractCleanEnglishKeywords(visualQuery);
+  const titleTokens = extractCleanEnglishKeywords(titleEn);
+  const categoryTokens = extractCleanEnglishKeywords(
+    CATEGORY_GIF_FALLBACK_QUERY[category] || 'science nature'
+  );
+
+  const combined = [];
+  const seen = new Set();
+  const pushToken = (token) => {
+    if (!seen.has(token) && combined.length < 3) {
+      seen.add(token);
+      combined.push(token);
+    }
+  };
+
+  for (const token of visualTokens) {
+    pushToken(token);
+  }
+  if (combined.length < 2) {
+    for (const token of titleTokens) {
+      pushToken(token);
+    }
+  }
+  if (combined.length < 2) {
+    for (const token of categoryTokens) {
+      pushToken(token);
+    }
+  }
+
+  if (combined.length === 0) {
+    return 'science discovery';
+  }
+  return combined.slice(0, 3).join(' ');
+}
+
+function isCleanGifCandidateUrl(url, metaParts = []) {
+  const cleanUrl = String(url || '').trim();
+  if (!cleanUrl.startsWith('https://')) return false;
+  if (DISALLOWED_VIDEO_EXT_PATTERN.test(cleanUrl)) return false;
+
+  const combined = [cleanUrl, ...metaParts].filter(Boolean).join(' ').trim();
+  if (combined && BANNED_GIF_PATTERN.test(combined)) {
+    return false;
+  }
+  return true;
+}
+
+function selectTopicRelevantCleanGif(candidates, gifQuery, category) {
+  const queryWords = extractCleanEnglishKeywords(gifQuery);
+  const categoryWords = extractCleanEnglishKeywords(CATEGORY_GIF_FALLBACK_QUERY[category] || '');
+  const relevanceSet = new Set([...queryWords, ...categoryWords]);
+
+  const cleanList = [];
+  for (const candidate of candidates) {
+    if (!candidate || !candidate.url || candidate.isSticker) continue;
+    const metaParts = [candidate.title || '', candidate.slug || '', ...(candidate.tags || [])];
+    if (!isCleanGifCandidateUrl(candidate.url, metaParts)) continue;
+    cleanList.push({
+      url: String(candidate.url).trim(),
+      metaText: metaParts.join(' ').toLowerCase(),
+    });
+  }
+
+  if (cleanList.length === 0) return null;
+
+  for (const item of cleanList) {
+    const metaTokens = extractCleanEnglishKeywords(item.metaText);
+    if (metaTokens.some((tok) => relevanceSet.has(tok))) {
+      return item.url;
+    }
+  }
+
+  // Fallback to first safe non-meme image URL when upstream omits descriptive tags
+  return cleanList[0].url;
+}
+
+function pickGiphyCandidateUrl(row) {
+  const urls = [
+    row?.images?.fixed_height?.webp,
+    row?.images?.downsized_medium?.url,
+    row?.images?.fixed_height?.url,
+    row?.images?.original?.url,
+  ];
+  for (const candidate of urls) {
+    const clean = String(candidate || '').trim();
+    if (clean.startsWith('https://') && !DISALLOWED_VIDEO_EXT_PATTERN.test(clean)) {
+      return clean;
+    }
+  }
+  return '';
+}
+
+function pickTenorCandidateUrl(row) {
+  const urls = [
+    row?.media_formats?.tinygif?.url,
+    row?.media_formats?.mediumgif?.url,
+    row?.media_formats?.gif?.url,
+  ];
+  for (const candidate of urls) {
+    const clean = String(candidate || '').trim();
+    if (clean.startsWith('https://') && !DISALLOWED_VIDEO_EXT_PATTERN.test(clean)) {
+      return clean;
+    }
+  }
+  return '';
+}
+
+async function fetchGiphyCleanGif(gifQuery, category, apiKey) {
+  const params = new URLSearchParams({
+    api_key: apiKey,
+    q: gifQuery,
+    limit: '8',
+    offset: '0',
+    rating: 'g',
+    lang: 'en',
+  });
+
+  try {
+    const res = await fetch(`https://api.giphy.com/v1/gifs/search?${params.toString()}`, {
+      signal: AbortSignal.timeout(GIF_FETCH_TIMEOUT_MS),
+      headers: { Accept: 'application/json' },
+    });
+    if (!res.ok) return null;
+    const json = await res.json();
+    const rows = Array.isArray(json?.data) ? json.data : [];
+    const candidates = rows.map((row) => ({
+      url: pickGiphyCandidateUrl(row),
+      title: row?.title || '',
+      slug: `${row?.slug || ''} ${row?.url || ''}`.trim(),
+      tags: Array.isArray(row?.tags) ? row.tags : [],
+      isSticker: Boolean(row?.is_sticker),
+    }));
+    return selectTopicRelevantCleanGif(candidates, gifQuery, category);
+  } catch {
+    return null;
+  }
+}
+
+async function fetchTenorCleanGif(gifQuery, category, apiKey) {
+  const params = new URLSearchParams({
+    key: apiKey,
+    q: gifQuery,
+    limit: '8',
+    contentfilter: 'high',
+    media_filter: 'tinygif,mediumgif,gif',
+    locale: 'en_US',
+  });
+
+  try {
+    const res = await fetch(`https://tenor.googleapis.com/v2/search?${params.toString()}`, {
+      signal: AbortSignal.timeout(GIF_FETCH_TIMEOUT_MS),
+      headers: { Accept: 'application/json' },
+    });
+    if (!res.ok) return null;
+    const json = await res.json();
+    const rows = Array.isArray(json?.results) ? json.results : [];
+    const candidates = rows.map((row) => ({
+      url: pickTenorCandidateUrl(row),
+      title: [row?.content_description, row?.title, row?.h1_title].filter(Boolean).join(' '),
+      slug: [row?.itemurl, row?.url].filter(Boolean).join(' '),
+      tags: Array.isArray(row?.tags) ? row.tags : [],
+      isSticker: Array.isArray(row?.flags) && row.flags.includes('sticker'),
+    }));
+    return selectTopicRelevantCleanGif(candidates, gifQuery, category);
+  } catch {
+    return null;
+  }
+}
+
+async function resolveServerGifForFact({
+  visualQuery = '',
+  titleEn = '',
+  category = 'science',
+  existingGifUrl = '',
+} = {}) {
+  const gifQuery = buildGifSearchQuery({ visualQuery, titleEn, category });
+  const existing = String(existingGifUrl || '').trim();
+  if (existing.startsWith('https://') && !DISALLOWED_VIDEO_EXT_PATTERN.test(existing)) {
+    return { gifQuery, gifUrl: existing, source: 'existing', skippedReason: null };
+  }
+
+  const giphyKey = String(process.env.GIPHY_API_KEY || '').trim();
+  const tenorKey = String(process.env.TENOR_API_KEY || '').trim();
+  if (!giphyKey && !tenorKey) {
+    return { gifQuery, gifUrl: null, source: 'none', skippedReason: 'no_api_key' };
+  }
+
+  if (sessionGifQueryCache.has(gifQuery)) {
+    const cachedUrl = sessionGifQueryCache.get(gifQuery) || null;
+    return {
+      gifQuery,
+      gifUrl: cachedUrl,
+      source: cachedUrl ? 'cache' : 'none',
+      skippedReason: cachedUrl ? null : 'cached_miss',
+    };
+  }
+
+  if (giphyKey) {
+    if (!consumeGifQuota()) {
+      return { gifQuery, gifUrl: null, source: 'none', skippedReason: 'quota_exhausted' };
+    }
+    const giphyUrl = await fetchGiphyCleanGif(gifQuery, category, giphyKey);
+    if (giphyUrl) {
+      sessionGifQueryCache.set(gifQuery, giphyUrl);
+      return { gifQuery, gifUrl: giphyUrl, source: 'giphy', skippedReason: null };
+    }
+  }
+
+  if (tenorKey) {
+    if (!consumeGifQuota()) {
+      return { gifQuery, gifUrl: null, source: 'none', skippedReason: 'quota_exhausted' };
+    }
+    const tenorUrl = await fetchTenorCleanGif(gifQuery, category, tenorKey);
+    if (tenorUrl) {
+      sessionGifQueryCache.set(gifQuery, tenorUrl);
+      return { gifQuery, gifUrl: tenorUrl, source: 'tenor', skippedReason: null };
+    }
+  }
+
+  sessionGifQueryCache.set(gifQuery, null);
+  return { gifQuery, gifUrl: null, source: 'none', skippedReason: 'no_clean_match' };
+}
+
+async function backfillMissingFactGifs(pool, { maxPerRun = 30 } = {}) {
+  const giphyKey = String(process.env.GIPHY_API_KEY || '').trim();
+  const tenorKey = String(process.env.TENOR_API_KEY || '').trim();
+  if (!giphyKey && !tenorKey) {
+    return { attempted: 0, updated: 0, queryUpdated: 0, skippedReason: 'no_api_key' };
+  }
+
+  const quotaStatus = getHourlyGifQuotaStatus();
+  if (quotaStatus.remaining <= 0) {
+    return { attempted: 0, updated: 0, queryUpdated: 0, skippedReason: 'quota_exhausted' };
+  }
+
+  const limit = Math.max(1, Math.min(maxPerRun, quotaStatus.remaining));
+  const pendingRes = await pool.query(
+    `SELECT id, slug, category, title_en, visual_query, gif_query
+     FROM facts
+     WHERE gif_url IS NULL OR TRIM(gif_url) = ''
+     ORDER BY created_at DESC
+     LIMIT $1`,
+    [limit]
+  );
+
+  let attempted = 0;
+  let updated = 0;
+  let queryUpdated = 0;
+  let stoppedForQuota = false;
+
+  for (const row of pendingRes.rows) {
+    if (!canConsumeGifQuota()) {
+      stoppedForQuota = true;
+      break;
+    }
+
+    attempted += 1;
+    const resolved = await resolveServerGifForFact({
+      visualQuery: row.gif_query || row.visual_query || '',
+      titleEn: row.title_en || '',
+      category: row.category || 'science',
+    });
+
+    if (resolved.gifUrl) {
+      await pool.query(
+        `UPDATE facts
+         SET gif_url = $2,
+             gif_query = COALESCE(NULLIF($3, ''), gif_query)
+         WHERE id = $1
+           AND (gif_url IS NULL OR TRIM(gif_url) = '')`,
+        [row.id, resolved.gifUrl, resolved.gifQuery]
+      );
+      updated += 1;
+    } else if (!row.gif_query && resolved.gifQuery) {
+      await pool.query(
+        `UPDATE facts
+         SET gif_query = $2
+         WHERE id = $1
+           AND (gif_query IS NULL OR TRIM(gif_query) = '')`,
+        [row.id, resolved.gifQuery]
+      );
+      queryUpdated += 1;
+    }
+
+    if (resolved.skippedReason === 'quota_exhausted') {
+      stoppedForQuota = true;
+      break;
+    }
+  }
+
+  return {
+    attempted,
+    updated,
+    queryUpdated,
+    skippedReason: stoppedForQuota ? 'quota_exhausted' : null,
+  };
+}
+
 async function loadSeedFactsFromDisk() {
   const shardFiles = ['space.json', 'nature.json', 'human_body.json', 'history.json', 'science.json', 'records.json', 'statistics.json'];
   const all = [];
@@ -181,6 +556,7 @@ async function ensureSchemaAndSeed(pool) {
       sketch_type TEXT,
       visual_query TEXT,
       gif_url TEXT,
+      gif_query TEXT,
       quiz_tr JSONB,
       quiz_en JSONB,
       source_name TEXT,
@@ -194,6 +570,7 @@ async function ensureSchemaAndSeed(pool) {
     ALTER TABLE facts
       ADD COLUMN IF NOT EXISTS visual_query TEXT,
       ADD COLUMN IF NOT EXISTS gif_url TEXT,
+      ADD COLUMN IF NOT EXISTS gif_query TEXT,
       ADD COLUMN IF NOT EXISTS quiz_tr JSONB,
       ADD COLUMN IF NOT EXISTS quiz_en JSONB;
   `);
@@ -307,19 +684,30 @@ async function ensureSchemaAndSeed(pool) {
             ? 1
             : 50;
 
+      const seedGifQuery = buildGifSearchQuery({
+        visualQuery: fact.visualQuery || '',
+        titleEn: fact.en?.title || '',
+        category: fact.category || 'science',
+      });
+      const rawSeedGifUrl = String(fact.gifUrl || '').trim();
+      const seedGifUrl =
+        rawSeedGifUrl.startsWith('https://') && !DISALLOWED_VIDEO_EXT_PATTERN.test(rawSeedGifUrl)
+          ? rawSeedGifUrl
+          : null;
+
       await pool.query(
         `INSERT INTO facts (
           slug, category, title_tr, title_en, summary_tr, summary_en,
           detail_tr, detail_en, question_tr, question_en,
           unit_tr, unit_en, min_val, max_val, answer_val,
-          sketch_type, visual_query, quiz_tr, quiz_en,
+          sketch_type, visual_query, gif_url, gif_query, quiz_tr, quiz_en,
           source_name, source_url, likes_count, created_at
         ) VALUES (
           $1, $2, $3, $4, $5, $6,
           $7, $8, $9, $10,
           $11, $12, $13, $14, $15,
-          $16, $17, $18::jsonb, $19::jsonb,
-          $20, $21, 0, NOW() - ($22 * INTERVAL '1 second')
+          $16, $17, $18, $19, $20::jsonb, $21::jsonb,
+          $22, $23, 0, NOW() - ($24 * INTERVAL '1 second')
         )
         ON CONFLICT (slug) DO NOTHING`,
         [
@@ -340,6 +728,8 @@ async function ensureSchemaAndSeed(pool) {
           answerVal,
           fact.id,
           fact.visualQuery || null,
+          seedGifUrl,
+          seedGifQuery || null,
           fact.tr?.quiz ? JSON.stringify(fact.tr.quiz) : null,
           fact.en?.quiz ? JSON.stringify(fact.en.quiz) : null,
           fact.en?.sourceName || fact.sourceName || fact.en?.sourceHint || '',
@@ -912,6 +1302,14 @@ function toFactCardSchema(clean, idx = 0) {
     emoji: meta.emoji,
     sketchType: clean.sketch_type,
     visualQuery: clean.visual_query,
+    gifQuery:
+      clean.gif_query ||
+      buildGifSearchQuery({
+        visualQuery: clean.visual_query,
+        titleEn: clean.title_en,
+        category: clean.category,
+      }),
+    ...(clean.gif_url ? { gifUrl: clean.gif_url } : {}),
     readingTimeSec: 18,
     sourceName: clean.source_name,
     sourceUrl: clean.source_url,
@@ -1495,19 +1893,28 @@ async function main() {
 
       // Immediate Postgres persistence for this batch so subsequent batches dedup accurately
       for (const clean of validCandidates.slice(0, batch.factsCount)) {
+        const gifResolved = await resolveServerGifForFact({
+          visualQuery: clean.visual_query || '',
+          titleEn: clean.title_en || '',
+          category: clean.category || 'science',
+          existingGifUrl: clean.gif_url || '',
+        });
+        clean.gif_url = gifResolved.gifUrl;
+        clean.gif_query = gifResolved.gifQuery;
+
         const insertRes = await pool.query(
           `INSERT INTO facts (
             slug, category, title_tr, title_en, summary_tr, summary_en,
             detail_tr, detail_en, question_tr, question_en,
             unit_tr, unit_en, min_val, max_val, answer_val,
-            sketch_type, visual_query, quiz_tr, quiz_en,
+            sketch_type, visual_query, gif_url, gif_query, quiz_tr, quiz_en,
             source_name, source_url, likes_count
           ) VALUES (
             $1, $2, $3, $4, $5, $6,
             $7, $8, $9, $10,
             $11, $12, $13, $14, $15,
-            $16, $17, $18::jsonb, $19::jsonb,
-            $20, $21, 0
+            $16, $17, $18, $19, $20::jsonb, $21::jsonb,
+            $22, $23, 0
           )
           ON CONFLICT (slug) DO NOTHING
           RETURNING id, slug, category`,
@@ -1529,6 +1936,8 @@ async function main() {
             clean.answer_val,
             clean.sketch_type,
             clean.visual_query || null,
+            clean.gif_url || null,
+            clean.gif_query || null,
             clean.quiz_tr ? JSON.stringify(clean.quiz_tr) : null,
             clean.quiz_en ? JSON.stringify(clean.quiz_en) : null,
             clean.source_name,
@@ -1545,6 +1954,7 @@ async function main() {
             slug: clean.slug,
             title_tr: clean.title_tr,
             sketch: clean.sketch_type,
+            gifResolved: Boolean(clean.gif_url),
             source: clean.source_name,
           });
         }
@@ -1604,9 +2014,21 @@ async function main() {
       throw new Error('Zero verified facts or vocabulary cards were inserted into Postgres.');
     }
 
+    let backfillStats = { attempted: 0, updated: 0, queryUpdated: 0, skippedReason: null };
+    try {
+      backfillStats = await backfillMissingFactGifs(pool, { maxPerRun: 30 });
+    } catch (backfillErr) {
+      console.warn(
+        '[generateFacts] GIF backfill pass skipped due to error:',
+        backfillErr instanceof Error ? backfillErr.message : String(backfillErr)
+      );
+    }
+
+    const quotaAfterRun = getHourlyGifQuotaStatus();
+
     console.log(`\n=== Scrolly ${lastModelUsed} Postgres Batch Generation Summary ===`);
     console.log(
-      `Facts generated: ${totalGeneratedFacts} | Inserted into Postgres: ${insertedFactsSummary.length} | Vocab generated: ${totalGeneratedVocab} | Inserted into Postgres: ${insertedVocabSummary.length}`
+      `Facts generated: ${totalGeneratedFacts} | Inserted into Postgres: ${insertedFactsSummary.length} | Vocab generated: ${totalGeneratedVocab} | Inserted into Postgres: ${insertedVocabSummary.length} | GIF backfill updated=${backfillStats.updated}/${backfillStats.attempted} (queries=${backfillStats.queryUpdated}, skipped=${backfillStats.skippedReason || 'none'}) | Hourly GIF quota used=${quotaAfterRun.used}/${quotaAfterRun.limit}`
     );
     if (insertedFactsSummary.length > 0) {
       console.table(insertedFactsSummary.slice(0, 20));
@@ -1621,10 +2043,20 @@ async function main() {
 
 export {
   appendGeneratedFacts,
+  backfillMissingFactGifs,
   buildBatchPlan,
+  buildGifSearchQuery,
+  canConsumeGifQuota,
+  consumeGifQuota,
   extractJsonCandidate,
   fetchGeneratedFactsFromModel,
+  getHourlyGifQuotaStatus,
+  pickGiphyCandidateUrl,
+  pickTenorCandidateUrl,
+  resetGifQuotaForTest,
+  resolveServerGifForFact,
   resolveTargetCardsPerRun,
+  selectTopicRelevantCleanGif,
   toFactCardSchema,
   validateGeneratedFact,
   validateVocabularyCard,

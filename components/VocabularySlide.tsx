@@ -177,8 +177,10 @@ export default function VocabularySlide({
         <div className="pointer-events-none absolute inset-x-0 bottom-0 z-[5] h-[58%] bg-gradient-to-t from-[#09090B] via-[#09090B]/75 to-transparent" />
 
         <div
-          className={`relative z-10 flex h-full w-full flex-col justify-end overflow-y-auto no-scrollbar px-4 pt-[108px] ${
-            cookieBannerVisible ? 'pb-[212px] lg:pb-8' : 'pb-[96px] lg:pb-8'
+          className={`relative z-10 flex h-full w-full flex-col justify-end overflow-y-auto no-scrollbar px-4 pt-[calc(env(safe-area-inset-top,12px)+96px)] lg:pt-[108px] ${
+            cookieBannerVisible
+              ? 'pb-[calc(env(safe-area-inset-bottom,16px)+204px)] lg:pb-8'
+              : 'pb-[calc(env(safe-area-inset-bottom,16px)+84px)] lg:pb-8'
           }`}
         >
           <div className="flex flex-col gap-3 pr-16">
@@ -284,8 +286,10 @@ export default function VocabularySlide({
         </div>
 
         <div
-          className={`absolute right-3 z-20 flex flex-col items-center gap-3 ${
-            cookieBannerVisible ? 'bottom-[218px] lg:bottom-8' : 'bottom-[104px] lg:bottom-8'
+          className={`absolute right-3 z-20 flex flex-col items-center gap-2.5 ${
+            cookieBannerVisible
+              ? 'bottom-[calc(env(safe-area-inset-bottom,16px)+204px)] lg:bottom-8'
+              : 'bottom-[calc(env(safe-area-inset-bottom,16px)+84px)] lg:bottom-8'
           }`}
         >
           <motion.button

@@ -249,17 +249,27 @@ export async function getFactGifUrlDb(slugOrId: string): Promise<string | null> 
   }
 }
 
-export async function updateFactGifUrlDb(slugOrId: string, gifUrl: string): Promise<void> {
+export async function updateFactGifUrlDb(
+  slugOrId: string,
+  gifUrl: string,
+  gifQuery?: string
+): Promise<void> {
   if (!hasDatabaseUrl() || !slugOrId || !gifUrl) return;
+  const cleanUrl = gifUrl.trim().slice(0, 500);
+  if (!cleanUrl.startsWith('https://') || /\.(mp4|webm|mov|m4v)(?:$|[?#])/i.test(cleanUrl)) {
+    return;
+  }
+  const cleanQuery = gifQuery ? gifQuery.trim().slice(0, 120) : '';
   try {
     await ensureSchema();
     const pool = getPool();
     await pool.query(
       `UPDATE facts
-       SET gif_url = $2
+       SET gif_url = $2,
+           gif_query = COALESCE(NULLIF($3, ''), gif_query)
        WHERE (slug = $1 OR sketch_type = $1)
-         AND (gif_url IS NULL OR gif_url = '')`,
-      [slugOrId.trim().slice(0, 160), gifUrl.trim().slice(0, 500)]
+         AND (gif_url IS NULL OR TRIM(gif_url) = '')`,
+      [slugOrId.trim().slice(0, 160), cleanUrl, cleanQuery]
     );
   } catch (err) {
     console.warn('[dbActions] updateFactGifUrlDb skipped:', err);
@@ -576,6 +586,106 @@ export async function upsertProfileState(
   return { persisted: true, profile: nextProfile };
 }
 
+const GENERIC_EXPLORER_EXACT_KEYS = new Set([
+  '',
+  'kasif',
+  'merak kasifi',
+  'curiosity explorer',
+  'explorer',
+  'scrolla explorer',
+  'player',
+  'anonim',
+  'anonymous',
+]);
+
+const GENERIC_42_KEY_PATTERN =
+  /^(?:merak\s+kasifi|curiosity\s+explorer|kasif|explorer)\s*#?\s*42$/i;
+
+function normalizeLeaderboardNameKey(name: string): string {
+  return String(name || '')
+    .trim()
+    .toLocaleLowerCase('tr-TR')
+    .normalize('NFKD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/\u0131/g, 'i')
+    .replace(/\s+/g, ' ');
+}
+
+function deriveDeterministicExplorerTag(deviceId: string): number {
+  let hash = 2166136261;
+  for (let i = 0; i < deviceId.length; i += 1) {
+    hash ^= deviceId.charCodeAt(i);
+    hash = Math.imul(hash, 16777619);
+  }
+  const unsigned = hash >>> 0;
+  return 100 + (unsigned % 9899);
+}
+
+/**
+ * Normalizes legacy `#42` / generic explorer defaults and deduplicates any colliding
+ * nicknames across distinct devices while preserving custom higher-ranked names.
+ */
+export function deduplicateLeaderboardRows(rows: DbLeaderboardRow[]): DbLeaderboardRow[] {
+  const seenDeviceIds = new Set<string>();
+  const usedNameKeys = new Set<string>();
+  const out: DbLeaderboardRow[] = [];
+
+  for (const row of rows) {
+    const cleanDeviceId = String(row.deviceId || '').trim();
+    if (!cleanDeviceId || seenDeviceIds.has(cleanDeviceId)) {
+      continue;
+    }
+    seenDeviceIds.add(cleanDeviceId);
+
+    const rawName = String(row.username || '').trim().slice(0, 28);
+    const rawKey = normalizeLeaderboardNameKey(rawName);
+    const baseTag = deriveDeterministicExplorerTag(cleanDeviceId);
+    const isGeneric =
+      GENERIC_EXPLORER_EXACT_KEYS.has(rawKey) || GENERIC_42_KEY_PATTERN.test(rawKey);
+    const isEnglishDefault = /\b(curiosity|explorer|player|anonymous)\b/i.test(rawKey);
+
+    let finalName = rawName;
+    let finalHandle = row.handle ? sanitizeHandle(row.handle) : '';
+
+    if (isGeneric) {
+      const baseLabel = isEnglishDefault ? 'Curiosity Explorer' : 'Merak Kaşifi';
+      let tag = baseTag;
+      let candidate = `${baseLabel} #${tag}`;
+      while (usedNameKeys.has(normalizeLeaderboardNameKey(candidate))) {
+        tag = 100 + ((tag - 100 + 1) % 9899);
+        candidate = `${baseLabel} #${tag}`;
+      }
+      finalName = candidate;
+      if (!finalHandle || /^@?(?:kasif|explorer)42$/i.test(finalHandle)) {
+        finalHandle = `@${isEnglishDefault ? 'explorer' : 'kasif'}${tag}`;
+      }
+    } else if (usedNameKeys.has(rawKey)) {
+      const strippedBase = rawName.replace(/\s*#\d+\s*$/, '').trim().slice(0, 20) || 'Kaşif';
+      let tag = baseTag;
+      let candidate = `${strippedBase} #${tag}`;
+      while (usedNameKeys.has(normalizeLeaderboardNameKey(candidate))) {
+        tag = 100 + ((tag - 100 + 1) % 9899);
+        candidate = `${strippedBase} #${tag}`;
+      }
+      finalName = candidate;
+      if (!finalHandle) {
+        finalHandle = sanitizeHandle(`${strippedBase}${tag}`);
+      }
+    }
+
+    usedNameKeys.add(normalizeLeaderboardNameKey(finalName));
+
+    out.push({
+      ...row,
+      deviceId: cleanDeviceId,
+      username: finalName,
+      handle: finalHandle || undefined,
+    });
+  }
+
+  return out;
+}
+
 export async function getLeaderboardRows(
   tab: 'daily' | 'weekly' | 'alltime',
   limit = 50,
@@ -626,7 +736,7 @@ export async function getLeaderboardRows(
       .sort((a, b) => b.score - a.score || b.xp - a.xp || b.updatedAt.localeCompare(a.updatedAt))
       .slice(0, safeLimit);
 
-    return { source: 'local', rows };
+    return { source: 'local', rows: deduplicateLeaderboardRows(rows) };
   }
 
   await ensureSchema();
@@ -671,19 +781,21 @@ export async function getLeaderboardRows(
       [dailyDates, safeLimit]
     );
 
+    const mapped = res.rows.map((r) => ({
+      deviceId: r.device_id,
+      username: sanitizeUsername(r.username),
+      handle: sanitizeHandle(r.handle) || undefined,
+      score: r.score,
+      xp: r.xp,
+      weeklyXp: r.weekly_xp,
+      streak: r.streak,
+      updatedAt:
+        r.updated_at instanceof Date ? r.updated_at.toISOString() : String(r.updated_at),
+    }));
+
     return {
       source: 'postgres',
-      rows: res.rows.map((r) => ({
-        deviceId: r.device_id,
-        username: sanitizeUsername(r.username),
-        handle: sanitizeHandle(r.handle) || undefined,
-        score: r.score,
-        xp: r.xp,
-        weeklyXp: r.weekly_xp,
-        streak: r.streak,
-        updatedAt:
-          r.updated_at instanceof Date ? r.updated_at.toISOString() : String(r.updated_at),
-      })),
+      rows: deduplicateLeaderboardRows(mapped),
     };
   }
 
@@ -715,19 +827,21 @@ export async function getLeaderboardRows(
     [safeLimit]
   );
 
+  const mapped = res.rows.map((r) => ({
+    deviceId: r.device_id,
+    username: sanitizeUsername(r.username),
+    handle: sanitizeHandle(r.handle) || undefined,
+    score: tab === 'weekly' ? (r.weekly_xp > 0 ? r.weekly_xp : r.xp) : r.xp,
+    xp: r.xp,
+    weeklyXp: r.weekly_xp,
+    streak: r.streak,
+    updatedAt:
+      r.updated_at instanceof Date ? r.updated_at.toISOString() : String(r.updated_at),
+  }));
+
   return {
     source: 'postgres',
-    rows: res.rows.map((r) => ({
-      deviceId: r.device_id,
-      username: sanitizeUsername(r.username),
-      handle: sanitizeHandle(r.handle) || undefined,
-      score: tab === 'weekly' ? (r.weekly_xp > 0 ? r.weekly_xp : r.xp) : r.xp,
-      xp: r.xp,
-      weeklyXp: r.weekly_xp,
-      streak: r.streak,
-      updatedAt:
-        r.updated_at instanceof Date ? r.updated_at.toISOString() : String(r.updated_at),
-    })),
+    rows: deduplicateLeaderboardRows(mapped),
   };
 }
 

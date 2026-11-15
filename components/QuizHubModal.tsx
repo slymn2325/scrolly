@@ -74,7 +74,7 @@ export default function QuizHubModal({
             transition={{ type: 'spring', stiffness: 320, damping: 26 }}
             className={
               isPage
-                ? 'relative h-full w-full overflow-y-auto no-scrollbar px-4 pb-[108px] pt-4 lg:pb-6'
+                ? 'relative h-full w-full overflow-y-auto no-scrollbar px-4 pb-[calc(env(safe-area-inset-bottom,16px)+100px)] pt-[calc(env(safe-area-inset-top,20px)+16px)] lg:pb-6 lg:pt-6'
                 : 'relative mb-[92px] max-h-[84dvh] w-full max-w-[430px] md:max-w-2xl overflow-y-auto no-scrollbar rounded-3xl border border-white/70 bg-[#FFFDF9]/95 p-5 shadow-2xl backdrop-blur-2xl dark:border-violet-700/50 dark:bg-[#171228]/95 sm:p-6'
             }
           >
@@ -123,7 +123,7 @@ export default function QuizHubModal({
             </div>
 
             {/* 8-Domain Topic Coverage Strip (includes Statistics & Language Learning) */}
-            <div className="mt-3 flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-1">
+            <div className="mt-3 flex flex-wrap items-center gap-2 pb-1">
               {topicDomains.map((cat) => (
                 <span
                   key={cat.id}

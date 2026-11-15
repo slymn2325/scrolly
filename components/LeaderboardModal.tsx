@@ -193,7 +193,7 @@ export default function LeaderboardModal({
             transition={{ type: 'spring', stiffness: 320, damping: 26 }}
             className={
               isPage
-                ? 'relative flex h-full w-full flex-col overflow-hidden px-4 pb-[108px] pt-[max(1rem,env(safe-area-inset-top))] lg:pb-6 lg:pt-4'
+                ? 'relative flex h-full w-full flex-col overflow-hidden px-4 pb-[calc(env(safe-area-inset-bottom,16px)+100px)] pt-[calc(env(safe-area-inset-top,20px)+16px)] lg:pb-6 lg:pt-6'
                 : 'relative mb-[92px] mt-[env(safe-area-inset-top)] flex max-h-[82dvh] w-full max-w-[430px] md:max-w-2xl flex-col rounded-3xl border-2 border-amber-200 bg-[#FFFDF9] p-5 shadow-2xl dark:border-violet-700/50 dark:bg-[#1A162B] sm:p-6'
             }
           >

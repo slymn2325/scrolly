@@ -22,6 +22,8 @@ import type { VocabularyCard } from '@/types/vocabulary';
 import { getVocabularyFacts } from '@/data/vocabularyFacts';
 import { UI_ICON_PATHS } from '@/utils/icons8Assets';
 
+const PRELOADED_GIF_CACHE = new Set<string>();
+
 export type FeedSlideItem =
   | { type: 'fact'; key: string; fact: FactCard; factIndex: number }
   | { type: 'vocabulary'; key: string; card: VocabularyCard; vocabIndex: number }
@@ -457,6 +459,27 @@ const TikTokFeed = forwardRef<TikTokFeedHandle, TikTokFeedProps>(function TikTok
     );
   }, [activeIndex, slides]);
 
+  // Eagerly preload next 2 card GIF URLs in browser cache + head preload hints
+  useEffect(() => {
+    if (typeof window === 'undefined' || slides.length === 0) return;
+    const candidates = [slides[activeIndex + 1], slides[activeIndex + 2]];
+    for (const slide of candidates) {
+      if (!slide || slide.type !== 'fact') continue;
+      const url = slide.fact.gifUrl?.trim();
+      if (!url || !url.startsWith('https://') || PRELOADED_GIF_CACHE.has(url)) continue;
+      PRELOADED_GIF_CACHE.add(url);
+      const img = new window.Image();
+      img.decoding = 'async';
+      img.src = url;
+      const preloadLink = document.createElement('link');
+      preloadLink.rel = 'preload';
+      preloadLink.as = 'image';
+      preloadLink.href = url;
+      preloadLink.setAttribute('data-scrolly-gif', '1');
+      document.head.appendChild(preloadLink);
+    }
+  }, [activeIndex, slides]);
+
   return (
     <div
       data-theme={darkMode ? 'dark' : 'light'}
@@ -464,16 +487,16 @@ const TikTokFeed = forwardRef<TikTokFeedHandle, TikTokFeedProps>(function TikTok
         darkMode ? 'bg-[#09090B] text-white' : 'bg-[#F7F5FB] text-[#1E1B2E]'
       }`}
     >
-      {/* Top HUD — compact, no stories/1-5 counter. overflow-visible so category drawer is not clipped. */}
+      {/* Top HUD — compact, z-40 crisp controls with safe-area notch clearance (no full-header blur wash). */}
       <header
         data-chrome-blocked={chromeBlocked ? 'true' : 'false'}
-        className={`pointer-events-none absolute inset-x-0 top-0 z-30 w-full px-2.5 pt-[max(8px,env(safe-area-inset-top))] pb-1.5 ${
+        className={`pointer-events-none absolute inset-x-0 top-0 z-40 w-full px-2.5 pt-[max(env(safe-area-inset-top,12px),12px)] pb-1.5 ${
           chromeBlocked ? 'opacity-40' : ''
         }`}
       >
         <div
           aria-hidden="true"
-          className="pointer-events-none absolute inset-x-0 top-0 h-[96px] bg-gradient-to-b from-black/80 via-black/40 to-transparent"
+          className="pointer-events-none absolute inset-x-0 top-0 h-[env(safe-area-inset-top,0px)] bg-black/55"
         />
         {/* Top Utility Bar: Left Streak+XP | Right Controls */}
         <div
@@ -484,7 +507,7 @@ const TikTokFeed = forwardRef<TikTokFeedHandle, TikTokFeedProps>(function TikTok
           <div className="flex flex-wrap items-center gap-1">
             <div
               data-testid="top-streak-xp-pill"
-              className="inline-flex items-center gap-1.5 rounded-full border border-white/15 bg-white/10 px-2 py-1 text-[10px] font-extrabold text-white backdrop-blur-md lg:hidden"
+              className="inline-flex items-center gap-1.5 rounded-full border border-white/25 bg-[#0B0B10]/85 px-2.5 py-1 text-[10px] font-extrabold text-white shadow-md lg:hidden"
             >
               <span className="inline-flex items-center gap-1 text-amber-300">
                 <img
@@ -515,10 +538,10 @@ const TikTokFeed = forwardRef<TikTokFeedHandle, TikTokFeedProps>(function TikTok
               onClick={onToggleDarkMode}
               aria-label={darkMode ? t.lightModeOn : t.darkModeOn}
               data-testid="theme-toggle-btn"
-              className={`flex h-9 w-9 items-center justify-center rounded-full border backdrop-blur-md ${
+              className={`flex h-9 w-9 items-center justify-center rounded-full border shadow-md ${
                 darkMode
-                  ? 'border-white/15 bg-white/10 text-amber-200'
-                  : 'border-[#1E1B2E]/[0.12] bg-white/85 text-amber-700 shadow-sm'
+                  ? 'border-white/25 bg-[#0B0B10]/85 text-amber-200'
+                  : 'border-[#1E1B2E]/15 bg-white/95 text-amber-700'
               }`}
             >
               <img
@@ -535,10 +558,10 @@ const TikTokFeed = forwardRef<TikTokFeedHandle, TikTokFeedProps>(function TikTok
               onClick={onToggleSound}
               aria-label={soundEnabled ? t.soundOn : t.soundOff}
               data-testid="sound-toggle-btn"
-              className={`flex h-9 w-9 items-center justify-center rounded-full border backdrop-blur-md ${
+              className={`flex h-9 w-9 items-center justify-center rounded-full border shadow-md ${
                 darkMode
-                  ? 'border-white/15 bg-white/10 text-violet-200'
-                  : 'border-[#1E1B2E]/[0.12] bg-white/85 text-violet-700 shadow-sm'
+                  ? 'border-white/25 bg-[#0B0B10]/85 text-violet-200'
+                  : 'border-[#1E1B2E]/15 bg-white/95 text-violet-700'
               }`}
             >
               <img
@@ -552,10 +575,10 @@ const TikTokFeed = forwardRef<TikTokFeedHandle, TikTokFeedProps>(function TikTok
             <div
               role="group"
               aria-label="Language switch"
-              className={`flex items-center gap-0.5 rounded-full border p-0.5 text-[10px] font-black backdrop-blur-md ${
+              className={`flex items-center gap-0.5 rounded-full border p-0.5 text-[10px] font-black shadow-md ${
                 darkMode
-                  ? 'border-white/15 bg-white/10 text-white'
-                  : 'border-[#1E1B2E]/[0.12] bg-white/85 text-[#1E1B2E] shadow-sm'
+                  ? 'border-white/25 bg-[#0B0B10]/85 text-white'
+                  : 'border-[#1E1B2E]/15 bg-white/95 text-[#1E1B2E]'
               }`}
             >
               <img
@@ -616,10 +639,10 @@ const TikTokFeed = forwardRef<TikTokFeedHandle, TikTokFeedProps>(function TikTok
               onSelectCategory('all');
             }}
             data-testid="category-pill-all"
-            className={`inline-flex h-8 shrink-0 items-center gap-1.5 rounded-full px-2.5 text-[10px] font-extrabold transition-all ${
+            className={`inline-flex h-8 shrink-0 items-center gap-1.5 rounded-full px-2.5 text-[10px] font-extrabold shadow-md transition-all ${
               activeCategory === 'all'
                 ? 'bg-white text-[#09090B]'
-                : 'border border-white/15 bg-white/10 text-white/85'
+                : 'border border-white/25 bg-[#0B0B10]/85 text-white'
             }`}
           >
             <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-white/95 p-0.5">
@@ -642,10 +665,10 @@ const TikTokFeed = forwardRef<TikTokFeedHandle, TikTokFeedProps>(function TikTok
             }}
             aria-expanded={isCategoryDrawerOpen}
             data-testid="choose-category-btn"
-            className={`inline-flex h-8 shrink-0 items-center gap-1 rounded-full border px-2.5 text-[10px] font-extrabold transition-all ${
+            className={`inline-flex h-8 shrink-0 items-center gap-1 rounded-full border px-2.5 text-[10px] font-extrabold shadow-md transition-all ${
               isCategoryDrawerOpen
                 ? 'border-violet-400 bg-violet-600 text-white'
-                : 'border-white/15 bg-white/10 text-white'
+                : 'border-white/25 bg-[#0B0B10]/85 text-white'
             }`}
           >
             <span>{copy.chooseCategory} ▾</span>
@@ -663,10 +686,10 @@ const TikTokFeed = forwardRef<TikTokFeedHandle, TikTokFeedProps>(function TikTok
               animate={{ opacity: 1, scale: 1 }}
               onClick={() => setIsCategoryDrawerOpen((prev) => !prev)}
               data-testid="active-category-badge"
-              className={`inline-flex h-8 shrink-0 items-center gap-1.5 rounded-full border px-2.5 text-[10px] font-extrabold ${
+              className={`inline-flex h-8 shrink-0 items-center gap-1.5 rounded-full border px-2.5 text-[10px] font-extrabold shadow-md ${
                 activeCategory === 'vocabulary'
                   ? 'border-indigo-300 bg-indigo-600 text-white'
-                  : 'border-white/20 bg-white/10 text-white'
+                  : 'border-white/25 bg-[#0B0B10]/85 text-white'
               }`}
             >
               <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-white/95 p-0.5">
@@ -694,7 +717,7 @@ const TikTokFeed = forwardRef<TikTokFeedHandle, TikTokFeedProps>(function TikTok
             exit={{ opacity: 0, y: -8, scale: 0.98 }}
             transition={{ duration: 0.18, ease: 'easeOut' }}
             data-testid="category-drawer"
-            className={`pointer-events-auto absolute inset-x-2.5 top-[92px] z-40 max-h-[50dvh] overflow-y-auto rounded-2xl border border-white/20 bg-[#111115] p-2.5 text-white shadow-2xl ${
+            className={`pointer-events-auto absolute inset-x-2.5 top-[calc(env(safe-area-inset-top,12px)+88px)] z-40 max-h-[50dvh] overflow-y-auto rounded-2xl border border-white/20 bg-[#111115] p-2.5 text-white shadow-2xl ${
               chromeBlocked ? 'opacity-40 pointer-events-none' : ''
             }`}
           >

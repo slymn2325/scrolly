@@ -219,10 +219,33 @@ function createClientPlayerId(): string {
   return cryptoRandomUuid();
 }
 
-function getDefaultNickname(lang: Language, tagNumber = 42): string {
+/**
+ * Deterministically maps a player/device ID to a 3-digit tag (100-999)
+ * so default explorer identities never collide on `#42`.
+ */
+export function deriveExplorerTagFromId(playerId: string): number {
+  const clean = (playerId || '').trim();
+  if (!clean) return 101;
+  let hash = 2166136261;
+  for (let i = 0; i < clean.length; i += 1) {
+    hash ^= clean.charCodeAt(i);
+    hash = Math.imul(hash, 16777619);
+  }
+  return 100 + ((hash >>> 0) % 900);
+}
+
+function getDefaultNickname(lang: Language, tagNumber: number): string {
   return lang === 'tr'
     ? `Merak Kaşifi #${tagNumber}`
     : `Curiosity Explorer #${tagNumber}`;
+}
+
+export function isLegacyUntaggedOrTag42Nickname(name: string | undefined | null): boolean {
+  const trimmed = (name || '').trim();
+  if (!trimmed) return true;
+  return /^(Merak Kaşifi|Merak Kâşifi|Meraklı Kaşif|Meraklı Kâşif|Curiosity Explorer|Kaşif|Kâşif|Explorer)(\s*#42)?$/i.test(
+    trimmed
+  );
 }
 
 function getYesterdayDateString(): string {
@@ -260,9 +283,10 @@ function writeCookie(name: string, value: string, days = 365): void {
  */
 export function getDefaultUserState(lang: Language = 'tr'): UserMemoryState {
   const safeLang: Language = lang === 'en' ? 'en' : 'tr';
+  const ssrPlayerId = 'local-default-player';
   return {
-    playerId: 'local-default-player',
-    nickname: getDefaultNickname(safeLang, 42),
+    playerId: ssrPlayerId,
+    nickname: getDefaultNickname(safeLang, deriveExplorerTagFromId(ssrPlayerId)),
     lang: safeLang,
     darkMode: false,
     xp: 0,
@@ -389,16 +413,22 @@ export function loadUserMemory(): UserMemoryState {
       ? savedHighest
       : computedLeague;
 
-  const randomTag = Math.floor(100 + Math.random() * 900);
+  const resolvedPlayerId =
+    typeof parsed?.playerId === 'string' &&
+    parsed.playerId.trim() &&
+    parsed.playerId !== 'local-default-player'
+      ? parsed.playerId
+      : createClientPlayerId();
+  const parsedNickname =
+    typeof parsed?.nickname === 'string' ? parsed.nickname.trim().slice(0, 24) : '';
+  const resolvedNickname =
+    parsedNickname && !isLegacyUntaggedOrTag42Nickname(parsedNickname)
+      ? parsedNickname
+      : getDefaultNickname(resolvedLang, deriveExplorerTagFromId(resolvedPlayerId));
+
   const state: UserMemoryState = {
-    playerId:
-      typeof parsed?.playerId === 'string' && parsed.playerId !== 'local-default-player'
-        ? parsed.playerId
-        : createClientPlayerId(),
-    nickname:
-      typeof parsed?.nickname === 'string' && parsed.nickname.trim()
-        ? parsed.nickname.trim().slice(0, 24)
-        : getDefaultNickname(resolvedLang, randomTag),
+    playerId: resolvedPlayerId,
+    nickname: resolvedNickname,
     lang: resolvedLang,
     darkMode: Boolean(parsed?.darkMode),
     xp: resolvedXp,
@@ -613,7 +643,9 @@ export function getTopCategory(weights: Record<CategoryId, number>): CategoryId 
 }
 
 export function updateUserNickname(state: UserMemoryState, nickname: string): UserMemoryState {
-  const clean = nickname.trim().slice(0, 24) || getDefaultNickname(state.lang);
+  const clean =
+    nickname.trim().slice(0, 24) ||
+    getDefaultNickname(state.lang, deriveExplorerTagFromId(state.playerId));
   const nextState: UserMemoryState = {
     ...state,
     nickname: clean,
@@ -684,7 +716,7 @@ export function resetUserMemory(): UserMemoryState {
   const detectedLang = detectBrowserLanguage();
   const fresh = getDefaultUserState(detectedLang);
   fresh.playerId = createClientPlayerId();
-  fresh.nickname = getDefaultNickname(detectedLang, Math.floor(100 + Math.random() * 900));
+  fresh.nickname = getDefaultNickname(detectedLang, deriveExplorerTagFromId(fresh.playerId));
   fresh.lastVisitDate = getTodayDateString();
   fresh.cookieAccepted = true;
   fresh.isReturningUser = false;
@@ -768,10 +800,15 @@ export function mergeRemoteProfileIntoMemory(
   });
 
   const remoteNick = typeof remote.username === 'string' ? remote.username.trim().slice(0, 24) : '';
+  const localNormalized = isLegacyUntaggedOrTag42Nickname(local.nickname)
+    ? getDefaultNickname(local.lang, deriveExplorerTagFromId(local.playerId))
+    : local.nickname;
   const nickname =
-    remoteNick && (!isGenericDefaultNickname(remoteNick) || isGenericDefaultNickname(local.nickname))
+    remoteNick &&
+    !isLegacyUntaggedOrTag42Nickname(remoteNick) &&
+    (!isGenericDefaultNickname(remoteNick) || isGenericDefaultNickname(localNormalized))
       ? remoteNick
-      : local.nickname;
+      : localNormalized;
 
   const currentTier = getLeagueInfo(mergedXp, local.lang).id;
   const highestLeagueId =
