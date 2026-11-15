@@ -11,16 +11,28 @@ import {
   Sparkles,
   Swords,
   Timer,
+  Volume2,
   XCircle,
   Zap,
 } from 'lucide-react';
 import type { DuelChallengeConfig } from '@/components/DuelModal';
-import { getCategoryMeta, type Language, translations } from '@/i18n/translations';
+import { getVocabularyFacts } from '@/data/vocabularyFacts';
+import {
+  type CategoryFilter,
+  type CategoryId,
+  getCategoryMeta,
+  type Language,
+  translations,
+  VOCABULARY_META,
+} from '@/i18n/translations';
+import type { VocabularyCard } from '@/types/vocabulary';
 import { vibrateSuccess, vibrateTap } from '@/utils/haptics';
 import { CATEGORY_SUB_ICON_MAP, UI_ICON_PATHS } from '@/utils/icons8Assets';
 import { prepareQuizOptions, type QuizQuestionItem } from '@/utils/recommendation';
+import { pickSeededFacts } from '@/utils/seededRandom';
 import { buildStructuredDetailHighlights } from '@/utils/topicMotif';
 import { useEscapeClose } from '@/utils/useEscapeClose';
+import { speakVocabularyText } from '@/utils/vocabNotebook';
 
 export type ActiveQuizMode = 'memory' | 'daily' | 'weekly' | 'duel';
 
@@ -55,6 +67,163 @@ function formatComboMultiplier(streak: number): string {
   return '1.0x';
 }
 
+interface EffectiveQuizLocalized {
+  title: string;
+  tag?: string;
+  factText: string;
+  deepDiveDetail?: string;
+  sourceHint?: string;
+  sourceName?: string;
+  quiz: {
+    question: string;
+    options: [string, string, string];
+    correctIndex: 0 | 1 | 2;
+    explanation?: string;
+  };
+}
+
+interface EffectiveQuizEntry {
+  id: string;
+  displayCategory: CategoryFilter;
+  sourceCategory: string;
+  emoji: string;
+  sourceName?: string;
+  tr: EffectiveQuizLocalized;
+  en: EffectiveQuizLocalized;
+  vocabMeta?: {
+    word: string;
+    phonetic: string;
+    partOfSpeech: string;
+    meaningTr: string;
+    exampleEn: string;
+    exampleTr: string;
+  };
+}
+
+function resolveCategoryBadgeIcon(category: CategoryFilter | string): string {
+  if (category === 'vocabulary' || category === 'language_lab') {
+    return VOCABULARY_META.iconPath;
+  }
+  if (category in CATEGORY_SUB_ICON_MAP) {
+    return CATEGORY_SUB_ICON_MAP[category as CategoryId];
+  }
+  return CATEGORY_SUB_ICON_MAP.science;
+}
+
+function maskStandaloneWord(sentence: string, word: string): string {
+  const cleanWord = word.trim();
+  if (!sentence || !cleanWord) return '';
+  const escaped = cleanWord.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const matcher = new RegExp(`\\b${escaped}\\b`, 'i');
+  return matcher.test(sentence) ? sentence.replace(matcher, '_____') : '';
+}
+
+function buildVocabQuizEntry(
+  card: VocabularyCard,
+  allVocab: VocabularyCard[],
+  index: number,
+  seedKey: string
+): EffectiveQuizEntry {
+  const others = allVocab.filter(
+    (other) => other.id !== card.id && other.word.toLowerCase() !== card.word.toLowerCase()
+  );
+  const samePos = others.filter((other) => other.partOfSpeech === card.partOfSpeech);
+  const diffPos = others.filter((other) => other.partOfSpeech !== card.partOfSpeech);
+  const pickedSame = pickSeededFacts(samePos, 3, `${seedKey}-pos-${card.id}`);
+  const pickedDiff = pickSeededFacts(diffPos, 3, `${seedKey}-diff-${card.id}`);
+  const distractorWords: string[] = [];
+  const distractorMeanings: string[] = [];
+
+  for (const candidate of [...pickedSame, ...pickedDiff]) {
+    if (
+      distractorWords.length < 2 &&
+      candidate.word.toLowerCase() !== card.word.toLowerCase() &&
+      !distractorWords.some((w) => w.toLowerCase() === candidate.word.toLowerCase())
+    ) {
+      distractorWords.push(candidate.word);
+    }
+    if (
+      distractorMeanings.length < 2 &&
+      candidate.meaningTr.toLowerCase() !== card.meaningTr.toLowerCase() &&
+      !distractorMeanings.some((m) => m.toLowerCase() === candidate.meaningTr.toLowerCase())
+    ) {
+      distractorMeanings.push(candidate.meaningTr);
+    }
+  }
+
+  const fallbackEn1 = distractorWords[0] ?? 'ephemeral';
+  const fallbackEn2 = distractorWords[1] ?? 'pragmatic';
+  const enOptions: [string, string, string] = [card.word, fallbackEn1, fallbackEn2];
+
+  const validTrOpts =
+    Array.isArray(card.quizOptions) && card.quizOptions.length === 3
+      ? ([card.quizOptions[0], card.quizOptions[1], card.quizOptions[2]] as [
+          string,
+          string,
+          string,
+        ])
+      : ([
+          card.meaningTr,
+          distractorMeanings[0] ?? 'geçici',
+          distractorMeanings[1] ?? 'belirsiz',
+        ] as [string, string, string]);
+  const validTrIdx: 0 | 1 | 2 =
+    Array.isArray(card.quizOptions) && card.quizOptions.length === 3 ? card.correctIndex : 0;
+
+  const maskedSentence = maskStandaloneWord(card.exampleEn, card.word);
+  const trQuestion =
+    index % 2 === 0 && card.exampleEn
+      ? `"${card.exampleEn}" cümlesindeki "${card.word}" (${card.phonetic}) kelimesi ne anlama gelir?`
+      : `"${card.word}" (${card.phonetic}) kelimesinin Türkçe karşılığı hangisidir?`;
+
+  const enQuestion =
+    index % 2 === 1 && maskedSentence
+      ? `Complete the sentence: "${maskedSentence}"`
+      : `Which English word matches this definition: "${card.definitionEn}"?`;
+
+  return {
+    id: card.id,
+    displayCategory: 'vocabulary',
+    sourceCategory: 'vocabulary',
+    emoji: VOCABULARY_META.emoji,
+    sourceName: 'Scrolly Dil Laboratuvarı',
+    tr: {
+      title: `${card.word} · ${card.phonetic}`,
+      tag: `Dil Öğrenme · ${card.partOfSpeech}`,
+      factText: `${card.exampleEn} — "${card.exampleTr}"`,
+      deepDiveDetail: `${card.word} (${card.partOfSpeech}): ${card.meaningTr}. Tanım: ${card.definitionEn}`,
+      sourceName: 'Scrolly Dil Laboratuvarı',
+      quiz: {
+        question: trQuestion,
+        options: validTrOpts,
+        correctIndex: validTrIdx,
+        explanation: `"${card.word}" (${card.partOfSpeech}) = ${card.meaningTr}. Tanım: ${card.definitionEn} · Örnek: "${card.exampleTr}"`,
+      },
+    },
+    en: {
+      title: `${card.word} · ${card.phonetic}`,
+      tag: `Language Lab · ${card.partOfSpeech}`,
+      factText: `${card.definitionEn} — "${card.exampleEn}"`,
+      deepDiveDetail: `${card.word} (${card.phonetic}) means: ${card.definitionEn}`,
+      sourceName: 'Scrolly Language Lab',
+      quiz: {
+        question: enQuestion,
+        options: enOptions,
+        correctIndex: 0,
+        explanation: `"${card.word}" (${card.phonetic}) means: ${card.definitionEn} Example: "${card.exampleEn}"`,
+      },
+    },
+    vocabMeta: {
+      word: card.word,
+      phonetic: card.phonetic,
+      partOfSpeech: card.partOfSpeech,
+      meaningTr: card.meaningTr,
+      exampleEn: card.exampleEn,
+      exampleTr: card.exampleTr,
+    },
+  };
+}
+
 export default function MemoryQuizCard({
   questions,
   lang,
@@ -82,26 +251,116 @@ export default function MemoryQuizCard({
 
   const rewardTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  const effectiveQuestions = useMemo<EffectiveQuizEntry[]>(() => {
+    const allVocab = getVocabularyFacts();
+    const vocabMap = new Map(allVocab.map((v) => [v.id, v]));
+    const isVocabDuel =
+      duelConfig?.category === 'vocabulary' ||
+      Boolean(duelConfig?.factIds?.some((id) => id.startsWith('vocab-')));
+
+    const seedKey = duelConfig?.duelId || `${quizMode}-vocab`;
+
+    if (isVocabDuel && allVocab.length > 0) {
+      const targetCount = Math.max(
+        1,
+        duelConfig?.questionCount || duelConfig?.factIds?.length || questions.length || 5
+      );
+      const chosenCards: VocabularyCard[] = [];
+      const seenIds = new Set<string>();
+
+      for (const id of duelConfig?.factIds ?? []) {
+        const match = vocabMap.get(id);
+        if (match && !seenIds.has(match.id)) {
+          seenIds.add(match.id);
+          chosenCards.push(match);
+        }
+      }
+
+      for (const q of questions) {
+        const match = vocabMap.get(q.fact.id);
+        if (match && !seenIds.has(match.id)) {
+          seenIds.add(match.id);
+          chosenCards.push(match);
+        }
+      }
+
+      if (chosenCards.length < targetCount) {
+        const remaining = allVocab.filter((v) => !seenIds.has(v.id));
+        const extra = pickSeededFacts(
+          remaining,
+          targetCount - chosenCards.length,
+          `scrolla-vocab-${seedKey}`
+        );
+        for (const item of extra) {
+          seenIds.add(item.id);
+          chosenCards.push(item);
+        }
+      }
+
+      return chosenCards
+        .slice(0, targetCount)
+        .map((card, idx) => buildVocabQuizEntry(card, allVocab, idx, seedKey));
+    }
+
+    return questions.map((item, idx) => {
+      const matchedVocab = vocabMap.get(item.fact.id);
+      if (matchedVocab) {
+        return buildVocabQuizEntry(matchedVocab, allVocab, idx, seedKey);
+      }
+
+      const rawCategory = item.fact.category as string;
+      const isVocabCat = rawCategory === 'vocabulary';
+      return {
+        id: item.fact.id,
+        displayCategory: isVocabCat ? 'vocabulary' : item.fact.category,
+        sourceCategory: rawCategory,
+        emoji: item.fact.emoji ?? getCategoryMeta(rawCategory).emoji,
+        sourceName: item.fact.sourceName,
+        tr: {
+          title: item.fact.tr.title,
+          tag: item.fact.tr.tag,
+          factText: item.fact.tr.factText,
+          deepDiveDetail: item.fact.tr.deepDiveDetail,
+          sourceHint: item.fact.tr.sourceHint,
+          sourceName: item.fact.tr.sourceName,
+          quiz: item.fact.tr.quiz,
+        },
+        en: {
+          title: item.fact.en.title,
+          tag: item.fact.en.tag,
+          factText: item.fact.en.factText,
+          deepDiveDetail: item.fact.en.deepDiveDetail,
+          sourceHint: item.fact.en.sourceHint,
+          sourceName: item.fact.en.sourceName,
+          quiz: item.fact.en.quiz,
+        },
+      };
+    });
+  }, [questions, duelConfig, quizMode]);
+
   const t = translations[lang];
-  const currentItem = questions[currentIndex];
-  const fact = currentItem?.fact;
-  const localized = fact?.[lang];
-  const catMeta = fact ? getCategoryMeta(fact.category) : getCategoryMeta('science');
-  const catSubIcon = fact ? CATEGORY_SUB_ICON_MAP[fact.category] : CATEGORY_SUB_ICON_MAP.science;
+  const currentEntry = effectiveQuestions[currentIndex];
+  const localized = currentEntry?.[lang];
+  const catMeta = currentEntry
+    ? getCategoryMeta(currentEntry.displayCategory)
+    : getCategoryMeta('science');
+  const catSubIcon = resolveCategoryBadgeIcon(
+    currentEntry ? currentEntry.displayCategory : 'science'
+  );
 
   const prepared = useMemo(() => {
-    if (!fact || !localized) {
+    if (!currentEntry || !localized) {
       return { options: [] as string[], correctIndex: 0 };
     }
-    return prepareQuizOptions(localized.quiz, `${fact.id}-${lang}`);
-  }, [localized, fact, lang]);
+    return prepareQuizOptions(localized.quiz, `${currentEntry.id}-${lang}`);
+  }, [localized, currentEntry, lang]);
 
   const highlights = useMemo(() => {
     if (!localized) return null;
     return buildStructuredDetailHighlights(
       {
         factText: localized.factText,
-        deepDiveDetail: localized.deepDiveDetail,
+        deepDiveDetail: localized.deepDiveDetail ?? localized.factText,
         tag: localized.tag,
         sourceHint: localized.sourceHint,
         quiz: localized.quiz,
@@ -112,7 +371,7 @@ export default function MemoryQuizCard({
 
   const hasAnswered = selectedOption !== null || timedOut;
   const isCorrect = selectedOption !== null && selectedOption === prepared.correctIndex;
-  const isLastQuestion = currentIndex === questions.length - 1;
+  const isLastQuestion = currentIndex === effectiveQuestions.length - 1;
   const isDuelMode = Boolean(duelConfig || quizMode === 'duel');
 
   useEffect(() => {
@@ -127,7 +386,7 @@ export default function MemoryQuizCard({
 
   // Continuous quiz-wide countdown timer with last-10s red pulse + tick sound
   useEffect(() => {
-    if (timedOut || rewardWatching || !currentItem) return;
+    if (timedOut || rewardWatching || !currentEntry) return;
 
     const timer = setInterval(() => {
       setTimeLeft((prev) => {
@@ -146,11 +405,11 @@ export default function MemoryQuizCard({
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [timedOut, rewardWatching, currentItem, onAnswerSound, onTickSound]);
+  }, [timedOut, rewardWatching, currentEntry, onAnswerSound, onTickSound]);
 
   const handleSelectOption = useCallback(
     (optionIdx: number) => {
-      if (hasAnswered || rewardWatching || !currentItem) return;
+      if (hasAnswered || rewardWatching || !currentEntry) return;
       vibrateTap(12);
       setSelectedOption(optionIdx);
       const correct = optionIdx === prepared.correctIndex;
@@ -166,7 +425,7 @@ export default function MemoryQuizCard({
       }
       onAnswerSound(correct);
     },
-    [hasAnswered, rewardWatching, currentItem, prepared.correctIndex, comboStreak, onAnswerSound]
+    [hasAnswered, rewardWatching, currentEntry, prepared.correctIndex, comboStreak, onAnswerSound]
   );
 
   const handleWatchRewardTime = () => {
@@ -192,11 +451,11 @@ export default function MemoryQuizCard({
       const speedBonus = correctSoFar > 0 && timeLeft > 0 ? timeLeft * 5 : 0;
       const finalScore = totalScore + speedBonus;
       const elapsedSec = Math.max(2, totalBudgetUsed - timeLeft);
-      const categories = questions.map((q) => q.fact.category);
-      const usedIds = questions.map((q) => q.fact.id);
+      const categories = effectiveQuestions.map((q) => q.sourceCategory);
+      const usedIds = effectiveQuestions.map((q) => q.id);
       onComplete(finalResults, categories, finalScore, elapsedSec, usedIds);
     },
-    [timeLeft, totalScore, totalBudgetUsed, questions, onComplete]
+    [timeLeft, totalScore, totalBudgetUsed, effectiveQuestions, onComplete]
   );
 
   const handleContinue = useCallback(() => {
@@ -208,10 +467,10 @@ export default function MemoryQuizCard({
 
     if (timedOut || isLastQuestion) {
       const padded =
-        updatedResults.length < questions.length
+        updatedResults.length < effectiveQuestions.length
           ? [
               ...updatedResults,
-              ...Array(questions.length - updatedResults.length).fill(false),
+              ...Array(effectiveQuestions.length - updatedResults.length).fill(false),
             ]
           : updatedResults;
       finishQuiz(padded);
@@ -222,11 +481,20 @@ export default function MemoryQuizCard({
     setSelectedOption(null);
     setLastGainedXp(0);
     setCurrentIndex((prev) => prev + 1);
-  }, [hasAnswered, onButtonPop, results, isCorrect, timedOut, isLastQuestion, questions.length, finishQuiz]);
+  }, [
+    hasAnswered,
+    onButtonPop,
+    results,
+    isCorrect,
+    timedOut,
+    isLastQuestion,
+    effectiveQuestions.length,
+    finishQuiz,
+  ]);
 
   // Keyboard shortcuts: 1/2/3 to answer, Enter to advance
   useEffect(() => {
-    if (!currentItem || rewardWatching) return;
+    if (!currentEntry || rewardWatching) return;
     const onKeyDown = (e: KeyboardEvent) => {
       const target = e.target as HTMLElement | null;
       if (target && ['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName)) return;
@@ -243,9 +511,16 @@ export default function MemoryQuizCard({
     };
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
-  }, [currentItem, rewardWatching, hasAnswered, prepared.options.length, handleSelectOption, handleContinue]);
+  }, [
+    currentEntry,
+    rewardWatching,
+    hasAnswered,
+    prepared.options.length,
+    handleSelectOption,
+    handleContinue,
+  ]);
 
-  if (!currentItem || !fact || !localized) {
+  if (!currentEntry || !localized) {
     return null;
   }
 
@@ -265,7 +540,7 @@ export default function MemoryQuizCard({
     localized.quiz.explanation?.trim() ||
     highlights?.keyInsight ||
     localized.factText;
-  const resolvedSource = localized.sourceName || fact.sourceName || localized.sourceHint;
+  const resolvedSource = localized.sourceName || currentEntry.sourceName || localized.sourceHint;
 
   return (
     <motion.div
@@ -346,7 +621,7 @@ export default function MemoryQuizCard({
           </span>
 
           <span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-extrabold text-ink/70 dark:bg-white/10 dark:text-violet-200">
-            {currentIndex + 1}/{questions.length}
+            {currentIndex + 1}/{effectiveQuestions.length}
           </span>
         </div>
       </div>
@@ -390,11 +665,25 @@ export default function MemoryQuizCard({
       <div className="my-4 rounded-2xl border border-slate-100 bg-slate-50/75 p-3.5 dark:border-white/10 dark:bg-white/5">
         <div className="flex flex-wrap items-center justify-between gap-1.5">
           <p className="text-[11px] font-black uppercase tracking-wider text-violet-700 dark:text-violet-300">
-            {fact.emoji ?? catMeta.emoji} {localized.tag || catMeta.label[lang]}
+            {currentEntry.emoji || catMeta.emoji} {localized.tag || catMeta.label[lang]}
           </p>
-          <span className="text-[10px] font-bold text-ink/55 dark:text-violet-200/60">
-            {lang === 'tr' ? 'Konu Kartı' : 'Topic Card'}
-          </span>
+          {currentEntry.vocabMeta ? (
+            <button
+              type="button"
+              onClick={() => {
+                onButtonPop();
+                speakVocabularyText(currentEntry.vocabMeta!.word, 'en-US');
+              }}
+              className="inline-flex items-center gap-1 rounded-full border border-indigo-200 bg-indigo-50 px-2.5 py-0.5 text-[10px] font-extrabold text-indigo-700 hover:bg-indigo-100 dark:border-indigo-500/40 dark:bg-indigo-950/60 dark:text-indigo-200"
+            >
+              <Volume2 className="h-3 w-3" />
+              <span>{lang === 'tr' ? 'Telaffuzu Dinle' : 'Listen'}</span>
+            </button>
+          ) : (
+            <span className="text-[10px] font-bold text-ink/55 dark:text-violet-200/60">
+              {lang === 'tr' ? 'Konu Kartı' : 'Topic Card'}
+            </span>
+          )}
         </div>
         <p className="mt-1 text-xs font-bold text-ink/75 dark:text-violet-100/80">
           {localized.title}
@@ -431,7 +720,7 @@ export default function MemoryQuizCard({
 
           return (
             <motion.button
-              key={`${fact.id}-${idx}`}
+              key={`${currentEntry.id}-${idx}`}
               type="button"
               whileTap={!hasAnswered ? { scale: 0.96 } : undefined}
               disabled={hasAnswered || rewardWatching}

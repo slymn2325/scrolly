@@ -140,8 +140,8 @@ export default function NativeAdSlide({
       onDoubleClick={(e) => e.stopPropagation()}
       className={`reels-slide relative flex h-full w-full shrink-0 flex-col justify-between overflow-hidden bg-slate-100 px-5 pt-[calc(6.25rem+env(safe-area-inset-top))] select-none dark:bg-[#0B0F17] ${
         cookieBannerVisible
-          ? 'pb-[calc(154px+env(safe-area-inset-bottom))]'
-          : 'pb-[calc(94px+env(safe-area-inset-bottom))]'
+          ? 'pb-[calc(204px+env(safe-area-inset-bottom))] lg:pb-8'
+          : 'pb-[calc(94px+env(safe-area-inset-bottom))] lg:pb-8'
       }`}
     >
       <div className="relative z-10 mx-auto flex h-full w-full max-w-[430px] md:max-w-xl flex-col justify-between rounded-3xl border-2 border-slate-300/90 bg-white/95 p-4 shadow-md dark:border-slate-700/90 dark:bg-[#121826]/95">

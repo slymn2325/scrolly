@@ -4,6 +4,7 @@ import {
   generateRoomCode,
   getMemoryDuelMap,
   isShortRoomCode,
+  normalizeDuelCategory,
   normalizeRoomCode,
   resolveEffectiveRoom,
   sanitizePlayerEmoji,
@@ -876,7 +877,7 @@ function mapDbRoomRow(row: {
   return {
     code: normalizeRoomCode(row.code),
     mode: 'duel',
-    category: (row.category || 'all') as CategoryFilter,
+    category: normalizeDuelCategory(row.category),
     questionCount: Number(row.question_count || 5),
     cardIds: Array.isArray(row.card_ids) ? (row.card_ids as string[]) : [],
     hostId: String(row.host_id),

@@ -46,6 +46,8 @@ interface TikTokFeedProps {
   cardsSinceLastQuiz: number;
   totalCardsViewed?: number;
   cookieBannerVisible?: boolean;
+  isExploreVisible?: boolean;
+  suppressUrlSync?: boolean;
   onSelectCategory: (cat: CategoryFilter) => void;
   onChangeLang: (lang: Language) => void;
   onToggleDarkMode: () => void;
@@ -81,6 +83,8 @@ const TikTokFeed = forwardRef<TikTokFeedHandle, TikTokFeedProps>(function TikTok
     cardsSinceLastQuiz,
     totalCardsViewed = 0,
     cookieBannerVisible = false,
+    isExploreVisible = true,
+    suppressUrlSync = false,
     onSelectCategory,
     onChangeLang,
     onToggleDarkMode,
@@ -116,6 +120,10 @@ const TikTokFeed = forwardRef<TikTokFeedHandle, TikTokFeedProps>(function TikTok
   onActiveFactChangeRef.current = onActiveFactChange;
   const onActiveSlideChangeRef = useRef(onActiveSlideChange);
   onActiveSlideChangeRef.current = onActiveSlideChange;
+  const isExploreVisibleRef = useRef(isExploreVisible);
+  isExploreVisibleRef.current = isExploreVisible;
+  const suppressUrlSyncRef = useRef(suppressUrlSync);
+  suppressUrlSyncRef.current = suppressUrlSync;
   const [activeIndex, setActiveIndex] = useState<number>(0);
   const [isCategoryDrawerOpen, setIsCategoryDrawerOpen] = useState<boolean>(false);
   const [chromeBlocked, setChromeBlocked] = useState<boolean>(false);
@@ -234,7 +242,12 @@ const TikTokFeed = forwardRef<TikTokFeedHandle, TikTokFeedProps>(function TikTok
           onSlideIndexChangeRef.current?.(settledIdx);
 
           const settledSlide = slides[settledIdx];
-          if (settledSlide?.type === 'fact' && typeof window !== 'undefined') {
+          if (
+            settledSlide?.type === 'fact' &&
+            isExploreVisibleRef.current &&
+            !suppressUrlSyncRef.current &&
+            typeof window !== 'undefined'
+          ) {
             const nextSlug =
               settledSlide.fact[lang]?.slug ||
               settledSlide.fact.slug ||
@@ -325,6 +338,7 @@ const TikTokFeed = forwardRef<TikTokFeedHandle, TikTokFeedProps>(function TikTok
   // Desktop keyboard navigation (ArrowUp / ArrowDown to step, Space to flip/close active card detail)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      if (!isExploreVisibleRef.current) return;
       const target = e.target as HTMLElement | null;
       if (target && (['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName) || target.isContentEditable)) {
         return;
@@ -593,12 +607,14 @@ const TikTokFeed = forwardRef<TikTokFeedHandle, TikTokFeedProps>(function TikTok
                 : 'border border-white/15 bg-white/10 text-white/85'
             }`}
           >
-            <img
-              src={allCategoryMeta.iconPath}
-              alt=""
-              aria-hidden="true"
-              className="h-4 w-4 object-contain"
-            />
+            <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-white/95 p-0.5">
+              <img
+                src={allCategoryMeta.iconPath}
+                alt=""
+                aria-hidden="true"
+                className="h-3 w-3 object-contain"
+              />
+            </span>
             <span>{copy.categoryAll}</span>
           </motion.button>
 
@@ -638,12 +654,14 @@ const TikTokFeed = forwardRef<TikTokFeedHandle, TikTokFeedProps>(function TikTok
                   : 'border-white/20 bg-white/10 text-white'
               }`}
             >
-              <img
-                src={activeCategoryMeta.iconPath}
-                alt=""
-                aria-hidden="true"
-                className="h-4 w-4 object-contain"
-              />
+              <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-white/95 p-0.5">
+                <img
+                  src={activeCategoryMeta.iconPath}
+                  alt=""
+                  aria-hidden="true"
+                  className="h-3 w-3 object-contain"
+                />
+              </span>
               <span>{activeCategoryMeta.label[lang]}</span>
             </motion.button>
           )}
@@ -688,12 +706,14 @@ const TikTokFeed = forwardRef<TikTokFeedHandle, TikTokFeedProps>(function TikTok
                         : 'border-white/20 bg-white/10 text-white hover:bg-white/15'
                     }`}
                   >
-                    <img
-                      src={cat.iconPath}
-                      alt=""
-                      aria-hidden="true"
-                      className="h-4 w-4 object-contain"
-                    />
+                    <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-white/95 p-0.5">
+                      <img
+                        src={cat.iconPath}
+                        alt=""
+                        aria-hidden="true"
+                        className="h-3.5 w-3.5 object-contain"
+                      />
+                    </span>
                     <span>{labelText}</span>
                   </button>
                 );
@@ -729,12 +749,16 @@ const TikTokFeed = forwardRef<TikTokFeedHandle, TikTokFeedProps>(function TikTok
           slides.map((slide, slideIdx) => {
           const isWithinWindow = Math.abs(slideIdx - activeIndex) <= 2;
           const isSlideActive = slideIdx === activeIndex;
+          const shouldHidePendingSync = suppressUrlSync && slideIdx === 0;
+          const effectiveSlideActive = isSlideActive && isExploreVisible && !suppressUrlSync;
 
           return (
             <div
               key={slide.key}
               data-slide-index={slideIdx}
-              className="reels-slide h-full min-h-full w-full shrink-0 snap-start"
+              className={`reels-slide h-full min-h-full w-full shrink-0 snap-start ${
+                shouldHidePendingSync ? 'pointer-events-none opacity-0' : ''
+              }`}
               aria-hidden={!isWithinWindow ? true : undefined}
             >
               {!isWithinWindow ? null : slide.type === 'fact' ? (
@@ -744,7 +768,7 @@ const TikTokFeed = forwardRef<TikTokFeedHandle, TikTokFeedProps>(function TikTok
                   darkMode={darkMode}
                   isFavorite={favoriteIds.includes(slide.fact.id)}
                   isFirstCard={slide.factIndex === 0}
-                  isActive={isSlideActive}
+                  isActive={effectiveSlideActive}
                   cookieBannerVisible={cookieBannerVisible}
                   onFlip={onFlipCard}
                   onDoubleTapLike={onDoubleTapLike}
@@ -764,7 +788,7 @@ const TikTokFeed = forwardRef<TikTokFeedHandle, TikTokFeedProps>(function TikTok
                   card={slide.card}
                   lang={lang}
                   darkMode={darkMode}
-                  isActive={isSlideActive}
+                  isActive={effectiveSlideActive}
                   cookieBannerVisible={cookieBannerVisible}
                   onButtonPop={onButtonPop}
                   onEarnXp={onEarnXp}

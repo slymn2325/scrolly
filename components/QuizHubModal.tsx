@@ -14,7 +14,7 @@ import {
   X,
   Zap,
 } from 'lucide-react';
-import { CATEGORIES, type Language, translations } from '@/i18n/translations';
+import { CATEGORIES, type Language, translations, VOCABULARY_META } from '@/i18n/translations';
 import { STATE_ILLUSTRATION_PATHS, UI_ICON_PATHS } from '@/utils/icons8Assets';
 import { useEscapeClose } from '@/utils/useEscapeClose';
 
@@ -47,7 +47,7 @@ export default function QuizHubModal({
 }: QuizHubModalProps) {
   const t = translations[lang];
   const isPage = presentation === 'page';
-  const topicDomains = CATEGORIES.filter((c) => c.id !== 'all');
+  const topicDomains = [...CATEGORIES.filter((c) => c.id !== 'all'), VOCABULARY_META];
   const clampedRecent = Math.min(5, Math.max(0, recentCount));
 
   useEscapeClose(open && !isPage, onClose);
@@ -122,7 +122,7 @@ export default function QuizHubModal({
               </div>
             </div>
 
-            {/* 7-Domain Topic Coverage Strip (includes Statistics) */}
+            {/* 8-Domain Topic Coverage Strip (includes Statistics & Language Learning) */}
             <div className="mt-3 flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-1">
               {topicDomains.map((cat) => (
                 <span

@@ -119,10 +119,19 @@ const SKETCH_TYPES = [
 ];
 const VALID_SKETCH_TYPES = new Set(SKETCH_TYPES);
 
-const AI_MODELS_ENDPOINT =
-  process.env.AI_MODELS_ENDPOINT ||
-  'https://generativelanguage.googleapis.com/v1beta/openai/chat/completions';
-const DEFAULT_AI_MODEL_NAME = process.env.AI_MODEL_NAME || 'gemini-4-hydrogen';
+const CUSTOM_AI_MODELS_ENDPOINT = String(process.env.AI_MODELS_ENDPOINT || '').trim();
+const DEFAULT_AI_MODEL_NAME = String(process.env.AI_MODEL_NAME || 'gemini-4-hydrogen').trim() || 'gemini-4-hydrogen';
+const GEMINI_FALLBACK_MODELS = ['gemini-4-hydrogen', 'gemini-2.5-flash', 'gemini-2.5-pro'];
+
+const CATEGORY_VISUAL_DEFAULTS = {
+  space: { accentColor: '#7C3AED', iconName: 'Orbit', emoji: '🪐' },
+  nature: { accentColor: '#0D9488', iconName: 'Waves', emoji: '🧊' },
+  human_body: { accentColor: '#E11D48', iconName: 'Bone', emoji: '🦴' },
+  history: { accentColor: '#D97706', iconName: 'Landmark', emoji: '🏛️' },
+  science: { accentColor: '#0284C7', iconName: 'Zap', emoji: '⚡' },
+  records: { accentColor: '#DB2777', iconName: 'Trophy', emoji: '🏆' },
+  statistics: { accentColor: '#6366F1', iconName: 'Percent', emoji: '📊' },
+};
 
 async function loadSeedFactsFromDisk() {
   const shardFiles = ['space.json', 'nature.json', 'human_body.json', 'history.json', 'science.json', 'records.json', 'statistics.json'];
@@ -392,7 +401,7 @@ function normalizeSlug(rawSlug, titleEn) {
 
 function getGenerationToken() {
   return String(
-    process.env.OPENAI_API_KEY || process.env.AI_API_KEY || process.env.GEMINI_API_KEY || ''
+    process.env.GEMINI_API_KEY || process.env.AI_API_KEY || process.env.OPENAI_API_KEY || ''
   ).trim();
 }
 
@@ -461,7 +470,8 @@ async function verifyPrimarySourceUrl(urlStr) {
   }
 }
 
-async function validateGeneratedFact(item, existingSlugs, existingTitlesEn) {
+async function validateGeneratedFact(item, existingSlugs, existingTitlesEn, options = {}) {
+  const { skipUrlFetch = false } = options;
   if (!item || typeof item !== 'object') return null;
 
   const category = String(item.category || '').trim().toLowerCase();
@@ -526,7 +536,9 @@ async function validateGeneratedFact(item, existingSlugs, existingTitlesEn) {
     return null;
   }
 
-  const sourceCheck = await verifyPrimarySourceUrl(sourceUrl);
+  const sourceCheck = skipUrlFetch
+    ? { ok: !isRootOrGenericUrl(sourceUrl), reason: 'root-or-invalid-url' }
+    : await verifyPrimarySourceUrl(sourceUrl);
   if (!sourceCheck.ok) {
     console.warn(
       `[generateFacts] Rejected candidate "${titleEn}" due to unverified primary source URL (${sourceCheck.reason}): ${sourceUrl}`
@@ -776,121 +788,556 @@ async function appendGeneratedVocabulary(cards) {
   return added;
 }
 
+function sleep(ms) {
+  if (!ms || ms <= 0 || process.env.SCROLLY_NO_RETRY_DELAY === '1') {
+    return Promise.resolve();
+  }
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function stripJsonCodeFences(rawText) {
+  return String(rawText || '')
+    .replace(/^```(?:json)?\s*/i, '')
+    .replace(/\s*```$/i, '')
+    .trim();
+}
+
+function extractJsonCandidate(rawText) {
+  const input = String(rawText || '').trim();
+  if (!input) return null;
+
+  const stripped = stripJsonCodeFences(input);
+  try {
+    return JSON.parse(stripped);
+  } catch {
+    // Fall through to scan fenced blocks or embedded object boundaries
+  }
+
+  const fenceRegex = /```(?:json)?\s*([\s\S]*?)\s*```/gi;
+  let match;
+  while ((match = fenceRegex.exec(input)) !== null) {
+    try {
+      return JSON.parse(match[1].trim());
+    } catch {
+      // Keep scanning other fenced blocks
+    }
+  }
+
+  const firstBrace = input.indexOf('{');
+  const lastBrace = input.lastIndexOf('}');
+  if (firstBrace !== -1 && lastBrace > firstBrace) {
+    try {
+      return JSON.parse(input.slice(firstBrace, lastBrace + 1));
+    } catch {
+      return null;
+    }
+  }
+
+  return null;
+}
+
+function ensureQuizTriplet(quizObj, fallbackQuestion, correctAnswerText, altOne, altTwo, fallbackExplanation) {
+  if (
+    quizObj &&
+    typeof quizObj === 'object' &&
+    typeof quizObj.question === 'string' &&
+    Array.isArray(quizObj.options) &&
+    quizObj.options.length === 3 &&
+    [0, 1, 2].includes(quizObj.correctIndex)
+  ) {
+    return quizObj;
+  }
+  return {
+    question: fallbackQuestion,
+    options: [correctAnswerText, altOne, altTwo],
+    correctIndex: 0,
+    explanation: fallbackExplanation,
+  };
+}
+
+function toFactCardSchema(clean, idx = 0) {
+  const meta = CATEGORY_VISUAL_DEFAULTS[clean.category] ?? CATEGORY_VISUAL_DEFAULTS.science;
+  const createdMs = Date.now() + idx;
+  const slugPart = String(clean.slug || `fact-${createdMs}`).slice(0, 44);
+  const id = `gen-${slugPart}`;
+  const isIntScale =
+    Number.isInteger(clean.min_val) &&
+    Number.isInteger(clean.max_val) &&
+    Number.isInteger(clean.answer_val);
+
+  const buildGuess = (prompt, unit) => ({
+    type: 'slider',
+    prompt,
+    min: clean.min_val,
+    max: clean.max_val,
+    step: isIntScale ? 1 : 0.1,
+    unit: unit || '',
+    correctValue: clean.answer_val,
+  });
+
+  return {
+    id,
+    slug: clean.slug,
+    category: clean.category,
+    accentColor: meta.accentColor,
+    iconName: meta.iconName,
+    emoji: meta.emoji,
+    sketchType: clean.sketch_type,
+    visualQuery: clean.visual_query,
+    readingTimeSec: 18,
+    sourceName: clean.source_name,
+    sourceUrl: clean.source_url,
+    createdAt: new Date(createdMs).toISOString(),
+    tr: {
+      slug: clean.slug,
+      title: clean.title_tr,
+      factText: clean.summary_tr,
+      deepDiveDetail: clean.detail_tr,
+      sourceHint: clean.source_name,
+      sourceName: clean.source_name,
+      sourceUrl: clean.source_url,
+      quiz: ensureQuizTriplet(
+        clean.quiz_tr,
+        clean.question_tr,
+        clean.title_tr,
+        clean.summary_tr,
+        clean.source_name,
+        clean.detail_tr
+      ),
+      guessChallenge: buildGuess(clean.question_tr, clean.unit_tr),
+    },
+    en: {
+      slug: clean.slug,
+      title: clean.title_en,
+      factText: clean.summary_en,
+      deepDiveDetail: clean.detail_en,
+      sourceHint: clean.source_name,
+      sourceName: clean.source_name,
+      sourceUrl: clean.source_url,
+      quiz: ensureQuizTriplet(
+        clean.quiz_en,
+        clean.question_en,
+        clean.title_en,
+        clean.summary_en,
+        clean.source_name,
+        clean.detail_en
+      ),
+      guessChallenge: buildGuess(clean.question_en, clean.unit_en),
+    },
+  };
+}
+
+async function loadExistingGeneratedFacts() {
+  const target = path.join(ROOT_DIR, 'data', 'factsGenerated.json');
+  try {
+    const raw = await fs.readFile(target, 'utf8');
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
+async function appendGeneratedFacts(cleanFacts, seedSlugs = new Set(), seedIds = new Set()) {
+  if (!cleanFacts.length) return 0;
+  const target = path.join(ROOT_DIR, 'data', 'factsGenerated.json');
+  const existing = await loadExistingGeneratedFacts();
+
+  const seenSlugs = new Set(seedSlugs);
+  const seenIds = new Set(seedIds);
+  for (const item of existing) {
+    if (item?.id) seenIds.add(String(item.id));
+    for (const candidateSlug of [item?.slug, item?.tr?.slug, item?.en?.slug]) {
+      if (candidateSlug) seenSlugs.add(String(candidateSlug));
+    }
+  }
+
+  let added = 0;
+  for (let i = 0; i < cleanFacts.length; i += 1) {
+    const card = toFactCardSchema(cleanFacts[i], i);
+    if (seenSlugs.has(card.slug) || seenIds.has(card.id)) {
+      continue;
+    }
+    seenSlugs.add(card.slug);
+    seenIds.add(card.id);
+    existing.push(card);
+    added += 1;
+  }
+
+  await fs.writeFile(target, `${JSON.stringify(existing, null, 2)}\n`, 'utf8');
+  return added;
+}
+
+async function requestNativeGemini({ modelName, token, systemPrompt, userPrompt }) {
+  const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(modelName)}:generateContent?key=${encodeURIComponent(token)}`;
+  const buildBody = (includeThinkingLevel) => {
+    const generationConfig = {
+      temperature: 0.7,
+      maxOutputTokens: 32768,
+      responseMimeType: 'application/json',
+    };
+    if (includeThinkingLevel) {
+      generationConfig.thinkingConfig = { thinkingLevel: 'LOW' };
+    }
+    return {
+      systemInstruction: { parts: [{ text: systemPrompt }] },
+      contents: [{ role: 'user', parts: [{ text: userPrompt }] }],
+      generationConfig,
+    };
+  };
+
+  let response = await fetch(endpoint, {
+    method: 'POST',
+    headers: {
+      Accept: 'application/json',
+      'Content-Type': 'application/json',
+    },
+    signal: AbortSignal.timeout(60000),
+    body: JSON.stringify(buildBody(true)),
+  });
+
+  let rawText = (await response.text()).trim();
+
+  // If a 2.5 fallback model rejects thinkingLevel in generationConfig, retry once without it
+  if (
+    response.status === 400 &&
+    /thinkingLevel|thinking_config|thinkingConfig/i.test(rawText)
+  ) {
+    response = await fetch(endpoint, {
+      method: 'POST',
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json',
+      },
+      signal: AbortSignal.timeout(60000),
+      body: JSON.stringify(buildBody(false)),
+    });
+    rawText = (await response.text()).trim();
+  }
+
+  let data;
+  try {
+    data = rawText ? JSON.parse(rawText) : null;
+  } catch {
+    data = null;
+  }
+
+  const candidate = data?.candidates?.[0];
+  const finishReason = candidate?.finishReason || data?.error?.status || 'unknown';
+  const usageMetadata = data?.usageMetadata || null;
+  const contentText = (candidate?.content?.parts || [])
+    .filter((p) => !p.thought && typeof p.text === 'string')
+    .map((p) => p.text)
+    .join('\n')
+    .trim();
+
+  return {
+    ok: response.ok,
+    status: response.status,
+    finishReason,
+    usageMetadata,
+    rawText,
+    contentText,
+    parsedPayload: extractJsonCandidate(contentText),
+  };
+}
+
+async function requestOpenAICompat({ endpoint, modelName, token, systemPrompt, userPrompt }) {
+  const response = await fetch(endpoint, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${token}`,
+      Accept: 'application/json',
+      'Content-Type': 'application/json',
+    },
+    signal: AbortSignal.timeout(60000),
+    body: JSON.stringify({
+      model: modelName,
+      response_format: { type: 'json_object' },
+      temperature: 0.7,
+      max_tokens: 32768,
+      reasoning_effort: 'low',
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: userPrompt },
+      ],
+    }),
+  });
+
+  const rawText = (await response.text()).trim();
+  let data;
+  try {
+    data = rawText ? JSON.parse(rawText) : null;
+  } catch {
+    data = null;
+  }
+
+  const choice = data?.choices?.[0];
+  const finishReason = choice?.finish_reason || data?.error?.code || 'unknown';
+  const usageMetadata = data?.usage || null;
+  const contentText = String(choice?.message?.content || '').trim();
+  const reasoningText = String(choice?.message?.reasoning_content || '').trim();
+
+  let parsedPayload = contentText ? extractJsonCandidate(contentText) : null;
+  if (!parsedPayload && reasoningText) {
+    parsedPayload = extractJsonCandidate(reasoningText);
+  }
+
+  return {
+    ok: response.ok,
+    status: response.status,
+    finishReason,
+    usageMetadata,
+    rawText,
+    contentText: contentText || reasoningText,
+    parsedPayload,
+  };
+}
+
 async function fetchGeneratedFactsFromModel(existingTitlesEn, topEngaged) {
   const token = getGenerationToken();
 
   if (!token) {
-    console.error(
-      '[generateFacts] Fatal: Missing OPENAI_API_KEY, AI_API_KEY, or GEMINI_API_KEY environment variable.'
+    throw new Error(
+      'Missing GEMINI_API_KEY, AI_API_KEY, or OPENAI_API_KEY environment variable.'
     );
-    process.exit(1);
   }
 
   const { systemPrompt, userPrompt } = buildPrompts(existingTitlesEn, topEngaged);
+  const customEndpoint = String(process.env.AI_MODELS_ENDPOINT || CUSTOM_AI_MODELS_ENDPOINT).trim();
+  const preferredModel =
+    String(process.env.AI_MODEL_NAME || DEFAULT_AI_MODEL_NAME).trim() || 'gemini-4-hydrogen';
+  const useCustomOpenAIEndpoint = Boolean(customEndpoint);
+  const modelCandidates = Array.from(
+    new Set([preferredModel, ...GEMINI_FALLBACK_MODELS].filter(Boolean))
+  );
+  const maxAttempts = 3;
+  const failures = [];
 
-  let response;
-  try {
-    response = await fetch(AI_MODELS_ENDPOINT, {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${token}`,
-        Accept: 'application/json',
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: DEFAULT_AI_MODEL_NAME,
-        response_format: { type: 'json_object' },
-        temperature: 0.7,
-        max_tokens: 8192,
-        messages: [
-          { role: 'system', content: systemPrompt },
-          { role: 'user', content: userPrompt },
-        ],
-      }),
-    });
-  } catch (err) {
-    console.error(
-      `[generateFacts] Fatal network failure calling ${AI_MODELS_ENDPOINT}:`,
-      err instanceof Error ? err.message : String(err)
-    );
-    process.exit(1);
-  }
+  for (const modelName of modelCandidates) {
+    for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
+      try {
+        const result = useCustomOpenAIEndpoint
+          ? await requestOpenAICompat({
+              endpoint: customEndpoint,
+              modelName,
+              token,
+              systemPrompt,
+              userPrompt,
+            })
+          : await requestNativeGemini({
+              modelName,
+              token,
+              systemPrompt,
+              userPrompt,
+            });
 
-  const rawText = (await response.text()).trim();
-  if (!response.ok || !rawText.startsWith('{')) {
-    console.error(
-      `[generateFacts] Fatal: AI endpoint (${AI_MODELS_ENDPOINT}, model=${DEFAULT_AI_MODEL_NAME}) returned HTTP ${response.status} non-JSON response: ${rawText.slice(0, 300)}`
-    );
-    process.exit(1);
-  }
+        const payload = result.parsedPayload;
+        const factsArr = Array.isArray(payload?.facts) ? payload.facts : [];
+        const vocabArr = Array.isArray(payload?.vocabulary) ? payload.vocabulary : [];
 
-  let parsedPayload;
-  try {
-    const data = JSON.parse(rawText);
-    const rawContent = String(data?.choices?.[0]?.message?.content || '').trim();
-    if (!rawContent) {
-      throw new Error('Empty choices[0].message.content returned by AI endpoint.');
+        if (result.ok && factsArr.length > 0) {
+          if (factsArr.length < 5 || vocabArr.length < 2) {
+            console.warn(
+              `[generateFacts] Partial counts from ${modelName} (attempt ${attempt}/${maxAttempts}): facts=${factsArr.length}, vocabulary=${vocabArr.length}, finishReason=${result.finishReason}, usageMetadata=${JSON.stringify(result.usageMetadata)}`
+            );
+            if (factsArr.length < 5 && attempt < maxAttempts) {
+              await sleep(1000 * 2 ** (attempt - 1));
+              continue;
+            }
+          }
+          return {
+            model: modelName,
+            facts: factsArr.slice(0, 5),
+            vocabulary: vocabArr.slice(0, 2),
+          };
+        }
+
+        const diag = `model=${modelName} attempt=${attempt}/${maxAttempts} status=${result.status} finishReason=${result.finishReason} usageMetadata=${JSON.stringify(result.usageMetadata)} snippet=${result.rawText.slice(0, 220)}`;
+        console.warn(`[generateFacts] Empty/invalid AI response: ${diag}`);
+        failures.push(diag);
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : String(err);
+        const diag = `model=${modelName} attempt=${attempt}/${maxAttempts} error=${msg}`;
+        console.warn(`[generateFacts] Request error: ${diag}`);
+        failures.push(diag);
+      }
+
+      if (attempt < maxAttempts) {
+        await sleep(1000 * 2 ** (attempt - 1));
+      }
     }
-    const cleanedContent = rawContent
-      .replace(/^```(?:json)?\s*/i, '')
-      .replace(/\s*```$/i, '')
-      .trim();
-    parsedPayload = JSON.parse(cleanedContent);
-  } catch (err) {
-    console.error(
-      '[generateFacts] Fatal: Invalid JSON returned by AI endpoint:',
-      err instanceof Error ? err.message : String(err)
-    );
-    process.exit(1);
   }
 
-  if (!Array.isArray(parsedPayload?.facts) || parsedPayload.facts.length === 0) {
-    console.error('[generateFacts] Fatal: AI response JSON does not contain a non-empty "facts" array.');
-    process.exit(1);
+  throw new Error(
+    `All model attempts failed across [${modelCandidates.join(', ')}]: ${failures[failures.length - 1] || 'unknown failure'}`
+  );
+}
+
+async function loadLocalBaselineState() {
+  const seedFacts = await loadSeedFactsFromDisk();
+  const generatedFacts = await loadExistingGeneratedFacts();
+
+  const existingSlugs = new Set();
+  const existingIds = new Set();
+  const existingTitlesEn = new Set();
+
+  for (const item of [...seedFacts, ...generatedFacts]) {
+    if (item?.id) existingIds.add(String(item.id));
+    for (const s of [item?.slug, item?.tr?.slug, item?.en?.slug]) {
+      if (s) existingSlugs.add(String(s));
+    }
+    const titleEn = String(item?.en?.title || item?.title_en || '').trim().toLowerCase();
+    if (titleEn) existingTitlesEn.add(titleEn);
   }
 
-  return {
-    facts: parsedPayload.facts,
-    vocabulary: Array.isArray(parsedPayload.vocabulary) ? parsedPayload.vocabulary : [],
-  };
+  let seedVocabWords = new Set();
+  try {
+    const seedRaw = await fs.readFile(path.join(ROOT_DIR, 'data', 'vocabularyFacts.ts'), 'utf8');
+    const wordMatches = seedRaw.matchAll(/word:\s*'([^']+)'/g);
+    for (const match of wordMatches) {
+      seedVocabWords.add(match[1].toLowerCase());
+    }
+  } catch {
+    seedVocabWords = new Set();
+  }
+  try {
+    const genRaw = await fs.readFile(path.join(ROOT_DIR, 'data', 'vocabularyGenerated.json'), 'utf8');
+    const genParsed = JSON.parse(genRaw);
+    if (Array.isArray(genParsed)) {
+      for (const item of genParsed) {
+        if (item?.word) seedVocabWords.add(String(item.word).toLowerCase());
+      }
+    }
+  } catch {
+    // ignore missing generated file
+  }
+
+  return { seedFacts, generatedFacts, existingSlugs, existingIds, existingTitlesEn, seedVocabWords };
+}
+
+async function runDryRun() {
+  const baseline = await loadLocalBaselineState();
+  const { VERIFIED_FACT_RESERVOIR, selectAutonomousSixFacts } = await import('./scientificFactReservoir.mjs');
+
+  if (baseline.seedFacts.length === 0) {
+    throw new Error('Dry-run failed: no seed facts loaded from public/data/facts/*.json');
+  }
+
+  for (const card of baseline.seedFacts) {
+    const vqWords = String(card.visualQuery || '').trim().split(/\s+/).filter(Boolean);
+    if (vqWords.length < 2 || vqWords.length > 3) {
+      throw new Error(`Dry-run failed: invalid visualQuery "${card.visualQuery}" on ${card.id}`);
+    }
+    if (!card.tr?.quiz || card.tr.quiz.options?.length !== 3 || !card.en?.quiz || card.en.quiz.options?.length !== 3) {
+      throw new Error(`Dry-run failed: missing bilingual quiz on ${card.id}`);
+    }
+  }
+
+  const reservoirSample = selectAutonomousSixFacts(new Set(), new Set(), []);
+  if (reservoirSample.length !== CATEGORIES.length) {
+    throw new Error(`Dry-run failed: expected ${CATEGORIES.length} reservoir sample categories, got ${reservoirSample.length}`);
+  }
+
+  const validatedSampleCards = [];
+  const tempSlugs = new Set();
+  const tempTitles = new Set();
+  for (const candidate of reservoirSample) {
+    const clean = await validateGeneratedFact(candidate, tempSlugs, tempTitles, { skipUrlFetch: true });
+    if (!clean) {
+      throw new Error(`Dry-run failed: reservoir item failed schema validation (${candidate.slug})`);
+    }
+    tempSlugs.add(clean.slug);
+    tempTitles.add(clean.title_en.toLowerCase());
+    validatedSampleCards.push(toFactCardSchema(clean));
+  }
+
+  const prompts = buildPrompts(baseline.existingTitlesEn, []);
+  if (!prompts.systemPrompt || !prompts.userPrompt) {
+    throw new Error('Dry-run failed: empty prompt template');
+  }
+
+  const vocabTest = validateVocabularyCard(
+    {
+      word: 'ephemeral',
+      phonetic: '/ɪˈfɛm.ər.əl/',
+      partOfSpeech: 'sıfat',
+      meaningTr: 'kısa ömürlü, geçici',
+      definitionEn: 'Lasting for a very short period of time.',
+      exampleEn: 'Cherry blossoms offer an ephemeral spectacle each spring.',
+      exampleTr: 'Kiraz çiçekleri her bahar kısa ömürlü bir şölen sunar.',
+      quizOptions: ['kısa ömürlü, geçici', 'sonsuz, kalıcı', 'ağır, dayanıklı'],
+      correctIndex: 0,
+    },
+    new Set()
+  );
+  if (!vocabTest) {
+    throw new Error('Dry-run failed: validateVocabularyCard rejected valid sample');
+  }
+
+  console.log(
+    `[generateFacts] Dry-run OK: seedFacts=${baseline.seedFacts.length}, factsGenerated=${baseline.generatedFacts.length}, reservoirTotal=${VERIFIED_FACT_RESERVOIR.length}, validatedSample=${validatedSampleCards.length}, vocabWordsTracked=${baseline.seedVocabWords.size}`
+  );
 }
 
 async function main() {
-  if (!process.env.DATABASE_URL) {
-    throw new Error('DATABASE_URL environment variable is required.');
+  if (process.argv.includes('--dry-run')) {
+    await runDryRun();
+    return;
   }
 
-  const pool = new Pool({
-    connectionString: process.env.DATABASE_URL,
-    ssl: process.env.DATABASE_CA_CERT
-      ? { rejectUnauthorized: true, ca: process.env.DATABASE_CA_CERT }
-      : { rejectUnauthorized: false },
-  });
+  const baseline = await loadLocalBaselineState();
+  const { existingSlugs, existingIds, existingTitlesEn, seedVocabWords } = baseline;
+  const seedSlugs = new Set(existingSlugs);
+  const seedIds = new Set(existingIds);
+
+  let pool = null;
+  let topEngaged = [];
+
+  if (process.env.DATABASE_URL) {
+    try {
+      pool = new Pool({
+        connectionString: process.env.DATABASE_URL,
+        ssl: process.env.DATABASE_CA_CERT
+          ? { rejectUnauthorized: true, ca: process.env.DATABASE_CA_CERT }
+          : { rejectUnauthorized: false },
+      });
+      await ensureSchemaAndSeed(pool);
+
+      const existingRes = await pool.query('SELECT slug, title_en FROM facts');
+      for (const r of existingRes.rows) {
+        if (r.slug) existingSlugs.add(String(r.slug));
+        const t = String(r.title_en || '').trim().toLowerCase();
+        if (t) existingTitlesEn.add(t);
+      }
+
+      const topRes = await pool.query(`
+        SELECT slug, category, title_en, likes_count, detail_opens, guess_attempts, avg_accuracy, avg_dwell_sec, shares_count
+        FROM fact_engagement_summary
+        ORDER BY likes_count DESC, avg_dwell_sec DESC, detail_opens DESC
+        LIMIT 5
+      `);
+      topEngaged = topRes.rows;
+    } catch (dbErr) {
+      console.warn(
+        '[generateFacts] Warning: Postgres unavailable; continuing with JSON-only persistence:',
+        dbErr instanceof Error ? dbErr.message : String(dbErr)
+      );
+      if (pool) {
+        await pool.end().catch(() => {});
+        pool = null;
+      }
+    }
+  } else {
+    console.warn('[generateFacts] Notice: DATABASE_URL not set; updating local JSON files only.');
+  }
 
   try {
-    await ensureSchemaAndSeed(pool);
-
-    const existingRes = await pool.query('SELECT slug, title_en FROM facts');
-    const existingSlugs = new Set(existingRes.rows.map((r) => String(r.slug)));
-    const existingTitlesEn = new Set(
-      existingRes.rows
-        .map((r) => String(r.title_en || '').trim().toLowerCase())
-        .filter(Boolean)
+    console.log(
+      `[generateFacts] Loaded ${existingSlugs.size} existing facts and top ${topEngaged.length} engagement benchmarks.`
     );
 
-    const topRes = await pool.query(`
-      SELECT slug, category, title_en, likes_count, detail_opens, guess_attempts, avg_accuracy, avg_dwell_sec, shares_count
-      FROM fact_engagement_summary
-      ORDER BY likes_count DESC, avg_dwell_sec DESC, detail_opens DESC
-      LIMIT 5
-    `);
-
-    console.log(`[generateFacts] Loaded ${existingSlugs.size} existing facts and top ${topRes.rows.length} engagement benchmarks.`);
-
-    const modelPayload = await fetchGeneratedFactsFromModel(
-      existingTitlesEn,
-      topRes.rows
-    );
+    const modelPayload = await fetchGeneratedFactsFromModel(existingTitlesEn, topEngaged);
     const rawGenerated = modelPayload.facts;
 
     const validCandidates = [];
@@ -909,31 +1356,7 @@ async function main() {
     }
 
     if (validCandidates.length === 0) {
-      console.error('[generateFacts] Fatal: Zero valid verified facts survived validation from remote AI output.');
-      process.exit(1);
-    }
-
-    // Seed + generated vocabulary words for de-duplication
-    let seedVocabWords = new Set();
-    try {
-      const seedRaw = await fs.readFile(path.join(ROOT_DIR, 'data', 'vocabularyFacts.ts'), 'utf8');
-      const wordMatches = seedRaw.matchAll(/word:\s*'([^']+)'/g);
-      for (const match of wordMatches) {
-        seedVocabWords.add(match[1].toLowerCase());
-      }
-    } catch {
-      seedVocabWords = new Set();
-    }
-    try {
-      const genRaw = await fs.readFile(path.join(ROOT_DIR, 'data', 'vocabularyGenerated.json'), 'utf8');
-      const genParsed = JSON.parse(genRaw);
-      if (Array.isArray(genParsed)) {
-        for (const item of genParsed) {
-          if (item?.word) seedVocabWords.add(String(item.word).toLowerCase());
-        }
-      }
-    } catch {
-      // ignore missing generated file
+      throw new Error('Zero valid verified facts survived validation from remote AI output.');
     }
 
     const validVocab = [];
@@ -946,69 +1369,83 @@ async function main() {
       seedVocabWords.add(cleanVocab.word.toLowerCase());
       validVocab.push(cleanVocab);
     }
+
+    const factsAddedJson = await appendGeneratedFacts(validCandidates.slice(0, 5), seedSlugs, seedIds);
     const vocabAdded = await appendGeneratedVocabulary(validVocab.slice(0, 2));
 
     const insertedSummary = [];
+    if (pool) {
+      try {
+        for (const clean of validCandidates.slice(0, 5)) {
+          const insertRes = await pool.query(
+            `INSERT INTO facts (
+              slug, category, title_tr, title_en, summary_tr, summary_en,
+              detail_tr, detail_en, question_tr, question_en,
+              unit_tr, unit_en, min_val, max_val, answer_val,
+              sketch_type, visual_query, quiz_tr, quiz_en,
+              source_name, source_url, likes_count
+            ) VALUES (
+              $1, $2, $3, $4, $5, $6,
+              $7, $8, $9, $10,
+              $11, $12, $13, $14, $15,
+              $16, $17, $18::jsonb, $19::jsonb,
+              $20, $21, 0
+            )
+            ON CONFLICT (slug) DO NOTHING
+            RETURNING id, slug, category`,
+            [
+              clean.slug,
+              clean.category,
+              clean.title_tr,
+              clean.title_en,
+              clean.summary_tr,
+              clean.summary_en,
+              clean.detail_tr,
+              clean.detail_en,
+              clean.question_tr,
+              clean.question_en,
+              clean.unit_tr,
+              clean.unit_en,
+              clean.min_val,
+              clean.max_val,
+              clean.answer_val,
+              clean.sketch_type,
+              clean.visual_query || null,
+              clean.quiz_tr ? JSON.stringify(clean.quiz_tr) : null,
+              clean.quiz_en ? JSON.stringify(clean.quiz_en) : null,
+              clean.source_name,
+              clean.source_url,
+            ]
+          );
 
-    for (const clean of validCandidates) {
-      const insertRes = await pool.query(
-        `INSERT INTO facts (
-          slug, category, title_tr, title_en, summary_tr, summary_en,
-          detail_tr, detail_en, question_tr, question_en,
-          unit_tr, unit_en, min_val, max_val, answer_val,
-          sketch_type, visual_query, quiz_tr, quiz_en,
-          source_name, source_url, likes_count
-        ) VALUES (
-          $1, $2, $3, $4, $5, $6,
-          $7, $8, $9, $10,
-          $11, $12, $13, $14, $15,
-          $16, $17, $18::jsonb, $19::jsonb,
-          $20, $21, 0
-        )
-        ON CONFLICT (slug) DO NOTHING
-        RETURNING id, slug, category`,
-        [
-          clean.slug,
-          clean.category,
-          clean.title_tr,
-          clean.title_en,
-          clean.summary_tr,
-          clean.summary_en,
-          clean.detail_tr,
-          clean.detail_en,
-          clean.question_tr,
-          clean.question_en,
-          clean.unit_tr,
-          clean.unit_en,
-          clean.min_val,
-          clean.max_val,
-          clean.answer_val,
-          clean.sketch_type,
-          clean.visual_query || null,
-          clean.quiz_tr ? JSON.stringify(clean.quiz_tr) : null,
-          clean.quiz_en ? JSON.stringify(clean.quiz_en) : null,
-          clean.source_name,
-          clean.source_url,
-        ]
-      );
-
-      if (insertRes.rows[0]) {
-        existingSlugs.add(clean.slug);
-        existingTitlesEn.add(clean.title_en.toLowerCase());
-        insertedSummary.push({
-          id: insertRes.rows[0].id,
-          category: clean.category,
-          slug: clean.slug,
-          title_tr: clean.title_tr,
-          sketch: clean.sketch_type,
-          source: clean.source_name,
-        });
+          if (insertRes.rows[0]) {
+            existingSlugs.add(clean.slug);
+            existingTitlesEn.add(clean.title_en.toLowerCase());
+            insertedSummary.push({
+              id: insertRes.rows[0].id,
+              category: clean.category,
+              slug: clean.slug,
+              title_tr: clean.title_tr,
+              sketch: clean.sketch_type,
+              source: clean.source_name,
+            });
+          }
+        }
+      } catch (dbWriteErr) {
+        console.warn(
+          '[generateFacts] Warning: Postgres upsert failed after JSON persistence succeeded:',
+          dbWriteErr instanceof Error ? dbWriteErr.message : String(dbWriteErr)
+        );
       }
     }
 
-    console.log('\n=== Scrolly gemini-4-hydrogen Generation Summary ===');
-    console.log(`Facts generated: ${rawGenerated.length} | Verified: ${validCandidates.length} | Inserted into Postgres: ${insertedSummary.length}`);
-    console.log(`Vocabulary candidates: ${modelPayload.vocabulary.length} | Valid: ${validVocab.length} | Appended to data/vocabularyGenerated.json: ${vocabAdded}`);
+    console.log(`\n=== Scrolly ${modelPayload.model} Generation Summary ===`);
+    console.log(
+      `Facts generated: ${rawGenerated.length} | Verified: ${validCandidates.length} | Appended to data/factsGenerated.json: ${factsAddedJson} | Inserted into Postgres: ${insertedSummary.length}`
+    );
+    console.log(
+      `Vocabulary candidates: ${modelPayload.vocabulary.length} | Valid: ${validVocab.length} | Appended to data/vocabularyGenerated.json: ${vocabAdded}`
+    );
     if (insertedSummary.length > 0) {
       console.table(insertedSummary);
     }
@@ -1016,9 +1453,20 @@ async function main() {
       console.table(validVocab.map((v) => ({ word: v.word, pos: v.partOfSpeech, meaningTr: v.meaningTr })));
     }
   } finally {
-    await pool.end();
+    if (pool) {
+      await pool.end().catch(() => {});
+    }
   }
 }
+
+export {
+  appendGeneratedFacts,
+  extractJsonCandidate,
+  fetchGeneratedFactsFromModel,
+  toFactCardSchema,
+  validateGeneratedFact,
+  validateVocabularyCard,
+};
 
 const isDirectExecution =
   typeof process !== 'undefined' &&

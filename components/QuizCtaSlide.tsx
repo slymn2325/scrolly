@@ -30,8 +30,8 @@ export default function QuizCtaSlide({
       onDoubleClick={(e) => e.stopPropagation()}
       className={`reels-slide relative flex h-full w-full shrink-0 flex-col justify-between overflow-hidden bg-gradient-to-br from-violet-100 via-[#F8FAFC] to-emerald-50 px-5 pt-[calc(6.25rem+env(safe-area-inset-top))] select-none dark:from-[#16102B] dark:via-[#0E0B1D] dark:to-[#102224] ${
         cookieBannerVisible
-          ? 'pb-[calc(154px+env(safe-area-inset-bottom))]'
-          : 'pb-[calc(94px+env(safe-area-inset-bottom))]'
+          ? 'pb-[calc(204px+env(safe-area-inset-bottom))] lg:pb-8'
+          : 'pb-[calc(94px+env(safe-area-inset-bottom))] lg:pb-8'
       }`}
     >
       {/* Ambient Background Glows */}
@@ -113,7 +113,7 @@ export default function QuizCtaSlide({
           type="button"
           onClick={onSkipNext}
           data-testid="quiz-cta-continue-btn"
-          className="mx-auto inline-flex min-h-[40px] items-center justify-center gap-1.5 rounded-full border border-slate-200/90 bg-white/95 px-4 py-2 text-[11px] font-extrabold text-ink/80 shadow-xs transition hover:bg-white dark:border-white/15 dark:bg-slate-900/95 dark:text-violet-200 dark:hover:bg-slate-800 whitespace-normal break-words text-center"
+          className="mx-auto inline-flex min-h-[40px] items-center justify-center gap-1.5 rounded-full border border-slate-200/90 bg-white/95 px-4 py-2 text-[11px] font-extrabold text-ink/80 shadow-sm transition hover:bg-white dark:border-white/15 dark:bg-slate-900/95 dark:text-violet-200 dark:hover:bg-slate-800 whitespace-normal break-words text-center"
         >
           <span>{t.quizCtaContinueHint}</span>
           <ArrowDown className="h-3.5 w-3.5 shrink-0" />

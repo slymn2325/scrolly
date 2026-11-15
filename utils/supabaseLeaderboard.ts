@@ -73,6 +73,86 @@ function avatarForScore(xp: number, streak: number): string {
   return '🧠';
 }
 
+const TARGET_LEAGUE_PLAYER_COUNT = 18;
+
+interface SeededExplorerTemplate {
+  id: string;
+  name: string;
+  streak: number;
+  dailyScore: number;
+  weeklyScore: number;
+  alltimeScore: number;
+}
+
+const SEEDED_EXPLORER_POOL: SeededExplorerTemplate[] = [
+  { id: 'npc-ada-kozmos', name: 'AstronomAda', streak: 14, dailyScore: 520, weeklyScore: 2250, alltimeScore: 3650 },
+  { id: 'npc-atlas-evren', name: 'EvrenAtlas', streak: 11, dailyScore: 445, weeklyScore: 1890, alltimeScore: 3120 },
+  { id: 'npc-deniz-kuantum', name: 'KuantumDeniz', streak: 9, dailyScore: 390, weeklyScore: 1580, alltimeScore: 2680 },
+  { id: 'npc-selin-veri', name: 'VeriKahiniSelin', streak: 8, dailyScore: 345, weeklyScore: 1340, alltimeScore: 2290 },
+  { id: 'npc-ege-biyolog', name: 'BiyologEge', streak: 7, dailyScore: 300, weeklyScore: 1120, alltimeScore: 1920 },
+  { id: 'npc-mert-tarih', name: 'TarihMert', streak: 6, dailyScore: 260, weeklyScore: 940, alltimeScore: 1590 },
+  { id: 'npc-elif-botanik', name: 'BotanikElif', streak: 6, dailyScore: 225, weeklyScore: 780, alltimeScore: 1280 },
+  { id: 'npc-kerem-noron', name: 'NöronKerem', streak: 5, dailyScore: 190, weeklyScore: 640, alltimeScore: 1020 },
+  { id: 'npc-nehir-kutup', name: 'KutupNehir', streak: 4, dailyScore: 160, weeklyScore: 510, alltimeScore: 810 },
+  { id: 'npc-arda-foton', name: 'FotonArda', streak: 4, dailyScore: 135, weeklyScore: 405, alltimeScore: 620 },
+  { id: 'npc-duru-galaksi', name: 'GalaksiDuru', streak: 3, dailyScore: 110, weeklyScore: 320, alltimeScore: 460 },
+  { id: 'npc-can-genetik', name: 'GenetikCan', streak: 3, dailyScore: 90, weeklyScore: 245, alltimeScore: 340 },
+  { id: 'npc-zeynep-arkeo', name: 'ArkeoZeynep', streak: 2, dailyScore: 70, weeklyScore: 185, alltimeScore: 240 },
+  { id: 'npc-emre-kozmos', name: 'KozmosEmre', streak: 2, dailyScore: 50, weeklyScore: 130, alltimeScore: 170 },
+  { id: 'npc-defne-okyanus', name: 'OkyanusDefne', streak: 2, dailyScore: 35, weeklyScore: 85, alltimeScore: 115 },
+  { id: 'npc-bora-istatistik', name: 'VeriBora', streak: 1, dailyScore: 25, weeklyScore: 55, alltimeScore: 75 },
+  { id: 'npc-asya-atom', name: 'AtomAsya', streak: 1, dailyScore: 15, weeklyScore: 30, alltimeScore: 45 },
+  { id: 'npc-kaan-fosil', name: 'FosilKaan', streak: 1, dailyScore: 5, weeklyScore: 10, alltimeScore: 15 },
+];
+
+function padLeagueWithSeededExplorers(
+  realRows: Omit<LeaderboardEntry, 'rank' | 'zone'>[],
+  tab: LeaderboardTab
+): Omit<LeaderboardEntry, 'rank' | 'zone'>[] {
+  if (realRows.length >= TARGET_LEAGUE_PLAYER_COUNT) {
+    return realRows;
+  }
+
+  const combined = [...realRows];
+  const existingIds = new Set(combined.map((r) => r.id));
+  const existingNames = new Set(combined.map((r) => r.name.trim().toLowerCase()));
+
+  // Spread picks across the score curve (top promotion, mid, bottom relegation) even if realRows > 1
+  const needed = TARGET_LEAGUE_PLAYER_COUNT - combined.length;
+  const available = SEEDED_EXPLORER_POOL.filter(
+    (npc) => !existingIds.has(npc.id) && !existingNames.has(npc.name.toLowerCase())
+  );
+
+  for (let i = 0; i < Math.min(needed, available.length); i += 1) {
+    // Pick balanced indices across Promotion + Neutral + Relegation zones
+    const pickIdx =
+      needed === available.length
+        ? i
+        : Math.min(available.length - 1, Math.floor((i * available.length) / needed));
+    const npc = available[pickIdx];
+    const score =
+      tab === 'daily'
+        ? npc.dailyScore
+        : tab === 'weekly'
+          ? npc.weeklyScore
+          : npc.alltimeScore;
+
+    if (existingIds.has(npc.id)) continue;
+    existingIds.add(npc.id);
+
+    combined.push({
+      id: npc.id,
+      name: npc.name,
+      avatar: avatarForScore(npc.alltimeScore, npc.streak),
+      score,
+      streak: npc.streak,
+      isUser: false,
+    });
+  }
+
+  return combined;
+}
+
 function assignRanksAndZones(rows: Omit<LeaderboardEntry, 'rank' | 'zone'>[]): LeaderboardEntry[] {
   const sorted = [...rows].sort((a, b) => b.score - a.score || b.streak - a.streak);
   const total = sorted.length;
@@ -119,7 +199,7 @@ export async function fetchLeaderboardEntries(
 
   if (typeof window === 'undefined') {
     return {
-      entries: assignRanksAndZones([myFallbackRow]),
+      entries: assignRanksAndZones(padLeagueWithSeededExplorers([myFallbackRow], tab)),
       isLiveSupabase: false,
       isLiveBackend: false,
     };
@@ -133,7 +213,7 @@ export async function fetchLeaderboardEntries(
 
     if (!res.ok) {
       return {
-        entries: assignRanksAndZones([myFallbackRow]),
+        entries: assignRanksAndZones(padLeagueWithSeededExplorers([myFallbackRow], tab)),
         isLiveSupabase: false,
         isLiveBackend: false,
       };
@@ -157,7 +237,7 @@ export async function fetchLeaderboardEntries(
 
     if (serverRows.length === 0) {
       return {
-        entries: assignRanksAndZones([myFallbackRow]),
+        entries: assignRanksAndZones(padLeagueWithSeededExplorers([myFallbackRow], tab)),
         isLiveSupabase: isPostgresLive,
         isLiveBackend: isPostgresLive,
       };
@@ -182,13 +262,13 @@ export async function fetchLeaderboardEntries(
     }
 
     return {
-      entries: assignRanksAndZones(mapped),
+      entries: assignRanksAndZones(padLeagueWithSeededExplorers(mapped, tab)),
       isLiveSupabase: isPostgresLive,
       isLiveBackend: isPostgresLive,
     };
   } catch {
     return {
-      entries: assignRanksAndZones([myFallbackRow]),
+      entries: assignRanksAndZones(padLeagueWithSeededExplorers([myFallbackRow], tab)),
       isLiveSupabase: false,
       isLiveBackend: false,
     };

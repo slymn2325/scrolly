@@ -3,6 +3,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import {
+  Bot,
   Check,
   Copy,
   Crown,
@@ -17,8 +18,19 @@ import {
   Users,
   X,
 } from 'lucide-react';
-import { CATEGORIES, type CategoryFilter, type Language, translations } from '@/i18n/translations';
-import { isShortRoomCode, normalizeRoomCode, type ScrollaRoom } from '@/lib/duelStore';
+import {
+  CATEGORIES,
+  CATEGORY_SELECTOR_OPTIONS,
+  type CategoryFilter,
+  type Language,
+  translations,
+} from '@/i18n/translations';
+import {
+  isShortRoomCode,
+  normalizeRoomCode,
+  type ScrollaPlayer,
+  type ScrollaRoom,
+} from '@/lib/duelStore';
 import type { FactCard } from '@/types/fact';
 import type { DuelKind, DuelPayload } from '@/utils/duelCodec';
 import {
@@ -29,6 +41,8 @@ import {
   getOrCreateScrollaPlayerId,
   kickScrollaPlayer,
   leaveScrollaRoom,
+  pickDuelQuestionIds,
+  resolveDuelPackItems,
   setSelfScrollaReady,
   startScrollaRoom,
   joinScrollaRoom,
@@ -73,6 +87,20 @@ function estimateTargetTime(questionCount: number): number {
   return Math.max(18, questionCount * 6);
 }
 
+const BOT_PLAYER_ID = 'scrolla-local-bot';
+
+function createSimulatedBotPlayer(lang: Language): ScrollaPlayer {
+  return {
+    id: BOT_PLAYER_ID,
+    name: lang === 'tr' ? 'Scrolla Bot (Test)' : 'Scrolla Bot (Test)',
+    emoji: '🤖',
+    ready: true,
+    score: null,
+    finishedAt: null,
+    joinedAt: new Date().toISOString(),
+  };
+}
+
 export { completeScrollaRoom };
 
 export default function DuelModal({
@@ -81,6 +109,7 @@ export default function DuelModal({
   defaultNickname,
   playerId: propPlayerId,
   seedFact,
+  allFacts,
   incomingDuel = null,
   initialRoomCode = null,
   onClearRoomCode,
@@ -101,6 +130,8 @@ export default function DuelModal({
   const [joinCodeInput, setJoinCodeInput] = useState<string>('');
   const [phase, setPhase] = useState<DuelPhase>('setup');
   const [room, setRoom] = useState<ScrollaRoom | null>(null);
+  const [isBotPractice, setIsBotPractice] = useState(false);
+  const [botLocalRoom, setBotLocalRoom] = useState<ScrollaRoom | null>(null);
   const [copied, setCopied] = useState(false);
   const [busyAction, setBusyAction] = useState<string | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
@@ -117,9 +148,25 @@ export default function DuelModal({
 
   useEscapeClose(open && !isPage, onClose);
 
+  const activeRoom = useMemo<ScrollaRoom | null>(() => {
+    if (botLocalRoom) return botLocalRoom;
+    if (!room) return null;
+    if (isBotPractice && room.players.length < 2) {
+      return {
+        ...room,
+        players: [...room.players, createSimulatedBotPlayer(lang)],
+      };
+    }
+    return room;
+  }, [botLocalRoom, isBotPractice, lang, room]);
+
   const applyRoomSync = useCallback((nextRoom: ScrollaRoom, serverNowMs?: number) => {
     if (typeof serverNowMs === 'number' && Number.isFinite(serverNowMs)) {
       serverOffsetMsRef.current = serverNowMs - Date.now();
+    }
+    if (nextRoom.players.length >= 2) {
+      setIsBotPractice(false);
+      setBotLocalRoom(null);
     }
     setRoom(nextRoom);
   }, []);
@@ -170,6 +217,8 @@ export default function DuelModal({
       }
 
       matchLaunchedRef.current = null;
+      setIsBotPractice(false);
+      setBotLocalRoom(null);
       applyRoomSync(res.room, res.serverNowMs);
       setPhase('lobby');
     },
@@ -188,6 +237,8 @@ export default function DuelModal({
       setNickname(defaultNickname || t.duelDefaultName);
       setCopied(false);
       setErrorMsg(null);
+      setIsBotPractice(false);
+      setBotLocalRoom(null);
     }
   }, [open, defaultNickname, t.duelDefaultName]);
 
@@ -231,9 +282,9 @@ export default function DuelModal({
     applyRoomSync,
   ]);
 
-  // Real-time room polling every 850ms while inside lobby/countdown
+  // Real-time room polling every 850ms while inside server lobby/countdown
   useEffect(() => {
-    if (!open || phase !== 'lobby' || !room?.code) return;
+    if (!open || phase !== 'lobby' || !room?.code || botLocalRoom) return;
     let active = true;
 
     const poll = async () => {
@@ -242,6 +293,8 @@ export default function DuelModal({
 
       if (res.kicked) {
         setRoom(null);
+        setIsBotPractice(false);
+        setBotLocalRoom(null);
         setPhase('setup');
         setCountdownSec(null);
         autoJoinedCodeRef.current = null;
@@ -267,50 +320,63 @@ export default function DuelModal({
       active = false;
       window.clearInterval(interval);
     };
-  }, [open, phase, room?.code, myPlayerId, applyRoomSync, lang, onClearRoomCode]);
+  }, [open, phase, room?.code, botLocalRoom, myPlayerId, applyRoomSync, lang, onClearRoomCode]);
 
   // Synchronized 5-second server-timestamp countdown (`startsAt = serverNow + 5000`)
   useEffect(() => {
-    if (!open || phase !== 'lobby' || !room) {
+    if (!open || phase !== 'lobby' || !activeRoom) {
       setCountdownSec(null);
       return;
     }
 
     const launchMatch = () => {
-      if (matchLaunchedRef.current === room.code) return;
-      matchLaunchedRef.current = room.code;
-      const opponent = room.players.find((p) => p.id !== myPlayerId);
+      if (matchLaunchedRef.current === activeRoom.code) return;
+      matchLaunchedRef.current = activeRoom.code;
+      const opponent = activeRoom.players.find((p) => p.id !== myPlayerId);
+      const isBotMatch = Boolean(
+        botLocalRoom ||
+          isBotPractice ||
+          activeRoom.players.some((p) => p.id === BOT_PLAYER_ID)
+      );
+      const hasServerRoom = Boolean(
+        room &&
+          room.code === activeRoom.code &&
+          isShortRoomCode(room.code) &&
+          !isBotMatch
+      );
       onStartDuel({
-        factIds: room.cardIds,
-        challengerName: opponent?.name || room.players[0]?.name || cleanName,
-        targetScore: estimateTargetScore(room.questionCount),
-        targetTimeSec: estimateTargetTime(room.questionCount),
+        factIds: activeRoom.cardIds,
+        challengerName: opponent?.name || activeRoom.players[0]?.name || cleanName,
+        targetScore: estimateTargetScore(activeRoom.questionCount),
+        targetTimeSec: estimateTargetTime(activeRoom.questionCount),
         kind: '1v1',
-        duelId: room.code,
-        category: room.category,
-        questionCount: room.questionCount,
+        duelId: hasServerRoom ? activeRoom.code : undefined,
+        category: activeRoom.category,
+        questionCount: activeRoom.questionCount,
       });
     };
 
-    if (room.status === 'started') {
+    if (activeRoom.status === 'started') {
       setCountdownSec(0);
       launchMatch();
       return;
     }
 
-    if (room.status !== 'countdown' || !room.startsAt) {
+    if (activeRoom.status !== 'countdown' || !activeRoom.startsAt) {
       setCountdownSec(null);
       return;
     }
 
-    const targetMs = Date.parse(room.startsAt);
+    const targetMs = Date.parse(activeRoom.startsAt);
     if (!Number.isFinite(targetMs)) {
       setCountdownSec(null);
       return;
     }
 
     const tick = () => {
-      const estimatedServerNow = Date.now() + serverOffsetMsRef.current;
+      const estimatedServerNow = botLocalRoom
+        ? Date.now()
+        : Date.now() + serverOffsetMsRef.current;
       const remainingMs = targetMs - estimatedServerNow;
       if (remainingMs <= 0) {
         setCountdownSec(0);
@@ -324,17 +390,59 @@ export default function DuelModal({
     tick();
     const timer = window.setInterval(tick, 120);
     return () => window.clearInterval(timer);
-  }, [open, phase, room, myPlayerId, cleanName, onStartDuel]);
+  }, [open, phase, activeRoom, botLocalRoom, myPlayerId, cleanName, onStartDuel]);
 
   const handleCreateRoom = async () => {
     onButtonPop();
-    setBusyAction('create');
     setErrorMsg(null);
+    const chosenCardIds = pickDuelQuestionIds(
+      allFacts,
+      category,
+      questionCount,
+      `${myPlayerId}-${Date.now()}`
+    );
+
+    if (isBotPractice) {
+      const nowIso = new Date().toISOString();
+      const localRoom: ScrollaRoom = {
+        code: 'LOCAL-BOT',
+        mode: 'duel',
+        category,
+        questionCount: chosenCardIds.length || questionCount,
+        cardIds: chosenCardIds,
+        hostId: myPlayerId,
+        players: [
+          {
+            id: myPlayerId,
+            name: cleanName,
+            emoji: '⚡',
+            ready: false,
+            score: null,
+            finishedAt: null,
+            joinedAt: nowIso,
+          },
+          createSimulatedBotPlayer(lang),
+        ],
+        kickedIds: [],
+        status: 'lobby',
+        startsAt: null,
+        createdAt: nowIso,
+        updatedAt: nowIso,
+      };
+      matchLaunchedRef.current = null;
+      setRoom(null);
+      setBotLocalRoom(localRoom);
+      setPhase('lobby');
+      return;
+    }
+
+    setBusyAction('create');
     const res = await createScrollaRoom({
       hostId: myPlayerId,
       hostName: cleanName,
       category,
       questionCount,
+      cardIds: chosenCardIds.length >= 2 ? chosenCardIds : undefined,
     });
     setBusyAction(null);
 
@@ -349,15 +457,33 @@ export default function DuelModal({
 
     matchLaunchedRef.current = null;
     autoJoinedCodeRef.current = res.room.code;
+    setBotLocalRoom(null);
     applyRoomSync(res.room, res.serverNowMs);
     setPhase('lobby');
   };
 
   const handleToggleSelfReady = async () => {
-    if (!room) return;
+    if (!activeRoom) return;
     onButtonPop();
-    const self = room.players.find((p) => p.id === myPlayerId);
+    const self = activeRoom.players.find((p) => p.id === myPlayerId);
     if (!self) return;
+
+    if (botLocalRoom) {
+      setBotLocalRoom((prev) =>
+        prev
+          ? {
+              ...prev,
+              players: prev.players.map((p) =>
+                p.id === myPlayerId ? { ...p, ready: !p.ready } : p
+              ),
+              updatedAt: new Date().toISOString(),
+            }
+          : prev
+      );
+      return;
+    }
+
+    if (!room) return;
     setBusyAction('ready');
     const res = await setSelfScrollaReady(room.code, myPlayerId, !self.ready);
     setBusyAction(null);
@@ -369,8 +495,26 @@ export default function DuelModal({
   };
 
   const handleKickOpponent = async (targetId: string) => {
-    if (!room || room.hostId !== myPlayerId) return;
+    if (!activeRoom || activeRoom.hostId !== myPlayerId) return;
     onButtonPop();
+
+    if (targetId === BOT_PLAYER_ID) {
+      setIsBotPractice(false);
+      if (botLocalRoom) {
+        setBotLocalRoom((prev) =>
+          prev
+            ? {
+                ...prev,
+                players: prev.players.filter((p) => p.id !== BOT_PLAYER_ID),
+                updatedAt: new Date().toISOString(),
+              }
+            : prev
+        );
+      }
+      return;
+    }
+
+    if (!room) return;
     setBusyAction(`kick-${targetId}`);
     const res = await kickScrollaPlayer(room.code, myPlayerId, targetId);
     setBusyAction(null);
@@ -379,11 +523,51 @@ export default function DuelModal({
     }
   };
 
-  const handleHostStart = async () => {
-    if (!room || room.hostId !== myPlayerId) return;
+  const handleEnableBotInLobby = () => {
     onButtonPop();
-    setBusyAction('start');
+    setIsBotPractice(true);
+    if (botLocalRoom && !botLocalRoom.players.some((p) => p.id === BOT_PLAYER_ID)) {
+      setBotLocalRoom((prev) =>
+        prev
+          ? {
+              ...prev,
+              players: [...prev.players, createSimulatedBotPlayer(lang)],
+              updatedAt: new Date().toISOString(),
+            }
+          : prev
+      );
+    }
+  };
+
+  const handleHostStart = async () => {
+    if (!activeRoom || activeRoom.hostId !== myPlayerId) return;
+    onButtonPop();
     setErrorMsg(null);
+
+    if (botLocalRoom || isBotPractice) {
+      const everyoneReady =
+        activeRoom.players.length === 2 && activeRoom.players.every((p) => p.ready);
+      if (!everyoneReady) {
+        setErrorMsg(
+          lang === 'tr'
+            ? 'Başlamak için önce "Hazır Ol" butonuna bas.'
+            : 'Press "Ready Up" first to start.'
+        );
+        return;
+      }
+      const startsAt = new Date(Date.now() + 5000).toISOString();
+      serverOffsetMsRef.current = 0;
+      setBotLocalRoom({
+        ...activeRoom,
+        status: 'countdown',
+        startsAt,
+        updatedAt: new Date().toISOString(),
+      });
+      return;
+    }
+
+    if (!room) return;
+    setBusyAction('start');
     const res = await startScrollaRoom(room.code, myPlayerId);
     setBusyAction(null);
     if (res.ok && res.room) {
@@ -404,6 +588,8 @@ export default function DuelModal({
     const code = room?.code;
     setPhase('setup');
     setRoom(null);
+    setBotLocalRoom(null);
+    setIsBotPractice(false);
     setCountdownSec(null);
     autoJoinedCodeRef.current = null;
     onClearRoomCode?.();
@@ -413,11 +599,11 @@ export default function DuelModal({
   };
 
   const duelUrl = useMemo(() => {
-    if (!room) return '';
+    if (!room || botLocalRoom) return '';
     const origin =
       typeof window !== 'undefined' ? window.location.origin : 'https://scrolly.live';
     return `${origin}/?duel=${room.code}`;
-  }, [room]);
+  }, [botLocalRoom, room]);
 
   const handleCopyDuel = async () => {
     if (!duelUrl) return;
@@ -431,15 +617,21 @@ export default function DuelModal({
     setTimeout(() => setCopied(false), 2500);
   };
 
-  const isHost = Boolean(room && room.hostId === myPlayerId);
-  const bothSeated = Boolean(room && room.players.length === 2);
-  const allReady = Boolean(room && bothSeated && room.players.every((p) => p.ready));
-  const readyCount = room ? room.players.filter((p) => p.ready).length : 0;
+  const isHost = Boolean(activeRoom && activeRoom.hostId === myPlayerId);
+  const bothSeated = Boolean(activeRoom && activeRoom.players.length === 2);
+  const allReady = Boolean(
+    activeRoom && bothSeated && activeRoom.players.every((p) => p.ready)
+  );
+  const readyCount = activeRoom ? activeRoom.players.filter((p) => p.ready).length : 0;
+  const packPreviewItems = useMemo(
+    () => (activeRoom ? resolveDuelPackItems(allFacts, activeRoom.cardIds, lang) : []),
+    [activeRoom, allFacts, lang]
+  );
 
-  const challengeText = room
+  const challengeText = activeRoom
     ? lang === 'tr'
-      ? `⚔️ ${cleanName} seni Scrolla 1v1 arenasına çağırıyor! Oda Kodu: ${room.code} (${room.questionCount} soru)\n${duelUrl}`
-      : `⚔️ ${cleanName} challenged you to Scrolla 1v1 Arena! Room Code: ${room.code} (${room.questionCount} qs)\n${duelUrl}`
+      ? `⚔️ ${cleanName} seni Scrolla 1v1 arenasına çağırıyor! Oda Kodu: ${activeRoom.code} (${activeRoom.questionCount} soru)\n${duelUrl}`
+      : `⚔️ ${cleanName} challenged you to Scrolla 1v1 Arena! Room Code: ${activeRoom.code} (${activeRoom.questionCount} qs)\n${duelUrl}`
     : '';
 
   const shellClass = isPage
@@ -573,7 +765,7 @@ export default function DuelModal({
                     {lang === 'tr' ? 'Arena Kategorisi' : 'Arena Topic'}
                   </p>
                   <div data-testid="duel-category-picker" className="mt-2 flex flex-wrap gap-1.5">
-                    {CATEGORIES.filter((c) => c.id !== 'vocabulary').map((cat) => {
+                    {CATEGORY_SELECTOR_OPTIONS.map((cat) => {
                       const active = category === cat.id;
                       return (
                         <button
@@ -626,6 +818,48 @@ export default function DuelModal({
                   </div>
                 </div>
 
+                {/* Explicit solo practice toggle (real P2P online lobby stays default) */}
+                <div className="rounded-2xl border border-slate-200/80 bg-white/80 p-3 dark:border-white/10 dark:bg-white/5">
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="min-w-0">
+                      <p className="inline-flex items-center gap-1.5 text-xs font-extrabold text-ink dark:text-white">
+                        <Bot className="h-3.5 w-3.5 text-violet-600 dark:text-violet-300" />
+                        <span>
+                          {lang === 'tr'
+                            ? 'Yerel Test / Bot Rakip ile Dene'
+                            : 'Practice with Local Bot Opponent'}
+                        </span>
+                      </p>
+                      <p className="mt-0.5 text-[11px] font-medium text-ink/60 dark:text-violet-200/75">
+                        {lang === 'tr'
+                          ? 'Varsayılan mod gerçek 2 oyunculu odadır; solo test için açabilirsin.'
+                          : 'Default creates a live 2-player room; enable this for instant solo practice.'}
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      role="switch"
+                      aria-checked={isBotPractice}
+                      data-testid="duel-bot-toggle-setup"
+                      onClick={() => {
+                        onButtonPop();
+                        setIsBotPractice((prev) => !prev);
+                      }}
+                      className={`relative inline-flex h-7 w-12 shrink-0 items-center rounded-full border transition-colors ${
+                        isBotPractice
+                          ? 'border-violet-600 bg-violet-600'
+                          : 'border-slate-300 bg-slate-200 dark:border-white/20 dark:bg-white/15'
+                      }`}
+                    >
+                      <span
+                        className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform ${
+                          isBotPractice ? 'translate-x-6' : 'translate-x-0.5'
+                        }`}
+                      />
+                    </button>
+                  </div>
+                </div>
+
                 <motion.button
                   type="button"
                   whileTap={{ scale: 0.94 }}
@@ -640,15 +874,19 @@ export default function DuelModal({
                       ? lang === 'tr'
                         ? 'Oda kuruluyor...'
                         : 'Creating room...'
-                      : lang === 'tr'
-                        ? 'Scrolla Odası Kur'
-                        : 'Create Scrolla Room'}
+                      : isBotPractice
+                        ? lang === 'tr'
+                          ? 'Bot Rakip ile Odayı Aç'
+                          : 'Open Solo Bot Lobby'
+                        : lang === 'tr'
+                          ? 'Scrolla Odası Kur'
+                          : 'Create Scrolla Room'}
                   </span>
                 </motion.button>
               </div>
             )}
 
-            {phase === 'lobby' && room && (
+            {phase === 'lobby' && activeRoom && (
               <div className="mt-4 space-y-3.5">
                 {/* Room code badge */}
                 <div
@@ -657,25 +895,49 @@ export default function DuelModal({
                 >
                   <div>
                     <p className="text-[10px] font-black uppercase tracking-wider text-violet-700 dark:text-violet-300">
-                      {lang === 'tr' ? 'Scrolla Oda Kodu' : 'Scrolla Room Code'}
+                      {botLocalRoom && !room
+                        ? lang === 'tr'
+                          ? 'Yerel Antrenman Modu'
+                          : 'Local Practice Mode'
+                        : lang === 'tr'
+                          ? 'Scrolla Oda Kodu'
+                          : 'Scrolla Room Code'}
                     </p>
                     <p
                       data-testid="duel-room-code"
                       className="mt-0.5 font-mono text-2xl font-black tracking-[0.2em] text-ink dark:text-white"
                     >
-                      {room.code}
+                      {botLocalRoom && !room ? 'BOT-TEST' : activeRoom.code}
                     </p>
                   </div>
                   <div className="text-right text-xs font-bold text-ink/75 dark:text-violet-200/85">
-                    <p>{room.questionCount} {lang === 'tr' ? 'soru' : 'qs'}</p>
+                    <p>{activeRoom.questionCount} {lang === 'tr' ? 'soru' : 'qs'}</p>
                     <p className="text-[11px] uppercase">
-                      {room.category === 'all'
+                      {activeRoom.category === 'all'
                         ? lang === 'tr'
                           ? 'Karma'
                           : 'Mixed'
-                        : CATEGORIES.find((c) => c.id === room.category)?.label[lang] || room.category}
+                        : CATEGORY_SELECTOR_OPTIONS.find((c) => c.id === activeRoom.category)?.label[lang] ||
+                          CATEGORIES.find((c) => c.id === activeRoom.category)?.label[lang] ||
+                          activeRoom.category}
                     </p>
                   </div>
+                </div>
+
+                {/* Human-readable Shared Pack ("Ortak paket") preview — never raw IDs */}
+                <div
+                  data-testid="duel-shared-pack"
+                  className="rounded-2xl border border-slate-200/85 bg-white/85 px-3.5 py-2.5 dark:border-white/10 dark:bg-white/[0.04]"
+                >
+                  <div className="flex items-center justify-between gap-2 text-[10px] font-black uppercase tracking-wider text-ink/60 dark:text-violet-200/75">
+                    <span>{lang === 'tr' ? 'Ortak paket' : 'Shared pack'}</span>
+                    <span>
+                      {activeRoom.questionCount} {lang === 'tr' ? 'kart' : 'cards'}
+                    </span>
+                  </div>
+                  <p className="mt-1 text-xs font-bold leading-relaxed text-ink/85 dark:text-violet-100">
+                    {packPreviewItems.join(' · ')}
+                  </p>
                 </div>
 
                 {/* Synchronized 5-second countdown spotlight */}
@@ -701,9 +963,9 @@ export default function DuelModal({
 
                 {/* Players list (2 slots max, ONLY own Ready button, Host kick on opponent) */}
                 <div data-testid="duel-lobby-players" className="space-y-2">
-                  {room.players.map((player) => {
+                  {activeRoom.players.map((player) => {
                     const isMe = player.id === myPlayerId;
-                    const playerIsHost = player.id === room.hostId;
+                    const playerIsHost = player.id === activeRoom.hostId;
                     return (
                       <div
                         key={player.id}
@@ -754,7 +1016,7 @@ export default function DuelModal({
                           {isMe ? (
                             <button
                               type="button"
-                              disabled={busyAction === 'ready' || room.status === 'countdown'}
+                              disabled={busyAction === 'ready' || activeRoom.status === 'countdown'}
                               data-testid="duel-ready-toggle"
                               onClick={() => void handleToggleSelfReady()}
                               className={`min-h-[40px] rounded-full px-3.5 text-xs font-black transition ${
@@ -789,7 +1051,7 @@ export default function DuelModal({
                                     ? 'Bekliyor'
                                     : 'Waiting'}
                               </span>
-                              {isHost && room.status === 'lobby' && (
+                              {isHost && activeRoom.status === 'lobby' && (
                                 <button
                                   type="button"
                                   disabled={busyAction === `kick-${player.id}`}
@@ -809,22 +1071,39 @@ export default function DuelModal({
                     );
                   })}
 
-                  {room.players.length < 2 && (
+                  {activeRoom.players.length < 2 && (
                     <div
                       data-testid="duel-waiting-slot"
-                      className="flex items-center justify-between rounded-2xl border border-dashed border-violet-300 bg-white/60 px-3.5 py-3 text-xs font-bold text-ink/60 dark:border-white/20 dark:bg-white/5 dark:text-violet-200/75"
+                      className="space-y-2 rounded-2xl border border-dashed border-violet-300 bg-white/60 px-3.5 py-3 text-xs font-bold text-ink/65 dark:border-white/20 dark:bg-white/5 dark:text-violet-200/80"
                     >
-                      <span className="inline-flex items-center gap-2">
-                        <Users className="h-4 w-4 text-violet-500" />
-                        <span>
-                          {lang === 'tr'
-                            ? '2. oyuncu bekleniyor — davet linkini veya oda kodunu paylaş'
-                            : 'Waiting for opponent — share invite link or room code'}
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="inline-flex items-center gap-2">
+                          <Users className="h-4 w-4 text-violet-500 shrink-0" />
+                          <span>
+                            {lang === 'tr'
+                              ? 'Rakip bekleniyor... Davet linkini veya oda kodunu paylaş'
+                              : 'Waiting for opponent... Share invite link or room code'}
+                          </span>
                         </span>
-                      </span>
-                      <span className="font-mono text-[11px] font-black text-violet-700 dark:text-violet-300">
-                        1/2
-                      </span>
+                        <span className="font-mono text-[11px] font-black text-violet-700 dark:text-violet-300">
+                          1/2
+                        </span>
+                      </div>
+                      {isHost && activeRoom.status === 'lobby' && (
+                        <button
+                          type="button"
+                          data-testid="duel-bot-toggle-lobby"
+                          onClick={handleEnableBotInLobby}
+                          className="inline-flex items-center gap-1.5 rounded-full border border-violet-300 bg-violet-50 px-3 py-1.5 text-[11px] font-extrabold text-violet-800 transition hover:bg-violet-100 dark:border-violet-500/40 dark:bg-violet-950/60 dark:text-violet-200"
+                        >
+                          <Bot className="h-3.5 w-3.5" />
+                          <span>
+                            {lang === 'tr'
+                              ? 'Yerel Test / Bot Rakip ile Dene'
+                              : 'Practice vs Local Bot'}
+                          </span>
+                        </button>
+                      )}
                     </div>
                   )}
                 </div>
@@ -843,14 +1122,14 @@ export default function DuelModal({
                   <motion.button
                     type="button"
                     whileTap={{ scale: 0.94 }}
-                    disabled={!allReady || room.status === 'countdown' || busyAction === 'start'}
+                    disabled={!allReady || activeRoom.status === 'countdown' || busyAction === 'start'}
                     onClick={() => void handleHostStart()}
                     data-testid="start-duel-btn"
                     className="flex w-full min-h-[52px] items-center justify-center gap-2 rounded-full bg-gradient-to-r from-violet-600 to-rose-500 px-4 py-3 text-sm font-black text-white shadow-cozy disabled:cursor-not-allowed disabled:opacity-45"
                   >
                     <Play className="h-4 w-4 shrink-0 fill-current" />
                     <span>
-                      {room.status === 'countdown'
+                      {activeRoom.status === 'countdown'
                         ? lang === 'tr'
                           ? `Başlıyor (${countdownSec ?? 5})...`
                           : `Starting (${countdownSec ?? 5})...`
@@ -872,7 +1151,7 @@ export default function DuelModal({
                     data-testid="duel-guest-wait-banner"
                     className="rounded-full border border-violet-300/70 bg-violet-50 px-4 py-3 text-center text-xs font-extrabold text-violet-900 dark:border-violet-700/60 dark:bg-violet-950/50 dark:text-violet-200"
                   >
-                    {room.status === 'countdown'
+                    {activeRoom.status === 'countdown'
                       ? lang === 'tr'
                         ? `🚀 Lobi Lideri maçı başlattı! (${countdownSec ?? 5})`
                         : `🚀 Room Leader started the match! (${countdownSec ?? 5})`
@@ -886,57 +1165,68 @@ export default function DuelModal({
                   </div>
                 )}
 
-                {/* Share link + Social */}
-                <div className="space-y-2.5 pt-1">
-                  <div className="rounded-2xl border border-violet-200 bg-pastel-lavender/40 p-3 dark:border-violet-700/50 dark:bg-violet-950/40">
-                    <p
-                      data-testid="duel-link-preview"
-                      className="truncate font-mono text-xs font-bold text-violet-900 dark:text-violet-200"
-                    >
-                      {duelUrl}
-                    </p>
-                  </div>
+                {/* Share link + Social (real P2P server rooms only) */}
+                {!botLocalRoom ? (
+                  <div className="space-y-2.5 pt-1">
+                    <div className="rounded-2xl border border-violet-200 bg-pastel-lavender/40 p-3 dark:border-violet-700/50 dark:bg-violet-950/40">
+                      <p
+                        data-testid="duel-link-preview"
+                        className="truncate font-mono text-xs font-bold text-violet-900 dark:text-violet-200"
+                      >
+                        {duelUrl}
+                      </p>
+                    </div>
 
-                  <motion.button
-                    type="button"
-                    whileTap={{ scale: 0.94 }}
-                    onClick={() => void handleCopyDuel()}
-                    data-testid="copy-duel-link-btn"
-                    className={`flex w-full min-h-[48px] items-center justify-center gap-2 rounded-2xl px-4 py-2.5 text-sm font-extrabold transition-colors ${
-                      copied
-                        ? 'bg-emerald-600 text-white'
-                        : 'border-2 border-ink bg-white text-ink hover:bg-slate-50 dark:border-violet-400 dark:bg-white/10 dark:text-white'
-                    }`}
+                    <motion.button
+                      type="button"
+                      whileTap={{ scale: 0.94 }}
+                      onClick={() => void handleCopyDuel()}
+                      data-testid="copy-duel-link-btn"
+                      className={`flex w-full min-h-[48px] items-center justify-center gap-2 rounded-2xl px-4 py-2.5 text-sm font-extrabold transition-colors ${
+                        copied
+                          ? 'bg-emerald-600 text-white'
+                          : 'border-2 border-ink bg-white text-ink hover:bg-slate-50 dark:border-violet-400 dark:bg-white/10 dark:text-white'
+                      }`}
+                    >
+                      {copied ? <Check className="h-4 w-4 shrink-0" /> : <Copy className="h-4 w-4 shrink-0" />}
+                      <span>{copied ? t.duelLinkCopied : t.duelCopyLinkBtn}</span>
+                    </motion.button>
+
+                    <div className="grid grid-cols-2 gap-2.5">
+                      <motion.a
+                        href={`https://wa.me/?text=${encodeURIComponent(challengeText)}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        whileTap={{ scale: 0.94 }}
+                        onClick={onButtonPop}
+                        className="flex min-h-[48px] items-center justify-center gap-1.5 rounded-2xl bg-[#25D366] px-3 py-2.5 text-center text-xs font-extrabold text-white"
+                      >
+                        <MessageCircle className="h-4 w-4 shrink-0" />
+                        <span>{t.duelShareWhatsapp}</span>
+                      </motion.a>
+                      <motion.a
+                        href={`https://x.com/intent/post?text=${encodeURIComponent(challengeText)}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        whileTap={{ scale: 0.94 }}
+                        onClick={onButtonPop}
+                        className="flex min-h-[48px] items-center justify-center gap-1.5 rounded-2xl bg-[#111827] px-3 py-2.5 text-center text-xs font-extrabold text-white"
+                      >
+                        <Share2 className="h-4 w-4 shrink-0" />
+                        <span>{t.duelShareX}</span>
+                      </motion.a>
+                    </div>
+                  </div>
+                ) : (
+                  <div
+                    data-testid="duel-bot-mode-note"
+                    className="rounded-2xl border border-violet-200/80 bg-violet-50/70 px-3.5 py-2.5 text-center text-[11px] font-bold text-violet-900 dark:border-violet-700/50 dark:bg-violet-950/40 dark:text-violet-200"
                   >
-                    {copied ? <Check className="h-4 w-4 shrink-0" /> : <Copy className="h-4 w-4 shrink-0" />}
-                    <span>{copied ? t.duelLinkCopied : t.duelCopyLinkBtn}</span>
-                  </motion.button>
-
-                  <div className="grid grid-cols-2 gap-2.5">
-                    <motion.a
-                      href={`https://wa.me/?text=${encodeURIComponent(challengeText)}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      whileTap={{ scale: 0.94 }}
-                      onClick={onButtonPop}
-                      className="flex min-h-[48px] items-center justify-center gap-1.5 rounded-2xl bg-[#25D366] px-3 py-2.5 text-center text-xs font-extrabold text-white"
-                    >
-                      <MessageCircle className="h-4 w-4 shrink-0" />
-                      <span>{t.duelShareWhatsapp}</span>
-                    </motion.a>
-                    <motion.a
-                      href={`https://x.com/intent/post?text=${encodeURIComponent(challengeText)}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      whileTap={{ scale: 0.94 }}
-                      onClick={onButtonPop}
-                      className="flex min-h-[48px] items-center justify-center gap-1.5 rounded-2xl bg-[#111827] px-3 py-2.5 text-center text-xs font-extrabold text-white"
-                    >
-                      <Share2 className="h-4 w-4 shrink-0" />
-                      <span>{t.duelShareX}</span>
-                    </motion.a>
+                    {lang === 'tr'
+                      ? '🤖 Yerel Test / Bot modu aktif — arkadaş davet linki için normal oda kurabilirsin.'
+                      : '🤖 Local Bot Practice active — switch off Bot mode to invite a friend online.'}
                   </div>
-                </div>
+                )}
 
                 <button
                   type="button"

@@ -24,24 +24,26 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Generate 5 facts + 2 vocabulary cards (gemini-4-hydrogen)
+      - name: Generate 5 facts + 2 vocabulary cards (Native Gemini / fallback)
         env:
-          OPENAI_API_KEY: ${{ secrets.AI_API_KEY || secrets.GEMINI_API_KEY }}
-          AI_MODELS_ENDPOINT: ${{ vars.AI_MODELS_ENDPOINT || 'https://generativelanguage.googleapis.com/v1beta/openai/chat/completions' }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          AI_API_KEY: ${{ secrets.AI_API_KEY }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          AI_MODELS_ENDPOINT: ${{ vars.AI_MODELS_ENDPOINT }}
           AI_MODEL_NAME: ${{ vars.AI_MODEL_NAME || 'gemini-4-hydrogen' }}
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           # Rejects overused internet trivia clichés (neutron star teaspoon, diamond rain, octopus 3 hearts, honey, Eiffel Tower, etc.)
           ANTI_CLICHE_STRICT: 'true'
         run: node scripts/generateFacts.mjs
 
-      - name: Commit vocabulary file updates
+      - name: Commit generated facts and vocabulary updates
         run: |
-          if git diff --quiet -- data/vocabularyGenerated.json; then
-            echo "No vocabulary file changes to commit."
+          if [ -z "$(git status --porcelain -- data/vocabularyGenerated.json data/factsGenerated.json)" ]; then
+            echo "No generated fact or vocabulary changes to commit."
           else
             git config user.name "github-actions[bot]"
             git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-            git add data/vocabularyGenerated.json
-            git commit -m "chore: append daily vocabulary cards from gemini-4-hydrogen"
+            git add data/vocabularyGenerated.json data/factsGenerated.json
+            git commit -m "chore: append daily facts and vocabulary cards"
             git push
           fi

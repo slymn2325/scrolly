@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import {
   AlertCircle,
@@ -60,6 +60,7 @@ export default function LeaderboardModal({
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [hasError, setHasError] = useState(false);
   const [inviteCopied, setInviteCopied] = useState(false);
+  const userRowRef = useRef<HTMLDivElement | null>(null);
 
   const handleInviteClick = async () => {
     if (onInviteDuel) {
@@ -149,6 +150,27 @@ export default function LeaderboardModal({
           ? 'Toplam XP'
           : 'Total XP';
 
+  const myZoneBadge = myEntry
+    ? myEntry.zone === 'promotion'
+      ? {
+          label: lang === 'tr' ? '▲ Yükselme Hattı' : '▲ Promotion Zone',
+          cls: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300',
+        }
+      : myEntry.zone === 'relegation'
+        ? {
+            label: lang === 'tr' ? '▼ Düşme Riski' : '▼ Relegation Risk',
+            cls: 'bg-rose-100 text-rose-800 dark:bg-rose-950/60 dark:text-rose-300',
+          }
+        : {
+            label: lang === 'tr' ? '● Güvenli Bölge' : '● Safe Zone',
+            cls: 'bg-slate-100 text-slate-700 dark:bg-white/10 dark:text-slate-200',
+          }
+    : null;
+
+  const scrollToMyRank = () => {
+    userRowRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  };
+
   return (
     <AnimatePresence>
       {open && (
@@ -171,8 +193,8 @@ export default function LeaderboardModal({
             transition={{ type: 'spring', stiffness: 320, damping: 26 }}
             className={
               isPage
-                ? 'relative flex h-full w-full flex-col overflow-hidden px-4 pb-[108px] pt-4 lg:pb-6'
-                : 'relative mb-[92px] flex max-h-[82dvh] w-full max-w-[430px] md:max-w-2xl flex-col rounded-3xl border-2 border-amber-200 bg-[#FFFDF9] p-5 shadow-2xl dark:border-violet-700/50 dark:bg-[#1A162B] sm:p-6'
+                ? 'relative flex h-full w-full flex-col overflow-hidden px-4 pb-[108px] pt-[max(1rem,env(safe-area-inset-top))] lg:pb-6 lg:pt-4'
+                : 'relative mb-[92px] mt-[env(safe-area-inset-top)] flex max-h-[82dvh] w-full max-w-[430px] md:max-w-2xl flex-col rounded-3xl border-2 border-amber-200 bg-[#FFFDF9] p-5 shadow-2xl dark:border-violet-700/50 dark:bg-[#1A162B] sm:p-6'
             }
           >
             {!isPage && (
@@ -213,8 +235,8 @@ export default function LeaderboardModal({
                       {isLiveBackend
                         ? t.lbLiveSupabase
                         : lang === 'tr'
-                          ? 'Yerel Oturum Sıralaması'
-                          : 'Local Session Ranking'}
+                          ? 'Haftalık Lig Sıralaması'
+                          : 'Weekly League Ranking'}
                     </span>
                     <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-extrabold text-ink/70 dark:bg-white/10 dark:text-violet-200">
                       <Users className="h-2.5 w-2.5" />
@@ -320,9 +342,20 @@ export default function LeaderboardModal({
                     ? `${t.nextLeagueLabel}: ${league.nextMinXp} XP (${Math.max(0, league.nextMinXp - userXp)} XP)`
                     : t.maxLeagueReached}
                 </span>
-                <span className="rounded-full bg-violet-50 px-2 py-0.5 font-extrabold text-violet-800 dark:bg-violet-900/50 dark:text-violet-200">
-                  #{myRank} · {tabMetricLabel}: {activeTabScore} XP
-                </span>
+                <div className="flex flex-wrap items-center gap-1.5">
+                  {myZoneBadge && (
+                    <span className={`rounded-full px-2 py-0.5 font-extrabold ${myZoneBadge.cls}`}>
+                      {myZoneBadge.label}
+                    </span>
+                  )}
+                  <button
+                    type="button"
+                    onClick={scrollToMyRank}
+                    className="rounded-full bg-violet-50 px-2 py-0.5 font-extrabold text-violet-800 transition hover:bg-violet-100 dark:bg-violet-900/50 dark:text-violet-200 dark:hover:bg-violet-800/70"
+                  >
+                    #{myRank} · {tabMetricLabel}: {activeTabScore} XP
+                  </button>
+                </div>
               </div>
             </div>
 
@@ -401,7 +434,13 @@ export default function LeaderboardModal({
                 </div>
               ) : (
                 <>
-                  {entries.map((row) => {
+                  {entries.map((row, idx) => {
+                    const prevRow = idx > 0 ? entries[idx - 1] : null;
+                    const showPromotionCutoff =
+                      prevRow?.zone === 'promotion' && row.zone !== 'promotion';
+                    const showRelegationCutoff =
+                      row.zone === 'relegation' && prevRow?.zone !== 'relegation';
+
                     const zoneClass = row.isUser
                       ? 'border-violet-500 bg-pastel-lavender/75 font-extrabold text-violet-950 dark:border-violet-400 dark:bg-violet-900/55 dark:text-white'
                       : row.zone === 'promotion'
@@ -411,47 +450,77 @@ export default function LeaderboardModal({
                           : 'border-slate-100 bg-white text-ink dark:border-white/10 dark:bg-white/5 dark:text-violet-100';
 
                     return (
-                      <div
-                        key={row.id}
-                        data-zone={row.zone}
-                        className={`flex items-center justify-between rounded-2xl border px-3 py-2 text-xs ${zoneClass}`}
-                      >
-                        <div className="flex min-w-0 items-center gap-2.5">
-                          <span className="w-6 text-center font-black text-ink/60 dark:text-violet-300">
-                            {row.rank === 1 ? (
-                              <Crown className="mx-auto h-4 w-4 text-amber-500" />
-                            ) : (
-                              `#${row.rank}`
-                            )}
-                          </span>
-                          <span className="text-base">{row.avatar}</span>
-                          <div className="flex min-w-0 items-center gap-1.5">
-                            <span className="font-bold whitespace-normal break-words">
-                              {row.name}
+                      <React.Fragment key={row.id}>
+                        {showPromotionCutoff && (
+                          <div className="my-1.5 flex items-center gap-2 px-1 text-[10px] font-black uppercase tracking-wider text-emerald-700 dark:text-emerald-400">
+                            <span className="h-px flex-1 bg-emerald-300/80 dark:bg-emerald-700/60" />
+                            <span>
+                              {lang === 'tr'
+                                ? '▲ İlk 10 · Üst Lige Yükselme Hattı'
+                                : '▲ Top 10 · Promotion Cutoff'}
                             </span>
-                            {row.isUser && (
-                              <span className="shrink-0 rounded-full bg-violet-600 px-1.5 py-0.5 text-[9px] font-black text-white">
-                                {t.youTag}
+                            <span className="h-px flex-1 bg-emerald-300/80 dark:bg-emerald-700/60" />
+                          </div>
+                        )}
+
+                        {showRelegationCutoff && (
+                          <div className="my-1.5 flex items-center gap-2 px-1 text-[10px] font-black uppercase tracking-wider text-rose-600 dark:text-rose-400">
+                            <span className="h-px flex-1 bg-rose-300/80 dark:bg-rose-700/60" />
+                            <span>
+                              {lang === 'tr'
+                                ? '▼ Son 5 · Küme Düşme Bölgesi'
+                                : '▼ Bottom 5 · Relegation Zone'}
+                            </span>
+                            <span className="h-px flex-1 bg-rose-300/80 dark:bg-rose-700/60" />
+                          </div>
+                        )}
+
+                        <div
+                          ref={row.isUser ? userRowRef : undefined}
+                          data-zone={row.zone}
+                          className={`flex items-center justify-between rounded-2xl border px-3 py-2 text-xs ${zoneClass}`}
+                        >
+                          <div className="flex min-w-0 items-center gap-2.5">
+                            <span className="w-6 text-center font-black text-ink/60 dark:text-violet-300">
+                              {row.rank === 1 ? (
+                                <Crown className="mx-auto h-4 w-4 text-amber-500" />
+                              ) : row.rank === 2 ? (
+                                '🥈'
+                              ) : row.rank === 3 ? (
+                                '🥉'
+                              ) : (
+                                `#${row.rank}`
+                              )}
+                            </span>
+                            <span className="text-base">{row.avatar}</span>
+                            <div className="flex min-w-0 items-center gap-1.5">
+                              <span className="font-bold whitespace-normal break-words">
+                                {row.name}
                               </span>
-                            )}
+                              {row.isUser && (
+                                <span className="shrink-0 rounded-full bg-violet-600 px-1.5 py-0.5 text-[9px] font-black text-white">
+                                  {t.youTag}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+
+                          <div className="flex shrink-0 items-center gap-2 font-bold">
+                            <span className="inline-flex items-center gap-1 text-amber-600 dark:text-amber-300">
+                              <img
+                                src={UI_ICON_PATHS.streakFire}
+                                alt=""
+                                aria-hidden="true"
+                                className="h-3.5 w-3.5 object-contain"
+                              />
+                              {row.streak}
+                            </span>
+                            <span className="rounded-full bg-white/80 px-2 py-0.5 text-ink dark:bg-black/30 dark:text-white">
+                              {row.score} XP
+                            </span>
                           </div>
                         </div>
-
-                        <div className="flex shrink-0 items-center gap-2 font-bold">
-                          <span className="inline-flex items-center gap-1 text-amber-600 dark:text-amber-300">
-                            <img
-                              src={UI_ICON_PATHS.streakFire}
-                              alt=""
-                              aria-hidden="true"
-                              className="h-3.5 w-3.5 object-contain"
-                            />
-                            {row.streak}
-                          </span>
-                          <span className="rounded-full bg-white/80 px-2 py-0.5 text-ink dark:bg-black/30 dark:text-white">
-                            {row.score} XP
-                          </span>
-                        </div>
-                      </div>
+                      </React.Fragment>
                     );
                   })}
 

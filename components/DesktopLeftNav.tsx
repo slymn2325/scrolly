@@ -1,7 +1,8 @@
 'use client';
 
-import React from 'react';
-import { type Language, translations } from '@/i18n/translations';
+import React, { useEffect, useState } from 'react';
+import { WifiOff } from 'lucide-react';
+import { type Language } from '@/i18n/translations';
 import { DOCK_ICON_MAP, type DockTabId } from '@/utils/icons8Assets';
 
 interface DesktopLeftNavProps {
@@ -13,6 +14,14 @@ interface DesktopLeftNavProps {
   streakDays: number;
   onSelectTab: (tab: DockTabId) => void;
 }
+
+const TAB_STATUS_COPY: Record<DockTabId, { tr: string; en: string }> = {
+  explore: { tr: 'Keşfet · Tam ekran Reels', en: 'For You · Full-screen Reels' },
+  quiz: { tr: 'Quiz · Hafıza & Sprint', en: 'Quiz · Memory & Sprint' },
+  leaderboard: { tr: 'Liderlik · Canlı Lig', en: 'Leaderboard · Live League' },
+  duel: { tr: 'Scrolla · 1v1 & Grup', en: 'Scrolla · 1v1 & Group' },
+  diploma: { tr: 'Profil · Kaşif Diploması', en: 'Profile · Explorer Diploma' },
+};
 
 const NAV_ITEMS: Array<{ id: DockTabId; tr: string; en: string; icon: keyof typeof DOCK_ICON_MAP; badge?: string }> = [
   { id: 'explore', tr: 'Keşfet', en: 'For You', icon: 'explore' },
@@ -31,7 +40,22 @@ export default function DesktopLeftNav({
   streakDays,
   onSelectTab,
 }: DesktopLeftNavProps) {
-  const t = translations[lang];
+  const [isOffline, setIsOffline] = useState(false);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    setIsOffline(navigator.onLine === false);
+    const onOnline = () => setIsOffline(false);
+    const onOffline = () => setIsOffline(true);
+    window.addEventListener('online', onOnline);
+    window.addEventListener('offline', onOffline);
+    return () => {
+      window.removeEventListener('online', onOnline);
+      window.removeEventListener('offline', onOffline);
+    };
+  }, []);
+
+  const statusText = TAB_STATUS_COPY[activeTab]?.[lang] ?? TAB_STATUS_COPY.explore[lang];
 
   return (
     <aside
@@ -105,6 +129,19 @@ export default function DesktopLeftNav({
       </nav>
 
       <div className={`mt-auto space-y-2 border-t px-2 pt-4 ${darkMode ? 'border-white/10' : 'border-[#1E1B2E]/10'}`}>
+        {isOffline && (
+          <div
+            data-testid="desktop-offline-badge"
+            className={`flex items-center gap-1.5 rounded-xl border px-3 py-1.5 text-[11px] font-extrabold ${
+              darkMode
+                ? 'border-emerald-400/35 bg-emerald-500/15 text-emerald-200'
+                : 'border-emerald-300 bg-emerald-50 text-emerald-800'
+            }`}
+          >
+            <WifiOff className="h-3.5 w-3.5 shrink-0" />
+            <span>{lang === 'tr' ? 'Çevrimdışı Mod · Hazır' : 'Offline Mode · Ready'}</span>
+          </div>
+        )}
         <div
           className={`rounded-xl border px-3 py-2.5 ${
             darkMode ? 'border-white/10 bg-white/5' : 'border-[#1E1B2E]/10 bg-white'
@@ -121,8 +158,11 @@ export default function DesktopLeftNav({
             {streakDays}🔥 · {xp} XP
           </p>
         </div>
-        <p className={`px-1 text-[10px] font-semibold leading-snug ${darkMode ? 'text-white/40' : 'text-[#1E1B2E]/45'}`}>
-          {t.dockExplore} · {lang === 'tr' ? 'Tam ekran Reels' : 'Full-screen Reels'}
+        <p
+          data-testid="desktop-nav-status"
+          className={`px-1 text-[10px] font-semibold leading-snug ${darkMode ? 'text-white/40' : 'text-[#1E1B2E]/45'}`}
+        >
+          {statusText}
         </p>
       </div>
     </aside>

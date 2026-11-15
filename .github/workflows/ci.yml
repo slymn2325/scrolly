@@ -27,7 +27,8 @@ jobs:
           node --check scripts/generateFacts.mjs
           node --check scripts/scientificFactReservoir.mjs
           node --check scripts/seedVocabularyFacts.mjs
-          node --input-type=module -e "import fs from 'node:fs'; for (const f of ['space.json','nature.json','human_body.json','history.json','science.json','records.json','statistics.json','facts.json']) { const d = JSON.parse(fs.readFileSync('public/data/facts/' + f, 'utf8')); if (!Array.isArray(d) || d.length === 0) throw new Error(f); }"
+          node scripts/generateFacts.mjs --dry-run
+          node --input-type=module -e "import fs from 'node:fs'; for (const f of ['space.json','nature.json','human_body.json','history.json','science.json','records.json','statistics.json','facts.json']) { const d = JSON.parse(fs.readFileSync('public/data/facts/' + f, 'utf8')); if (!Array.isArray(d) || d.length === 0) throw new Error(f); } for (const g of ['data/factsGenerated.json','data/vocabularyGenerated.json']) { const d = JSON.parse(fs.readFileSync(g, 'utf8')); if (!Array.isArray(d)) throw new Error(g); }"
 
       - name: TypeScript type check
         run: npx tsc --noEmit

@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
+import { X } from 'lucide-react';
 import { type Language, translations } from '@/i18n/translations';
 import { STATE_ILLUSTRATION_PATHS } from '@/utils/icons8Assets';
 
@@ -22,15 +23,22 @@ const PREFETCH_FACT_SHARDS = [
 
 export default function OfflineManager({ lang }: OfflineManagerProps) {
   const [isOffline, setIsOffline] = useState(false);
+  const [dismissed, setDismissed] = useState(false);
   const t = translations[lang];
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
 
-    setIsOffline(!navigator.onLine);
+    setIsOffline(navigator.onLine === false);
 
-    const handleOnline = () => setIsOffline(false);
-    const handleOffline = () => setIsOffline(true);
+    const handleOnline = () => {
+      setIsOffline(false);
+      setDismissed(false);
+    };
+    const handleOffline = () => {
+      setDismissed(false);
+      setIsOffline(true);
+    };
 
     window.addEventListener('online', handleOnline);
     window.addEventListener('offline', handleOffline);
@@ -103,23 +111,32 @@ export default function OfflineManager({ lang }: OfflineManagerProps) {
 
   return (
     <AnimatePresence>
-      {isOffline && (
-        <div className="pointer-events-none fixed inset-x-0 top-[calc(6.35rem+env(safe-area-inset-top))] z-40 mx-auto flex w-full max-w-[430px] justify-center px-3 md:top-[calc(2dvh+6.35rem+env(safe-area-inset-top))]">
+      {isOffline && !dismissed && (
+        <div className="pointer-events-none fixed inset-x-0 top-[calc(5.2rem+env(safe-area-inset-top))] z-[19] mx-auto flex w-full max-w-[360px] justify-center px-3 lg:hidden">
           <motion.div
-            initial={{ opacity: 0, y: -16 }}
+            initial={{ opacity: 0, y: -12 }}
             animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -16 }}
+            exit={{ opacity: 0, y: -12 }}
             data-testid="offline-mode-banner"
           >
-            <div className="inline-flex items-center gap-2 whitespace-nowrap rounded-full border border-emerald-400/50 bg-emerald-950/90 px-3.5 py-1.5 text-[11px] font-extrabold text-emerald-100 shadow-lg backdrop-blur-xl">
+            <div className="pointer-events-auto inline-flex items-center gap-1.5 whitespace-nowrap rounded-full border border-emerald-400/50 bg-emerald-950/90 py-1 pl-2.5 pr-1.5 text-[10.5px] font-extrabold text-emerald-100 shadow-lg backdrop-blur-xl">
               <img
                 src={STATE_ILLUSTRATION_PATHS.offlineState}
                 alt=""
                 aria-hidden="true"
                 loading="lazy"
-                className="h-5 w-5 object-contain"
+                className="h-4 w-4 shrink-0 object-contain"
               />
               <span>{t.offlineReadyBanner}</span>
+              <button
+                type="button"
+                onClick={() => setDismissed(true)}
+                aria-label={lang === 'tr' ? 'Kapat' : 'Dismiss'}
+                data-testid="offline-banner-close-btn"
+                className="ml-0.5 flex h-5 w-5 items-center justify-center rounded-full bg-white/10 text-emerald-100 transition hover:bg-white/20"
+              >
+                <X className="h-3 w-3" />
+              </button>
             </div>
           </motion.div>
         </div>

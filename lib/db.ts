@@ -1,9 +1,11 @@
+import fs from 'node:fs';
+import path from 'node:path';
 import { cache } from 'react';
 import { Pool } from 'pg';
 import type { Language } from '@/i18n/translations';
 import { formatValueWithUnit } from '@/lib/formatUnit';
 import type { CategoryId, FactCard, FactQuizContent, GuessChallenge } from '@/types/fact';
-import { getFactPrimarySlug } from '@/utils/factsData';
+import { enrichFactWithGuessChallenge, getFactPrimarySlug } from '@/utils/factsData';
 import { getAllFacts, LEGACY_SLUG_TO_FACT_ID } from '@/utils/factsServerData';
 
 export interface DbFactRow {
@@ -147,8 +149,82 @@ export function getPool(): Pool {
   return global.__scrollyPgPool;
 }
 
+const FACT_SHARD_FILES = [
+  'space.json',
+  'nature.json',
+  'human_body.json',
+  'history.json',
+  'science.json',
+  'records.json',
+  'statistics.json',
+] as const;
+
+function readFactJsonArraySafe(filePath: string): FactCard[] {
+  try {
+    if (!fs.existsSync(filePath)) return [];
+    const raw = fs.readFileSync(filePath, 'utf8').trim();
+    if (!raw) return [];
+    const parsed = JSON.parse(raw) as unknown;
+    if (!Array.isArray(parsed)) return [];
+    return parsed.filter(
+      (item): item is FactCard =>
+        Boolean(item) &&
+        typeof item === 'object' &&
+        typeof (item as FactCard).id === 'string' &&
+        Boolean((item as FactCard).tr) &&
+        Boolean((item as FactCard).en)
+    );
+  } catch (err) {
+    console.warn(`[lib/db] Failed to read seed facts from ${filePath}:`, err);
+    return [];
+  }
+}
+
+export function loadSeedFactsFromDisk(): FactCard[] {
+  const cwd = process.cwd();
+  const shardCards: FactCard[] = [];
+
+  for (const shardFile of FACT_SHARD_FILES) {
+    const publicPath = path.join(cwd, 'public', 'data', 'facts', shardFile);
+    const items = readFactJsonArraySafe(publicPath);
+    if (items.length > 0) {
+      shardCards.push(...items);
+    }
+  }
+
+  const baseFacts = shardCards.length > 0 ? shardCards : getAllFacts();
+  const generatedPath = path.join(cwd, 'data', 'factsGenerated.json');
+  const generatedFacts = readFactJsonArraySafe(generatedPath);
+
+  const merged: FactCard[] = [];
+  const seenKeys = new Set<string>();
+
+  for (const rawCard of [...baseFacts, ...generatedFacts]) {
+    const enriched = enrichFactWithGuessChallenge(rawCard);
+    const primarySlug = getFactPrimarySlug(enriched);
+    const keys = [
+      enriched.id,
+      primarySlug,
+      enriched.slug,
+      enriched.tr?.slug,
+      enriched.en?.slug,
+    ].filter((k): k is string => typeof k === 'string' && k.trim().length > 0);
+
+    if (keys.some((k) => seenKeys.has(k))) continue;
+    keys.forEach((k) => seenKeys.add(k));
+
+    merged.push({
+      ...enriched,
+      slug: primarySlug,
+      sketchType: enriched.sketchType || enriched.id,
+    });
+  }
+
+  return merged;
+}
+
 async function seedInitialFactsIfEmpty(pool: Pool): Promise<void> {
-  const initialFacts = getAllFacts();
+  const initialFacts = loadSeedFactsFromDisk();
   const initialSlugs = initialFacts.map((fact) => getFactPrimarySlug(fact));
   const checkRes = await pool.query<{
     total: number;
@@ -195,6 +271,10 @@ async function seedInitialFactsIfEmpty(pool: Pool): Promise<void> {
         : guessEn?.type === 'binary'
           ? 1
           : 50;
+    const createdIso =
+      typeof fact.createdAt === 'string' && !Number.isNaN(Date.parse(fact.createdAt))
+        ? new Date(fact.createdAt).toISOString()
+        : null;
 
     await pool.query(
       `INSERT INTO facts (
@@ -208,7 +288,7 @@ async function seedInitialFactsIfEmpty(pool: Pool): Promise<void> {
         $7, $8, $9, $10,
         $11, $12, $13, $14, $15,
         $16, $17, $18::jsonb, $19::jsonb,
-        $20, $21, 0, NOW() - ($22 * INTERVAL '1 second')
+        $20, $21, 0, COALESCE($23::timestamptz, NOW() - ($22 * INTERVAL '1 second'))
       )
       ON CONFLICT (slug) DO UPDATE SET
         category = EXCLUDED.category,
@@ -224,8 +304,8 @@ async function seedInitialFactsIfEmpty(pool: Pool): Promise<void> {
         fact.en.factText,
         fact.tr.deepDiveDetail,
         fact.en.deepDiveDetail,
-        guessTr?.prompt || fact.tr.quiz.question,
-        guessEn?.prompt || fact.en.quiz.question,
+        guessTr?.prompt || fact.tr.quiz?.question || fact.tr.title,
+        guessEn?.prompt || fact.en.quiz?.question || fact.en.title,
         guessTr?.unit || '',
         guessEn?.unit || '',
         minVal,
@@ -233,11 +313,12 @@ async function seedInitialFactsIfEmpty(pool: Pool): Promise<void> {
         answerVal,
         fact.id,
         fact.visualQuery || null,
-        JSON.stringify(fact.tr.quiz),
-        JSON.stringify(fact.en.quiz),
-        fact.en.sourceName || fact.sourceName || fact.en.sourceHint,
+        fact.tr.quiz ? JSON.stringify(fact.tr.quiz) : null,
+        fact.en.quiz ? JSON.stringify(fact.en.quiz) : null,
+        fact.en.sourceName || fact.sourceName || fact.en.sourceHint || '',
         fact.en.sourceUrl || fact.sourceUrl || '',
         idx + 1,
+        createdIso,
       ]
     );
   }
@@ -809,8 +890,8 @@ function buildSynthesizedQuiz(input: SynthesizedQuizInput): FactQuizContent {
   };
 }
 
-export function mapDbRowToFactCard(row: DbFactRow): FactCard {
-  const staticFacts = getAllFacts();
+export function mapDbRowToFactCard(row: DbFactRow, preloadedSeedFacts?: FactCard[]): FactCard {
+  const staticFacts = preloadedSeedFacts ?? loadSeedFactsFromDisk();
   const staticMatch = staticFacts.find(
     (item) =>
       item.en.slug === row.slug ||
@@ -995,9 +1076,9 @@ function parseTimestamp(value?: string | Date | null, fallback = new Date()): Da
   return fallback;
 }
 
-function buildStaticServerEntries(): ServerFactEntry[] {
+function buildStaticServerEntries(seedFacts = loadSeedFactsFromDisk()): ServerFactEntry[] {
   const defaultDate = new Date('2026-01-01T00:00:00.000Z');
-  return getAllFacts().map((fact) => ({
+  return seedFacts.map((fact) => ({
     fact: {
       ...fact,
       slug: getFactPrimarySlug(fact),
@@ -1009,7 +1090,8 @@ function buildStaticServerEntries(): ServerFactEntry[] {
 
 export const fetchFactsWithSourceServer = cache(
   async (): Promise<ServerFactsFetchResult> => {
-    const staticEntries = buildStaticServerEntries();
+    const seedFacts = loadSeedFactsFromDisk();
+    const staticEntries = buildStaticServerEntries(seedFacts);
 
     if (!hasDatabaseUrl()) {
       return { source: 'local', entries: staticEntries };
@@ -1030,7 +1112,7 @@ export const fetchFactsWithSourceServer = cache(
       const combined: ServerFactEntry[] = [];
 
       for (const row of result.rows) {
-        const card = mapDbRowToFactCard(row);
+        const card = mapDbRowToFactCard(row, seedFacts);
         const updatedAt = parseTimestamp(row.created_at ?? card.createdAt);
         const keys = [
           row.slug,

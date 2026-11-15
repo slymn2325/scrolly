@@ -35,6 +35,9 @@ export interface CategoryAccuracyStat {
   totalPct: number;
 }
 
+export type WeightCategoryId = CategoryId | 'vocabulary';
+export type CategoryWeightsMap = Record<CategoryId, number> & { vocabulary?: number };
+
 export interface UserMemoryState {
   playerId: string;
   nickname: string;
@@ -51,7 +54,7 @@ export interface UserMemoryState {
   cardsSinceLastQuiz: number;
   totalSwipes: number;
   favoriteIds: string[];
-  categoryWeights: Record<CategoryId, number>;
+  categoryWeights: CategoryWeightsMap;
   categoryAccuracy?: Record<CategoryId, CategoryAccuracyStat>;
   streakDays: number;
   lastVisitDate: string;
@@ -137,7 +140,7 @@ export function getLeagueInfo(xp: number, lang: Language): LeagueInfo {
   };
 }
 
-export function createEmptyWeights(): Record<CategoryId, number> {
+export function createEmptyWeights(): CategoryWeightsMap {
   return {
     space: 0,
     nature: 0,
@@ -146,6 +149,7 @@ export function createEmptyWeights(): Record<CategoryId, number> {
     science: 0,
     records: 0,
     statistics: 0,
+    vocabulary: 0,
   };
 }
 
@@ -285,15 +289,16 @@ export function getDefaultUserState(lang: Language = 'tr'): UserMemoryState {
   };
 }
 
-function normalizeWeights(rawWeights?: Record<string, number>): Record<CategoryId, number> {
+function normalizeWeights(rawWeights?: Record<string, number>): CategoryWeightsMap {
   const base = createEmptyWeights();
   if (!rawWeights) return base;
-  (Object.keys(base) as CategoryId[]).forEach((k) => {
-    if (typeof rawWeights[k] === 'number') {
-      base[k] = rawWeights[k];
+  (Object.keys(base) as WeightCategoryId[]).forEach((k) => {
+    const val = rawWeights[k];
+    if (typeof val === 'number' && Number.isFinite(val) && val >= 0) {
+      base[k] = val;
     }
   });
-  if (typeof rawWeights.weird_records === 'number') {
+  if (typeof rawWeights.weird_records === 'number' && Number.isFinite(rawWeights.weird_records)) {
     base.records += rawWeights.weird_records;
   }
   return base;
@@ -487,7 +492,7 @@ export function recordCategoryGuessAccuracy(
 export function recordCardRead(
   state: UserMemoryState,
   factId: string,
-  category: CategoryId
+  category: WeightCategoryId
 ): UserMemoryState {
   const isNew = !state.seenIds.includes(factId);
   const seenIds = isNew ? [...state.seenIds, factId] : state.seenIds;
@@ -526,7 +531,7 @@ export function recordCardRead(
 
 export function boostCategoryWeight(
   state: UserMemoryState,
-  category: CategoryId,
+  category: WeightCategoryId,
   amount = 1
 ): UserMemoryState {
   const nextState: UserMemoryState = {
@@ -596,8 +601,9 @@ export function getTopCategory(weights: Record<CategoryId, number>): CategoryId 
   let topCat: CategoryId | null = null;
   let maxScore = 0;
 
-  (Object.keys(weights) as CategoryId[]).forEach((cat) => {
-    if (weights[cat] > maxScore) {
+  (Object.keys(weights) as Array<keyof typeof weights>).forEach((cat) => {
+    if (cat === 'vocabulary' as string) return;
+    if ((weights[cat] ?? 0) > maxScore) {
       maxScore = weights[cat];
       topCat = cat;
     }
@@ -738,7 +744,7 @@ export function mergeRemoteProfileIntoMemory(
 
   const remoteWeights = normalizeWeights(remote.categoryWeights);
   const mergedWeights = createEmptyWeights();
-  (Object.keys(mergedWeights) as CategoryId[]).forEach((k) => {
+  (Object.keys(mergedWeights) as WeightCategoryId[]).forEach((k) => {
     mergedWeights[k] = Math.max(local.categoryWeights[k] ?? 0, remoteWeights[k] ?? 0);
   });
 

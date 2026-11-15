@@ -73,7 +73,7 @@ export default function TikTokFactSlide({
   isFavorite,
   isFirstCard = false,
   isActive = true,
-  cookieBannerVisible: _cookieBannerVisible = false,
+  cookieBannerVisible = false,
   onFlip,
   onDoubleTapLike,
   onDwellRead,
@@ -674,13 +674,15 @@ export default function TikTokFactSlide({
         {/* Front content — mandatory safe paddings; full headline & short fact readable immediately */}
         <div
           data-testid="fact-card-front"
-          className={`relative z-10 flex h-full w-full flex-col justify-end overflow-hidden px-4 pt-[96px] pb-[94px] lg:pt-[88px] lg:pb-7 ${
-            isFlipped ? 'invisible pointer-events-none' : ''
-          }`}
+          className={`relative z-10 flex h-full w-full flex-col justify-end overflow-hidden px-4 pt-[96px] lg:pt-[88px] ${
+            cookieBannerVisible ? 'pb-[210px] lg:pb-7' : 'pb-[94px] lg:pb-7'
+          } ${isFlipped ? 'invisible pointer-events-none' : ''}`}
         >
           <div className="pointer-events-none relative z-10 flex max-h-full w-full flex-col gap-2 overflow-y-auto no-scrollbar pr-16 lg:pr-2">
             <div className="inline-flex w-fit items-center gap-1.5 rounded-full border border-white/20 bg-white/10 px-2.5 py-1 text-[10px] font-extrabold uppercase tracking-wide text-white backdrop-blur-md">
-              <img src={catMeta.iconPath} alt="" aria-hidden="true" className="h-3.5 w-3.5 object-contain" />
+              <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-white/95 p-0.5">
+                <img src={catMeta.iconPath} alt="" aria-hidden="true" className="h-3 w-3 object-contain" />
+              </span>
               <span>{catMeta.label[lang]}</span>
             </div>
 
@@ -745,7 +747,9 @@ export default function TikTokFactSlide({
             data-testid="reels-action-column"
             onClick={(e) => e.stopPropagation()}
             onDoubleClick={(e) => e.stopPropagation()}
-            className="absolute bottom-[104px] right-2 z-20 flex flex-col items-center gap-3 lg:hidden"
+            className={`absolute ${
+              cookieBannerVisible ? 'bottom-[218px]' : 'bottom-[104px]'
+            } right-2 z-20 flex flex-col items-center gap-3 lg:hidden`}
           >
             <motion.button
               type="button"

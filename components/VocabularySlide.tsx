@@ -80,7 +80,7 @@ export default function VocabularySlide({
   card,
   lang,
   isActive = true,
-  cookieBannerVisible: _cookieBannerVisible = false,
+  cookieBannerVisible = false,
   onButtonPop,
   onEarnXp,
   onSuccessSound,
@@ -148,7 +148,23 @@ export default function VocabularySlide({
       data-active={isActive ? 'true' : 'false'}
       className="reels-slide relative flex h-full w-full shrink-0 items-center justify-center overflow-hidden select-none bg-[#09090B]"
     >
-      <div className="relative z-10 mx-auto flex h-full w-full flex-col overflow-hidden">
+      <div
+        style={{
+          background: 'radial-gradient(circle at 50% 30%, rgba(129, 140, 248, 0.28) 0%, #0D0D1A 60%, #09090B 100%)',
+        }}
+        className="relative z-10 mx-auto flex h-full w-full flex-col overflow-hidden"
+      >
+        {/* Instant deterministic SVG backdrop on first paint before canvas animates */}
+        <svg
+          aria-hidden="true"
+          viewBox="0 0 360 640"
+          preserveAspectRatio="none"
+          className="pointer-events-none absolute inset-0 z-0 h-full w-full opacity-30"
+        >
+          <circle cx="180" cy="175" r="118" fill="none" stroke="#818CF8" strokeWidth="1.2" strokeDasharray="6 6" />
+          <circle cx="180" cy="175" r="76" fill="none" stroke="#A5B4FC" strokeWidth="1" />
+          <path d="M 24 235 Q 180 155 336 235" fill="none" stroke="#6366F1" strokeWidth="1.5" />
+        </svg>
         <FullBleedReelsCanvas
           category="vocabulary"
           accentColor="#818CF8"
@@ -160,7 +176,11 @@ export default function VocabularySlide({
         />
         <div className="pointer-events-none absolute inset-x-0 bottom-0 z-[5] h-[58%] bg-gradient-to-t from-[#09090B] via-[#09090B]/75 to-transparent" />
 
-        <div className="relative z-10 flex h-full w-full flex-col justify-end overflow-y-auto no-scrollbar px-4 pt-[108px] pb-[96px]">
+        <div
+          className={`relative z-10 flex h-full w-full flex-col justify-end overflow-y-auto no-scrollbar px-4 pt-[108px] ${
+            cookieBannerVisible ? 'pb-[212px] lg:pb-8' : 'pb-[96px] lg:pb-8'
+          }`}
+        >
           <div className="flex flex-col gap-3 pr-16">
             <span
               data-testid="vocab-badge"
@@ -263,7 +283,11 @@ export default function VocabularySlide({
           </div>
         </div>
 
-        <div className="absolute bottom-[104px] right-3 z-20 flex flex-col items-center gap-3">
+        <div
+          className={`absolute right-3 z-20 flex flex-col items-center gap-3 ${
+            cookieBannerVisible ? 'bottom-[218px] lg:bottom-8' : 'bottom-[104px] lg:bottom-8'
+          }`}
+        >
           <motion.button
             type="button"
             whileTap={{ scale: 0.9 }}
@@ -282,19 +306,6 @@ export default function VocabularySlide({
             <span className="max-w-[58px] text-center text-[10px] font-extrabold leading-tight text-white">
               {saved ? copy.savedWordBtn : copy.saveWordBtn}
             </span>
-          </motion.button>
-
-          <motion.button
-            type="button"
-            whileTap={{ scale: 0.9 }}
-            onClick={() => handleSpeak(card.word, 'en-US', 0.9)}
-            aria-label={copy.listenEn}
-            className="flex flex-col items-center gap-0.5"
-          >
-            <span className="flex h-11 w-11 items-center justify-center rounded-full border border-white/20 bg-white/10 text-indigo-200 backdrop-blur-md">
-              <Volume2 className="h-5 w-5" />
-            </span>
-            <span className="text-[10.5px] font-extrabold text-white">Dinle</span>
           </motion.button>
         </div>
       </div>

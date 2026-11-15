@@ -1,7 +1,9 @@
 import { NextResponse } from 'next/server';
+import { getVocabularyFacts } from '@/data/vocabularyFacts';
 import type { CategoryFilter } from '@/i18n/translations';
 import { getAllFactsServer } from '@/lib/db';
 import { createDuelRoomDb } from '@/lib/dbActions';
+import { normalizeDuelCategory } from '@/lib/duelStore';
 import { checkRateLimit, extractClientIp } from '@/lib/rateLimit';
 
 export const dynamic = 'force-dynamic';
@@ -9,28 +11,6 @@ export const dynamic = 'force-dynamic';
 const NO_STORE_HEADERS = {
   'Cache-Control': 'no-store, max-age=0',
 };
-
-const VALID_DUEL_CATEGORIES = new Set<CategoryFilter>([
-  'all',
-  'vocabulary',
-  'space',
-  'nature',
-  'human_body',
-  'history',
-  'science',
-  'records',
-  'statistics',
-]);
-
-function normalizeDuelCategory(raw: unknown): CategoryFilter {
-  const clean = typeof raw === 'string' ? raw.trim().toLowerCase() : 'all';
-  if (clean === 'weird_records') return 'records';
-  if (clean === 'human-body') return 'human_body';
-  if (clean === 'istatistik') return 'statistics';
-  return VALID_DUEL_CATEGORIES.has(clean as CategoryFilter)
-    ? (clean as CategoryFilter)
-    : 'all';
-}
 
 function fisherYatesShuffle<T>(items: T[]): T[] {
   const arr = [...items];
@@ -51,9 +31,17 @@ function pickDuelCardIds(
 ): string[] {
   if (Array.isArray(explicitIds) && explicitIds.length >= 2) {
     return explicitIds
-      .map((id) => String(id).trim())
+      .map((id) => String(id).trim().slice(0, 140))
       .filter(Boolean)
       .slice(0, count);
+  }
+  if (category === 'vocabulary') {
+    const vocabPool = getVocabularyFacts();
+    if (vocabPool.length > 0) {
+      return fisherYatesShuffle(vocabPool)
+        .slice(0, count)
+        .map((item) => item.id);
+    }
   }
   const pool =
     category === 'all' || category === 'vocabulary'
@@ -92,7 +80,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const facts = await getAllFactsServer();
+    const facts = category === 'vocabulary' ? [] : await getAllFactsServer();
     const cardIds = pickDuelCardIds(facts, category, questionCount, explicitCardIds);
 
     const { room, serverNow } = await createDuelRoomDb({

@@ -1,5 +1,7 @@
-import type { FactCard } from '@/types/fact';
-import type { CategoryFilter } from '@/i18n/translations';
+import { VOCABULARY_FACTS } from '@/data/vocabularyFacts';
+import { getCategoryMeta, type CategoryFilter, type Language } from '@/i18n/translations';
+import type { CategoryId, FactCard } from '@/types/fact';
+import type { VocabularyCard } from '@/types/vocabulary';
 import {
   normalizeRoomCode,
   type ScrollaPlayer,
@@ -69,11 +71,77 @@ export function createPlayerId(): string {
   return `p${Date.now().toString(36)}${Math.floor(Math.random() * 1e6).toString(36)}`;
 }
 
+/** Converts a VocabularyCard into a playable FactCard quiz item for Scrolla/Quiz modes. */
+export function vocabCardToFactCard(
+  vocab: VocabularyCard,
+  pool: VocabularyCard[] = VOCABULARY_FACTS
+): FactCard {
+  const distractors = pool
+    .filter((v) => v.id !== vocab.id && v.definitionEn !== vocab.definitionEn)
+    .slice(0, 2)
+    .map((v) => v.definitionEn);
+  while (distractors.length < 2) {
+    distractors.push(
+      distractors.length === 0
+        ? 'Moving rapidly without clear direction.'
+        : 'Relating purely to decorative shapes.'
+    );
+  }
+  const enOptions: [string, string, string] = [
+    vocab.definitionEn,
+    distractors[0],
+    distractors[1],
+  ];
+
+  return {
+    id: vocab.id,
+    slug: vocab.id,
+    category: 'science',
+    accentColor: '#6366F1',
+    iconName: 'globe',
+    emoji: '🌐',
+    sketchType: 'vocabulary',
+    tr: {
+      slug: vocab.id,
+      title: `${vocab.word} (${vocab.partOfSpeech})`,
+      teaserTitle: `🌐 ${vocab.word}`,
+      factText: `"${vocab.word}" ${vocab.phonetic}: ${vocab.meaningTr}`,
+      deepDiveDetail: `${vocab.exampleEn} — ${vocab.exampleTr}`,
+      sourceHint: 'Scrolly Dil Laboratuvarı',
+      tag: 'Dil Öğrenme',
+      quiz: {
+        question: `"${vocab.word}" (${vocab.partOfSpeech}) kelimesinin Türkçesi nedir?`,
+        options: vocab.quizOptions,
+        correctIndex: vocab.correctIndex,
+        explanation: `"${vocab.word}" = "${vocab.meaningTr}". Örnek: ${vocab.exampleTr}`,
+      },
+    },
+    en: {
+      slug: vocab.id,
+      title: `${vocab.word} (${vocab.phonetic})`,
+      teaserTitle: `🌐 ${vocab.word}`,
+      factText: `"${vocab.word}": ${vocab.definitionEn}`,
+      deepDiveDetail: `Example: "${vocab.exampleEn}"`,
+      sourceHint: 'Scrolly Language Lab',
+      tag: 'Language Learning',
+      quiz: {
+        question: `What does "${vocab.word}" mean?`,
+        options: enOptions,
+        correctIndex: 0,
+        explanation: `"${vocab.word}" means: ${vocab.definitionEn} ("${vocab.exampleEn}").`,
+      },
+    },
+  };
+}
+
 export function filterFactsForDuel(
   allFacts: FactCard[],
   category: CategoryFilter
 ): FactCard[] {
-  if (category === 'all' || category === 'vocabulary') return allFacts;
+  if (category === 'vocabulary') {
+    return VOCABULARY_FACTS.map((v) => vocabCardToFactCard(v, VOCABULARY_FACTS));
+  }
+  if (category === 'all') return allFacts;
   return allFacts.filter((f) => f.category === category);
 }
 
@@ -91,10 +159,72 @@ export function pickDuelQuestionIds(
 
 export function resolveFactsByIds(allFacts: FactCard[], ids: string[]): FactCard[] {
   return ids
-    .map((id) =>
-      allFacts.find((f) => f.id === id || f.slug === id || f.en.slug === id || f.tr.slug === id)
-    )
+    .map((id) => {
+      const direct = allFacts.find(
+        (f) => f.id === id || f.slug === id || f.en.slug === id || f.tr.slug === id
+      );
+      if (direct) return direct;
+      const vocab = VOCABULARY_FACTS.find(
+        (v) => v.id === id || v.word.toLowerCase() === id.toLowerCase()
+      );
+      return vocab ? vocabCardToFactCard(vocab, VOCABULARY_FACTS) : undefined;
+    })
     .filter((f): f is FactCard => Boolean(f));
+}
+
+function inferCategoryFromCardId(cardId: string): CategoryId | null {
+  const lower = cardId.toLowerCase();
+  if (lower.startsWith('space')) return 'space';
+  if (lower.startsWith('nature')) return 'nature';
+  if (lower.startsWith('human') || lower.startsWith('body')) return 'human_body';
+  if (lower.startsWith('history')) return 'history';
+  if (lower.startsWith('science')) return 'science';
+  if (lower.startsWith('weird') || lower.startsWith('record')) return 'records';
+  if (lower.startsWith('stat')) return 'statistics';
+  return null;
+}
+
+function truncatePackTitle(raw: string, maxLen = 32): string {
+  const clean = raw.replace(/\s+/g, ' ').trim();
+  if (clean.length <= maxLen) return clean;
+  const sliced = clean.slice(0, maxLen - 1).trim();
+  const lastSpace = sliced.lastIndexOf(' ');
+  return `${lastSpace > 14 ? sliced.slice(0, lastSpace) : sliced}…`;
+}
+
+/**
+ * Resolves human-readable pack preview labels for Scrolla Lobby ("Ortak paket")
+ * and never exposes raw slug/id strings to the user.
+ */
+export function resolveDuelPackItems(
+  allFacts: FactCard[],
+  cardIds: string[],
+  lang: Language
+): string[] {
+  return cardIds.map((id, idx) => {
+    const vocab = VOCABULARY_FACTS.find(
+      (v) => v.id === id || v.word.toLowerCase() === id.toLowerCase()
+    );
+    if (vocab) {
+      return `🌐 ${vocab.word}`;
+    }
+
+    const fact = allFacts.find(
+      (f) => f.id === id || f.slug === id || f.en.slug === id || f.tr.slug === id
+    );
+    if (fact) {
+      const title = (fact[lang]?.teaserTitle || fact[lang]?.title || '').trim();
+      if (title) return truncatePackTitle(title);
+      return `${getCategoryMeta(fact.category).label[lang]} #${idx + 1}`;
+    }
+
+    const inferred = inferCategoryFromCardId(id);
+    if (inferred) {
+      return `${getCategoryMeta(inferred).label[lang]} #${idx + 1}`;
+    }
+
+    return lang === 'tr' ? `Kart #${idx + 1}` : `Card #${idx + 1}`;
+  });
 }
 
 export interface ScrollaApiResult {

@@ -1,5 +1,30 @@
 import type { CategoryFilter } from '@/i18n/translations';
 
+export const DUEL_VALID_CATEGORIES: ReadonlySet<CategoryFilter> = new Set<CategoryFilter>([
+  'all',
+  'vocabulary',
+  'space',
+  'nature',
+  'human_body',
+  'history',
+  'science',
+  'records',
+  'statistics',
+]);
+
+export function normalizeDuelCategory(raw: unknown): CategoryFilter {
+  const clean = typeof raw === 'string' ? raw.trim().toLowerCase() : 'all';
+  if (clean === 'weird_records') return 'records';
+  if (clean === 'human-body') return 'human_body';
+  if (clean === 'istatistik') return 'statistics';
+  if (clean === 'vocab' || clean === 'dil_ogrenme' || clean === 'dil-ogrenme' || clean === 'english') {
+    return 'vocabulary';
+  }
+  return DUEL_VALID_CATEGORIES.has(clean as CategoryFilter)
+    ? (clean as CategoryFilter)
+    : 'all';
+}
+
 export interface ScrollaPlayer {
   id: string;
   name: string;

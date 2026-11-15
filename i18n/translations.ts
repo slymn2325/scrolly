@@ -141,6 +141,7 @@ export const VOCABULARY_META: CategoryMeta = {
   emoji: '🌐',
   iconPath: '/assets/icons8/icons/lang-globe.png',
   accentText: 'text-indigo-700 dark:text-indigo-300',
+  accentBg: 'bg-indigo-500',
   bgClass: 'bg-indigo-50 dark:bg-indigo-950/60',
   borderClass: 'border-indigo-300 dark:border-indigo-500/40',
   ringClass: 'ring-indigo-400/50',

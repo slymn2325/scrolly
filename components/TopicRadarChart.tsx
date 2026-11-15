@@ -56,9 +56,9 @@ const COMMUNITY_TARGET_ACCURACY: Record<CategoryId, number> = {
 };
 
 const SVG_WIDTH = 380;
-const SVG_HEIGHT = 276;
+const SVG_HEIGHT = 312;
 const CENTER_X = 190;
-const CENTER_Y = 138;
+const CENTER_Y = 144;
 const RADAR_RADIUS = 68;
 const GRID_LEVELS = [20, 40, 60, 80, 100] as const;
 
@@ -70,31 +70,31 @@ interface LabelPlacement {
 const AXIS_LABEL_PLACEMENTS: Record<CategoryId, LabelPlacement> = {
   space: {
     className: '-translate-x-1/2 -translate-y-1/2 justify-center',
-    style: { left: '50%', top: '9%' },
+    style: { left: '50%', top: '8.5%' },
   },
   nature: {
     className: '-translate-y-1/2 justify-start',
-    style: { left: '68%', top: '28%' },
+    style: { left: '68%', top: '27.5%' },
   },
   science: {
     className: '-translate-y-1/2 justify-start',
-    style: { left: '70%', top: '57%' },
+    style: { left: '70%', top: '55.5%' },
   },
   statistics: {
     className: '-translate-y-1/2 justify-start',
-    style: { left: '57%', top: '87%' },
+    style: { left: '57%', top: '83.5%' },
   },
   history: {
     className: '-translate-y-1/2 justify-end',
-    style: { right: '57%', top: '87%' },
+    style: { right: '57%', top: '83.5%' },
   },
   records: {
     className: '-translate-y-1/2 justify-end',
-    style: { right: '70%', top: '57%' },
+    style: { right: '70%', top: '55.5%' },
   },
   human_body: {
     className: '-translate-y-1/2 justify-end',
-    style: { right: '68%', top: '28%' },
+    style: { right: '68%', top: '27.5%' },
   },
 };
 
@@ -246,7 +246,7 @@ export default function TopicRadarChart({
       </div>
 
       {/* DataMB Style Card: Percentile Comparison Header + 7-Axis Radar SVG */}
-      <div className="overflow-hidden rounded-3xl border border-slate-200/90 bg-white p-3 shadow-sm dark:border-white/10 dark:bg-[#1E1932]">
+      <div className="overflow-visible rounded-3xl border border-slate-200/90 bg-white p-3 pb-4 shadow-sm dark:border-white/10 dark:bg-[#1E1932]">
         {/* 1. Compact DataMB Comparison Row */}
         <div
           data-testid="radar-percentile-table"
@@ -360,7 +360,7 @@ export default function TopicRadarChart({
         {/* 2. Interactive 7-Axis Heptagon SVG Radar */}
         <div
           data-testid="topic-radar-svg-wrap"
-          className="relative mx-auto mt-2 aspect-[380/276] w-full max-w-[440px]"
+          className="relative mx-auto mt-2 mb-6 aspect-[380/312] w-full max-w-[440px] pb-3"
         >
           <svg
             viewBox={`0 0 ${SVG_WIDTH} ${SVG_HEIGHT}`}

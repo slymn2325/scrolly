@@ -22,10 +22,12 @@ import TopicRadarChart from '@/components/TopicRadarChart';
 import {
   CATEGORIES,
   FEED_EXPERIENCE_COPY,
+  type CategoryFilter,
   type CategoryId,
   getCategoryMeta,
   type Language,
   translations,
+  VOCABULARY_META,
 } from '@/i18n/translations';
 import { generateDiplomaCertificateImage } from '@/utils/diplomaCanvasGenerator';
 import {
@@ -105,7 +107,14 @@ export default function DiplomaProfileModal({
 
   const favoriteFacts = allFacts.filter((f) => memory.favoriteIds.includes(f.id));
   const categoryList = CATEGORIES.filter((c) => c.id !== 'all');
-  const maxWeight = Math.max(1, ...categoryList.map((c) => memory.categoryWeights[c.id as CategoryId] ?? 0));
+  const affinityCategories = [...categoryList, VOCABULARY_META];
+  const getAffinityWeight = (catId: CategoryFilter): number => {
+    if (catId === 'vocabulary') {
+      return Math.max(memory.categoryWeights.vocabulary ?? 0, savedVocab.length);
+    }
+    return memory.categoryWeights[catId as CategoryId] ?? 0;
+  };
+  const maxWeight = Math.max(1, ...affinityCategories.map((c) => getAffinityWeight(c.id)));
 
   const handleCelebrate = () => {
     onButtonPop();
@@ -315,7 +324,7 @@ export default function DiplomaProfileModal({
                     disabled={exportingDiploma}
                     onClick={handleShareDiploma}
                     data-testid="diploma-share-btn"
-                    className="inline-flex min-h-[42px] items-center gap-1.5 rounded-full border border-ink/20 bg-white/85 px-3.5 py-2 text-xs font-black text-ink shadow-xs hover:bg-white disabled:opacity-60 dark:border-white/20 dark:bg-white/10 dark:text-white whitespace-normal break-words leading-snug"
+                    className="inline-flex min-h-[42px] items-center gap-1.5 rounded-full border border-ink/20 bg-white/85 px-3.5 py-2 text-xs font-black text-ink shadow-sm hover:bg-white disabled:opacity-60 dark:border-white/20 dark:bg-white/10 dark:text-white whitespace-normal break-words leading-snug"
                   >
                     <Share2 className="h-3.5 w-3.5 shrink-0" />
                     <span>{t.diplomaSharePngBtn}</span>
@@ -418,14 +427,14 @@ export default function DiplomaProfileModal({
                 )}
               </div>
 
-              {/* Topic Affinity */}
+              {/* Topic Affinity (all 7 fact categories + Language Learning) */}
               <div>
                 <h3 className="mb-2 text-xs font-extrabold uppercase tracking-wider text-ink/65 dark:text-violet-200/70">
                   {t.drawerAffinity}
                 </h3>
                 <div className="space-y-1.5 rounded-2xl border border-slate-100 bg-white p-3 dark:border-white/10 dark:bg-white/5">
-                  {categoryList.map((cat) => {
-                    const weight = memory.categoryWeights[cat.id as CategoryId] ?? 0;
+                  {affinityCategories.map((cat) => {
+                    const weight = getAffinityWeight(cat.id);
                     const pct = Math.round((weight / maxWeight) * 100);
                     return (
                       <div key={cat.id} className="space-y-0.5">

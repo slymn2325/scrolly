@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { AnimatePresence } from 'framer-motion';
 import CookieBanner from '@/components/CookieBanner';
 import DiplomaProfileModal from '@/components/DiplomaProfileModal';
@@ -170,6 +170,15 @@ function buildPersonalizedDeck(
     : primaryPool;
 }
 
+const useIsomorphicLayoutEffect = typeof window !== 'undefined' ? useLayoutEffect : useEffect;
+
+function hasFactSlugMatch(pool: FactCardType[], targetSlug: string | null): boolean {
+  if (!targetSlug) return false;
+  return pool.some(
+    (f) => f.slug === targetSlug || f.tr.slug === targetSlug || f.en.slug === targetSlug || f.id === targetSlug
+  );
+}
+
 function promoteFactToFront(
   deck: FactCardType[],
   pool: FactCardType[],
@@ -206,6 +215,7 @@ export default function HomeClient({ initialFacts }: HomeClientProps) {
 
   const [activeTab, setActiveTab] = useState<DockTabId>('explore');
   const [chromeBlocked, setChromeBlocked] = useState(false);
+  const [suppressInitialFactSync, setSuppressInitialFactSync] = useState(false);
   const [activeQuiz, setActiveQuiz] = useState<ActiveQuizSession | null>(null);
   const [incomingDuel, setIncomingDuel] = useState<DuelPayload | null>(null);
   const [incomingRoomCode, setIncomingRoomCode] = useState<string | null>(null);
@@ -233,26 +243,35 @@ export default function HomeClient({ initialFacts }: HomeClientProps) {
     return () => window.removeEventListener('scrolly-chrome-block', onChromeBlock as EventListener);
   }, []);
 
-  useEffect(() => {
+  // Resolve local state + ?tab= / ?fact= synchronously before first paint to prevent initial card/tab flash and stray dwell XP
+  useIsomorphicLayoutEffect(() => {
     const loaded = loadUserMemory();
     setMemory(loaded);
     hasHydratedRef.current = true;
     document.documentElement.classList.toggle('dark', loaded.darkMode);
     document.documentElement.lang = loaded.lang === 'en' ? 'en' : 'tr';
 
-    initTelemetrySync();
-
     let requestedFactSlug: string | null = null;
     let duelParam: string | null = null;
     let openQuizParam: string | null = null;
+    let resolvedTab: DockTabId | null = null;
     if (typeof window !== 'undefined') {
       const searchParams = new URLSearchParams(window.location.search);
       requestedFactSlug = searchParams.get('fact');
       duelParam = searchParams.get('duel');
       openQuizParam = searchParams.get('openQuiz');
+      const rawTab = searchParams.get('tab')?.toLowerCase() ?? null;
+      if (rawTab === 'quiz') resolvedTab = 'quiz';
+      else if (rawTab === 'leaderboard') resolvedTab = 'leaderboard';
+      else if (rawTab === 'duel') resolvedTab = 'duel';
+      else if (rawTab === 'profile' || rawTab === 'diploma') resolvedTab = 'diploma';
+
       requestedFactSlugRef.current = requestedFactSlug;
-      // Welcome once — skip when deep-linking into a ready duel / quiz
-      if (!readWelcomeDismissed() && !duelParam && openQuizParam !== 'daily') {
+
+      if (resolvedTab) {
+        setActiveTab(resolvedTab);
+        setShowWelcome(false);
+      } else if (!readWelcomeDismissed() && !duelParam && openQuizParam !== 'daily') {
         setShowWelcome(true);
       }
     }
@@ -266,7 +285,29 @@ export default function HomeClient({ initialFacts }: HomeClientProps) {
     );
     const initialDeck = promoteFactToFront(baseDeck, initialFacts, requestedFactSlug);
     setDeckFacts(initialDeck);
-    if (initialDeck[0]) setSeedFact(initialDeck[0]);
+    if (initialDeck[0]) {
+      setSeedFact(initialDeck[0]);
+      setActiveFact(initialDeck[0]);
+    }
+
+    const matchedInInitial = hasFactSlugMatch(initialFacts, requestedFactSlug);
+    if (requestedFactSlug && !matchedInInitial && !resolvedTab && !duelParam && openQuizParam !== 'daily') {
+      setSuppressInitialFactSync(true);
+    } else {
+      setSuppressInitialFactSync(false);
+    }
+  }, [initialFacts]);
+
+  useEffect(() => {
+    initTelemetrySync();
+
+    let duelParam: string | null = null;
+    let openQuizParam: string | null = null;
+    if (typeof window !== 'undefined') {
+      const searchParams = new URLSearchParams(window.location.search);
+      duelParam = searchParams.get('duel');
+      openQuizParam = searchParams.get('openQuiz');
+    }
 
     let cancelled = false;
 
@@ -310,14 +351,33 @@ export default function HomeClient({ initialFacts }: HomeClientProps) {
       );
       const updatedDeck = promoteFactToFront(baseLiveDeck, merged, targetSlug);
       setDeckFacts(updatedDeck);
-      if (updatedDeck[0]) setSeedFact(updatedDeck[0]);
-      if (targetSlug) {
+      if (updatedDeck[0]) {
+        setSeedFact(updatedDeck[0]);
+        setActiveFact(updatedDeck[0]);
+      }
+      if (targetSlug && hasFactSlugMatch(merged, targetSlug)) {
+        requestedFactSlugRef.current = null;
+        setSuppressInitialFactSync(false);
         requestAnimationFrame(() => feedRef.current?.scrollToTop());
       }
       return merged;
     };
 
     const hydratePaginatedFeed = async () => {
+      // If a deep-linked ?fact= slug is missing from initial SSR slice, immediately resolve bundled local pool in parallel
+      const deepLinkSlug = requestedFactSlugRef.current;
+      if (deepLinkSlug && !hasFactSlugMatch(allFactsRef.current, deepLinkSlug)) {
+        try {
+          const { getAllFacts } = await import('@/utils/factsServerData');
+          const localFacts = getAllFacts();
+          if (!cancelled && localFacts.length > 0) {
+            applyFactBatch(localFacts);
+          }
+        } catch {
+          // Continue with paginated API resolution
+        }
+      }
+
       const page1 = await fetchPaginatedFactsFromApi({ offset: 0, limit: 80 });
       let workingPool: FactCardType[] | undefined;
 
@@ -350,6 +410,7 @@ export default function HomeClient({ initialFacts }: HomeClientProps) {
       }
 
       if (cancelled) return;
+      setSuppressInitialFactSync(false);
       const activePool = workingPool ?? allFactsRef.current;
 
       if (duelParam) {
@@ -863,6 +924,45 @@ export default function HomeClient({ initialFacts }: HomeClientProps) {
     !memory.cookieAccepted && activeTab === 'explore' && !activeQuiz && !showWelcome;
   const showExploreFeed = activeTab === 'explore' && !activeQuiz;
 
+  // Keep URL query params cleanly synchronized with active tab state
+  useEffect(() => {
+    if (!hasHydratedRef.current || typeof window === 'undefined') return;
+    try {
+      const currentUrl = new URL(window.location.href);
+      let changed = false;
+
+      if (activeTab !== 'explore' || activeQuiz) {
+        const targetTabParam =
+          activeTab === 'diploma'
+            ? 'profile'
+            : activeTab === 'explore' && activeQuiz
+              ? 'quiz'
+              : activeTab;
+        if (currentUrl.searchParams.has('fact')) {
+          currentUrl.searchParams.delete('fact');
+          changed = true;
+        }
+        if (currentUrl.searchParams.get('tab') !== targetTabParam) {
+          currentUrl.searchParams.set('tab', targetTabParam);
+          changed = true;
+        }
+      } else if (currentUrl.searchParams.has('tab')) {
+        currentUrl.searchParams.delete('tab');
+        changed = true;
+      }
+
+      if (changed) {
+        window.history.replaceState(
+          window.history.state,
+          '',
+          `${currentUrl.pathname}${currentUrl.search}${currentUrl.hash}`
+        );
+      }
+    } catch {
+      // Ignore history API errors in restricted webviews
+    }
+  }, [activeTab, activeQuiz]);
+
   useEffect(() => {
     const onAmbient = (event: Event) => {
       const accent = (event as CustomEvent<{ accent?: string }>).detail?.accent;
@@ -991,6 +1091,8 @@ export default function HomeClient({ initialFacts }: HomeClientProps) {
             cardsSinceLastQuiz={memory.cardsSinceLastQuiz}
             totalCardsViewed={Math.max(memory.totalSwipes, getTotalCardsViewed())}
             cookieBannerVisible={cookieBannerVisible}
+            isExploreVisible={showExploreFeed}
+            suppressUrlSync={suppressInitialFactSync}
             onSelectCategory={handleSelectCategory}
             onChangeLang={handleChangeLang}
             onToggleDarkMode={handleToggleDarkMode}
@@ -1152,31 +1254,6 @@ export default function HomeClient({ initialFacts }: HomeClientProps) {
           />
         )}
 
-        <CookieBanner
-          lang={lang}
-          visible={cookieBannerVisible}
-          onAccept={() => {
-            vibrateTap(12);
-            playPop(soundEnabled);
-            applyGoogleConsentChoice('granted');
-            setMemory((prev) => {
-              const updated = { ...prev, cookieAccepted: true };
-              saveUserMemory(updated);
-              return updated;
-            });
-          }}
-          onDecline={() => {
-            vibrateTap(12);
-            playPop(soundEnabled);
-            applyGoogleConsentChoice('denied');
-            setMemory((prev) => {
-              const updated = { ...prev, cookieAccepted: true };
-              saveUserMemory(updated);
-              return updated;
-            });
-          }}
-        />
-
         {showExploreFeed && usingLocalFallback && (
           <div
             data-testid="local-fallback-notice"
@@ -1269,6 +1346,41 @@ export default function HomeClient({ initialFacts }: HomeClientProps) {
         )}
         </div>
       </div>
+
+      {/* Rendered directly under desktop shell so lg:right-6 lg:bottom-6 docks outside the centered stage */}
+      <CookieBanner
+        lang={lang}
+        visible={cookieBannerVisible}
+        onAccept={() => {
+          vibrateTap(12);
+          playPop(soundEnabled);
+          applyGoogleConsentChoice('granted');
+          setMemory((prev) => {
+            const updated = { ...prev, cookieAccepted: true };
+            saveUserMemory(updated);
+            return updated;
+          });
+        }}
+        onDecline={() => {
+          vibrateTap(12);
+          playPop(soundEnabled);
+          applyGoogleConsentChoice('denied');
+          setMemory((prev) => {
+            const updated = { ...prev, cookieAccepted: true };
+            saveUserMemory(updated);
+            return updated;
+          });
+        }}
+        onDismiss={() => {
+          vibrateTap(10);
+          playPop(soundEnabled);
+          setMemory((prev) => {
+            const updated = { ...prev, cookieAccepted: true };
+            saveUserMemory(updated);
+            return updated;
+          });
+        }}
+      />
     </div>
     </ErrorBoundary>
   );

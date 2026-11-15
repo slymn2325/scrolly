@@ -1,3 +1,4 @@
+import generatedFactsRaw from '@/data/factsGenerated.json';
 import spaceFacts from '@/public/data/facts/space.json';
 import natureFacts from '@/public/data/facts/nature.json';
 import humanBodyFacts from '@/public/data/facts/human_body.json';
@@ -8,10 +9,29 @@ import statisticsFacts from '@/public/data/facts/statistics.json';
 import type { CategoryId, FactCard } from '@/types/fact';
 import {
   enrichFactWithGuessChallenge,
+  getFactPrimarySlug,
   interleaveFactsByCategory,
 } from '@/utils/factsData';
 
-const SHARDED_BY_CATEGORY: Record<CategoryId, FactCard[]> = {
+function normalizeFactCategory(rawCategory: unknown): CategoryId {
+  const clean = typeof rawCategory === 'string' ? rawCategory.trim().toLowerCase() : '';
+  if (clean === 'weird_records') return 'records';
+  if (clean === 'istatistik') return 'statistics';
+  if (
+    clean === 'space' ||
+    clean === 'nature' ||
+    clean === 'human_body' ||
+    clean === 'history' ||
+    clean === 'science' ||
+    clean === 'records' ||
+    clean === 'statistics'
+  ) {
+    return clean;
+  }
+  return 'science';
+}
+
+const BASE_SHARDED: Record<CategoryId, FactCard[]> = {
   space: (spaceFacts as FactCard[]).map(enrichFactWithGuessChallenge),
   nature: (natureFacts as FactCard[]).map(enrichFactWithGuessChallenge),
   human_body: (humanBodyFacts as FactCard[]).map(enrichFactWithGuessChallenge),
@@ -20,6 +40,53 @@ const SHARDED_BY_CATEGORY: Record<CategoryId, FactCard[]> = {
   records: (recordsFacts as FactCard[]).map(enrichFactWithGuessChallenge),
   statistics: (statisticsFacts as FactCard[]).map(enrichFactWithGuessChallenge),
 };
+
+const SHARDED_BY_CATEGORY: Record<CategoryId, FactCard[]> = {
+  space: [...BASE_SHARDED.space],
+  nature: [...BASE_SHARDED.nature],
+  human_body: [...BASE_SHARDED.human_body],
+  history: [...BASE_SHARDED.history],
+  science: [...BASE_SHARDED.science],
+  records: [...BASE_SHARDED.records],
+  statistics: [...BASE_SHARDED.statistics],
+};
+
+const seenFactKeys = new Set<string>();
+const collectKeys = (fact: FactCard): string[] =>
+  [
+    fact.id,
+    getFactPrimarySlug(fact),
+    fact.slug,
+    fact.tr?.slug,
+    fact.en?.slug,
+  ].filter((k): k is string => typeof k === 'string' && k.trim().length > 0);
+
+(Object.values(SHARDED_BY_CATEGORY) as FactCard[][]).forEach((bucket) => {
+  bucket.forEach((fact) => {
+    collectKeys(fact).forEach((k) => seenFactKeys.add(k));
+  });
+});
+
+if (Array.isArray(generatedFactsRaw)) {
+  (generatedFactsRaw as unknown as FactCard[]).forEach((raw) => {
+    if (!raw || typeof raw !== 'object' || !raw.id || !raw.tr?.factText || !raw.en?.factText) {
+      return;
+    }
+    const category = normalizeFactCategory(raw.category);
+    const enriched = enrichFactWithGuessChallenge({
+      ...raw,
+      category,
+      slug: getFactPrimarySlug(raw),
+      sketchType: raw.sketchType || raw.id,
+    });
+    const keys = collectKeys(enriched);
+    if (keys.some((k) => seenFactKeys.has(k))) {
+      return;
+    }
+    keys.forEach((k) => seenFactKeys.add(k));
+    SHARDED_BY_CATEGORY[category].push(enriched);
+  });
+}
 
 export const LEGACY_SLUG_TO_FACT_ID: Record<string, string> = {
   'bir-cay-kasigi-notron-yildizi-6-milyar-ton-agirligindadir': 'space-02',
