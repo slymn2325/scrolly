@@ -1,1 +1,36 @@
-[]
+[
+  {
+    "id": "vocab-gen-ephemeral-mwh3wioh",
+    "category": "vocabulary",
+    "word": "ephemeral",
+    "phonetic": "/ɪˈfem.ər.əl/",
+    "partOfSpeech": "sıfat",
+    "meaningTr": "kısa ömürlü, geçici",
+    "definitionEn": "Lasting for a very short time.",
+    "exampleEn": "Cherry blossoms are famous for their ephemeral beauty each spring.",
+    "exampleTr": "Kiraz çiçekleri her bahar kısa ömürlü güzellikleriyle ünlüdür.",
+    "quizOptions": [
+      "kısa ömürlü, geçici",
+      "sonsuz, kalıcı",
+      "karmaşık, anlaşılması zor"
+    ],
+    "correctIndex": 0
+  },
+  {
+    "id": "vocab-gen-ubiquitous-mwh3wioh",
+    "category": "vocabulary",
+    "word": "ubiquitous",
+    "phonetic": "/juːˈbɪk.wɪ.təs/",
+    "partOfSpeech": "sıfat",
+    "meaningTr": "her yerde bulunan, yaygın",
+    "definitionEn": "Present, appearing, or found everywhere.",
+    "exampleEn": "Smartphones have become ubiquitous in modern daily life.",
+    "exampleTr": "Akıllı telefonlar modern günlük yaşamda her yerde bulunur hale geldi.",
+    "quizOptions": [
+      "nadir bulunan, eşsiz",
+      "her yerde bulunan, yaygın",
+      "eski moda, modası geçmiş"
+    ],
+    "correctIndex": 1
+  }
+]

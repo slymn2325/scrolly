@@ -1,1 +1,212 @@
-[]
+[
+  {
+    "id": "gen-the-moon-is-slowly-drifting-away-from-earth",
+    "slug": "the-moon-is-slowly-drifting-away-from-earth",
+    "category": "space",
+    "accentColor": "#7C3AED",
+    "iconName": "Orbit",
+    "emoji": "🪐",
+    "sketchType": "moon",
+    "visualQuery": "moon earth orbit",
+    "readingTimeSec": 18,
+    "sourceName": "NASA Science",
+    "sourceUrl": "https://science.nasa.gov/moon/facts/",
+    "createdAt": "2026-11-15T00:38:45.906Z",
+    "tr": {
+      "slug": "the-moon-is-slowly-drifting-away-from-earth",
+      "title": "Ay Her Yıl Dünya'dan Yavaşça Uzaklaşıyor",
+      "factText": "Ay, Dünya'nın okyanuslarındaki gelgit sürtünmesi nedeniyle her yıl yaklaşık 3,8 santimetre uzaklaşıyor.",
+      "deepDiveDetail": "Ay'ın kütleçekimi Dünya'daki okyanusları çeker ve gelgit çıkıntıları oluşturur. Dünya kendi ekseni etrafında Ay'ın yörünge hızından daha hızlı döndüğü için bu su çıkıntıları Ay'ı hafifçe öne çeker; bu da Ay'a enerji aktararak yörüngesini genişletir.",
+      "sourceHint": "NASA Science",
+      "sourceName": "NASA Science",
+      "sourceUrl": "https://science.nasa.gov/moon/facts/",
+      "quiz": {
+        "question": "Ay'ın Dünya'dan yavaşça uzaklaşmasına temel olarak ne sebep olur?",
+        "options": [
+          "Gelgit sürtünmesiyle Ay'a enerji aktarılması",
+          "Güneş rüzgarlarının Ay'ı dışarı itmesi",
+          "Dünya'nın kütlesinin zamanla azalması"
+        ],
+        "correctIndex": 0,
+        "explanation": "Dünya'nın dönüşüyle oluşan okyanus gelgit çıkıntıları Ay'ı yörüngesinde ileri doğru çekerek enerjisini artırır ve uzaklaşmasına yol açar."
+      },
+      "guessChallenge": {
+        "type": "slider",
+        "prompt": "Ay her yıl Dünya'dan ortalama kaç santimetre uzaklaşmaktadır?",
+        "min": 1,
+        "max": 15,
+        "step": 0.1,
+        "unit": "cm",
+        "correctValue": 3.8
+      }
+    },
+    "en": {
+      "slug": "the-moon-is-slowly-drifting-away-from-earth",
+      "title": "The Moon Is Slowly Drifting Away from Earth Every Year",
+      "factText": "Due to tidal friction in Earth's oceans, the Moon drifts roughly 3.8 centimeters farther away from us every single year.",
+      "deepDiveDetail": "The Moon's gravity pulls on Earth's oceans, creating tidal bulges. Because Earth rotates faster than the Moon orbits, these bulges sit slightly ahead of the Moon and gravitationally tug it forward, transferring rotational energy into a wider lunar orbit.",
+      "sourceHint": "NASA Science",
+      "sourceName": "NASA Science",
+      "sourceUrl": "https://science.nasa.gov/moon/facts/",
+      "quiz": {
+        "question": "What primarily causes the Moon to drift away from Earth over time?",
+        "options": [
+          "Tidal friction transferring rotational energy to the Moon",
+          "Solar winds pushing the Moon outward",
+          "Earth's mass steadily decreasing"
+        ],
+        "correctIndex": 0,
+        "explanation": "Earth's spinning tidal bulges pull slightly ahead of the Moon, transferring angular momentum and nudging it into a higher orbit."
+      },
+      "guessChallenge": {
+        "type": "slider",
+        "prompt": "On average, how many centimeters does the Moon drift away from Earth each year?",
+        "min": 1,
+        "max": 15,
+        "step": 0.1,
+        "unit": "cm",
+        "correctValue": 3.8
+      }
+    }
+  },
+  {
+    "id": "gen-immortal-jellyfish-reverts-cells-to-youth",
+    "slug": "immortal-jellyfish-reverts-cells-to-youth",
+    "category": "nature",
+    "accentColor": "#0D9488",
+    "iconName": "Waves",
+    "emoji": "🧊",
+    "sketchType": "immortal_jellyfish",
+    "visualQuery": "glowing ocean jellyfish",
+    "readingTimeSec": 18,
+    "sourceName": "Natural History Museum London",
+    "sourceUrl": "https://www.nhm.ac.uk/discover/immortal-jellyfish-secret-to-cheating-death.html",
+    "createdAt": "2026-11-15T00:38:45.907Z",
+    "tr": {
+      "slug": "immortal-jellyfish-reverts-cells-to-youth",
+      "title": "Ölümsüz Denizanası Hücrelerini Gençliğe Döndürebiliyor",
+      "factText": "Turritopsis dohrnii türü denizanası, stres veya yaşlanma durumunda yetişkin hücrelerini tekrar bebeklik evresine dönüştürebilir.",
+      "deepDiveDetail": "Bu biyolojik süreç 'transdiferansiyasyon' olarak adlandırılır; özelleşmiş hücreler başka bir hücre tipine dönüşür. Böylece denizanası yaşam döngüsünü sıfırlayarak teorik olarak biyolojik ölümden kaçabilir, ancak yine de avcılar tarafından yenebilir.",
+      "sourceHint": "Natural History Museum London",
+      "sourceName": "Natural History Museum London",
+      "sourceUrl": "https://www.nhm.ac.uk/discover/immortal-jellyfish-secret-to-cheating-death.html",
+      "quiz": {
+        "question": "Ölümsüz denizanasının yaşam döngüsünü sıfırlamasını sağlayan hücresel mekanizma nedir?",
+        "options": [
+          "Hücre bölünmesini tamamen durdurması",
+          "Yetişkin hücrelerin transdiferansiyasyonla gençleşmesi",
+          "Dış kabuğunu değiştirerek yeni bir vücut örmesi"
+        ],
+        "correctIndex": 1,
+        "explanation": "Transdiferansiyasyon sayesinde özelleşmiş yetişkin hücreler yeniden genç polip hücrelerine dönüşebilir."
+      },
+      "guessChallenge": {
+        "type": "slider",
+        "prompt": "Bu 'ölümsüz' denizanası türünün çapı yetişkinlikte yaklaşık kaç milimetredir?",
+        "min": 1,
+        "max": 50,
+        "step": 0.1,
+        "unit": "mm",
+        "correctValue": 4.5
+      }
+    },
+    "en": {
+      "slug": "immortal-jellyfish-reverts-cells-to-youth",
+      "title": "The Immortal Jellyfish Can Reset Its Cells Back to Youth",
+      "factText": "When stressed or injured, the Turritopsis dohrnii jellyfish can transform its adult cells back into a juvenile polyp state.",
+      "deepDiveDetail": "This rare process, called transdifferentiation, allows specialized adult cells to revert into stem-like cells and rebuild a young polyp colony. While it can theoretically repeat this cycle indefinitely, it can still be eaten by predators.",
+      "sourceHint": "Natural History Museum London",
+      "sourceName": "Natural History Museum London",
+      "sourceUrl": "https://www.nhm.ac.uk/discover/immortal-jellyfish-secret-to-cheating-death.html",
+      "quiz": {
+        "question": "Which cellular mechanism allows the immortal jellyfish to reset its life cycle?",
+        "options": [
+          "Halting all cell division indefinitely",
+          "Transdifferentiation of adult cells into juvenile cells",
+          "Shedding an outer shell to grow a new body"
+        ],
+        "correctIndex": 1,
+        "explanation": "Through transdifferentiation, mature specialized cells convert back into juvenile polyp cells, restarting the life cycle."
+      },
+      "guessChallenge": {
+        "type": "slider",
+        "prompt": "About how many millimeters wide is an adult Turritopsis dohrnii jellyfish?",
+        "min": 1,
+        "max": 50,
+        "step": 0.1,
+        "unit": "mm",
+        "correctValue": 4.5
+      }
+    }
+  },
+  {
+    "id": "gen-quantum-entanglement-links-particles-across-",
+    "slug": "quantum-entanglement-links-particles-across-distance",
+    "category": "science",
+    "accentColor": "#0284C7",
+    "iconName": "Zap",
+    "emoji": "⚡",
+    "sketchType": "entanglement",
+    "visualQuery": "quantum light particles",
+    "readingTimeSec": 18,
+    "sourceName": "The Nobel Prize",
+    "sourceUrl": "https://www.nobelprize.org/prizes/physics/2022/popular-information/",
+    "createdAt": "2026-11-15T00:38:45.908Z",
+    "tr": {
+      "slug": "quantum-entanglement-links-particles-across-distance",
+      "title": "Kuantum Dolanıklık Parçacıkları Mesafeden Bağımsız Bağlar",
+      "factText": "Dolanık iki parçacıktan birinin durumu ölçüldüğünde, diğeri ışık yılları uzakta olsa bile durumu anında belirlenir.",
+      "deepDiveDetail": "Bu olgu, 2022 Nobel Fizik Ödülü'ne konu olan Bell testleriyle kesin olarak kanıtlandı. Ancak parçacıklar arasında ışıktan hızlı bir mesaj iletilmez; sonuçlar yalnızca her iki ölçümün verileri klasik yollarla karşılaştırıldığında anlam kazanır.",
+      "sourceHint": "The Nobel Prize",
+      "sourceName": "The Nobel Prize",
+      "sourceUrl": "https://www.nobelprize.org/prizes/physics/2022/popular-information/",
+      "quiz": {
+        "question": "Kuantum dolanıklık neden ışıktan hızlı iletişim kurmak için kullanılamaz?",
+        "options": [
+          "Parçacıklar yalnızca laboratuvar içinde dolanık kalabildiği için",
+          "Ölçüm sonuçları tek başına rastgele göründüğü ve karşılaştırma gerektiği için",
+          "Kütleçekimi dolanık sinyalleri yavaşlattığı için"
+        ],
+        "correctIndex": 1,
+        "explanation": "Her bir parçacığın ölçümü tek başına tamamen rastgeledir; korelasyon ancak iki tarafın sonuçları klasik iletişimle karşılaştırıldığında görülür."
+      },
+      "guessChallenge": {
+        "type": "slider",
+        "prompt": "Kuantum dolanıklığı deneysel olarak kanıtlayan çalışmalar hangi yıl Nobel Fizik Ödülü'nü kazandı?",
+        "min": 1980,
+        "max": 2025,
+        "step": 1,
+        "unit": "yıl",
+        "correctValue": 2022
+      }
+    },
+    "en": {
+      "slug": "quantum-entanglement-links-particles-across-distance",
+      "title": "Quantum Entanglement Links Particles Across Any Distance",
+      "factText": "When two particles are quantum entangled, measuring the state of one instantaneously determines the state of the other, regardless of distance.",
+      "deepDiveDetail": "Confirmed by Bell test experiments that won the 2022 Nobel Prize in Physics, entangled particles share a single unified quantum state. However, no faster-than-light message is transmitted, because the correlation only appears when both measurements are compared classically.",
+      "sourceHint": "The Nobel Prize",
+      "sourceName": "The Nobel Prize",
+      "sourceUrl": "https://www.nobelprize.org/prizes/physics/2022/popular-information/",
+      "quiz": {
+        "question": "Why can't quantum entanglement be used to send faster-than-light messages?",
+        "options": [
+          "Particles only stay entangled inside a laboratory",
+          "Each individual measurement looks random until compared classically",
+          "Gravity slows down the entangled signal"
+        ],
+        "correctIndex": 1,
+        "explanation": "Measuring one particle yields a purely random outcome; the correlation is only revealed when both observers compare results via classical channels."
+      },
+      "guessChallenge": {
+        "type": "slider",
+        "prompt": "In what year did experiments proving quantum entanglement win the Nobel Prize in Physics?",
+        "min": 1980,
+        "max": 2025,
+        "step": 1,
+        "unit": "year",
+        "correctValue": 2022
+      }
+    }
+  }
+]
