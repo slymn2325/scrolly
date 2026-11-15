@@ -5,6 +5,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import CookieBanner from '@/components/CookieBanner';
 import DiplomaProfileModal from '@/components/DiplomaProfileModal';
 import ErrorBoundary from '@/components/ErrorBoundary';
+import FactDetailPage from '@/components/FactDetailPage';
 import { applyGoogleConsentChoice } from '@/utils/consent';
 import DuelModal, { type DuelChallengeConfig } from '@/components/DuelModal';
 import DesktopFeedSideRail from '@/components/DesktopFeedSideRail';
@@ -318,7 +319,7 @@ function syncDocumentTheme(darkMode: boolean, lang: Language) {
     themeMeta.name = 'theme-color';
     document.head.appendChild(themeMeta);
   }
-  themeMeta.content = darkMode ? '#0A0A0E' : '#FAF9F5';
+  themeMeta.content = darkMode || checkIsStandalone() ? '#0A0A0E' : '#FAF9F5';
 }
 
 function hasFactSlugMatch(pool: FactCardType[], targetSlug: string | null): boolean {
@@ -381,6 +382,10 @@ export default function HomeClient({ initialFacts, initialVocabulary }: HomeClie
   const [incomingDuel, setIncomingDuel] = useState<DuelPayload | null>(null);
   const [incomingRoomCode, setIncomingRoomCode] = useState<string | null>(null);
   const [storyShareFact, setStoryShareFact] = useState<FactCardType | null>(null);
+  const [detailState, setDetailState] = useState<{
+    fact: FactCardType;
+    resolvedGifUrl?: string | null;
+  } | null>(null);
   const [maxSwipedCards, setMaxSwipedCards] = useState(0);
   const [manualPwaOpen, setManualPwaOpen] = useState(false);
   const [showPwaGuideModal, setShowPwaGuideModal] = useState(false);
@@ -909,6 +914,8 @@ export default function HomeClient({ initialFacts, initialVocabulary }: HomeClie
   const handleSelectCategory = (cat: CategoryFilter) => {
     vibrateTap(12);
     playPop(soundEnabled);
+    setDetailState(null);
+    setShowPwaGuideModal(false);
     restoredFeedSessionRef.current = null;
     activeCategoryRef.current = cat;
     activeSlideIndexRef.current = 0;
@@ -1257,9 +1264,16 @@ export default function HomeClient({ initialFacts, initialVocabulary }: HomeClie
   const handleDockSelectTab = (tab: DockTabId) => {
     vibrateTap(12);
     playPop(soundEnabled);
+    const hadSubPage = Boolean(
+      detailState || storyShareFact || shareModalData || showPwaGuideModal
+    );
+    setDetailState(null);
+    setShowPwaGuideModal(false);
+    setStoryShareFact(null);
+    setShareModalData(null);
 
     if (tab === 'explore') {
-      const alreadyExploring = activeTab === 'explore' && !activeQuiz;
+      const alreadyExploring = activeTab === 'explore' && !activeQuiz && !hadSubPage;
       setActiveQuiz(null);
       setIncomingDuel(null);
       setActiveTab('explore');
@@ -1278,6 +1292,10 @@ export default function HomeClient({ initialFacts, initialVocabulary }: HomeClie
   const closeOverlayToExplore = () => {
     vibrateTap(12);
     playPop(soundEnabled);
+    setDetailState(null);
+    setShowPwaGuideModal(false);
+    setStoryShareFact(null);
+    setShareModalData(null);
     setIncomingDuel(null);
     setIncomingRoomCode(null);
     setActiveQuiz(null);
@@ -1330,6 +1348,7 @@ export default function HomeClient({ initialFacts, initialVocabulary }: HomeClie
     setActiveQuiz(null);
     setShareModalData(null);
     setStoryShareFact(null);
+    setDetailState(null);
     setManualPwaOpen(false);
     setShowPwaGuideModal(false);
     setShowWelcome(true);
@@ -1410,9 +1429,17 @@ export default function HomeClient({ initialFacts, initialVocabulary }: HomeClie
     setShowPwaGuideModal(true);
   }, [showToast]);
 
+  const isExploreSubPageOpen = Boolean(
+    detailState || storyShareFact || shareModalData || showPwaGuideModal
+  );
   const cookieBannerVisible =
-    !memory.cookieAccepted && activeTab === 'explore' && !activeQuiz && !showWelcome;
-  const showExploreFeed = activeTab === 'explore' && !activeQuiz;
+    !memory.cookieAccepted &&
+    activeTab === 'explore' &&
+    !activeQuiz &&
+    !showWelcome &&
+    !isExploreSubPageOpen &&
+    !chromeBlocked;
+  const showExploreFeed = activeTab === 'explore' && !activeQuiz && !isExploreSubPageOpen;
 
   // Keep URL query params cleanly synchronized with active tab state
   useEffect(() => {
@@ -1594,14 +1621,14 @@ export default function HomeClient({ initialFacts, initialVocabulary }: HomeClie
           onButtonPop={() => playPop(soundEnabled)}
         />
 
-        <PwaInstallGuideModal
-          open={showPwaGuideModal}
-          lang={lang}
-          onClose={() => setShowPwaGuideModal(false)}
-          onButtonPop={() => playPop(soundEnabled)}
-        />
-
-        {showExploreFeed && (
+        <div
+          className={
+            showExploreFeed
+              ? 'relative h-full w-full'
+              : 'pointer-events-none invisible absolute inset-0 h-full w-full'
+          }
+          aria-hidden={!showExploreFeed}
+        >
           <TikTokFeed
             ref={feedRef}
             deckFacts={deckFacts}
@@ -1623,6 +1650,7 @@ export default function HomeClient({ initialFacts, initialVocabulary }: HomeClie
             onToggleDarkMode={handleToggleDarkMode}
             onToggleSound={handleToggleSound}
             onFlipCard={handleFlipCard}
+            onOpenDetail={(fact, resolvedGifUrl) => setDetailState({ fact, resolvedGifUrl })}
             onDoubleTapLike={handleDoubleTapLike}
             onDwellRead={handleDwellRead}
             onMarkFactSeen={(fact) => {
@@ -1651,7 +1679,36 @@ export default function HomeClient({ initialFacts, initialVocabulary }: HomeClie
             onSuccessSound={() => playDing(soundEnabled)}
             onWrongSound={() => playWrong(soundEnabled)}
           />
-        )}
+        </div>
+
+        <AnimatePresence>
+          {detailState && (
+            <FactDetailPage
+              key={`fact-detail-${detailState.fact.id}`}
+              fact={detailState.fact}
+              lang={lang}
+              darkMode={isDark}
+              resolvedGifUrl={detailState.resolvedGifUrl}
+              onClose={() => setDetailState(null)}
+              onNextCard={() => {
+                setDetailState(null);
+                requestAnimationFrame(() => {
+                  feedRef.current?.scrollToNext();
+                });
+              }}
+              onOpenDuel={(fact) => {
+                setDetailState(null);
+                handleOpenDuelFromCard(fact);
+              }}
+              onButtonPop={() => playPop(soundEnabled)}
+              onEarnXp={(xpAmount) => {
+                setMemory((prev) => addUserXp(prev, xpAmount));
+              }}
+              onSuccessSound={() => playDing(soundEnabled)}
+              onWrongSound={() => playWrong(soundEnabled)}
+            />
+          )}
+        </AnimatePresence>
 
         <AnimatePresence>
           {activeQuiz && (
@@ -1780,6 +1837,14 @@ export default function HomeClient({ initialFacts, initialVocabulary }: HomeClie
           onCelebrateLeague={() => playLeagueCelebration(soundEnabled)}
         />
 
+        <PwaInstallGuideModal
+          open={showPwaGuideModal}
+          lang={lang}
+          darkMode={isDark}
+          onClose={() => setShowPwaGuideModal(false)}
+          onButtonPop={() => playPop(soundEnabled)}
+        />
+
         <StoryShareModal
           open={Boolean(storyShareFact)}
           fact={storyShareFact}
@@ -1820,17 +1885,19 @@ export default function HomeClient({ initialFacts, initialVocabulary }: HomeClie
           </div>
         )}
 
-        {/* Bottom dock: mobile + tablet only (desktop uses left nav) */}
-        <div className="lg:hidden">
-          <IosFloatingIslandDock
-            activeTab={activeTab}
-            lang={lang}
-            darkMode={isDark}
-            showQuizDot={showQuizDot}
-            onSelectTab={handleDockSelectTab}
-            chromeBlocked={chromeBlocked || showWelcome}
-          />
-        </div>
+        {/* Bottom dock: mobile + tablet only (desktop uses left nav). Hide on full-page sub-views */}
+        {!isExploreSubPageOpen && !showWelcome && !chromeBlocked && (
+          <div className="lg:hidden">
+            <IosFloatingIslandDock
+              activeTab={activeTab}
+              lang={lang}
+              darkMode={isDark}
+              showQuizDot={showQuizDot}
+              onSelectTab={handleDockSelectTab}
+              chromeBlocked={chromeBlocked || showWelcome}
+            />
+          </div>
+        )}
       </div>
 
         {showExploreFeed && (

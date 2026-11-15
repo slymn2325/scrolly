@@ -703,7 +703,7 @@ export default function DuelModal({
 
   const shellClass = isPage
     ? 'absolute inset-0 z-20 flex h-full w-full flex-col bg-[#FFFDF9] dark:bg-[#141024]'
-    : 'fixed inset-0 z-50 flex w-full items-center justify-center bg-ink/55 px-3 pt-4 backdrop-blur-md';
+    : 'absolute inset-0 z-20 flex h-full w-full flex-col bg-[#FFFDF9] dark:bg-[#141024]';
 
   const panelClass = isPage
     ? 'relative flex h-full w-full flex-col overflow-y-auto no-scrollbar px-4 pb-[calc(env(safe-area-inset-bottom,16px)+100px)] pt-[calc(env(safe-area-inset-top,20px)+16px)] lg:pb-6 lg:pt-6'

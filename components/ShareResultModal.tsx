@@ -4,6 +4,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
 import confetti from 'canvas-confetti';
 import {
+  ArrowLeft,
   ArrowRight,
   Award,
   Check,
@@ -12,7 +13,6 @@ import {
   MessageCircle,
   Share2,
   Swords,
-  X,
 } from 'lucide-react';
 import type { DuelChallengeConfig } from '@/components/DuelModal';
 import GiphyReactionPicker, {
@@ -300,31 +300,33 @@ export default function ShareResultModal({
 
   return (
     <div
-      role="dialog"
-      aria-modal="true"
       aria-labelledby="share-modal-title"
       data-testid="share-result-modal"
-      className="fixed inset-0 z-50 mx-auto flex w-full max-w-[430px] items-center justify-center bg-ink/55 px-3 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] backdrop-blur-md"
+      data-presentation="page"
+      className="absolute inset-0 z-30 flex h-full w-full flex-col overflow-hidden bg-[#FFFDF9] text-[#1E1B2E] dark:bg-[#1A162B] dark:text-white"
     >
       <motion.div
         initial={{ opacity: 0, scale: 0.88, y: 20 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.9, y: 20 }}
         transition={{ type: 'spring', stiffness: 320, damping: 24 }}
-        className="relative max-h-[88dvh] w-full overflow-y-auto no-scrollbar rounded-3xl border-2 border-amber-200 bg-[#FFFDF9] p-4 shadow-2xl dark:border-violet-700/60 dark:bg-[#1A162B] sm:p-5"
+        className="no-scrollbar flex h-full w-full flex-col overflow-y-auto px-4 pt-[calc(env(safe-area-inset-top,14px)+14px)] pb-[calc(env(safe-area-inset-bottom,16px)+24px)] sm:px-5 lg:pt-5"
       >
-        <motion.button
-          type="button"
-          whileTap={{ scale: 0.94 }}
-          onClick={() => {
-            onButtonPop();
-            onClose();
-          }}
-          aria-label="Close modal"
-          className="absolute right-3 top-3 flex h-10 w-10 items-center justify-center rounded-full bg-slate-100 text-ink/75 hover:bg-slate-200 dark:bg-white/10 dark:text-violet-100"
-        >
-          <X className="h-4 w-4" />
-        </motion.button>
+        <div className="mb-3 flex items-center justify-between border-b border-ink/10 pb-3 dark:border-white/10">
+          <motion.button
+            type="button"
+            whileTap={{ scale: 0.94 }}
+            onClick={() => {
+              onButtonPop();
+              onClose();
+            }}
+            aria-label="Close modal"
+            className="inline-flex h-10 items-center gap-1.5 rounded-full border border-ink/15 bg-white px-3.5 text-xs font-extrabold text-ink transition hover:bg-slate-50 dark:border-white/15 dark:bg-white/10 dark:text-white dark:hover:bg-white/15"
+          >
+            <ArrowLeft className="h-4 w-4 shrink-0" />
+            <span>{lang === 'tr' ? 'Keşfe Dön' : 'Back to Feed'}</span>
+          </motion.button>
+        </div>
 
         {/* Celebration Header */}
         <div className="text-center">

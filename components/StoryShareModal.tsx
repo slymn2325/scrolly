@@ -2,11 +2,12 @@
 
 import React, { useEffect, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { Check, Copy, Download, Film, Loader2, MessageCircle, Share2, Sparkles, X } from 'lucide-react';
+import { ArrowLeft, Check, Copy, Download, Film, Loader2, MessageCircle, Share2, Sparkles } from 'lucide-react';
 import PoweredByGiphyBadge from '@/components/PoweredByGiphyBadge';
 import { type Language, translations } from '@/i18n/translations';
 import type { FactCard } from '@/types/fact';
 import { getFactPrimarySlug, getFactUrl } from '@/utils/factsData';
+import { UI_ICON_PATHS } from '@/utils/icons8Assets';
 import {
   fetchProxiedMediaFile,
   type GeneratedCanvasAsset,
@@ -214,35 +215,42 @@ export default function StoryShareModal({
     <AnimatePresence>
       {open && fact && (
         <div
-          role="dialog"
-          aria-modal="true"
           aria-label={t.storyModalTitle}
           data-testid="story-share-modal"
+          data-presentation="page"
           onClick={(e) => e.stopPropagation()}
-          className="fixed inset-0 z-50 mx-auto flex w-full max-w-[430px] items-center justify-center bg-black/70 px-3 pt-4 backdrop-blur-md"
+          className="absolute inset-0 z-30 flex h-full w-full flex-col overflow-hidden bg-[#FFFDF9] text-[#1E1B2E] dark:bg-[#141122] dark:text-white"
         >
           <motion.div
-            initial={{ opacity: 0, scale: 0.92, y: 18 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.92, y: 18 }}
-            transition={{ type: 'spring', stiffness: 320, damping: 24 }}
-            className="relative mb-[92px] flex max-h-[84dvh] w-full flex-col overflow-y-auto no-scrollbar rounded-3xl border border-violet-300/60 bg-[#FFFDF9] p-4 shadow-2xl dark:border-violet-700/60 dark:bg-[#141122] sm:p-5"
+            initial={{ opacity: 0, x: 16 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: 16 }}
+            transition={{ duration: 0.2 }}
+            className="no-scrollbar flex h-full w-full flex-col overflow-y-auto px-4 pt-[calc(env(safe-area-inset-top,14px)+14px)] pb-[calc(env(safe-area-inset-bottom,16px)+24px)] sm:px-5 lg:pt-5"
           >
-            <motion.button
-              type="button"
-              whileTap={{ scale: 0.92 }}
-              onClick={() => {
-                onButtonPop();
-                onClose();
-              }}
-              aria-label="Close"
-              data-testid="story-close-btn"
-              className="absolute right-3 top-3 flex h-11 w-11 items-center justify-center rounded-full bg-slate-100 text-ink/75 hover:bg-slate-200 dark:bg-white/10 dark:text-violet-100"
-            >
-              <X className="h-4 w-4" />
-            </motion.button>
+            <div className="mb-3 flex items-center justify-between gap-2 border-b border-ink/10 pb-3 dark:border-white/10">
+              <motion.button
+                type="button"
+                whileTap={{ scale: 0.94 }}
+                onClick={() => {
+                  onButtonPop();
+                  onClose();
+                }}
+                aria-label="Close"
+                data-testid="story-close-btn"
+                className="inline-flex h-10 items-center gap-1.5 rounded-full border border-ink/15 bg-white px-3.5 text-xs font-extrabold text-ink transition hover:bg-slate-50 dark:border-white/15 dark:bg-white/10 dark:text-white dark:hover:bg-white/15"
+              >
+                <ArrowLeft className="h-4 w-4 shrink-0" />
+                <span>{lang === 'tr' ? 'Karta Dön' : 'Back to Card'}</span>
+              </motion.button>
 
-            <div className="flex items-center gap-2.5 pr-10">
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-violet-100 px-3 py-1 text-[11px] font-black text-violet-800 dark:bg-violet-500/20 dark:text-violet-200">
+                <img src={UI_ICON_PATHS.xpSparkles} alt="" aria-hidden="true" className="h-4 w-4 object-contain" />
+                <span>9:16 Story</span>
+              </span>
+            </div>
+
+            <div className="flex items-center gap-2.5">
               <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-fuchsia-500 to-violet-600 text-white shadow-sm">
                 <Sparkles className="h-5 w-5" />
               </div>

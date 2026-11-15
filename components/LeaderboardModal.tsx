@@ -183,7 +183,7 @@ export default function LeaderboardModal({
           className={
             isPage
               ? 'absolute inset-0 z-20 flex h-full w-full flex-col bg-[#FFFDF9] dark:bg-[#1A162B]'
-              : 'fixed inset-0 z-50 flex w-full items-center justify-center bg-ink/55 px-3 pt-4 backdrop-blur-md'
+              : 'absolute inset-0 z-20 flex h-full w-full flex-col bg-[#FFFDF9] dark:bg-[#1A162B]'
           }
         >
           <motion.div

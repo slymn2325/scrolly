@@ -96,11 +96,10 @@ export default function WelcomeExploreModal({
     <AnimatePresence>
       {open && (
         <div
-          role="dialog"
-          aria-modal="true"
           aria-label={title}
           data-testid="welcome-explore-modal"
-          className="fixed inset-0 z-[70] flex items-center justify-center bg-black/65 px-4 backdrop-blur-md"
+          data-presentation="page"
+          className="absolute inset-0 z-[70] flex min-h-full w-full flex-col overflow-y-auto no-scrollbar bg-[#0A0A0E] text-white"
         >
           <motion.form
             onSubmit={handleSubmit}
@@ -108,7 +107,7 @@ export default function WelcomeExploreModal({
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.94, y: 12 }}
             transition={{ type: 'spring', stiffness: 340, damping: 26 }}
-            className="relative w-full max-w-[400px] overflow-hidden rounded-3xl border border-white/15 bg-[#121218] p-6 text-white shadow-2xl dark:border-violet-500/25"
+            className="relative mx-auto flex min-h-full w-full max-w-[460px] flex-col justify-center px-5 pt-[calc(env(safe-area-inset-top,18px)+28px)] pb-[calc(env(safe-area-inset-bottom,18px)+28px)] text-white"
           >
             <div
               aria-hidden="true"

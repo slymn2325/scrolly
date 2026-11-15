@@ -122,6 +122,7 @@ export default function RootHtmlShell({ lang, children }: RootHtmlShellProps) {
         />
       </head>
       <body className="min-h-screen bg-[#0A0A0E] font-sans text-white antialiased selection:bg-amber-200 selection:text-[#09090B]">
+        <div aria-hidden="true" className="pwa-statusbar-guard" />
         {children}
         <Script id="google-tag-manager" strategy="afterInteractive">
           {`

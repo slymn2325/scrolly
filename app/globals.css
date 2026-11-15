@@ -106,3 +106,22 @@ html.dark [data-fact-surface='true'] p {
   outline-offset: 2px;
   border-radius: 6px;
 }
+
+/* iOS Home Screen PWA (standalone): keep charging/clock status-bar strip sharp black, zero scroll-edge blur */
+.pwa-statusbar-guard {
+  display: none;
+}
+
+@media all and (display-mode: standalone) {
+  .pwa-statusbar-guard {
+    display: block;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: env(safe-area-inset-top, 0px);
+    background-color: #000000;
+    pointer-events: none;
+    z-index: 9999;
+  }
+}

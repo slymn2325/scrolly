@@ -2,7 +2,7 @@
 
 import React, { forwardRef, useCallback, useEffect, useImperativeHandle, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { ChevronDown } from 'lucide-react';
+import { ArrowLeft, ChevronDown } from 'lucide-react';
 import NativeAdSlide from '@/components/NativeAdSlide';
 import QuizCtaSlide from '@/components/QuizCtaSlide';
 import TikTokFactSlide from '@/components/TikTokFactSlide';
@@ -18,7 +18,7 @@ import {
 import type { FactCard } from '@/types/fact';
 import type { VocabularyCard } from '@/types/vocabulary';
 import { getVocabularyFacts } from '@/data/vocabularyFacts';
-import { UI_ICON_PATHS } from '@/utils/icons8Assets';
+import { CATEGORY_ILLUSTRATION_MAP, DOCK_ICON_MAP, UI_ICON_PATHS } from '@/utils/icons8Assets';
 import { markFactSeenInStorage } from '@/utils/seenFacts';
 
 const PRELOADED_GIF_CACHE = new Set<string>();
@@ -56,6 +56,7 @@ interface TikTokFeedProps {
   onToggleDarkMode: () => void;
   onToggleSound: () => void;
   onFlipCard: (fact: FactCard) => void;
+  onOpenDetail?: (fact: FactCard, resolvedGifUrl?: string | null) => void;
   onDoubleTapLike: (fact: FactCard) => void;
   onDwellRead: (fact: FactCard) => void;
   onMarkFactSeen?: (fact: FactCard) => void;
@@ -95,6 +96,7 @@ const TikTokFeed = forwardRef<TikTokFeedHandle, TikTokFeedProps>(function TikTok
     onToggleDarkMode,
     onToggleSound,
     onFlipCard,
+    onOpenDetail,
     onDoubleTapLike,
     onDwellRead,
     onMarkFactSeen,
@@ -231,6 +233,24 @@ const TikTokFeed = forwardRef<TikTokFeedHandle, TikTokFeedProps>(function TikTok
       container.style.scrollBehavior = prevBehavior;
     }
   }, [safeInitialIndex, slides.length]);
+
+  // Preserve active slide scrollTop when toggling back from full-page subviews (Detail, Share, Profile)
+  useIsomorphicLayoutEffect(() => {
+    if (!isExploreVisible) return;
+    const container = scrollRef.current;
+    if (!container || slides.length === 0) return;
+    const currentIdx = Math.max(0, Math.min(activeIndexRef.current, slides.length - 1));
+    if (currentIdx === 0) return;
+    const targetNode = container.querySelector<HTMLElement>(`[data-slide-index="${currentIdx}"]`);
+    const slideHeight = container.clientHeight || window.innerHeight;
+    const targetTop = targetNode ? targetNode.offsetTop : currentIdx * slideHeight;
+    if (Math.abs(container.scrollTop - targetTop) > 12) {
+      const prevBehavior = container.style.scrollBehavior;
+      container.style.scrollBehavior = 'auto';
+      container.scrollTop = targetTop;
+      container.style.scrollBehavior = prevBehavior;
+    }
+  }, [isExploreVisible, slides.length]);
 
   // Immediately record any swiped-past fact card in scrolly_seen_slugs_v1 without waiting for dwell or Guess Lock
   useEffect(() => {
@@ -468,8 +488,11 @@ const TikTokFeed = forwardRef<TikTokFeedHandle, TikTokFeedProps>(function TikTok
     return () => container.removeEventListener('wheel', handleWheel);
   }, [getStepAnchorIndex, scrollToSlide]);
 
-  // Close Category Drawer on Escape key
+  // Close Category Explorer page on Escape key & block dock while full-page picker is active
   useEffect(() => {
+    window.dispatchEvent(
+      new CustomEvent('scrolly-chrome-block', { detail: { open: isCategoryDrawerOpen } })
+    );
     if (!isCategoryDrawerOpen) return;
     const handleEsc = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
@@ -477,7 +500,12 @@ const TikTokFeed = forwardRef<TikTokFeedHandle, TikTokFeedProps>(function TikTok
       }
     };
     window.addEventListener('keydown', handleEsc);
-    return () => window.removeEventListener('keydown', handleEsc);
+    return () => {
+      window.removeEventListener('keydown', handleEsc);
+      window.dispatchEvent(
+        new CustomEvent('scrolly-chrome-block', { detail: { open: false } })
+      );
+    };
   }, [isCategoryDrawerOpen]);
 
   // When a card detail overlay is open, disable HUD hit-testing so close/back controls stay reachable
@@ -681,55 +709,107 @@ const TikTokFeed = forwardRef<TikTokFeedHandle, TikTokFeedProps>(function TikTok
         </div>
       </header>
 
-      {/* Opaque category picker — sibling of header so it is never clipped by HUD height */}
+      {/* Full-page Category Explorer — integrated page instead of floating dropdown */}
       <AnimatePresence>
         {isCategoryDrawerOpen && (
           <motion.div
             key="category-drawer"
-            initial={{ opacity: 0, y: -8, scale: 0.98 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: -8, scale: 0.98 }}
-            transition={{ duration: 0.18, ease: 'easeOut' }}
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 16 }}
+            transition={{ duration: 0.2, ease: 'easeOut' }}
             data-testid="category-drawer"
-            className={`pointer-events-auto absolute inset-x-4 top-[calc(env(safe-area-inset-top,14px)+54px)] z-[65] max-h-[50dvh] overflow-y-auto rounded-2xl border border-white/20 bg-[#111115] p-2.5 text-white shadow-2xl ${
-              chromeBlocked ? 'opacity-40 pointer-events-none' : ''
+            data-presentation="page"
+            className={`pointer-events-auto absolute inset-0 z-[70] flex h-full w-full flex-col overflow-hidden ${
+              darkMode ? 'bg-[#0A0A0E] text-white' : 'bg-[#F7F5FB] text-[#1E1B2E]'
             }`}
           >
-            <div className="flex flex-wrap items-center gap-1.5">
-              {CATEGORY_SELECTOR_OPTIONS.map((cat) => {
-                const isActive = activeCategory === cat.id;
-                const labelText =
-                  cat.id === 'all' ? (lang === 'tr' ? 'Tümü (Genel)' : 'All (General)') : cat.label[lang];
-                return (
-                  <button
-                    key={cat.id}
-                    type="button"
-                    onClick={() => {
-                      onButtonPop();
-                      onSelectCategory(cat.id);
-                      setIsCategoryDrawerOpen(false);
-                    }}
-                    data-testid={`category-option-${cat.id}`}
-                    className={`inline-flex h-9 items-center gap-1.5 rounded-full border px-2.5 text-[11px] font-extrabold transition ${
-                      isActive
-                        ? cat.id === 'vocabulary'
-                          ? 'border-indigo-400 bg-indigo-600 text-white'
-                          : 'border-white bg-white text-[#09090B]'
-                        : 'border-white/20 bg-white/10 text-white hover:bg-white/15'
-                    }`}
-                  >
-                    <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-white/95 p-0.5">
-                      <img
-                        src={cat.iconPath}
-                        alt=""
-                        aria-hidden="true"
-                        className="h-3.5 w-3.5 object-contain"
-                      />
-                    </span>
-                    <span>{labelText}</span>
-                  </button>
-                );
-              })}
+            {/* Top Navigation Bar */}
+            <div
+              className={`flex shrink-0 items-center justify-between gap-3 border-b px-4 pb-3 pt-[calc(env(safe-area-inset-top,14px)+14px)] lg:pt-4 ${
+                darkMode ? 'border-white/10 bg-[#0A0A0E]' : 'border-[#1E1B2E]/10 bg-[#F7F5FB]'
+              }`}
+            >
+              <button
+                type="button"
+                onClick={() => {
+                  onButtonPop();
+                  setIsCategoryDrawerOpen(false);
+                }}
+                className={`inline-flex h-10 items-center gap-2 rounded-full border px-3.5 text-xs font-extrabold transition active:scale-95 ${
+                  darkMode
+                    ? 'border-white/15 bg-white/10 text-white hover:bg-white/15'
+                    : 'border-[#1E1B2E]/15 bg-white text-[#1E1B2E] hover:bg-slate-50'
+                }`}
+              >
+                <ArrowLeft className="h-4 w-4 shrink-0" />
+                <span>{lang === 'tr' ? 'Keşfe Dön' : 'Back to Feed'}</span>
+              </button>
+
+              <span
+                className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[11px] font-black uppercase tracking-wider ${
+                  darkMode ? 'bg-violet-500/20 text-violet-200' : 'bg-violet-100 text-violet-800'
+                }`}
+              >
+                <img src={DOCK_ICON_MAP.explore} alt="" aria-hidden="true" className="h-4 w-4 object-contain" />
+                <span>{lang === 'tr' ? 'Konu Seç' : 'Choose Topic'}</span>
+              </span>
+            </div>
+
+            {/* Category Explorer Grid */}
+            <div className="no-scrollbar flex-1 overflow-y-auto px-4 py-5 pb-[calc(env(safe-area-inset-bottom,16px)+28px)]">
+              <div className="grid grid-cols-2 gap-3">
+                {CATEGORY_SELECTOR_OPTIONS.map((cat) => {
+                  const isActive = activeCategory === cat.id;
+                  const labelText =
+                    cat.id === 'all' ? (lang === 'tr' ? 'Tümü (Genel)' : 'All (General)') : cat.label[lang];
+                  const artPath =
+                    cat.id === 'all'
+                      ? DOCK_ICON_MAP.explore
+                      : cat.id === 'vocabulary'
+                        ? UI_ICON_PATHS.langGlobe
+                        : CATEGORY_ILLUSTRATION_MAP[cat.id];
+                  return (
+                    <button
+                      key={cat.id}
+                      type="button"
+                      onClick={() => {
+                        onButtonPop();
+                        onSelectCategory(cat.id);
+                        setIsCategoryDrawerOpen(false);
+                      }}
+                      data-testid={`category-option-${cat.id}`}
+                      className={`group relative flex flex-col items-start gap-2.5 rounded-2xl border p-3.5 text-left transition active:scale-[0.98] ${
+                        isActive
+                          ? cat.id === 'vocabulary'
+                            ? 'border-indigo-400 bg-indigo-600 text-white shadow-lg shadow-indigo-500/25'
+                            : 'border-violet-400 bg-violet-600 text-white shadow-lg shadow-violet-500/25'
+                          : darkMode
+                            ? 'border-white/10 bg-white/[0.05] text-white hover:bg-white/[0.1]'
+                            : 'border-[#1E1B2E]/10 bg-white text-[#1E1B2E] shadow-sm hover:bg-slate-50'
+                      }`}
+                    >
+                      <div className="flex w-full items-center justify-between gap-2">
+                        <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-white/95 p-1.5 shadow-sm">
+                          <img
+                            src={artPath}
+                            alt=""
+                            aria-hidden="true"
+                            className="h-8 w-8 object-contain transition group-hover:scale-105"
+                          />
+                        </span>
+                        <img
+                          src={cat.iconPath}
+                          alt=""
+                          aria-hidden="true"
+                          className="h-5 w-5 object-contain opacity-85"
+                        />
+                      </div>
+                      <span className="text-xs font-extrabold leading-snug">{labelText}</span>
+                    </button>
+                  );
+                })}
+              </div>
             </div>
           </motion.div>
         )}
@@ -784,6 +864,7 @@ const TikTokFeed = forwardRef<TikTokFeedHandle, TikTokFeedProps>(function TikTok
                   isGuessLocked={Boolean(lockedFactIds?.[slide.fact.id])}
                   cookieBannerVisible={cookieBannerVisible}
                   onFlip={onFlipCard}
+                  onOpenDetail={onOpenDetail}
                   onDoubleTapLike={onDoubleTapLike}
                   onDwellRead={onDwellRead}
                   onNextSlide={() => scrollToSlide(slideIdx + 1)}

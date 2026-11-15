@@ -345,26 +345,19 @@ export default function VocabularySlide({
         />
 
         {resolvedGifUrl && !gifFailed && (
-          <div className="pointer-events-none absolute inset-x-0 top-0 z-[2] flex justify-center px-4 pt-[calc(env(safe-area-inset-top,14px)+58px)] pr-16 sm:pr-[72px] lg:pr-4">
-            <div className="relative flex w-full items-center justify-center overflow-hidden rounded-2xl bg-[#0A0A0E] shadow-xl">
-              <img
-                ref={gifImgRef}
-                src={resolvedGifUrl}
-                alt={card.word}
-                loading="eager"
-                decoding="async"
-                data-testid="vocab-topic-gif"
-                onLoad={() => setGifLoaded(true)}
-                onError={() => setGifFailed(true)}
-                className={`pointer-events-none max-h-[58dvh] w-full rounded-2xl object-contain sm:object-cover brightness-105 contrast-105 transition-opacity duration-500 ${
-                  gifLoaded ? 'opacity-95' : 'opacity-0'
-                }`}
-              />
-              <div className="pointer-events-auto absolute bottom-2.5 left-4 z-[6]">
-                <PoweredByGiphyBadge micro lang={lang} />
-              </div>
-            </div>
-          </div>
+          <img
+            ref={gifImgRef}
+            src={resolvedGifUrl}
+            alt={card.word}
+            loading="eager"
+            decoding="async"
+            data-testid="vocab-topic-gif"
+            onLoad={() => setGifLoaded(true)}
+            onError={() => setGifFailed(true)}
+            className={`pointer-events-none absolute inset-0 z-[2] h-full w-full object-cover brightness-105 contrast-105 transition-opacity duration-500 ${
+              gifLoaded ? 'opacity-95' : 'opacity-0'
+            }`}
+          />
         )}
 
         {/* Smooth bottom contrast gradient deepening cleanly when drawer opens */}
@@ -388,7 +381,7 @@ export default function VocabularySlide({
         }`}
       >
         <div className="flex flex-col gap-2.5">
-          {/* 1. Top Metadata Row: Localized POS + CEFR Pill */}
+          {/* 1. Top Metadata Row: Localized POS + CEFR Pill + Giphy Attribution */}
           <div className="flex flex-wrap items-center gap-2">
             <span
               data-testid="vocab-badge"
@@ -399,6 +392,11 @@ export default function VocabularySlide({
                 {lang === 'tr' ? 'DİL ÖĞRENME' : 'WORD LAB'} • {posLabel.toUpperCase()} • {cefrLabel}
               </span>
             </span>
+            {resolvedGifUrl && !gifFailed && (
+              <div className="pointer-events-auto">
+                <PoweredByGiphyBadge micro lang={lang} />
+              </div>
+            )}
           </div>
 
           {/* 2. Word Header + Phonetic (tappable to toggle drawer) & Dual Audio Controls */}
