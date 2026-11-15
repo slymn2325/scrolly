@@ -108,6 +108,12 @@ export default function TikTokFactSlide({
   const [miniQuizChoice, setMiniQuizChoice] = useState<number | null>(null);
   const [miniQuizAwarded, setMiniQuizAwarded] = useState(false);
   const [localGuessLocked, setLocalGuessLocked] = useState(false);
+  const [savedGuessResult, setSavedGuessResult] = useState<{
+    tier: 'spotOn' | 'close' | 'participated';
+    earnedXp: number;
+    accuracyPct: number;
+  } | null>(null);
+  const [isDetailsOpen, setIsDetailsOpen] = useState(false);
   const detailDragControls = useDragControls();
   const detailScrollRef = useRef<HTMLDivElement>(null);
   const detailDragYRef = useRef(0);
@@ -122,7 +128,12 @@ export default function TikTokFactSlide({
 
   useEffect(() => {
     setLocalGuessLocked(false);
+    setSavedGuessResult(null);
   }, [fact.id]);
+
+  useEffect(() => {
+    setIsDetailsOpen(false);
+  }, [fact.id, isActive]);
 
   const slideRef = useRef<HTMLDivElement>(null);
   const singleTapTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -664,10 +675,9 @@ export default function TikTokFactSlide({
         }}
       />
 
-      <div className="relative mx-auto flex h-full w-full flex-col overflow-hidden bg-[#0A0A0E]">
-        {/* Upper 43-45% live media stage — bright, vivid GIF or ambient category art */}
-        <div className="relative h-[43%] sm:h-[45%] w-full shrink-0 overflow-hidden bg-[#0A0A0E]">
-          {/* Seamless category canvas fallback / backdrop */}
+      <div className="relative mx-auto h-full w-full overflow-hidden bg-[#0A0A0E]">
+        {/* Full-bleed live visual backdrop (animated canvas fallback + bright GIF layer) */}
+        <div className="pointer-events-none absolute inset-0 overflow-hidden bg-[#0A0A0E]">
           <CategoryMotionArt
             variant="hero"
             factId={fact.id}
@@ -701,100 +711,175 @@ export default function TikTokFactSlide({
             />
           )}
 
-          {/* Top edge gradient only for top HUD readability */}
+          {/* Edge-only gradients so top HUD & bottom title/drawer stay legible without dimming center */}
           <div
             aria-hidden="true"
-            className="pointer-events-none absolute inset-x-0 top-0 z-[5] h-16 bg-gradient-to-b from-black/65 to-transparent"
+            className="pointer-events-none absolute inset-x-0 top-0 z-[5] h-20 bg-gradient-to-b from-black/65 to-transparent"
           />
 
-          {/* Bottom edge gradient blending into the #0A0A0E lower body surface */}
           <div
             aria-hidden="true"
-            className="pointer-events-none absolute inset-x-0 bottom-0 z-[5] h-20 bg-gradient-to-t from-[#0A0A0E] via-[#0A0A0E]/80 to-transparent"
+            className={`pointer-events-none absolute inset-x-0 bottom-0 z-[5] transition-all duration-300 ${
+              isDetailsOpen
+                ? 'h-[78%] bg-gradient-to-t from-[#0A0A0E] via-[#0A0A0E]/95 to-transparent'
+                : 'h-[52%] bg-gradient-to-t from-[#0A0A0E] via-[#0A0A0E]/85 to-transparent'
+            }`}
           />
-
-          {/* Micro GIPHY attribution tucked cleanly in bottom-right corner of the GIF stage */}
-          {!isFlipped && resolvedGifUrl && !gifFailed && (
-            <div className="pointer-events-auto absolute bottom-2 right-3 z-20">
-              <PoweredByGiphyBadge micro lang={lang} />
-            </div>
-          )}
         </div>
 
-        {/* Lower ~55% compact fact text + interactive guess widget */}
+        {/* Bottom collapsed headline + expandable story & guess drawer */}
         <div
           data-testid="fact-card-front"
-          className={`relative z-10 flex min-h-0 flex-1 flex-col justify-start overflow-hidden bg-[#0A0A0E] px-4 pt-1 pr-14 sm:pr-16 lg:pr-4 ${
+          className={`relative z-10 flex h-full w-full flex-col justify-end overflow-hidden px-4 pt-20 pr-14 sm:pr-16 lg:pr-5 ${
             cookieBannerVisible
               ? 'pb-[calc(env(safe-area-inset-bottom,16px)+200px)] lg:pb-6'
               : 'pb-[calc(env(safe-area-inset-bottom,16px)+84px)] lg:pb-6'
           } ${isFlipped ? 'invisible pointer-events-none' : ''}`}
         >
-          <div className="pointer-events-none relative z-10 flex max-h-full w-full flex-col overflow-y-auto no-scrollbar">
-            <div className="mb-1.5 flex flex-wrap items-center gap-2">
-              <div className="inline-flex w-fit items-center gap-1.5 rounded-full border border-white/15 bg-white/10 px-2.5 py-0.5 text-[10px] font-extrabold uppercase tracking-wide text-white">
-                <span className="flex h-3.5 w-3.5 shrink-0 items-center justify-center rounded-full bg-white/95 p-0.5">
-                  <img src={catMeta.iconPath} alt="" aria-hidden="true" className="h-2.5 w-2.5 object-contain" />
-                </span>
-                <span>{catMeta.label[lang]}</span>
+          <div
+            className={`pointer-events-none relative z-10 flex w-full flex-col no-scrollbar ${
+              isDetailsOpen ? 'max-h-[min(100%,calc(100dvh-140px))] overflow-y-auto' : ''
+            }`}
+          >
+            <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+              <div className="flex flex-wrap items-center gap-2">
+                <div className="inline-flex w-fit items-center gap-1.5 rounded-full border border-white/15 bg-white/10 px-2.5 py-0.5 text-[10px] font-extrabold uppercase tracking-wide text-white backdrop-blur-sm">
+                  <span className="flex h-3.5 w-3.5 shrink-0 items-center justify-center rounded-full bg-white/95 p-0.5">
+                    <img src={catMeta.iconPath} alt="" aria-hidden="true" className="h-2.5 w-2.5 object-contain" />
+                  </span>
+                  <span>{catMeta.label[lang]}</span>
+                </div>
+
+                <button
+                  type="button"
+                  data-testid="front-see-details-btn"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onButtonPop();
+                    executeFlip();
+                  }}
+                  onDoubleClick={(e) => e.stopPropagation()}
+                  onPointerDown={(e) => e.stopPropagation()}
+                  onTouchStart={(e) => e.stopPropagation()}
+                  className="pointer-events-auto inline-flex min-h-[26px] items-center gap-1 rounded-full border border-white/15 bg-white/10 px-2.5 py-0.5 text-[10px] font-extrabold text-white/90 backdrop-blur-sm transition hover:bg-white/20 hover:text-white"
+                >
+                  <Info className="h-3 w-3 shrink-0" aria-hidden="true" />
+                  <span>{lang === 'tr' ? 'Kaynak' : 'Source'}</span>
+                </button>
               </div>
 
-              <button
-                type="button"
-                data-testid="front-see-details-btn"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onButtonPop();
-                  executeFlip();
-                }}
-                onDoubleClick={(e) => e.stopPropagation()}
-                onPointerDown={(e) => e.stopPropagation()}
-                onTouchStart={(e) => e.stopPropagation()}
-                className="pointer-events-auto inline-flex min-h-[26px] items-center gap-1 rounded-full border border-white/15 bg-white/10 px-2.5 py-0.5 text-[10px] font-extrabold text-white/90 transition hover:bg-white/20 hover:text-white"
-              >
-                <Info className="h-3 w-3 shrink-0" aria-hidden="true" />
-                <span>{lang === 'tr' ? 'Kaynak' : 'Source'}</span>
-              </button>
+              {resolvedGifUrl && !gifFailed && (
+                <div className="pointer-events-auto shrink-0">
+                  <PoweredByGiphyBadge micro lang={lang} />
+                </div>
+              )}
             </div>
 
-            <h2
-              data-testid="fact-headline"
-              className="mb-1.5 font-display text-lg font-bold leading-snug text-white whitespace-normal break-words sm:text-xl"
+            <button
+              type="button"
+              data-testid="fact-headline-toggle"
+              aria-expanded={isDetailsOpen}
+              onClick={(e) => {
+                e.stopPropagation();
+                onButtonPop();
+                setIsDetailsOpen((prev) => !prev);
+              }}
+              onDoubleClick={(e) => e.stopPropagation()}
+              onPointerDown={(e) => e.stopPropagation()}
+              onTouchStart={(e) => e.stopPropagation()}
+              className="pointer-events-auto group w-full text-left focus:outline-none"
             >
-              {localized.title}
-            </h2>
+              <h2
+                data-testid="fact-headline"
+                className="font-display text-xl font-bold leading-snug text-white text-left whitespace-normal break-words drop-shadow sm:text-2xl"
+              >
+                {localized.title}
+              </h2>
+              {!isDetailsOpen && (
+                <span className="mt-1.5 inline-flex items-center gap-1 text-[11px] font-bold text-white/75 transition group-hover:text-white">
+                  {lang === 'tr'
+                    ? '👆 Hikaye ve tahmin için başlığa dokun ▾'
+                    : '👆 Tap headline for story & quiz ▾'}
+                </span>
+              )}
+            </button>
 
-            <p
-              data-testid="fact-body"
-              className="mb-2.5 text-xs font-medium leading-relaxed text-white/85 line-clamp-2 whitespace-normal break-words sm:text-sm sm:line-clamp-3"
-            >
-              {maskedFactText}
-            </p>
+            <AnimatePresence initial={false}>
+              {isDetailsOpen && (
+                <motion.div
+                  key="details-drawer"
+                  data-testid="fact-details-drawer"
+                  initial={{ opacity: 0, height: 0, y: 8 }}
+                  animate={{ opacity: 1, height: 'auto', y: 0 }}
+                  exit={{ opacity: 0, height: 0, y: 8 }}
+                  transition={{ duration: 0.24, ease: 'easeOut' }}
+                  className="pointer-events-auto overflow-hidden"
+                >
+                  <div
+                    onClick={(e) => e.stopPropagation()}
+                    onDoubleClick={(e) => e.stopPropagation()}
+                    onPointerDown={(e) => e.stopPropagation()}
+                    onTouchStart={(e) => e.stopPropagation()}
+                    className="mt-2 rounded-2xl border border-white/15 bg-[#0A0A0E]/90 p-3.5 backdrop-blur-md"
+                  >
+                    <div className="mb-1.5 flex items-center justify-end">
+                      <button
+                        type="button"
+                        data-testid="front-collapse-btn"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onButtonPop();
+                          setIsDetailsOpen(false);
+                        }}
+                        className="inline-flex min-h-[26px] items-center gap-1 rounded-full border border-white/15 bg-white/10 px-2.5 py-0.5 text-[10px] font-extrabold text-white/85 transition hover:bg-white/20 hover:text-white"
+                      >
+                        {lang === 'tr' ? '▴ Daralt' : '▴ Collapse'}
+                      </button>
+                    </div>
 
-            {localized.guessChallenge && (
-              <GuessWidget
-                factId={fact.id}
-                challenge={localized.guessChallenge}
-                lang={lang}
-                onGuessLocked={(id) => {
-                  setLocalGuessLocked(true);
-                  onGuessLocked?.(id);
-                }}
-                onGuessAnswered={(xpAwarded, accurate, details) => {
-                  setLocalGuessLocked(true);
-                  onGuessLocked?.(fact.id);
-                  onGuessReward(xpAwarded, accurate, fact.category, details.accuracyPct);
-                  void trackEvent(factSlug, fact.category, 'quick_guess', {
-                    guess: details.userGuess,
-                    target: details.correctValue,
-                    accuracy: details.accuracyPct,
-                    xp_awarded: xpAwarded,
-                  });
-                }}
-                onRequestFlip={() => executeFlip()}
-                onButtonPop={onButtonPop}
-              />
-            )}
+                    <p
+                      data-testid="fact-body"
+                      className="mb-2.5 text-xs font-medium leading-relaxed text-white/90 whitespace-normal break-words sm:text-sm"
+                    >
+                      {maskedFactText}
+                    </p>
+
+                    {localized.guessChallenge && (
+                      <GuessWidget
+                        factId={fact.id}
+                        challenge={localized.guessChallenge}
+                        lang={lang}
+                        initialAnsweredState={savedGuessResult}
+                        onGuessLocked={(id) => {
+                          setLocalGuessLocked(true);
+                          onGuessLocked?.(id);
+                        }}
+                        onGuessAnswered={(xpAwarded, accurate, details) => {
+                          const nextTier: 'spotOn' | 'close' | 'participated' =
+                            xpAwarded >= 20 ? 'spotOn' : xpAwarded >= 15 ? 'close' : 'participated';
+                          setSavedGuessResult({
+                            tier: nextTier,
+                            earnedXp: xpAwarded,
+                            accuracyPct: details.accuracyPct,
+                          });
+                          setLocalGuessLocked(true);
+                          onGuessLocked?.(fact.id);
+                          onGuessReward(xpAwarded, accurate, fact.category, details.accuracyPct);
+                          void trackEvent(factSlug, fact.category, 'quick_guess', {
+                            guess: details.userGuess,
+                            target: details.correctValue,
+                            accuracy: details.accuracyPct,
+                            xp_awarded: xpAwarded,
+                          });
+                        }}
+                        onRequestFlip={() => executeFlip()}
+                        onButtonPop={onButtonPop}
+                      />
+                    )}
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
         </div>
 

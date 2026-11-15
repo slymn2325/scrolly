@@ -3,6 +3,7 @@
 import React from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import {
+  BookOpen,
   Brain,
   Calendar,
   CheckCircle2,
@@ -18,7 +19,7 @@ import { CATEGORIES, type Language, translations, VOCABULARY_META } from '@/i18n
 import { STATE_ILLUSTRATION_PATHS, UI_ICON_PATHS } from '@/utils/icons8Assets';
 import { useEscapeClose } from '@/utils/useEscapeClose';
 
-export type QuizModeChoice = 'daily' | 'weekly' | 'memory';
+export type QuizModeChoice = 'daily' | 'weekly' | 'memory' | 'vocabulary';
 
 interface QuizHubModalProps {
   open: boolean;
@@ -251,6 +252,40 @@ export default function QuizHubModal({
                   </div>
                 </div>
                 <Brain className="h-5 w-5 shrink-0 text-teal-600 dark:text-teal-300" />
+              </motion.button>
+
+              {/* 4. Word Lab Vocabulary Quiz (5 curated B1-C2 vocab cards) */}
+              <motion.button
+                type="button"
+                whileTap={{ scale: 0.96 }}
+                onClick={() => {
+                  onButtonPop();
+                  onSelectMode('vocabulary');
+                }}
+                data-testid="start-vocab-quiz-btn"
+                className="flex w-full items-center justify-between gap-3 rounded-2xl border-2 border-indigo-200 bg-gradient-to-r from-indigo-50/80 to-sky-50/75 p-4 text-left shadow-sm transition hover:brightness-95 dark:border-indigo-500/45 dark:from-indigo-950/60 dark:to-[#17162E]"
+              >
+                <div className="flex items-start gap-3">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-indigo-500/20 text-indigo-700 dark:text-indigo-300">
+                    <BookOpen className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <div className="flex flex-wrap items-center gap-1.5">
+                      <span className="font-display text-base font-bold text-ink dark:text-white">
+                        {lang === 'tr' ? '🇬🇧 Kelime Quizi (Word Lab)' : '🇬🇧 Word Lab Quiz'}
+                      </span>
+                      <span className="rounded-full bg-indigo-600/15 px-2 py-0.5 text-[10px] font-extrabold text-indigo-700 dark:bg-indigo-500/25 dark:text-indigo-200">
+                        B1–C2
+                      </span>
+                    </div>
+                    <p className="mt-0.5 text-xs font-medium text-ink/70 dark:text-violet-200/75">
+                      {lang === 'tr'
+                        ? 'Bağlam içi cümleler, sesli telaffuz ve eş anlamlılarla 5 kelimelik test'
+                        : '5 curated B1–C2 vocabulary questions with pronunciation & context'}
+                    </p>
+                  </div>
+                </div>
+                <BookOpen className="h-5 w-5 shrink-0 text-indigo-600 dark:text-indigo-300" />
               </motion.button>
             </div>
 

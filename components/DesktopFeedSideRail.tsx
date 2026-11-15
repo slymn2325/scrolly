@@ -18,6 +18,15 @@ import PoweredByGiphyBadge from '@/components/PoweredByGiphyBadge';
 import type { FeedSlideItem } from '@/components/TikTokFeed';
 import { getCategoryMeta, type Language } from '@/i18n/translations';
 import type { FactCard } from '@/types/fact';
+import type { VocabPartOfSpeech } from '@/types/vocabulary';
+
+const PART_OF_SPEECH_LABELS: Record<VocabPartOfSpeech, { tr: string; en: string }> = {
+  isim: { tr: 'İsim', en: 'Noun' },
+  sıfat: { tr: 'Sıfat', en: 'Adjective' },
+  fiil: { tr: 'Fiil', en: 'Verb' },
+  zarf: { tr: 'Zarf', en: 'Adverb' },
+  edat: { tr: 'Edat', en: 'Preposition' },
+};
 
 interface DesktopFeedSideRailProps {
   onPrev: () => void;
@@ -68,6 +77,9 @@ export default function DesktopFeedSideRail({
 
   const labelTone = darkMode ? 'text-white/75' : 'text-[#1E1B2E]/75';
   const hasFact = Boolean(activeFact);
+  const isVocab = activeSlide?.type === 'vocabulary';
+  const canSave = Boolean(hasFact || isVocab);
+  const canDetail = Boolean(hasFact || isVocab);
   const catMeta = activeFact ? getCategoryMeta(activeFact.category) : null;
   const localized = activeFact ? activeFact[lang] : null;
   const sourceName =
@@ -98,23 +110,26 @@ export default function DesktopFeedSideRail({
       };
     }
     if (activeSlide?.type === 'vocabulary') {
-      const cefr = (activeSlide.card.cefrLevel || 'B2/C1').trim().toUpperCase();
-      const synonyms = (activeSlide.card.synonyms || [])
+      const card = activeSlide.card;
+      const cefr = (card.cefrLevel || 'B2/C1').trim().toUpperCase();
+      const localizedPos =
+        PART_OF_SPEECH_LABELS[card.partOfSpeech]?.[lang] || card.partOfSpeech;
+      const synonyms = (card.synonyms || [])
         .map((s) => s.trim())
         .filter(Boolean)
         .slice(0, 2);
       return {
         kind: 'other' as const,
-        badge: lang === 'tr' ? '📚 İngilizce Kelime' : '📚 Vocabulary Card',
+        badge: lang === 'tr' ? '🇬🇧 Kelime Laboratuvarı' : '🇬🇧 Word Lab',
         badgeColor: '#6366F1',
-        subLabel: [cefr, activeSlide.card.partOfSpeech, activeSlide.card.phonetic]
-          .filter(Boolean)
-          .join(' · '),
+        subLabel: [cefr, localizedPos, card.phonetic].filter(Boolean).join(' · '),
+        definitionEn: card.definitionEn,
+        exampleEn: card.exampleEn,
         synonyms,
         note:
           lang === 'tr'
-            ? 'İngilizce bağlam cümlesini incele, 1.0x/0.75x telaffuzu dinle ve doğru Türkçe anlamı seç.'
-            : 'Read the context sentence, listen at 1.0x or 0.75x speed, and pick the matching meaning.',
+            ? 'Bağlam cümlesini ve İngilizce tanımı incele; karttaki başlığa veya Detay butonuna dokunarak anlam testini aç.'
+            : 'Review the English definition and context sentence, then tap the word header or Detail to open the meaning quiz.',
         xpLabel: '+15 XP',
       };
     }
@@ -189,17 +204,17 @@ export default function DesktopFeedSideRail({
               type="button"
               data-testid="desktop-action-save"
               onClick={onSave}
-              disabled={!hasFact}
+              disabled={!canSave}
               aria-label={lang === 'tr' ? 'Kaydet' : 'Save'}
               className={`flex h-11 w-11 items-center justify-center rounded-full border backdrop-blur-md transition ${
-                !hasFact
+                !canSave
                   ? `${actionBtn} cursor-not-allowed opacity-35`
                   : isSaved
                     ? 'border-amber-400/60 bg-amber-400 text-[#09090B] shadow-lg shadow-amber-400/30'
                     : actionBtn
               }`}
             >
-              <Bookmark className={`h-5 w-5 ${isSaved && hasFact ? 'fill-current' : ''}`} />
+              <Bookmark className={`h-5 w-5 ${isSaved && canSave ? 'fill-current' : ''}`} />
             </button>
             <span className={`text-[10px] font-extrabold ${labelTone}`}>
               {lang === 'tr' ? 'Kaydet' : 'Save'}
@@ -213,10 +228,10 @@ export default function DesktopFeedSideRail({
               type="button"
               data-testid="desktop-action-detail"
               onClick={onDetail}
-              disabled={!hasFact}
+              disabled={!canDetail}
               aria-label={lang === 'tr' ? 'Detay' : 'Detail'}
               className={`flex h-11 w-11 items-center justify-center rounded-full border backdrop-blur-md transition ${actionBtn} ${
-                !hasFact ? 'cursor-not-allowed opacity-35' : ''
+                !canDetail ? 'cursor-not-allowed opacity-35' : ''
               }`}
             >
               <BookOpen className="h-5 w-5" />
@@ -378,42 +393,92 @@ export default function DesktopFeedSideRail({
                 </div>
               )
             ) : (
-              <div className="mt-2">
+              <div className="mt-2 space-y-2">
                 {slideSummary.subLabel && (
                   <p className={`text-[11px] font-bold ${darkMode ? 'text-indigo-300' : 'text-indigo-700'}`}>
                     {slideSummary.subLabel}
                   </p>
                 )}
+                {'definitionEn' in slideSummary && slideSummary.definitionEn && (
+                  <div
+                    className={`rounded-xl border px-2.5 py-2 ${
+                      darkMode
+                        ? 'border-white/10 bg-white/[0.04]'
+                        : 'border-[#1E1B2E]/10 bg-[#1E1B2E]/[0.03]'
+                    }`}
+                  >
+                    <p
+                      className={`text-[10px] font-black uppercase tracking-wider ${
+                        darkMode ? 'text-white/50' : 'text-[#1E1B2E]/55'
+                      }`}
+                    >
+                      {lang === 'tr' ? 'İngilizce Tanım' : 'English Definition'}
+                    </p>
+                    <p
+                      className={`mt-0.5 text-xs font-semibold leading-snug ${
+                        darkMode ? 'text-white/90' : 'text-[#1E1B2E]/90'
+                      }`}
+                    >
+                      {slideSummary.definitionEn}
+                    </p>
+                  </div>
+                )}
+                {'exampleEn' in slideSummary && slideSummary.exampleEn && (
+                  <div
+                    className={`rounded-xl border px-2.5 py-2 ${
+                      darkMode
+                        ? 'border-indigo-400/20 bg-indigo-500/[0.08]'
+                        : 'border-indigo-200 bg-indigo-50/70'
+                    }`}
+                  >
+                    <p
+                      className={`text-[10px] font-black uppercase tracking-wider ${
+                        darkMode ? 'text-indigo-300' : 'text-indigo-700'
+                      }`}
+                    >
+                      {lang === 'tr' ? 'Örnek Kullanım' : 'Usage Context'}
+                    </p>
+                    <p
+                      className={`mt-0.5 text-xs font-medium italic leading-snug ${
+                        darkMode ? 'text-white/85' : 'text-[#1E1B2E]/85'
+                      }`}
+                    >
+                      “{slideSummary.exampleEn}”
+                    </p>
+                  </div>
+                )}
                 <p
-                  className={`mt-1 text-xs font-medium leading-relaxed ${
+                  className={`text-xs font-medium leading-relaxed ${
                     darkMode ? 'text-white/75' : 'text-[#1E1B2E]/75'
                   }`}
                 >
                   {slideSummary.note}
                 </p>
-                {slideSummary.synonyms && slideSummary.synonyms.length > 0 && (
-                  <div className="mt-2.5 flex flex-wrap items-center gap-1.5">
-                    <span
-                      className={`text-[10px] font-black uppercase tracking-wider ${
-                        darkMode ? 'text-white/50' : 'text-[#1E1B2E]/55'
-                      }`}
-                    >
-                      {lang === 'tr' ? 'Eş Anlam:' : 'Synonyms:'}
-                    </span>
-                    {slideSummary.synonyms.map((syn) => (
+                {'synonyms' in slideSummary &&
+                  slideSummary.synonyms &&
+                  slideSummary.synonyms.length > 0 && (
+                    <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
                       <span
-                        key={syn}
-                        className={`rounded-full border px-2 py-0.5 text-[10px] font-bold ${
-                          darkMode
-                            ? 'border-indigo-400/30 bg-indigo-500/20 text-indigo-200'
-                            : 'border-indigo-300 bg-indigo-50 text-indigo-800'
+                        className={`text-[10px] font-black uppercase tracking-wider ${
+                          darkMode ? 'text-white/50' : 'text-[#1E1B2E]/55'
                         }`}
                       >
-                        ≈ {syn}
+                        {lang === 'tr' ? 'Eş Anlam:' : 'Synonyms:'}
                       </span>
-                    ))}
-                  </div>
-                )}
+                      {slideSummary.synonyms.map((syn) => (
+                        <span
+                          key={syn}
+                          className={`rounded-full border px-2 py-0.5 text-[10px] font-bold ${
+                            darkMode
+                              ? 'border-indigo-400/30 bg-indigo-500/20 text-indigo-200'
+                              : 'border-indigo-300 bg-indigo-50 text-indigo-800'
+                          }`}
+                        >
+                          ≈ {syn}
+                        </span>
+                      ))}
+                    </div>
+                  )}
               </div>
             )}
           </div>

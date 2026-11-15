@@ -8,9 +8,7 @@ import QuizCtaSlide from '@/components/QuizCtaSlide';
 import TikTokFactSlide from '@/components/TikTokFactSlide';
 import VocabularySlide from '@/components/VocabularySlide';
 import {
-  CATEGORIES,
   CATEGORY_SELECTOR_OPTIONS,
-  FEED_EXPERIENCE_COPY,
   getCategoryMeta,
   type CategoryFilter,
   type CategoryId,
@@ -82,8 +80,6 @@ const TikTokFeed = forwardRef<TikTokFeedHandle, TikTokFeedProps>(function TikTok
     soundEnabled,
     activeCategory,
     favoriteIds,
-    streakDays,
-    xp,
     cardsSinceLastQuiz,
     totalCardsViewed = 0,
     cookieBannerVisible = false,
@@ -134,9 +130,13 @@ const TikTokFeed = forwardRef<TikTokFeedHandle, TikTokFeedProps>(function TikTok
   const [isCategoryDrawerOpen, setIsCategoryDrawerOpen] = useState<boolean>(false);
   const [chromeBlocked, setChromeBlocked] = useState<boolean>(false);
   const t = translations[lang];
-  const copy = FEED_EXPERIENCE_COPY[lang];
-  const allCategoryMeta = CATEGORIES[0];
   const activeCategoryMeta = getCategoryMeta(activeCategory);
+  const categoryTriggerLabel =
+    activeCategory === 'all'
+      ? lang === 'tr'
+        ? 'Kategori: Tümü'
+        : 'Category: All'
+      : activeCategoryMeta.label[lang];
   const vocabPool = useMemo(() => {
     const staticVocab = getVocabularyFacts();
     if (!vocabularyCards || vocabularyCards.length === 0) return staticVocab;
@@ -493,224 +493,151 @@ const TikTokFeed = forwardRef<TikTokFeedHandle, TikTokFeedProps>(function TikTok
         darkMode ? 'bg-[#0A0A0E] text-white' : 'bg-[#F7F5FB] text-[#1E1B2E]'
       }`}
     >
-      {/* Top HUD — compact, z-40 crisp controls with safe-area notch clearance (no white mist). */}
+      {/* Top HUD — sleek single horizontal row: Left Category Picker | Right Controls */}
       <header
         data-chrome-blocked={chromeBlocked ? 'true' : 'false'}
-        className={`pointer-events-none absolute inset-x-0 top-0 z-40 w-full px-2.5 pt-[max(env(safe-area-inset-top,12px),12px)] pb-1.5 ${
+        className={`pointer-events-none absolute inset-x-0 top-0 z-30 flex items-center justify-between gap-2 px-4 pt-[max(env(safe-area-inset-top,14px),14px)] pb-2 ${
           chromeBlocked ? 'opacity-40' : ''
         }`}
       >
         <div
           aria-hidden="true"
-          className="pointer-events-none absolute inset-x-0 top-0 h-[calc(env(safe-area-inset-top,0px)+16px)] bg-gradient-to-b from-black/60 via-black/35 to-transparent"
+          className="pointer-events-none absolute inset-x-0 top-0 h-20 bg-gradient-to-b from-black/60 via-black/30 to-transparent"
         />
-        {/* Top Utility Bar: Left Streak+XP | Right Controls */}
+
         <div
-          className={`relative z-10 flex flex-wrap items-center justify-between gap-1.5 ${
-            chromeBlocked ? 'pointer-events-none' : 'pointer-events-auto'
-          }`}
-        >
-          <div className="flex flex-wrap items-center gap-1">
-            <div
-              data-testid="top-streak-xp-pill"
-              className="inline-flex items-center gap-1.5 rounded-full border border-white/25 bg-[#0B0B10]/85 px-2.5 py-1 text-[10px] font-extrabold text-white shadow-md lg:hidden"
-            >
-              <span className="inline-flex items-center gap-1 text-amber-300">
-                <img
-                  src={UI_ICON_PATHS.streakFire}
-                  alt=""
-                  aria-hidden="true"
-                  className="h-3.5 w-3.5 object-contain"
-                />
-                <span>{streakDays}</span>
-              </span>
-              <span className="h-3 w-px bg-white/25" />
-              <span className="inline-flex items-center gap-1 text-violet-200">
-                <img
-                  src={UI_ICON_PATHS.xpSparkles}
-                  alt=""
-                  aria-hidden="true"
-                  className="h-3.5 w-3.5 object-contain"
-                />
-                <span>{xp}</span>
-              </span>
-            </div>
-          </div>
-
-          <div className="flex flex-wrap items-center gap-1">
-            <motion.button
-              type="button"
-              whileTap={{ scale: 0.92 }}
-              onClick={onToggleDarkMode}
-              aria-label={darkMode ? t.lightModeOn : t.darkModeOn}
-              data-testid="theme-toggle-btn"
-              className={`flex h-9 w-9 items-center justify-center rounded-full border shadow-md ${
-                darkMode
-                  ? 'border-white/25 bg-[#0B0B10]/85 text-amber-200'
-                  : 'border-[#1E1B2E]/15 bg-white/95 text-amber-700'
-              }`}
-            >
-              <img
-                src={darkMode ? UI_ICON_PATHS.themeSun : UI_ICON_PATHS.themeMoon}
-                alt=""
-                aria-hidden="true"
-                className="h-5 w-5 object-contain"
-              />
-            </motion.button>
-
-            <motion.button
-              type="button"
-              whileTap={{ scale: 0.92 }}
-              onClick={onToggleSound}
-              aria-label={soundEnabled ? t.soundOn : t.soundOff}
-              data-testid="sound-toggle-btn"
-              className={`flex h-9 w-9 items-center justify-center rounded-full border shadow-md ${
-                darkMode
-                  ? 'border-white/25 bg-[#0B0B10]/85 text-violet-200'
-                  : 'border-[#1E1B2E]/15 bg-white/95 text-violet-700'
-              }`}
-            >
-              <img
-                src={soundEnabled ? UI_ICON_PATHS.soundOn : UI_ICON_PATHS.soundOff}
-                alt=""
-                aria-hidden="true"
-                className={`h-5 w-5 object-contain ${soundEnabled ? '' : 'opacity-45 grayscale'}`}
-              />
-            </motion.button>
-
-            <div
-              role="group"
-              aria-label="Language switch"
-              className={`flex items-center gap-0.5 rounded-full border p-0.5 text-[10px] font-black shadow-md ${
-                darkMode
-                  ? 'border-white/25 bg-[#0B0B10]/85 text-white'
-                  : 'border-[#1E1B2E]/15 bg-white/95 text-[#1E1B2E]'
-              }`}
-            >
-              <img
-                src={UI_ICON_PATHS.langGlobe}
-                alt=""
-                aria-hidden="true"
-                className="ml-1 h-3.5 w-3.5 object-contain"
-              />
-              <button
-                type="button"
-                onClick={() => onChangeLang('tr')}
-                data-testid="lang-btn-tr"
-                className={`inline-flex h-8 min-w-[32px] items-center justify-center rounded-full px-2 transition-all ${
-                  lang === 'tr'
-                    ? darkMode
-                      ? 'bg-white text-[#09090B]'
-                      : 'bg-[#1E1B2E] text-white'
-                    : darkMode
-                      ? 'text-white/80'
-                      : 'text-[#1E1B2E]/70'
-                }`}
-              >
-                TR
-              </button>
-              <button
-                type="button"
-                onClick={() => onChangeLang('en')}
-                data-testid="lang-btn-en"
-                className={`inline-flex h-8 min-w-[32px] items-center justify-center rounded-full px-2 transition-all ${
-                  lang === 'en'
-                    ? darkMode
-                      ? 'bg-white text-[#09090B]'
-                      : 'bg-[#1E1B2E] text-white'
-                    : darkMode
-                      ? 'text-white/80'
-                      : 'text-[#1E1B2E]/70'
-                }`}
-              >
-                EN
-              </button>
-            </div>
-          </div>
-        </div>
-
-        {/* Genel + Kategori Seç ▾ */}
-        <div
-          data-testid="category-bar"
-          className={`relative z-10 mt-1.5 flex flex-wrap items-center gap-1.5 ${
+          className={`relative z-10 min-w-0 flex-1 ${
             chromeBlocked ? 'pointer-events-none' : 'pointer-events-auto'
           }`}
         >
           <motion.button
             type="button"
-            whileTap={{ scale: 0.94 }}
-            onClick={() => {
-              onButtonPop();
-              setIsCategoryDrawerOpen(false);
-              onSelectCategory('all');
-            }}
-            data-testid="category-pill-all"
-            className={`inline-flex h-8 shrink-0 items-center gap-1.5 rounded-full px-2.5 text-[10px] font-extrabold shadow-md transition-all ${
-              activeCategory === 'all'
-                ? 'bg-white text-[#09090B]'
-                : 'border border-white/25 bg-[#0B0B10]/85 text-white'
-            }`}
-          >
-            <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-white/95 p-0.5">
-              <img
-                src={allCategoryMeta.iconPath}
-                alt=""
-                aria-hidden="true"
-                className="h-3 w-3 object-contain"
-              />
-            </span>
-            <span>{copy.categoryAll}</span>
-          </motion.button>
-
-          <motion.button
-            type="button"
-            whileTap={{ scale: 0.94 }}
+            whileTap={{ scale: 0.96 }}
             onClick={() => {
               onButtonPop();
               setIsCategoryDrawerOpen((prev) => !prev);
             }}
             aria-expanded={isCategoryDrawerOpen}
             data-testid="choose-category-btn"
-            className={`inline-flex h-8 shrink-0 items-center gap-1 rounded-full border px-2.5 text-[10px] font-extrabold shadow-md transition-all ${
+            className={`inline-flex h-9 max-w-full items-center gap-1.5 rounded-full border px-2.5 sm:px-3 text-xs font-extrabold backdrop-blur-md transition ${
               isCategoryDrawerOpen
                 ? 'border-violet-400 bg-violet-600 text-white'
-                : 'border-white/25 bg-[#0B0B10]/85 text-white'
+                : darkMode
+                  ? 'border-white/15 bg-black/50 text-white hover:bg-black/65'
+                  : 'border-[#1E1B2E]/15 bg-white/90 text-[#1E1B2E] shadow-sm hover:bg-white'
             }`}
           >
-            <span>{copy.chooseCategory} ▾</span>
+            <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-white/95 p-0.5">
+              <img
+                src={activeCategoryMeta.iconPath}
+                alt=""
+                aria-hidden="true"
+                className="h-3 w-3 object-contain"
+              />
+            </span>
+            <span className="truncate whitespace-nowrap">{categoryTriggerLabel}</span>
             <ChevronDown
-              className={`h-3.5 w-3.5 transition-transform duration-200 ${
+              className={`h-3.5 w-3.5 shrink-0 transition-transform duration-200 ${
                 isCategoryDrawerOpen ? 'rotate-180' : ''
               }`}
             />
           </motion.button>
-
-          {activeCategory !== 'all' && (
-            <motion.button
-              type="button"
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              onClick={() => setIsCategoryDrawerOpen((prev) => !prev)}
-              data-testid="active-category-badge"
-              className={`inline-flex h-8 shrink-0 items-center gap-1.5 rounded-full border px-2.5 text-[10px] font-extrabold shadow-md ${
-                activeCategory === 'vocabulary'
-                  ? 'border-indigo-300 bg-indigo-600 text-white'
-                  : 'border-white/25 bg-[#0B0B10]/85 text-white'
-              }`}
-            >
-              <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-white/95 p-0.5">
-                <img
-                  src={activeCategoryMeta.iconPath}
-                  alt=""
-                  aria-hidden="true"
-                  className="h-3 w-3 object-contain"
-                />
-              </span>
-              <span>{activeCategoryMeta.label[lang]}</span>
-            </motion.button>
-          )}
         </div>
 
+        <div
+          className={`relative z-10 flex shrink-0 items-center gap-1.5 ${
+            chromeBlocked ? 'pointer-events-none' : 'pointer-events-auto'
+          }`}
+        >
+          <motion.button
+            type="button"
+            whileTap={{ scale: 0.92 }}
+            onClick={onToggleDarkMode}
+            aria-label={darkMode ? t.lightModeOn : t.darkModeOn}
+            data-testid="theme-toggle-btn"
+            className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full border backdrop-blur-md transition ${
+              darkMode
+                ? 'border-white/15 bg-black/50 text-amber-200 hover:bg-black/65'
+                : 'border-[#1E1B2E]/15 bg-white/90 text-amber-700 shadow-sm hover:bg-white'
+            }`}
+          >
+            <img
+              src={darkMode ? UI_ICON_PATHS.themeSun : UI_ICON_PATHS.themeMoon}
+              alt=""
+              aria-hidden="true"
+              className="h-4 w-4 object-contain"
+            />
+          </motion.button>
+
+          <motion.button
+            type="button"
+            whileTap={{ scale: 0.92 }}
+            onClick={onToggleSound}
+            aria-label={soundEnabled ? t.soundOn : t.soundOff}
+            data-testid="sound-toggle-btn"
+            className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full border backdrop-blur-md transition ${
+              darkMode
+                ? 'border-white/15 bg-black/50 text-violet-200 hover:bg-black/65'
+                : 'border-[#1E1B2E]/15 bg-white/90 text-violet-700 shadow-sm hover:bg-white'
+            }`}
+          >
+            <img
+              src={soundEnabled ? UI_ICON_PATHS.soundOn : UI_ICON_PATHS.soundOff}
+              alt=""
+              aria-hidden="true"
+              className={`h-4 w-4 object-contain ${soundEnabled ? '' : 'opacity-45 grayscale'}`}
+            />
+          </motion.button>
+
+          <div
+            role="group"
+            aria-label="Language switch"
+            className={`flex h-9 shrink-0 items-center gap-0.5 rounded-full border p-0.5 text-[10px] font-black backdrop-blur-md transition ${
+              darkMode
+                ? 'border-white/15 bg-black/50 text-white'
+                : 'border-[#1E1B2E]/15 bg-white/90 text-[#1E1B2E] shadow-sm'
+            }`}
+          >
+            <img
+              src={UI_ICON_PATHS.langGlobe}
+              alt=""
+              aria-hidden="true"
+              className="ml-1 h-3.5 w-3.5 shrink-0 object-contain"
+            />
+            <button
+              type="button"
+              onClick={() => onChangeLang('tr')}
+              data-testid="lang-btn-tr"
+              className={`inline-flex h-7 min-w-[30px] items-center justify-center rounded-full px-2 transition-all ${
+                lang === 'tr'
+                  ? darkMode
+                    ? 'bg-white text-[#09090B]'
+                    : 'bg-[#1E1B2E] text-white'
+                  : darkMode
+                    ? 'text-white/80'
+                    : 'text-[#1E1B2E]/70'
+              }`}
+            >
+              TR
+            </button>
+            <button
+              type="button"
+              onClick={() => onChangeLang('en')}
+              data-testid="lang-btn-en"
+              className={`inline-flex h-7 min-w-[30px] items-center justify-center rounded-full px-2 transition-all ${
+                lang === 'en'
+                  ? darkMode
+                    ? 'bg-white text-[#09090B]'
+                    : 'bg-[#1E1B2E] text-white'
+                  : darkMode
+                    ? 'text-white/80'
+                    : 'text-[#1E1B2E]/70'
+              }`}
+            >
+              EN
+            </button>
+          </div>
+        </div>
       </header>
 
       {/* Opaque category picker — sibling of header so it is never clipped by HUD height */}
@@ -723,7 +650,7 @@ const TikTokFeed = forwardRef<TikTokFeedHandle, TikTokFeedProps>(function TikTok
             exit={{ opacity: 0, y: -8, scale: 0.98 }}
             transition={{ duration: 0.18, ease: 'easeOut' }}
             data-testid="category-drawer"
-            className={`pointer-events-auto absolute inset-x-2.5 top-[calc(env(safe-area-inset-top,12px)+88px)] z-40 max-h-[50dvh] overflow-y-auto rounded-2xl border border-white/20 bg-[#111115] p-2.5 text-white shadow-2xl ${
+            className={`pointer-events-auto absolute inset-x-4 top-[calc(env(safe-area-inset-top,14px)+54px)] z-40 max-h-[50dvh] overflow-y-auto rounded-2xl border border-white/20 bg-[#111115] p-2.5 text-white shadow-2xl ${
               chromeBlocked ? 'opacity-40 pointer-events-none' : ''
             }`}
           >

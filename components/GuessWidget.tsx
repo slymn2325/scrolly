@@ -26,6 +26,11 @@ interface GuessWidgetProps {
   onGuessLocked?: (factId: string) => void;
   onRequestFlip: () => void;
   onButtonPop: () => void;
+  initialAnsweredState?: {
+    tier: 'spotOn' | 'close' | 'participated';
+    earnedXp: number;
+    accuracyPct: number;
+  } | null;
 }
 
 function pluralizeUnit(value: number, unit: string | undefined, lang: Language): string {
@@ -49,6 +54,7 @@ export default function GuessWidget({
   onGuessLocked,
   onRequestFlip,
   onButtonPop,
+  initialAnsweredState = null,
 }: GuessWidgetProps) {
   const t = translations[lang];
   const copy = FEED_EXPERIENCE_COPY[lang];
@@ -64,18 +70,29 @@ export default function GuessWidget({
   }, [minVal, maxVal, stepVal]);
 
   const [sliderValue, setSliderValue] = useState<number>(initialSliderValue);
-  const [submitted, setSubmitted] = useState(false);
-  const [tier, setTier] = useState<'spotOn' | 'close' | 'participated' | null>(null);
-  const [earnedXp, setEarnedXp] = useState<number>(0);
-  const [accuracyPct, setAccuracyPct] = useState<number>(100);
+  const [submitted, setSubmitted] = useState<boolean>(Boolean(initialAnsweredState));
+  const [tier, setTier] = useState<'spotOn' | 'close' | 'participated' | null>(
+    initialAnsweredState?.tier ?? null
+  );
+  const [earnedXp, setEarnedXp] = useState<number>(initialAnsweredState?.earnedXp ?? 0);
+  const [accuracyPct, setAccuracyPct] = useState<number>(
+    initialAnsweredState?.accuracyPct ?? 100
+  );
 
   useEffect(() => {
     setSliderValue(initialSliderValue);
-    setSubmitted(false);
-    setTier(null);
-    setEarnedXp(0);
-    setAccuracyPct(100);
-  }, [factId, initialSliderValue]);
+    if (initialAnsweredState) {
+      setSubmitted(true);
+      setTier(initialAnsweredState.tier);
+      setEarnedXp(initialAnsweredState.earnedXp);
+      setAccuracyPct(initialAnsweredState.accuracyPct);
+    } else {
+      setSubmitted(false);
+      setTier(null);
+      setEarnedXp(0);
+      setAccuracyPct(100);
+    }
+  }, [factId, initialSliderValue, initialAnsweredState]);
 
   const stop = (e: React.SyntheticEvent) => {
     e.stopPropagation();

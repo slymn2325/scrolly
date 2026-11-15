@@ -25,7 +25,7 @@ import {
   translations,
   VOCABULARY_META,
 } from '@/i18n/translations';
-import type { VocabularyCard } from '@/types/vocabulary';
+import type { VocabPartOfSpeech, VocabularyCard } from '@/types/vocabulary';
 import { vibrateSuccess, vibrateTap } from '@/utils/haptics';
 import { CATEGORY_SUB_ICON_MAP, UI_ICON_PATHS } from '@/utils/icons8Assets';
 import { prepareQuizOptions, type QuizQuestionItem } from '@/utils/recommendation';
@@ -34,13 +34,14 @@ import { buildStructuredDetailHighlights } from '@/utils/topicMotif';
 import { useEscapeClose } from '@/utils/useEscapeClose';
 import { speakVocabularyText } from '@/utils/vocabNotebook';
 
-export type ActiveQuizMode = 'memory' | 'daily' | 'weekly' | 'duel';
+export type ActiveQuizMode = 'memory' | 'daily' | 'weekly' | 'duel' | 'vocabulary';
 
 interface MemoryQuizCardProps {
   questions: QuizQuestionItem[];
   lang: Language;
   quizMode?: ActiveQuizMode;
   duelConfig?: DuelChallengeConfig | null;
+  vocabularyPool?: VocabularyCard[];
   onAnswerSound: (isCorrect: boolean) => void;
   onTickSound: (urgent: boolean) => void;
   onButtonPop: () => void;
@@ -56,7 +57,7 @@ interface MemoryQuizCardProps {
 
 function getDefaultDuration(mode: ActiveQuizMode): number {
   if (mode === 'weekly') return 90;
-  if (mode === 'daily') return 60;
+  if (mode === 'daily' || mode === 'vocabulary') return 60;
   return 45;
 }
 
@@ -118,6 +119,18 @@ function maskStandaloneWord(sentence: string, word: string): string {
   return matcher.test(sentence) ? sentence.replace(matcher, '_____') : '';
 }
 
+const VOCAB_POS_LABELS: Record<VocabPartOfSpeech, { tr: string; en: string }> = {
+  isim: { tr: 'İsim', en: 'Noun' },
+  sıfat: { tr: 'Sıfat', en: 'Adjective' },
+  fiil: { tr: 'Fiil', en: 'Verb' },
+  zarf: { tr: 'Zarf', en: 'Adverb' },
+  edat: { tr: 'Edat', en: 'Preposition' },
+};
+
+function resolveVocabPosLabel(partOfSpeech: VocabPartOfSpeech, lang: Language): string {
+  return VOCAB_POS_LABELS[partOfSpeech]?.[lang] ?? partOfSpeech;
+}
+
 function buildVocabQuizEntry(
   card: VocabularyCard,
   allVocab: VocabularyCard[],
@@ -170,6 +183,10 @@ function buildVocabQuizEntry(
   const validTrIdx: 0 | 1 | 2 =
     Array.isArray(card.quizOptions) && card.quizOptions.length === 3 ? card.correctIndex : 0;
 
+  const posTr = resolveVocabPosLabel(card.partOfSpeech, 'tr');
+  const posEn = resolveVocabPosLabel(card.partOfSpeech, 'en');
+  const synonymList = card.synonyms?.filter((s) => s.trim().length > 0).slice(0, 2) ?? [];
+
   const maskedSentence = maskStandaloneWord(card.exampleEn, card.word);
   const trQuestion =
     index % 2 === 0 && card.exampleEn
@@ -189,28 +206,28 @@ function buildVocabQuizEntry(
     sourceName: 'Scrolly Dil Laboratuvarı',
     tr: {
       title: `${card.word} · ${card.phonetic}`,
-      tag: `Dil Öğrenme · ${card.partOfSpeech}`,
+      tag: `Dil Öğrenme · ${posTr}`,
       factText: `${card.exampleEn} — "${card.exampleTr}"`,
-      deepDiveDetail: `${card.word} (${card.partOfSpeech}): ${card.meaningTr}. Tanım: ${card.definitionEn}`,
+      deepDiveDetail: `${card.word} (${posTr}): ${card.meaningTr}. Tanım: ${card.definitionEn}`,
       sourceName: 'Scrolly Dil Laboratuvarı',
       quiz: {
         question: trQuestion,
         options: validTrOpts,
         correctIndex: validTrIdx,
-        explanation: `"${card.word}" (${card.partOfSpeech}) = ${card.meaningTr}. Tanım: ${card.definitionEn} · Örnek: "${card.exampleTr}"`,
+        explanation: `"${card.word}" (${posTr}) = ${card.meaningTr}. Tanım: ${card.definitionEn} · Örnek: "${card.exampleTr}"${synonymList.length ? ` · Eş anlam: ${synonymList.join(', ')}` : ''}`,
       },
     },
     en: {
       title: `${card.word} · ${card.phonetic}`,
-      tag: `Language Lab · ${card.partOfSpeech}`,
+      tag: `Language Lab · ${posEn}`,
       factText: `${card.definitionEn} — "${card.exampleEn}"`,
-      deepDiveDetail: `${card.word} (${card.phonetic}) means: ${card.definitionEn}`,
+      deepDiveDetail: `${card.word} (${posEn}, ${card.phonetic}): ${card.definitionEn}`,
       sourceName: 'Scrolly Language Lab',
       quiz: {
         question: enQuestion,
         options: enOptions,
         correctIndex: 0,
-        explanation: `"${card.word}" (${card.phonetic}) means: ${card.definitionEn} Example: "${card.exampleEn}"`,
+        explanation: `"${card.word}" (${posEn}, ${card.phonetic}) means: ${card.definitionEn} Example: "${card.exampleEn}"${synonymList.length ? ` · Synonyms: ${synonymList.join(', ')}` : ''}`,
       },
     },
     vocabMeta: {
@@ -229,6 +246,7 @@ export default function MemoryQuizCard({
   lang,
   quizMode = 'memory',
   duelConfig,
+  vocabularyPool,
   onAnswerSound,
   onTickSound,
   onButtonPop,
@@ -252,15 +270,21 @@ export default function MemoryQuizCard({
   const rewardTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const effectiveQuestions = useMemo<EffectiveQuizEntry[]>(() => {
-    const allVocab = getVocabularyFacts();
-    const vocabMap = new Map(allVocab.map((v) => [v.id, v]));
-    const isVocabDuel =
+    const staticVocab = getVocabularyFacts();
+    const poolVocab =
+      vocabularyPool && vocabularyPool.length > 0 ? vocabularyPool : staticVocab;
+    const vocabMap = new Map<string, VocabularyCard>();
+    for (const v of staticVocab) vocabMap.set(v.id, v);
+    for (const v of poolVocab) vocabMap.set(v.id, v);
+
+    const isVocabMode =
+      quizMode === 'vocabulary' ||
       duelConfig?.category === 'vocabulary' ||
       Boolean(duelConfig?.factIds?.some((id) => id.startsWith('vocab-')));
 
     const seedKey = duelConfig?.duelId || `${quizMode}-vocab`;
 
-    if (isVocabDuel && allVocab.length > 0) {
+    if (isVocabMode && poolVocab.length > 0) {
       const targetCount = Math.max(
         1,
         duelConfig?.questionCount || duelConfig?.factIds?.length || questions.length || 5
@@ -285,7 +309,7 @@ export default function MemoryQuizCard({
       }
 
       if (chosenCards.length < targetCount) {
-        const remaining = allVocab.filter((v) => !seenIds.has(v.id));
+        const remaining = poolVocab.filter((v) => !seenIds.has(v.id));
         const extra = pickSeededFacts(
           remaining,
           targetCount - chosenCards.length,
@@ -299,13 +323,13 @@ export default function MemoryQuizCard({
 
       return chosenCards
         .slice(0, targetCount)
-        .map((card, idx) => buildVocabQuizEntry(card, allVocab, idx, seedKey));
+        .map((card, idx) => buildVocabQuizEntry(card, poolVocab, idx, seedKey));
     }
 
     return questions.map((item, idx) => {
       const matchedVocab = vocabMap.get(item.fact.id);
       if (matchedVocab) {
-        return buildVocabQuizEntry(matchedVocab, allVocab, idx, seedKey);
+        return buildVocabQuizEntry(matchedVocab, poolVocab, idx, seedKey);
       }
 
       const rawCategory = item.fact.category as string;
@@ -336,7 +360,7 @@ export default function MemoryQuizCard({
         },
       };
     });
-  }, [questions, duelConfig, quizMode]);
+  }, [questions, duelConfig, quizMode, vocabularyPool]);
 
   const t = translations[lang];
   const currentEntry = effectiveQuestions[currentIndex];
@@ -533,7 +557,11 @@ export default function MemoryQuizCard({
       ? t.dailySprintTitle
       : quizMode === 'weekly'
         ? t.weeklyMarathonTitle
-        : t.quizBadge;
+        : quizMode === 'vocabulary'
+          ? lang === 'tr'
+            ? 'Kelime Quizi · Word Lab'
+            : 'Word Lab Quiz'
+          : t.quizBadge;
   const optionLetters = ['A', 'B', 'C'] as const;
   const multiplierLabel = formatComboMultiplier(comboStreak);
   const topicExplanation =

@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
-import { AnimatePresence } from 'framer-motion';
+import { AnimatePresence, motion } from 'framer-motion';
 import CookieBanner from '@/components/CookieBanner';
 import DiplomaProfileModal from '@/components/DiplomaProfileModal';
 import ErrorBoundary from '@/components/ErrorBoundary';
@@ -51,9 +51,24 @@ import {
   completeScrollaRoom,
   getOrCreateScrollaPlayerId,
   resolveFactsByIds,
+  vocabCardToFactCard,
 } from '@/utils/duelLobby';
 import { clearLikedFacts, isFactLiked } from '@/utils/likedFacts';
-import { clearVocabNotebook } from '@/utils/vocabNotebook';
+import {
+  clearSavedFacts,
+  isFactSaved,
+  loadSavedFactIds,
+  removeSavedFact,
+  SAVED_FACTS_UPDATED_EVENT,
+  seedSavedFactsIfUnset,
+  toggleSavedFact,
+} from '@/utils/savedFacts';
+import {
+  clearVocabNotebook,
+  isVocabWordSaved,
+  loadSavedVocabNotebook,
+  toggleSaveVocabularyCard,
+} from '@/utils/vocabNotebook';
 import { cryptoRandomFloat } from '@/utils/cryptoRandom';
 import {
   vibrateDoubleTap,
@@ -240,6 +255,10 @@ export default function HomeClient({ initialFacts, initialVocabulary }: HomeClie
   const [activeSlide, setActiveSlide] = useState<FeedSlideItem | null>(null);
   const [usingLocalFallback, setUsingLocalFallback] = useState(false);
   const [likedRevision, setLikedRevision] = useState(0);
+  const [savedIds, setSavedIds] = useState<string[]>([]);
+  const [savedVocabWords, setSavedVocabWords] = useState<string[]>([]);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const toastTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const [activeTab, setActiveTab] = useState<DockTabId>('explore');
   const [chromeBlocked, setChromeBlocked] = useState(false);
@@ -276,6 +295,9 @@ export default function HomeClient({ initialFacts, initialVocabulary }: HomeClie
   useIsomorphicLayoutEffect(() => {
     const loaded = loadUserMemory();
     setMemory(loaded);
+    const seededSaved = seedSavedFactsIfUnset(loaded.favoriteIds);
+    setSavedIds(seededSaved.length > 0 ? seededSaved : loadSavedFactIds());
+    setSavedVocabWords(loadSavedVocabNotebook().map((entry) => entry.word.toLowerCase()));
     hasHydratedRef.current = true;
     syncDocumentTheme(loaded.darkMode, loaded.lang);
 
@@ -483,7 +505,17 @@ export default function HomeClient({ initialFacts, initialVocabulary }: HomeClie
         const remote = await fetchProfileFromApi();
         if (cancelled) return;
         if (remote) {
+          const mergedRemoteFavs = Array.from(
+            new Set([
+              ...(Array.isArray(remote.favoriteIds) ? remote.favoriteIds : []),
+              ...memoryRef.current.favoriteIds,
+            ])
+          );
           setMemory((prev) => mergeRemoteProfileIntoMemory(prev, remote));
+          if (mergedRemoteFavs.length > 0) {
+            const seededRemote = seedSavedFactsIfUnset(mergedRemoteFavs);
+            setSavedIds(seededRemote.length > 0 ? seededRemote : loadSavedFactIds());
+          }
         } else {
           const cur = loadUserMemory();
           void syncProfileToApi({
@@ -516,11 +548,49 @@ export default function HomeClient({ initialFacts, initialVocabulary }: HomeClie
     };
   }, [initialFacts]);
 
+  const showToast = useCallback((text: string) => {
+    const cleanText = text.trim();
+    if (!cleanText) return;
+    setToastMessage(cleanText);
+    if (toastTimeoutRef.current) {
+      clearTimeout(toastTimeoutRef.current);
+    }
+    toastTimeoutRef.current = setTimeout(() => {
+      setToastMessage(null);
+    }, 2400);
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (toastTimeoutRef.current) {
+        clearTimeout(toastTimeoutRef.current);
+      }
+    };
+  }, []);
+
   useEffect(() => {
     const bumpLikes = () => setLikedRevision((prev) => prev + 1);
+    const syncSaved = () => setSavedIds(loadSavedFactIds());
+    const syncVocab = () =>
+      setSavedVocabWords(loadSavedVocabNotebook().map((entry) => entry.word.toLowerCase()));
+    const onScrollyToast = (event: Event) => {
+      const text = (event as CustomEvent<{ text?: string }>).detail?.text;
+      if (typeof text === 'string' && text.trim()) {
+        showToast(text);
+      }
+    };
+
     window.addEventListener('scrolly-liked-facts-updated', bumpLikes);
-    return () => window.removeEventListener('scrolly-liked-facts-updated', bumpLikes);
-  }, []);
+    window.addEventListener(SAVED_FACTS_UPDATED_EVENT, syncSaved);
+    window.addEventListener('scrolly-vocab-updated', syncVocab);
+    window.addEventListener('scrolly-toast', onScrollyToast as EventListener);
+    return () => {
+      window.removeEventListener('scrolly-liked-facts-updated', bumpLikes);
+      window.removeEventListener(SAVED_FACTS_UPDATED_EVENT, syncSaved);
+      window.removeEventListener('scrolly-vocab-updated', syncVocab);
+      window.removeEventListener('scrolly-toast', onScrollyToast as EventListener);
+    };
+  }, [showToast]);
 
   useEffect(() => {
     if (!hasHydratedRef.current || !profileHydratedRef.current) return;
@@ -740,9 +810,35 @@ export default function HomeClient({ initialFacts, initialVocabulary }: HomeClie
       setSeedFact(fact);
       vibrateDoubleTap(12);
       playPopDing(soundEnabled);
-      setMemory((prev) => toggleFavoriteFact(prev, fact.id, fact.category));
+
+      const wasSaved =
+        isFactSaved(fact.id) || memoryRef.current.favoriteIds.includes(fact.id);
+      let nextSaved: boolean;
+      if (wasSaved && !isFactSaved(fact.id)) {
+        removeSavedFact(fact.id);
+        nextSaved = false;
+      } else {
+        nextSaved = toggleSavedFact(fact.id);
+      }
+      setSavedIds(loadSavedFactIds());
+
+      setMemory((prev) => {
+        const inMemoryFavs = prev.favoriteIds.includes(fact.id);
+        if (inMemoryFavs === nextSaved) return prev;
+        return toggleFavoriteFact(prev, fact.id, fact.category);
+      });
+
+      showToast(
+        nextSaved
+          ? lang === 'tr'
+            ? '🔖 Kaydedilenlere eklendi'
+            : '🔖 Added to Saved Facts'
+          : lang === 'tr'
+            ? '🔖 Kaydedilenlerden çıkarıldı'
+            : '🔖 Removed from Saved Facts'
+      );
     },
-    [soundEnabled]
+    [soundEnabled, lang, showToast]
   );
 
   const handleOpenDuelFromCard = useCallback(
@@ -778,6 +874,23 @@ export default function HomeClient({ initialFacts, initialVocabulary }: HomeClie
         key: `weekly-${Date.now()}`,
         mode: 'weekly',
         questions: weeklyFacts.map((fact) => ({ fact })),
+      });
+      return;
+    }
+
+    if (choice === 'vocabulary') {
+      const vocabPool = mergedVocabulary.length > 0 ? mergedVocabulary : getVocabularyFacts();
+      const pickedVocab = pickSeededFacts(
+        vocabPool,
+        5,
+        `${getDailySeedKey()}-vocab-${Date.now()}`
+      );
+      setActiveQuiz({
+        key: `vocabulary-${Date.now()}`,
+        mode: 'vocabulary',
+        questions: pickedVocab.map((card) => ({
+          fact: vocabCardToFactCard(card, vocabPool),
+        })),
       });
       return;
     }
@@ -828,6 +941,8 @@ export default function HomeClient({ initialFacts, initialVocabulary }: HomeClie
 
     const finishedSession = activeQuiz;
     const quizMode = finishedSession?.mode ?? 'memory';
+    const storageQuizMode: 'memory' | 'daily' | 'weekly' | 'duel' =
+      quizMode === 'vocabulary' ? 'memory' : quizMode;
     const duelConfig = finishedSession?.duelConfig ?? null;
     const isRealServerDuel = Boolean(
       duelConfig?.duelId && isShortRoomCode(duelConfig.duelId) && !duelConfig.isBotPractice
@@ -852,7 +967,7 @@ export default function HomeClient({ initialFacts, initialVocabulary }: HomeClie
       memory,
       bestQuizCategory,
       totalBonusXp,
-      quizMode,
+      storageQuizMode,
       results,
       sourceCategories
     );
@@ -869,7 +984,7 @@ export default function HomeClient({ initialFacts, initialVocabulary }: HomeClie
     submitQuizScoreToLeaderboard({
       playerId: updated.playerId,
       nickname: updated.nickname,
-      quizMode,
+      quizMode: storageQuizMode,
       score: totalBonusXp,
       durationSec: elapsedSec,
       correctCount: results.filter(Boolean).length,
@@ -953,6 +1068,7 @@ export default function HomeClient({ initialFacts, initialVocabulary }: HomeClie
     skipNextProfileSyncRef.current = true;
 
     // Wipe every client-side progress bucket Reset Memory is documented to clear.
+    clearSavedFacts();
     clearLikedFacts();
     clearVocabNotebook();
     clearPwaDismissed();
@@ -970,6 +1086,8 @@ export default function HomeClient({ initialFacts, initialVocabulary }: HomeClie
     getOrCreateScrollaPlayerId(fresh.playerId);
 
     setMemory(fresh);
+    setSavedIds([]);
+    setSavedVocabWords([]);
     setLikedRevision((prev) => prev + 1);
     setClientResetEpoch((prev) => prev + 1);
     setLockedFactIds({});
@@ -1090,6 +1208,16 @@ export default function HomeClient({ initialFacts, initialVocabulary }: HomeClie
     }
     return merged;
   }, [dbVocabulary]);
+  const mergedSavedFactIds = useMemo(
+    () => Array.from(new Set([...savedIds, ...memory.favoriteIds])),
+    [savedIds, memory.favoriteIds]
+  );
+  const isCurrentSlideSaved = activeFact
+    ? mergedSavedFactIds.includes(activeFact.id)
+    : activeSlide?.type === 'vocabulary'
+      ? savedVocabWords.includes(activeSlide.card.word.toLowerCase()) ||
+        isVocabWordSaved(activeSlide.card.word)
+      : false;
   const activeFactLiked = activeFact ? (likedRevision >= 0 && isFactLiked(activeFact.id)) : false;
   const activeFactLikesCount = activeFact
     ? typeof activeFact.likesCount === 'number'
@@ -1203,7 +1331,7 @@ export default function HomeClient({ initialFacts, initialVocabulary }: HomeClie
             darkMode={memory.darkMode}
             soundEnabled={soundEnabled}
             activeCategory={activeCategory}
-            favoriteIds={memory.favoriteIds}
+            favoriteIds={mergedSavedFactIds}
             streakDays={memory.streakDays}
             xp={memory.xp}
             cardsSinceLastQuiz={memory.cardsSinceLastQuiz}
@@ -1253,6 +1381,7 @@ export default function HomeClient({ initialFacts, initialVocabulary }: HomeClie
                 lang={lang}
                 quizMode={activeQuiz.mode}
                 duelConfig={activeQuiz.duelConfig}
+                vocabularyPool={mergedVocabulary}
                 onAnswerSound={(isCorrect) =>
                   isCorrect ? playDing(soundEnabled) : playWrong(soundEnabled)
                 }
@@ -1345,6 +1474,7 @@ export default function HomeClient({ initialFacts, initialVocabulary }: HomeClie
             const fact = allFacts.find((f) => f.id === factId);
             if (!fact) {
               setMemory((prev) => {
+                if (!prev.favoriteIds.includes(factId)) return prev;
                 const next = {
                   ...prev,
                   favoriteIds: prev.favoriteIds.filter((id) => id !== factId),
@@ -1354,7 +1484,10 @@ export default function HomeClient({ initialFacts, initialVocabulary }: HomeClie
               });
               return;
             }
-            setMemory((prev) => toggleFavoriteFact(prev, fact.id, fact.category));
+            setMemory((prev) => {
+              if (!prev.favoriteIds.includes(fact.id)) return prev;
+              return toggleFavoriteFact(prev, fact.id, fact.category);
+            });
           }}
           onResetMemory={handleResetMemory}
           onRequestPwaInstall={() => setManualPwaOpen(true)}
@@ -1425,7 +1558,7 @@ export default function HomeClient({ initialFacts, initialVocabulary }: HomeClie
             activeSlide={activeSlide}
             isGuessLocked={activeFact ? Boolean(lockedFactIds[activeFact.id]) : false}
             isLiked={activeFactLiked}
-            isSaved={activeFact ? memory.favoriteIds.includes(activeFact.id) : false}
+            isSaved={isCurrentSlideSaved}
             likesCount={activeFactLikesCount}
             onLike={() => {
               if (!activeFact) return;
@@ -1436,20 +1569,48 @@ export default function HomeClient({ initialFacts, initialVocabulary }: HomeClie
               );
             }}
             onSave={() => {
-              if (!activeFact) return;
-              window.dispatchEvent(
-                new CustomEvent('scrolly-card-action', {
-                  detail: { factId: activeFact.id, action: 'save' },
-                })
-              );
+              if (activeFact) {
+                window.dispatchEvent(
+                  new CustomEvent('scrolly-card-action', {
+                    detail: { factId: activeFact.id, action: 'save' },
+                  })
+                );
+                return;
+              }
+              if (activeSlide?.type === 'vocabulary') {
+                vibrateDoubleTap(12);
+                playPopDing(soundEnabled);
+                const { saved } = toggleSaveVocabularyCard(activeSlide.card);
+                setSavedVocabWords(
+                  loadSavedVocabNotebook().map((entry) => entry.word.toLowerCase())
+                );
+                showToast(
+                  saved
+                    ? lang === 'tr'
+                      ? '🔖 Kelime defterine eklendi'
+                      : '🔖 Saved to Word Notebook'
+                    : lang === 'tr'
+                      ? '🔖 Kelime defterinden çıkarıldı'
+                      : '🔖 Removed from Word Notebook'
+                );
+              }
             }}
             onDetail={() => {
-              if (!activeFact) return;
-              window.dispatchEvent(
-                new CustomEvent('scrolly-card-action', {
-                  detail: { factId: activeFact.id, action: 'detail' },
-                })
-              );
+              if (activeFact) {
+                window.dispatchEvent(
+                  new CustomEvent('scrolly-card-action', {
+                    detail: { factId: activeFact.id, action: 'detail' },
+                  })
+                );
+                return;
+              }
+              if (activeSlide?.type === 'vocabulary') {
+                window.dispatchEvent(
+                  new CustomEvent('scrolly-card-action', {
+                    detail: { vocabId: activeSlide.card.id, action: 'detail' },
+                  })
+                );
+              }
             }}
             onDuel={() => {
               if (activeFact) {
@@ -1519,6 +1680,23 @@ export default function HomeClient({ initialFacts, initialVocabulary }: HomeClie
           });
         }}
       />
+      <AnimatePresence>
+        {toastMessage && (
+          <motion.div
+            key={toastMessage}
+            initial={{ opacity: 0, y: -10, scale: 0.96 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -8, scale: 0.96 }}
+            transition={{ duration: 0.18 }}
+            role="status"
+            aria-live="polite"
+            data-testid="feed-action-toast"
+            className="pointer-events-none fixed left-1/2 top-[calc(env(safe-area-inset-top,14px)+56px)] z-50 -translate-x-1/2 whitespace-nowrap rounded-full border border-white/15 bg-[#0A0A0E]/90 px-4 py-2 text-xs font-extrabold text-white shadow-xl backdrop-blur-md dark:border-amber-300/30 dark:bg-[#171326]/95"
+          >
+            {toastMessage}
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
     </ErrorBoundary>
   );

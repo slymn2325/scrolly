@@ -8,6 +8,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import {
   Bell,
   BellOff,
+  Bookmark,
   BookMarked,
   Download,
   ExternalLink,
@@ -38,13 +39,106 @@ import {
 } from '@/utils/factsData';
 import { DOCK_ICON_MAP, UI_ICON_PATHS } from '@/utils/icons8Assets';
 import { loadLikedFactIds, removeLikedFact } from '@/utils/likedFacts';
+import {
+  loadSavedFactIds,
+  removeSavedFact,
+  SAVED_FACTS_UPDATED_EVENT,
+} from '@/utils/savedFacts';
 import { getLeagueInfo, type UserMemoryState } from '@/utils/userMemory';
-import type { SavedVocabularyEntry } from '@/types/vocabulary';
+import type { SavedVocabularyEntry, VocabPartOfSpeech } from '@/types/vocabulary';
 import {
   loadSavedVocabNotebook,
   removeSavedVocabWord,
   speakVocabularyText,
 } from '@/utils/vocabNotebook';
+
+const VOCAB_POS_LABELS: Record<VocabPartOfSpeech, { tr: string; en: string }> = {
+  isim: { tr: 'İsim', en: 'Noun' },
+  sıfat: { tr: 'Sıfat', en: 'Adjective' },
+  fiil: { tr: 'Fiil', en: 'Verb' },
+  zarf: { tr: 'Zarf', en: 'Adverb' },
+  edat: { tr: 'Edat', en: 'Preposition' },
+};
+
+interface FactArchiveSectionProps {
+  title: string;
+  count: number;
+  icon: React.ReactNode;
+  testId: string;
+  emptyText: string;
+  facts: FactCard[];
+  lang: Language;
+  removeTestIdPrefix: string;
+  removeAriaVerb: string;
+  onButtonPop: () => void;
+  onRemoveFact: (factId: string) => void;
+}
+
+function FactArchiveSection({
+  title,
+  count,
+  icon,
+  testId,
+  emptyText,
+  facts,
+  lang,
+  removeTestIdPrefix,
+  removeAriaVerb,
+  onButtonPop,
+  onRemoveFact,
+}: FactArchiveSectionProps) {
+  return (
+    <div>
+      <h3 className="mb-2 flex items-center gap-1.5 text-xs font-extrabold uppercase tracking-wider text-ink/65 dark:text-violet-200/70">
+        {icon}
+        <span>
+          {title} ({count})
+        </span>
+      </h3>
+      <div data-testid={testId}>
+        {facts.length === 0 ? (
+          <p className="rounded-2xl border border-dashed border-slate-300 p-3 text-xs font-medium text-ink/60 dark:border-white/20 dark:text-violet-200/60">
+            {emptyText}
+          </p>
+        ) : (
+          <div className="space-y-2">
+            {facts.map((fact) => (
+              <div
+                key={fact.id}
+                className="flex items-start justify-between gap-2 rounded-2xl border border-slate-100 bg-white p-3 text-xs font-bold text-ink shadow-sm dark:border-white/10 dark:bg-white/5 dark:text-white"
+              >
+                <Link
+                  href={buildFactHref(getFactPrimarySlug(fact), lang)}
+                  onClick={onButtonPop}
+                  className="min-w-0 flex-1 line-clamp-2 transition hover:text-violet-700 dark:hover:text-violet-200"
+                >
+                  {fact.emoji} {fact[lang].title}
+                </Link>
+                <div className="flex shrink-0 items-center gap-1">
+                  <ExternalLink className="h-3.5 w-3.5 text-ink/45 dark:text-violet-300" aria-hidden />
+                  <button
+                    type="button"
+                    data-testid={`${removeTestIdPrefix}-${fact.id}`}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      onButtonPop();
+                      onRemoveFact(fact.id);
+                    }}
+                    aria-label={`${fact[lang].title} ${removeAriaVerb}`}
+                    className="relative z-10 inline-flex h-9 w-9 items-center justify-center rounded-full bg-rose-50 text-rose-600 transition hover:bg-rose-100 dark:bg-rose-950/50 dark:text-rose-300 dark:hover:bg-rose-900/60"
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
 
 interface DiplomaProfileModalProps {
   open: boolean;
@@ -85,6 +179,7 @@ export default function DiplomaProfileModal({
   const [diplomaStatusMsg, setDiplomaStatusMsg] = useState<string | null>(null);
   const [isStandalone, setIsStandalone] = useState(false);
   const [savedVocab, setSavedVocab] = useState<SavedVocabularyEntry[]>([]);
+  const [savedIds, setSavedIds] = useState<string[]>([]);
   const [likedIds, setLikedIds] = useState<string[]>([]);
   const scrollBodyRef = useRef<HTMLDivElement>(null);
   const t = translations[lang];
@@ -107,21 +202,27 @@ export default function DiplomaProfileModal({
   useEffect(() => {
     if (!open) return;
     const syncVocab = () => setSavedVocab(loadSavedVocabNotebook());
+    const syncSaved = () => setSavedIds(loadSavedFactIds());
     const syncLikes = () => setLikedIds(loadLikedFactIds());
     syncVocab();
+    syncSaved();
     syncLikes();
     window.addEventListener('scrolly-vocab-updated', syncVocab);
+    window.addEventListener(SAVED_FACTS_UPDATED_EVENT, syncSaved);
     window.addEventListener('scrolly-liked-facts-updated', syncLikes);
     return () => {
       window.removeEventListener('scrolly-vocab-updated', syncVocab);
+      window.removeEventListener(SAVED_FACTS_UPDATED_EVENT, syncSaved);
       window.removeEventListener('scrolly-liked-facts-updated', syncLikes);
     };
   }, [open]);
 
   useEscapeClose(open && !isPage, onClose);
 
-  const archivedFactIds = Array.from(new Set([...likedIds, ...memory.favoriteIds]));
-  const favoriteFacts = allFacts.filter((f) => archivedFactIds.includes(f.id));
+  const savedIdSet = new Set([...savedIds, ...memory.favoriteIds]);
+  const likedIdSet = new Set(likedIds);
+  const savedFacts = allFacts.filter((f) => savedIdSet.has(f.id));
+  const likedFacts = allFacts.filter((f) => likedIdSet.has(f.id));
   const categoryList = CATEGORIES.filter((c) => c.id !== 'all');
   const affinityCategories = [...categoryList, VOCABULARY_META];
   const getAffinityWeight = (catId: CategoryFilter): number => {
@@ -484,64 +585,44 @@ export default function DiplomaProfileModal({
                 </div>
               </div>
 
-              {/* Double-Tap Liked Archive */}
-              <div>
-                <h3 className="mb-2 flex items-center gap-1.5 text-xs font-extrabold uppercase tracking-wider text-ink/65 dark:text-violet-200/70">
-                  <Heart className="h-3.5 w-3.5 text-rose-500" />
-                  <span>
-                    {t.diplomaLikedArchive} ({favoriteFacts.length})
-                  </span>
-                </h3>
-                <div data-testid="diploma-favorites-list">
-                  {favoriteFacts.length === 0 ? (
-                    <p className="rounded-2xl border border-dashed border-slate-300 p-3 text-xs font-medium text-ink/60 dark:border-white/20 dark:text-violet-200/60">
-                      {t.drawerNoFavorites}
-                    </p>
-                  ) : (
-                    <div className="space-y-2">
-                      {favoriteFacts.map((fact) => (
-                        <div
-                          key={fact.id}
-                          className="flex items-start justify-between gap-2 rounded-2xl border border-slate-100 bg-white p-3 text-xs font-bold text-ink shadow-sm dark:border-white/10 dark:bg-white/5 dark:text-white"
-                        >
-                          <Link
-                            href={buildFactHref(getFactPrimarySlug(fact), lang)}
-                            onClick={onButtonPop}
-                            className="min-w-0 flex-1 line-clamp-2 transition hover:text-violet-700 dark:hover:text-violet-200"
-                          >
-                            {fact.emoji} {fact[lang].title}
-                          </Link>
-                          <div className="flex shrink-0 items-center gap-1">
-                            <ExternalLink className="h-3.5 w-3.5 text-ink/45 dark:text-violet-300" aria-hidden />
-                            <button
-                              type="button"
-                              data-testid={`diploma-unlike-${fact.id}`}
-                              onClick={(e) => {
-                                e.preventDefault();
-                                e.stopPropagation();
-                                onButtonPop();
-                                removeLikedFact(fact.id);
-                                setLikedIds(loadLikedFactIds());
-                                if (memory.favoriteIds.includes(fact.id)) {
-                                  onRemoveFavorite(fact.id);
-                                }
-                              }}
-                              aria-label={
-                                lang === 'tr'
-                                  ? `${fact[lang].title} beğenisini kaldır`
-                                  : `Remove ${fact[lang].title} from likes`
-                              }
-                              className="relative z-10 inline-flex h-9 w-9 items-center justify-center rounded-full bg-rose-50 text-rose-600 transition hover:bg-rose-100 dark:bg-rose-950/50 dark:text-rose-300 dark:hover:bg-rose-900/60"
-                            >
-                              <Trash2 className="h-3.5 w-3.5" />
-                            </button>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              </div>
+              {/* 1. Saved Facts Archive (🔖) */}
+              <FactArchiveSection
+                title={t.diplomaSavedArchive}
+                count={savedFacts.length}
+                icon={<Bookmark className="h-3.5 w-3.5 text-amber-500" />}
+                testId="diploma-saved-list"
+                emptyText={t.diplomaNoSavedFacts}
+                facts={savedFacts}
+                lang={lang}
+                removeTestIdPrefix="diploma-unsave"
+                removeAriaVerb={lang === 'tr' ? 'kaydını kaldır' : 'remove from saved'}
+                onButtonPop={onButtonPop}
+                onRemoveFact={(factId) => {
+                  removeSavedFact(factId);
+                  setSavedIds(loadSavedFactIds());
+                  if (memory.favoriteIds.includes(factId)) {
+                    onRemoveFavorite(factId);
+                  }
+                }}
+              />
+
+              {/* 2. Double-Tap / ❤️ Liked Facts Archive */}
+              <FactArchiveSection
+                title={t.diplomaLikedArchive}
+                count={likedFacts.length}
+                icon={<Heart className="h-3.5 w-3.5 text-rose-500" />}
+                testId="diploma-liked-list"
+                emptyText={t.diplomaNoLikedFacts}
+                facts={likedFacts}
+                lang={lang}
+                removeTestIdPrefix="diploma-unlike"
+                removeAriaVerb={lang === 'tr' ? 'beğenisini kaldır' : 'remove from likes'}
+                onButtonPop={onButtonPop}
+                onRemoveFact={(factId) => {
+                  removeLikedFact(factId);
+                  setLikedIds(loadLikedFactIds());
+                }}
+              />
 
               {/* Kelime Defteri */}
               <div>
@@ -555,8 +636,8 @@ export default function DiplomaProfileModal({
                   {savedVocab.length === 0 ? (
                     <p className="rounded-2xl border border-dashed border-slate-300 p-3 text-xs font-medium text-ink/60 dark:border-white/20 dark:text-violet-200/60">
                       {lang === 'tr'
-                        ? 'Henüz kelime kaydetmedin. Dil Öğrenme kartlarında “Kelime Defterime Kaydet”e dokun.'
-                        : 'No saved words yet. Tap Save on Language Learning cards.'}
+                        ? 'Henüz kelime kaydetmedin. Kelime kartlarında sağdaki Kaydet (🔖) butonuna dokun.'
+                        : 'No saved words yet. Tap Save (🔖) on Vocabulary cards.'}
                     </p>
                   ) : (
                     <div className="space-y-2">
@@ -573,7 +654,8 @@ export default function DiplomaProfileModal({
                               </span>
                             </p>
                             <p className="font-bold text-emerald-700 dark:text-emerald-300">
-                              {entry.meaningTr} · {entry.partOfSpeech}
+                              {entry.meaningTr} ·{' '}
+                              {VOCAB_POS_LABELS[entry.partOfSpeech]?.[lang] ?? entry.partOfSpeech}
                             </p>
                             <p className="mt-0.5 line-clamp-2 text-[11px] text-slate-600 dark:text-slate-300">
                               {entry.exampleEn}
@@ -656,6 +738,7 @@ export default function DiplomaProfileModal({
                     e.stopPropagation();
                     onButtonPop();
                     onResetMemory();
+                    setSavedIds([]);
                     setLikedIds([]);
                     setSavedVocab([]);
                     setJustReset(true);
