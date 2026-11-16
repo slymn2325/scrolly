@@ -679,6 +679,13 @@ export default function TikTokFactSlide({
           } ${isFlipped ? 'pointer-events-none opacity-0' : 'opacity-100'}`}
         >
           <div
+            data-scroll-contain={isDetailsOpen ? 'true' : undefined}
+            onWheel={(e) => {
+              if (!isDetailsOpen) return;
+              const el = e.currentTarget;
+              if (el.scrollHeight > el.clientHeight + 1) e.stopPropagation();
+            }}
+            style={isDetailsOpen ? { overscrollBehavior: 'contain' } : undefined}
             className={`pointer-events-none relative z-10 flex w-full flex-col no-scrollbar ${
               isDetailsOpen ? 'max-h-[min(100%,calc(100dvh-140px))] overflow-y-auto' : ''
             }`}
@@ -970,8 +977,10 @@ export default function TikTokFactSlide({
             onClick={(e) => e.stopPropagation()}
             onDoubleClick={(e) => e.stopPropagation()}
             onPointerDown={(e) => e.stopPropagation()}
+            data-scroll-contain="true"
             onWheel={(e) => e.stopPropagation()}
-            className="backface-hidden pointer-events-auto absolute inset-0 z-[70] h-full w-full"
+            style={{ overscrollBehavior: 'contain' }}
+            className="backface-hidden pointer-events-auto absolute inset-0 z-[70] h-full w-full overflow-y-auto"
           >
             <FactDetailPage
               fact={fact}

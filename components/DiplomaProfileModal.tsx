@@ -35,6 +35,7 @@ import {
   VOCABULARY_META,
 } from '@/i18n/translations';
 import { generateDiplomaCertificateImage } from '@/utils/diplomaCanvasGenerator';
+import { formatPhoneticForDisplay } from '@/utils/phoneticDisplay';
 import {
   buildFactHref,
   type FactCard,
@@ -818,8 +819,12 @@ export default function DiplomaProfileModal({
                           <div className="min-w-0">
                             <p className="font-black text-indigo-800 dark:text-indigo-200">
                               {entry.word}{' '}
-                              <span className="font-mono text-[10px] font-semibold text-slate-500">
-                                {entry.phonetic}
+                              <span
+                                data-phonetic="true"
+                                aria-label={entry.phonetic}
+                                className="font-mono text-[10px] font-semibold text-slate-500"
+                              >
+                                {formatPhoneticForDisplay(entry.phonetic)}
                               </span>
                             </p>
                             <p className="font-bold text-emerald-700 dark:text-emerald-300">

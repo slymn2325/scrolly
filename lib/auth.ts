@@ -870,6 +870,11 @@ export async function requestOtpChallenge(params: {
     if (!mailResult.ok) {
       const idx = otps.findIndex((o) => o.id === otpId);
       if (idx >= 0) otps.splice(idx, 1);
+      console.error('[lib/auth] OTP email delivery failed (memory path)', {
+        error: mailResult.error,
+        errorCode: mailResult.errorCode || mailResult.error,
+        delivery: mailResult.delivery,
+      });
       return {
         ok: false,
         status: 503,
@@ -1016,6 +1021,11 @@ export async function requestOtpChallenge(params: {
 
   if (!mailResult.ok) {
     await pool.query(`DELETE FROM auth_otps WHERE id = $1`, [otpId]).catch(() => {});
+    console.error('[lib/auth] OTP email delivery failed (postgres path)', {
+      error: mailResult.error,
+      errorCode: mailResult.errorCode || mailResult.error,
+      delivery: mailResult.delivery,
+    });
     return {
       ok: false,
       status: 503,

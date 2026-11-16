@@ -109,6 +109,64 @@ declare global {
   var __scrollySchemaReadyPromise: Promise<void> | undefined;
 }
 
+/** Stable Postgres advisory-lock key for one-time schema/index migrations (not per-request). */
+const SCHEMA_MIGRATION_LOCK_KEY = 87201401;
+
+async function indexExists(pool: Pool, indexName: string): Promise<boolean> {
+  const res = await pool.query<{ exists: boolean }>(
+    `SELECT EXISTS (
+       SELECT 1 FROM pg_indexes WHERE schemaname = 'public' AND indexname = $1
+     ) AS exists`,
+    [indexName]
+  );
+  return Boolean(res.rows[0]?.exists);
+}
+
+async function ensureFactEventsXpOnceIndex(pool: Pool): Promise<void> {
+  if (await indexExists(pool, 'idx_fact_events_xp_once')) return;
+
+  // Deduplicate before unique index — duplicates previously aborted CREATE and
+  // reset __scrollySchemaReadyPromise, re-locking Heroku on every request.
+  await pool.query(`
+    DELETE FROM fact_events a
+    USING fact_events b
+    WHERE a.ctid > b.ctid
+      AND a.device_id = b.device_id
+      AND a.fact_slug = b.fact_slug
+      AND a.event_type = b.event_type;
+  `);
+
+  await pool.query(`
+    CREATE UNIQUE INDEX IF NOT EXISTS idx_fact_events_xp_once
+      ON fact_events (device_id, fact_slug, event_type)
+      WHERE event_type IN ('quick_guess', 'detail_open', 'share', 'card_dwell', 'duel')
+        AND device_id IS NOT NULL
+        AND TRIM(device_id) <> ''
+        AND fact_slug IS NOT NULL
+        AND TRIM(fact_slug) <> '';
+  `);
+}
+
+async function ensureQuizSubmissionsDailyOnceIndex(pool: Pool): Promise<void> {
+  if (await indexExists(pool, 'idx_quiz_submissions_daily_once')) return;
+
+  await pool.query(`
+    DELETE FROM quiz_submissions a
+    USING quiz_submissions b
+    WHERE a.ctid > b.ctid
+      AND a.device_id = b.device_id
+      AND a.mode = b.mode
+      AND a.quiz_date = b.quiz_date
+      AND a.mode = 'daily';
+  `);
+
+  await pool.query(`
+    CREATE UNIQUE INDEX IF NOT EXISTS idx_quiz_submissions_daily_once
+      ON quiz_submissions (device_id, mode, quiz_date)
+      WHERE mode = 'daily' AND quiz_date IS NOT NULL AND TRIM(quiz_date) <> '';
+  `);
+}
+
 export function hasDatabaseUrl(): boolean {
   return Boolean(process.env.DATABASE_URL && process.env.DATABASE_URL.trim().length > 0);
 }
@@ -338,6 +396,11 @@ export async function ensureSchema(): Promise<void> {
     global.__scrollySchemaReadyPromise = (async () => {
       const pool = getPool();
 
+      // One migration lock across dynos — never re-run heavy unique-index builds on
+      // fetchFacts / profile / events / scheduler once indexes exist.
+      await pool.query('SELECT pg_advisory_lock($1)', [SCHEMA_MIGRATION_LOCK_KEY]);
+      try {
+
       await pool.query(`
         CREATE TABLE IF NOT EXISTS facts (
           id SERIAL PRIMARY KEY,
@@ -555,20 +618,8 @@ export async function ensureSchema(): Promise<void> {
           ON profiles (user_id)
           WHERE user_id IS NOT NULL;
       `);
-      await pool.query(`
-        CREATE UNIQUE INDEX IF NOT EXISTS idx_fact_events_xp_once
-          ON fact_events (device_id, fact_slug, event_type)
-          WHERE event_type IN ('quick_guess', 'detail_open', 'share', 'card_dwell', 'duel')
-            AND device_id IS NOT NULL
-            AND TRIM(device_id) <> ''
-            AND fact_slug IS NOT NULL
-            AND TRIM(fact_slug) <> '';
-      `);
-      await pool.query(`
-        CREATE UNIQUE INDEX IF NOT EXISTS idx_quiz_submissions_daily_once
-          ON quiz_submissions (device_id, mode, quiz_date)
-          WHERE mode = 'daily' AND quiz_date IS NOT NULL AND TRIM(quiz_date) <> '';
-      `);
+
+      await ensureFactEventsXpOnceIndex(pool);
 
       await pool.query(`
         CREATE TABLE IF NOT EXISTS quiz_submissions (
@@ -632,6 +683,8 @@ export async function ensureSchema(): Promise<void> {
         CREATE INDEX IF NOT EXISTS idx_quiz_submissions_mode_date
           ON quiz_submissions (mode, quiz_date, score DESC);
       `);
+
+      await ensureQuizSubmissionsDailyOnceIndex(pool);
 
       await pool.query(`
         CREATE TABLE IF NOT EXISTS duel_rooms (
@@ -822,6 +875,9 @@ export async function ensureSchema(): Promise<void> {
 
       await seedInitialFactsIfEmpty(pool);
       await seedInitialVocabularyIfMissing(pool);
+      } finally {
+        await pool.query('SELECT pg_advisory_unlock($1)', [SCHEMA_MIGRATION_LOCK_KEY]).catch(() => {});
+      }
     })().catch((err) => {
       global.__scrollySchemaReadyPromise = undefined;
       throw err;
@@ -836,6 +892,7 @@ export const initDb = ensureSchema;
 function sanitizeSourceUrl(url?: string | null): string | undefined {
   if (!url) return undefined;
   const trimmed = url.trim();
+  // Absolute http(s) only — never promote IPA `/ˈ…/` or other relative paths into hrefs.
   if (/^https?:\/\//i.test(trimmed)) {
     return trimmed;
   }
@@ -1442,7 +1499,9 @@ function normalizePartOfSpeech(raw: unknown): VocabPartOfSpeech {
   return PART_OF_SPEECH_ALIASES[clean] ?? 'isim';
 }
 
-function parseVocabQuizOptions(raw: unknown): [string, string, string] | null {
+function parseVocabQuizOptions(
+  raw: unknown
+): [string, string, string] | [string, string, string, string] | null {
   let candidate = raw;
   if (typeof raw === 'string') {
     try {
@@ -1451,10 +1510,14 @@ function parseVocabQuizOptions(raw: unknown): [string, string, string] | null {
       return null;
     }
   }
-  if (!Array.isArray(candidate) || candidate.length !== 3) return null;
-  const opts = candidate.map((opt) => (typeof opt === 'string' ? opt.trim() : ''));
-  if (opts.some((opt) => opt.length === 0)) return null;
-  return [opts[0], opts[1], opts[2]];
+  if (!Array.isArray(candidate) || (candidate.length !== 3 && candidate.length !== 4)) return null;
+  const opts = candidate
+    .map((opt) => (typeof opt === 'string' ? opt.trim() : ''))
+    .filter(Boolean)
+    .slice(0, 4);
+  if (opts.length === 3) return [opts[0], opts[1], opts[2]];
+  if (opts.length === 4) return [opts[0], opts[1], opts[2], opts[3]];
+  return null;
 }
 
 function parseVocabSynonyms(raw: unknown): string[] {
@@ -1576,7 +1639,9 @@ export function mapDbVocabularyRow(row: DbVocabularyRow): VocabularyCard | null 
   const quizOptions = parseVocabQuizOptions(row.quiz_options);
   if (!word || !meaningTr || !quizOptions) return null;
   const rawIndex = Number(row.correct_index ?? 0);
-  const correctIndex: 0 | 1 | 2 = rawIndex === 1 ? 1 : rawIndex === 2 ? 2 : 0;
+  const maxIdx = (quizOptions.length - 1) as 0 | 1 | 2 | 3;
+  const correctIndex: 0 | 1 | 2 | 3 =
+    rawIndex >= 0 && rawIndex <= maxIdx ? (rawIndex as 0 | 1 | 2 | 3) : 0;
   const cefrLevel = normalizeCefrLevel(row.cefr_level) ?? 'B2';
   const synonyms = parseVocabSynonyms(row.synonyms);
   const gifUrl = sanitizeVocabGifUrl(row.gif_url);

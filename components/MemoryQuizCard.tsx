@@ -28,6 +28,7 @@ import {
 import type { VocabPartOfSpeech, VocabularyCard } from '@/types/vocabulary';
 import { vibrateSuccess, vibrateTap } from '@/utils/haptics';
 import { UI_ICON_PATHS } from '@/utils/icons8Assets';
+import { formatPhoneticForDisplay } from '@/utils/phoneticDisplay';
 import { prepareQuizOptions, type QuizQuestionItem } from '@/utils/recommendation';
 import { pickSeededFacts } from '@/utils/seededRandom';
 import { buildStructuredDetailHighlights } from '@/utils/topicMotif';
@@ -158,20 +159,27 @@ function buildVocabQuizEntry(
   const fallbackEn2 = distractorWords[1] ?? 'pragmatic';
   const enOptions: [string, string, string] = [card.word, fallbackEn1, fallbackEn2];
 
-  const validTrOpts =
-    Array.isArray(card.quizOptions) && card.quizOptions.length === 3
-      ? ([card.quizOptions[0], card.quizOptions[1], card.quizOptions[2]] as [
-          string,
-          string,
-          string,
-        ])
-      : ([
-          card.meaningTr,
-          distractorMeanings[0] ?? 'geçici',
-          distractorMeanings[1] ?? 'belirsiz',
-        ] as [string, string, string]);
-  const validTrIdx: 0 | 1 | 2 =
-    Array.isArray(card.quizOptions) && card.quizOptions.length === 3 ? card.correctIndex : 0;
+  const sourceOpts = Array.isArray(card.quizOptions)
+    ? card.quizOptions.map((o) => o.trim()).filter(Boolean).slice(0, 4)
+    : [];
+  let validTrOpts: [string, string, string];
+  let validTrIdx: 0 | 1 | 2;
+  if (sourceOpts.length >= 3 && card.correctIndex <= 2) {
+    validTrOpts = [sourceOpts[0], sourceOpts[1], sourceOpts[2]];
+    validTrIdx = card.correctIndex as 0 | 1 | 2;
+  } else if (sourceOpts.length >= 3) {
+    const correct = sourceOpts[card.correctIndex] || card.meaningTr;
+    const rest = sourceOpts.filter((_, i) => i !== card.correctIndex).slice(0, 2);
+    validTrOpts = [correct, rest[0] ?? 'geçici', rest[1] ?? 'belirsiz'];
+    validTrIdx = 0;
+  } else {
+    validTrOpts = [
+      card.meaningTr,
+      distractorMeanings[0] ?? 'geçici',
+      distractorMeanings[1] ?? 'belirsiz',
+    ];
+    validTrIdx = 0;
+  }
 
   const posTr = resolveVocabPosLabel(card.partOfSpeech, 'tr');
   const posEn = resolveVocabPosLabel(card.partOfSpeech, 'en');
@@ -180,8 +188,8 @@ function buildVocabQuizEntry(
   const maskedSentence = maskStandaloneWord(card.exampleEn, card.word);
   const trQuestion =
     index % 2 === 0 && card.exampleEn
-      ? `"${card.exampleEn}" cümlesindeki "${card.word}" (${card.phonetic}) kelimesi ne anlama gelir?`
-      : `"${card.word}" (${card.phonetic}) kelimesinin Türkçe karşılığı hangisidir?`;
+      ? `"${card.exampleEn}" cümlesindeki "${card.word}" (${formatPhoneticForDisplay(card.phonetic)}) kelimesi ne anlama gelir?`
+      : `"${card.word}" (${formatPhoneticForDisplay(card.phonetic)}) kelimesinin Türkçe karşılığı hangisidir?`;
 
   const enQuestion =
     index % 2 === 1 && maskedSentence
@@ -195,7 +203,7 @@ function buildVocabQuizEntry(
     emoji: VOCABULARY_META.emoji,
     sourceName: 'Scrolly Dil Laboratuvarı',
     tr: {
-      title: `${card.word} · ${card.phonetic}`,
+      title: `${card.word} · ${formatPhoneticForDisplay(card.phonetic)}`,
       tag: `Dil Öğrenme · ${posTr}`,
       factText: `${card.exampleEn} · "${card.exampleTr}"`,
       deepDiveDetail: `${card.word} (${posTr}): ${card.meaningTr}. Tanım: ${card.definitionEn}`,
@@ -208,21 +216,21 @@ function buildVocabQuizEntry(
       },
     },
     en: {
-      title: `${card.word} · ${card.phonetic}`,
+      title: `${card.word} · ${formatPhoneticForDisplay(card.phonetic)}`,
       tag: `Language Lab · ${posEn}`,
       factText: `${card.definitionEn} · "${card.exampleEn}"`,
-      deepDiveDetail: `${card.word} (${posEn}, ${card.phonetic}): ${card.definitionEn}`,
+      deepDiveDetail: `${card.word} (${posEn}, ${formatPhoneticForDisplay(card.phonetic)}): ${card.definitionEn}`,
       sourceName: 'Scrolly Language Lab',
       quiz: {
         question: enQuestion,
         options: enOptions,
         correctIndex: 0,
-        explanation: `"${card.word}" (${posEn}, ${card.phonetic}) means: ${card.definitionEn} Example: "${card.exampleEn}"${synonymList.length ? ` · Synonyms: ${synonymList.join(', ')}` : ''}`,
+        explanation: `"${card.word}" (${posEn}, ${formatPhoneticForDisplay(card.phonetic)}) means: ${card.definitionEn} Example: "${card.exampleEn}"${synonymList.length ? ` · Synonyms: ${synonymList.join(', ')}` : ''}`,
       },
     },
     vocabMeta: {
       word: card.word,
-      phonetic: card.phonetic,
+      phonetic: formatPhoneticForDisplay(card.phonetic),
       partOfSpeech: card.partOfSpeech,
       meaningTr: card.meaningTr,
       exampleEn: card.exampleEn,

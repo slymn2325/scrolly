@@ -9,6 +9,7 @@ import { FEED_EXPERIENCE_COPY, type Language } from '@/i18n/translations';
 import type { VocabPartOfSpeech, VocabularyCard } from '@/types/vocabulary';
 import { vibrateTap } from '@/utils/haptics';
 import { UI_ICON_PATHS } from '@/utils/icons8Assets';
+import { formatPhoneticForDisplay } from '@/utils/phoneticDisplay';
 import {
   isVocabWordSaved,
   loadSavedVocabNotebook,
@@ -102,26 +103,35 @@ function renderHighlightedSentence(sentence: string, word: string): React.ReactN
   );
 }
 
-/** Build 3 clean Turkish meaning choices, never repeating the English target word as a choice. */
+/** Build 3–4 clean Turkish meaning choices, never repeating the English target word as a choice. */
 function buildVocabQuizChoices(card: VocabularyCard): {
-  options: [string, string, string];
-  correctIdx: 0 | 1 | 2;
+  options: string[];
+  correctIdx: number;
 } {
   const wordLower = card.word.trim().toLowerCase();
   const fallbackDistractors = ['yanlış anlam', 'alakasız', 'zıt anlam', 'nadir kullanım'];
-  const rawOptions: [string, string, string] = [
-    card.quizOptions[0]?.trim() || '',
-    card.quizOptions[1]?.trim() || '',
-    card.quizOptions[2]?.trim() || '',
-  ];
+  const rawOptions = card.quizOptions
+    .map((opt) => opt?.trim() || '')
+    .filter(Boolean)
+    .slice(0, 4);
+  while (rawOptions.length < 3) {
+    const filler =
+      fallbackDistractors.find((item) => !rawOptions.some((o) => o.toLowerCase() === item)) ||
+      `seçenek ${rawOptions.length + 1}`;
+    rawOptions.push(filler);
+  }
 
-  const correctRaw = rawOptions[card.correctIndex];
+  const safeCorrectIdx = Math.min(
+    Math.max(0, card.correctIndex),
+    Math.max(0, rawOptions.length - 1)
+  );
+  const correctRaw = rawOptions[safeCorrectIdx];
   const resolvedCorrect =
     correctRaw && correctRaw.toLowerCase() !== wordLower ? correctRaw : card.meaningTr.trim();
 
   const seen = new Set<string>([resolvedCorrect.toLowerCase()]);
   const sanitized = rawOptions.map((opt, idx) => {
-    if (idx === card.correctIndex) return resolvedCorrect;
+    if (idx === safeCorrectIdx) return resolvedCorrect;
     const low = opt.toLowerCase();
     if (opt && low !== wordLower && !seen.has(low)) {
       seen.add(low);
@@ -131,12 +141,19 @@ function buildVocabQuizChoices(card: VocabularyCard): {
       fallbackDistractors.find((item) => !seen.has(item.toLowerCase())) || 'farklı anlam';
     seen.add(candidate.toLowerCase());
     return candidate;
-  }) as [string, string, string];
+  });
 
   return {
     options: sanitized,
-    correctIdx: card.correctIndex,
+    correctIdx: safeCorrectIdx,
   };
+}
+
+function handleContainWheel(e: React.WheelEvent<HTMLElement>) {
+  const el = e.currentTarget;
+  if (el.scrollHeight > el.clientHeight + 1) {
+    e.stopPropagation();
+  }
 }
 
 export default function VocabularySlide({
@@ -311,14 +328,14 @@ export default function VocabularySlide({
       data-active={isActive ? 'true' : 'false'}
       className="reels-slide relative flex h-full w-full shrink-0 flex-col overflow-hidden select-none bg-[#0A0A0E]"
     >
-      {/* Reserved fixed aspect/height GIF stage BEFORE GIF loads (zero CLS) */}
+      {/* Media stage: compact on mobile Reels; cinematic 16:9 on desktop theater */}
       <div
         data-testid="vocab-media-stage"
         style={{
           background:
             'radial-gradient(circle at 50% 35%, rgba(129, 140, 248, 0.28) 0%, #10101D 60%, #0A0A0E 100%)',
         }}
-        className="relative h-[188px] sm:h-[220px] w-full shrink-0 overflow-hidden bg-[#0A0A0E]"
+        className="relative h-[188px] sm:h-[220px] w-full shrink-0 overflow-hidden bg-[#0A0A0E] lg:h-auto lg:aspect-video lg:max-h-[42%]"
       >
         <svg
           aria-hidden="true"
@@ -379,6 +396,9 @@ export default function VocabularySlide({
       {/* Scrollable card body below the reserved GIF stage — never clips word header or collides with Save button */}
       <div
         ref={bodyScrollRef}
+        data-scroll-contain="true"
+        onWheel={handleContainWheel}
+        style={{ overscrollBehavior: 'contain' }}
         className={`relative z-10 min-h-0 flex-1 w-full overflow-y-auto no-scrollbar px-4 pt-2.5 pr-16 sm:pr-20 lg:pr-5 ${
           cookieBannerVisible
             ? 'pb-[calc(env(safe-area-inset-bottom,16px)+216px)] lg:pb-8'
@@ -423,8 +443,13 @@ export default function VocabularySlide({
                 >
                   {card.word}
                 </h2>
-                <span className="font-mono text-xs font-semibold text-indigo-200 sm:text-sm">
-                  {card.phonetic}
+                <span
+                  data-testid="vocab-phonetic"
+                  data-phonetic="true"
+                  aria-label={card.phonetic}
+                  className="font-mono text-xs font-semibold text-indigo-200 sm:text-sm"
+                >
+                  {formatPhoneticForDisplay(card.phonetic)}
                 </span>
               </div>
             </button>
@@ -549,7 +574,7 @@ export default function VocabularySlide({
                     </p>
                   </div>
 
-                  {/* 3 Spacious, Full-Width Wrap-Safe Quiz Options */}
+                  {/* Spacious wrap-safe quiz options — 3rd/4th always fully readable */}
                   <div
                     data-testid="vocab-quick-guess"
                     className="rounded-xl border border-amber-300/25 bg-amber-400/10 p-3"
@@ -565,7 +590,7 @@ export default function VocabularySlide({
                       </span>
                     </div>
 
-                    <div className="grid grid-cols-1 gap-2">
+                    <div className="grid grid-cols-1 gap-2.5">
                       {quiz.options.map((opt, idx) => {
                         const isCorrect = idx === quiz.correctIdx;
                         const pickedWrong = wrongIndices.includes(idx);
@@ -585,7 +610,7 @@ export default function VocabularySlide({
                             onClick={() => handleQuizPick(idx)}
                             data-testid={`vocab-quiz-option-${idx}`}
                             data-option-text={opt}
-                            className={`min-h-[48px] h-auto w-full rounded-xl border py-2.5 px-3 flex items-center justify-center text-center text-xs sm:text-sm font-bold leading-snug whitespace-normal break-words transition active:scale-[0.98] ${style}`}
+                            className={`min-h-[52px] h-auto w-full rounded-xl border py-3 px-3.5 flex items-center justify-center text-center text-sm font-bold leading-snug whitespace-normal break-words transition active:scale-[0.98] ${style}`}
                           >
                             {opt}
                           </button>

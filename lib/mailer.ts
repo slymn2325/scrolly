@@ -10,6 +10,7 @@ export interface MailDeliveryResult {
   recipient?: string;
   id?: string;
   error?: string;
+  errorCode?: string;
 }
 
 function getResendApiKey(): string {
@@ -20,8 +21,16 @@ export function hasResendApiKey(): boolean {
   return getResendApiKey().length > 0;
 }
 
+/** Strip accidental quotes/whitespace from Heroku config EMAIL_FROM. */
+export function sanitizeEmailFrom(raw: string | null | undefined): string {
+  return String(raw || '')
+    .trim()
+    .replace(/^["']|["']$/g, '')
+    .trim();
+}
+
 export function getEmailFromAddress(): string {
-  return (process.env.EMAIL_FROM || '').trim() || DEFAULT_EMAIL_FROM;
+  return sanitizeEmailFrom(process.env.EMAIL_FROM) || DEFAULT_EMAIL_FROM;
 }
 
 export function getContactRecipientEmail(): string {
@@ -46,6 +55,14 @@ function escapeHtml(value: string): string {
     .replace(/'/g, '&#39;');
 }
 
+function logResendContext(extra: Record<string, unknown>): void {
+  console.error('[lib/mailer] Resend delivery diagnostics', {
+    hasResendApiKey: hasResendApiKey(),
+    emailFrom: getEmailFromAddress(),
+    ...extra,
+  });
+}
+
 async function postToResend(payload: {
   from: string;
   to: string[];
@@ -57,11 +74,16 @@ async function postToResend(payload: {
   const apiKey = getResendApiKey();
   if (!apiKey) {
     if (process.env.NODE_ENV === 'production') {
-      console.error('[lib/mailer] RESEND_API_KEY is not configured in production.');
+      logResendContext({
+        error: { message: 'RESEND_API_KEY missing' },
+        data: null,
+        errorCode: 'email_provider_unconfigured',
+      });
       return {
         ok: false,
         delivery: 'resend',
         error: 'email_provider_unconfigured',
+        errorCode: 'email_provider_unconfigured',
       };
     }
     return {
@@ -82,31 +104,55 @@ async function postToResend(payload: {
       signal: AbortSignal.timeout(10_000),
     });
 
+    const rawBody = await res.text().catch(() => '');
+    type ResendPayload = { id?: string; message?: string; name?: string; statusCode?: number };
+    let parsed: ResendPayload | null = null;
+    try {
+      parsed = rawBody ? (JSON.parse(rawBody) as ResendPayload) : null;
+    } catch {
+      parsed = null;
+    }
+
+    // Mirror Resend SDK `{ data, error }` shape in Heroku logs for OTP debugging.
     if (!res.ok) {
-      const errBody = await res.text().catch(() => '');
-      console.error('[lib/mailer] Resend API returned error:', res.status, errBody.slice(0, 400));
+      const error: ResendPayload =
+        parsed ??
+        { message: rawBody.slice(0, 400) || `HTTP ${res.status}`, statusCode: res.status };
+      logResendContext({
+        data: null,
+        error,
+        httpStatus: res.status,
+        errorCode: 'resend_delivery_failed',
+        toDomain: payload.to[0]?.split('@')[1] || null,
+      });
       return {
         ok: false,
         delivery: 'resend',
         recipient: payload.to[0],
         error: 'resend_delivery_failed',
+        errorCode: 'resend_delivery_failed',
       };
     }
 
-    const data = (await res.json().catch(() => ({}))) as { id?: string };
+    const dataId = typeof parsed?.id === 'string' ? parsed.id : undefined;
     return {
       ok: true,
       delivery: 'resend',
       recipient: payload.to[0],
-      ...(typeof data.id === 'string' ? { id: data.id } : {}),
+      ...(dataId ? { id: dataId } : {}),
     };
   } catch (err) {
-    console.error('[lib/mailer] Resend API request failed:', err);
+    logResendContext({
+      data: null,
+      error: err instanceof Error ? { message: err.message, name: err.name } : { message: String(err) },
+      errorCode: 'resend_network_failed',
+    });
     return {
       ok: false,
       delivery: 'resend',
       recipient: payload.to[0],
       error: 'resend_network_failed',
+      errorCode: 'resend_network_failed',
     };
   }
 }
@@ -121,6 +167,13 @@ export async function sendOtpEmail(params: {
   const safeCode = stripHeaderBreaks(params.code);
   const lang: Language = params.lang === 'en' ? 'en' : 'tr';
   const expiresInMin = Math.max(1, Math.floor(params.expiresInMin ?? 10));
+  const from = getEmailFromAddress();
+
+  console.info('[lib/mailer] sendOtpEmail attempt', {
+    hasResendApiKey: hasResendApiKey(),
+    emailFrom: from,
+    toDomain: safeTo.includes('@') ? safeTo.split('@')[1] : null,
+  });
 
   const subject =
     lang === 'en'
@@ -180,7 +233,7 @@ export async function sendOtpEmail(params: {
   ].join('\n');
 
   return postToResend({
-    from: getEmailFromAddress(),
+    from,
     to: [safeTo],
     subject: stripHeaderBreaks(subject),
     html,

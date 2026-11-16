@@ -2,6 +2,7 @@ import { VOCABULARY_FACTS } from '@/data/vocabularyFacts';
 import { getCategoryMeta, type CategoryFilter, type Language } from '@/i18n/translations';
 import type { CategoryId, FactCard } from '@/types/fact';
 import type { VocabularyCard } from '@/types/vocabulary';
+import { formatPhoneticForDisplay } from '@/utils/phoneticDisplay';
 import {
   normalizeRoomCode,
   type ScrollaPlayer,
@@ -115,20 +116,28 @@ export function vocabCardToFactCard(
       slug: vocab.id,
       title: `${vocab.word} (${vocab.partOfSpeech})`,
       teaserTitle: vocab.word,
-      factText: `"${vocab.word}" ${vocab.phonetic}: ${vocab.meaningTr}`,
+      factText: `"${vocab.word}" ${formatPhoneticForDisplay(vocab.phonetic)}: ${vocab.meaningTr}`,
       deepDiveDetail: `${vocab.exampleEn} · ${vocab.exampleTr}`,
       sourceHint: 'Scrolly Dil Laboratuvarı',
       tag: 'Dil Öğrenme',
       quiz: {
         question: `"${vocab.word}" (${vocab.partOfSpeech}) kelimesinin Türkçesi nedir?`,
-        options: vocab.quizOptions,
-        correctIndex: vocab.correctIndex,
+        options: (() => {
+          const opts = vocab.quizOptions.map((o) => o.trim()).filter(Boolean);
+          if (opts.length >= 3 && vocab.correctIndex <= 2) {
+            return [opts[0], opts[1], opts[2]] as [string, string, string];
+          }
+          const correct = opts[vocab.correctIndex] || vocab.meaningTr;
+          const rest = opts.filter((_, i) => i !== vocab.correctIndex).slice(0, 2);
+          return [correct, rest[0] || 'geçici', rest[1] || 'belirsiz'] as [string, string, string];
+        })(),
+        correctIndex: (vocab.correctIndex <= 2 ? vocab.correctIndex : 0) as 0 | 1 | 2,
         explanation: `"${vocab.word}" = "${vocab.meaningTr}". Örnek: ${vocab.exampleTr}`,
       },
     },
     en: {
       slug: vocab.id,
-      title: `${vocab.word} (${vocab.phonetic})`,
+      title: `${vocab.word} (${formatPhoneticForDisplay(vocab.phonetic)})`,
       teaserTitle: vocab.word,
       factText: `"${vocab.word}": ${vocab.definitionEn}`,
       deepDiveDetail: `Example: "${vocab.exampleEn}"`,

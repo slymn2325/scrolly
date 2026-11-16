@@ -1802,6 +1802,8 @@ export default function HomeClient({ initialFacts, initialVocabulary }: HomeClie
         showQuizDot={showQuizDot}
         xp={memory.xp}
         streakDays={memory.streakDays}
+        accountLabel={authUser?.nickname || memory.nickname || null}
+        accountEmail={authUser?.email || null}
         onSelectTab={handleDockSelectTab}
       />
 
@@ -1836,10 +1838,10 @@ export default function HomeClient({ initialFacts, initialVocabulary }: HomeClie
         {/* Immersive vertical stage: full-bleed on mobile/tablet; proportional 88dvh showcase on desktop */}
         <div
           data-testid="reels-phone-frame"
-          className={`relative z-10 mx-auto flex h-full w-full min-w-0 flex-1 flex-col overflow-hidden lg:mx-0 lg:my-auto lg:h-[88dvh] lg:flex-none lg:rounded-[28px] lg:border lg:border-white/15 lg:shadow-[0_24px_90px_-12px_rgba(0,0,0,0.72)] ${
+          className={`relative z-10 mx-auto flex h-full w-full min-w-0 flex-1 flex-col overflow-hidden lg:mx-0 lg:my-auto lg:h-[min(92dvh,920px)] lg:flex-none lg:rounded-[24px] lg:border lg:border-white/12 lg:shadow-[0_28px_100px_-18px_rgba(0,0,0,0.65)] ${
             showExploreFeed
-              ? 'lg:w-[min(480px,46vw)] lg:max-w-[500px] xl:w-[min(500px,38vw)] xl:max-w-[520px]'
-              : 'lg:w-[min(600px,54vw)] lg:max-w-[620px]'
+              ? 'lg:w-[min(760px,58vw)] lg:max-w-[820px] xl:w-[min(860px,54vw)] xl:max-w-[900px]'
+              : 'lg:w-[min(820px,62vw)] lg:max-w-[900px]'
           } ${
             isDark ? 'bg-[#0A0A0E] text-white' : 'bg-[#F7F5FB] text-[#1E1B2E]'
           }`}

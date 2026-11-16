@@ -505,6 +505,20 @@ const TikTokFeed = forwardRef<TikTokFeedHandle, TikTokFeedProps>(function TikTok
       if (targetEl?.closest('[data-testid="language-lab-overlay"], [data-testid="fact-card-back"]')) {
         return;
       }
+
+      // Inner scrollable Word Lab / long-copy regions: keep wheel local until edges.
+      const scrollContain = targetEl?.closest(
+        '[data-scroll-contain="true"]'
+      ) as HTMLElement | null;
+      if (scrollContain && scrollContain.scrollHeight > scrollContain.clientHeight + 1) {
+        const { scrollTop, clientHeight, scrollHeight } = scrollContain;
+        const atTop = scrollTop <= 0;
+        const atBottom = scrollTop + clientHeight >= scrollHeight - 2;
+        if ((e.deltaY < 0 && !atTop) || (e.deltaY > 0 && !atBottom)) {
+          return;
+        }
+      }
+
       if (Math.abs(e.deltaY) < 20) return;
 
       e.preventDefault();

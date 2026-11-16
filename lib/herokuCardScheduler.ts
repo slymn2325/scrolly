@@ -138,8 +138,8 @@ export interface ValidatedVocabularyCard {
   definitionEn: string;
   exampleEn: string;
   exampleTr: string;
-  quizOptions: [string, string, string];
-  correctIndex: 0 | 1 | 2;
+  quizOptions: [string, string, string] | [string, string, string, string];
+  correctIndex: 0 | 1 | 2 | 3;
   gifQuery: string;
   gifUrl: string | null;
 }
@@ -458,7 +458,7 @@ export function validateVocabularyCard(
   const exampleEn = String(item.exampleEn || '').trim();
   const exampleTr = String(item.exampleTr || '').trim();
   const quizOptions = Array.isArray(item.quizOptions)
-    ? item.quizOptions.map((o) => String(o || '').trim()).filter(Boolean).slice(0, 3)
+    ? item.quizOptions.map((o) => String(o || '').trim()).filter(Boolean).slice(0, 4)
     : [];
   const correctIndex = Number(item.correctIndex);
 
@@ -478,10 +478,19 @@ export function validateVocabularyCard(
   if (!new RegExp(`\\b${escapedWord}\\b`, 'i').test(exampleEn)) {
     return null;
   }
-  if (quizOptions.length !== 3 || new Set(quizOptions.map((o) => o.toLowerCase())).size !== 3) {
+  if (
+    (quizOptions.length !== 3 && quizOptions.length !== 4) ||
+    new Set(quizOptions.map((o) => o.toLowerCase())).size !== quizOptions.length
+  ) {
     return null;
   }
-  if (correctIndex !== 0 && correctIndex !== 1 && correctIndex !== 2) return null;
+  if (
+    !Number.isInteger(correctIndex) ||
+    correctIndex < 0 ||
+    correctIndex >= quizOptions.length
+  ) {
+    return null;
+  }
 
   const slugWord = word
     .toLowerCase()
@@ -553,8 +562,11 @@ export function validateVocabularyCard(
     definitionEn,
     exampleEn,
     exampleTr,
-    quizOptions: [quizOptions[0], quizOptions[1], quizOptions[2]],
-    correctIndex: correctIndex as 0 | 1 | 2,
+    quizOptions:
+      quizOptions.length === 4
+        ? [quizOptions[0], quizOptions[1], quizOptions[2], quizOptions[3]]
+        : [quizOptions[0], quizOptions[1], quizOptions[2]],
+    correctIndex: correctIndex as 0 | 1 | 2 | 3,
     gifQuery,
     gifUrl,
   };
@@ -638,8 +650,8 @@ STRICT ANTI-CLICHÉ BAN LIST — NEVER generate or paraphrase these overused int
 - "definitionEn": one clear English definition sentence
 - "exampleEn": natural English example sentence that CONTAINS the word
 - "exampleTr": Turkish translation of that example
-- "quizOptions": array of exactly 3 distinct Turkish meaning options
-- "correctIndex": 0 | 1 | 2 matching the correct Turkish meaning in quizOptions`
+- "quizOptions": array of 3 or 4 distinct Turkish meaning options (never clip later choices)
+- "correctIndex": 0-based index matching the correct Turkish meaning in quizOptions`
       : '\n\nInclude "vocabulary": [] (0 vocabulary items in this batch).';
 
   const userPrompt = `Create exactly ${options.factsCount} brand-new bilingual (TR & EN) micro-fact card${options.factsCount === 1 ? '' : 's'} distributed across categories (${options.targetCategories.join(', ')} — cover every listed category before repeating any).

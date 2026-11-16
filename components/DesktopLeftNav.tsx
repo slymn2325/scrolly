@@ -12,6 +12,8 @@ interface DesktopLeftNavProps {
   showQuizDot: boolean;
   xp: number;
   streakDays: number;
+  accountLabel?: string | null;
+  accountEmail?: string | null;
   onSelectTab: (tab: DockTabId) => void;
 }
 
@@ -38,6 +40,8 @@ export default function DesktopLeftNav({
   showQuizDot,
   xp,
   streakDays,
+  accountLabel = null,
+  accountEmail = null,
   onSelectTab,
 }: DesktopLeftNavProps) {
   const [isOffline, setIsOffline] = useState(false);
@@ -174,6 +178,19 @@ export default function DesktopLeftNav({
               className="h-4 w-4 shrink-0 object-contain"
             />
             <span>· {xp.toLocaleString()} XP</span>
+          </p>
+          <p
+            data-testid="desktop-account-status"
+            className={`mt-2 truncate text-[11px] font-bold ${
+              darkMode ? 'text-white/80' : 'text-[#1E1B2E]/80'
+            }`}
+            title={accountEmail || accountLabel || undefined}
+          >
+            {accountEmail || accountLabel
+              ? accountLabel || accountEmail
+              : lang === 'tr'
+                ? 'Misafir oturum'
+                : 'Guest session'}
           </p>
         </div>
         <p

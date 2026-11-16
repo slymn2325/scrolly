@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import {
   Bookmark,
   BookOpen,
@@ -19,6 +19,7 @@ import type { FeedSlideItem } from '@/components/TikTokFeed';
 import { getCategoryMeta, type Language } from '@/i18n/translations';
 import type { FactCard } from '@/types/fact';
 import type { VocabPartOfSpeech } from '@/types/vocabulary';
+import { formatPhoneticForDisplay } from '@/utils/phoneticDisplay';
 
 const PART_OF_SPEECH_LABELS: Record<VocabPartOfSpeech, { tr: string; en: string }> = {
   isim: { tr: 'İsim', en: 'Noun' },
@@ -67,6 +68,8 @@ export default function DesktopFeedSideRail({
   onDuel,
   onShare,
 }: DesktopFeedSideRailProps) {
+  const [shortcutsOpen, setShortcutsOpen] = useState(false);
+
   const stepBtn = darkMode
     ? 'border-white/20 bg-white/10 text-white hover:bg-white/20'
     : 'border-[#1E1B2E]/15 bg-white/95 text-[#1E1B2E] hover:bg-white shadow-sm';
@@ -122,7 +125,9 @@ export default function DesktopFeedSideRail({
         kind: 'other' as const,
         badge: lang === 'tr' ? 'Kelime Laboratuvarı' : 'Word Lab',
         badgeColor: '#6366F1',
-        subLabel: [cefr, localizedPos, card.phonetic].filter(Boolean).join(' · '),
+        subLabel: [cefr, localizedPos, formatPhoneticForDisplay(card.phonetic)]
+          .filter(Boolean)
+          .join(' · '),
         definitionEn: card.definitionEn,
         exampleEn: card.exampleEn,
         synonyms,
@@ -167,139 +172,132 @@ export default function DesktopFeedSideRail({
       data-testid="desktop-feed-side-cluster"
       className="hidden shrink-0 items-center gap-5 lg:flex"
     >
-      {/* 1. Card-Adjacent Action Column + Up/Down Steppers */}
+      {/* 1. Ordered action bar + Up/Down steppers (Like → Save → Detail → 1v1 → Share) */}
       <aside
         data-testid="desktop-feed-side-rail"
         data-theme={darkMode ? 'dark' : 'light'}
-        className="relative z-20 flex flex-col items-center justify-center gap-3"
+        className={`relative z-20 flex w-[128px] flex-col justify-center gap-2 rounded-2xl border p-2 backdrop-blur-xl ${
+          darkMode ? 'border-white/12 bg-[#13131A]/85' : 'border-[#1E1B2E]/10 bg-white/90 shadow-sm'
+        }`}
         aria-label={lang === 'tr' ? 'Kart aksiyonları ve kaydırma' : 'Card actions and navigation'}
       >
         {onLike && (
-          <div className="flex flex-col items-center gap-1">
-            <button
-              type="button"
-              data-testid="desktop-action-like"
-              onClick={onLike}
-              disabled={!hasFact}
-              aria-label={lang === 'tr' ? 'Beğen' : 'Like'}
-              className={`flex h-11 w-11 items-center justify-center rounded-full border backdrop-blur-md transition ${
-                !hasFact
-                  ? `${actionBtn} cursor-not-allowed opacity-35`
-                  : isLiked
-                    ? 'border-rose-400/60 bg-rose-500 text-white shadow-lg shadow-rose-500/30'
-                    : actionBtn
-              }`}
-            >
-              <Heart className={`h-5 w-5 ${isLiked && hasFact ? 'fill-current' : ''}`} />
-            </button>
-            <span className={`text-[10px] font-extrabold tabular-nums ${labelTone}`}>
+          <button
+            type="button"
+            data-testid="desktop-action-like"
+            onClick={onLike}
+            disabled={!hasFact}
+            aria-label={lang === 'tr' ? 'Beğen' : 'Like'}
+            className={`flex h-10 w-full items-center gap-2 rounded-xl border px-2.5 text-left text-[11px] font-extrabold transition ${
+              !hasFact
+                ? `${actionBtn} cursor-not-allowed opacity-35`
+                : isLiked
+                  ? 'border-rose-400/60 bg-rose-500 text-white shadow-md shadow-rose-500/25'
+                  : actionBtn
+            }`}
+          >
+            <Heart className={`h-4 w-4 shrink-0 ${isLiked && hasFact ? 'fill-current' : ''}`} />
+            <span className="min-w-0 truncate">
               {hasFact && likesCount > 0 ? likesCount : lang === 'tr' ? 'Beğen' : 'Like'}
             </span>
-          </div>
+          </button>
         )}
 
         {onSave && (
-          <div className="flex flex-col items-center gap-1">
-            <button
-              type="button"
-              data-testid="desktop-action-save"
-              onClick={onSave}
-              disabled={!canSave}
-              aria-label={lang === 'tr' ? 'Kaydet' : 'Save'}
-              className={`flex h-11 w-11 items-center justify-center rounded-full border backdrop-blur-md transition ${
-                !canSave
-                  ? `${actionBtn} cursor-not-allowed opacity-35`
-                  : isSaved
-                    ? 'border-amber-400/60 bg-amber-400 text-[#09090B] shadow-lg shadow-amber-400/30'
-                    : actionBtn
-              }`}
-            >
-              <Bookmark className={`h-5 w-5 ${isSaved && canSave ? 'fill-current' : ''}`} />
-            </button>
-            <span className={`text-[10px] font-extrabold ${labelTone}`}>
-              {lang === 'tr' ? 'Kaydet' : 'Save'}
-            </span>
-          </div>
+          <button
+            type="button"
+            data-testid="desktop-action-save"
+            onClick={onSave}
+            disabled={!canSave}
+            aria-label={lang === 'tr' ? 'Kaydet' : 'Save'}
+            className={`flex h-10 w-full items-center gap-2 rounded-xl border px-2.5 text-left text-[11px] font-extrabold transition ${
+              !canSave
+                ? `${actionBtn} cursor-not-allowed opacity-35`
+                : isSaved
+                  ? 'border-amber-400/60 bg-amber-400 text-[#09090B] shadow-md shadow-amber-400/25'
+                  : actionBtn
+            }`}
+          >
+            <Bookmark className={`h-4 w-4 shrink-0 ${isSaved && canSave ? 'fill-current' : ''}`} />
+            <span className="min-w-0 truncate">{lang === 'tr' ? 'Kaydet' : 'Save'}</span>
+          </button>
         )}
 
         {onDetail && (
-          <div className="flex flex-col items-center gap-1">
-            <button
-              type="button"
-              data-testid="desktop-action-detail"
-              onClick={onDetail}
-              disabled={!canDetail}
-              aria-label={lang === 'tr' ? 'Detay' : 'Detail'}
-              className={`flex h-11 w-11 items-center justify-center rounded-full border backdrop-blur-md transition-[transform,background-color,border-color,color] duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400 ${actionBtn} ${
-                !canDetail ? 'cursor-not-allowed opacity-35' : ''
-              }`}
-            >
-              <BookOpen className="h-5 w-5" />
-            </button>
-            <span className={`text-[10px] font-extrabold ${labelTone}`}>
-              {lang === 'tr' ? 'Detay' : 'Detail'}
-            </span>
-          </div>
+          <button
+            type="button"
+            data-testid="desktop-action-detail"
+            onClick={onDetail}
+            disabled={!canDetail}
+            aria-label={lang === 'tr' ? '3D Flip / Detay' : '3D Flip / Detail'}
+            className={`flex h-10 w-full items-center gap-2 rounded-xl border px-2.5 text-left text-[11px] font-extrabold transition ${actionBtn} ${
+              !canDetail ? 'cursor-not-allowed opacity-35' : ''
+            }`}
+          >
+            <BookOpen className="h-4 w-4 shrink-0" />
+            <span className="min-w-0 truncate">{lang === 'tr' ? '3D Detay' : '3D Flip'}</span>
+          </button>
         )}
 
         {onDuel && (
-          <div className="flex flex-col items-center gap-1">
-            <button
-              type="button"
-              data-testid="desktop-action-duel"
-              onClick={onDuel}
-              aria-label="Scrolla"
-              className="flex h-11 w-11 items-center justify-center rounded-full border border-violet-400/50 bg-gradient-to-br from-violet-600 to-fuchsia-600 text-white shadow-lg shadow-violet-500/30 transition-transform duration-150 hover:scale-105 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400"
-            >
-              <Swords className="h-5 w-5" />
-            </button>
-            <span className={`text-[10px] font-extrabold ${labelTone}`}>Scrolla</span>
-          </div>
+          <button
+            type="button"
+            data-testid="desktop-action-duel"
+            onClick={onDuel}
+            aria-label="Scrolla 1v1"
+            className="flex h-10 w-full items-center gap-2 rounded-xl border border-violet-400/45 bg-gradient-to-r from-violet-600 to-fuchsia-600 px-2.5 text-left text-[11px] font-extrabold text-white shadow-md shadow-violet-500/25 transition hover:brightness-110"
+          >
+            <Swords className="h-4 w-4 shrink-0" />
+            <span className="min-w-0 truncate">1v1</span>
+          </button>
         )}
 
         {onShare && (
-          <div className="flex flex-col items-center gap-1">
-            <button
-              type="button"
-              data-testid="desktop-action-share"
-              onClick={onShare}
-              disabled={!hasFact}
-              aria-label={lang === 'tr' ? 'Paylaş' : 'Share'}
-              className={`flex h-11 w-11 items-center justify-center rounded-full border backdrop-blur-md transition-[transform,background-color,border-color,color] duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400 ${actionBtn} ${
-                !hasFact ? 'cursor-not-allowed opacity-35' : ''
-              }`}
-            >
-              <Share2 className="h-5 w-5" />
-            </button>
-            <span className={`text-[10px] font-extrabold ${labelTone}`}>
-              {lang === 'tr' ? 'Paylaş' : 'Share'}
-            </span>
-          </div>
+          <button
+            type="button"
+            data-testid="desktop-action-share"
+            onClick={onShare}
+            disabled={!hasFact}
+            aria-label={lang === 'tr' ? 'Paylaş' : 'Share'}
+            className={`flex h-10 w-full items-center gap-2 rounded-xl border px-2.5 text-left text-[11px] font-extrabold transition ${actionBtn} ${
+              !hasFact ? 'cursor-not-allowed opacity-35' : ''
+            }`}
+          >
+            <Share2 className="h-4 w-4 shrink-0" />
+            <span className="min-w-0 truncate">{lang === 'tr' ? 'Paylaş' : 'Share'}</span>
+          </button>
         )}
 
         <div
-          className={`my-1 h-px w-7 ${darkMode ? 'bg-white/15' : 'bg-[#1E1B2E]/15'}`}
+          className={`my-0.5 h-px w-full ${darkMode ? 'bg-white/15' : 'bg-[#1E1B2E]/15'}`}
           aria-hidden="true"
         />
 
-        <button
-          type="button"
-          data-testid="desktop-feed-prev"
-          onClick={onPrev}
-          aria-label={lang === 'tr' ? 'Önceki kart' : 'Previous card'}
-          className={`flex h-10 w-10 items-center justify-center rounded-full border backdrop-blur-md transition-[transform,background-color,border-color,color] duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400 ${stepBtn}`}
-        >
-          <ChevronUp className="h-5 w-5" />
-        </button>
-        <button
-          type="button"
-          data-testid="desktop-feed-next"
-          onClick={onNext}
-          aria-label={lang === 'tr' ? 'Sonraki kart' : 'Next card'}
-          className={`flex h-10 w-10 items-center justify-center rounded-full border backdrop-blur-md transition-[transform,background-color,border-color,color] duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400 ${stepBtn}`}
-        >
-          <ChevronDown className="h-5 w-5" />
-        </button>
+        <div className="flex gap-1.5">
+          <button
+            type="button"
+            data-testid="desktop-feed-prev"
+            onClick={onPrev}
+            aria-label={lang === 'tr' ? 'Önceki kart' : 'Previous card'}
+            title="↑"
+            className={`flex h-10 flex-1 items-center justify-center rounded-xl border transition ${stepBtn}`}
+          >
+            <ChevronUp className="h-5 w-5" />
+          </button>
+          <button
+            type="button"
+            data-testid="desktop-feed-next"
+            onClick={onNext}
+            aria-label={lang === 'tr' ? 'Sonraki kart' : 'Next card'}
+            title="↓"
+            className={`flex h-10 flex-1 items-center justify-center rounded-xl border transition ${stepBtn}`}
+          >
+            <ChevronDown className="h-5 w-5" />
+          </button>
+        </div>
+        <p className={`px-1 text-center text-[9px] font-bold uppercase tracking-wide ${labelTone}`}>
+          ↑ ↓
+        </p>
       </aside>
 
       {/* 2. Large Desktop Right Panel (xl:): Non-Duplicating Insight / Source & Keyboard Shortcuts */}
@@ -384,6 +382,12 @@ export default function DesktopFeedSideRail({
                     {lang === 'tr' ? 'Bilimsel Arka Plan' : 'Scientific Context'}
                   </p>
                   <p
+                    data-scroll-contain="true"
+                    onWheel={(e) => {
+                      const el = e.currentTarget;
+                      if (el.scrollHeight > el.clientHeight + 1) e.stopPropagation();
+                    }}
+                    style={{ overscrollBehavior: 'contain' }}
                     className={`mt-1.5 max-h-[210px] overflow-y-auto pr-1 text-xs font-medium leading-relaxed ${
                       darkMode ? 'text-white/85' : 'text-[#1E1B2E]/85'
                     }`}
@@ -530,14 +534,22 @@ export default function DesktopFeedSideRail({
                 : 'border-[#1E1B2E]/10 bg-[#1E1B2E]/[0.03]'
             }`}
           >
-            <div
-              className={`flex items-center gap-1.5 text-[10px] font-black uppercase tracking-wider ${
+            <button
+              type="button"
+              data-testid="desktop-shortcuts-toggle"
+              onClick={() => setShortcutsOpen((open) => !open)}
+              aria-expanded={shortcutsOpen}
+              className={`flex w-full items-center justify-between gap-1.5 text-[10px] font-black uppercase tracking-wider ${
                 darkMode ? 'text-white/55' : 'text-[#1E1B2E]/55'
               }`}
             >
-              <Keyboard className="h-3.5 w-3.5" />
-              <span>{lang === 'tr' ? 'Klavye Kısayolları' : 'Keyboard Shortcuts'}</span>
-            </div>
+              <span className="inline-flex items-center gap-1.5">
+                <Keyboard className="h-3.5 w-3.5" />
+                <span>{lang === 'tr' ? 'Klavye Kısayolları' : 'Keyboard Shortcuts'}</span>
+              </span>
+              {shortcutsOpen ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
+            </button>
+            {shortcutsOpen && (
             <ul className="mt-2 space-y-1.5 text-[11px] font-semibold">
               <li className="flex items-center justify-between gap-2">
                 <span className={darkMode ? 'text-white/75' : 'text-[#1E1B2E]/75'}>
@@ -582,6 +594,7 @@ export default function DesktopFeedSideRail({
                 </kbd>
               </li>
             </ul>
+            )}
           </div>
         </aside>
       )}

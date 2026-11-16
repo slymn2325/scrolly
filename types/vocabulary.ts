@@ -12,8 +12,9 @@ export interface VocabularyCard {
   definitionEn: string;
   exampleEn: string;
   exampleTr: string;
-  quizOptions: [string, string, string];
-  correctIndex: 0 | 1 | 2;
+  /** 3–4 Turkish meaning choices; UI must never clip the 3rd/4th option. */
+  quizOptions: [string, string, string] | [string, string, string, string];
+  correctIndex: 0 | 1 | 2 | 3;
   gifUrl?: string;
   gifQuery?: string;
 }
