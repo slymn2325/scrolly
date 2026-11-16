@@ -123,8 +123,8 @@ const CUSTOM_AI_MODELS_ENDPOINT = String(process.env.AI_MODELS_ENDPOINT || '').t
 // IMPORTANT: must be a Google Generative Language API model id (not a Cursor-internal name).
 // Root cause of silent cron failures: defaulting to `gemini-4-hydrogen` (not a Gemini API model).
 const DEFAULT_AI_MODEL_NAME =
-  String(process.env.AI_MODEL_NAME || 'gemini-2.5-flash').trim() || 'gemini-2.5-flash';
-const GEMINI_FALLBACK_MODELS = ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-2.5-pro'];
+  String(process.env.AI_MODEL_NAME || 'gemini-3.8-flash').trim() || 'gemini-3.8-flash';
+const GEMINI_FALLBACK_MODELS = ['gemini-3.8-flash', 'gemini-2.5-flash', 'gemini-2.0-flash'];
 
 const CATEGORY_VISUAL_DEFAULTS = {
   space: { accentColor: '#7C3AED', iconName: 'Orbit', emoji: '🪐' },
@@ -1694,7 +1694,8 @@ async function requestNativeGemini({ modelName, token, systemPrompt, userPrompt 
       generationConfig.responseMimeType = 'application/json';
     }
     if (includeThinkingLevel) {
-      generationConfig.thinkingConfig = { thinkingLevel: 'LOW' };
+      // Prefer thinkingLevel (not legacy thinkingBudget) for Gemini 3.x.
+      generationConfig.thinkingConfig = { thinkingLevel: 'high' };
     }
     const body = {
       systemInstruction: { parts: [{ text: systemPrompt }] },
@@ -1723,33 +1724,36 @@ async function requestNativeGemini({ modelName, token, systemPrompt, userPrompt 
   };
 
   console.log(
-    `[generateFacts] Gemini request start model=${modelName} googleSearch=true jsonMime=false`
+    `[generateFacts] Gemini request start model=${modelName} googleSearch=true thinkingLevel=high jsonMime=false`
   );
 
-  // Prefer Search grounding (no JSON mime / thinking — most compatible with google_search tool).
+  // Primary path: googleSearch grounding + thinkingLevel high (no legacy thinkingBudget).
   let { response, rawText } = await postOnce({
-    includeThinkingLevel: false,
+    includeThinkingLevel: true,
     includeGoogleSearch: true,
     jsonMime: false,
   });
 
-  // Tool / schema rejections → retry without search but with JSON mime.
+  // Tool / schema rejections → retry without search but keep high thinking + JSON mime.
   if (
     !response.ok &&
     /google_search|googleSearch|tools|Tool/i.test(rawText)
   ) {
     console.warn(
-      `[generateFacts] Gemini google_search rejected (HTTP ${response.status}); retrying JSON-only mode`
+      `[generateFacts] Gemini google_search rejected (HTTP ${response.status}); retrying JSON-only mode with thinkingLevel=high`
     );
     ({ response, rawText } = await postOnce({
-      includeThinkingLevel: false,
+      includeThinkingLevel: true,
       includeGoogleSearch: false,
       jsonMime: true,
     }));
   } else if (
     response.status === 400 &&
-    /thinkingLevel|thinking_config|thinkingConfig/i.test(rawText)
+    /thinkingLevel|thinking_config|thinkingConfig|thinkingBudget/i.test(rawText)
   ) {
+    console.warn(
+      `[generateFacts] thinkingLevel rejected (HTTP ${response.status}); retrying googleSearch without thinkingConfig`
+    );
     ({ response, rawText } = await postOnce({
       includeThinkingLevel: false,
       includeGoogleSearch: true,
@@ -1775,10 +1779,10 @@ async function requestNativeGemini({ modelName, token, systemPrompt, userPrompt 
 
   if (response.ok && !parsedPayload) {
     console.warn(
-      `[generateFacts] Gemini response JSON parse miss; retrying with responseMimeType=json (model=${modelName})`
+      `[generateFacts] Gemini response JSON parse miss; retrying with responseMimeType=json + thinkingLevel=high (model=${modelName})`
     );
     ({ response, rawText } = await postOnce({
-      includeThinkingLevel: false,
+      includeThinkingLevel: true,
       includeGoogleSearch: true,
       jsonMime: true,
     }));
