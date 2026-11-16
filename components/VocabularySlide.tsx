@@ -446,7 +446,7 @@ export default function VocabularySlide({
                 <span
                   data-testid="vocab-phonetic"
                   data-phonetic="true"
-                  aria-label={card.phonetic}
+                  aria-label={formatPhoneticForDisplay(card.phonetic)}
                   className="font-mono text-xs font-semibold text-indigo-200 sm:text-sm"
                 >
                   {formatPhoneticForDisplay(card.phonetic)}

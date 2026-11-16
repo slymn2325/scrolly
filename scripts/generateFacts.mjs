@@ -124,7 +124,9 @@ const CUSTOM_AI_MODELS_ENDPOINT = String(process.env.AI_MODELS_ENDPOINT || '').t
 // Root cause of silent cron failures: defaulting to `gemini-4-hydrogen` (not a Gemini API model).
 const DEFAULT_AI_MODEL_NAME =
   String(process.env.AI_MODEL_NAME || 'gemini-3.8-flash').trim() || 'gemini-3.8-flash';
-const GEMINI_FALLBACK_MODELS = ['gemini-3.8-flash', 'gemini-2.5-flash', 'gemini-2.0-flash'];
+const GEMINI_FALLBACK_MODELS = ['gemini-3.8-flash', 'gemini-3.6-flash', 'gemini-3.5-flash-lite'];
+const GEMINI_THINKING_LEVEL = 'medium';
+const GEMINI_FETCH_TIMEOUT_MS = 180000;
 
 const CATEGORY_VISUAL_DEFAULTS = {
   space: { accentColor: '#7C3AED', iconName: 'Orbit', emoji: '🪐' },
@@ -1695,7 +1697,8 @@ async function requestNativeGemini({ modelName, token, systemPrompt, userPrompt 
     }
     if (includeThinkingLevel) {
       // Prefer thinkingLevel (not legacy thinkingBudget) for Gemini 3.x.
-      generationConfig.thinkingConfig = { thinkingLevel: 'high' };
+      // Keep medium/low — high thinking burns the HTTP timeout on multi-card batches.
+      generationConfig.thinkingConfig = { thinkingLevel: GEMINI_THINKING_LEVEL };
     }
     const body = {
       systemInstruction: { parts: [{ text: systemPrompt }] },
@@ -1716,7 +1719,7 @@ async function requestNativeGemini({ modelName, token, systemPrompt, userPrompt 
         Accept: 'application/json',
         'Content-Type': 'application/json',
       },
-      signal: AbortSignal.timeout(90000),
+      signal: AbortSignal.timeout(GEMINI_FETCH_TIMEOUT_MS),
       body: JSON.stringify(buildBody(opts)),
     });
     const rawText = (await response.text()).trim();
@@ -1724,23 +1727,23 @@ async function requestNativeGemini({ modelName, token, systemPrompt, userPrompt 
   };
 
   console.log(
-    `[generateFacts] Gemini request start model=${modelName} googleSearch=true thinkingLevel=high jsonMime=false`
+    `[generateFacts] Gemini request start model=${modelName} googleSearch=true thinkingLevel=${GEMINI_THINKING_LEVEL} timeoutMs=${GEMINI_FETCH_TIMEOUT_MS} jsonMime=false`
   );
 
-  // Primary path: googleSearch grounding + thinkingLevel high (no legacy thinkingBudget).
+  // Primary path: googleSearch grounding + thinkingLevel medium (no legacy thinkingBudget).
   let { response, rawText } = await postOnce({
     includeThinkingLevel: true,
     includeGoogleSearch: true,
     jsonMime: false,
   });
 
-  // Tool / schema rejections → retry without search but keep high thinking + JSON mime.
+  // Tool / schema rejections → retry without search but keep thinking + JSON mime.
   if (
     !response.ok &&
     /google_search|googleSearch|tools|Tool/i.test(rawText)
   ) {
     console.warn(
-      `[generateFacts] Gemini google_search rejected (HTTP ${response.status}); retrying JSON-only mode with thinkingLevel=high`
+      `[generateFacts] Gemini google_search rejected (HTTP ${response.status}); retrying JSON-only mode with thinkingLevel=${GEMINI_THINKING_LEVEL}`
     );
     ({ response, rawText } = await postOnce({
       includeThinkingLevel: true,
@@ -1779,7 +1782,7 @@ async function requestNativeGemini({ modelName, token, systemPrompt, userPrompt 
 
   if (response.ok && !parsedPayload) {
     console.warn(
-      `[generateFacts] Gemini response JSON parse miss; retrying with responseMimeType=json + thinkingLevel=high (model=${modelName})`
+      `[generateFacts] Gemini response JSON parse miss; retrying with responseMimeType=json + thinkingLevel=${GEMINI_THINKING_LEVEL} (model=${modelName})`
     );
     ({ response, rawText } = await postOnce({
       includeThinkingLevel: true,
@@ -2067,7 +2070,8 @@ function resolveTargetCardsPerRun(argv = process.argv, env = process.env) {
 }
 
 function buildBatchPlan(targetTotal) {
-  const BATCH_SIZE = 10;
+  // Keep Gemini payloads small (2–3 cards) so thinking + grounding finish inside the HTTP timeout.
+  const BATCH_SIZE = 3;
   const plan = [];
   let remaining = Math.min(100, Math.max(1, Number(targetTotal) || 25));
   let batchIndex = 0;

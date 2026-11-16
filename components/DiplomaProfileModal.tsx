@@ -821,7 +821,7 @@ export default function DiplomaProfileModal({
                               {entry.word}{' '}
                               <span
                                 data-phonetic="true"
-                                aria-label={entry.phonetic}
+                                aria-label={formatPhoneticForDisplay(entry.phonetic)}
                                 className="font-mono text-[10px] font-semibold text-slate-500"
                               >
                                 {formatPhoneticForDisplay(entry.phonetic)}

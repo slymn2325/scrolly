@@ -893,6 +893,13 @@ function sanitizeSourceUrl(url?: string | null): string | undefined {
   if (!url) return undefined;
   const trimmed = url.trim();
   // Absolute http(s) only — never promote IPA `/ˈ…/` or other relative paths into hrefs.
+  // Inline IPA check (avoid circular import with utils that may pull db types).
+  if (
+    trimmed.startsWith('/') &&
+    /[ˈˌːɑɒæəɜɪʊʌθðʃʒŋɡ]/.test(trimmed)
+  ) {
+    return undefined;
+  }
   if (/^https?:\/\//i.test(trimmed)) {
     return trimmed;
   }

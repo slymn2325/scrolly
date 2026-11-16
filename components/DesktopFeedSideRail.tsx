@@ -19,7 +19,7 @@ import type { FeedSlideItem } from '@/components/TikTokFeed';
 import { getCategoryMeta, type Language } from '@/i18n/translations';
 import type { FactCard } from '@/types/fact';
 import type { VocabPartOfSpeech } from '@/types/vocabulary';
-import { formatPhoneticForDisplay } from '@/utils/phoneticDisplay';
+import { formatPhoneticForDisplay, safeExternalHref } from '@/utils/phoneticDisplay';
 
 const PART_OF_SPEECH_LABELS: Record<VocabPartOfSpeech, { tr: string; en: string }> = {
   isim: { tr: 'İsim', en: 'Noun' },
@@ -90,7 +90,7 @@ export default function DesktopFeedSideRail({
     activeFact?.sourceName ||
     localized?.sourceHint ||
     (lang === 'tr' ? 'Doğrulanmış Bilimsel Kaynak' : 'Verified Scientific Source');
-  const sourceUrl = localized?.sourceUrl || activeFact?.sourceUrl;
+  const sourceUrl = safeExternalHref(localized?.sourceUrl || activeFact?.sourceUrl);
   const hasGuessChallenge = Boolean(localized?.guessChallenge);
   const isAnalysisUnlocked = !hasGuessChallenge || isGuessLocked;
   const deepAnalysisText =
