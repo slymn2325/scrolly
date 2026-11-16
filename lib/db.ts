@@ -399,19 +399,110 @@ export async function ensureSchema(): Promise<void> {
       `);
 
       await pool.query(`
+        CREATE TABLE IF NOT EXISTS users (
+          id TEXT PRIMARY KEY,
+          email TEXT UNIQUE NOT NULL,
+          nickname TEXT DEFAULT '',
+          xp INT DEFAULT 0,
+          weekly_xp INT DEFAULT 0,
+          daily_best_score INT DEFAULT 0,
+          last_daily_quiz_date TEXT DEFAULT '',
+          streak INT DEFAULT 0,
+          last_visit_date TEXT DEFAULT '',
+          last_active_date DATE,
+          seen_ids JSONB DEFAULT '[]'::jsonb,
+          favorite_ids JSONB DEFAULT '[]'::jsonb,
+          liked_ids JSONB DEFAULT '[]'::jsonb,
+          vocab_notebook JSONB DEFAULT '[]'::jsonb,
+          category_weights JSONB DEFAULT '{}'::jsonb,
+          category_accuracy JSONB DEFAULT '{}'::jsonb,
+          badges JSONB DEFAULT '[]'::jsonb,
+          linked_device_ids JSONB DEFAULT '[]'::jsonb,
+          created_at TIMESTAMPTZ DEFAULT NOW(),
+          updated_at TIMESTAMPTZ DEFAULT NOW()
+        );
+      `);
+
+      await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS nickname TEXT DEFAULT '';`);
+      await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS xp INT DEFAULT 0;`);
+      await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS weekly_xp INT DEFAULT 0;`);
+      await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS daily_best_score INT DEFAULT 0;`);
+      await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS last_daily_quiz_date TEXT DEFAULT '';`);
+      await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS streak INT DEFAULT 0;`);
+      await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS last_visit_date TEXT DEFAULT '';`);
+      await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS last_active_date DATE;`);
+      await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS seen_ids JSONB DEFAULT '[]'::jsonb;`);
+      await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS favorite_ids JSONB DEFAULT '[]'::jsonb;`);
+      await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS liked_ids JSONB DEFAULT '[]'::jsonb;`);
+      await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS vocab_notebook JSONB DEFAULT '[]'::jsonb;`);
+      await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS category_weights JSONB DEFAULT '{}'::jsonb;`);
+      await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS category_accuracy JSONB DEFAULT '{}'::jsonb;`);
+      await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS badges JSONB DEFAULT '[]'::jsonb;`);
+      await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS linked_device_ids JSONB DEFAULT '[]'::jsonb;`);
+      await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ DEFAULT NOW();`);
+      await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT NOW();`);
+
+      await pool.query(`
+        CREATE TABLE IF NOT EXISTS user_sessions (
+          id TEXT PRIMARY KEY,
+          user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+          token_hash TEXT UNIQUE NOT NULL,
+          expires_at TIMESTAMPTZ NOT NULL,
+          last_seen_at TIMESTAMPTZ DEFAULT NOW(),
+          created_at TIMESTAMPTZ DEFAULT NOW()
+        );
+      `);
+
+      await pool.query(`
+        CREATE INDEX IF NOT EXISTS idx_user_sessions_token_hash
+          ON user_sessions (token_hash);
+      `);
+
+      await pool.query(`
+        CREATE INDEX IF NOT EXISTS idx_user_sessions_user_id
+          ON user_sessions (user_id);
+      `);
+
+      await pool.query(`
+        CREATE TABLE IF NOT EXISTS auth_otps (
+          id TEXT PRIMARY KEY,
+          email TEXT NOT NULL,
+          code_hash TEXT NOT NULL,
+          expires_at TIMESTAMPTZ NOT NULL,
+          attempts INT NOT NULL DEFAULT 0,
+          consumed_at TIMESTAMPTZ,
+          ip_hash TEXT NOT NULL DEFAULT '',
+          created_at TIMESTAMPTZ DEFAULT NOW()
+        );
+      `);
+
+      await pool.query(`
+        CREATE INDEX IF NOT EXISTS idx_auth_otps_email_created
+          ON auth_otps (email, created_at DESC);
+      `);
+
+      await pool.query(`
+        CREATE INDEX IF NOT EXISTS idx_auth_otps_ip_created
+          ON auth_otps (ip_hash, created_at DESC);
+      `);
+
+      await pool.query(`
         CREATE TABLE IF NOT EXISTS profiles (
           device_id TEXT PRIMARY KEY,
-          username TEXT DEFAULT 'Kâşif',
+          user_id TEXT,
+          username TEXT DEFAULT '',
           handle TEXT DEFAULT '',
           xp INT DEFAULT 0,
           weekly_xp INT DEFAULT 0,
           daily_best_score INT DEFAULT 0,
           last_daily_quiz_date TEXT DEFAULT '',
           last_visit_date TEXT DEFAULT '',
-          streak INT DEFAULT 1,
+          streak INT DEFAULT 0,
           last_active_date DATE,
           seen_ids JSONB DEFAULT '[]'::jsonb,
           favorite_ids JSONB DEFAULT '[]'::jsonb,
+          liked_ids JSONB DEFAULT '[]'::jsonb,
+          vocab_notebook JSONB DEFAULT '[]'::jsonb,
           category_weights JSONB DEFAULT '{}'::jsonb,
           category_accuracy JSONB DEFAULT '{}'::jsonb,
           badges JSONB DEFAULT '[]'::jsonb,
@@ -419,6 +510,7 @@ export async function ensureSchema(): Promise<void> {
         );
       `);
 
+      await pool.query(`ALTER TABLE profiles ADD COLUMN IF NOT EXISTS user_id TEXT;`);
       await pool.query(`ALTER TABLE profiles ADD COLUMN IF NOT EXISTS handle TEXT DEFAULT '';`);
       await pool.query(`ALTER TABLE profiles ADD COLUMN IF NOT EXISTS weekly_xp INT DEFAULT 0;`);
       await pool.query(`ALTER TABLE profiles ADD COLUMN IF NOT EXISTS daily_best_score INT DEFAULT 0;`);
@@ -426,9 +518,13 @@ export async function ensureSchema(): Promise<void> {
       await pool.query(`ALTER TABLE profiles ADD COLUMN IF NOT EXISTS last_visit_date TEXT DEFAULT '';`);
       await pool.query(`ALTER TABLE profiles ADD COLUMN IF NOT EXISTS seen_ids JSONB DEFAULT '[]'::jsonb;`);
       await pool.query(`ALTER TABLE profiles ADD COLUMN IF NOT EXISTS favorite_ids JSONB DEFAULT '[]'::jsonb;`);
+      await pool.query(`ALTER TABLE profiles ADD COLUMN IF NOT EXISTS liked_ids JSONB DEFAULT '[]'::jsonb;`);
+      await pool.query(`ALTER TABLE profiles ADD COLUMN IF NOT EXISTS vocab_notebook JSONB DEFAULT '[]'::jsonb;`);
       await pool.query(`ALTER TABLE profiles ADD COLUMN IF NOT EXISTS category_weights JSONB DEFAULT '{}'::jsonb;`);
       await pool.query(`ALTER TABLE profiles ADD COLUMN IF NOT EXISTS category_accuracy JSONB DEFAULT '{}'::jsonb;`);
       await pool.query(`ALTER TABLE profiles ADD COLUMN IF NOT EXISTS badges JSONB DEFAULT '[]'::jsonb;`);
+      await pool.query(`ALTER TABLE profiles ALTER COLUMN streak SET DEFAULT 0;`);
+      await pool.query(`ALTER TABLE profiles ALTER COLUMN username SET DEFAULT '';`);
 
       await pool.query(`
         CREATE TABLE IF NOT EXISTS quiz_submissions (
@@ -445,7 +541,8 @@ export async function ensureSchema(): Promise<void> {
       `);
 
       await pool.query(`ALTER TABLE quiz_submissions ADD COLUMN IF NOT EXISTS device_id TEXT DEFAULT '';`);
-      await pool.query(`ALTER TABLE quiz_submissions ADD COLUMN IF NOT EXISTS username TEXT DEFAULT 'Kâşif';`);
+      await pool.query(`ALTER TABLE quiz_submissions ADD COLUMN IF NOT EXISTS user_id TEXT;`);
+      await pool.query(`ALTER TABLE quiz_submissions ADD COLUMN IF NOT EXISTS username TEXT DEFAULT '';`);
       await pool.query(`ALTER TABLE quiz_submissions ADD COLUMN IF NOT EXISTS mode TEXT DEFAULT 'daily';`);
       await pool.query(`ALTER TABLE quiz_submissions ADD COLUMN IF NOT EXISTS correct_count INT DEFAULT 0;`);
       await pool.query(`ALTER TABLE quiz_submissions ADD COLUMN IF NOT EXISTS total_questions INT DEFAULT 1;`);
@@ -690,6 +787,8 @@ export async function ensureSchema(): Promise<void> {
   return global.__scrollySchemaReadyPromise;
 }
 
+export const initDb = ensureSchema;
+
 function sanitizeSourceUrl(url?: string | null): string | undefined {
   if (!url) return undefined;
   const trimmed = url.trim();
@@ -841,12 +940,7 @@ function compactInsightSentence(text: string, maxLen = 112): string {
     .split(/(?<=[.!?])\s+/)
     .map((s) => s.trim())
     .filter((s) => s.length >= 22);
-  const picked =
-    sentences.find((s) => s.length <= maxLen) ||
-    sentences[0] ||
-    cleaned;
-  if (picked.length <= maxLen) return picked;
-  return `${picked.slice(0, maxLen - 3).trimEnd()}...`;
+  return sentences.find((s) => s.length <= maxLen) || sentences[0] || cleaned;
 }
 
 function deriveFallbackVisualQuery(row: DbFactRow): string | undefined {
@@ -927,7 +1021,7 @@ function buildSynthesizedQuiz(input: SynthesizedQuizInput): FactQuizContent {
     const decoyA = decoyPool[idxA];
     const decoyB = decoyPool[idxB];
 
-    const shortTitle = title.length > 64 ? `${title.slice(0, 61).trimEnd()}...` : title;
+    const shortTitle = title.trim();
     const promptVariant = hash % 3;
     const qPrompt =
       lang === 'tr'

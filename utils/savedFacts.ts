@@ -87,3 +87,15 @@ export function clearSavedFacts(): void {
   }
   emitSavedFactsUpdated();
 }
+
+export function mergeSavedFactIds(ids: string[]): string[] {
+  if (typeof window === 'undefined') return [];
+  const cleanIncoming = normalizeIdList(ids);
+  const current = loadSavedFactIds();
+  if (cleanIncoming.length === 0) return current;
+  const merged = normalizeIdList([...current, ...cleanIncoming]);
+  if (merged.length !== current.length) {
+    saveSavedFactIds(merged);
+  }
+  return merged;
+}

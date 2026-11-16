@@ -177,3 +177,31 @@ export function clearSeenSlugsStorage(): void {
     // Ignore storage removal errors
   }
 }
+
+/** Merges remote seen IDs into `scrolly_seen_slugs_v1` cleanly without overwriting timestamps. */
+export function mergeSeenIdsInStorage(ids: string[]): SeenFactRecord[] {
+  const existing = loadSeenRecords();
+  if (typeof window === 'undefined' || !Array.isArray(ids) || ids.length === 0) {
+    return existing;
+  }
+  const known = new Set<string>();
+  for (const rec of existing) {
+    known.add(rec.id);
+    known.add(rec.slug);
+    if (rec.enSlug) known.add(rec.enSlug);
+    if (rec.trSlug) known.add(rec.trSlug);
+  }
+  const additions: SeenFactRecord[] = [];
+  const now = Date.now();
+  for (const raw of ids) {
+    if (typeof raw !== 'string') continue;
+    const clean = raw.trim();
+    if (!clean || known.has(clean)) continue;
+    known.add(clean);
+    additions.push({ id: clean, slug: clean, seenAt: now });
+  }
+  if (additions.length === 0) return existing;
+  const next = [...existing, ...additions];
+  writeSeenRecords(next);
+  return next;
+}

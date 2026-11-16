@@ -37,6 +37,7 @@ export default function SiteTrustFooter({
 
   return (
     <footer
+      lang={isEn ? 'en-US' : 'tr-TR'}
       aria-label={isEn ? 'Site information and legal links' : 'Site bilgileri ve yasal bağlantılar'}
       className={`mt-10 border-t border-amber-200/70 bg-white/85 px-4 py-8 text-xs text-ink/75 dark:border-white/10 dark:bg-[#141024]/90 dark:text-violet-100/80 ${className}`}
     >
@@ -90,8 +91,11 @@ export default function SiteTrustFooter({
           aria-label={isEn ? 'Explore Categories' : 'Kategorileri Keşfet'}
           className="flex flex-wrap items-center gap-2 border-t border-amber-100/90 pt-4 dark:border-white/10"
         >
-          <span className="mr-1 font-extrabold uppercase tracking-wider text-ink/55 dark:text-violet-300/65">
-            {isEn ? 'Topics:' : 'Konular:'}
+          <span
+            lang={isEn ? 'en-US' : 'tr-TR'}
+            className="mr-1 font-extrabold tracking-wider text-ink/55 dark:text-violet-300/65"
+          >
+            {(isEn ? 'Topics:' : 'Konular:').toLocaleUpperCase(isEn ? 'en-US' : 'tr-TR')}
           </span>
           {CATEGORY_ROUTE_SLUGS.map((slug) => {
             const catId = categoryRouteSlugToId(slug)!;

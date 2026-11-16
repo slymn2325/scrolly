@@ -166,16 +166,23 @@ export default function ContactInteractiveSection({ lang }: ContactInteractiveSe
   };
 
   return (
-    <div className="space-y-6">
+    <div lang={isEn ? 'en-US' : 'tr-TR'} className="space-y-6">
       {/* Official Email Card & Editorial Guidance */}
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="rounded-2xl border-2 border-violet-200/90 bg-gradient-to-br from-violet-50 via-white to-amber-50/50 p-4 shadow-sm dark:border-violet-700/50 dark:from-violet-950/50 dark:via-[#1B1530] dark:to-violet-950/20">
           <div className="flex items-center justify-between gap-2">
-            <div className="flex items-center gap-2 text-xs font-extrabold uppercase tracking-wider text-violet-800 dark:text-violet-300">
-              <Mail className="h-4 w-4" />
-              <span>{isEn ? 'Official Email' : 'Resmi Kurumsal E-posta'}</span>
+            <div
+              lang={isEn ? 'en-US' : 'tr-TR'}
+              className="flex min-w-0 items-center gap-1.5 text-[11px] font-extrabold tracking-wide text-violet-800 dark:text-violet-300"
+            >
+              <Mail className="h-3.5 w-3.5 shrink-0" />
+              <span className="whitespace-nowrap">
+                {(isEn ? 'Official Email' : 'Resmi Kurumsal E-posta').toLocaleUpperCase(
+                  isEn ? 'en-US' : 'tr-TR'
+                )}
+              </span>
             </div>
-            <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-extrabold text-emerald-800 dark:bg-emerald-900/50 dark:text-emerald-200">
+            <span className="shrink-0 whitespace-nowrap rounded-full bg-emerald-100 px-2.5 py-0.5 text-[10px] font-extrabold text-emerald-800 dark:bg-emerald-900/50 dark:text-emerald-200">
               {isEn ? '24–48h Reply' : '24–48 Saat Yanıt'}
             </span>
           </div>
@@ -216,9 +223,16 @@ export default function ContactInteractiveSection({ lang }: ContactInteractiveSe
         </div>
 
         <div className="rounded-2xl border border-amber-200/80 bg-amber-50/70 p-4 dark:border-amber-700/40 dark:bg-amber-950/25">
-          <div className="flex items-center gap-2 text-xs font-extrabold uppercase tracking-wider text-amber-800 dark:text-amber-300">
-            <BookCheck className="h-4 w-4" />
-            <span>{isEn ? 'Source & Citation Review' : 'Kaynak ve Atıf İncelemesi'}</span>
+          <div
+            lang={isEn ? 'en-US' : 'tr-TR'}
+            className="flex items-center gap-2 text-xs font-extrabold tracking-wider text-amber-800 dark:text-amber-300"
+          >
+            <BookCheck className="h-4 w-4 shrink-0" />
+            <span>
+              {(isEn ? 'Source & Citation Review' : 'Kaynak ve Atıf İncelemesi').toLocaleUpperCase(
+                isEn ? 'en-US' : 'tr-TR'
+              )}
+            </span>
           </div>
           <p className="mt-2 text-xs leading-relaxed text-ink/80 dark:text-violet-100/85">
             {isEn
@@ -317,7 +331,7 @@ export default function ContactInteractiveSection({ lang }: ContactInteractiveSe
                 onChange={(e) => setName(e.target.value)}
                 data-testid="contact-name-input"
                 placeholder={isEn ? 'e.g. Alex Taylor' : 'Örn. Deniz Yılmaz'}
-                className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-ink outline-none transition focus:border-violet-500 focus:ring-2 focus:ring-violet-200 dark:border-white/15 dark:bg-[#171228] dark:text-white dark:focus:ring-violet-800"
+                className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-ink transition-colors duration-150 focus:border-violet-500 focus:outline-none focus:ring-2 focus:ring-violet-300 dark:border-white/15 dark:bg-[#171228] dark:text-white dark:focus:ring-violet-700"
               />
             </label>
 
@@ -333,7 +347,7 @@ export default function ContactInteractiveSection({ lang }: ContactInteractiveSe
                 onChange={(e) => setEmail(e.target.value)}
                 data-testid="contact-email-input"
                 placeholder="name@example.com"
-                className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-ink outline-none transition focus:border-violet-500 focus:ring-2 focus:ring-violet-200 dark:border-white/15 dark:bg-[#171228] dark:text-white dark:focus:ring-violet-800"
+                className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-ink transition-colors duration-150 focus:border-violet-500 focus:outline-none focus:ring-2 focus:ring-violet-300 dark:border-white/15 dark:bg-[#171228] dark:text-white dark:focus:ring-violet-700"
               />
             </label>
           </div>
@@ -347,7 +361,7 @@ export default function ContactInteractiveSection({ lang }: ContactInteractiveSe
               value={activeSubject}
               onChange={(e) => setSubject(e.target.value)}
               data-testid="contact-subject-select"
-              className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm font-semibold text-ink outline-none transition focus:border-violet-500 focus:ring-2 focus:ring-violet-200 dark:border-white/15 dark:bg-[#171228] dark:text-white dark:focus:ring-violet-800"
+              className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm font-semibold text-ink transition-colors duration-150 focus:border-violet-500 focus:outline-none focus:ring-2 focus:ring-violet-300 dark:border-white/15 dark:bg-[#171228] dark:text-white dark:focus:ring-violet-700"
             >
               {subjects.map((opt) => (
                 <option key={opt} value={opt}>
@@ -373,7 +387,7 @@ export default function ContactInteractiveSection({ lang }: ContactInteractiveSe
                   ? 'Write your question, source URL, or partnership details...'
                   : 'Sorunuzu, bilimsel kaynak bağlantısını veya iş birliği detaylarını yazın...'
               }
-              className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-ink outline-none transition focus:border-violet-500 focus:ring-2 focus:ring-violet-200 dark:border-white/15 dark:bg-[#171228] dark:text-white dark:focus:ring-violet-800"
+              className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-ink transition-colors duration-150 focus:border-violet-500 focus:outline-none focus:ring-2 focus:ring-violet-300 dark:border-white/15 dark:bg-[#171228] dark:text-white dark:focus:ring-violet-700"
             />
           </label>
 

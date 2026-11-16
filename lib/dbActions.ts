@@ -3,6 +3,7 @@ import { ensureSchema, getPool, hasDatabaseUrl } from '@/lib/db';
 import {
   generateRoomCode,
   getMemoryDuelMap,
+  isDummyActorId,
   isShortRoomCode,
   normalizeDuelCategory,
   normalizeRoomCode,
@@ -14,9 +15,11 @@ import {
   type ScrollaRoomStatus,
 } from '@/lib/duelStore';
 import type { CategoryId } from '@/types/fact';
+import type { SavedVocabularyEntry, VocabPartOfSpeech } from '@/types/vocabulary';
 
 export interface PersistedProfileDto {
   deviceId: string;
+  userId?: string | null;
   username: string;
   handle: string;
   xp: number;
@@ -27,6 +30,8 @@ export interface PersistedProfileDto {
   lastVisitDate: string;
   seenIds: string[];
   favoriteIds: string[];
+  likedIds: string[];
+  vocabNotebook: SavedVocabularyEntry[];
   categoryWeights: Record<string, number>;
   categoryAccuracy: Record<string, { attempts: number; totalPct: number }>;
   badges: string[];
@@ -35,6 +40,7 @@ export interface PersistedProfileDto {
 
 export interface ProfileUpsertInput {
   deviceId: string;
+  userId?: string | null;
   username?: string;
   handle?: string;
   xp?: number;
@@ -45,6 +51,8 @@ export interface ProfileUpsertInput {
   lastVisitDate?: string;
   seenIds?: string[];
   favoriteIds?: string[];
+  likedIds?: string[];
+  vocabNotebook?: SavedVocabularyEntry[];
   categoryWeights?: Record<string, number>;
   categoryAccuracy?: Record<string, { attempts: number; totalPct: number }>;
   badges?: string[];
@@ -89,18 +97,25 @@ declare global {
   var __scrollyRecentSubmissions: Map<string, number> | undefined;
 }
 
-function getMemoryProfileMap(): Map<string, PersistedProfileDto> {
+export function getMemoryProfileMap(): Map<string, PersistedProfileDto> {
   if (!globalThis.__scrollyMemoryProfiles) {
     globalThis.__scrollyMemoryProfiles = new Map<string, PersistedProfileDto>();
   }
   return globalThis.__scrollyMemoryProfiles;
 }
 
-function getMemoryQuizSubmissions(): MemoryQuizSubmission[] {
+export function getMemoryQuizSubmissions(): MemoryQuizSubmission[] {
   if (!globalThis.__scrollyMemoryQuizSubmissions) {
     globalThis.__scrollyMemoryQuizSubmissions = [];
   }
   return globalThis.__scrollyMemoryQuizSubmissions;
+}
+
+export function isValidDeviceId(raw: unknown): raw is string {
+  if (typeof raw !== 'string') return false;
+  const trimmed = raw.trim();
+  if (trimmed.length < 4 || trimmed.length > 128) return false;
+  return !isDummyActorId(trimmed);
 }
 
 function isDuplicateRecentSubmission(dedupeKey: string, windowMs = 8_000): boolean {
@@ -124,7 +139,7 @@ function isDuplicateRecentSubmission(dedupeKey: string, windowMs = 8_000): boole
   return false;
 }
 
-function sanitizeStringArray(arr: unknown, maxLen: number): string[] {
+export function sanitizeStringArray(arr: unknown, maxLen: number): string[] {
   if (!Array.isArray(arr)) return [];
   const seen = new Set<string>();
   const out: string[] = [];
@@ -141,18 +156,76 @@ function sanitizeStringArray(arr: unknown, maxLen: number): string[] {
   return out;
 }
 
-function sanitizeNonNegInt(value: unknown, fallback = 0, max = 5_000_000): number {
+const VALID_SAVED_POS = new Set<VocabPartOfSpeech>(['isim', 'sıfat', 'fiil', 'zarf', 'edat']);
+
+export function sanitizeVocabNotebook(raw: unknown, maxLen = 250): SavedVocabularyEntry[] {
+  if (!Array.isArray(raw)) return [];
+  const byWord = new Map<string, SavedVocabularyEntry>();
+
+  for (const item of raw) {
+    if (!item || typeof item !== 'object') continue;
+    const obj = item as Partial<SavedVocabularyEntry>;
+    const word = typeof obj.word === 'string' ? obj.word.trim().slice(0, 80) : '';
+    if (!word) continue;
+    const wordKey = word.toLowerCase();
+    const pos =
+      typeof obj.partOfSpeech === 'string' && VALID_SAVED_POS.has(obj.partOfSpeech as VocabPartOfSpeech)
+        ? (obj.partOfSpeech as VocabPartOfSpeech)
+        : 'isim';
+    const savedAtRaw = typeof obj.savedAt === 'string' ? obj.savedAt.trim() : '';
+    const savedAt =
+      savedAtRaw && !Number.isNaN(Date.parse(savedAtRaw))
+        ? new Date(savedAtRaw).toISOString()
+        : new Date().toISOString();
+
+    const candidate: SavedVocabularyEntry = {
+      id: typeof obj.id === 'string' && obj.id.trim() ? obj.id.trim().slice(0, 120) : `vocab-${wordKey}`,
+      word,
+      phonetic: typeof obj.phonetic === 'string' ? obj.phonetic.trim().slice(0, 80) : '',
+      partOfSpeech: pos,
+      meaningTr: typeof obj.meaningTr === 'string' ? obj.meaningTr.trim().slice(0, 240) : '',
+      exampleEn: typeof obj.exampleEn === 'string' ? obj.exampleEn.trim().slice(0, 400) : '',
+      exampleTr: typeof obj.exampleTr === 'string' ? obj.exampleTr.trim().slice(0, 400) : '',
+      savedAt,
+    };
+
+    const existing = byWord.get(wordKey);
+    if (!existing) {
+      byWord.set(wordKey, candidate);
+    } else {
+      const existingTs = Date.parse(existing.savedAt) || 0;
+      const incomingTs = Date.parse(candidate.savedAt) || 0;
+      if (incomingTs >= existingTs) {
+        byWord.set(wordKey, {
+          ...existing,
+          ...candidate,
+          meaningTr: candidate.meaningTr || existing.meaningTr,
+          exampleEn: candidate.exampleEn || existing.exampleEn,
+          exampleTr: candidate.exampleTr || existing.exampleTr,
+          phonetic: candidate.phonetic || existing.phonetic,
+        });
+      }
+    }
+    if (byWord.size >= maxLen) break;
+  }
+
+  return Array.from(byWord.values()).sort(
+    (a, b) => (Date.parse(b.savedAt) || 0) - (Date.parse(a.savedAt) || 0)
+  );
+}
+
+export function sanitizeNonNegInt(value: unknown, fallback = 0, max = 5_000_000): number {
   const num = Number(value);
   if (!Number.isFinite(num) || num < 0) return fallback;
   return Math.min(max, Math.floor(num));
 }
 
-function sanitizeUsername(raw: unknown): string {
+export function sanitizeUsername(raw: unknown): string {
   const clean = String(raw || '').trim().slice(0, 28);
   return clean || 'Merak Kâşifi';
 }
 
-function sanitizeHandle(raw: unknown): string {
+export function sanitizeHandle(raw: unknown): string {
   const clean = String(raw || '')
     .trim()
     .replace(/^@+/, '')
@@ -161,35 +234,38 @@ function sanitizeHandle(raw: unknown): string {
   return clean ? `@${clean.toLowerCase()}` : '';
 }
 
-function sanitizeCategoryKey(rawKey: string): CategoryId | null {
+function sanitizeCategoryKey(rawKey: string): CategoryId | 'vocabulary' | null {
   const clean = rawKey.trim().toLowerCase();
   if (clean === 'weird_records') return 'records';
   if (clean === 'human-body') return 'human_body';
   if (clean === 'istatistik') return 'statistics';
+  if (clean === 'vocabulary') return 'vocabulary';
   return VALID_CATEGORY_IDS.has(clean as CategoryId) ? (clean as CategoryId) : null;
 }
 
-function sanitizeCategoryWeights(raw: unknown): Record<string, number> {
+export function sanitizeCategoryWeights(raw: unknown): Record<string, number> {
   if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return {};
   const out: Record<string, number> = {};
   for (const [k, v] of Object.entries(raw as Record<string, unknown>)) {
     const cat = sanitizeCategoryKey(k);
     const num = Number(v);
-    if (cat && Number.isFinite(num) && num > 0) {
-      out[cat] = Math.min(10, Math.max(0.1, Number(num.toFixed(2))));
+    if (cat && Number.isFinite(num) && num >= 0) {
+      if (num > 0) {
+        out[cat] = Math.min(1000, Math.max(0.1, Number(num.toFixed(2))));
+      }
     }
   }
   return out;
 }
 
-function sanitizeCategoryAccuracy(
+export function sanitizeCategoryAccuracy(
   raw: unknown
 ): Record<string, { attempts: number; totalPct: number }> {
   if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return {};
   const out: Record<string, { attempts: number; totalPct: number }> = {};
   for (const [k, v] of Object.entries(raw as Record<string, unknown>)) {
     const cat = sanitizeCategoryKey(k);
-    if (!cat || !v || typeof v !== 'object') continue;
+    if (!cat || cat === 'vocabulary' || !v || typeof v !== 'object') continue;
     const obj = v as { attempts?: unknown; totalPct?: unknown };
     out[cat] = {
       attempts: sanitizeNonNegInt(obj.attempts, 0, 50_000),
@@ -199,7 +275,7 @@ function sanitizeCategoryAccuracy(
   return out;
 }
 
-function sanitizeDateStr(raw: unknown): string {
+export function sanitizeDateStr(raw: unknown): string {
   if (typeof raw !== 'string') return '';
   const trimmed = raw.trim().slice(0, 10);
   return /^\d{4}-\d{2}-\d{2}$/.test(trimmed) ? trimmed : '';
@@ -396,10 +472,10 @@ export async function updateVocabularyGifQueryOnlyDb(
 export async function getProfileByDeviceId(
   deviceId: string
 ): Promise<{ persisted: boolean; profile: PersistedProfileDto | null }> {
-  const cleanId = String(deviceId || '').trim().slice(0, 128);
-  if (!cleanId) {
+  if (!isValidDeviceId(deviceId)) {
     return { persisted: false, profile: null };
   }
+  const cleanId = deviceId.trim().slice(0, 128);
   if (!hasDatabaseUrl()) {
     return {
       persisted: false,
@@ -411,6 +487,7 @@ export async function getProfileByDeviceId(
   const pool = getPool();
   const res = await pool.query<{
     device_id: string;
+    user_id: string | null;
     username: string | null;
     handle: string | null;
     xp: number | null;
@@ -421,14 +498,17 @@ export async function getProfileByDeviceId(
     last_visit_date: string | null;
     seen_ids: unknown;
     favorite_ids: unknown;
+    liked_ids: unknown;
+    vocab_notebook: unknown;
     category_weights: unknown;
     category_accuracy: unknown;
     badges: unknown;
     updated_at: Date | string | null;
   }>(
-    `SELECT device_id, username, handle, xp, weekly_xp, daily_best_score,
+    `SELECT device_id, user_id, username, handle, xp, weekly_xp, daily_best_score,
             last_daily_quiz_date, streak, last_visit_date,
-            seen_ids, favorite_ids, category_weights, category_accuracy, badges, updated_at
+            seen_ids, favorite_ids, liked_ids, vocab_notebook,
+            category_weights, category_accuracy, badges, updated_at
      FROM profiles
      WHERE device_id = $1`,
     [cleanId]
@@ -443,16 +523,19 @@ export async function getProfileByDeviceId(
     persisted: true,
     profile: {
       deviceId: row.device_id,
+      userId: row.user_id || null,
       username: sanitizeUsername(row.username),
       handle: sanitizeHandle(row.handle),
       xp: sanitizeNonNegInt(row.xp, 0),
       weeklyXp: sanitizeNonNegInt(row.weekly_xp, 0),
       dailyBestScore: sanitizeNonNegInt(row.daily_best_score, 0),
       lastDailyQuizDate: sanitizeDateStr(row.last_daily_quiz_date),
-      streak: Math.max(1, sanitizeNonNegInt(row.streak, 1, 36500)),
+      streak: sanitizeNonNegInt(row.streak, 0, 36500),
       lastVisitDate: sanitizeDateStr(row.last_visit_date),
-      seenIds: sanitizeStringArray(row.seen_ids, 500),
-      favoriteIds: sanitizeStringArray(row.favorite_ids, 300),
+      seenIds: sanitizeStringArray(row.seen_ids, 2500),
+      favoriteIds: sanitizeStringArray(row.favorite_ids, 500),
+      likedIds: sanitizeStringArray(row.liked_ids, 500),
+      vocabNotebook: sanitizeVocabNotebook(row.vocab_notebook, 250),
       categoryWeights: sanitizeCategoryWeights(row.category_weights),
       categoryAccuracy: sanitizeCategoryAccuracy(row.category_accuracy),
       badges: sanitizeStringArray(row.badges, 40),
@@ -467,10 +550,10 @@ export async function getProfileByDeviceId(
 export async function upsertProfileState(
   input: ProfileUpsertInput
 ): Promise<{ persisted: boolean; profile: PersistedProfileDto | null }> {
-  const cleanId = String(input.deviceId || '').trim().slice(0, 128);
-  if (!cleanId) {
+  if (!isValidDeviceId(input.deviceId)) {
     return { persisted: false, profile: null };
   }
+  const cleanId = input.deviceId.trim().slice(0, 128);
 
   const memOnly = !hasDatabaseUrl();
   const today = new Date().toISOString().slice(0, 10);
@@ -480,16 +563,19 @@ export async function upsertProfileState(
     const handle = sanitizeHandle(input.handle);
     const resetProfile: PersistedProfileDto = {
       deviceId: cleanId,
+      userId: null,
       username,
       handle,
       xp: 0,
       weeklyXp: 0,
       dailyBestScore: 0,
       lastDailyQuizDate: '',
-      streak: 1,
-      lastVisitDate: today,
+      streak: 0,
+      lastVisitDate: '',
       seenIds: [],
       favoriteIds: [],
+      likedIds: [],
+      vocabNotebook: [],
       categoryWeights: {},
       categoryAccuracy: {},
       badges: [],
@@ -505,32 +591,37 @@ export async function upsertProfileState(
     const pool = getPool();
     const res = await pool.query(
       `INSERT INTO profiles (
-        device_id, username, handle, xp, weekly_xp, daily_best_score,
+        device_id, user_id, username, handle, xp, weekly_xp, daily_best_score,
         last_daily_quiz_date, streak, last_visit_date, last_active_date,
-        seen_ids, favorite_ids, category_weights, category_accuracy, badges, updated_at
+        seen_ids, favorite_ids, liked_ids, vocab_notebook,
+        category_weights, category_accuracy, badges, updated_at
       ) VALUES (
-        $1, $2, $3, 0, 0, 0,
-        '', 1, $4, CURRENT_DATE,
-        '[]'::jsonb, '[]'::jsonb, '{}'::jsonb, '{}'::jsonb, '[]'::jsonb, NOW()
+        $1, NULL, $2, $3, 0, 0, 0,
+        '', 0, '', NULL,
+        '[]'::jsonb, '[]'::jsonb, '[]'::jsonb, '[]'::jsonb,
+        '{}'::jsonb, '{}'::jsonb, '[]'::jsonb, NOW()
       )
       ON CONFLICT (device_id) DO UPDATE SET
+        user_id = NULL,
         username = EXCLUDED.username,
         handle = EXCLUDED.handle,
         xp = 0,
         weekly_xp = 0,
         daily_best_score = 0,
         last_daily_quiz_date = '',
-        streak = 1,
-        last_visit_date = EXCLUDED.last_visit_date,
-        last_active_date = CURRENT_DATE,
+        streak = 0,
+        last_visit_date = '',
+        last_active_date = NULL,
         seen_ids = '[]'::jsonb,
         favorite_ids = '[]'::jsonb,
+        liked_ids = '[]'::jsonb,
+        vocab_notebook = '[]'::jsonb,
         category_weights = '{}'::jsonb,
         category_accuracy = '{}'::jsonb,
         badges = '[]'::jsonb,
         updated_at = NOW()
       RETURNING updated_at`,
-      [cleanId, username, handle, today]
+      [cleanId, username, handle]
     );
     resetProfile.updatedAt =
       res.rows[0]?.updated_at instanceof Date
@@ -592,23 +683,26 @@ export async function upsertProfileState(
     finalDailyBest = reqDaily;
   }
 
-  const streak = Math.max(
-    1,
-    prev?.streak ?? 1,
-    sanitizeNonNegInt(input.streak, prev?.streak ?? 1, 36500)
-  );
-  const rawVisit = sanitizeDateStr(input.lastVisitDate);
-  const prevVisit = sanitizeDateStr(prev?.lastVisitDate);
-  const lastVisitDate =
-    rawVisit && rawVisit >= prevVisit ? rawVisit : prevVisit || today;
+  const prevStreak = prev?.streak ?? 0;
+  const reqStreak =
+    typeof input.streak === 'number'
+      ? sanitizeNonNegInt(input.streak, prevStreak, 36500)
+      : prevStreak;
+  const streak = Math.max(0, prevStreak, reqStreak);
 
   const mergedSeen = sanitizeStringArray(
     [...(prev?.seenIds ?? []), ...(input.seenIds ?? [])],
-    500
+    2500
   );
   const finalFavorites = Array.isArray(input.favoriteIds)
-    ? sanitizeStringArray(input.favoriteIds, 300)
+    ? sanitizeStringArray(input.favoriteIds, 500)
     : (prev?.favoriteIds ?? []);
+  const finalLiked = Array.isArray(input.likedIds)
+    ? sanitizeStringArray(input.likedIds, 500)
+    : (prev?.likedIds ?? []);
+  const finalVocab = Array.isArray(input.vocabNotebook)
+    ? sanitizeVocabNotebook(input.vocabNotebook, 250)
+    : (prev?.vocabNotebook ?? []);
   const finalWeights =
     input.categoryWeights && typeof input.categoryWeights === 'object'
       ? sanitizeCategoryWeights(input.categoryWeights)
@@ -622,8 +716,27 @@ export async function upsertProfileState(
     40
   );
 
+  const hasEarnedProgress =
+    boundedXp > 0 ||
+    streak > 0 ||
+    mergedSeen.length > 0 ||
+    finalFavorites.length > 0 ||
+    finalLiked.length > 0 ||
+    finalVocab.length > 0 ||
+    mergedBadges.length > 0;
+
+  const rawVisit = sanitizeDateStr(input.lastVisitDate);
+  const prevVisit = sanitizeDateStr(prev?.lastVisitDate);
+  const lastVisitDate =
+    rawVisit && rawVisit >= prevVisit
+      ? rawVisit
+      : prevVisit || (hasEarnedProgress ? today : '');
+
+  const nextUserId = input.userId !== undefined ? input.userId : (prev?.userId ?? null);
+
   const nextProfile: PersistedProfileDto = {
     deviceId: cleanId,
+    userId: nextUserId,
     username,
     handle,
     xp: boundedXp,
@@ -634,6 +747,8 @@ export async function upsertProfileState(
     lastVisitDate,
     seenIds: mergedSeen,
     favoriteIds: finalFavorites,
+    likedIds: finalLiked,
+    vocabNotebook: finalVocab,
     categoryWeights: finalWeights,
     categoryAccuracy: finalAccuracy,
     badges: mergedBadges,
@@ -649,15 +764,18 @@ export async function upsertProfileState(
   const pool = getPool();
   await pool.query(
     `INSERT INTO profiles (
-      device_id, username, handle, xp, weekly_xp, daily_best_score,
+      device_id, user_id, username, handle, xp, weekly_xp, daily_best_score,
       last_daily_quiz_date, streak, last_visit_date, last_active_date,
-      seen_ids, favorite_ids, category_weights, category_accuracy, badges, updated_at
+      seen_ids, favorite_ids, liked_ids, vocab_notebook,
+      category_weights, category_accuracy, badges, updated_at
     ) VALUES (
-      $1, $2, $3, $4, $5, $6,
-      $7, $8, $9, CURRENT_DATE,
-      $10::jsonb, $11::jsonb, $12::jsonb, $13::jsonb, $14::jsonb, NOW()
+      $1, $2, $3, $4, $5, $6, $7,
+      $8, $9, $10, CASE WHEN $5 > 0 OR $9 > 0 THEN CURRENT_DATE ELSE NULL END,
+      $11::jsonb, $12::jsonb, $13::jsonb, $14::jsonb,
+      $15::jsonb, $16::jsonb, $17::jsonb, NOW()
     )
     ON CONFLICT (device_id) DO UPDATE SET
+      user_id = COALESCE(EXCLUDED.user_id, profiles.user_id),
       username = EXCLUDED.username,
       handle = CASE WHEN TRIM(EXCLUDED.handle) <> '' THEN EXCLUDED.handle ELSE COALESCE(profiles.handle, '') END,
       xp = GREATEST(COALESCE(profiles.xp, 0), EXCLUDED.xp),
@@ -673,17 +791,25 @@ export async function upsertProfileState(
         COALESCE(profiles.last_daily_quiz_date, ''),
         EXCLUDED.last_daily_quiz_date
       ),
-      streak = GREATEST(COALESCE(profiles.streak, 1), EXCLUDED.streak),
+      streak = GREATEST(COALESCE(profiles.streak, 0), EXCLUDED.streak),
       last_visit_date = GREATEST(COALESCE(profiles.last_visit_date, ''), EXCLUDED.last_visit_date),
-      last_active_date = CURRENT_DATE,
+      last_active_date = CASE
+        WHEN GREATEST(COALESCE(profiles.xp, 0), EXCLUDED.xp) > 0
+          OR GREATEST(COALESCE(profiles.streak, 0), EXCLUDED.streak) > 0
+        THEN CURRENT_DATE
+        ELSE profiles.last_active_date
+      END,
       seen_ids = EXCLUDED.seen_ids,
       favorite_ids = EXCLUDED.favorite_ids,
+      liked_ids = EXCLUDED.liked_ids,
+      vocab_notebook = EXCLUDED.vocab_notebook,
       category_weights = EXCLUDED.category_weights,
       category_accuracy = EXCLUDED.category_accuracy,
       badges = EXCLUDED.badges,
       updated_at = NOW()`,
     [
       cleanId,
+      nextUserId,
       username,
       handle,
       boundedXp,
@@ -694,6 +820,8 @@ export async function upsertProfileState(
       lastVisitDate,
       JSON.stringify(mergedSeen),
       JSON.stringify(finalFavorites),
+      JSON.stringify(finalLiked),
+      JSON.stringify(finalVocab),
       JSON.stringify(finalWeights),
       JSON.stringify(finalAccuracy),
       JSON.stringify(mergedBadges),
@@ -825,7 +953,7 @@ export async function getLeaderboardRows(
     }
 
     const rows: DbLeaderboardRow[] = profiles
-      .filter((p) => p.username.trim().length > 0 || p.xp > 0 || p.weeklyXp > 0)
+      .filter((p) => p.xp > 0 || p.weeklyXp > 0 || p.dailyBestScore > 0)
       .map((p) => {
         const dailyProfileScore = activeDateSet.has(p.lastDailyQuizDate)
           ? p.dailyBestScore
@@ -880,7 +1008,7 @@ export async function getLeaderboardRows(
          )::INT AS score,
          COALESCE(p.xp, 0)::INT AS xp,
          COALESCE(p.weekly_xp, 0)::INT AS weekly_xp,
-         COALESCE(p.streak, 1)::INT AS streak,
+         COALESCE(p.streak, 0)::INT AS streak,
          p.updated_at
        FROM profiles p
        LEFT JOIN (
@@ -889,8 +1017,7 @@ export async function getLeaderboardRows(
          WHERE quiz_date = ANY($1::text[])
          GROUP BY device_id
        ) qs ON qs.device_id = p.device_id
-       WHERE NULLIF(TRIM(p.username), '') IS NOT NULL
-          OR (p.last_daily_quiz_date = ANY($1::text[]) AND COALESCE(p.daily_best_score, 0) > 0)
+       WHERE (p.last_daily_quiz_date = ANY($1::text[]) AND COALESCE(p.daily_best_score, 0) > 0)
           OR COALESCE(qs.max_score, 0) > 0
           OR COALESCE(p.xp, 0) > 0
        ORDER BY score DESC, p.xp DESC, p.updated_at DESC
@@ -935,10 +1062,10 @@ export async function getLeaderboardRows(
        COALESCE(handle, '') AS handle,
        COALESCE(xp, 0)::INT AS xp,
        COALESCE(weekly_xp, 0)::INT AS weekly_xp,
-       COALESCE(streak, 1)::INT AS streak,
+       COALESCE(streak, 0)::INT AS streak,
        updated_at
      FROM profiles
-     WHERE NULLIF(TRIM(username), '') IS NOT NULL OR COALESCE(xp, 0) > 0 OR COALESCE(weekly_xp, 0) > 0
+     WHERE COALESCE(xp, 0) > 0 OR COALESCE(weekly_xp, 0) > 0 OR COALESCE(daily_best_score, 0) > 0
      ORDER BY ${orderColumn} DESC, COALESCE(xp, 0) DESC, COALESCE(streak, 0) DESC, updated_at DESC
      LIMIT $1`,
     [safeLimit]
@@ -972,10 +1099,10 @@ export async function recordQuizSubmission(input: {
   totalQuestions: number;
   clientDate?: string;
 }): Promise<{ persisted: boolean }> {
-  const cleanId = String(input.deviceId || '').trim().slice(0, 128);
-  if (!cleanId) {
+  if (!isValidDeviceId(input.deviceId)) {
     return { persisted: false };
   }
+  const cleanId = input.deviceId.trim().slice(0, 128);
 
   const username = sanitizeUsername(input.username);
   const handle = sanitizeHandle(input.handle);
@@ -1018,19 +1145,23 @@ export async function recordQuizSubmission(input: {
         : prev?.dailyBestScore ?? 0;
     const nextDailyDate =
       input.mode === 'daily' ? quizDate : prev?.lastDailyQuizDate ?? '';
+    const earnedActivity = safeScore > 0 || safeCorrect > 0;
 
     map.set(cleanId, {
       deviceId: cleanId,
+      userId: prev?.userId ?? null,
       username,
       handle: handle || prev?.handle || '',
       xp: (prev?.xp ?? 0) + safeScore,
       weeklyXp: (prev?.weeklyXp ?? 0) + safeScore,
       dailyBestScore: nextDailyBest,
       lastDailyQuizDate: nextDailyDate,
-      streak: prev?.streak ?? 1,
+      streak: Math.max(prev?.streak ?? 0, earnedActivity ? 1 : 0),
       lastVisitDate: prev?.lastVisitDate || quizDate,
       seenIds: prev?.seenIds ?? [],
       favoriteIds: prev?.favoriteIds ?? [],
+      likedIds: prev?.likedIds ?? [],
+      vocabNotebook: prev?.vocabNotebook ?? [],
       categoryWeights: prev?.categoryWeights ?? {},
       categoryAccuracy: prev?.categoryAccuracy ?? {},
       badges: prev?.badges ?? [],
@@ -1041,6 +1172,7 @@ export async function recordQuizSubmission(input: {
 
   await ensureSchema();
   const pool = getPool();
+  const earnedStreak = safeScore > 0 || safeCorrect > 0 ? 1 : 0;
 
   await pool.query(
     `INSERT INTO quiz_submissions (device_id, username, mode, score, correct_count, total_questions, quiz_date)
@@ -1052,7 +1184,7 @@ export async function recordQuizSubmission(input: {
     `INSERT INTO profiles (
       device_id, username, handle, xp, weekly_xp, daily_best_score, last_daily_quiz_date, last_visit_date, last_active_date, streak, updated_at
     ) VALUES (
-      $1, $2, $3, $4, $4, $5, $6, $7, CURRENT_DATE, 1, NOW()
+      $1, $2, $3, $4, $4, $5, $6, $7, CURRENT_DATE, $9, NOW()
     )
     ON CONFLICT (device_id) DO UPDATE SET
       username = EXCLUDED.username,
@@ -1070,6 +1202,7 @@ export async function recordQuizSubmission(input: {
         WHEN $8 = 'daily' THEN GREATEST(COALESCE(profiles.last_daily_quiz_date, ''), $7)
         ELSE COALESCE(profiles.last_daily_quiz_date, '')
       END,
+      streak = GREATEST(COALESCE(profiles.streak, 0), $9),
       last_active_date = CURRENT_DATE,
       updated_at = NOW()`,
     [
@@ -1081,6 +1214,7 @@ export async function recordQuizSubmission(input: {
       input.mode === 'daily' ? quizDate : '',
       quizDate,
       input.mode,
+      earnedStreak,
     ]
   );
 

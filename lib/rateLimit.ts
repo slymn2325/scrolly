@@ -3,16 +3,39 @@ interface Bucket {
   resetAt: number;
 }
 
-const rateLimitStore = new Map<string, Bucket>();
+declare global {
+  var __scrollyRateLimitStore: Map<string, Bucket> | undefined;
+}
+
+function getRateLimitStore(): Map<string, Bucket> {
+  if (!globalThis.__scrollyRateLimitStore) {
+    globalThis.__scrollyRateLimitStore = new Map<string, Bucket>();
+  }
+  return globalThis.__scrollyRateLimitStore;
+}
+
+function normalizeIp(raw: string): string {
+  const cleaned = raw.trim().slice(0, 128);
+  if (cleaned.startsWith('::ffff:')) {
+    return cleaned.slice(7);
+  }
+  return cleaned;
+}
 
 export function extractClientIp(request: Request): string {
+  const cfIp = request.headers.get('cf-connecting-ip');
+  if (cfIp && cfIp.trim()) {
+    return normalizeIp(cfIp);
+  }
   const forwarded = request.headers.get('x-forwarded-for');
   if (forwarded) {
     const first = forwarded.split(',')[0]?.trim();
-    if (first) return first.slice(0, 128);
+    if (first) return normalizeIp(first);
   }
   const realIp = request.headers.get('x-real-ip');
-  if (realIp) return realIp.trim().slice(0, 128);
+  if (realIp && realIp.trim()) {
+    return normalizeIp(realIp);
+  }
   return 'unknown';
 }
 
@@ -21,16 +44,17 @@ export function checkRateLimit(
   maxRequests: number,
   windowMs: number
 ): { allowed: boolean; retryAfterSec: number } {
+  const store = getRateLimitStore();
   const now = Date.now();
-  const existing = rateLimitStore.get(key);
+  const existing = store.get(key);
 
   if (!existing || now >= existing.resetAt) {
-    if (rateLimitStore.size > 5000) {
-      for (const [k, v] of rateLimitStore) {
-        if (now >= v.resetAt) rateLimitStore.delete(k);
+    if (store.size > 5000) {
+      for (const [k, v] of store) {
+        if (now >= v.resetAt) store.delete(k);
       }
     }
-    rateLimitStore.set(key, { count: 1, resetAt: now + windowMs });
+    store.set(key, { count: 1, resetAt: now + windowMs });
     return { allowed: true, retryAfterSec: 0 };
   }
 

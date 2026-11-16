@@ -622,7 +622,7 @@ export default function TikTokFactSlide({
         }}
       />
 
-      <div className="relative mx-auto h-full w-full overflow-hidden bg-[#0A0A0E]">
+      <div className="perspective-1000 relative mx-auto h-full w-full overflow-hidden bg-[#0A0A0E]">
         {/* Full-bleed live visual backdrop + framed upper/mid GIF media stage */}
         <div className="pointer-events-none absolute inset-0 overflow-hidden bg-[#0A0A0E]">
           <CategoryMotionArt
@@ -672,11 +672,11 @@ export default function TikTokFactSlide({
         {/* Bottom collapsed headline + expandable story & guess drawer */}
         <div
           data-testid="fact-card-front"
-          className={`relative z-10 flex h-full w-full flex-col justify-end overflow-hidden px-4 pt-20 pr-14 sm:pr-16 lg:pr-5 ${
+          className={`backface-hidden relative z-10 flex h-full w-full flex-col justify-end overflow-hidden px-4 pt-20 pr-14 sm:pr-16 lg:pr-5 ${
             cookieBannerVisible
               ? 'pb-[calc(env(safe-area-inset-bottom,16px)+200px)] lg:pb-6'
               : 'pb-[calc(env(safe-area-inset-bottom,16px)+84px)] lg:pb-6'
-          } ${isFlipped ? 'invisible pointer-events-none' : ''}`}
+          } ${isFlipped ? 'pointer-events-none opacity-0' : 'opacity-100'}`}
         >
           <div
             className={`pointer-events-none relative z-10 flex w-full flex-col no-scrollbar ${
@@ -685,16 +685,17 @@ export default function TikTokFactSlide({
           >
             <div className="mb-2 flex flex-wrap items-center gap-2">
               <div className="flex flex-wrap items-center gap-2">
-                <div className="inline-flex w-fit items-center gap-1.5 rounded-full border border-white/15 bg-white/10 px-2.5 py-0.5 text-[10px] font-extrabold uppercase tracking-wide text-white">
-                  <span className="flex h-3.5 w-3.5 shrink-0 items-center justify-center rounded-full bg-white/95 p-0.5">
+                <div className="inline-flex w-fit items-center gap-1.5 rounded-full border border-white/20 bg-black/50 px-2.5 py-1 text-[10px] font-extrabold uppercase tracking-wide text-white backdrop-blur-sm">
+                  <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-white/95 p-0.5 shadow-sm">
                     <img
                       src={catMeta.iconPath}
                       alt=""
                       aria-hidden="true"
-                      width={10}
-                      height={10}
-                      decoding="async"
-                      className="h-2.5 w-2.5 object-contain"
+                      width={16}
+                      height={16}
+                      loading="eager"
+                      decoding="sync"
+                      className="h-4 w-4 shrink-0 object-contain"
                     />
                   </span>
                   <span>{catMeta.label[lang]}</span>
@@ -970,7 +971,7 @@ export default function TikTokFactSlide({
             onDoubleClick={(e) => e.stopPropagation()}
             onPointerDown={(e) => e.stopPropagation()}
             onWheel={(e) => e.stopPropagation()}
-            className="pointer-events-auto absolute inset-0 z-[70] h-full w-full"
+            className="backface-hidden pointer-events-auto absolute inset-0 z-[70] h-full w-full"
           >
             <FactDetailPage
               fact={fact}
@@ -979,15 +980,18 @@ export default function TikTokFactSlide({
               resolvedGifUrl={resolvedGifUrl}
               onClose={() => {
                 isFlippedRef.current = false;
+                setIsFlipping(false);
                 setIsFlipped(false);
               }}
               onNextCard={() => {
                 isFlippedRef.current = false;
+                setIsFlipping(false);
                 setIsFlipped(false);
                 setTimeout(() => onNextSlide(), 30);
               }}
               onOpenDuel={(targetFact) => {
                 isFlippedRef.current = false;
+                setIsFlipping(false);
                 setIsFlipped(false);
                 onOpenDuel(targetFact);
               }}

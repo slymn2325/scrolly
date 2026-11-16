@@ -17,13 +17,17 @@ import { buildVocabularyGifQuery } from '@/lib/serverGifMatcher';
 
 export const dynamic = 'force-dynamic';
 
+const NO_STORE_HEADERS = {
+  'Cache-Control': 'no-store, max-age=0',
+};
+
 export async function GET(request: Request) {
   const ip = extractClientIp(request);
   const rl = checkRateLimit(`gif:${ip}`, 90, 60_000);
   if (!rl.allowed) {
     return NextResponse.json(
       { ok: false, gifUrl: null, fallback: 'motion_canvas', error: 'rate_limited' },
-      { status: 429, headers: { 'Retry-After': String(rl.retryAfterSec) } }
+      { status: 429, headers: { ...NO_STORE_HEADERS, 'Retry-After': String(rl.retryAfterSec) } }
     );
   }
 
@@ -84,7 +88,9 @@ export async function GET(request: Request) {
         },
         {
           headers: {
-            'Cache-Control': 'public, max-age=3600, s-maxage=3600',
+            'Cache-Control': renderableUrl
+              ? 'public, max-age=3600, s-maxage=3600'
+              : 'no-store, max-age=0',
           },
         }
       );
@@ -108,7 +114,9 @@ export async function GET(request: Request) {
         },
         {
           headers: {
-            'Cache-Control': 'public, max-age=3600, s-maxage=3600',
+            'Cache-Control': renderableUrl
+              ? 'public, max-age=3600, s-maxage=3600'
+              : 'no-store, max-age=0',
           },
         }
       );

@@ -4,7 +4,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import confetti from 'canvas-confetti';
 import { useEscapeClose } from '@/utils/useEscapeClose';
-import { AnimatePresence, motion } from 'framer-motion';
+import { motion } from 'framer-motion';
 import {
   Bell,
   BellOff,
@@ -13,6 +13,9 @@ import {
   Download,
   ExternalLink,
   Heart,
+  LogOut,
+  Mail,
+  MailCheck,
   RotateCcw,
   Share2,
   Trash2,
@@ -205,10 +208,64 @@ export default function DiplomaProfileModal({
   const [savedVocab, setSavedVocab] = useState<SavedVocabularyEntry[]>([]);
   const [savedIds, setSavedIds] = useState<string[]>([]);
   const [likedIds, setLikedIds] = useState<string[]>([]);
+  const [authEmail, setAuthEmail] = useState<string | null>(null);
+  const [signingOut, setSigningOut] = useState(false);
   const scrollBodyRef = useRef<HTMLDivElement>(null);
   const t = translations[lang];
   const copy = FEED_EXPERIENCE_COPY[lang];
   const league = getLeagueInfo(memory.xp, lang);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const readAuthEmail = () => {
+      try {
+        const stored = window.localStorage.getItem('scrolly_auth_user_email');
+        setAuthEmail(stored && stored.trim() ? stored.trim() : null);
+      } catch {
+        setAuthEmail(null);
+      }
+    };
+
+    readAuthEmail();
+    const onAuthChanged = (event: Event) => {
+      const detail = (event as CustomEvent<{ user?: { email?: string } | null }>).detail;
+      if (detail && 'user' in detail) {
+        setAuthEmail(detail.user?.email?.trim() || null);
+      } else {
+        readAuthEmail();
+      }
+    };
+
+    window.addEventListener('scrolly-auth-changed', onAuthChanged as EventListener);
+    window.addEventListener('storage', readAuthEmail);
+    return () => {
+      window.removeEventListener('scrolly-auth-changed', onAuthChanged as EventListener);
+      window.removeEventListener('storage', readAuthEmail);
+    };
+  }, [open]);
+
+  const handleLogout = async () => {
+    if (signingOut) return;
+    onButtonPop();
+    setSigningOut(true);
+    try {
+      await fetch('/api/auth/logout', {
+        method: 'POST',
+        credentials: 'same-origin',
+      });
+    } catch {
+      // Clear local session state even if offline
+    } finally {
+      try {
+        window.localStorage.removeItem('scrolly_auth_user_email');
+      } catch {
+        // Ignore storage restrictions
+      }
+      setAuthEmail(null);
+      window.dispatchEvent(new CustomEvent('scrolly-auth-changed', { detail: { user: null } }));
+      setSigningOut(false);
+    }
+  };
 
   useEffect(() => {
     setIsStandalone(checkIsStandalone());
@@ -323,9 +380,9 @@ export default function DiplomaProfileModal({
     }
   };
 
+  if (!open) return null;
+
   return (
-    <AnimatePresence>
-      {open && (
         <div
           role={isPage ? 'region' : 'dialog'}
           aria-modal={isPage ? undefined : true}
@@ -334,19 +391,18 @@ export default function DiplomaProfileModal({
           data-presentation={presentation}
           className={
             isPage
-              ? 'absolute inset-0 z-20 flex h-full w-full flex-col bg-[#FFFDF9] dark:bg-[#171228]'
-              : 'absolute inset-0 z-20 flex h-full w-full flex-col bg-[#FFFDF9] dark:bg-[#171228]'
+              ? 'absolute inset-0 z-20 flex h-full w-full flex-col bg-[#FFFDF9] dark:bg-[#0B0B11]'
+              : 'absolute inset-0 z-20 flex h-full w-full items-center justify-center bg-[#0B0B11]/85 p-3 backdrop-blur-sm'
           }
         >
           <motion.div
-            initial={isPage ? { opacity: 0, x: 12 } : { opacity: 0, scale: 0.92, y: 18 }}
-            animate={isPage ? { opacity: 1, x: 0 } : { opacity: 1, scale: 1, y: 0 }}
-            exit={isPage ? { opacity: 0, x: 8 } : { opacity: 0, scale: 0.92, y: 18 }}
-            transition={{ type: 'spring', stiffness: 320, damping: 26 }}
+            initial={isPage ? { opacity: 0.94, y: 8 } : { opacity: 0.94, scale: 0.97, y: 8 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            transition={{ duration: 0.14, ease: [0.23, 1, 0.32, 1] }}
             className={
               isPage
                 ? 'relative flex h-full w-full flex-col overflow-hidden pb-[calc(env(safe-area-inset-bottom,16px)+100px)] lg:pb-0'
-                : 'relative mb-[92px] flex max-h-[82dvh] w-full max-w-[430px] md:max-w-2xl flex-col overflow-hidden rounded-3xl border-2 border-amber-200 bg-[#FFFDF9] shadow-2xl dark:border-violet-700/50 dark:bg-[#171228]'
+                : 'relative mb-[92px] flex max-h-[82dvh] w-full max-w-[430px] md:max-w-2xl flex-col overflow-hidden rounded-3xl border-2 border-amber-200 bg-[#FFFDF9] shadow-2xl dark:border-violet-700/50 dark:bg-[#0B0B11]'
             }
           >
             {/* Header */}
@@ -361,6 +417,10 @@ export default function DiplomaProfileModal({
                     src={DOCK_ICON_MAP.diploma}
                     alt=""
                     aria-hidden="true"
+                    width={28}
+                    height={28}
+                    loading="eager"
+                    decoding="sync"
                     className="h-7 w-7 object-contain"
                   />
                 </div>
@@ -394,11 +454,82 @@ export default function DiplomaProfileModal({
                 isPage ? 'pb-8 lg:pb-6' : 'pb-5'
               }`}
             >
+              {/* Account Sync Status / Non-blocking Email OTP CTA */}
+              {authEmail ? (
+                <div
+                  data-testid="diploma-auth-connected"
+                  className="flex flex-wrap items-center justify-between gap-2.5 rounded-2xl border border-emerald-200 bg-emerald-50/80 px-3.5 py-2.5 dark:border-emerald-700/50 dark:bg-emerald-950/40"
+                >
+                  <div className="flex min-w-0 items-center gap-2.5">
+                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-emerald-500/15 text-emerald-700 dark:text-emerald-300">
+                      <MailCheck className="h-4 w-4" />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-[10px] font-black uppercase tracking-wider text-emerald-700 dark:text-emerald-300">
+                        {lang === 'tr' ? 'E-posta Hesabı Bağlı' : 'Connected Account'}
+                      </p>
+                      <p
+                        data-testid="diploma-auth-email"
+                        className="truncate text-xs font-extrabold text-ink dark:text-white"
+                      >
+                        {authEmail}
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    disabled={signingOut}
+                    onClick={() => void handleLogout()}
+                    data-testid="diploma-logout-btn"
+                    className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-rose-200 bg-white px-3 py-1.5 text-[11px] font-extrabold text-rose-700 transition-colors hover:bg-rose-50 disabled:opacity-60 dark:border-rose-700/50 dark:bg-rose-950/50 dark:text-rose-200 dark:hover:bg-rose-900/60"
+                  >
+                    <LogOut className="h-3.5 w-3.5" />
+                    <span>{lang === 'tr' ? 'Çıkış Yap' : 'Sign Out'}</span>
+                  </button>
+                </div>
+              ) : (
+                <div
+                  data-testid="diploma-auth-cta"
+                  className="flex flex-wrap items-center justify-between gap-2.5 rounded-2xl border border-violet-200 bg-violet-50/80 px-3.5 py-2.5 dark:border-violet-700/50 dark:bg-violet-950/40"
+                >
+                  <div className="min-w-0 flex-1">
+                    <p className="text-xs font-extrabold text-ink dark:text-white">
+                      {lang === 'tr'
+                        ? 'XP, seri ve defterini yedekle'
+                        : 'Back up your XP, streak & saved cards'}
+                    </p>
+                    <p className="mt-0.5 text-[11px] font-medium text-ink/70 dark:text-violet-200/80">
+                      {lang === 'tr'
+                        ? 'Şifresiz tek kullanımlık kod ile cihazlar arasında eşitle.'
+                        : 'Sync across devices with a quick passwordless email code.'}
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      onButtonPop();
+                      window.dispatchEvent(
+                        new CustomEvent('scrolly-open-auth', { detail: { trigger: 'profile' } })
+                      );
+                    }}
+                    data-testid="diploma-connect-email-btn"
+                    className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-violet-600 px-3.5 py-2 text-[11px] font-extrabold text-white shadow-sm transition-colors hover:bg-violet-700"
+                  >
+                    <Mail className="h-3.5 w-3.5 shrink-0" />
+                    <span>
+                      {lang === 'tr'
+                        ? 'E-posta ile Hesabını Bağla / Giriş Yap'
+                        : 'Connect Email / Sign In'}
+                    </span>
+                  </button>
+                </div>
+              )}
+
               {/* Explorer Nickname */}
               <div>
                 <label
                   htmlFor="diploma-nickname-input"
-                  className="block text-xs font-extrabold text-ink/70 dark:text-violet-200/80"
+                  className="block text-xs font-extrabold text-ink/75 dark:text-violet-200/80"
                 >
                   {t.diplomaNickLabel}
                 </label>
@@ -409,7 +540,7 @@ export default function DiplomaProfileModal({
                   value={memory.nickname}
                   onChange={(e) => onUpdateNickname(e.target.value)}
                   maxLength={24}
-                  className="mt-1.5 w-full rounded-2xl border border-amber-200 bg-white px-3.5 py-2 text-sm font-bold text-ink outline-none focus:border-violet-500 dark:border-white/15 dark:bg-white/10 dark:text-white"
+                  className="mt-1.5 w-full rounded-2xl border border-amber-200 bg-white px-3.5 py-2 text-sm font-bold text-ink focus:border-violet-500 focus:outline-none focus:ring-2 focus:ring-violet-400/50 dark:border-white/15 dark:bg-white/10 dark:text-white"
                 />
               </div>
 
@@ -864,7 +995,5 @@ export default function DiplomaProfileModal({
             </div>
           </motion.div>
         </div>
-      )}
-    </AnimatePresence>
   );
 }

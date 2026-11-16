@@ -120,7 +120,7 @@ export default function IosFloatingIslandDock({
                   ? tab.id === 'duel'
                     ? 'text-violet-800'
                     : 'text-[#1E1B2E]'
-                  : 'text-[#1E1B2E]/65 hover:text-[#1E1B2E]'
+                  : 'text-[#1E1B2E]/80 hover:text-[#1E1B2E]'
             }`}
           >
             {isActive && (
@@ -144,9 +144,13 @@ export default function IosFloatingIslandDock({
                 src={tab.iconSrc}
                 alt=""
                 aria-hidden="true"
+                width={24}
+                height={24}
+                loading="eager"
+                decoding="sync"
                 className={`object-contain transition-transform duration-200 ${
                   isCenter ? 'h-6 w-6' : 'h-[22px] w-[22px]'
-                } ${isActive ? 'scale-110' : 'opacity-90'}`}
+                } ${isActive ? 'scale-110' : 'opacity-100'}`}
               />
               {tab.id === 'duel' && (
                 <span className="absolute -right-3 -top-1 rounded-full bg-gradient-to-r from-violet-500 to-fuchsia-500 px-1 py-[1px] text-[8px] font-black leading-none text-white shadow-sm">

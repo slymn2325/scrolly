@@ -45,15 +45,23 @@
   --scrolly-focus-ring: var(--primary);
 }
 
-html,
+html {
+  background-color: var(--background);
+  color: var(--foreground);
+  overflow-x: clip;
+  overflow-y: auto;
+  min-height: 100%;
+  -webkit-font-smoothing: antialiased;
+  transition: background-color 0.25s ease, color 0.25s ease;
+}
+
 body {
-  background-color: #0A0A0E;
-  color: #F5F3FF;
-  overflow-x: hidden;
-  overscroll-behavior: none;
-  -webkit-touch-callout: none;
-  user-select: none;
-  -webkit-user-select: none;
+  background-color: var(--background);
+  color: var(--foreground);
+  overflow-x: clip;
+  overflow-y: auto;
+  min-height: 100dvh;
+  overscroll-behavior-y: auto;
   -webkit-font-smoothing: antialiased;
   transition: background-color 0.25s ease, color 0.25s ease;
 }
@@ -107,6 +115,7 @@ html.dark [data-fact-surface='true'] p {
 
 .preserve-3d {
   transform-style: preserve-3d;
+  -webkit-transform-style: preserve-3d;
 }
 
 .backface-hidden {
@@ -122,7 +131,9 @@ html.dark [data-fact-surface='true'] p {
 .tiktok-feed-scroll,
 .reels-container {
   scroll-snap-type: y mandatory;
-  overscroll-behavior-y: none;
+  overscroll-behavior-y: contain;
+  scroll-behavior: auto;
+  -webkit-overflow-scrolling: touch;
   user-select: none;
   -webkit-user-select: none;
 }
@@ -130,7 +141,18 @@ html.dark [data-fact-surface='true'] p {
 .reels-slide {
   scroll-snap-align: start;
   scroll-snap-stop: always;
+  height: 100dvh;
+  min-height: 100dvh;
   contain: layout style paint;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+@media (min-width: 1024px) {
+  [data-testid='reels-phone-frame'] .reels-slide {
+    height: 100%;
+    min-height: 100%;
+  }
 }
 
 /* Hide scrollbars cleanly for horizontal category pills */

@@ -102,3 +102,35 @@ export function clearVocabNotebook(): void {
     // Ignore storage quota errors
   }
 }
+
+export function mergeSavedVocabNotebook(entries: SavedVocabularyEntry[]): SavedVocabularyEntry[] {
+  if (typeof window === 'undefined' || !Array.isArray(entries) || entries.length === 0) {
+    return loadSavedVocabNotebook();
+  }
+  const current = loadSavedVocabNotebook();
+  const byWord = new Map<string, SavedVocabularyEntry>();
+  for (const entry of current) {
+    const key = entry.word?.trim().toLowerCase();
+    if (key) byWord.set(key, entry);
+  }
+  let changed = false;
+  for (const entry of entries) {
+    if (!entry || typeof entry.word !== 'string') continue;
+    const key = entry.word.trim().toLowerCase();
+    if (!key) continue;
+    if (!byWord.has(key)) {
+      byWord.set(key, entry);
+      changed = true;
+    }
+  }
+  const next = Array.from(byWord.values()).slice(0, 120);
+  if (changed) {
+    try {
+      window.localStorage.setItem(VOCAB_NOTEBOOK_KEY, JSON.stringify(next));
+      window.dispatchEvent(new Event('scrolly-vocab-updated'));
+    } catch {
+      // Ignore storage quota errors
+    }
+  }
+  return next;
+}

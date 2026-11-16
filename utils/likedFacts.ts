@@ -60,3 +60,25 @@ export function clearLikedFacts(): void {
   }
   window.dispatchEvent(new CustomEvent('scrolly-liked-facts-updated'));
 }
+
+export function mergeLikedFactIds(ids: string[]): string[] {
+  if (typeof window === 'undefined' || !Array.isArray(ids) || ids.length === 0) {
+    return readIds();
+  }
+  const current = readIds();
+  const seen = new Set(current);
+  let changed = false;
+  const next = [...current];
+  for (const raw of ids) {
+    if (typeof raw !== 'string') continue;
+    const clean = raw.trim();
+    if (!clean || seen.has(clean)) continue;
+    seen.add(clean);
+    next.push(clean);
+    changed = true;
+  }
+  if (changed) {
+    writeIds(next);
+  }
+  return next;
+}

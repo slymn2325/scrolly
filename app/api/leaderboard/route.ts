@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
-import { getLeaderboardRows, recordQuizSubmission } from '@/lib/dbActions';
+import { getSessionUserFromRequest, syncAuthenticatedUserFromProfile } from '@/lib/auth';
+import { getLeaderboardRows, isValidDeviceId, recordQuizSubmission } from '@/lib/dbActions';
 import { checkRateLimit, extractClientIp } from '@/lib/rateLimit';
 
 export const dynamic = 'force-dynamic';
@@ -73,23 +74,46 @@ export async function POST(request: Request) {
         ? rawMode
         : 'daily';
 
-    if (!deviceId || deviceId.length < 4) {
+    if (!isValidDeviceId(deviceId)) {
       return NextResponse.json(
         { ok: false, error: 'invalid_device_id' },
         { status: 400, headers: NO_STORE_HEADERS }
       );
     }
 
+    const score = Number(body.score || 0);
+    const correctCount = Number(body.correctCount || 0);
+    const totalQuestions = Number(body.totalQuestions || 1);
+
     const result = await recordQuizSubmission({
       deviceId,
       username,
       handle,
       mode,
-      score: Number(body.score || 0),
-      correctCount: Number(body.correctCount || 0),
-      totalQuestions: Number(body.totalQuestions || 1),
+      score,
+      correctCount,
+      totalQuestions,
       clientDate,
     });
+
+    const sessionUser = await getSessionUserFromRequest(request).catch(() => null);
+    if (sessionUser) {
+      const today = new Date().toISOString().slice(0, 10);
+      await syncAuthenticatedUserFromProfile({
+        userId: sessionUser.id,
+        deviceId,
+        snapshot: {
+          nickname: username,
+          ...(mode === 'daily'
+            ? {
+                dailyBestScore: Math.max(0, Math.floor(score)),
+                lastDailyQuizDate: clientDate || today,
+              }
+            : {}),
+          ...(score > 0 || correctCount > 0 ? { streak: Math.max(sessionUser.streak, 1) } : {}),
+        },
+      }).catch(() => {});
+    }
 
     return NextResponse.json(
       {

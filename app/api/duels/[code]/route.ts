@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getDuelRoomDb, mutateDuelRoomDb } from '@/lib/dbActions';
 import {
+  isDummyActorId,
   isShortRoomCode,
   normalizeRoomCode,
   sanitizeAnswersArray,
@@ -86,7 +87,7 @@ export async function POST(request: Request, context: RouteContext) {
     const action = String(body.action || '').trim();
     const playerId = typeof body.playerId === 'string' ? body.playerId.trim().slice(0, 128) : '';
 
-    if (!playerId) {
+    if (isDummyActorId(playerId)) {
       return NextResponse.json(
         { ok: false, error: 'missing_player_id' },
         { status: 400, headers: NO_STORE_HEADERS }

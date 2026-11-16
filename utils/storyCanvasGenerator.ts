@@ -617,24 +617,74 @@ export async function generateStoryCardImage(
   ctx.textBaseline = 'middle';
   ctx.fillText(sourceLabel, width / 2, srcY + 29, srcW - 36);
 
-  // 5. Bottom CTA Pill & Footer URL Band
+  // 5. Bottom CTA Pill & Stylish Viral scrolly.live Branding Pill
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
-  drawRoundedRect(ctx, 88, 1590, width - 176, 108, 54);
+  drawRoundedRect(ctx, 88, 1582, width - 176, 102, 51);
   ctx.fillStyle = 'rgba(255, 255, 255, 0.94)';
   ctx.fill();
 
   if (verifiedSealImg) {
-    ctx.drawImage(verifiedSealImg, 120, 1619, 50, 50);
+    ctx.drawImage(verifiedSealImg, 120, 1608, 50, 50);
   }
-  ctx.font = '800 32px "Plus Jakarta Sans", system-ui, sans-serif';
+  ctx.font = '800 31px "Plus Jakarta Sans", system-ui, sans-serif';
   ctx.fillStyle = '#1E1B2E';
-  ctx.fillText(t.storyCtaLine, verifiedSealImg ? width / 2 + 16 : width / 2, 1645, width - 290);
+  ctx.fillText(t.storyCtaLine, verifiedSealImg ? width / 2 + 16 : width / 2, 1633, width - 290);
 
-  // Footer domain strip
-  ctx.font = '700 30px "Plus Jakarta Sans", system-ui, sans-serif';
-  ctx.fillStyle = 'rgba(255, 255, 255, 0.78)';
-  ctx.fillText('scrolly.live  •  TR | EN', width / 2, 1782);
+  // Stylish scrolly.live watermark pill + short viral callout CTA
+  const viralCtaText =
+    lang === 'tr' ? 'Kaydır, Keşfet & 1v1 Oyna' : 'Scroll, Discover & Play 1v1';
+  const domainText = 'scrolly.live';
+  const pillW = 790;
+  const pillH = 74;
+  const pillX = (width - pillW) / 2;
+  const pillY = 1718;
+
+  ctx.save();
+  drawRoundedRect(ctx, pillX, pillY, pillW, pillH, 37);
+  ctx.fillStyle = 'rgba(10, 10, 18, 0.56)';
+  ctx.fill();
+  ctx.strokeStyle = 'rgba(255, 255, 255, 0.34)';
+  ctx.lineWidth = 2.5;
+  ctx.stroke();
+
+  // Brand inner badge inside the footer pill
+  ctx.font = '800 28px "Fredoka", "Plus Jakarta Sans", system-ui, sans-serif';
+  const domainBadgeW = ctx.measureText(domainText).width + 58;
+  drawRoundedRect(ctx, pillX + 12, pillY + 11, domainBadgeW, 52, 26);
+  ctx.fillStyle = 'rgba(124, 58, 237, 0.92)';
+  ctx.fill();
+
+  ctx.beginPath();
+  ctx.arc(pillX + 34, pillY + 37, 6, 0, Math.PI * 2);
+  ctx.fillStyle = '#34D399';
+  ctx.fill();
+
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'middle';
+  ctx.fillStyle = '#FFFFFF';
+  ctx.fillText(domainText, pillX + 48, pillY + 38);
+
+  // Callout CTA right side inside the pill
+  ctx.font = '700 26px "Plus Jakarta Sans", system-ui, sans-serif';
+  ctx.fillStyle = 'rgba(255, 255, 255, 0.94)';
+  const calloutX = pillX + 12 + domainBadgeW + 22;
+  const maxCalloutW = pillX + pillW - 24 - calloutX;
+  ctx.fillText(viralCtaText, calloutX, pillY + 38, maxCalloutW);
+  ctx.restore();
+
+  // Crisp subtle bilingual caption beneath watermark pill
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.font = '700 22px "Plus Jakarta Sans", system-ui, sans-serif';
+  ctx.fillStyle = 'rgba(255, 255, 255, 0.72)';
+  ctx.fillText(
+    lang === 'tr'
+      ? 'Doğrulanmış Mikro Bilgi · TR | EN'
+      : 'Verified Micro-Knowledge · TR | EN',
+    width / 2,
+    1834
+  );
 
   const safeSlug =
     getFactPrimarySlug(fact)

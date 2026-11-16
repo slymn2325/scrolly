@@ -1,6 +1,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { ArrowLeft, ChevronRight, Home } from 'lucide-react';
+import HtmlLangSync from '@/components/HtmlLangSync';
 import SiteTrustFooter from '@/components/SiteTrustFooter';
 import type { Language } from '@/i18n/translations';
 
@@ -29,40 +30,52 @@ export default function TrustPageShell({
 
   return (
     <>
+      <HtmlLangSync lang={lang} />
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{
           __html: JSON.stringify(jsonLd).replace(/</g, '\\u003c'),
         }}
       />
-      <div className="min-h-screen bg-[#FFFDF9] text-ink dark:bg-[#0D0A19] dark:text-white">
-        <header className="sticky top-0 z-30 border-b border-amber-100/90 bg-[#FFFDF9]/90 backdrop-blur-md dark:border-white/10 dark:bg-[#0D0A19]/90">
+      <div
+        lang={isEn ? 'en-US' : 'tr-TR'}
+        className="min-h-dvh w-full overflow-x-clip overflow-y-auto bg-[#FFFDF9] text-ink dark:bg-[#0D0A19] dark:text-white"
+      >
+        <header className="sticky top-0 z-30 border-b border-amber-100/90 bg-[#FFFDF9]/95 backdrop-blur-md dark:border-white/10 dark:bg-[#0D0A19]/95">
           <div className="mx-auto flex max-w-4xl items-center justify-between gap-3 px-4 py-3">
             <Link
               href="/"
-              className="inline-flex items-center gap-2 rounded-full border border-amber-200 bg-white px-3.5 py-1.5 text-xs font-extrabold text-ink shadow-sm transition hover:bg-amber-50 dark:border-white/15 dark:bg-white/10 dark:text-white"
+              className="inline-flex items-center gap-2 rounded-full border border-amber-200 bg-white px-3.5 py-1.5 text-xs font-extrabold text-ink shadow-sm transition-colors duration-150 hover:bg-amber-50 dark:border-white/15 dark:bg-white/10 dark:text-white dark:hover:bg-white/15"
             >
               <ArrowLeft className="h-4 w-4" />
               <span>{isEn ? 'Back to Scrolly Feed' : 'Scrolly Akışına Dön'}</span>
             </Link>
 
-            <div className="inline-flex items-center rounded-full border border-amber-200 bg-white p-0.5 text-xs font-black shadow-sm dark:border-white/15 dark:bg-white/10">
+            <div
+              role="group"
+              aria-label={isEn ? 'Language switcher' : 'Dil seçici'}
+              className="inline-flex items-center gap-0.5 rounded-full border border-amber-200 bg-white p-0.5 text-xs font-black shadow-sm dark:border-white/15 dark:bg-white/10"
+            >
               <Link
                 href={`${routePath}?lang=tr`}
-                className={`rounded-full px-3 py-1 transition ${
+                aria-current={lang === 'tr' ? 'page' : undefined}
+                data-testid="trust-lang-tr"
+                className={`inline-flex min-h-[30px] min-w-[38px] items-center justify-center rounded-full px-3 py-1 transition-colors duration-150 ${
                   lang === 'tr'
-                    ? 'bg-ink text-white dark:bg-violet-600'
-                    : 'text-ink/70 hover:text-ink dark:text-white/70'
+                    ? 'bg-[#1E1B2E] text-white shadow-sm dark:bg-white dark:text-[#09090B]'
+                    : 'text-[#1E1B2E]/75 hover:text-[#1E1B2E] dark:text-white/80 dark:hover:text-white'
                 }`}
               >
                 TR
               </Link>
               <Link
                 href={`${routePath}?lang=en`}
-                className={`rounded-full px-3 py-1 transition ${
+                aria-current={lang === 'en' ? 'page' : undefined}
+                data-testid="trust-lang-en"
+                className={`inline-flex min-h-[30px] min-w-[38px] items-center justify-center rounded-full px-3 py-1 transition-colors duration-150 ${
                   lang === 'en'
-                    ? 'bg-ink text-white dark:bg-violet-600'
-                    : 'text-ink/70 hover:text-ink dark:text-white/70'
+                    ? 'bg-[#1E1B2E] text-white shadow-sm dark:bg-white dark:text-[#09090B]'
+                    : 'text-[#1E1B2E]/75 hover:text-[#1E1B2E] dark:text-white/80 dark:hover:text-white'
                 }`}
               >
                 EN

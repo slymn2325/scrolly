@@ -931,7 +931,7 @@ export default function FullBleedReelsCanvas({
     >
       <canvas ref={canvasRef} className="absolute inset-0 h-full w-full" aria-hidden="true" />
       {showHint && isActive && !reduceMotion && (
-        <div className="pointer-events-none absolute right-3 top-[calc(env(safe-area-inset-top,12px)+104px)] z-[5] rounded-full border border-white/20 bg-white/15 px-2.5 py-1 text-[10px] font-bold text-white/90 backdrop-blur-md">
+        <div className="pointer-events-none absolute right-3 top-[calc(env(safe-area-inset-top,12px)+104px)] z-[5] rounded-full border border-white/30 bg-[#0A0A0E]/85 px-3 py-1 text-[11px] font-extrabold tracking-tight text-white shadow-[0_4px_16px_rgba(0,0,0,0.45)] backdrop-blur-md">
           {lang === 'tr' ? 'Dokun & Hızlandır' : 'Tap & Boost'}
         </div>
       )}

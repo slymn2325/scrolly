@@ -3,7 +3,7 @@ import { getVocabularyFacts } from '@/data/vocabularyFacts';
 import type { CategoryFilter } from '@/i18n/translations';
 import { getAllFactsServer } from '@/lib/db';
 import { createDuelRoomDb } from '@/lib/dbActions';
-import { normalizeDuelCategory } from '@/lib/duelStore';
+import { isDummyActorId, normalizeDuelCategory } from '@/lib/duelStore';
 import { checkRateLimit, extractClientIp } from '@/lib/rateLimit';
 
 export const dynamic = 'force-dynamic';
@@ -73,7 +73,7 @@ export async function POST(request: Request) {
     const questionCount = [3, 5, 7, 10].includes(rawCount) ? rawCount : 5;
     const explicitCardIds = Array.isArray(body.cardIds) ? (body.cardIds as string[]) : undefined;
 
-    if (!hostId || hostId.length < 3) {
+    if (isDummyActorId(hostId)) {
       return NextResponse.json(
         { ok: false, error: 'invalid_host_id' },
         { status: 400, headers: NO_STORE_HEADERS }

@@ -68,8 +68,13 @@ gtag('consent', 'default', {
   wait_for_update: 500
 });
 try {
-  if (window.location.pathname === '/en' || window.location.pathname.indexOf('/en/') === 0) {
+  var searchStr = window.location.search || '';
+  var hasLangEn = /(?:^|[?&])lang=en(?:&|$)/.test(searchStr);
+  var hasLangTr = /(?:^|[?&])lang=tr(?:&|$)/.test(searchStr);
+  if (hasLangEn || window.location.pathname === '/en' || window.location.pathname.indexOf('/en/') === 0) {
     document.documentElement.lang = 'en';
+  } else if (hasLangTr) {
+    document.documentElement.lang = 'tr';
   }
   var root = document.documentElement;
   root.classList.add('dark');
@@ -121,7 +126,7 @@ export default function RootHtmlShell({ lang, children }: RootHtmlShellProps) {
           }}
         />
       </head>
-      <body className="min-h-screen bg-[#0A0A0E] font-sans text-white antialiased selection:bg-amber-200 selection:text-[#09090B]">
+      <body className="min-h-dvh overflow-x-clip overflow-y-auto bg-[var(--background)] font-sans text-[var(--foreground)] antialiased selection:bg-amber-200 selection:text-[#09090B]">
         <div aria-hidden="true" className="pwa-statusbar-guard" />
         {children}
         <Script id="google-tag-manager" strategy="afterInteractive">

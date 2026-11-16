@@ -60,6 +60,8 @@ export interface UserMemoryState {
   categoryAccuracy?: Record<CategoryId, CategoryAccuracyStat>;
   streakDays: number;
   lastVisitDate: string;
+  /** Local calendar day (YYYY-MM-DD) of the last real XP / discovery action. Empty for clean guests. */
+  lastActiveDate?: string;
   badges: string[];
   soundEnabled: boolean;
   cookieAccepted: boolean;
@@ -305,8 +307,9 @@ export function getDefaultUserState(lang: Language = 'tr'): UserMemoryState {
     favoriteIds: [],
     categoryWeights: createEmptyWeights(),
     categoryAccuracy: createEmptyCategoryAccuracy(),
-    streakDays: 1,
+    streakDays: 0,
     lastVisitDate: '',
+    lastActiveDate: '',
     badges: [],
     soundEnabled: false,
     cookieAccepted: false,
@@ -395,16 +398,25 @@ export function loadUserMemory(): UserMemoryState {
   const today = getTodayDateString();
   const yesterday = getYesterdayDateString();
 
-  let streakDays = parsed?.streakDays ?? 1;
-  const lastVisit = parsed?.lastVisitDate ?? today;
-
-  if (hadPriorStorage && lastVisit !== today) {
-    if (lastVisit === yesterday) {
-      streakDays = streakDays + 1;
-    } else {
-      streakDays = 1;
-    }
-  }
+  const resolvedXpForStreak = typeof parsed?.xp === 'number' && parsed.xp > 0 ? parsed.xp : 0;
+  const parsedSeenCount = Array.isArray(parsed?.seenIds) ? parsed.seenIds.length : 0;
+  const hasRealActivity = resolvedXpForStreak > 0 || parsedSeenCount > 0;
+  // Legacy states never stored lastActiveDate: fall back to lastVisitDate only when real progress exists.
+  const lastActiveDate =
+    typeof parsed?.lastActiveDate === 'string'
+      ? parsed.lastActiveDate
+      : hasRealActivity && typeof parsed?.lastVisitDate === 'string'
+        ? parsed.lastVisitDate
+        : '';
+  const storedStreak =
+    typeof parsed?.streakDays === 'number' && Number.isFinite(parsed.streakDays)
+      ? Math.max(0, Math.floor(parsed.streakDays))
+      : 0;
+  // Strict zero-start: streak only survives when the last real activity was today or yesterday.
+  const streakDays =
+    hasRealActivity && (lastActiveDate === today || lastActiveDate === yesterday)
+      ? storedStreak
+      : 0;
 
   const resolvedLang: Language =
     parsed?.lang === 'tr' || parsed?.lang === 'en' ? parsed.lang : detectBrowserLanguage();
@@ -454,8 +466,9 @@ export function loadUserMemory(): UserMemoryState {
     categoryAccuracy: normalizeCategoryAccuracy(
       parsed?.categoryAccuracy as Partial<Record<string, Partial<CategoryAccuracyStat>>> | undefined
     ),
-    streakDays: Math.max(1, streakDays),
+    streakDays,
     lastVisitDate: today,
+    lastActiveDate,
     badges: normalizeBadges(parsed?.badges),
     soundEnabled: typeof parsed?.soundEnabled === 'boolean' ? parsed.soundEnabled : false,
     cookieAccepted: Boolean(parsed?.cookieAccepted),
@@ -505,15 +518,92 @@ export function saveUserMemory(state: UserMemoryState): void {
   } catch {
     // Ignore cookie errors
   }
+
+  try {
+    window.dispatchEvent(
+      new CustomEvent<UserMemoryUpdatedDetail>(USER_MEMORY_UPDATED_EVENT, {
+        detail: {
+          xp: persistedState.xp,
+          weeklyXp: persistedState.weeklyXp,
+          streakDays: persistedState.streakDays,
+          nickname: persistedState.nickname,
+        },
+      })
+    );
+  } catch {
+    // Ignore CustomEvent failures in legacy webviews
+  }
 }
 
-export function addUserXp(state: UserMemoryState, amount: number): UserMemoryState {
+export const USER_MEMORY_UPDATED_EVENT = 'scrolly-memory-updated';
+export const XP_GAINED_EVENT = 'scrolly-xp-gained';
+
+export interface UserMemoryUpdatedDetail {
+  xp: number;
+  weeklyXp: number;
+  streakDays: number;
+  nickname: string;
+}
+
+export interface XpGainedDetail {
+  amount: number;
+  totalXp: number;
+  streakDays: number;
+  source: string;
+}
+
+/** Broadcasts a real XP gain so HUD counters / toasts can react instantly without a refresh. */
+function emitXpGained(state: UserMemoryState, amount: number, source: string): void {
+  if (typeof window === 'undefined' || amount <= 0) return;
+  try {
+    window.dispatchEvent(
+      new CustomEvent<XpGainedDetail>(XP_GAINED_EVENT, {
+        detail: { amount, totalXp: state.xp, streakDays: state.streakDays, source },
+      })
+    );
+  } catch {
+    // Ignore CustomEvent failures in legacy webviews
+  }
+}
+
+/**
+ * Marks today as a real active day. A clean guest moves from `0` to `1` on the very first
+ * XP / discovery action; consecutive days increment, broken streaks restart at `1`.
+ */
+export function applyActivityStreak(state: UserMemoryState): UserMemoryState {
+  const today = getTodayDateString();
+  if (state.lastActiveDate === today && state.streakDays >= 1) {
+    return state;
+  }
+  const yesterday = getYesterdayDateString();
+  const nextStreak =
+    state.lastActiveDate === today
+      ? Math.max(1, state.streakDays)
+      : state.lastActiveDate === yesterday && state.streakDays >= 1
+        ? state.streakDays + 1
+        : 1;
+  return { ...state, streakDays: nextStreak, lastActiveDate: today };
+}
+
+export function addUserXp(
+  state: UserMemoryState,
+  amount: number,
+  source = 'generic'
+): UserMemoryState {
+  const base = amount > 0 ? applyActivityStreak(state) : state;
+  const nextXp = Math.max(0, base.xp + amount);
+  const currentTier = getLeagueInfo(nextXp, base.lang).id;
   const nextState: UserMemoryState = {
-    ...state,
-    xp: Math.max(0, state.xp + amount),
-    weeklyXp: Math.max(0, state.weeklyXp + amount),
+    ...base,
+    xp: nextXp,
+    weeklyXp: Math.max(0, base.weeklyXp + amount),
+    highestLeagueId:
+      LEAGUE_ORDER[currentTier] > LEAGUE_ORDER[base.highestLeagueId]
+        ? currentTier
+        : base.highestLeagueId,
   };
   saveUserMemory(nextState);
+  emitXpGained(nextState, amount, source);
   return nextState;
 }
 
@@ -526,13 +616,16 @@ export function recordCategoryGuessAccuracy(
   const nextAccuracy = normalizeCategoryAccuracy(state.categoryAccuracy);
   appendAccuracySample(nextAccuracy, category, accuracyPct);
 
+  // Any locked guess is a real engagement action, even when it earns 0 XP.
+  const base = applyActivityStreak(state);
   const nextState: UserMemoryState = {
-    ...state,
-    xp: Math.max(0, state.xp + xpAmount),
-    weeklyXp: Math.max(0, state.weeklyXp + xpAmount),
+    ...base,
+    xp: Math.max(0, base.xp + xpAmount),
+    weeklyXp: Math.max(0, base.weeklyXp + xpAmount),
     categoryAccuracy: nextAccuracy,
   };
   saveUserMemory(nextState);
+  emitXpGained(nextState, xpAmount, 'guess');
   return nextState;
 }
 
@@ -551,28 +644,30 @@ export function recordCardRead(
   };
 
   const xpGain = isNew ? 15 : 5;
-  const nextXp = state.xp + xpGain;
-  const currentTier = getLeagueInfo(nextXp, state.lang).id;
+  const base = applyActivityStreak(state);
+  const nextXp = base.xp + xpGain;
+  const currentTier = getLeagueInfo(nextXp, base.lang).id;
   const highestLeagueId =
-    LEAGUE_ORDER[currentTier] > LEAGUE_ORDER[state.highestLeagueId]
+    LEAGUE_ORDER[currentTier] > LEAGUE_ORDER[base.highestLeagueId]
       ? currentTier
-      : state.highestLeagueId;
+      : base.highestLeagueId;
 
   const nextState: UserMemoryState = {
-    ...state,
+    ...base,
     xp: nextXp,
-    weeklyXp: state.weeklyXp + xpGain,
+    weeklyXp: base.weeklyXp + xpGain,
     highestLeagueId,
     seenIds,
     recentFiveIds,
-    cardsSinceLastQuiz: state.cardsSinceLastQuiz + 1,
-    totalSwipes: state.totalSwipes + 1,
+    cardsSinceLastQuiz: base.cardsSinceLastQuiz + 1,
+    totalSwipes: base.totalSwipes + 1,
     categoryWeights: nextWeights,
     isReturningUser: seenIds.length > 0,
   };
 
   saveUserMemory(nextState);
   incrementTotalCardsViewed();
+  emitXpGained(nextState, xpGain, 'card_read');
   return nextState;
 }
 
@@ -586,7 +681,7 @@ export function markFactIdSeen(
   const seenIds = [...state.seenIds, factId];
   const recentFiveIds = [...state.recentFiveIds.filter((id) => id !== factId), factId].slice(-5);
   const nextState: UserMemoryState = {
-    ...state,
+    ...applyActivityStreak(state),
     seenIds,
     recentFiveIds,
     isReturningUser: true,
@@ -628,18 +723,20 @@ export function toggleFavoriteFact(
 
   const weightDelta = exists ? 0 : 2;
   const xpDelta = exists ? 0 : 10;
+  const base = exists ? state : applyActivityStreak(state);
   const nextState: UserMemoryState = {
-    ...state,
-    xp: state.xp + xpDelta,
-    weeklyXp: state.weeklyXp + xpDelta,
+    ...base,
+    xp: base.xp + xpDelta,
+    weeklyXp: base.weeklyXp + xpDelta,
     favoriteIds,
     categoryWeights: {
-      ...state.categoryWeights,
-      [category]: (state.categoryWeights[category] ?? 0) + weightDelta,
+      ...base.categoryWeights,
+      [category]: (base.categoryWeights[category] ?? 0) + weightDelta,
     },
   };
 
   saveUserMemory(nextState);
+  emitXpGained(nextState, xpDelta, 'save');
   return nextState;
 }
 
@@ -719,32 +816,34 @@ export function completeMemoryQuiz(
     });
   }
 
-  const nextXp = state.xp + earnedXp;
-  const nextWeeklyXp = state.weeklyXp + earnedXp;
-  const currentTier = getLeagueInfo(nextXp, state.lang).id;
+  const base = applyActivityStreak(state);
+  const nextXp = base.xp + earnedXp;
+  const nextWeeklyXp = base.weeklyXp + earnedXp;
+  const currentTier = getLeagueInfo(nextXp, base.lang).id;
   const highestLeagueId =
-    LEAGUE_ORDER[currentTier] > LEAGUE_ORDER[state.highestLeagueId]
+    LEAGUE_ORDER[currentTier] > LEAGUE_ORDER[base.highestLeagueId]
       ? currentTier
-      : state.highestLeagueId;
+      : base.highestLeagueId;
 
   const today = getTodayDateString();
   const nextState: UserMemoryState = {
-    ...state,
+    ...base,
     xp: nextXp,
     weeklyXp: nextWeeklyXp,
     highestLeagueId,
     dailyBestScore:
       quizMode === 'daily'
-        ? state.lastDailyQuizDate === today
-          ? Math.max(state.dailyBestScore, earnedXp)
+        ? base.lastDailyQuizDate === today
+          ? Math.max(base.dailyBestScore, earnedXp)
           : earnedXp
-        : state.dailyBestScore,
-    lastDailyQuizDate: quizMode === 'daily' ? today : state.lastDailyQuizDate,
+        : base.dailyBestScore,
+    lastDailyQuizDate: quizMode === 'daily' ? today : base.lastDailyQuizDate,
     cardsSinceLastQuiz: 0,
     badges,
     categoryAccuracy: nextAccuracy,
   };
   saveUserMemory(nextState);
+  emitXpGained(nextState, earnedXp, `quiz_${quizMode}`);
   return nextState;
 }
 
@@ -760,7 +859,10 @@ export function resetUserMemory(): UserMemoryState {
   fresh.favoriteIds = [];
   fresh.xp = 0;
   fresh.weeklyXp = 0;
-  fresh.streakDays = 1;
+  fresh.dailyBestScore = 0;
+  fresh.lastDailyQuizDate = '';
+  fresh.streakDays = 0;
+  fresh.lastActiveDate = '';
   fresh.badges = [];
   lastSyncedThemeDark = fresh.darkMode;
   saveUserMemory(fresh);
@@ -784,6 +886,7 @@ export interface RemoteProfileMergeInput {
   lastDailyQuizDate?: string;
   streak?: number;
   lastVisitDate?: string;
+  lastActiveDate?: string;
   seenIds?: string[];
   favoriteIds?: string[];
   categoryWeights?: Record<string, number>;
@@ -815,10 +918,11 @@ export function mergeRemoteProfileIntoMemory(
     local.dailyBestScore,
     typeof remote.dailyBestScore === 'number' ? remote.dailyBestScore : 0
   );
-  const mergedStreak = Math.max(
-    local.streakDays,
-    typeof remote.streak === 'number' ? remote.streak : 1
-  );
+  const remoteStreak =
+    typeof remote.streak === 'number' && Number.isFinite(remote.streak)
+      ? Math.max(0, Math.floor(remote.streak))
+      : 0;
+  const mergedStreak = Math.max(local.streakDays, remoteStreak);
 
   const remoteWeights = normalizeWeights(remote.categoryWeights);
   const mergedWeights = createEmptyWeights();
@@ -878,6 +982,10 @@ export function mergeRemoteProfileIntoMemory(
     categoryAccuracy: mergedAccuracy,
     streakDays: mergedStreak,
     lastVisitDate: local.lastVisitDate || remote.lastVisitDate || getTodayDateString(),
+    lastActiveDate:
+      mergedStreak > 0
+        ? local.lastActiveDate || remote.lastActiveDate || remote.lastVisitDate || getTodayDateString()
+        : '',
     badges,
     isReturningUser: local.isReturningUser || seenIds.length > 0,
   };

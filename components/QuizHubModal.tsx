@@ -1,13 +1,14 @@
 'use client';
 
-import React from 'react';
-import { AnimatePresence, motion } from 'framer-motion';
+import React, { useEffect } from 'react';
+import { motion } from 'framer-motion';
 import {
   BookOpen,
   Brain,
   Calendar,
   CheckCircle2,
   Flame,
+  Globe,
   Sparkles,
   Swords,
   Timer,
@@ -53,9 +54,16 @@ export default function QuizHubModal({
 
   useEscapeClose(open && !isPage, onClose);
 
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const preloadImg = new window.Image();
+    preloadImg.decoding = 'sync';
+    preloadImg.src = STATE_ILLUSTRATION_PATHS.quizCelebration;
+  }, []);
+
+  if (!open) return null;
+
   return (
-    <AnimatePresence>
-      {open && (
         <div
           role={isPage ? 'region' : 'dialog'}
           aria-modal={isPage ? undefined : true}
@@ -64,19 +72,18 @@ export default function QuizHubModal({
           data-presentation={presentation}
           className={
             isPage
-              ? 'absolute inset-0 z-20 flex h-full w-full flex-col bg-[#FFFDF9] dark:bg-[#171228]'
-              : 'absolute inset-0 z-20 flex h-full w-full flex-col bg-[#FFFDF9] dark:bg-[#171228]'
+              ? 'absolute inset-0 z-20 flex h-full w-full flex-col bg-[#FFFDF9] dark:bg-[#0B0B11]'
+              : 'absolute inset-0 z-20 flex h-full w-full items-center justify-center bg-[#0B0B11]/85 p-3 backdrop-blur-sm'
           }
         >
           <motion.div
-            initial={isPage ? { opacity: 0, x: 12 } : { opacity: 0, scale: 0.92, y: 20 }}
-            animate={isPage ? { opacity: 1, x: 0 } : { opacity: 1, scale: 1, y: 0 }}
-            exit={isPage ? { opacity: 0, x: 8 } : { opacity: 0, scale: 0.92, y: 20 }}
-            transition={{ type: 'spring', stiffness: 320, damping: 26 }}
+            initial={isPage ? { opacity: 0.94, y: 8 } : { opacity: 0.94, scale: 0.97, y: 8 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            transition={{ duration: 0.14, ease: [0.23, 1, 0.32, 1] }}
             className={
               isPage
                 ? 'relative h-full w-full overflow-y-auto no-scrollbar px-4 pb-[calc(env(safe-area-inset-bottom,16px)+100px)] pt-[calc(env(safe-area-inset-top,20px)+16px)] lg:pb-6 lg:pt-6'
-                : 'relative mb-[92px] max-h-[84dvh] w-full max-w-[430px] md:max-w-2xl overflow-y-auto no-scrollbar rounded-3xl border border-white/70 bg-[#FFFDF9]/95 p-5 shadow-2xl backdrop-blur-2xl dark:border-violet-700/50 dark:bg-[#171228]/95 sm:p-6'
+                : 'relative mb-[92px] max-h-[84dvh] w-full max-w-[430px] md:max-w-2xl overflow-y-auto no-scrollbar rounded-3xl border border-white/70 bg-[#FFFDF9] p-5 shadow-2xl dark:border-violet-700/50 dark:bg-[#0B0B11] sm:p-6'
             }
           >
             {!isPage && (
@@ -97,18 +104,22 @@ export default function QuizHubModal({
 
             {/* Header Hero */}
             <div className="flex items-center justify-between gap-3 rounded-2xl border border-violet-200/70 bg-gradient-to-br from-pastel-lavender/75 via-white to-amber-50/75 p-3.5 dark:border-violet-600/40 dark:from-violet-950/70 dark:via-[#1D1635] dark:to-amber-950/35">
-              <div className="flex items-center gap-3">
+              <div className="flex min-w-0 items-center gap-3">
                 <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-violet-500 to-fuchsia-500 p-1.5 text-white shadow-md">
                   <img
                     src={STATE_ILLUSTRATION_PATHS.quizCelebration}
                     alt=""
                     aria-hidden="true"
+                    width={36}
+                    height={36}
+                    loading="eager"
+                    decoding="sync"
                     className="h-9 w-9 object-contain"
                   />
                 </div>
-                <div>
+                <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-center gap-1.5">
-                    <h2 className="font-display text-xl font-bold text-ink dark:text-white">
+                    <h2 className="font-display text-xl font-bold text-ink dark:text-white whitespace-normal break-words">
                       {t.quizHubTitle}
                     </h2>
                     <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-black text-amber-800 dark:bg-amber-900/50 dark:text-amber-200">
@@ -116,7 +127,7 @@ export default function QuizHubModal({
                       {lang === 'tr' ? 'Kombo 2.0x' : 'Combo 2.0x'}
                     </span>
                   </div>
-                  <p className="mt-0.5 text-xs font-medium text-ink/75 dark:text-violet-100/85">
+                  <p className="mt-0.5 text-xs font-medium text-ink/75 dark:text-violet-100/85 whitespace-normal break-words leading-snug">
                     {t.quizHubSubtitle}
                   </p>
                 </div>
@@ -128,9 +139,18 @@ export default function QuizHubModal({
               {topicDomains.map((cat) => (
                 <span
                   key={cat.id}
-                  className={`inline-flex shrink-0 items-center gap-1 rounded-full border ${cat.borderClass} ${cat.bgClass} px-2.5 py-1 text-[10px] font-extrabold ${cat.accentText} dark:border-white/15 dark:bg-white/5 dark:text-violet-100`}
+                  className={`inline-flex shrink-0 items-center gap-1.5 rounded-full border ${cat.borderClass} ${cat.bgClass} px-2.5 py-1 text-[10px] font-extrabold ${cat.accentText} dark:border-white/15 dark:bg-white/10 dark:text-violet-100`}
                 >
-                  <span>{cat.emoji}</span>
+                  <img
+                    src={cat.iconPath}
+                    alt=""
+                    aria-hidden="true"
+                    width={14}
+                    height={14}
+                    loading="eager"
+                    decoding="sync"
+                    className="h-3.5 w-3.5 shrink-0 object-contain"
+                  />
                   <span>{cat.label[lang]}</span>
                 </span>
               ))}
@@ -148,13 +168,13 @@ export default function QuizHubModal({
                 data-testid="start-daily-sprint-btn"
                 className="flex w-full items-center justify-between gap-3 rounded-2xl border-2 border-amber-300 bg-gradient-to-r from-amber-50 to-orange-50 p-4 text-left shadow-sm transition hover:brightness-[0.98] dark:border-amber-600/60 dark:from-amber-950/50 dark:to-orange-950/40"
               >
-                <div className="flex items-start gap-3">
+                <div className="flex min-w-0 flex-1 items-start gap-3">
                   <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-400/25 text-amber-700 dark:text-amber-300">
                     <Calendar className="h-5 w-5" />
                   </div>
-                  <div>
+                  <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-center gap-1.5">
-                      <span className="font-display text-base font-bold text-ink dark:text-white">
+                      <span className="font-display text-base font-bold text-ink dark:text-white whitespace-normal break-words">
                         {t.dailySprintTitle}
                       </span>
                       <span className="inline-flex items-center gap-0.5 rounded-full bg-amber-500/15 px-2 py-0.5 text-[10px] font-black text-amber-800 dark:text-amber-200">
@@ -168,7 +188,7 @@ export default function QuizHubModal({
                         </span>
                       )}
                     </div>
-                    <p className="mt-0.5 text-xs font-medium text-ink/70 dark:text-violet-200/75">
+                    <p className="mt-0.5 text-xs font-medium text-ink/70 dark:text-violet-200/75 whitespace-normal break-words leading-snug">
                       {t.dailySprintDesc}
                     </p>
                   </div>
@@ -187,13 +207,13 @@ export default function QuizHubModal({
                 data-testid="start-weekly-marathon-btn"
                 className="flex w-full items-center justify-between gap-3 rounded-2xl border-2 border-violet-300 bg-gradient-to-r from-pastel-lavender/60 to-sky-50 p-4 text-left shadow-sm transition hover:brightness-[0.98] dark:border-violet-600/60 dark:from-violet-950/60 dark:to-indigo-950/50"
               >
-                <div className="flex items-start gap-3">
+                <div className="flex min-w-0 flex-1 items-start gap-3">
                   <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-violet-500/20 text-violet-700 dark:text-violet-300">
                     <Trophy className="h-5 w-5" />
                   </div>
-                  <div>
+                  <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-center gap-1.5">
-                      <span className="font-display text-base font-bold text-ink dark:text-white">
+                      <span className="font-display text-base font-bold text-ink dark:text-white whitespace-normal break-words">
                         {t.weeklyMarathonTitle}
                       </span>
                       <span className="inline-flex items-center gap-0.5 rounded-full bg-violet-600/15 px-2 py-0.5 text-[10px] font-extrabold text-violet-700 dark:text-violet-300">
@@ -201,7 +221,7 @@ export default function QuizHubModal({
                         2x XP
                       </span>
                     </div>
-                    <p className="mt-0.5 text-xs font-medium text-ink/70 dark:text-violet-200/75">
+                    <p className="mt-0.5 text-xs font-medium text-ink/70 dark:text-violet-200/75 whitespace-normal break-words leading-snug">
                       {t.weeklyMarathonDesc}
                     </p>
                   </div>
@@ -220,20 +240,20 @@ export default function QuizHubModal({
                 data-testid="start-memory-quiz-btn"
                 className="flex w-full items-center justify-between gap-3 rounded-2xl border-2 border-teal-200 bg-gradient-to-r from-pastel-mint/55 to-white p-4 text-left shadow-sm transition hover:brightness-[0.98] dark:border-teal-700/60 dark:from-teal-950/50 dark:to-[#1F1A36]"
               >
-                <div className="flex items-start gap-3">
+                <div className="flex min-w-0 flex-1 items-start gap-3">
                   <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-teal-500/20 text-teal-700 dark:text-teal-300">
                     <Brain className="h-5 w-5" />
                   </div>
-                  <div>
+                  <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-center gap-2">
-                      <span className="font-display text-base font-bold text-ink dark:text-white">
+                      <span className="font-display text-base font-bold text-ink dark:text-white whitespace-normal break-words">
                         {t.memoryQuizTitle}
                       </span>
                       <span className="rounded-full bg-teal-600/15 px-2 py-0.5 text-[10px] font-extrabold text-teal-800 dark:text-teal-300">
                         {clampedRecent}/5
                       </span>
                     </div>
-                    <p className="mt-0.5 text-xs font-medium text-ink/70 dark:text-violet-200/75">
+                    <p className="mt-0.5 text-xs font-medium text-ink/70 dark:text-violet-200/75 whitespace-normal break-words leading-snug">
                       {t.memoryQuizDesc}
                     </p>
                     {/* 5-card memory readiness meter */}
@@ -265,20 +285,20 @@ export default function QuizHubModal({
                 data-testid="start-vocab-quiz-btn"
                 className="flex w-full items-center justify-between gap-3 rounded-2xl border-2 border-indigo-200 bg-gradient-to-r from-indigo-50/80 to-sky-50/75 p-4 text-left shadow-sm transition hover:brightness-95 dark:border-indigo-500/45 dark:from-indigo-950/60 dark:to-[#17162E]"
               >
-                <div className="flex items-start gap-3">
+                <div className="flex min-w-0 flex-1 items-start gap-3">
                   <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-indigo-500/20 text-indigo-700 dark:text-indigo-300">
-                    <BookOpen className="h-5 w-5" />
+                    <Globe className="h-5 w-5" />
                   </div>
-                  <div>
+                  <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-center gap-1.5">
-                      <span className="font-display text-base font-bold text-ink dark:text-white">
-                        {lang === 'tr' ? '🇬🇧 Kelime Quizi (Word Lab)' : '🇬🇧 Word Lab Quiz'}
+                      <span className="font-display text-base font-bold text-ink dark:text-white whitespace-normal break-words">
+                        {lang === 'tr' ? 'Kelime Quizi (Word Lab)' : 'Word Lab Quiz'}
                       </span>
                       <span className="rounded-full bg-indigo-600/15 px-2 py-0.5 text-[10px] font-extrabold text-indigo-700 dark:bg-indigo-500/25 dark:text-indigo-200">
                         B1–C2
                       </span>
                     </div>
-                    <p className="mt-0.5 text-xs font-medium text-ink/70 dark:text-violet-200/75">
+                    <p className="mt-0.5 text-xs font-medium text-ink/70 dark:text-violet-200/75 whitespace-normal break-words leading-snug">
                       {lang === 'tr'
                         ? 'Bağlam içi cümleler, sesli telaffuz ve eş anlamlılarla 5 kelimelik test'
                         : '5 curated B1–C2 vocabulary questions with pronunciation & context'}
@@ -292,15 +312,15 @@ export default function QuizHubModal({
             {/* Combo Bonus & Scrolla 1v1 Footer Card */}
             <div className="mt-4 rounded-2xl border border-fuchsia-200/80 bg-gradient-to-r from-fuchsia-50/75 via-violet-50/75 to-white p-3.5 dark:border-fuchsia-600/35 dark:from-fuchsia-950/35 dark:via-violet-950/35 dark:to-white/5">
               <div className="flex items-center justify-between gap-2">
-                <div className="flex items-center gap-2.5">
+                <div className="flex min-w-0 flex-1 items-center gap-2.5">
                   <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-violet-600 to-fuchsia-600 text-white shadow-sm">
                     <Swords className="h-4 w-4" />
                   </div>
-                  <div>
-                    <p className="text-xs font-extrabold text-ink dark:text-white">
+                  <div className="min-w-0 flex-1">
+                    <p className="text-xs font-extrabold text-ink dark:text-white whitespace-normal break-words">
                       {lang === 'tr' ? 'Scrolla 1v1 Arena' : 'Scrolla 1v1 Arena'}
                     </p>
-                    <p className="text-[11px] font-medium text-ink/70 dark:text-violet-200/75">
+                    <p className="text-[11px] font-medium text-ink/70 dark:text-violet-200/75 whitespace-normal break-words leading-snug">
                       {lang === 'tr'
                         ? 'Aynı sorularla gerçek zamanlı yarışmak için Scrolla sekmesine geç!'
                         : 'Switch to the Scrolla tab to race a friend live on the same questions!'}
@@ -323,6 +343,10 @@ export default function QuizHubModal({
                     src={UI_ICON_PATHS.xpSparkles}
                     alt=""
                     aria-hidden="true"
+                    width={24}
+                    height={24}
+                    loading="eager"
+                    decoding="sync"
                     className="h-6 w-6 shrink-0 object-contain opacity-90"
                   />
                 )}
@@ -330,7 +354,5 @@ export default function QuizHubModal({
             </div>
           </motion.div>
         </div>
-      )}
-    </AnimatePresence>
   );
 }

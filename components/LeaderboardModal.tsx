@@ -1,13 +1,14 @@
 'use client';
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { AnimatePresence, motion } from 'framer-motion';
+import { motion } from 'framer-motion';
 import {
   AlertCircle,
   ArrowDownRight,
   ArrowUpRight,
   Check,
   Crown,
+  Mail,
   Medal,
   Radio,
   RefreshCw,
@@ -61,7 +62,41 @@ export default function LeaderboardModal({
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [hasError, setHasError] = useState(false);
   const [inviteCopied, setInviteCopied] = useState(false);
+  const [authEmail, setAuthEmail] = useState<string | null>(null);
   const userRowRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const preloadImg = new window.Image();
+    preloadImg.decoding = 'sync';
+    preloadImg.src = DOCK_ICON_MAP.leaderboard;
+
+    const readAuthEmail = () => {
+      try {
+        const stored = window.localStorage.getItem('scrolly_auth_user_email');
+        setAuthEmail(stored && stored.trim() ? stored.trim() : null);
+      } catch {
+        setAuthEmail(null);
+      }
+    };
+
+    readAuthEmail();
+    const onAuthChanged = (event: Event) => {
+      const detail = (event as CustomEvent<{ user?: { email?: string } | null }>).detail;
+      if (detail && 'user' in detail) {
+        const nextEmail = detail.user?.email?.trim() || null;
+        setAuthEmail(nextEmail);
+      } else {
+        readAuthEmail();
+      }
+    };
+    window.addEventListener('scrolly-auth-changed', onAuthChanged as EventListener);
+    window.addEventListener('storage', readAuthEmail);
+    return () => {
+      window.removeEventListener('scrolly-auth-changed', onAuthChanged as EventListener);
+      window.removeEventListener('storage', readAuthEmail);
+    };
+  }, [open]);
 
   const handleInviteClick = async () => {
     if (onInviteDuel) {
@@ -172,9 +207,9 @@ export default function LeaderboardModal({
     userRowRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
   };
 
+  if (!open) return null;
+
   return (
-    <AnimatePresence>
-      {open && (
         <div
           role={isPage ? 'region' : 'dialog'}
           aria-modal={isPage ? undefined : true}
@@ -183,19 +218,18 @@ export default function LeaderboardModal({
           data-presentation={presentation}
           className={
             isPage
-              ? 'absolute inset-0 z-20 flex h-full w-full flex-col bg-[#FFFDF9] dark:bg-[#1A162B]'
-              : 'absolute inset-0 z-20 flex h-full w-full flex-col bg-[#FFFDF9] dark:bg-[#1A162B]'
+              ? 'absolute inset-0 z-20 flex h-full w-full flex-col bg-[#FFFDF9] dark:bg-[#0B0B11]'
+              : 'absolute inset-0 z-20 flex h-full w-full items-center justify-center bg-[#0B0B11]/85 p-3 backdrop-blur-sm'
           }
         >
           <motion.div
-            initial={isPage ? { opacity: 0, x: 12 } : { opacity: 0, scale: 0.9, y: 18 }}
-            animate={isPage ? { opacity: 1, x: 0 } : { opacity: 1, scale: 1, y: 0 }}
-            exit={isPage ? { opacity: 0, x: 8 } : { opacity: 0, scale: 0.9, y: 18 }}
-            transition={{ type: 'spring', stiffness: 320, damping: 26 }}
+            initial={isPage ? { opacity: 0.94, y: 8 } : { opacity: 0.94, scale: 0.97, y: 8 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            transition={{ duration: 0.14, ease: [0.23, 1, 0.32, 1] }}
             className={
               isPage
                 ? 'relative flex h-full w-full flex-col overflow-hidden px-4 pb-[calc(env(safe-area-inset-bottom,16px)+100px)] pt-[calc(env(safe-area-inset-top,20px)+16px)] lg:pb-6 lg:pt-6'
-                : 'relative mb-[92px] mt-[env(safe-area-inset-top)] flex max-h-[82dvh] w-full max-w-[430px] md:max-w-2xl flex-col rounded-3xl border-2 border-amber-200 bg-[#FFFDF9] p-5 shadow-2xl dark:border-violet-700/50 dark:bg-[#1A162B] sm:p-6'
+                : 'relative mb-[92px] mt-[env(safe-area-inset-top)] flex max-h-[82dvh] w-full max-w-[430px] md:max-w-2xl flex-col rounded-3xl border-2 border-amber-200 bg-[#FFFDF9] p-5 shadow-2xl dark:border-violet-700/50 dark:bg-[#0B0B11] sm:p-6'
             }
           >
             {!isPage && (
@@ -219,6 +253,10 @@ export default function LeaderboardModal({
                     src={DOCK_ICON_MAP.leaderboard}
                     alt=""
                     aria-hidden="true"
+                    width={32}
+                    height={32}
+                    loading="eager"
+                    decoding="sync"
                     className="h-8 w-8 object-contain"
                   />
                 </div>
@@ -303,7 +341,7 @@ export default function LeaderboardModal({
                         className={`flex h-8 w-8 items-center justify-center rounded-full p-1 transition-transform ${
                           active
                             ? 'scale-110 bg-amber-100 ring-2 ring-amber-400 dark:bg-violet-800 dark:ring-violet-400'
-                            : 'opacity-50 grayscale-[20%]'
+                            : 'opacity-75'
                         }`}
                       >
                         <img
@@ -579,10 +617,37 @@ export default function LeaderboardModal({
                   <span>{inviteCopied ? t.copiedLink : t.lbInviteBtn}</span>
                 </motion.button>
               </div>
+
+              {!authEmail && (
+                <div
+                  data-testid="leaderboard-auth-cta"
+                  className="mt-3 flex flex-wrap items-center justify-between gap-2 rounded-2xl border border-violet-200/80 bg-violet-50/70 px-3.5 py-2.5 text-xs dark:border-violet-600/35 dark:bg-violet-950/35"
+                >
+                  <span className="font-bold text-ink/80 dark:text-violet-100">
+                    {lang === 'tr'
+                      ? 'Skorunu ve ligini cihazlar arasında sakla'
+                      : 'Save your rank & XP across devices'}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      window.dispatchEvent(
+                        new CustomEvent('scrolly-open-auth', { detail: { trigger: 'leaderboard' } })
+                      )
+                    }
+                    className="inline-flex items-center gap-1.5 rounded-full bg-violet-600 px-3 py-1.5 text-[11px] font-extrabold text-white transition-colors hover:bg-violet-700"
+                  >
+                    <Mail className="h-3.5 w-3.5 shrink-0" />
+                    <span>
+                      {lang === 'tr'
+                        ? 'E-posta ile Hesabını Bağla / Giriş Yap'
+                        : 'Connect Email / Sign In'}
+                    </span>
+                  </button>
+                </div>
+              )}
             </div>
           </motion.div>
         </div>
-      )}
-    </AnimatePresence>
   );
 }

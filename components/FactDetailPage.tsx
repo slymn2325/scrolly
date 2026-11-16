@@ -128,11 +128,11 @@ export default function FactDetailPage({
       data-card-view="detail"
       data-presentation="page"
       data-theme={darkMode ? 'dark' : 'light'}
-      initial={{ opacity: 0, x: 16 }}
-      animate={{ opacity: 1, x: 0 }}
-      exit={{ opacity: 0, x: 12 }}
-      transition={{ duration: 0.2 }}
-      className={`absolute inset-0 z-30 flex h-full w-full flex-col overflow-hidden ${
+      initial={{ opacity: 0.96, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, transition: { duration: 0.01 } }}
+      transition={{ duration: 0.14, ease: [0.23, 1, 0.32, 1] }}
+      className={`backface-hidden absolute inset-0 z-30 flex h-full w-full flex-col overflow-hidden ${
         darkMode ? 'bg-[#111115] text-white' : 'bg-[#FFFDF9] text-[#1E1B2E]'
       }`}
     >

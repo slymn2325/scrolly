@@ -156,6 +156,7 @@ export default function VocabularySlide({
   const [gifLoaded, setGifLoaded] = useState(() => isImageCachedInBrowser(initialGifUrl));
   const gifImgRef = useRef<HTMLImageElement>(null);
   const bodyScrollRef = useRef<HTMLDivElement>(null);
+  const revealRef = useRef<HTMLDivElement>(null);
 
   const [saved, setSaved] = useState(false);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
@@ -171,6 +172,9 @@ export default function VocabularySlide({
     setXpAwarded(false);
     setAudioUnavailable(false);
     setIsDetailsOpen(false);
+    if (bodyScrollRef.current) {
+      bodyScrollRef.current.scrollTop = 0;
+    }
   }, [card.id, card.word]);
 
   useEffect(() => {
@@ -231,11 +235,11 @@ export default function VocabularySlide({
   }, [resolvedGifUrl]);
 
   useEffect(() => {
-    if (!solved || !isDetailsOpen || !bodyScrollRef.current) return;
-    const el = bodyScrollRef.current;
-    if (el.scrollHeight > el.clientHeight) {
-      el.scrollTo({ top: el.scrollHeight, behavior: 'smooth' });
-    }
+    if (!solved || !isDetailsOpen) return;
+    const raf = requestAnimationFrame(() => {
+      revealRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    });
+    return () => cancelAnimationFrame(raf);
   }, [isDetailsOpen, solved]);
 
   useEffect(() => {
@@ -305,34 +309,34 @@ export default function VocabularySlide({
       data-testid="vocabulary-slide"
       data-vocab-id={card.id}
       data-active={isActive ? 'true' : 'false'}
-      className="reels-slide relative flex h-full w-full shrink-0 flex-col justify-end overflow-hidden select-none bg-[#0A0A0E]"
+      className="reels-slide relative flex h-full w-full shrink-0 flex-col overflow-hidden select-none bg-[#0A0A0E]"
     >
-      {/* Full-bleed contextual background visual + bright GIF (zero center darkening) */}
+      {/* Reserved fixed aspect/height GIF stage BEFORE GIF loads (zero CLS) */}
       <div
         data-testid="vocab-media-stage"
         style={{
           background:
             'radial-gradient(circle at 50% 35%, rgba(129, 140, 248, 0.28) 0%, #10101D 60%, #0A0A0E 100%)',
         }}
-        className="pointer-events-none absolute inset-0 z-0 overflow-hidden bg-[#0A0A0E]"
+        className="relative h-[188px] sm:h-[220px] w-full shrink-0 overflow-hidden bg-[#0A0A0E]"
       >
         <svg
           aria-hidden="true"
-          viewBox="0 0 360 640"
+          viewBox="0 0 360 220"
           preserveAspectRatio="none"
           className="pointer-events-none absolute inset-0 z-0 h-full w-full opacity-30"
         >
           <circle
             cx="180"
-            cy="210"
-            r="116"
+            cy="110"
+            r="84"
             fill="none"
             stroke="#818CF8"
             strokeWidth="1.2"
             strokeDasharray="6 6"
           />
-          <circle cx="180" cy="210" r="74" fill="none" stroke="#A5B4FC" strokeWidth="1" />
-          <path d="M 24 285 Q 180 205 336 285" fill="none" stroke="#6366F1" strokeWidth="1.5" />
+          <circle cx="180" cy="110" r="52" fill="none" stroke="#A5B4FC" strokeWidth="1" />
+          <path d="M 24 165 Q 180 95 336 165" fill="none" stroke="#6366F1" strokeWidth="1.5" />
         </svg>
 
         <FullBleedReelsCanvas
@@ -351,34 +355,34 @@ export default function VocabularySlide({
             src={resolvedGifUrl}
             alt={card.word}
             loading="eager"
-            decoding="async"
+            decoding="sync"
             data-testid="vocab-topic-gif"
             onLoad={() => setGifLoaded(true)}
             onError={() => setGifFailed(true)}
-            className={`pointer-events-none absolute inset-0 z-[2] h-full w-full object-cover brightness-105 contrast-105 transition-opacity duration-500 ${
+            className={`pointer-events-none absolute inset-0 z-[2] h-full w-full object-cover brightness-105 contrast-105 transition-opacity duration-300 ${
               gifLoaded ? 'opacity-95' : 'opacity-0'
             }`}
           />
         )}
 
-        {/* Smooth bottom contrast gradient deepening cleanly when drawer opens */}
+        {/* Top HUD readability gradient & bottom blend into dark card body */}
         <div
           aria-hidden="true"
-          className={`pointer-events-none absolute inset-x-0 bottom-0 z-[5] transition-[height,opacity] duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] ${
-            isDetailsOpen
-              ? 'h-[82%] bg-gradient-to-t from-[#0A0A0E] via-[#0A0A0E]/95 to-transparent'
-              : 'h-[54%] bg-gradient-to-t from-[#0A0A0E] via-[#0A0A0E]/85 to-transparent'
-          }`}
+          className="pointer-events-none absolute inset-x-0 top-0 z-[4] h-16 bg-gradient-to-b from-[#0A0A0E]/75 to-transparent"
+        />
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-x-0 bottom-0 z-[4] h-14 bg-gradient-to-t from-[#0A0A0E] via-[#0A0A0E]/80 to-transparent"
         />
       </div>
 
-      {/* Unified scrollable bottom sheet container anchored below the top bar so word header & drawer scroll cleanly together without slicing */}
+      {/* Scrollable card body below the reserved GIF stage — never clips word header or collides with Save button */}
       <div
         ref={bodyScrollRef}
-        className={`relative z-10 mt-auto max-h-[min(calc(100%-76px),calc(100dvh-140px))] w-full overflow-y-auto no-scrollbar px-4 pt-3 pr-14 sm:pr-16 lg:pr-5 ${
+        className={`relative z-10 min-h-0 flex-1 w-full overflow-y-auto no-scrollbar px-4 pt-2.5 pr-16 sm:pr-20 lg:pr-5 ${
           cookieBannerVisible
-            ? 'pb-[calc(env(safe-area-inset-bottom,16px)+200px)] lg:pb-6'
-            : 'pb-[calc(env(safe-area-inset-bottom,16px)+84px)] lg:pb-6'
+            ? 'pb-[calc(env(safe-area-inset-bottom,16px)+216px)] lg:pb-8'
+            : 'pb-[calc(env(safe-area-inset-bottom,16px)+104px)] lg:pb-8'
         }`}
       >
         <div className="flex flex-col gap-2.5">
@@ -604,6 +608,7 @@ export default function VocabularySlide({
                   {/* Rich Reveal Panel on Solve */}
                   {solved && (
                     <motion.div
+                      ref={revealRef}
                       initial={{ opacity: 0, y: 8 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ duration: 0.2 }}

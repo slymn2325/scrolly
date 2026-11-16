@@ -8,8 +8,7 @@ import { interleaveFactsByCategory } from '@/utils/factsData';
 export const dynamic = 'force-dynamic';
 
 const NO_STORE_HEADERS = {
-  'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0',
-  Pragma: 'no-cache',
+  'Cache-Control': 'no-store, max-age=0',
 };
 
 const VALID_CATEGORIES = new Set<CategoryId>([

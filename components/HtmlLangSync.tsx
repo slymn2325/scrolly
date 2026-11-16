@@ -9,7 +9,9 @@ interface HtmlLangSyncProps {
 
 export default function HtmlLangSync({ lang }: HtmlLangSyncProps) {
   useEffect(() => {
-    document.documentElement.lang = lang;
+    if (typeof document !== 'undefined') {
+      document.documentElement.lang = lang;
+    }
   }, [lang]);
 
   return null;

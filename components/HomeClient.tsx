@@ -11,7 +11,18 @@ import DuelModal, { type DuelChallengeConfig } from '@/components/DuelModal';
 import DesktopFeedSideRail from '@/components/DesktopFeedSideRail';
 import DesktopLeftNav from '@/components/DesktopLeftNav';
 import IosFloatingIslandDock, { type DockTabId } from '@/components/IosFloatingIslandDock';
+import LazyAuthPrompt, {
+  clearAuthNudgeDismissed,
+  isAuthNudgeCoolingDown,
+  persistAuthNudgeDismissed,
+  type AuthTriggerSource,
+} from '@/components/LazyAuthPrompt';
 import LeaderboardModal from '@/components/LeaderboardModal';
+import MiniOnboardingHint, {
+  clearMiniOnboardingDismissed,
+  persistMiniOnboardingDismissed,
+  readMiniOnboardingDismissed,
+} from '@/components/MiniOnboardingHint';
 import WelcomeExploreModal, {
   clearWelcomeDismissed,
   persistWelcomeDismissed,
@@ -37,7 +48,15 @@ import {
   type Language,
 } from '@/i18n/translations';
 import { getVocabularyFacts } from '@/data/vocabularyFacts';
+import type { AuthUserDto } from '@/types/auth';
 import type { VocabularyCard } from '@/types/vocabulary';
+import {
+  AUTH_CHANGED_EVENT,
+  OPEN_AUTH_EVENT,
+  fetchSession,
+  getCachedAuthUserEmail,
+  hydrateLocalMemoryFromAuthUser,
+} from '@/lib/authClient';
 import { isShortRoomCode, normalizeRoomCode } from '@/lib/duelStore';
 import {
   fetchFactsFromApiWithCache,
@@ -60,7 +79,7 @@ import {
   resolveFactsByIds,
   vocabCardToFactCard,
 } from '@/utils/duelLobby';
-import { clearLikedFacts, isFactLiked } from '@/utils/likedFacts';
+import { clearLikedFacts, isFactLiked, loadLikedFactIds } from '@/utils/likedFacts';
 import {
   clearSavedFacts,
   isFactSaved,
@@ -322,6 +341,27 @@ function syncDocumentTheme(darkMode: boolean, lang: Language) {
   themeMeta.content = darkMode || checkIsStandalone() ? '#0A0A0E' : '#FAF9F5';
 }
 
+function normalizeCategoryParam(raw: string | null): CategoryFilter | null {
+  if (!raw) return null;
+  const clean = raw.trim().toLowerCase();
+  if (clean === 'weird_records') return 'records';
+  if (clean === 'istatistik') return 'statistics';
+  if (
+    clean === 'all' ||
+    clean === 'vocabulary' ||
+    clean === 'space' ||
+    clean === 'nature' ||
+    clean === 'human_body' ||
+    clean === 'history' ||
+    clean === 'science' ||
+    clean === 'records' ||
+    clean === 'statistics'
+  ) {
+    return clean;
+  }
+  return null;
+}
+
 function hasFactSlugMatch(pool: FactCardType[], targetSlug: string | null): boolean {
   if (!targetSlug) return false;
   return pool.some(
@@ -332,11 +372,14 @@ function hasFactSlugMatch(pool: FactCardType[], targetSlug: string | null): bool
 function promoteFactToFront(
   deck: FactCardType[],
   pool: FactCardType[],
-  targetSlug: string | null
+  targetSlug: string | null,
+  category: CategoryFilter = 'all'
 ): FactCardType[] {
-  if (!targetSlug) return deck;
+  if (!targetSlug || category === 'vocabulary') return deck;
   const match = pool.find(
-    (f) => f.slug === targetSlug || f.tr.slug === targetSlug || f.en.slug === targetSlug || f.id === targetSlug
+    (f) =>
+      (category === 'all' || f.category === category) &&
+      (f.slug === targetSlug || f.tr.slug === targetSlug || f.en.slug === targetSlug || f.id === targetSlug)
   );
   if (!match) return deck;
   return [match, ...deck.filter((f) => f.id !== match.id)];
@@ -401,6 +444,14 @@ export default function HomeClient({ initialFacts, initialVocabulary }: HomeClie
   } | null>(null);
   const [showWelcome, setShowWelcome] = useState(false);
   const [ambientAccent, setAmbientAccent] = useState('#818CF8');
+  const [authUser, setAuthUser] = useState<AuthUserDto | null>(null);
+  const authUserRef = useRef<AuthUserDto | null>(null);
+  authUserRef.current = authUser;
+  const [authPromptOpen, setAuthPromptOpen] = useState(false);
+  const [authNudgeOpen, setAuthNudgeOpen] = useState(false);
+  const [authTrigger, setAuthTrigger] = useState<AuthTriggerSource | string>('manual');
+  const [miniOnboardingDismissed, setMiniOnboardingDismissed] = useState(true);
+  const guestSaveNudgeShownRef = useRef(false);
 
   useEffect(() => {
     const onChromeBlock = (event: Event) => {
@@ -411,24 +462,31 @@ export default function HomeClient({ initialFacts, initialVocabulary }: HomeClie
     return () => window.removeEventListener('scrolly-chrome-block', onChromeBlock as EventListener);
   }, []);
 
-  // Resolve local state + ?tab= / ?fact= synchronously before first paint to prevent initial card/tab flash and stray dwell XP
+  // Resolve local state + ?tab= / ?category= / ?vocab= / ?fact= / ?room= synchronously before first paint
   useIsomorphicLayoutEffect(() => {
     const loaded = loadUserMemory();
     setMemory(loaded);
     const seededSaved = seedSavedFactsIfUnset(loaded.favoriteIds);
     setSavedIds(seededSaved.length > 0 ? seededSaved : loadSavedFactIds());
     setSavedVocabWords(loadSavedVocabNotebook().map((entry) => entry.word.toLowerCase()));
+    setMiniOnboardingDismissed(readMiniOnboardingDismissed());
     hasHydratedRef.current = true;
     syncDocumentTheme(loaded.darkMode, loaded.lang);
 
+    let requestedCategory: CategoryFilter | null = null;
     let requestedFactSlug: string | null = null;
+    let requestedVocabId: string | null = null;
     let duelParam: string | null = null;
+    let roomCodeCandidate: string | null = null;
     let openQuizParam: string | null = null;
     let resolvedTab: DockTabId | null = null;
     if (typeof window !== 'undefined') {
       const searchParams = new URLSearchParams(window.location.search);
+      requestedCategory = normalizeCategoryParam(searchParams.get('category'));
       requestedFactSlug = searchParams.get('fact');
+      requestedVocabId = searchParams.get('vocab');
       duelParam = searchParams.get('duel');
+      const roomParam = searchParams.get('room');
       openQuizParam = searchParams.get('openQuiz');
       const rawTab = searchParams.get('tab')?.toLowerCase() ?? null;
       if (rawTab === 'quiz') resolvedTab = 'quiz';
@@ -436,7 +494,20 @@ export default function HomeClient({ initialFacts, initialVocabulary }: HomeClie
       else if (rawTab === 'duel') resolvedTab = 'duel';
       else if (rawTab === 'profile' || rawTab === 'diploma') resolvedTab = 'diploma';
 
-      requestedFactSlugRef.current = requestedFactSlug;
+      if (roomParam && isShortRoomCode(roomParam)) {
+        roomCodeCandidate = normalizeRoomCode(roomParam);
+      } else if (duelParam && isShortRoomCode(duelParam)) {
+        roomCodeCandidate = normalizeRoomCode(duelParam);
+      }
+      if (roomCodeCandidate) {
+        resolvedTab = 'duel';
+        setIncomingRoomCode(roomCodeCandidate);
+        setIncomingDuel(null);
+        setActiveQuiz(null);
+      }
+
+      requestedFactSlugRef.current =
+        requestedCategory === 'vocabulary' || requestedVocabId ? null : requestedFactSlug;
 
       if (resolvedTab) {
         setActiveTab(resolvedTab);
@@ -446,10 +517,45 @@ export default function HomeClient({ initialFacts, initialVocabulary }: HomeClie
       }
     }
 
+    const effectiveInitialCategory: CategoryFilter =
+      requestedCategory ?? (requestedVocabId ? 'vocabulary' : 'all');
+
     const restoredSession =
-      !duelParam && openQuizParam !== 'daily' && !requestedFactSlug && !resolvedTab
+      !duelParam &&
+      !roomCodeCandidate &&
+      openQuizParam !== 'daily' &&
+      !requestedFactSlug &&
+      !requestedVocabId &&
+      !requestedCategory &&
+      !resolvedTab
         ? readFeedSession()
         : null;
+
+    if (effectiveInitialCategory === 'vocabulary') {
+      restoredFeedSessionRef.current = null;
+      activeCategoryRef.current = 'vocabulary';
+      setActiveCategory('vocabulary');
+      setDeckFacts([]);
+      setActiveFact(null);
+      const vocabBase =
+        initialVocabulary && initialVocabulary.length > 0
+          ? initialVocabulary
+          : getVocabularyFacts();
+      const targetIdx = requestedVocabId
+        ? Math.max(
+            0,
+            vocabBase.findIndex(
+              (c) =>
+                c.id === requestedVocabId ||
+                c.word.toLowerCase() === requestedVocabId.toLowerCase()
+            )
+          )
+        : 0;
+      activeSlideIndexRef.current = targetIdx;
+      setExploreSlideIndex(targetIdx);
+      setSuppressInitialFactSync(false);
+      return;
+    }
 
     if (restoredSession && restoredSession.category !== 'vocabulary') {
       restoredFeedSessionRef.current = restoredSession;
@@ -484,14 +590,21 @@ export default function HomeClient({ initialFacts, initialVocabulary }: HomeClie
       }
     } else {
       restoredFeedSessionRef.current = null;
+      activeCategoryRef.current = effectiveInitialCategory;
+      setActiveCategory(effectiveInitialCategory);
       const baseDeck = buildPersonalizedDeck(
         initialFacts,
-        'all',
+        effectiveInitialCategory,
         loaded.seenIds,
         loaded.categoryWeights,
         !requestedFactSlug
       );
-      const initialDeck = promoteFactToFront(baseDeck, initialFacts, requestedFactSlug);
+      const initialDeck = promoteFactToFront(
+        baseDeck,
+        initialFacts,
+        requestedFactSlug,
+        effectiveInitialCategory
+      );
       activeSlideIndexRef.current = 0;
       setExploreSlideIndex(0);
       setDeckFacts(initialDeck);
@@ -501,22 +614,31 @@ export default function HomeClient({ initialFacts, initialVocabulary }: HomeClie
       }
     }
 
-    const matchedInInitial = hasFactSlugMatch(initialFacts, requestedFactSlug);
-    if (requestedFactSlug && !matchedInInitial && !resolvedTab && !duelParam && openQuizParam !== 'daily') {
+    const matchedInInitial = hasFactSlugMatch(initialFacts, requestedFactSlugRef.current);
+    if (
+      requestedFactSlugRef.current &&
+      !matchedInInitial &&
+      !resolvedTab &&
+      !duelParam &&
+      !roomCodeCandidate &&
+      openQuizParam !== 'daily'
+    ) {
       setSuppressInitialFactSync(true);
     } else {
       setSuppressInitialFactSync(false);
     }
-  }, [initialFacts]);
+  }, [initialFacts, initialVocabulary]);
 
   useEffect(() => {
     initTelemetrySync();
 
     let duelParam: string | null = null;
+    let roomParam: string | null = null;
     let openQuizParam: string | null = null;
     if (typeof window !== 'undefined') {
       const searchParams = new URLSearchParams(window.location.search);
       duelParam = searchParams.get('duel');
+      roomParam = searchParams.get('room');
       openQuizParam = searchParams.get('openQuiz');
     }
 
@@ -530,7 +652,7 @@ export default function HomeClient({ initialFacts, initialVocabulary }: HomeClie
 
       const currentMem = loadUserMemory();
       const targetSlug =
-        activeCategoryRef.current === 'all' ? requestedFactSlugRef.current : null;
+        activeCategoryRef.current !== 'vocabulary' ? requestedFactSlugRef.current : null;
 
       if (restoredFeedSessionRef.current && !targetSlug) {
         const session = restoredFeedSessionRef.current;
@@ -563,7 +685,7 @@ export default function HomeClient({ initialFacts, initialVocabulary }: HomeClie
       }
 
       if (activeSlideIndexRef.current > 0 && !targetSlug) {
-        // User has already swiped down — preserve cards up to activeSlideIndexRef and rebuild unseen tail
+        // User has already swiped down: preserve cards up to activeSlideIndexRef and rebuild unseen tail
         setDeckFacts((prevDeck) => {
           const category = activeCategoryRef.current;
           const pinnedPrefix = prevDeck.slice(0, activeSlideIndexRef.current + 1);
@@ -617,10 +739,10 @@ export default function HomeClient({ initialFacts, initialVocabulary }: HomeClie
         }
       }
 
-      const updatedDeck = promoteFactToFront(baseLiveDeck, merged, targetSlug);
+      const updatedDeck = promoteFactToFront(baseLiveDeck, merged, targetSlug, category);
       setDeckFacts(updatedDeck);
       persistFeedSession(category, updatedDeck, 0);
-      if (updatedDeck[0]) {
+      if (updatedDeck[0] && category !== 'vocabulary') {
         setSeedFact(updatedDeck[0]);
         setActiveFact(updatedDeck[0]);
       }
@@ -694,28 +816,33 @@ export default function HomeClient({ initialFacts, initialVocabulary }: HomeClie
       setSuppressInitialFactSync(false);
       const activePool = workingPool ?? allFactsRef.current;
 
-      if (duelParam) {
-        if (isShortRoomCode(duelParam)) {
-          setIncomingRoomCode(normalizeRoomCode(duelParam));
-          setIncomingDuel(null);
+      const directRoomCode =
+        roomParam && isShortRoomCode(roomParam)
+          ? normalizeRoomCode(roomParam)
+          : duelParam && isShortRoomCode(duelParam)
+            ? normalizeRoomCode(duelParam)
+            : null;
+
+      if (directRoomCode) {
+        setIncomingRoomCode(directRoomCode);
+        setIncomingDuel(null);
+        setActiveQuiz(null);
+        setActiveTab('duel');
+        setShowWelcome(false);
+      } else if (duelParam) {
+        const decoded = decodeDuelPayload(duelParam);
+        if (decoded && decoded.cardIds.length > 0) {
+          // Legacy base64 duel URL fallback: opens lobby without auto-starting
+          const resolved = resolveFactsByIds(activePool, decoded.cardIds);
+          const cardIds =
+            resolved.length > 0 ? resolved.map((f) => f.id) : decoded.cardIds;
+          setIncomingDuel({
+            ...decoded,
+            cardIds,
+          });
           setActiveQuiz(null);
           setActiveTab('duel');
           setShowWelcome(false);
-        } else {
-          const decoded = decodeDuelPayload(duelParam);
-          if (decoded && decoded.cardIds.length > 0) {
-            // Legacy base64 duel URL fallback — still opens lobby without auto-starting
-            const resolved = resolveFactsByIds(activePool, decoded.cardIds);
-            const cardIds =
-              resolved.length > 0 ? resolved.map((f) => f.id) : decoded.cardIds;
-            setIncomingDuel({
-              ...decoded,
-              cardIds,
-            });
-            setActiveQuiz(null);
-            setActiveTab('duel');
-            setShowWelcome(false);
-          }
         }
       } else if (openQuizParam === 'daily') {
         const dailyFacts = pickSeededFacts(activePool, 5, getDailySeedKey());
@@ -730,6 +857,18 @@ export default function HomeClient({ initialFacts, initialVocabulary }: HomeClie
 
     const hydrateRemoteProfile = async () => {
       try {
+        const sessionRes = await fetchSession();
+        if (cancelled) return;
+        if (sessionRes.authenticated && sessionRes.user) {
+          const user = sessionRes.user;
+          setAuthUser(user);
+          setMemory((prev) => hydrateLocalMemoryFromAuthUser(prev, user));
+          setSavedIds(loadSavedFactIds());
+          setSavedVocabWords(loadSavedVocabNotebook().map((entry) => entry.word.toLowerCase()));
+          setLikedRevision((prev) => prev + 1);
+          return;
+        }
+
         const remote = await fetchProfileFromApi();
         if (cancelled) return;
         if (remote) {
@@ -746,20 +885,26 @@ export default function HomeClient({ initialFacts, initialVocabulary }: HomeClie
           }
         } else {
           const cur = loadUserMemory();
-          void syncProfileToApi({
-            username: cur.nickname,
-            xp: cur.xp,
-            weeklyXp: cur.weeklyXp,
-            dailyBestScore: cur.dailyBestScore,
-            lastDailyQuizDate: cur.lastDailyQuizDate,
-            streak: cur.streakDays,
-            lastVisitDate: cur.lastVisitDate,
-            seenIds: cur.seenIds,
-            favoriteIds: cur.favoriteIds,
-            categoryWeights: cur.categoryWeights,
-            categoryAccuracy: cur.categoryAccuracy,
-            badges: cur.badges,
-          });
+          const hasAnyActivity =
+            cur.xp > 0 || cur.seenIds.length > 0 || cur.favoriteIds.length > 0 || cur.streakDays > 0;
+          if (hasAnyActivity) {
+            void syncProfileToApi({
+              username: cur.nickname,
+              xp: cur.xp,
+              weeklyXp: cur.weeklyXp,
+              dailyBestScore: cur.dailyBestScore,
+              lastDailyQuizDate: cur.lastDailyQuizDate,
+              streak: cur.streakDays,
+              lastVisitDate: cur.lastVisitDate,
+              seenIds: cur.seenIds,
+              favoriteIds: cur.favoriteIds,
+              likedIds: loadLikedFactIds(),
+              vocabNotebook: loadSavedVocabNotebook(),
+              categoryWeights: cur.categoryWeights,
+              categoryAccuracy: cur.categoryAccuracy,
+              badges: cur.badges,
+            });
+          }
         }
       } finally {
         if (!cancelled) {
@@ -808,15 +953,33 @@ export default function HomeClient({ initialFacts, initialVocabulary }: HomeClie
       }
     };
 
+    const onOpenAuth = (event: Event) => {
+      const trigger = (event as CustomEvent<{ trigger?: string }>).detail?.trigger || 'manual';
+      setAuthTrigger(trigger);
+      setAuthNudgeOpen(false);
+      setAuthPromptOpen(true);
+    };
+    const onAuthChanged = (event: Event) => {
+      const nextUser = (event as CustomEvent<{ user?: AuthUserDto | null }>).detail?.user ?? null;
+      setAuthUser(nextUser);
+      if (!nextUser) {
+        setAuthNudgeOpen(false);
+      }
+    };
+
     window.addEventListener('scrolly-liked-facts-updated', bumpLikes);
     window.addEventListener(SAVED_FACTS_UPDATED_EVENT, syncSaved);
     window.addEventListener('scrolly-vocab-updated', syncVocab);
     window.addEventListener('scrolly-toast', onScrollyToast as EventListener);
+    window.addEventListener(OPEN_AUTH_EVENT, onOpenAuth as EventListener);
+    window.addEventListener(AUTH_CHANGED_EVENT, onAuthChanged as EventListener);
     return () => {
       window.removeEventListener('scrolly-liked-facts-updated', bumpLikes);
       window.removeEventListener(SAVED_FACTS_UPDATED_EVENT, syncSaved);
       window.removeEventListener('scrolly-vocab-updated', syncVocab);
       window.removeEventListener('scrolly-toast', onScrollyToast as EventListener);
+      window.removeEventListener(OPEN_AUTH_EVENT, onOpenAuth as EventListener);
+      window.removeEventListener(AUTH_CHANGED_EVENT, onAuthChanged as EventListener);
     };
   }, [showToast]);
 
@@ -826,6 +989,16 @@ export default function HomeClient({ initialFacts, initialVocabulary }: HomeClie
       skipNextProfileSyncRef.current = false;
       return;
     }
+    const hasActivity =
+      memory.xp > 0 ||
+      memory.seenIds.length > 0 ||
+      memory.favoriteIds.length > 0 ||
+      savedIds.length > 0 ||
+      savedVocabWords.length > 0 ||
+      likedRevision > 0 ||
+      memory.streakDays > 0 ||
+      Boolean(authUserRef.current);
+    if (!hasActivity) return;
 
     const activeSlug = seedFact?.slug || seedFact?.en.slug || seedFact?.tr.slug || seedFact?.id || 'profile';
     const syncTimer = setTimeout(() => {
@@ -846,6 +1019,8 @@ export default function HomeClient({ initialFacts, initialVocabulary }: HomeClie
         lastVisitDate: memory.lastVisitDate,
         seenIds: memory.seenIds,
         favoriteIds: memory.favoriteIds,
+        likedIds: loadLikedFactIds(),
+        vocabNotebook: loadSavedVocabNotebook(),
         categoryWeights: memory.categoryWeights,
         categoryAccuracy: memory.categoryAccuracy,
         badges: memory.badges,
@@ -866,6 +1041,9 @@ export default function HomeClient({ initialFacts, initialVocabulary }: HomeClie
     memory.categoryWeights,
     memory.categoryAccuracy,
     memory.badges,
+    savedIds,
+    savedVocabWords,
+    likedRevision,
     seedFact,
   ]);
 
@@ -911,16 +1089,45 @@ export default function HomeClient({ initialFacts, initialVocabulary }: HomeClie
     });
   };
 
+  const triggerGuestAuthNudge = useCallback((source: AuthTriggerSource) => {
+    if (authUserRef.current || getCachedAuthUserEmail()) return;
+    if (isAuthNudgeCoolingDown()) return;
+    setAuthTrigger(source);
+    setAuthNudgeOpen(true);
+  }, []);
+
   const handleSelectCategory = (cat: CategoryFilter) => {
     vibrateTap(12);
     playPop(soundEnabled);
     setDetailState(null);
     setShowPwaGuideModal(false);
     restoredFeedSessionRef.current = null;
+    requestedFactSlugRef.current = null;
+    setSuppressInitialFactSync(false);
     activeCategoryRef.current = cat;
     activeSlideIndexRef.current = 0;
     setExploreSlideIndex(0);
     setActiveCategory(cat);
+
+    if (typeof window !== 'undefined') {
+      try {
+        const currentUrl = new URL(window.location.href);
+        currentUrl.searchParams.delete('fact');
+        currentUrl.searchParams.delete('vocab');
+        if (cat === 'all') {
+          currentUrl.searchParams.delete('category');
+        } else {
+          currentUrl.searchParams.set('category', cat);
+        }
+        window.history.replaceState(
+          window.history.state,
+          '',
+          `${currentUrl.pathname}${currentUrl.search}${currentUrl.hash}`
+        );
+      } catch {
+        // Ignore history API errors in restricted webviews
+      }
+    }
 
     const prevMem = memoryRef.current;
     const nextMem =
@@ -940,7 +1147,12 @@ export default function HomeClient({ initialFacts, initialVocabulary }: HomeClie
     );
     setDeckFacts(newDeck);
     persistFeedSession(cat, newDeck, 0);
-    if (newDeck[0]) setSeedFact(newDeck[0]);
+    if (cat === 'vocabulary') {
+      setActiveFact(null);
+    } else if (newDeck[0]) {
+      setSeedFact(newDeck[0]);
+      setActiveFact(newDeck[0]);
+    }
 
     feedRef.current?.scrollToTop();
 
@@ -963,13 +1175,14 @@ export default function HomeClient({ initialFacts, initialVocabulary }: HomeClie
             );
             setDeckFacts(refreshed);
             persistFeedSession(cat, refreshed, 0);
-            if (refreshed[0]) setSeedFact(refreshed[0]);
+            if (refreshed[0]) {
+              setSeedFact(refreshed[0]);
+              setActiveFact(refreshed[0]);
+            }
           }
         });
       }
     }
-
-    feedRef.current?.scrollToTop();
   };
 
   const handleDwellRead = useCallback((fact: FactCardType) => {
@@ -1031,7 +1244,7 @@ export default function HomeClient({ initialFacts, initialVocabulary }: HomeClie
 
   const handleDoubleTapLike = useCallback(
     (fact: FactCardType) => {
-      // Like feedback only — never auto-save / favorite. Liked IDs live in likedFacts localStorage.
+      // Like feedback only: never auto-save / favorite. Liked IDs live in likedFacts localStorage.
       setSeedFact(fact);
       vibrateDoubleTap(12);
       playPopDing(soundEnabled);
@@ -1071,8 +1284,13 @@ export default function HomeClient({ initialFacts, initialVocabulary }: HomeClie
             ? 'Kaydedilenlerden çıkarıldı'
             : 'Removed from Saved Facts'
       );
+
+      if (nextSaved && !guestSaveNudgeShownRef.current) {
+        guestSaveNudgeShownRef.current = true;
+        triggerGuestAuthNudge('save');
+      }
     },
-    [soundEnabled, lang, showToast]
+    [soundEnabled, lang, showToast, triggerGuestAuthNudge]
   );
 
   const handleOpenDuelFromCard = useCallback(
@@ -1195,10 +1413,11 @@ export default function HomeClient({ initialFacts, initialVocabulary }: HomeClie
       topCategory ??
       seedFact.category;
 
-    const oldTier = getLeagueInfo(memory.xp, lang).id;
+    const currentMem = memoryRef.current;
+    const oldTier = getLeagueInfo(currentMem.xp, lang).id;
     const totalBonusXp = earnedXp + (isDuelWin ? 150 : 0);
     const updated = completeMemoryQuiz(
-      memory,
+      currentMem,
       bestQuizCategory,
       totalBonusXp,
       storageQuizMode,
@@ -1242,6 +1461,8 @@ export default function HomeClient({ initialFacts, initialVocabulary }: HomeClie
       questionIds: usedQuestionIds,
       duelConfig,
     });
+
+    triggerGuestAuthNudge('quiz');
   };
 
   const refreshExploreDeck = useCallback((shuffle = true) => {
@@ -1287,6 +1508,10 @@ export default function HomeClient({ initialFacts, initialVocabulary }: HomeClie
     if (tab !== 'quiz' && tab !== 'duel') setActiveQuiz(null);
     if (tab === 'quiz') setActiveQuiz(null);
     setActiveTab(tab);
+
+    if ((tab === 'leaderboard' || tab === 'duel') && memoryRef.current.xp > 0) {
+      triggerGuestAuthNudge(tab);
+    }
   };
 
   const closeOverlayToExplore = () => {
@@ -1324,6 +1549,8 @@ export default function HomeClient({ initialFacts, initialVocabulary }: HomeClie
     clearVocabNotebook();
     clearPwaDismissed();
     clearWelcomeDismissed();
+    clearAuthNudgeDismissed();
+    clearMiniOnboardingDismissed();
     clearScrollaPlayerId();
     try {
       window.localStorage.removeItem(DIAGRAM_INTERACTED_STORAGE_KEY);
@@ -1337,6 +1564,8 @@ export default function HomeClient({ initialFacts, initialVocabulary }: HomeClie
     getOrCreateScrollaPlayerId(fresh.playerId);
 
     setMemory(fresh);
+    setMiniOnboardingDismissed(false);
+    setAuthNudgeOpen(false);
     setSavedIds([]);
     setSavedVocabWords([]);
     setLikedRevision((prev) => prev + 1);
@@ -1374,10 +1603,12 @@ export default function HomeClient({ initialFacts, initialVocabulary }: HomeClie
       weeklyXp: 0,
       dailyBestScore: 0,
       lastDailyQuizDate: '',
-      streak: 1,
+      streak: 0,
       lastVisitDate: fresh.lastVisitDate,
       seenIds: [] as string[],
       favoriteIds: [] as string[],
+      likedIds: [] as string[],
+      vocabNotebook: [],
       categoryWeights: fresh.categoryWeights,
       categoryAccuracy: fresh.categoryAccuracy,
       badges: [] as string[],
@@ -1441,12 +1672,12 @@ export default function HomeClient({ initialFacts, initialVocabulary }: HomeClie
     !chromeBlocked;
   const showExploreFeed = activeTab === 'explore' && !activeQuiz && !isExploreSubPageOpen;
 
-  // Keep URL query params cleanly synchronized with active tab state
+  // Keep URL query params cleanly synchronized with active tab & category state
   useEffect(() => {
     if (!hasHydratedRef.current || typeof window === 'undefined') return;
     try {
       const currentUrl = new URL(window.location.href);
-      let changed = false;
+      const before = `${currentUrl.pathname}${currentUrl.search}${currentUrl.hash}`;
 
       if (activeTab !== 'explore' || activeQuiz) {
         const targetTabParam =
@@ -1455,30 +1686,36 @@ export default function HomeClient({ initialFacts, initialVocabulary }: HomeClie
             : activeTab === 'explore' && activeQuiz
               ? 'quiz'
               : activeTab;
-        if (currentUrl.searchParams.has('fact')) {
-          currentUrl.searchParams.delete('fact');
-          changed = true;
+        currentUrl.searchParams.delete('fact');
+        currentUrl.searchParams.delete('vocab');
+        currentUrl.searchParams.delete('category');
+        currentUrl.searchParams.set('tab', targetTabParam);
+        if (targetTabParam !== 'duel') {
+          currentUrl.searchParams.delete('room');
+          currentUrl.searchParams.delete('duel');
         }
-        if (currentUrl.searchParams.get('tab') !== targetTabParam) {
-          currentUrl.searchParams.set('tab', targetTabParam);
-          changed = true;
-        }
-      } else if (currentUrl.searchParams.has('tab')) {
+      } else {
         currentUrl.searchParams.delete('tab');
-        changed = true;
+        currentUrl.searchParams.delete('room');
+        currentUrl.searchParams.delete('duel');
+        if (activeCategory === 'all') {
+          currentUrl.searchParams.delete('category');
+        } else {
+          currentUrl.searchParams.set('category', activeCategory);
+          if (activeCategory === 'vocabulary') {
+            currentUrl.searchParams.delete('fact');
+          }
+        }
       }
 
-      if (changed) {
-        window.history.replaceState(
-          window.history.state,
-          '',
-          `${currentUrl.pathname}${currentUrl.search}${currentUrl.hash}`
-        );
+      const after = `${currentUrl.pathname}${currentUrl.search}${currentUrl.hash}`;
+      if (after !== before) {
+        window.history.replaceState(window.history.state, '', after);
       }
     } catch {
       // Ignore history API errors in restricted webviews
     }
-  }, [activeTab, activeQuiz]);
+  }, [activeTab, activeQuiz, activeCategory]);
 
   useEffect(() => {
     const onAmbient = (event: Event) => {
@@ -1568,7 +1805,7 @@ export default function HomeClient({ initialFacts, initialVocabulary }: HomeClie
         onSelectTab={handleDockSelectTab}
       />
 
-      {/* Main feed region — ambient fills gutters behind the stage */}
+      {/* Main feed region: ambient fills gutters behind the stage */}
       <div
         data-testid="reels-main-region"
         className="relative z-10 flex min-h-0 min-w-0 flex-1 items-stretch justify-center"
@@ -1608,6 +1845,17 @@ export default function HomeClient({ initialFacts, initialVocabulary }: HomeClie
           }`}
         >
         <OfflineManager lang={lang} />
+
+        <MiniOnboardingHint
+          visible={showExploreFeed && !showWelcome && !chromeBlocked && !miniOnboardingDismissed}
+          xp={memory.xp}
+          lang={lang}
+          darkMode={isDark}
+          onDismiss={() => {
+            persistMiniOnboardingDismissed();
+            setMiniOnboardingDismissed(true);
+          }}
+        />
 
         <PwaInstallPrompt
           key={`pwa-${clientResetEpoch}`}
@@ -1674,7 +1922,7 @@ export default function HomeClient({ initialFacts, initialVocabulary }: HomeClie
             onActiveFactChange={setActiveFact}
             onActiveSlideChange={setActiveSlide}
             onEarnXp={(xpAmount) => {
-              setMemory((prev) => addUserXp(prev, xpAmount));
+              setMemory((prev) => addUserXp(prev, xpAmount, 'vocab'));
             }}
             onSuccessSound={() => playDing(soundEnabled)}
             onWrongSound={() => playWrong(soundEnabled)}
@@ -1702,7 +1950,7 @@ export default function HomeClient({ initialFacts, initialVocabulary }: HomeClie
               }}
               onButtonPop={() => playPop(soundEnabled)}
               onEarnXp={(xpAmount) => {
-                setMemory((prev) => addUserXp(prev, xpAmount));
+                setMemory((prev) => addUserXp(prev, xpAmount, 'detail'));
               }}
               onSuccessSound={() => playDing(soundEnabled)}
               onWrongSound={() => playWrong(soundEnabled)}
@@ -1710,132 +1958,138 @@ export default function HomeClient({ initialFacts, initialVocabulary }: HomeClie
           )}
         </AnimatePresence>
 
-        <AnimatePresence>
-          {activeQuiz && (
-            <div
-              data-testid="active-quiz-page"
-              className="absolute inset-0 z-30 flex h-full w-full flex-col overflow-y-auto bg-[#FFFDF9] px-3 pt-[calc(env(safe-area-inset-top,20px)+16px)] pb-[calc(env(safe-area-inset-bottom,16px)+100px)] dark:bg-[#171228] lg:pt-6 lg:pb-6"
-            >
-              <MemoryQuizCard
-                key={activeQuiz.key}
-                questions={activeQuiz.questions}
-                lang={lang}
-                quizMode={activeQuiz.mode}
-                duelConfig={activeQuiz.duelConfig}
-                vocabularyPool={mergedVocabulary}
-                onAnswerSound={(isCorrect) =>
-                  isCorrect ? playDing(soundEnabled) : playWrong(soundEnabled)
-                }
-                onTickSound={(urgent) => playTick(soundEnabled, urgent)}
-                onButtonPop={() => playPop(soundEnabled)}
-                onComplete={handleQuizComplete}
-                onSkip={() => {
-                  vibrateTap(12);
-                  playPop(soundEnabled);
-                  setActiveQuiz(null);
-                  setActiveTab(activeQuiz.mode === 'duel' ? 'duel' : 'quiz');
-                  setMemory((prev) => {
-                    const updated = { ...prev, cardsSinceLastQuiz: 0 };
-                    saveUserMemory(updated);
-                    return updated;
-                  });
-                }}
-              />
-            </div>
-          )}
-        </AnimatePresence>
+        {activeQuiz && (
+          <div
+            data-testid="active-quiz-page"
+            className="absolute inset-0 z-30 flex h-full w-full flex-col overflow-y-auto bg-[#FFFDF9] px-3 pt-[calc(env(safe-area-inset-top,20px)+16px)] pb-[calc(env(safe-area-inset-bottom,16px)+100px)] dark:bg-[#171228] lg:pt-6 lg:pb-6"
+          >
+            <MemoryQuizCard
+              key={activeQuiz.key}
+              questions={activeQuiz.questions}
+              lang={lang}
+              quizMode={activeQuiz.mode}
+              duelConfig={activeQuiz.duelConfig}
+              vocabularyPool={mergedVocabulary}
+              onAnswerSound={(isCorrect) =>
+                isCorrect ? playDing(soundEnabled) : playWrong(soundEnabled)
+              }
+              onTickSound={(urgent) => playTick(soundEnabled, urgent)}
+              onButtonPop={() => playPop(soundEnabled)}
+              onComplete={handleQuizComplete}
+              onSkip={() => {
+                vibrateTap(12);
+                playPop(soundEnabled);
+                setActiveQuiz(null);
+                setActiveTab(activeQuiz.mode === 'duel' ? 'duel' : 'quiz');
+                setMemory((prev) => {
+                  const updated = { ...prev, cardsSinceLastQuiz: 0 };
+                  saveUserMemory(updated);
+                  return updated;
+                });
+              }}
+            />
+          </div>
+        )}
 
-        <LeaderboardModal
-          open={activeTab === 'leaderboard' && !activeQuiz}
-          presentation="page"
-          lang={lang}
-          nickname={memory.nickname}
-          userXp={memory.xp}
-          weeklyXp={memory.weeklyXp}
-          dailyBestScore={memory.dailyBestScore}
-          streakDays={memory.streakDays}
-          onInviteDuel={() => {
-            vibrateTap(12);
-            playPop(soundEnabled);
-            setIncomingDuel(null);
-            setActiveTab('duel');
-          }}
-          onClose={closeOverlayToExplore}
-        />
+        {activeTab === 'leaderboard' && !activeQuiz && (
+          <LeaderboardModal
+            open
+            presentation="page"
+            lang={lang}
+            nickname={memory.nickname}
+            userXp={memory.xp}
+            weeklyXp={memory.weeklyXp}
+            dailyBestScore={memory.dailyBestScore}
+            streakDays={memory.streakDays}
+            onInviteDuel={() => {
+              vibrateTap(12);
+              playPop(soundEnabled);
+              setIncomingDuel(null);
+              setActiveTab('duel');
+            }}
+            onClose={closeOverlayToExplore}
+          />
+        )}
 
-        <QuizHubModal
-          open={activeTab === 'quiz' && !activeQuiz}
-          presentation="page"
-          lang={lang}
-          dailyCompleted={dailyCompleted}
-          dailyBestScore={memory.dailyBestScore}
-          recentCount={memory.recentFiveIds.length}
-          onSelectMode={handleStartQuizMode}
-          onClose={closeOverlayToExplore}
-          onButtonPop={() => playPop(soundEnabled)}
-          onOpenScrolla={() => {
-            vibrateTap(12);
-            playPop(soundEnabled);
-            setActiveQuiz(null);
-            setIncomingDuel(null);
-            setIncomingRoomCode(null);
-            setActiveTab('duel');
-          }}
-        />
+        {activeTab === 'quiz' && !activeQuiz && (
+          <QuizHubModal
+            open
+            presentation="page"
+            lang={lang}
+            dailyCompleted={dailyCompleted}
+            dailyBestScore={memory.dailyBestScore}
+            recentCount={memory.recentFiveIds.length}
+            onSelectMode={handleStartQuizMode}
+            onClose={closeOverlayToExplore}
+            onButtonPop={() => playPop(soundEnabled)}
+            onOpenScrolla={() => {
+              vibrateTap(12);
+              playPop(soundEnabled);
+              setActiveQuiz(null);
+              setIncomingDuel(null);
+              setIncomingRoomCode(null);
+              setActiveTab('duel');
+            }}
+          />
+        )}
 
-        <DuelModal
-          open={activeTab === 'duel' && !activeQuiz}
-          presentation="page"
-          lang={lang}
-          defaultNickname={memory.nickname}
-          playerId={memory.playerId}
-          seedFact={seedFact}
-          allFacts={allFacts}
-          incomingDuel={incomingDuel}
-          initialRoomCode={incomingRoomCode}
-          onClearRoomCode={() => setIncomingRoomCode(null)}
-          onStartDuel={handleStartDuel}
-          onClose={closeOverlayToExplore}
-          onButtonPop={() => playPop(soundEnabled)}
-        />
+        {activeTab === 'duel' && !activeQuiz && (
+          <DuelModal
+            open
+            presentation="page"
+            lang={lang}
+            defaultNickname={memory.nickname}
+            playerId={memory.playerId}
+            seedFact={seedFact}
+            allFacts={allFacts}
+            incomingDuel={incomingDuel}
+            initialRoomCode={incomingRoomCode}
+            onClearRoomCode={() => setIncomingRoomCode(null)}
+            onStartDuel={handleStartDuel}
+            onClose={closeOverlayToExplore}
+            onButtonPop={() => playPop(soundEnabled)}
+          />
+        )}
 
-        <DiplomaProfileModal
-          open={activeTab === 'diploma' && !activeQuiz}
-          presentation="page"
-          lang={lang}
-          memory={memory}
-          allFacts={allFacts}
-          onUpdateNickname={(nick) => setMemory((prev) => updateUserNickname(prev, nick))}
-          onToggleNotifications={handleToggleNotifications}
-          onSelectCategoryFromConstellation={(cat) => {
-            handleSelectCategory(cat);
-            setActiveTab('explore');
-          }}
-          onRemoveFavorite={(factId) => {
-            const fact = allFacts.find((f) => f.id === factId);
-            if (!fact) {
+        {activeTab === 'diploma' && !activeQuiz && (
+          <DiplomaProfileModal
+            open
+            presentation="page"
+            lang={lang}
+            memory={memory}
+            allFacts={allFacts}
+            onUpdateNickname={(nick) => setMemory((prev) => updateUserNickname(prev, nick))}
+            onToggleNotifications={handleToggleNotifications}
+            onSelectCategoryFromConstellation={(cat) => {
+              handleSelectCategory(cat);
+              setActiveTab('explore');
+            }}
+            onRemoveFavorite={(factId) => {
+              const fact = allFacts.find((f) => f.id === factId);
+              if (!fact) {
+                setMemory((prev) => {
+                  if (!prev.favoriteIds.includes(factId)) return prev;
+                  const next = {
+                    ...prev,
+                    favoriteIds: prev.favoriteIds.filter((id) => id !== factId),
+                  };
+                  saveUserMemory(next);
+                  return next;
+                });
+                return;
+              }
               setMemory((prev) => {
-                if (!prev.favoriteIds.includes(factId)) return prev;
-                const next = {
-                  ...prev,
-                  favoriteIds: prev.favoriteIds.filter((id) => id !== factId),
-                };
-                saveUserMemory(next);
-                return next;
+                if (!prev.favoriteIds.includes(fact.id)) return prev;
+                return toggleFavoriteFact(prev, fact.id, fact.category);
               });
-              return;
-            }
-            setMemory((prev) => {
-              if (!prev.favoriteIds.includes(fact.id)) return prev;
-              return toggleFavoriteFact(prev, fact.id, fact.category);
-            });
-          }}
-          onResetMemory={handleResetMemory}
-          onRequestPwaInstall={handleRequestPwaInstall}
-          onClose={closeOverlayToExplore}
-          onButtonPop={() => playPop(soundEnabled)}
-          onCelebrateLeague={() => playLeagueCelebration(soundEnabled)}
-        />
+            }}
+            onResetMemory={handleResetMemory}
+            onRequestPwaInstall={handleRequestPwaInstall}
+            onClose={closeOverlayToExplore}
+            onButtonPop={() => playPop(soundEnabled)}
+            onCelebrateLeague={() => playLeagueCelebration(soundEnabled)}
+          />
+        )}
 
         <PwaInstallGuideModal
           open={showPwaGuideModal}
@@ -1943,6 +2197,10 @@ export default function HomeClient({ initialFacts, initialVocabulary }: HomeClie
                       ? 'Kelime defterinden çıkarıldı'
                       : 'Removed from Word Notebook'
                 );
+                if (saved && !guestSaveNudgeShownRef.current) {
+                  guestSaveNudgeShownRef.current = true;
+                  triggerGuestAuthNudge('save');
+                }
               }
             }}
             onDetail={() => {
@@ -2030,18 +2288,49 @@ export default function HomeClient({ initialFacts, initialVocabulary }: HomeClie
           });
         }}
       />
+      <LazyAuthPrompt
+        open={authPromptOpen}
+        nudgeOpen={authNudgeOpen && !authUser && !showWelcome && !activeQuiz}
+        trigger={authTrigger}
+        lang={lang}
+        darkMode={isDark}
+        currentXp={memory.xp}
+        onCloseModal={() => setAuthPromptOpen(false)}
+        onDismissNudge={() => {
+          persistAuthNudgeDismissed();
+          setAuthNudgeOpen(false);
+        }}
+        onOpenModalFromNudge={() => {
+          setAuthNudgeOpen(false);
+          setAuthPromptOpen(true);
+        }}
+        onAuthenticated={(user) => {
+          setAuthUser(user);
+          setMemory((prev) => hydrateLocalMemoryFromAuthUser(prev, user));
+          setSavedIds(loadSavedFactIds());
+          setSavedVocabWords(loadSavedVocabNotebook().map((entry) => entry.word.toLowerCase()));
+          setLikedRevision((prev) => prev + 1);
+          setAuthPromptOpen(false);
+          setAuthNudgeOpen(false);
+          showToast(
+            lang === 'tr'
+              ? `Hesap bağlandı · ${user.xp.toLocaleString()} XP senkronize edildi`
+              : `Account linked · ${user.xp.toLocaleString()} XP synced`
+          );
+        }}
+      />
       <AnimatePresence>
         {toastMessage && (
           <motion.div
             key={toastMessage}
-            initial={{ opacity: 0, y: -10, scale: 0.96 }}
+            initial={{ opacity: 0, y: 10, scale: 0.96 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: -8, scale: 0.96 }}
+            exit={{ opacity: 0, y: 8, scale: 0.96 }}
             transition={{ duration: 0.18 }}
             role="status"
             aria-live="polite"
             data-testid="feed-action-toast"
-            className="pointer-events-none fixed left-1/2 top-[calc(env(safe-area-inset-top,14px)+56px)] z-[95] -translate-x-1/2 whitespace-nowrap rounded-full border border-white/15 bg-[#0A0A0E]/90 px-4 py-2 text-xs font-extrabold text-white shadow-xl backdrop-blur-md dark:border-amber-300/30 dark:bg-[#171326]/95"
+            className="pointer-events-none fixed bottom-[calc(env(safe-area-inset-bottom,16px)+92px)] lg:bottom-8 lg:top-auto left-1/2 z-50 -translate-x-1/2 whitespace-nowrap rounded-full border border-white/15 bg-[#0A0A0E]/95 px-4 py-2 text-xs font-extrabold text-white shadow-xl backdrop-blur-md dark:border-amber-300/30 dark:bg-[#171326]/95"
           >
             {toastMessage}
           </motion.div>

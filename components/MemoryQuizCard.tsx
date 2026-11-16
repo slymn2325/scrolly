@@ -20,7 +20,6 @@ import type { DuelChallengeConfig } from '@/components/DuelModal';
 import { getVocabularyFacts } from '@/data/vocabularyFacts';
 import {
   type CategoryFilter,
-  type CategoryId,
   getCategoryMeta,
   type Language,
   translations,
@@ -28,7 +27,7 @@ import {
 } from '@/i18n/translations';
 import type { VocabPartOfSpeech, VocabularyCard } from '@/types/vocabulary';
 import { vibrateSuccess, vibrateTap } from '@/utils/haptics';
-import { CATEGORY_SUB_ICON_MAP, UI_ICON_PATHS } from '@/utils/icons8Assets';
+import { UI_ICON_PATHS } from '@/utils/icons8Assets';
 import { prepareQuizOptions, type QuizQuestionItem } from '@/utils/recommendation';
 import { pickSeededFacts } from '@/utils/seededRandom';
 import { buildStructuredDetailHighlights } from '@/utils/topicMotif';
@@ -100,16 +99,6 @@ interface EffectiveQuizEntry {
     exampleEn: string;
     exampleTr: string;
   };
-}
-
-function resolveCategoryBadgeIcon(category: CategoryFilter | string): string {
-  if (category === 'vocabulary' || category === 'language_lab') {
-    return VOCABULARY_META.iconPath;
-  }
-  if (category in CATEGORY_SUB_ICON_MAP) {
-    return CATEGORY_SUB_ICON_MAP[category as CategoryId];
-  }
-  return CATEGORY_SUB_ICON_MAP.science;
 }
 
 function maskStandaloneWord(sentence: string, word: string): string {
@@ -369,9 +358,6 @@ export default function MemoryQuizCard({
   const catMeta = currentEntry
     ? getCategoryMeta(currentEntry.displayCategory)
     : getCategoryMeta('science');
-  const catSubIcon = resolveCategoryBadgeIcon(
-    currentEntry ? currentEntry.displayCategory : 'science'
-  );
 
   const prepared = useMemo(() => {
     if (!currentEntry || !localized) {
@@ -583,12 +569,11 @@ export default function MemoryQuizCard({
 
   return (
     <motion.div
-      initial={{ opacity: 0, scale: 0.94, y: 18 }}
-      animate={{ opacity: 1, scale: 1, y: 0 }}
-      exit={{ opacity: 0, scale: 0.94, y: -12 }}
-      transition={{ type: 'spring', stiffness: 280, damping: 24 }}
+      initial={{ opacity: 0.94, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.14, ease: [0.23, 1, 0.32, 1] }}
       data-testid="memory-quiz-card"
-      className="mx-auto my-auto flex max-h-[calc(100dvh-110px)] lg:max-h-[calc(88dvh-48px)] w-full max-w-[430px] md:max-w-2xl flex-col overflow-y-auto no-scrollbar rounded-3xl border-2 border-violet-200 bg-white/95 p-3.5 pb-6 shadow-2xl backdrop-blur-xl dark:border-violet-700/60 dark:bg-[#1A162B]/95 sm:p-5 sm:pb-6"
+      className="mx-auto my-auto flex max-h-[calc(100dvh-110px)] lg:max-h-[calc(88dvh-48px)] w-full max-w-[430px] md:max-w-2xl flex-col overflow-y-auto no-scrollbar rounded-3xl border-2 border-violet-200 bg-white p-3.5 pb-6 shadow-2xl dark:border-violet-700/60 dark:bg-[#0B0B11] sm:p-5 sm:pb-6"
     >
       {/* Incoming 1v1 Scrolla Duel Banner */}
       {isDuelMode && (
@@ -701,10 +686,18 @@ export default function MemoryQuizCard({
         </div>
 
         <span
-          className={`inline-flex items-center gap-1.5 rounded-full ${catMeta.bgClass} px-2.5 py-0.5 text-[11px] font-bold ${catMeta.accentText}`}
+          className={`inline-flex items-center gap-1.5 rounded-full border border-transparent px-2.5 py-0.5 text-[11px] font-bold dark:border-white/15 dark:bg-white/15 dark:text-white ${catMeta.bgClass} ${catMeta.accentText}`}
         >
-          <img src={catSubIcon} alt="" aria-hidden="true" className="h-3.5 w-3.5 object-contain" />
-          <span>{catMeta.emoji}</span>
+          <img
+            src={catMeta.iconPath}
+            alt=""
+            aria-hidden="true"
+            width={16}
+            height={16}
+            loading="eager"
+            decoding="sync"
+            className="h-4 w-4 shrink-0 object-contain"
+          />
           <span>{catMeta.label[lang]}</span>
         </span>
       </div>
@@ -712,8 +705,18 @@ export default function MemoryQuizCard({
       {/* Topic Anchor Card + Question */}
       <div className="my-2.5 rounded-2xl border border-slate-100 bg-slate-50/75 p-3 dark:border-white/10 dark:bg-white/5">
         <div className="flex flex-wrap items-center justify-between gap-1.5">
-          <p className="text-[11px] font-black uppercase tracking-wider text-violet-700 dark:text-violet-300">
-            {currentEntry.emoji || catMeta.emoji} {localized.tag || catMeta.label[lang]}
+          <p className="inline-flex items-center gap-1.5 text-[11px] font-black uppercase tracking-wider text-violet-700 dark:text-violet-300 whitespace-normal break-words">
+            <img
+              src={catMeta.iconPath}
+              alt=""
+              aria-hidden="true"
+              width={14}
+              height={14}
+              loading="eager"
+              decoding="sync"
+              className="h-3.5 w-3.5 shrink-0 object-contain"
+            />
+            <span>{localized.tag || catMeta.label[lang]}</span>
           </p>
           {currentEntry.vocabMeta ? (
             !hideVocabTargetBeforeAnswer ? (
@@ -747,13 +750,16 @@ export default function MemoryQuizCard({
             </span>
           </p>
         ) : (
-          <p data-testid="quiz-anchor-title" className="mt-1 text-xs font-bold text-ink/75 dark:text-violet-100/80">
+          <p
+            data-testid="quiz-anchor-title"
+            className="mt-1 text-xs font-bold leading-snug text-ink/75 dark:text-violet-100/80 whitespace-normal break-words"
+          >
             {localized.title}
           </p>
         )}
         <h2
           data-testid="quiz-question-text"
-          className="mt-1.5 font-display text-base font-bold leading-snug text-ink dark:text-white sm:text-lg"
+          className="mt-1.5 font-display text-base font-bold leading-snug text-ink dark:text-white sm:text-lg whitespace-normal break-words"
         >
           {localized.quiz.question}
         </h2>
@@ -789,11 +795,11 @@ export default function MemoryQuizCard({
               disabled={hasAnswered || rewardWatching}
               onClick={() => handleSelectOption(idx)}
               data-testid={`quiz-option-${idx}`}
-              className={`w-full h-auto min-h-[44px] py-2 px-3 rounded-2xl border-2 text-left text-xs sm:text-sm font-semibold transition-[background-color,border-color,color,transform] duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400 flex items-center justify-between gap-2.5 whitespace-normal break-words leading-snug ${btnStyle}`}
+              className={`w-full h-auto min-h-[44px] py-2.5 px-3 rounded-2xl border-2 text-left text-xs sm:text-sm font-semibold transition-[background-color,border-color,color,transform] duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400 flex items-center justify-between gap-2.5 whitespace-normal break-words leading-snug ${btnStyle}`}
             >
-              <div className="flex items-center gap-2.5">
+              <div className="flex min-w-0 flex-1 items-start gap-2.5">
                 <span
-                  className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-lg text-[11px] font-black ${
+                  className={`mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-lg text-[11px] font-black ${
                     hasAnswered && isThisCorrect
                       ? 'bg-emerald-600 text-white'
                       : hasAnswered && isThisSelected
@@ -803,7 +809,9 @@ export default function MemoryQuizCard({
                 >
                   {optionLetters[idx] ?? idx + 1}
                 </span>
-                <span className="whitespace-normal break-words leading-snug">{optText}</span>
+                <span className="min-w-0 flex-1 whitespace-normal break-words leading-snug">
+                  {optText}
+                </span>
               </div>
               {hasAnswered && isThisCorrect && (
                 <CheckCircle2 className="h-5 w-5 shrink-0 text-emerald-600 dark:text-emerald-400" />

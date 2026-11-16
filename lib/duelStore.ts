@@ -63,8 +63,34 @@ export interface ScrollaRoom {
 
 const ROOM_ALPHABET = '23456789ABCDEFGHJKLMNPQRSTUVWXYZ';
 
+const DUMMY_ACTOR_IDS = new Set([
+  'default',
+  'local-default-player',
+  'server',
+  'unknown',
+  'anonymous',
+  'null',
+  'undefined',
+]);
+
+export function isDummyActorId(raw: unknown): boolean {
+  if (typeof raw !== 'string') return true;
+  const trimmed = raw.trim().toLowerCase();
+  if (!trimmed || trimmed.length < 3) return true;
+  return DUMMY_ACTOR_IDS.has(trimmed);
+}
+
 export function generateRoomCode(length = 6): string {
   let out = '';
+  const cryptoApi = typeof globalThis !== 'undefined' ? globalThis.crypto : undefined;
+  if (cryptoApi && typeof cryptoApi.getRandomValues === 'function') {
+    const bytes = new Uint8Array(length);
+    cryptoApi.getRandomValues(bytes);
+    for (let i = 0; i < length; i += 1) {
+      out += ROOM_ALPHABET[bytes[i] % ROOM_ALPHABET.length];
+    }
+    return out;
+  }
   for (let i = 0; i < length; i += 1) {
     out += ROOM_ALPHABET[Math.floor(Math.random() * ROOM_ALPHABET.length)];
   }

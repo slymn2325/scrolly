@@ -1,7 +1,7 @@
 'use client';
 
 import type { FactCard } from '@/types/fact';
-import type { VocabularyCard } from '@/types/vocabulary';
+import type { SavedVocabularyEntry, VocabularyCard } from '@/types/vocabulary';
 import { cryptoRandomUuid } from '@/utils/cryptoRandom';
 
 export type TelemetryEventType =
@@ -341,6 +341,7 @@ export async function fetchFactsFromApiWithCache(): Promise<FactCard[] | null> {
 
 export interface RemoteProfileSnapshot {
   deviceId: string;
+  userId?: string | null;
   username: string;
   handle?: string;
   xp: number;
@@ -351,6 +352,8 @@ export interface RemoteProfileSnapshot {
   lastVisitDate: string;
   seenIds: string[];
   favoriteIds: string[];
+  likedIds?: string[];
+  vocabNotebook?: SavedVocabularyEntry[];
   categoryWeights: Record<string, number>;
   categoryAccuracy: Record<string, { attempts: number; totalPct: number }>;
   badges: string[];
@@ -387,6 +390,8 @@ export async function syncProfileToApi(payload: {
   lastVisitDate?: string;
   seenIds?: string[];
   favoriteIds?: string[];
+  likedIds?: string[];
+  vocabNotebook?: SavedVocabularyEntry[];
   categoryWeights?: Record<string, number>;
   categoryAccuracy?: Record<string, { attempts: number; totalPct: number }>;
   badges?: string[];
@@ -401,6 +406,7 @@ export async function syncProfileToApi(payload: {
     });
     const res = await fetch('/api/profile', {
       method: 'POST',
+      cache: 'no-store',
       headers: { 'Content-Type': 'application/json' },
       body,
       keepalive: body.length < 48_000,

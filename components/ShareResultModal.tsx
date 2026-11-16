@@ -11,6 +11,7 @@ import {
   Clock,
   Copy,
   Film,
+  Mail,
   MessageCircle,
   Share2,
   Swords,
@@ -72,8 +73,36 @@ export default function ShareResultModal({
   const [showReactionDrawer, setShowReactionDrawer] = useState(false);
   const [sendingReaction, setSendingReaction] = useState(false);
   const [localReactions, setLocalReactions] = useState<GiphyReactionItemDisplay[]>([]);
+  const [authEmail, setAuthEmail] = useState<string | null>(null);
   const pendingRoomRef = useRef<Promise<string | null> | null>(null);
   const t = translations[lang];
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const readAuthEmail = () => {
+      try {
+        const stored = window.localStorage.getItem('scrolly_auth_user_email');
+        setAuthEmail(stored && stored.trim() ? stored.trim() : null);
+      } catch {
+        setAuthEmail(null);
+      }
+    };
+    readAuthEmail();
+    const onAuthChanged = (event: Event) => {
+      const detail = (event as CustomEvent<{ user?: { email?: string } | null }>).detail;
+      if (detail && 'user' in detail) {
+        setAuthEmail(detail.user?.email?.trim() || null);
+      } else {
+        readAuthEmail();
+      }
+    };
+    window.addEventListener('scrolly-auth-changed', onAuthChanged as EventListener);
+    window.addEventListener('storage', readAuthEmail);
+    return () => {
+      window.removeEventListener('scrolly-auth-changed', onAuthChanged as EventListener);
+      window.removeEventListener('storage', readAuthEmail);
+    };
+  }, []);
 
   const activePlayerId = useMemo(
     () => duelConfig?.myPlayerId || propPlayerId || getOrCreateScrollaPlayerId(),
@@ -153,7 +182,7 @@ export default function ShareResultModal({
 
   const duelShareUrl = useMemo(() => {
     if (createdRoomCode) {
-      return `${siteUrl}/?duel=${createdRoomCode}`;
+      return `${siteUrl}/?tab=duel&room=${createdRoomCode}`;
     }
     return siteUrl;
   }, [createdRoomCode, siteUrl]);
@@ -284,7 +313,7 @@ export default function ShareResultModal({
     if (!createdRoomCode && questionIds.length > 0) {
       const code = await ensureScrollaRoomCode();
       if (code) {
-        shareUrl = `${siteUrl}/?duel=${code}`;
+        shareUrl = `${siteUrl}/?tab=duel&room=${code}`;
       }
     }
     try {
@@ -304,13 +333,12 @@ export default function ShareResultModal({
       aria-labelledby="share-modal-title"
       data-testid="share-result-modal"
       data-presentation="page"
-      className="absolute inset-0 z-30 flex h-full w-full flex-col overflow-hidden bg-[#FFFDF9] text-[#1E1B2E] dark:bg-[#1A162B] dark:text-white"
+      className="absolute inset-0 z-30 flex h-full w-full flex-col overflow-hidden bg-[#FFFDF9] text-[#1E1B2E] dark:bg-[#0B0B11] dark:text-white"
     >
       <motion.div
-        initial={{ opacity: 0, scale: 0.88, y: 20 }}
-        animate={{ opacity: 1, scale: 1, y: 0 }}
-        exit={{ opacity: 0, scale: 0.9, y: 20 }}
-        transition={{ type: 'spring', stiffness: 320, damping: 24 }}
+        initial={{ opacity: 0.94, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.14, ease: [0.23, 1, 0.32, 1] }}
         className="no-scrollbar flex h-full w-full flex-col overflow-y-auto px-4 pt-[calc(env(safe-area-inset-top,14px)+14px)] pb-[calc(env(safe-area-inset-bottom,16px)+24px)] sm:px-5 lg:pt-5"
       >
         <div className="mb-3 flex items-center justify-between border-b border-ink/10 pb-3 dark:border-white/10">
@@ -340,7 +368,10 @@ export default function ShareResultModal({
               }
               alt=""
               aria-hidden="true"
-              loading="lazy"
+              width={36}
+              height={36}
+              loading="eager"
+              decoding="sync"
               className="h-9 w-9 object-contain drop-shadow-md"
             />
           </div>
@@ -591,6 +622,36 @@ export default function ShareResultModal({
             </motion.a>
           </div>
         </div>
+
+        {!authEmail && (
+          <div
+            data-testid="share-auth-cta"
+            className="mt-3 flex flex-wrap items-center justify-between gap-2 rounded-2xl border border-violet-200/80 bg-violet-50/75 px-3.5 py-2.5 text-xs dark:border-violet-600/35 dark:bg-violet-950/35"
+          >
+            <span className="font-bold text-ink/80 dark:text-violet-100">
+              {lang === 'tr'
+                ? 'Kazandığın XP’yi kalıcı olarak sakla'
+                : 'Keep your earned XP synced'}
+            </span>
+            <button
+              type="button"
+              onClick={() => {
+                onButtonPop();
+                window.dispatchEvent(
+                  new CustomEvent('scrolly-open-auth', { detail: { trigger: 'quiz' } })
+                );
+              }}
+              className="inline-flex items-center gap-1.5 rounded-full bg-violet-600 px-3 py-1.5 text-[11px] font-extrabold text-white transition-colors hover:bg-violet-700"
+            >
+              <Mail className="h-3.5 w-3.5 shrink-0" />
+              <span>
+                {lang === 'tr'
+                  ? 'E-posta ile Hesabını Bağla / Giriş Yap'
+                  : 'Connect Email / Sign In'}
+              </span>
+            </button>
+          </div>
+        )}
 
         {/* Continue Button */}
         <motion.button

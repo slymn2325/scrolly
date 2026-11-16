@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { AnimatePresence, motion } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { ArrowLeft, Check, Copy, Download, Film, Loader2, MessageCircle, Share2, Sparkles } from 'lucide-react';
 import PoweredByGiphyBadge from '@/components/PoweredByGiphyBadge';
 import { type Language, translations } from '@/i18n/translations';
@@ -91,7 +91,7 @@ export default function StoryShareModal({
     const origin =
       typeof window !== 'undefined' ? window.location.origin : 'https://scrolly.live';
     const shareUrl = `${origin}${getFactUrl(targetFact, lang)}`;
-    const shareText = `${localized.title} — ${t.brandName}`;
+    const shareText = `${localized.title} · ${t.brandName}`;
     return { localized, shareUrl, shareText };
   };
 
@@ -211,23 +211,20 @@ export default function StoryShareModal({
   const animatedGifBtnLabel =
     lang === 'tr' ? "Hareketli GIF'i İndir / Paylaş" : 'Download / Share Animated GIF';
 
+  if (!open || !fact) return null;
+
   return (
-    <AnimatePresence>
-      {open && fact && (
-        <div
-          aria-label={t.storyModalTitle}
-          data-testid="story-share-modal"
-          data-presentation="page"
-          onClick={(e) => e.stopPropagation()}
-          className="absolute inset-0 z-30 flex h-full w-full flex-col overflow-hidden bg-[#FFFDF9] text-[#1E1B2E] dark:bg-[#141122] dark:text-white"
-        >
-          <motion.div
-            initial={{ opacity: 0, x: 16 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: 16 }}
-            transition={{ duration: 0.2 }}
-            className="no-scrollbar flex h-full w-full flex-col overflow-y-auto px-4 pt-[calc(env(safe-area-inset-top,14px)+14px)] pb-[calc(env(safe-area-inset-bottom,16px)+24px)] sm:px-5 lg:pt-5"
-          >
+    <motion.div
+      aria-label={t.storyModalTitle}
+      data-testid="story-share-modal"
+      data-presentation="page"
+      onClick={(e) => e.stopPropagation()}
+      initial={{ opacity: 0.96, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.14, ease: [0.23, 1, 0.32, 1] }}
+      className="backface-hidden absolute inset-0 z-30 flex h-full w-full flex-col overflow-hidden bg-[#FFFDF9] text-[#1E1B2E] dark:bg-[#0B0B11] dark:text-white"
+    >
+      <div className="no-scrollbar flex h-full w-full flex-col overflow-y-auto px-4 pt-[calc(env(safe-area-inset-top,14px)+14px)] pb-[calc(env(safe-area-inset-bottom,16px)+24px)] sm:px-5 lg:pt-5">
             <div className="mb-3 flex items-center justify-between gap-2 border-b border-ink/10 pb-3 dark:border-white/10">
               <motion.button
                 type="button"
@@ -412,9 +409,7 @@ export default function StoryShareModal({
                 </div>
               )}
             </div>
-          </motion.div>
-        </div>
-      )}
-    </AnimatePresence>
+          </div>
+        </motion.div>
   );
 }

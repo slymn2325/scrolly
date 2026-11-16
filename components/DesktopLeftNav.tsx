@@ -88,18 +88,14 @@ export default function DesktopLeftNav({
                 active
                   ? isDuel
                     ? darkMode
-                      ? 'border-violet-400/45 bg-violet-500/20 text-white shadow-sm shadow-violet-500/20 before:absolute before:left-0 before:top-2.5 before:bottom-2.5 before:w-1 before:rounded-r-full before:bg-violet-400'
-                      : 'border-violet-300/80 bg-violet-50 text-violet-950 shadow-sm before:absolute before:left-0 before:top-2.5 before:bottom-2.5 before:w-1 before:rounded-r-full before:bg-violet-600'
+                      ? 'border-violet-400/50 bg-violet-500/20 text-white shadow-sm shadow-violet-500/20 before:absolute before:left-0 before:top-2.5 before:bottom-2.5 before:w-1 before:rounded-r-full before:bg-violet-400'
+                      : 'border-violet-400/80 bg-violet-50 text-violet-950 shadow-sm before:absolute before:left-0 before:top-2.5 before:bottom-2.5 before:w-1 before:rounded-r-full before:bg-violet-600'
                     : darkMode
                       ? 'border-white/15 bg-white/10 text-white before:absolute before:left-0 before:top-2.5 before:bottom-2.5 before:w-1 before:rounded-r-full before:bg-white'
                       : 'border-[#1E1B2E]/15 bg-[#1E1B2E]/[0.08] text-[#1E1B2E] before:absolute before:left-0 before:top-2.5 before:bottom-2.5 before:w-1 before:rounded-r-full before:bg-[#1E1B2E]'
-                  : isDuel
-                    ? darkMode
-                      ? 'border-violet-500/20 bg-violet-500/[0.06] text-white/85 hover:border-violet-400/40 hover:bg-violet-500/15 hover:text-white'
-                      : 'border-violet-200/70 bg-violet-50/50 text-[#1E1B2E]/85 hover:border-violet-300 hover:bg-violet-50 hover:text-[#1E1B2E]'
-                    : darkMode
-                      ? 'border-transparent text-white/70 hover:bg-white/5 hover:text-white'
-                      : 'border-transparent text-[#1E1B2E]/70 hover:bg-[#1E1B2E]/[0.05] hover:text-[#1E1B2E]'
+                  : darkMode
+                    ? 'border-transparent text-white/75 hover:bg-white/5 hover:text-white'
+                    : 'border-transparent text-[#1E1B2E]/80 hover:bg-[#1E1B2E]/[0.05] hover:text-[#1E1B2E]'
               }`}
             >
               <span className="relative flex h-7 w-7 items-center justify-center">
@@ -109,7 +105,8 @@ export default function DesktopLeftNav({
                   aria-hidden="true"
                   width={24}
                   height={24}
-                  decoding="async"
+                  loading="eager"
+                  decoding="sync"
                   className="h-6 w-6 object-contain"
                 />
                 {item.id === 'quiz' && showQuizDot && (
@@ -122,7 +119,15 @@ export default function DesktopLeftNav({
               </span>
               <span>{lang === 'tr' ? item.tr : item.en}</span>
               {item.badge && (
-                <span className="ml-auto rounded-full bg-gradient-to-r from-violet-500 to-fuchsia-500 px-2 py-0.5 text-[10px] font-black uppercase tracking-wider text-white shadow-sm">
+                <span
+                  className={`ml-auto rounded-full px-2 py-0.5 text-[10px] font-black uppercase tracking-wider ${
+                    active
+                      ? 'bg-gradient-to-r from-violet-500 to-fuchsia-500 text-white shadow-sm'
+                      : darkMode
+                        ? 'border border-white/15 bg-white/10 text-violet-200'
+                        : 'border border-violet-200 bg-violet-100/80 text-violet-800'
+                  }`}
+                >
                   {item.badge}
                 </span>
               )}

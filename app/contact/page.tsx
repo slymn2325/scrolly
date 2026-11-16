@@ -5,7 +5,7 @@ import ContactInteractiveSection from '@/components/ContactInteractiveSection';
 import TrustPageShell from '@/components/TrustPageShell';
 import type { Language } from '@/i18n/translations';
 
-export const revalidate = 3600;
+export const dynamic = 'force-dynamic';
 
 interface PageProps {
   searchParams: Promise<{ lang?: string }>;

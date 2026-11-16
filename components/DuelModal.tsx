@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { AnimatePresence, motion } from 'framer-motion';
+import { motion } from 'framer-motion';
 import {
   Bot,
   Check,
@@ -161,6 +161,13 @@ export default function DuelModal({
   const wasOpenRef = useRef(false);
 
   useEscapeClose(open && !isPage, onClose);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const preloadImg = new window.Image();
+    preloadImg.decoding = 'sync';
+    preloadImg.src = STATE_ILLUSTRATION_PATHS.duelArena;
+  }, []);
 
   const activeRoom = useMemo<ScrollaRoom | null>(() => {
     if (botLocalRoom) return botLocalRoom;
@@ -674,7 +681,7 @@ export default function DuelModal({
     if (!room || botLocalRoom) return '';
     const origin =
       typeof window !== 'undefined' ? window.location.origin : 'https://scrolly.live';
-    return `${origin}/?duel=${room.code}`;
+    return `${origin}/?tab=duel&room=${room.code}`;
   }, [botLocalRoom, room]);
 
   const handleCopyDuel = async () => {
@@ -707,16 +714,16 @@ export default function DuelModal({
     : '';
 
   const shellClass = isPage
-    ? 'absolute inset-0 z-20 flex h-full w-full flex-col bg-[#FFFDF9] dark:bg-[#141024]'
-    : 'absolute inset-0 z-20 flex h-full w-full flex-col bg-[#FFFDF9] dark:bg-[#141024]';
+    ? 'absolute inset-0 z-20 flex h-full w-full flex-col bg-[#FFFDF9] dark:bg-[#0B0B11]'
+    : 'absolute inset-0 z-20 flex h-full w-full items-center justify-center bg-[#0B0B11]/85 p-3 backdrop-blur-sm';
 
   const panelClass = isPage
     ? 'relative flex h-full w-full flex-col overflow-y-auto no-scrollbar px-4 pb-[calc(env(safe-area-inset-bottom,16px)+100px)] pt-[calc(env(safe-area-inset-top,20px)+16px)] lg:pb-6 lg:pt-6'
-    : 'relative mb-[92px] max-h-[84dvh] w-full max-w-[440px] overflow-y-auto no-scrollbar rounded-3xl border-2 border-amber-200 bg-[#FFFDF9] p-5 shadow-2xl dark:border-violet-700/50 dark:bg-[#171228] sm:p-6 md:max-w-2xl';
+    : 'relative mb-[92px] max-h-[84dvh] w-full max-w-[440px] overflow-y-auto no-scrollbar rounded-3xl border-2 border-amber-200 bg-[#FFFDF9] p-5 shadow-2xl dark:border-violet-700/50 dark:bg-[#0B0B11] sm:p-6 md:max-w-2xl';
+
+  if (!open) return null;
 
   return (
-    <AnimatePresence>
-      {open && (
         <div
           role={isPage ? 'region' : 'dialog'}
           aria-modal={isPage ? undefined : true}
@@ -726,10 +733,9 @@ export default function DuelModal({
           className={shellClass}
         >
           <motion.div
-            initial={isPage ? { opacity: 0, x: 12 } : { opacity: 0, scale: 0.9, y: 18 }}
-            animate={isPage ? { opacity: 1, x: 0 } : { opacity: 1, scale: 1, y: 0 }}
-            exit={isPage ? { opacity: 0, x: 8 } : { opacity: 0, scale: 0.9, y: 18 }}
-            transition={{ type: 'spring', stiffness: 320, damping: 26 }}
+            initial={isPage ? { opacity: 0.94, y: 8 } : { opacity: 0.94, scale: 0.97, y: 8 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            transition={{ duration: 0.14, ease: [0.23, 1, 0.32, 1] }}
             className={panelClass}
           >
             {!isPage && (
@@ -753,6 +759,10 @@ export default function DuelModal({
                     src={STATE_ILLUSTRATION_PATHS.duelArena}
                     alt=""
                     aria-hidden="true"
+                    width={36}
+                    height={36}
+                    loading="eager"
+                    decoding="sync"
                     className="h-9 w-9 object-contain drop-shadow-sm"
                   />
                 </div>
@@ -798,7 +808,7 @@ export default function DuelModal({
                     value={nickname}
                     onChange={(e) => setNickname(e.target.value)}
                     maxLength={24}
-                    className="mt-1.5 w-full rounded-2xl border border-amber-200 bg-white px-3.5 py-2.5 text-sm font-bold text-ink outline-none focus:border-violet-500 dark:border-white/15 dark:bg-white/10 dark:text-white"
+                    className="mt-1.5 w-full rounded-2xl border border-amber-200 bg-white px-3.5 py-2.5 text-sm font-bold text-ink focus:border-violet-500 focus:outline-none focus:ring-2 focus:ring-violet-400/50 dark:border-white/15 dark:bg-white/10 dark:text-white"
                   />
                 </div>
 
@@ -815,7 +825,7 @@ export default function DuelModal({
                       placeholder="K8M2P9"
                       maxLength={6}
                       data-testid="duel-join-code-input"
-                      className="min-w-0 flex-1 rounded-xl border border-violet-300 bg-white px-3 py-2 font-mono text-sm font-black tracking-widest text-ink uppercase outline-none focus:border-violet-600 dark:border-white/20 dark:bg-black/35 dark:text-white"
+                      className="min-w-0 flex-1 rounded-xl border border-violet-300 bg-white px-3 py-2 font-mono text-sm font-black tracking-widest text-ink uppercase focus:border-violet-600 focus:outline-none focus:ring-2 focus:ring-violet-400/50 dark:border-white/20 dark:bg-black/35 dark:text-white"
                     />
                     <motion.button
                       type="button"
@@ -1395,7 +1405,5 @@ export default function DuelModal({
             )}
           </motion.div>
         </div>
-      )}
-    </AnimatePresence>
   );
 }
