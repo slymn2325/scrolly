@@ -6,6 +6,8 @@
  */
 
 const ZWSP = '\u200B';
+const IPA_SYMBOL_PATTERN = /[ˈˌːɑɒæəɜɪʊʌθðʃʒŋɡ]/;
+const IPA_ESCAPE_PATTERN = /\\[uʊiɪeɛæɑɒɔoʊəɜ]/;
 
 export function sanitizePhoneticText(raw: string | null | undefined): string {
   return String(raw || '').trim().slice(0, 80);
@@ -24,9 +26,24 @@ export function formatPhoneticForDisplay(raw: string | null | undefined): string
 /** True when a string looks like slash-wrapped IPA rather than a real URL/path. */
 export function looksLikeIpaPhonetic(value: string | null | undefined): boolean {
   const trimmed = String(value || '').trim();
-  if (!trimmed.startsWith('/') || !trimmed.endsWith('/') || trimmed.length < 3) {
+  if (!trimmed.startsWith('/') || trimmed.length < 3) {
     return false;
   }
-  // IPA typically contains stress marks, length marks, or non-ASCII phonetic letters.
-  return /[ˈˌːɑɒæəɜɪʊʌθðʃʒŋɡ]/.test(trimmed) || /\\[uʊiɪeɛæɑɒɔoʊəɜ]/.test(trimmed);
+  // Accept `/ipa/` and crawler-truncated `/ipa` forms (e.g. /æmˈbɪv.ə.lənt).
+  const body =
+    trimmed.endsWith('/') && trimmed.length > 2 ? trimmed.slice(1, -1) : trimmed.slice(1);
+  if (!body) return false;
+  return IPA_SYMBOL_PATTERN.test(body) || IPA_ESCAPE_PATTERN.test(body);
+}
+
+/**
+ * Absolute http(s) href only. Rejects IPA phonetics and other relative paths so
+ * they never become `<a href>` / `<Link href>` targets.
+ */
+export function safeExternalHref(url: string | null | undefined): string | undefined {
+  const trimmed = String(url || '').trim();
+  if (!trimmed) return undefined;
+  if (looksLikeIpaPhonetic(trimmed)) return undefined;
+  if (!/^https?:\/\//i.test(trimmed)) return undefined;
+  return trimmed;
 }

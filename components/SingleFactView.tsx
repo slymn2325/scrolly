@@ -59,6 +59,7 @@ import {
   CATEGORY_SUB_ICON_MAP,
   UI_ICON_PATHS,
 } from '@/utils/icons8Assets';
+import { safeExternalHref } from '@/utils/phoneticDisplay';
 import { prepareQuizOptions } from '@/utils/recommendation';
 import { playCelebration, playDing, playPop, playWrong } from '@/utils/soundEngine';
 import {
@@ -215,7 +216,7 @@ export default function SingleFactView({
   const catSubIcon = CATEGORY_SUB_ICON_MAP[fact.category];
   const resolvedSourceName =
     content.sourceName || fact.sourceName || content.sourceHint;
-  const resolvedSourceUrl = content.sourceUrl || fact.sourceUrl;
+  const resolvedSourceUrl = safeExternalHref(content.sourceUrl || fact.sourceUrl);
 
   const detailHighlights = useMemo(
     () =>

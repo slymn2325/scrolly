@@ -23,6 +23,7 @@ import { trackEvent } from '@/lib/telemetry';
 import type { FactCard } from '@/types/fact';
 import { getFactUrl } from '@/utils/factsData';
 import { UI_ICON_PATHS } from '@/utils/icons8Assets';
+import { safeExternalHref } from '@/utils/phoneticDisplay';
 import {
   buildFactDetailArticle,
   buildStructuredDetailHighlights,
@@ -119,7 +120,7 @@ export default function FactDetailPage({
 
   const resolvedSourceName =
     localized.sourceName || fact.sourceName || localized.sourceHint;
-  const resolvedSourceUrl = localized.sourceUrl || fact.sourceUrl;
+  const resolvedSourceUrl = safeExternalHref(localized.sourceUrl || fact.sourceUrl);
 
   return (
     <motion.div
