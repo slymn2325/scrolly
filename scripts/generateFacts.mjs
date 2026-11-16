@@ -120,8 +120,11 @@ const SKETCH_TYPES = [
 const VALID_SKETCH_TYPES = new Set(SKETCH_TYPES);
 
 const CUSTOM_AI_MODELS_ENDPOINT = String(process.env.AI_MODELS_ENDPOINT || '').trim();
-const DEFAULT_AI_MODEL_NAME = String(process.env.AI_MODEL_NAME || 'gemini-4-hydrogen').trim() || 'gemini-4-hydrogen';
-const GEMINI_FALLBACK_MODELS = ['gemini-4-hydrogen', 'gemini-2.5-flash', 'gemini-2.5-pro'];
+// IMPORTANT: must be a Google Generative Language API model id (not a Cursor-internal name).
+// Root cause of silent cron failures: defaulting to `gemini-4-hydrogen` (not a Gemini API model).
+const DEFAULT_AI_MODEL_NAME =
+  String(process.env.AI_MODEL_NAME || 'gemini-2.5-flash').trim() || 'gemini-2.5-flash';
+const GEMINI_FALLBACK_MODELS = ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-2.5-pro'];
 
 const CATEGORY_VISUAL_DEFAULTS = {
   space: { accentColor: '#7C3AED', iconName: 'Orbit', emoji: '🪐' },
@@ -335,27 +338,48 @@ function pickTenorCandidateUrl(row) {
   return '';
 }
 
-async function fetchGifCandidate(url, gifQuery, category, extractCandidates) {
+async function fetchGifCandidate(url, gifQuery, category, extractCandidates, providerLabel = 'gif') {
   try {
     const res = await fetch(url, {
       signal: AbortSignal.timeout(GIF_FETCH_TIMEOUT_MS),
       headers: { Accept: 'application/json' },
     });
+    if (res.status === 401 || res.status === 403) {
+      console.error(
+        `[generateFacts] ${providerLabel} HTTP ${res.status} (auth) query="${gifQuery}" data.length=0 — check API key`
+      );
+      return { gifUrl: null, rateLimited: false, status: res.status, dataLength: 0, emptyResult: true };
+    }
     if (res.status === 429) {
+      console.error(`[generateFacts] ${providerLabel} HTTP 429 (rate limit) query="${gifQuery}" data.length=0`);
       lockGifQuotaForWindow();
-      return { gifUrl: null, rateLimited: true };
+      return { gifUrl: null, rateLimited: true, status: 429, dataLength: 0, emptyResult: true };
     }
     if (!res.ok) {
-      return { gifUrl: null, rateLimited: false };
+      console.error(`[generateFacts] ${providerLabel} HTTP ${res.status} query="${gifQuery}" data.length=0`);
+      return { gifUrl: null, rateLimited: false, status: res.status, dataLength: 0, emptyResult: true };
     }
     const json = await res.json();
     const candidates = extractCandidates(json);
+    const dataLength = Array.isArray(candidates) ? candidates.length : 0;
+    console.log(`[generateFacts] ${providerLabel} HTTP 200 query="${gifQuery}" data.length=${dataLength}`);
+    const gifUrl = selectTopicRelevantCleanGif(candidates, gifQuery, category);
+    if (!gifUrl) {
+      console.log(
+        `[generateFacts] ${providerLabel} candidates rejected by clean/relevance filters query="${gifQuery}" data.length=${dataLength}`
+      );
+    }
     return {
-      gifUrl: selectTopicRelevantCleanGif(candidates, gifQuery, category),
+      gifUrl,
       rateLimited: false,
+      status: 200,
+      dataLength,
+      emptyResult: !gifUrl,
     };
-  } catch {
-    return { gifUrl: null, rateLimited: false };
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    console.error(`[generateFacts] ${providerLabel} network/timeout query="${gifQuery}": ${msg}`);
+    return { gifUrl: null, rateLimited: false, status: 0, dataLength: 0, emptyResult: true };
   }
 }
 
@@ -382,7 +406,8 @@ async function fetchGiphyCleanGif(gifQuery, category, apiKey) {
         tags: Array.isArray(row?.tags) ? row.tags : [],
         isSticker: Boolean(row?.is_sticker),
       }));
-    }
+    },
+    'Giphy'
   );
 }
 
@@ -409,7 +434,8 @@ async function fetchTenorCleanGif(gifQuery, category, apiKey) {
         tags: Array.isArray(row?.tags) ? row.tags : [],
         isSticker: Array.isArray(row?.flags) && row.flags.includes('sticker'),
       }));
-    }
+    },
+    'Tenor'
   );
 }
 
@@ -473,7 +499,9 @@ async function resolveServerGifForFact({
   return { gifQuery, gifUrl: null, source: 'none', skippedReason: 'no_clean_match' };
 }
 
-async function backfillMissingFactGifs(pool, { maxPerRun = 30 } = {}) {
+async function backfillMissingFactGifs(pool, { maxPerRun = 12 } = {}) {
+  const CIRCUIT_BREAKER = 3;
+  const REQUEST_GAP_MS = 350;
   const giphyKey = String(process.env.GIPHY_API_KEY || '').trim();
   const tenorKey = String(process.env.TENOR_API_KEY || '').trim();
   if (!giphyKey && !tenorKey) {
@@ -485,7 +513,10 @@ async function backfillMissingFactGifs(pool, { maxPerRun = 30 } = {}) {
     return { attempted: 0, updated: 0, queryUpdated: 0, skippedReason: 'quota_exhausted' };
   }
 
-  const limit = Math.max(1, Math.min(maxPerRun, quotaStatus.remaining));
+  const limit = Math.max(1, Math.min(15, maxPerRun, quotaStatus.remaining));
+  console.log(
+    `[generateFacts] GIF backfill start: maxPerRun=${limit} quotaRemaining=${quotaStatus.remaining}/${quotaStatus.limit}`
+  );
   const pendingRes = await pool.query(
     `SELECT id, slug, category, title_en, visual_query, gif_query
      FROM facts
@@ -499,11 +530,16 @@ async function backfillMissingFactGifs(pool, { maxPerRun = 30 } = {}) {
   let updated = 0;
   let queryUpdated = 0;
   let stopReason = null;
+  let consecutiveMisses = 0;
 
   for (const row of pendingRes.rows) {
     if (!canConsumeGifQuota()) {
       stopReason = 'quota_exhausted';
       break;
+    }
+
+    if (attempted > 0) {
+      await sleep(REQUEST_GAP_MS);
     }
 
     attempted += 1;
@@ -514,6 +550,7 @@ async function backfillMissingFactGifs(pool, { maxPerRun = 30 } = {}) {
     });
 
     if (resolved.gifUrl) {
+      consecutiveMisses = 0;
       await pool.query(
         `UPDATE facts
          SET gif_url = $2,
@@ -523,22 +560,40 @@ async function backfillMissingFactGifs(pool, { maxPerRun = 30 } = {}) {
         [row.id, resolved.gifUrl, resolved.gifQuery]
       );
       updated += 1;
-    } else if (!row.gif_query && resolved.gifQuery) {
-      await pool.query(
-        `UPDATE facts
-         SET gif_query = $2
-         WHERE id = $1
-           AND (gif_query IS NULL OR TRIM(gif_query) = '')`,
-        [row.id, resolved.gifQuery]
+    } else {
+      consecutiveMisses += 1;
+      if (!row.gif_query && resolved.gifQuery) {
+        await pool.query(
+          `UPDATE facts
+           SET gif_query = $2
+           WHERE id = $1
+             AND (gif_query IS NULL OR TRIM(gif_query) = '')`,
+          [row.id, resolved.gifQuery]
+        );
+        queryUpdated += 1;
+      }
+      console.log(
+        `[generateFacts] GIF miss ${consecutiveMisses}/${CIRCUIT_BREAKER} slug=${row.slug} reason=${resolved.skippedReason || 'unknown'}`
       );
-      queryUpdated += 1;
     }
 
     if (resolved.skippedReason === 'quota_exhausted' || resolved.skippedReason === 'rate_limited') {
       stopReason = resolved.skippedReason;
       break;
     }
+
+    if (consecutiveMisses >= CIRCUIT_BREAKER) {
+      stopReason = 'circuit_open';
+      console.error(
+        `[generateFacts] Circuit breaker OPEN after ${consecutiveMisses} consecutive GIF misses — stopping backfill`
+      );
+      break;
+    }
   }
+
+  console.log(
+    `[generateFacts] GIF backfill done: attempted=${attempted} updated=${updated} queryUpdated=${queryUpdated} stop=${stopReason || 'none'}`
+  );
 
   return {
     attempted,
@@ -891,6 +946,48 @@ function getGenerationToken() {
   ).trim();
 }
 
+async function acquireCardGenerationLock(pool) {
+  try {
+    const res = await pool.query(
+      `UPDATE scheduler_state
+       SET is_generating_cards = TRUE,
+           card_lock_started_at = NOW(),
+           updated_at = NOW()
+       WHERE id = 1
+         AND (
+           is_generating_cards = FALSE
+           OR card_lock_started_at IS NULL
+           OR card_lock_started_at <= NOW() - INTERVAL '20 minutes'
+         )
+       RETURNING id`
+    );
+    return (res.rowCount ?? 0) > 0;
+  } catch (err) {
+    console.warn(
+      '[generateFacts] Card generation lock acquire failed (continuing unlocked):',
+      err instanceof Error ? err.message : err
+    );
+    return true;
+  }
+}
+
+async function releaseCardGenerationLock(pool) {
+  try {
+    await pool.query(
+      `UPDATE scheduler_state
+       SET is_generating_cards = FALSE,
+           card_lock_started_at = NULL,
+           updated_at = NOW()
+       WHERE id = 1`
+    );
+  } catch (err) {
+    console.warn(
+      '[generateFacts] Card generation lock release failed:',
+      err instanceof Error ? err.message : err
+    );
+  }
+}
+
 function isRootOrGenericUrl(urlStr) {
   try {
     const parsed = new URL(urlStr);
@@ -942,10 +1039,15 @@ async function verifyPrimarySourceUrl(urlStr) {
         headers,
       });
     }
-    if (res.status === 200) {
-      return { ok: true, status: res.status };
+    // Accept 200–399 (redirects already followed). Reject 404/5xx/broken links.
+    if (res.status >= 200 && res.status < 400) {
+      const finalUrl = String(res.url || urlStr).trim();
+      if (isRootOrGenericUrl(finalUrl)) {
+        return { ok: false, reason: 'root-or-invalid-url-after-redirect', status: res.status, finalUrl };
+      }
+      return { ok: true, status: res.status, finalUrl };
     }
-    return { ok: false, reason: `http-${res.status}` };
+    return { ok: false, reason: `http-${res.status}`, status: res.status };
   } catch (err) {
     return {
       ok: false,
@@ -954,6 +1056,56 @@ async function verifyPrimarySourceUrl(urlStr) {
   } finally {
     clearTimeout(timer);
   }
+}
+
+function extractGroundedWebUrls(candidate) {
+  const urls = [];
+  const meta = candidate?.groundingMetadata;
+  const chunks = Array.isArray(meta?.groundingChunks) ? meta.groundingChunks : [];
+  for (const chunk of chunks) {
+    const uri = chunk?.web?.uri || chunk?.web?.url;
+    if (typeof uri === 'string' && /^https?:\/\//i.test(uri.trim())) {
+      urls.push(uri.trim());
+    }
+  }
+  // Deduplicate while preserving order
+  return [...new Set(urls)];
+}
+
+function pickGroundedDeepLink(groundedUrls, preferredUrl = '') {
+  const preferred = String(preferredUrl || '').trim();
+  const candidates = [];
+  if (preferred) candidates.push(preferred);
+  for (const url of groundedUrls || []) {
+    if (!candidates.includes(url)) candidates.push(url);
+  }
+
+  for (const url of candidates) {
+    if (!/^https:\/\//i.test(url)) continue;
+    if (isRootOrGenericUrl(url)) continue;
+    return url;
+  }
+  return null;
+}
+
+function attachGroundedSourceUrl(fact, groundedUrls) {
+  if (!fact || typeof fact !== 'object') return fact;
+  const modelUrl = String(fact.source_url || '').trim();
+  const groundedPick = pickGroundedDeepLink(groundedUrls, modelUrl);
+  if (!groundedPick) {
+    return {
+      ...fact,
+      source_url: modelUrl,
+      _groundingAttached: false,
+      _groundingRejectedReason: 'no-deep-grounded-url',
+    };
+  }
+  return {
+    ...fact,
+    source_url: groundedPick,
+    _groundingAttached: groundedPick !== modelUrl || groundedUrls.includes(modelUrl),
+    _groundedFromSearch: groundedUrls.includes(groundedPick),
+  };
 }
 
 async function validateGeneratedFact(item, existingSlugs, existingTitlesEn, options = {}) {
@@ -1022,12 +1174,28 @@ async function validateGeneratedFact(item, existingSlugs, existingTitlesEn, opti
     return null;
   }
 
+  // Ban homepage / root URLs; require a live deep article/research link (200–399).
+  if (isRootOrGenericUrl(sourceUrl)) {
+    console.warn(
+      `[generateFacts] Rejected candidate "${titleEn}" — homepage/root source_url banned: ${sourceUrl}`
+    );
+    return null;
+  }
+
   const sourceCheck = skipUrlFetch
-    ? { ok: !isRootOrGenericUrl(sourceUrl), reason: 'root-or-invalid-url' }
+    ? { ok: true, reason: 'skipped-fetch', finalUrl: sourceUrl }
     : await verifyPrimarySourceUrl(sourceUrl);
   if (!sourceCheck.ok) {
     console.warn(
       `[generateFacts] Rejected candidate "${titleEn}" due to unverified primary source URL (${sourceCheck.reason}): ${sourceUrl}`
+    );
+    return null;
+  }
+
+  const verifiedSourceUrl = String(sourceCheck.finalUrl || sourceUrl).trim();
+  if (isRootOrGenericUrl(verifiedSourceUrl)) {
+    console.warn(
+      `[generateFacts] Rejected candidate "${titleEn}" — final URL after redirect is homepage: ${verifiedSourceUrl}`
     );
     return null;
   }
@@ -1116,7 +1284,7 @@ async function validateGeneratedFact(item, existingSlugs, existingTitlesEn, opti
     quiz_tr: normalizeQuizObj(item.quiz_tr, detailTr),
     quiz_en: normalizeQuizObj(item.quiz_en, detailEn),
     source_name: sourceName,
-    source_url: sourceUrl,
+    source_url: verifiedSourceUrl,
   };
 }
 
@@ -1140,7 +1308,7 @@ function buildPrompts(existingTitlesEn, topEngaged, batchOptions = {}) {
       : 'No prior telemetry events yet—aim for crisp, astonishing, verified scientific hooks.';
 
   const systemPrompt = `You are the chief scientific editor for Scrolly (scrolly.live), a bilingual (Turkish & English) micro-learning discovery feed.
-Generate strictly valid JSON matching the exact schema requested. Every fact MUST be scientifically true, verifiable, fascinating, and cite a REAL, permanent, deep primary source URL starting with https:// (such as a specific NASA/ESA/NOAA article URL, NIH/PubMed paper, Nature/Science DOI, Smithsonian/UNESCO/Guinness specific entry page, or university press release — NEVER a root homepage like https://www.nasa.gov/ or https://www.nature.com/).
+Generate strictly valid JSON matching the exact schema requested. Every fact MUST be scientifically true, verifiable, fascinating, and cite a REAL, permanent, deep primary source URL starting with https:// taken from Google Search grounding results when available (specific NASA/ESA/NOAA article URL, NIH/PubMed paper, Nature/Science DOI, Smithsonian/UNESCO/Guinness specific entry page, or university press release — NEVER invent URLs and NEVER use a root homepage like https://www.nasa.gov/ or https://www.nature.com/).
 
 STRICT ANTI-CLICHÉ BAN LIST — NEVER generate or paraphrase these overused internet trivia tropes:
 1. A teaspoon of neutron star weighing billions of tons
@@ -1517,51 +1685,79 @@ async function appendGeneratedFacts(cleanFacts, seedSlugs = new Set(), seedIds =
 
 async function requestNativeGemini({ modelName, token, systemPrompt, userPrompt }) {
   const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(modelName)}:generateContent?key=${encodeURIComponent(token)}`;
-  const buildBody = (includeThinkingLevel) => {
+  const buildBody = ({ includeThinkingLevel, includeGoogleSearch, jsonMime }) => {
     const generationConfig = {
       temperature: 0.7,
       maxOutputTokens: 32768,
-      responseMimeType: 'application/json',
     };
+    if (jsonMime) {
+      generationConfig.responseMimeType = 'application/json';
+    }
     if (includeThinkingLevel) {
       generationConfig.thinkingConfig = { thinkingLevel: 'LOW' };
     }
-    return {
+    const body = {
       systemInstruction: { parts: [{ text: systemPrompt }] },
       contents: [{ role: 'user', parts: [{ text: userPrompt }] }],
       generationConfig,
     };
+    if (includeGoogleSearch) {
+      // Grounding with Google Search — source URLs must come from groundingMetadata.
+      body.tools = [{ google_search: {} }];
+    }
+    return body;
   };
 
-  let response = await fetch(endpoint, {
-    method: 'POST',
-    headers: {
-      Accept: 'application/json',
-      'Content-Type': 'application/json',
-    },
-    signal: AbortSignal.timeout(60000),
-    body: JSON.stringify(buildBody(true)),
-  });
-
-  let rawText = (await response.text()).trim();
-
-  // If a 2.5 fallback model rejects thinkingLevel in generationConfig, retry once without it
-  if (
-    response.status === 400 &&
-    /thinkingLevel|thinking_config|thinkingConfig/i.test(rawText)
-  ) {
-    response = await fetch(endpoint, {
+  const postOnce = async (opts) => {
+    const response = await fetch(endpoint, {
       method: 'POST',
       headers: {
         Accept: 'application/json',
         'Content-Type': 'application/json',
       },
-      signal: AbortSignal.timeout(60000),
-      body: JSON.stringify(buildBody(false)),
+      signal: AbortSignal.timeout(90000),
+      body: JSON.stringify(buildBody(opts)),
     });
-    rawText = (await response.text()).trim();
+    const rawText = (await response.text()).trim();
+    return { response, rawText };
+  };
+
+  console.log(
+    `[generateFacts] Gemini request start model=${modelName} googleSearch=true jsonMime=false`
+  );
+
+  // Prefer Search grounding (no JSON mime / thinking — most compatible with google_search tool).
+  let { response, rawText } = await postOnce({
+    includeThinkingLevel: false,
+    includeGoogleSearch: true,
+    jsonMime: false,
+  });
+
+  // Tool / schema rejections → retry without search but with JSON mime.
+  if (
+    !response.ok &&
+    /google_search|googleSearch|tools|Tool/i.test(rawText)
+  ) {
+    console.warn(
+      `[generateFacts] Gemini google_search rejected (HTTP ${response.status}); retrying JSON-only mode`
+    );
+    ({ response, rawText } = await postOnce({
+      includeThinkingLevel: false,
+      includeGoogleSearch: false,
+      jsonMime: true,
+    }));
+  } else if (
+    response.status === 400 &&
+    /thinkingLevel|thinking_config|thinkingConfig/i.test(rawText)
+  ) {
+    ({ response, rawText } = await postOnce({
+      includeThinkingLevel: false,
+      includeGoogleSearch: true,
+      jsonMime: false,
+    }));
   }
 
+  // If grounded text didn't parse as JSON, one JSON-mime retry (still with search when possible).
   let data;
   try {
     data = rawText ? JSON.parse(rawText) : null;
@@ -1569,14 +1765,58 @@ async function requestNativeGemini({ modelName, token, systemPrompt, userPrompt 
     data = null;
   }
 
-  const candidate = data?.candidates?.[0];
-  const finishReason = candidate?.finishReason || data?.error?.status || 'unknown';
-  const usageMetadata = data?.usageMetadata || null;
-  const contentText = (candidate?.content?.parts || [])
+  let candidate = data?.candidates?.[0];
+  let contentText = (candidate?.content?.parts || [])
     .filter((p) => !p.thought && typeof p.text === 'string')
     .map((p) => p.text)
     .join('\n')
     .trim();
+  let parsedPayload = extractJsonCandidate(contentText);
+
+  if (response.ok && !parsedPayload) {
+    console.warn(
+      `[generateFacts] Gemini response JSON parse miss; retrying with responseMimeType=json (model=${modelName})`
+    );
+    ({ response, rawText } = await postOnce({
+      includeThinkingLevel: false,
+      includeGoogleSearch: true,
+      jsonMime: true,
+    }));
+    try {
+      data = rawText ? JSON.parse(rawText) : null;
+    } catch {
+      data = null;
+    }
+    candidate = data?.candidates?.[0];
+    contentText = (candidate?.content?.parts || [])
+      .filter((p) => !p.thought && typeof p.text === 'string')
+      .map((p) => p.text)
+      .join('\n')
+      .trim();
+    parsedPayload = extractJsonCandidate(contentText);
+  }
+
+  const finishReason = candidate?.finishReason || data?.error?.status || 'unknown';
+  const usageMetadata = data?.usageMetadata || null;
+  const groundedUrls = extractGroundedWebUrls(candidate);
+
+  console.log(
+    `[generateFacts] Gemini response model=${modelName} http=${response.status} ok=${response.ok} finishReason=${finishReason} groundedUrls=${groundedUrls.length} parsedFacts=${Array.isArray(parsedPayload?.facts) ? parsedPayload.facts.length : 0}`
+  );
+  if (!response.ok) {
+    console.error(
+      `[generateFacts] Gemini error body snippet: ${rawText.slice(0, 400)}`
+    );
+  }
+  if (groundedUrls.length > 0) {
+    console.log(
+      `[generateFacts] Grounding sample URLs: ${groundedUrls.slice(0, 5).join(' | ')}`
+    );
+  } else if (response.ok) {
+    console.warn(
+      '[generateFacts] No groundingMetadata URLs returned — deep-link validator will reject homepage/guessed sources'
+    );
+  }
 
   return {
     ok: response.ok,
@@ -1585,7 +1825,8 @@ async function requestNativeGemini({ modelName, token, systemPrompt, userPrompt 
     usageMetadata,
     rawText,
     contentText,
-    parsedPayload: extractJsonCandidate(contentText),
+    parsedPayload,
+    groundedUrls,
   };
 }
 
@@ -1638,6 +1879,7 @@ async function requestOpenAICompat({ endpoint, modelName, token, systemPrompt, u
     rawText,
     contentText: contentText || reasoningText,
     parsedPayload,
+    groundedUrls: [],
   };
 }
 
@@ -1662,10 +1904,23 @@ async function fetchGeneratedFactsFromModel(existingTitlesEn, topEngaged, batchO
   });
   const customEndpoint = String(process.env.AI_MODELS_ENDPOINT || CUSTOM_AI_MODELS_ENDPOINT).trim();
   const preferredModel =
-    String(process.env.AI_MODEL_NAME || DEFAULT_AI_MODEL_NAME).trim() || 'gemini-4-hydrogen';
+    String(process.env.AI_MODEL_NAME || DEFAULT_AI_MODEL_NAME).trim() || DEFAULT_AI_MODEL_NAME;
+  // Strip Cursor-internal model aliases that are not valid Gemini API ids.
+  const sanitizedPreferred =
+    /hydrogen|carbon|composer|cursor/i.test(preferredModel) && !/^gemini-\d/i.test(preferredModel)
+      ? DEFAULT_AI_MODEL_NAME
+      : preferredModel;
+  if (sanitizedPreferred !== preferredModel) {
+    console.warn(
+      `[generateFacts] AI_MODEL_NAME="${preferredModel}" is not a Gemini API model id; using ${sanitizedPreferred}`
+    );
+  }
   const useCustomOpenAIEndpoint = Boolean(customEndpoint);
   const modelCandidates = Array.from(
-    new Set([preferredModel, ...GEMINI_FALLBACK_MODELS].filter(Boolean))
+    new Set([sanitizedPreferred, ...GEMINI_FALLBACK_MODELS].filter(Boolean))
+  );
+  console.log(
+    `[generateFacts] Model candidates: ${modelCandidates.join(' → ')} (customEndpoint=${useCustomOpenAIEndpoint})`
   );
   const maxAttempts = 3;
   const failures = [];
@@ -1691,21 +1946,38 @@ async function fetchGeneratedFactsFromModel(existingTitlesEn, topEngaged, batchO
         const payload = result.parsedPayload;
         const factsArr = Array.isArray(payload?.facts) ? payload.facts : [];
         const vocabArr = Array.isArray(payload?.vocabulary) ? payload.vocabulary : [];
+        const groundedUrls = Array.isArray(result.groundedUrls) ? result.groundedUrls : [];
 
         if (result.ok && factsArr.length > 0) {
           if (factsArr.length < factsTarget || vocabArr.length < vocabTarget) {
             console.warn(
-              `[generateFacts] Partial counts from ${modelName} (attempt ${attempt}/${maxAttempts}): facts=${factsArr.length}/${factsTarget}, vocabulary=${vocabArr.length}/${vocabTarget}, finishReason=${result.finishReason}, usageMetadata=${JSON.stringify(result.usageMetadata)}`
+              `[generateFacts] Partial counts from ${modelName} (attempt ${attempt}/${maxAttempts}): facts=${factsArr.length}/${factsTarget}, vocabulary=${vocabArr.length}/${vocabTarget}, finishReason=${result.finishReason}, groundedUrls=${groundedUrls.length}, usageMetadata=${JSON.stringify(result.usageMetadata)}`
             );
             if (factsArr.length < factsTarget && attempt < maxAttempts) {
               await sleep(1000 * 2 ** (attempt - 1));
               continue;
             }
           }
+
+          const factsWithGrounding = factsArr.slice(0, factsTarget).map((fact) => {
+            const attached = attachGroundedSourceUrl(fact, groundedUrls);
+            if (attached?._groundingRejectedReason) {
+              console.warn(
+                `[generateFacts] Fact "${fact?.title_en || fact?.slug}" has no deep grounded URL yet (model_url=${fact?.source_url || 'none'})`
+              );
+            } else if (attached?._groundedFromSearch) {
+              console.log(
+                `[generateFacts] Attached grounded source_url for "${fact?.title_en || fact?.slug}": ${attached.source_url}`
+              );
+            }
+            return attached;
+          });
+
           return {
             model: modelName,
-            facts: factsArr.slice(0, factsTarget),
+            facts: factsWithGrounding,
             vocabulary: vocabTarget > 0 ? vocabArr.slice(0, vocabTarget) : [],
+            groundedUrls,
           };
         }
 
@@ -1892,8 +2164,30 @@ async function runDryRun() {
 }
 
 async function main() {
+  const cronTriggered = Boolean(
+    process.env.DYNO || process.env.HEROKU_APP_NAME || process.env.SCHEDULER_JOB || process.argv.includes('--cron')
+  );
+  const geminiKeySet = Boolean(
+    process.env.GEMINI_API_KEY?.trim() || process.env.AI_API_KEY?.trim() || process.env.OPENAI_API_KEY?.trim()
+  );
+  const preferredModel =
+    String(process.env.AI_MODEL_NAME || DEFAULT_AI_MODEL_NAME).trim() || DEFAULT_AI_MODEL_NAME;
+
+  console.log(
+    `[generateFacts] start at ${new Date().toISOString()} cronTriggered=${cronTriggered} dryRun=${process.argv.includes('--dry-run')}`
+  );
+  console.log(
+    `[generateFacts] Gemini/AI key=${geminiKeySet ? 'set' : 'MISSING'} model=${preferredModel} (default=${DEFAULT_AI_MODEL_NAME}) endpoint=${process.env.AI_MODELS_ENDPOINT ? 'custom' : 'native-gemini+google_search'} GIPHY=${process.env.GIPHY_API_KEY ? 'set' : 'MISSING'} DATABASE_URL=${process.env.DATABASE_URL ? 'set' : 'MISSING'}`
+  );
+  if (!geminiKeySet && !process.argv.includes('--dry-run')) {
+    console.error(
+      '[generateFacts] Gemini will not produce cards: set GEMINI_API_KEY (or AI_API_KEY). Heroku Scheduler should run `npm run generate-facts` with those config vars.'
+    );
+  }
+
   if (process.argv.includes('--dry-run')) {
     await runDryRun();
+    console.log(`[generateFacts] finish dry-run ok at ${new Date().toISOString()}`);
     return;
   }
 
@@ -1904,9 +2198,19 @@ async function main() {
     process.exit(1);
   }
 
+  if (!geminiKeySet) {
+    console.error(
+      '[generateFacts] Fatal: missing GEMINI_API_KEY/AI_API_KEY — cron cannot generate new cards.'
+    );
+    process.exit(1);
+  }
+
   const writeLocalJson = process.argv.includes('--local-json');
   const targetTotal = resolveTargetCardsPerRun();
   const batchPlan = buildBatchPlan(targetTotal);
+  console.log(
+    `[generateFacts] production run: targetCards=${targetTotal} batches=${batchPlan.length} (Scheduler entry: npm run generate-facts)`
+  );
 
   const baseline = await loadLocalBaselineState();
   const { existingSlugs, existingIds, existingTitlesEn, seedVocabWords } = baseline;
@@ -1920,8 +2224,19 @@ async function main() {
       : { rejectUnauthorized: false },
   });
 
+  let lockHeld = false;
   try {
     await ensureSchemaAndSeed(pool);
+
+    lockHeld = await acquireCardGenerationLock(pool);
+    if (!lockHeld) {
+      const busyErr = new Error(
+        'another card-generation run holds is_generating_cards lock (or lock busy). Scheduler will retry next hour.'
+      );
+      console.error(`[generateFacts] Aborting: ${busyErr.message}`);
+      throw busyErr;
+    }
+    console.log('[generateFacts] Acquired is_generating_cards scheduler lock');
 
     const existingRes = await pool.query('SELECT slug, title_en FROM facts');
     for (const r of existingRes.rows) {
@@ -2069,6 +2384,9 @@ async function main() {
         existingSlugs.add(clean.slug);
         existingTitlesEn.add(clean.title_en.toLowerCase());
         if (insertRes.rows[0]) {
+          console.log(
+            `[generateFacts] DB write OK fact id=${insertRes.rows[0].id} slug=${clean.slug} source_url=${clean.source_url}`
+          );
           insertedFactsSummary.push({
             id: insertRes.rows[0].id,
             category: clean.category,
@@ -2078,6 +2396,10 @@ async function main() {
             gifResolved: Boolean(clean.gif_url),
             source: clean.source_name,
           });
+        } else {
+          console.log(
+            `[generateFacts] DB write skipped (duplicate slug) slug=${clean.slug}`
+          );
         }
       }
 
@@ -2155,7 +2477,7 @@ async function main() {
 
     let backfillStats = { attempted: 0, updated: 0, queryUpdated: 0, skippedReason: null };
     try {
-      backfillStats = await backfillMissingFactGifs(pool, { maxPerRun: 30 });
+      backfillStats = await backfillMissingFactGifs(pool, { maxPerRun: 12 });
     } catch (backfillErr) {
       console.warn(
         '[generateFacts] GIF backfill pass skipped due to error:',
@@ -2175,7 +2497,12 @@ async function main() {
     if (insertedVocabSummary.length > 0) {
       console.table(insertedVocabSummary.slice(0, 10));
     }
+    console.log(`[generateFacts] finish ok at ${new Date().toISOString()}`);
   } finally {
+    if (lockHeld) {
+      await releaseCardGenerationLock(pool);
+      console.log('[generateFacts] Released is_generating_cards scheduler lock');
+    }
     await pool.end().catch(() => {});
   }
 }

@@ -94,6 +94,9 @@ interface ProviderFetchResult {
   candidates: RawGifCandidate[];
   hadError: boolean;
   rateLimited: boolean;
+  status: number;
+  dataLength: number;
+  errorKind?: 'auth' | 'rate_limit' | 'http' | 'timeout' | 'network' | null;
 }
 
 export function hasConfiguredGifProviderKeys(): boolean {
@@ -276,15 +279,27 @@ export function scoreGifCandidateRelevance(
  */
 export function pickFirstCleanGifUrl(
   candidates: RawGifCandidate[],
-  options?: PickGifOptions
+  options?: PickGifOptions & { logRejections?: boolean; queryLabel?: string }
 ): string | null {
   let bestUrl: string | null = null;
   let bestScore = -1;
+  let rejectedMissingUrl = 0;
+  let rejectedSticker = 0;
+  let rejectedBannedOrUnsafe = 0;
+  let rejectedIrrelevant = 0;
 
   for (const item of candidates) {
-    if (!item || !item.url || item.isSticker) continue;
+    if (!item || !item.url) {
+      rejectedMissingUrl += 1;
+      continue;
+    }
+    if (item.isSticker) {
+      rejectedSticker += 1;
+      continue;
+    }
     const url = String(item.url).trim();
     if (!isCleanGifUrl(url, [item.title, item.slug, ...(item.tags || [])])) {
+      rejectedBannedOrUnsafe += 1;
       continue;
     }
 
@@ -293,12 +308,27 @@ export function pickFirstCleanGifUrl(
     }
 
     const { relevant, score } = scoreGifCandidateRelevance(item, options);
-    if (!relevant) continue;
+    if (!relevant) {
+      rejectedIrrelevant += 1;
+      continue;
+    }
 
     if (score > bestScore) {
       bestScore = score;
       bestUrl = url;
     }
+  }
+
+  if (!bestUrl && (options?.logRejections || candidates.length > 0)) {
+    console.log(
+      `[gifService] pickFirstCleanGifUrl rejected all candidates` +
+        ` query="${options?.queryLabel || ''}"` +
+        ` total=${candidates.length}` +
+        ` missingUrl=${rejectedMissingUrl}` +
+        ` sticker=${rejectedSticker}` +
+        ` bannedOrUnsafe=${rejectedBannedOrUnsafe}` +
+        ` irrelevant=${rejectedIrrelevant}`
+    );
   }
 
   return bestUrl;
@@ -314,36 +344,94 @@ async function fetchFromGiphy(query: string, apiKey: string): Promise<ProviderFe
     lang: 'en',
   });
 
-  const res = await fetch(`https://api.giphy.com/v1/gifs/search?${params.toString()}`, {
-    signal: AbortSignal.timeout(3500),
-    headers: { Accept: 'application/json' },
-  });
-  if (res.status === 429) return { candidates: [], hadError: true, rateLimited: true };
-  if (!res.ok) return { candidates: [], hadError: true, rateLimited: false };
+  try {
+    const res = await fetch(`https://api.giphy.com/v1/gifs/search?${params.toString()}`, {
+      signal: AbortSignal.timeout(3500),
+      headers: { Accept: 'application/json' },
+    });
 
-  const json = (await res.json()) as {
-    data?: Array<{
-      title?: string;
-      slug?: string;
-      url?: string;
-      is_sticker?: number | boolean;
-      tags?: string[];
-      images?: GiphyImageVariants;
-    }>;
-  };
+    if (res.status === 401 || res.status === 403) {
+      console.error(
+        `[gifService] Giphy HTTP ${res.status} (auth) query="${query}" data.length=0 — check GIPHY_API_KEY`
+      );
+      return {
+        candidates: [],
+        hadError: true,
+        rateLimited: false,
+        status: res.status,
+        dataLength: 0,
+        errorKind: 'auth',
+      };
+    }
+    if (res.status === 429) {
+      console.error(`[gifService] Giphy HTTP 429 (rate limit) query="${query}" data.length=0`);
+      return {
+        candidates: [],
+        hadError: true,
+        rateLimited: true,
+        status: 429,
+        dataLength: 0,
+        errorKind: 'rate_limit',
+      };
+    }
+    if (!res.ok) {
+      console.error(`[gifService] Giphy HTTP ${res.status} query="${query}" data.length=0`);
+      return {
+        candidates: [],
+        hadError: true,
+        rateLimited: false,
+        status: res.status,
+        dataLength: 0,
+        errorKind: 'http',
+      };
+    }
 
-  if (!Array.isArray(json.data)) return { candidates: [], hadError: false, rateLimited: false };
-  return {
-    hadError: false,
-    rateLimited: false,
-    candidates: json.data.map((row) => ({
-      url: pickBestGiphyImageUrl(row.images),
-      title: row.title || '',
-      slug: `${row.slug || ''} ${row.url || ''}`.trim(),
-      tags: Array.isArray(row.tags) ? row.tags : [],
-      isSticker: Boolean(row.is_sticker),
-    })),
-  };
+    const json = (await res.json()) as {
+      data?: Array<{
+        title?: string;
+        slug?: string;
+        url?: string;
+        is_sticker?: number | boolean;
+        tags?: string[];
+        images?: GiphyImageVariants;
+      }>;
+    };
+
+    const rows = Array.isArray(json.data) ? json.data : [];
+    console.log(`[gifService] Giphy HTTP 200 query="${query}" data.length=${rows.length}`);
+    if (rows.length === 0) {
+      console.log(`[gifService] Giphy returned 0 results for query="${query}"`);
+    }
+
+    return {
+      hadError: false,
+      rateLimited: false,
+      status: 200,
+      dataLength: rows.length,
+      errorKind: null,
+      candidates: rows.map((row) => ({
+        url: pickBestGiphyImageUrl(row.images),
+        title: row.title || '',
+        slug: `${row.slug || ''} ${row.url || ''}`.trim(),
+        tags: Array.isArray(row.tags) ? row.tags : [],
+        isSticker: Boolean(row.is_sticker),
+      })),
+    };
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    const isTimeout = /timeout|aborted|AbortError/i.test(msg);
+    console.error(
+      `[gifService] Giphy ${isTimeout ? 'timeout' : 'network'} error query="${query}": ${msg}`
+    );
+    return {
+      candidates: [],
+      hadError: true,
+      rateLimited: false,
+      status: 0,
+      dataLength: 0,
+      errorKind: isTimeout ? 'timeout' : 'network',
+    };
+  }
 }
 
 async function fetchFromTenor(query: string, apiKey: string): Promise<ProviderFetchResult> {
@@ -356,38 +444,89 @@ async function fetchFromTenor(query: string, apiKey: string): Promise<ProviderFe
     locale: 'en_US',
   });
 
-  const res = await fetch(`https://tenor.googleapis.com/v2/search?${params.toString()}`, {
-    signal: AbortSignal.timeout(3500),
-    headers: { Accept: 'application/json' },
-  });
-  if (res.status === 429) return { candidates: [], hadError: true, rateLimited: true };
-  if (!res.ok) return { candidates: [], hadError: true, rateLimited: false };
+  try {
+    const res = await fetch(`https://tenor.googleapis.com/v2/search?${params.toString()}`, {
+      signal: AbortSignal.timeout(3500),
+      headers: { Accept: 'application/json' },
+    });
+    if (res.status === 401 || res.status === 403) {
+      console.error(`[gifService] Tenor HTTP ${res.status} (auth) query="${query}" data.length=0`);
+      return {
+        candidates: [],
+        hadError: true,
+        rateLimited: false,
+        status: res.status,
+        dataLength: 0,
+        errorKind: 'auth',
+      };
+    }
+    if (res.status === 429) {
+      console.error(`[gifService] Tenor HTTP 429 (rate limit) query="${query}" data.length=0`);
+      return {
+        candidates: [],
+        hadError: true,
+        rateLimited: true,
+        status: 429,
+        dataLength: 0,
+        errorKind: 'rate_limit',
+      };
+    }
+    if (!res.ok) {
+      console.error(`[gifService] Tenor HTTP ${res.status} query="${query}" data.length=0`);
+      return {
+        candidates: [],
+        hadError: true,
+        rateLimited: false,
+        status: res.status,
+        dataLength: 0,
+        errorKind: 'http',
+      };
+    }
 
-  const json = (await res.json()) as {
-    results?: Array<{
-      title?: string;
-      h1_title?: string;
-      content_description?: string;
-      itemurl?: string;
-      url?: string;
-      tags?: string[];
-      flags?: string[];
-      media_formats?: TenorMediaFormats;
-    }>;
-  };
+    const json = (await res.json()) as {
+      results?: Array<{
+        title?: string;
+        h1_title?: string;
+        content_description?: string;
+        itemurl?: string;
+        url?: string;
+        tags?: string[];
+        flags?: string[];
+        media_formats?: TenorMediaFormats;
+      }>;
+    };
 
-  if (!Array.isArray(json.results)) return { candidates: [], hadError: false, rateLimited: false };
-  return {
-    hadError: false,
-    rateLimited: false,
-    candidates: json.results.map((row) => ({
-      url: pickBestTenorImageUrl(row.media_formats),
-      title: [row.content_description, row.title, row.h1_title].filter(Boolean).join(' '),
-      slug: [row.itemurl, row.url].filter(Boolean).join(' '),
-      tags: Array.isArray(row.tags) ? row.tags : [],
-      isSticker: Array.isArray(row.flags) && row.flags.includes('sticker'),
-    })),
-  };
+    const rows = Array.isArray(json.results) ? json.results : [];
+    console.log(`[gifService] Tenor HTTP 200 query="${query}" data.length=${rows.length}`);
+    return {
+      hadError: false,
+      rateLimited: false,
+      status: 200,
+      dataLength: rows.length,
+      errorKind: null,
+      candidates: rows.map((row) => ({
+        url: pickBestTenorImageUrl(row.media_formats),
+        title: [row.content_description, row.title, row.h1_title].filter(Boolean).join(' '),
+        slug: [row.itemurl, row.url].filter(Boolean).join(' '),
+        tags: Array.isArray(row.tags) ? row.tags : [],
+        isSticker: Array.isArray(row.flags) && row.flags.includes('sticker'),
+      })),
+    };
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    const isTimeout = /timeout|aborted|AbortError/i.test(msg);
+    console.error(
+      `[gifService] Tenor ${isTimeout ? 'timeout' : 'network'} error query="${query}": ${msg}`
+    );
+    return {
+      candidates: [],
+      hadError: true,
+      rateLimited: false,
+      status: 0,
+      dataLength: 0,
+      errorKind: isTimeout ? 'timeout' : 'network',
+    };
+  }
 }
 
 function setCachedQuery(key: string, entry: CacheEntry) {
@@ -404,6 +543,10 @@ interface ProviderAttemptOutcome {
   rateLimited: boolean;
   quotaBlocked: boolean;
   madeRequest: boolean;
+  emptyResult: boolean;
+  status: number;
+  dataLength: number;
+  errorKind?: ProviderFetchResult['errorKind'];
 }
 
 async function queryGifProviderWithQuota(
@@ -420,11 +563,15 @@ async function queryGifProviderWithQuota(
       rateLimited: false,
       quotaBlocked: true,
       madeRequest: false,
+      emptyResult: false,
+      status: 0,
+      dataLength: 0,
+      errorKind: null,
     };
   }
 
-  const { candidates, hadError, rateLimited } = await fetcher(query, apiKey);
-  if (rateLimited) {
+  const fetched = await fetcher(query, apiKey);
+  if (fetched.rateLimited) {
     await markGifHourlyQuotaExhaustedServer();
     return {
       gifUrl: null,
@@ -432,16 +579,28 @@ async function queryGifProviderWithQuota(
       rateLimited: true,
       quotaBlocked: true,
       madeRequest: true,
+      emptyResult: true,
+      status: fetched.status,
+      dataLength: fetched.dataLength,
+      errorKind: fetched.errorKind,
     };
   }
 
-  const url = pickFirstCleanGifUrl(candidates, relevanceOptions);
+  const url = pickFirstCleanGifUrl(fetched.candidates, {
+    ...relevanceOptions,
+    logRejections: true,
+    queryLabel: query,
+  });
   return {
     gifUrl: url,
-    hadError,
+    hadError: fetched.hadError,
     rateLimited: false,
     quotaBlocked: false,
     madeRequest: true,
+    emptyResult: !url,
+    status: fetched.status,
+    dataLength: fetched.dataLength,
+    errorKind: fetched.errorKind,
   };
 }
 
@@ -452,17 +611,22 @@ async function queryGifProviderWithQuota(
  */
 export async function searchTopicGif(
   rawQuery: string,
-  options?: PickGifOptions & { bypassCache?: boolean }
+  options?: PickGifOptions & { bypassCache?: boolean; relaxRelevance?: boolean }
 ): Promise<{
   gifUrl: string | null;
   provider: 'giphy' | 'tenor' | 'none';
   cached: boolean;
   quotaExhausted?: boolean;
   rateLimited?: boolean;
+  emptyResult?: boolean;
+  upstreamError?: boolean;
+  httpStatus?: number;
+  dataLength?: number;
+  errorKind?: ProviderFetchResult['errorKind'];
 }> {
   const cleanQuery = sanitizeVisualQuery(rawQuery);
   if (!cleanQuery) {
-    return { gifUrl: null, provider: 'none', cached: false };
+    return { gifUrl: null, provider: 'none', cached: false, emptyResult: true };
   }
 
   const giphyKey = process.env.GIPHY_API_KEY?.trim() || '';
@@ -472,13 +636,19 @@ export async function searchTopicGif(
   }
 
   const categorySuffix = options?.category ? `::${String(options.category).toLowerCase()}` : '';
-  const cacheKey = `${cleanQuery}${categorySuffix}`;
+  const relaxSuffix = options?.relaxRelevance ? '::relax' : '';
+  const cacheKey = `${cleanQuery}${categorySuffix}${relaxSuffix}`;
   const now = Date.now();
 
   if (!options?.bypassCache) {
     const cached = gifQueryCache.get(cacheKey);
     if (cached && cached.expiresAt > now) {
-      return { gifUrl: cached.url, provider: cached.provider, cached: true };
+      return {
+        gifUrl: cached.url,
+        provider: cached.provider,
+        cached: true,
+        emptyResult: !cached.url,
+      };
     }
   }
 
@@ -487,18 +657,24 @@ export async function searchTopicGif(
     return { gifUrl: null, provider: 'none', cached: false, quotaExhausted: true };
   }
 
-  const relevanceOptions: PickGifOptions = {
-    expectedTerms:
-      options?.expectedTerms && options.expectedTerms.length > 0
-        ? options.expectedTerms
-        : cleanQuery.split(' '),
-    category: options?.category,
-  };
+  const relevanceOptions: PickGifOptions = options?.relaxRelevance
+    ? { category: options?.category }
+    : {
+        expectedTerms:
+          options?.expectedTerms && options.expectedTerms.length > 0
+            ? options.expectedTerms
+            : cleanQuery.split(' '),
+        category: options?.category,
+      };
 
   let sawUpstreamError = false;
   let madeUpstreamRequest = false;
   let blockedByQuota = false;
   let sawRateLimit = false;
+  let lastStatus = 0;
+  let lastDataLength = 0;
+  let lastErrorKind: ProviderFetchResult['errorKind'] = null;
+  let sawEmptyResult = false;
 
   const providers: Array<{
     name: 'giphy' | 'tenor';
@@ -520,6 +696,10 @@ export async function searchTopicGif(
       if (outcome.madeRequest) madeUpstreamRequest = true;
       if (outcome.hadError) sawUpstreamError = true;
       if (outcome.rateLimited) sawRateLimit = true;
+      if (outcome.emptyResult) sawEmptyResult = true;
+      lastStatus = outcome.status;
+      lastDataLength = outcome.dataLength;
+      lastErrorKind = outcome.errorKind ?? null;
       if (outcome.quotaBlocked) {
         blockedByQuota = true;
         break;
@@ -530,11 +710,21 @@ export async function searchTopicGif(
           provider: provider.name,
           expiresAt: now + CACHE_TTL_MS,
         });
-        return { gifUrl: outcome.gifUrl, provider: provider.name, cached: false };
+        return {
+          gifUrl: outcome.gifUrl,
+          provider: provider.name,
+          cached: false,
+          httpStatus: outcome.status,
+          dataLength: outcome.dataLength,
+        };
       }
     }
-  } catch {
+  } catch (err) {
     sawUpstreamError = true;
+    console.error(
+      '[gifService] searchTopicGif unexpected error:',
+      err instanceof Error ? err.message : err
+    );
   }
 
   if ((blockedByQuota && !madeUpstreamRequest) || sawRateLimit) {
@@ -543,6 +733,11 @@ export async function searchTopicGif(
       provider: 'none',
       cached: false,
       quotaExhausted: true,
+      emptyResult: true,
+      upstreamError: sawUpstreamError,
+      httpStatus: lastStatus,
+      dataLength: lastDataLength,
+      errorKind: lastErrorKind,
       ...(sawRateLimit ? { rateLimited: true } : {}),
     };
   }
@@ -559,6 +754,11 @@ export async function searchTopicGif(
     gifUrl: null,
     provider: 'none',
     cached: false,
+    emptyResult: sawEmptyResult || madeUpstreamRequest,
+    upstreamError: sawUpstreamError,
+    httpStatus: lastStatus,
+    dataLength: lastDataLength,
+    errorKind: lastErrorKind,
     ...(blockedByQuota ? { quotaExhausted: true } : {}),
   };
 }

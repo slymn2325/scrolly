@@ -22,7 +22,18 @@ import type { CategoryId, FactCard } from '@/types/fact';
 export const GIF_HOURLY_QUOTA_LIMIT = 90;
 export const GIF_QUOTA_WINDOW_MS = 60 * 60 * 1000;
 
+/** Cap outbound GIF searches per backfill run so a bad key/filter cannot burn 90/90. */
+export const GIF_BACKFILL_MAX_ATTEMPTS_PER_RUN = 12;
+/** Delay between Giphy/Tenor HTTP calls inside a backfill loop. */
+export const GIF_REQUEST_GAP_MS = 350;
+/** Stop the loop after this many consecutive errors or empty clean matches. */
+export const GIF_CIRCUIT_BREAKER_THRESHOLD = 3;
+
 const BACKFILL_THROTTLE_MS = 60 * 1000;
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
 
 const ABSTRACT_VISUAL_STOPWORDS = new Set([
   'the', 'a', 'an', 'and', 'or', 'of', 'in', 'on', 'at', 'to', 'for', 'from', 'by',
@@ -94,7 +105,12 @@ export interface MatchFactGifResult {
     | 'no_api_key'
     | 'invalid_query'
     | 'quota_exceeded'
-    | 'no_clean_match';
+    | 'no_clean_match'
+    | 'circuit_open'
+    | 'upstream_error';
+  emptyResult?: boolean;
+  upstreamError?: boolean;
+  httpStatus?: number;
 }
 
 export interface BackfillGifOptions {
@@ -384,6 +400,37 @@ export function buildSpecificGifQuery(input: GifMatchInput): string | null {
   return sanitizeVisualQuery(catFallback);
 }
 
+/**
+ * Broader 1–2 word keyword + category fallback when a specific query yields no clean GIF.
+ */
+export function buildBroaderGifFallbackQuery(input: GifMatchInput, specificQuery?: string | null): string | null {
+  const catKey = String(input.category || '').trim().toLowerCase();
+  const catFallback = CATEGORY_VISUAL_FALLBACKS[catKey] || 'science cosmos';
+  const catWords = catFallback.split(' ').filter(Boolean);
+
+  const specificWords = String(specificQuery || '')
+    .toLowerCase()
+    .split(/\s+/)
+    .filter((w) => w.length >= 3 && !ABSTRACT_VISUAL_STOPWORDS.has(w));
+
+  const titleWords = extractVisualTokens(input.en?.title || input.titleEn || input.title);
+  const seed = specificWords[0] || titleWords[0] || catWords[0];
+  if (!seed) return sanitizeVisualQuery(catWords.slice(0, 2).join(' '));
+
+  const second =
+    catWords.find((w) => w !== seed) ||
+    specificWords.find((w) => w !== seed) ||
+    titleWords.find((w) => w !== seed) ||
+    'cosmos';
+
+  const broader = sanitizeVisualQuery(`${seed} ${second}`);
+  if (!broader) return sanitizeVisualQuery(catWords.slice(0, 2).join(' '));
+  if (broader === sanitizeVisualQuery(specificQuery)) {
+    return sanitizeVisualQuery(catWords.slice(0, 2).join(' '));
+  }
+  return broader;
+}
+
 const VOCAB_VISUAL_QUERY_OVERRIDES: Record<string, string> = {
   resilient: 'strong storm comeback',
   substantiate: 'detective evidence proof',
@@ -614,40 +661,83 @@ export async function matchAndPersistFactGifServer(
     ])
   );
 
-  const searchResult = await resolveServerGifForQuery(gifQuery, {
+  let searchResult = await resolveServerGifForQuery(gifQuery, {
     category: input.category ? String(input.category) : undefined,
     expectedTerms,
   });
+  let effectiveQuery = gifQuery;
+
+  if (!searchResult.gifUrl && !searchResult.quotaExhausted && !searchResult.rateLimited) {
+    const broader = buildBroaderGifFallbackQuery(input, gifQuery);
+    if (broader && broader !== gifQuery) {
+      console.log(
+        `[serverGifMatcher] No clean GIF for specific query="${gifQuery}"; retrying broader="${broader}" (slug=${slug || 'n/a'})`
+      );
+      const broaderResult = await resolveServerGifForQuery(broader, {
+        category: input.category ? String(input.category) : undefined,
+        expectedTerms: broader.split(' '),
+      });
+      // If still empty after filters, relax relevance once on the broader query.
+      if (
+        !broaderResult.gifUrl &&
+        !broaderResult.quotaExhausted &&
+        !broaderResult.rateLimited &&
+        (broaderResult.dataLength ?? 0) > 0
+      ) {
+        console.log(
+          `[serverGifMatcher] Broader query still filtered out; relaxing relevance for "${broader}"`
+        );
+        searchResult = await searchTopicGif(broader, {
+          category: input.category ? String(input.category) : undefined,
+          relaxRelevance: true,
+          bypassCache: true,
+        });
+        effectiveQuery = broader;
+      } else {
+        searchResult = broaderResult;
+        effectiveQuery = broader;
+      }
+    }
+  }
 
   if (!searchResult.gifUrl) {
     if (slug && hasDatabaseUrl() && !searchResult.quotaExhausted && !searchResult.rateLimited) {
-      await updateFactGifQueryOnlyDb(slug, gifQuery);
+      await updateFactGifQueryOnlyDb(slug, effectiveQuery);
     }
+    const upstreamError = Boolean(searchResult.upstreamError || searchResult.errorKind);
     return {
       slug,
       gifUrl: null,
-      gifQuery,
+      gifQuery: effectiveQuery,
       provider: 'none',
       persisted: false,
       cached: searchResult.cached,
       rateLimited: searchResult.rateLimited,
-      skippedReason: searchResult.quotaExhausted ? 'quota_exceeded' : 'no_clean_match',
+      emptyResult: searchResult.emptyResult ?? true,
+      upstreamError,
+      httpStatus: searchResult.httpStatus,
+      skippedReason: searchResult.quotaExhausted
+        ? 'quota_exceeded'
+        : upstreamError
+          ? 'upstream_error'
+          : 'no_clean_match',
     };
   }
 
   let persisted = false;
   if (slug && hasDatabaseUrl()) {
-    await updateFactGifUrlDb(slug, searchResult.gifUrl, gifQuery);
+    await updateFactGifUrlDb(slug, searchResult.gifUrl, effectiveQuery);
     persisted = true;
   }
 
   return {
     slug,
     gifUrl: searchResult.gifUrl,
-    gifQuery,
+    gifQuery: effectiveQuery,
     provider: searchResult.provider,
     persisted,
     cached: searchResult.cached,
+    httpStatus: searchResult.httpStatus,
   };
 }
 
@@ -950,10 +1040,15 @@ export async function backfillMissingFactGifsServer(
 
     try {
       const budget = Math.max(1, quotaBefore.remaining - minRemaining);
-      const maxPerRun = Math.min(
-        GIF_HOURLY_QUOTA_LIMIT,
-        Math.max(1, Math.floor(options?.maxPerRun ?? budget)),
-        budget
+      const requestedCap = Math.max(
+        1,
+        Math.floor(options?.maxPerRun ?? GIF_BACKFILL_MAX_ATTEMPTS_PER_RUN)
+      );
+      // Hard ceiling 15 so a bad key/filter cannot burn the full 90/hr quota in one loop.
+      const maxPerRun = Math.min(15, requestedCap, GIF_HOURLY_QUOTA_LIMIT, budget);
+
+      console.info(
+        `[serverGifMatcher] GIF backfill start: maxPerRun=${maxPerRun} quotaRemaining=${quotaBefore.remaining}/${quotaBefore.limit} gapMs=${GIF_REQUEST_GAP_MS} circuitBreaker=${GIF_CIRCUIT_BREAKER_THRESHOLD}`
       );
 
       const rawCandidates = options?.entries
@@ -976,6 +1071,8 @@ export async function backfillMissingFactGifsServer(
       let persisted = 0;
       let rateLimited = false;
       let hitQuotaCeiling = false;
+      let circuitOpen = false;
+      let consecutiveMisses = 0;
 
       for (const candidate of missingCandidates) {
         const statusNow = await getHourlyGifQuotaStatusServer();
@@ -984,21 +1081,51 @@ export async function backfillMissingFactGifsServer(
           break;
         }
 
+        if (attempted > 0) {
+          await sleep(GIF_REQUEST_GAP_MS);
+        }
+
         attempted += 1;
         const result = await matchAndPersistFactGifServer(candidate);
         if (result.gifUrl) {
           matched += 1;
+          consecutiveMisses = 0;
           if (result.persisted) persisted += 1;
         } else if (result.rateLimited) {
           rateLimited = true;
+          consecutiveMisses += 1;
+          console.error(
+            `[serverGifMatcher] Rate limited during backfill (slug=${result.slug} status=${result.httpStatus ?? 'n/a'}); opening circuit`
+          );
+          circuitOpen = true;
           break;
         } else if (result.skippedReason === 'quota_exceeded') {
           hitQuotaCeiling = true;
           break;
+        } else {
+          consecutiveMisses += 1;
+          console.log(
+            `[serverGifMatcher] Miss ${consecutiveMisses}/${GIF_CIRCUIT_BREAKER_THRESHOLD}` +
+              ` slug=${result.slug} reason=${result.skippedReason || 'unknown'}` +
+              ` status=${result.httpStatus ?? 'n/a'} upstreamError=${Boolean(result.upstreamError)}`
+          );
+          if (consecutiveMisses >= GIF_CIRCUIT_BREAKER_THRESHOLD) {
+            circuitOpen = true;
+            console.error(
+              `[serverGifMatcher] Circuit breaker OPEN after ${consecutiveMisses} consecutive Giphy errors/empty results — stopping to protect hourly quota`
+            );
+            break;
+          }
         }
       }
 
-      if (!options?.entries && !rateLimited && !hitQuotaCeiling && hasDatabaseUrl()) {
+      if (
+        !options?.entries &&
+        !rateLimited &&
+        !hitQuotaCeiling &&
+        !circuitOpen &&
+        hasDatabaseUrl()
+      ) {
         const statusBeforeVocab = await getHourlyGifQuotaStatusServer();
         const remainingSlots = Math.min(
           maxPerRun - attempted,
@@ -1011,25 +1138,40 @@ export async function backfillMissingFactGifsServer(
             if (statusNow.remaining <= minRemaining || statusNow.exhausted) {
               break;
             }
+            if (attempted > 0) {
+              await sleep(GIF_REQUEST_GAP_MS);
+            }
             attempted += 1;
             const vocabResult = await matchAndPersistVocabularyGifServer(vocab);
             if (vocabResult.gifUrl) {
               matched += 1;
+              consecutiveMisses = 0;
               if (vocabResult.persisted) persisted += 1;
             } else if (vocabResult.rateLimited) {
               rateLimited = true;
+              circuitOpen = true;
               break;
             } else if (vocabResult.skippedReason === 'quota_exceeded') {
               break;
+            } else {
+              consecutiveMisses += 1;
+              if (consecutiveMisses >= GIF_CIRCUIT_BREAKER_THRESHOLD) {
+                circuitOpen = true;
+                console.error(
+                  `[serverGifMatcher] Circuit breaker OPEN on vocab backfill after ${consecutiveMisses} consecutive misses`
+                );
+                break;
+              }
             }
           }
         }
       }
 
-      if (attempted > 0 || rateLimited) {
+      if (attempted > 0 || rateLimited || circuitOpen) {
         const endQuota = await getHourlyGifQuotaStatusServer();
         console.info(
-          `[serverGifMatcher] GIF backfill done: attempted=${attempted} matched=${matched} persisted=${persisted} quotaUsed=${endQuota.used}/${endQuota.limit}${rateLimited ? ' (rateLimited)' : ''}`
+          `[serverGifMatcher] GIF backfill done: attempted=${attempted} matched=${matched} persisted=${persisted} quotaUsed=${endQuota.used}/${endQuota.limit}` +
+            `${rateLimited ? ' (rateLimited)' : ''}${circuitOpen ? ' (circuitOpen)' : ''}`
         );
       }
 
@@ -1039,6 +1181,7 @@ export async function backfillMissingFactGifsServer(
         persisted,
         quotaStatus: await getHourlyGifQuotaStatusServer(),
         ...(rateLimited ? { rateLimited: true } : {}),
+        ...(circuitOpen ? { skippedReason: 'circuit_open' } : {}),
       };
     } finally {
       if (!(options?.allowMemoryOnly && !hasDatabaseUrl())) {
@@ -1086,6 +1229,7 @@ export function scheduleMissingFactGifsBackfill(
 
   queueMicrotask(() => {
     void backfillMissingFactGifsServer({
+      maxPerRun: GIF_BACKFILL_MAX_ATTEMPTS_PER_RUN,
       ...(missing ? { entries: missing } : {}),
     }).catch((err) => {
       console.warn('[serverGifMatcher] Scheduled backfill error ignored:', err);
