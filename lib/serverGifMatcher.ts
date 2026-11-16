@@ -23,7 +23,7 @@ export const GIF_HOURLY_QUOTA_LIMIT = 90;
 export const GIF_QUOTA_WINDOW_MS = 60 * 60 * 1000;
 
 /** Cap outbound GIF searches per backfill run so a bad key/filter cannot burn 90/90. */
-export const GIF_BACKFILL_MAX_ATTEMPTS_PER_RUN = 12;
+export const GIF_BACKFILL_MAX_ATTEMPTS_PER_RUN = 10;
 /** Delay between Giphy/Tenor HTTP calls inside a backfill loop. */
 export const GIF_REQUEST_GAP_MS = 350;
 /** Stop the loop after this many consecutive errors or empty clean matches. */

@@ -35,6 +35,8 @@ export interface AuthUserDto {
   categoryAccuracy: Record<string, { attempts: number; totalPct: number }>;
   badges: string[];
   linkedDeviceIds: string[];
+  /** ISO timestamp once guest progress was merged; further merges are no-ops. */
+  guestMergedAt?: string | null;
   createdAt: string;
   updatedAt: string;
 }

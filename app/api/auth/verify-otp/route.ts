@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import {
   SESSION_COOKIE_NAME,
   SESSION_MAX_AGE_SECONDS,
+  buildSignedSessionCookieValue,
   shouldUseSecureCookie,
   verifyOtpAndCreateSession,
 } from '@/lib/auth';
@@ -91,13 +92,17 @@ export async function POST(request: Request) {
       status: 200,
       headers: NO_STORE_HEADERS,
     });
-    response.cookies.set(SESSION_COOKIE_NAME, outcome.sessionToken, {
-      httpOnly: true,
-      sameSite: 'lax',
-      secure: shouldUseSecureCookie(request),
-      path: '/',
-      maxAge: SESSION_MAX_AGE_SECONDS,
-    });
+    response.cookies.set(
+      SESSION_COOKIE_NAME,
+      buildSignedSessionCookieValue(outcome.sessionToken),
+      {
+        httpOnly: true,
+        sameSite: 'lax',
+        secure: shouldUseSecureCookie(request),
+        path: '/',
+        maxAge: SESSION_MAX_AGE_SECONDS,
+      }
+    );
 
     return response;
   } catch (err) {

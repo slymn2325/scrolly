@@ -25,6 +25,15 @@ const EVENT_XP_WEIGHTS: Record<string, number> = {
   profile_sync: 0,
 };
 
+/** Event types that award XP at most once per (device, fact_slug, type). */
+const XP_ONCE_EVENT_TYPES = new Set([
+  'quick_guess',
+  'detail_open',
+  'share',
+  'card_dwell',
+  'duel',
+]);
+
 const ALLOWED_EVENT_TYPES = new Set(Object.keys(EVENT_XP_WEIGHTS));
 
 interface IncomingEventItem {
@@ -186,12 +195,27 @@ export async function POST(request: Request) {
       if (ev.username) latestUsername = ev.username;
 
       if (ev.event_type !== 'profile_sync' && ev.fact_slug) {
-        await pool.query(
-          `INSERT INTO fact_events (device_id, fact_slug, category, event_type, meta)
-           VALUES ($1, $2, $3, $4, $5::jsonb)`,
-          [ev.device_id, ev.fact_slug, ev.category, ev.event_type, ev.metaJson]
-        );
-        processed += 1;
+        let eventInserted = true;
+        if (XP_ONCE_EVENT_TYPES.has(ev.event_type)) {
+          const insertedEv = await pool.query<{ id: number }>(
+            `INSERT INTO fact_events (device_id, fact_slug, category, event_type, meta)
+             SELECT $1, $2, $3, $4, $5::jsonb
+             WHERE NOT EXISTS (
+               SELECT 1 FROM fact_events
+               WHERE device_id = $1 AND fact_slug = $2 AND event_type = $4
+             )
+             RETURNING id`,
+            [ev.device_id, ev.fact_slug, ev.category, ev.event_type, ev.metaJson]
+          );
+          eventInserted = (insertedEv.rowCount ?? 0) > 0;
+        } else {
+          await pool.query(
+            `INSERT INTO fact_events (device_id, fact_slug, category, event_type, meta)
+             VALUES ($1, $2, $3, $4, $5::jsonb)`,
+            [ev.device_id, ev.fact_slug, ev.category, ev.event_type, ev.metaJson]
+          );
+        }
+        if (eventInserted) processed += 1;
 
         if (ev.event_type === 'like') {
           addedLikes.push(ev.fact_slug);
@@ -241,7 +265,8 @@ export async function POST(request: Request) {
               likesMap[res.rows[0].slug] = count;
             }
           }
-        } else {
+        } else if (eventInserted) {
+          // Anti-replay: only award XP when the once-per-card event row was newly inserted.
           computedXpDelta += EVENT_XP_WEIGHTS[ev.event_type] ?? 0;
         }
       }

@@ -4,7 +4,7 @@ import {
   OTP_TTL_SECONDS,
   requestOtpChallenge,
 } from '@/lib/auth';
-import { extractClientIp } from '@/lib/rateLimit';
+import { checkRateLimit, extractClientIp } from '@/lib/rateLimit';
 import type { RequestOtpPayload, RequestOtpResponse } from '@/types/auth';
 
 export const dynamic = 'force-dynamic';
@@ -14,6 +14,22 @@ const NO_STORE_HEADERS = {
 };
 
 export async function POST(request: Request) {
+  const clientIp = extractClientIp(request);
+  const rl = checkRateLimit(`auth_request_otp:${clientIp}`, 20, 10 * 60_000);
+  if (!rl.allowed) {
+    const errPayload: RequestOtpResponse = {
+      ok: false,
+      cooldownSec: OTP_COOLDOWN_SECONDS,
+      expiresInSec: OTP_TTL_SECONDS,
+      delivery: 'resend',
+      error: 'Too many OTP requests. Please wait a few minutes.',
+    };
+    return NextResponse.json(errPayload, {
+      status: 429,
+      headers: { ...NO_STORE_HEADERS, 'Retry-After': String(rl.retryAfterSec) },
+    });
+  }
+
   let body: Partial<RequestOtpPayload>;
   try {
     body = (await request.json()) as Partial<RequestOtpPayload>;
@@ -30,7 +46,6 @@ export async function POST(request: Request) {
 
   const lang = body.lang === 'en' ? 'en' : 'tr';
   const email = typeof body.email === 'string' ? body.email : '';
-  const clientIp = extractClientIp(request);
 
   try {
     const outcome = await requestOtpChallenge({

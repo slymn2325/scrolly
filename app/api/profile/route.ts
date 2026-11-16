@@ -85,8 +85,7 @@ export async function POST(request: Request) {
       userId: isReset ? null : sessionUser?.id,
       username: typeof body.username === 'string' ? body.username : undefined,
       handle: typeof body.handle === 'string' ? body.handle : undefined,
-      xp: typeof body.xp === 'number' ? body.xp : undefined,
-      weeklyXp: typeof body.weeklyXp === 'number' ? body.weeklyXp : undefined,
+      // XP is server-awarded only — ignore client xp/weeklyXp.
       dailyBestScore: typeof body.dailyBestScore === 'number' ? body.dailyBestScore : undefined,
       lastDailyQuizDate:
         typeof body.lastDailyQuizDate === 'string' ? body.lastDailyQuizDate : undefined,
@@ -111,12 +110,10 @@ export async function POST(request: Request) {
     if (sessionUser && !isReset) {
       const snapshot: LocalMemorySnapshot = {
         nickname: typeof body.username === 'string' ? body.username : undefined,
-        xp: typeof body.xp === 'number' ? body.xp : undefined,
-        weeklyXp: typeof body.weeklyXp === 'number' ? body.weeklyXp : undefined,
+        // Do not pass client XP into auth sync.
         dailyBestScore: typeof body.dailyBestScore === 'number' ? body.dailyBestScore : undefined,
         lastDailyQuizDate:
           typeof body.lastDailyQuizDate === 'string' ? body.lastDailyQuizDate : undefined,
-        streak: typeof body.streak === 'number' ? body.streak : undefined,
         lastVisitDate: typeof body.lastVisitDate === 'string' ? body.lastVisitDate : undefined,
         seenIds: Array.isArray(body.seenIds) ? (body.seenIds as string[]) : undefined,
         favoriteIds: Array.isArray(body.favoriteIds) ? (body.favoriteIds as string[]) : undefined,

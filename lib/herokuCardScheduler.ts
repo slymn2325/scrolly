@@ -17,7 +17,8 @@ import {
 import type { CategoryId } from '@/types/fact';
 
 export const CARD_GENERATION_INTERVAL_HOURS = 12;
-export const TARGET_CARDS_PER_HEROKU_RUN = 100;
+/** Cap per in-app / Heroku tick — keep aligned with Scheduler `npm run generate-facts` (8–10). */
+export const TARGET_CARDS_PER_HEROKU_RUN = 8;
 const BATCH_SIZE = 10;
 const BATCH_DELAY_MS = 2000;
 const SCHEDULER_INTERVAL_MS = 15 * 60 * 1000;

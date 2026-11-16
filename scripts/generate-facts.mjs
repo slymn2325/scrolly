@@ -27,7 +27,7 @@ import { fileURLToPath } from 'node:url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const SCHEDULER_DEFAULT_CARDS = 6;
+const SCHEDULER_DEFAULT_CARDS = 8;
 
 function applySchedulerDefaults() {
   const existing = String(process.env.TARGET_CARDS_PER_RUN || '').trim();

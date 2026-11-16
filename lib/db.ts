@@ -441,6 +441,18 @@ export async function ensureSchema(): Promise<void> {
       await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS linked_device_ids JSONB DEFAULT '[]'::jsonb;`);
       await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ DEFAULT NOW();`);
       await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT NOW();`);
+      await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS canonical_email TEXT;`);
+      await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS guest_merged_at TIMESTAMPTZ;`);
+      await pool.query(`
+        UPDATE users
+        SET canonical_email = LOWER(TRIM(email))
+        WHERE canonical_email IS NULL OR TRIM(canonical_email) = '';
+      `);
+      await pool.query(`
+        CREATE UNIQUE INDEX IF NOT EXISTS idx_users_canonical_email
+          ON users (canonical_email)
+          WHERE canonical_email IS NOT NULL AND TRIM(canonical_email) <> '';
+      `);
 
       await pool.query(`
         CREATE TABLE IF NOT EXISTS user_sessions (
@@ -525,6 +537,38 @@ export async function ensureSchema(): Promise<void> {
       await pool.query(`ALTER TABLE profiles ADD COLUMN IF NOT EXISTS badges JSONB DEFAULT '[]'::jsonb;`);
       await pool.query(`ALTER TABLE profiles ALTER COLUMN streak SET DEFAULT 0;`);
       await pool.query(`ALTER TABLE profiles ALTER COLUMN username SET DEFAULT '';`);
+
+      await pool.query(`
+        CREATE INDEX IF NOT EXISTS idx_facts_category
+          ON facts (category);
+      `);
+      await pool.query(`
+        CREATE INDEX IF NOT EXISTS idx_profiles_xp
+          ON profiles (xp DESC);
+      `);
+      await pool.query(`
+        CREATE INDEX IF NOT EXISTS idx_profiles_weekly_xp
+          ON profiles (weekly_xp DESC);
+      `);
+      await pool.query(`
+        CREATE INDEX IF NOT EXISTS idx_profiles_user_id
+          ON profiles (user_id)
+          WHERE user_id IS NOT NULL;
+      `);
+      await pool.query(`
+        CREATE UNIQUE INDEX IF NOT EXISTS idx_fact_events_xp_once
+          ON fact_events (device_id, fact_slug, event_type)
+          WHERE event_type IN ('quick_guess', 'detail_open', 'share', 'card_dwell', 'duel')
+            AND device_id IS NOT NULL
+            AND TRIM(device_id) <> ''
+            AND fact_slug IS NOT NULL
+            AND TRIM(fact_slug) <> '';
+      `);
+      await pool.query(`
+        CREATE UNIQUE INDEX IF NOT EXISTS idx_quiz_submissions_daily_once
+          ON quiz_submissions (device_id, mode, quiz_date)
+          WHERE mode = 'daily' AND quiz_date IS NOT NULL AND TRIM(quiz_date) <> '';
+      `);
 
       await pool.query(`
         CREATE TABLE IF NOT EXISTS quiz_submissions (

@@ -1,4 +1,11 @@
-import { createHash, randomBytes, randomInt, randomUUID, timingSafeEqual } from 'node:crypto';
+import {
+  createHash,
+  createHmac,
+  randomBytes,
+  randomInt,
+  randomUUID,
+  timingSafeEqual,
+} from 'node:crypto';
 import type { Language } from '@/i18n/translations';
 import { ensureSchema, getPool, hasDatabaseUrl } from '@/lib/db';
 import {
@@ -88,15 +95,65 @@ function getMemoryOtps(): MemoryOtpRecord[] {
 }
 
 function getOtpPepper(): string {
-  return (
-    process.env.AUTH_SECRET?.trim() ||
-    process.env.SESSION_SECRET?.trim() ||
-    'scrolly-dev-otp-pepper'
-  );
+  const secret =
+    process.env.AUTH_SECRET?.trim() || process.env.SESSION_SECRET?.trim() || '';
+  if (secret) return secret;
+  if (process.env.NODE_ENV === 'production') {
+    throw new Error(
+      'AUTH_SECRET (or SESSION_SECRET) must be set in production — refusing insecure OTP/session pepper.'
+    );
+  }
+  return 'scrolly-dev-otp-pepper';
 }
 
+/**
+ * Normalize for display / OTP targeting (lowercase trim).
+ */
 export function normalizeEmail(raw: unknown): string {
   return String(raw || '').trim().toLowerCase();
+}
+
+/**
+ * Canonical identity key: Gmail/Googlemail +tag and dot stripping so
+ * a.b+tag@gmail.com === ab@gmail.com.
+ */
+export function canonicalizeEmail(raw: unknown): string {
+  const normalized = normalizeEmail(raw);
+  if (!normalized.includes('@')) return normalized;
+  const [localRaw, domainRaw] = normalized.split('@');
+  const domain = domainRaw === 'googlemail.com' ? 'gmail.com' : domainRaw;
+  let local = localRaw.split('+')[0] || localRaw;
+  if (domain === 'gmail.com') {
+    local = local.replace(/\./g, '');
+  }
+  return `${local}@${domain}`;
+}
+
+function signSessionToken(rawToken: string): string {
+  const sig = createHmac('sha256', getOtpPepper())
+    .update(`session-cookie:${rawToken}`)
+    .digest('base64url');
+  return `${rawToken}.${sig}`;
+}
+
+function unsignSessionToken(cookieValue: string): string | null {
+  const raw = String(cookieValue || '').trim();
+  const dot = raw.lastIndexOf('.');
+  if (dot <= 0) return null;
+  const token = raw.slice(0, dot);
+  const sig = raw.slice(dot + 1);
+  if (!token || !sig) return null;
+  const expected = createHmac('sha256', getOtpPepper())
+    .update(`session-cookie:${token}`)
+    .digest('base64url');
+  try {
+    const a = Buffer.from(sig);
+    const b = Buffer.from(expected);
+    if (a.length !== b.length || !timingSafeEqual(a, b)) return null;
+  } catch {
+    return null;
+  }
+  return token;
 }
 
 export function isValidEmailFormat(email: string): boolean {
@@ -162,16 +219,28 @@ export function readSessionCookieFromRequest(request: Request): string | null {
   for (const part of parts) {
     const trimmed = part.trim();
     if (trimmed.startsWith(prefix)) {
-      const raw = trimmed.slice(prefix.length).trim();
+      let raw = trimmed.slice(prefix.length).trim();
       if (!raw) return null;
       try {
-        return decodeURIComponent(raw);
+        raw = decodeURIComponent(raw);
       } catch {
+        // keep raw
+      }
+      // Prefer HMAC-signed cookies; accept unsigned only outside production for migration.
+      const unsigned = unsignSessionToken(raw);
+      if (unsigned) return unsigned;
+      if (process.env.NODE_ENV !== 'production' && !raw.includes('.')) {
         return raw;
       }
+      return null;
     }
   }
   return null;
+}
+
+/** Build the HttpOnly cookie value (HMAC-signed opaque token). */
+export function buildSignedSessionCookieValue(rawToken: string): string {
+  return signSessionToken(rawToken);
 }
 
 function isGenericNickname(name: string): boolean {
@@ -264,6 +333,7 @@ function resolveLatestDateStr(...dates: Array<string | undefined>): string {
 interface DbUserRow {
   id: string;
   email: string;
+  canonical_email?: string | null;
   nickname: string | null;
   xp: number | null;
   weekly_xp: number | null;
@@ -279,12 +349,19 @@ interface DbUserRow {
   category_accuracy: unknown;
   badges: unknown;
   linked_device_ids: unknown;
+  guest_merged_at?: Date | string | null;
   created_at: Date | string | null;
   updated_at: Date | string | null;
 }
 
 function mapDbUserRowToDto(row: DbUserRow): AuthUserDto {
   const nowIso = new Date().toISOString();
+  const guestMergedAt =
+    row.guest_merged_at instanceof Date
+      ? row.guest_merged_at.toISOString()
+      : row.guest_merged_at
+        ? String(row.guest_merged_at)
+        : null;
   return {
     id: row.id,
     email: normalizeEmail(row.email),
@@ -303,6 +380,7 @@ function mapDbUserRowToDto(row: DbUserRow): AuthUserDto {
     categoryAccuracy: sanitizeCategoryAccuracy(row.category_accuracy),
     badges: normalizeBadgeList(row.badges),
     linkedDeviceIds: sanitizeStringArray(row.linked_device_ids, 50),
+    guestMergedAt,
     createdAt:
       row.created_at instanceof Date
         ? row.created_at.toISOString()
@@ -334,6 +412,7 @@ function createZeroStartUserRecord(email: string, id = randomUUID()): AuthUserDt
     categoryAccuracy: {},
     badges: [],
     linkedDeviceIds: [],
+    guestMergedAt: null,
     createdAt: nowIso,
     updatedAt: nowIso,
   };
@@ -383,14 +462,13 @@ function mergeUserProgress(
   const snap = localSnapshot ?? {};
   const cleanGuestId = isValidDeviceId(guestId) ? guestId.trim().slice(0, 128) : null;
 
-  const snapXp = sanitizeNonNegInt(snap.xp, 0);
-  const snapWeeklyXp = sanitizeNonNegInt(snap.weeklyXp, 0);
-  const snapStreak = sanitizeNonNegInt(snap.streak, 0, 36500);
-
+  // Never trust client snapshot XP/streak for awards — only merge list/notebook state.
+  // Server-persisted guest profile XP (from /api/events) may still merge via Math.max.
   const mergedDaily = resolveMergedDailyBest([
     { date: base.lastDailyQuizDate, score: base.dailyBestScore },
     { date: guestProfile?.lastDailyQuizDate ?? '', score: guestProfile?.dailyBestScore ?? 0 },
     { date: guestExtra.dailyQuizDate, score: guestExtra.dailyBestScore },
+    // dailyBestScore from client is leaderboard display state, not XP — still date-bounded
     { date: snap.lastDailyQuizDate ?? '', score: snap.dailyBestScore ?? 0 },
   ]);
 
@@ -442,9 +520,9 @@ function mergeUserProgress(
     50
   );
 
-  const mergedXp = Math.max(base.xp, guestProfile?.xp ?? 0, snapXp);
-  const mergedWeeklyXp = Math.max(base.weeklyXp, guestProfile?.weeklyXp ?? 0, snapWeeklyXp);
-  const mergedStreak = Math.max(0, base.streak, guestProfile?.streak ?? 0, snapStreak);
+  const mergedXp = Math.max(base.xp, guestProfile?.xp ?? 0);
+  const mergedWeeklyXp = Math.max(base.weeklyXp, guestProfile?.weeklyXp ?? 0);
+  const mergedStreak = Math.max(0, base.streak, guestProfile?.streak ?? 0);
 
   return {
     ...base,
@@ -519,6 +597,8 @@ async function saveMergedUserToDb(user: AuthUserDto, linkedGuestId?: string | nu
          category_accuracy = $14::jsonb,
          badges = $15::jsonb,
          linked_device_ids = $16::jsonb,
+         guest_merged_at = COALESCE(guest_merged_at, $17::timestamptz),
+         canonical_email = COALESCE(canonical_email, $18),
          updated_at = NOW()
      WHERE id = $1
      RETURNING *`,
@@ -539,6 +619,8 @@ async function saveMergedUserToDb(user: AuthUserDto, linkedGuestId?: string | nu
       JSON.stringify(user.categoryAccuracy),
       JSON.stringify(user.badges),
       JSON.stringify(user.linkedDeviceIds),
+      user.guestMergedAt || null,
+      canonicalizeEmail(user.email),
     ]
   );
 
@@ -554,34 +636,59 @@ async function saveMergedUserToDb(user: AuthUserDto, linkedGuestId?: string | nu
 
 async function findOrCreateUserByEmail(email: string): Promise<AuthUserDto> {
   const cleanEmail = normalizeEmail(email);
+  const canonical = canonicalizeEmail(cleanEmail);
 
   if (!hasDatabaseUrl()) {
     const usersById = getMemoryUsersById();
     const userIdByEmail = getMemoryUserIdByEmail();
-    const existingId = userIdByEmail.get(cleanEmail);
+    const existingId = userIdByEmail.get(canonical) || userIdByEmail.get(cleanEmail);
     if (existingId) {
       const existing = usersById.get(existingId);
       if (existing) return existing;
     }
     const created = createZeroStartUserRecord(cleanEmail);
     usersById.set(created.id, created);
+    userIdByEmail.set(canonical, created.id);
     userIdByEmail.set(cleanEmail, created.id);
     return created;
   }
 
   await ensureSchema();
   const pool = getPool();
+
+  const existing = await pool.query<DbUserRow>(
+    `SELECT * FROM users
+     WHERE canonical_email = $1 OR email = $2 OR email = $3
+     ORDER BY created_at ASC
+     LIMIT 1`,
+    [canonical, cleanEmail, canonical]
+  );
+  if (existing.rows[0]) {
+    const row = existing.rows[0];
+    if (!row.canonical_email || row.canonical_email !== canonical) {
+      await pool.query(
+        `UPDATE users SET canonical_email = $2, updated_at = NOW() WHERE id = $1`,
+        [row.id, canonical]
+      );
+      row.canonical_email = canonical;
+    }
+    return mapDbUserRowToDto(row);
+  }
+
   const newId = randomUUID();
   await pool.query(
-    `INSERT INTO users (id, email)
-     VALUES ($1, $2)
+    `INSERT INTO users (id, email, canonical_email)
+     VALUES ($1, $2, $3)
      ON CONFLICT (email) DO NOTHING`,
-    [newId, cleanEmail]
+    [newId, cleanEmail, canonical]
   );
 
   const res = await pool.query<DbUserRow>(
-    `SELECT * FROM users WHERE email = $1 LIMIT 1`,
-    [cleanEmail]
+    `SELECT * FROM users
+     WHERE canonical_email = $1 OR email = $2
+     ORDER BY created_at ASC
+     LIMIT 1`,
+    [canonical, cleanEmail]
   );
   if (!res.rows[0]) {
     throw new Error('Failed to resolve user record.');
@@ -1206,19 +1313,49 @@ export async function verifyOtpAndCreateSession(params: {
 
   const baseUser = await findOrCreateUserByEmail(email);
   const cleanGuestId = isValidDeviceId(params.guestId) ? params.guestId.trim().slice(0, 128) : undefined;
-  const guestProfileRes = cleanGuestId ? await getProfileByDeviceId(cleanGuestId) : { profile: null };
-  const guestExtra = cleanGuestId
-    ? await fetchGuestDbExtras(cleanGuestId)
-    : { likedSlugs: [], dailyBestScore: 0, dailyQuizDate: '' };
+  const alreadyMerged = Boolean(baseUser.guestMergedAt);
+  const guestProfileRes =
+    cleanGuestId && !alreadyMerged
+      ? await getProfileByDeviceId(cleanGuestId)
+      : { profile: null };
+  const guestExtra =
+    cleanGuestId && !alreadyMerged
+      ? await fetchGuestDbExtras(cleanGuestId)
+      : { likedSlugs: [], dailyBestScore: 0, dailyQuizDate: '' };
 
-  const mergedUser = mergeUserProgress(
-    baseUser,
-    guestProfileRes.profile,
-    guestExtra,
-    cleanGuestId,
-    params.localSnapshot
-  );
-  const persistedUser = await saveMergedUserToDb(mergedUser, cleanGuestId);
+  const mergedUser = alreadyMerged
+    ? {
+        ...baseUser,
+        // Still allow non-XP list merges from snapshot when already merged once.
+        seenIds: sanitizeStringArray(
+          [...baseUser.seenIds, ...(params.localSnapshot?.seenIds ?? [])],
+          2500
+        ),
+        favoriteIds: sanitizeStringArray(
+          [...baseUser.favoriteIds, ...(params.localSnapshot?.favoriteIds ?? [])],
+          500
+        ),
+        likedIds: sanitizeStringArray(
+          [...baseUser.likedIds, ...(params.localSnapshot?.likedIds ?? [])],
+          500
+        ),
+        vocabNotebook: sanitizeVocabNotebook(
+          [...baseUser.vocabNotebook, ...(params.localSnapshot?.vocabNotebook ?? [])],
+          250
+        ),
+      }
+    : mergeUserProgress(
+        baseUser,
+        guestProfileRes.profile,
+        guestExtra,
+        cleanGuestId,
+        params.localSnapshot
+      );
+
+  if (!alreadyMerged && cleanGuestId) {
+    mergedUser.guestMergedAt = new Date().toISOString();
+  }
+  const persistedUser = await saveMergedUserToDb(mergedUser, alreadyMerged ? null : cleanGuestId);
 
   const sessionToken = randomBytes(32).toString('base64url');
   const tokenHash = hashSessionToken(sessionToken);
@@ -1258,6 +1395,11 @@ export async function mergeGuestDataIntoUser(params: {
   const user = await getUserById(params.userId);
   if (!user) return null;
 
+  // Guest merge is one-shot via guest_merged_at.
+  if (user.guestMergedAt) {
+    return user;
+  }
+
   const cleanGuestId = isValidDeviceId(params.guestId) ? params.guestId.trim().slice(0, 128) : undefined;
   const guestProfileRes = cleanGuestId ? await getProfileByDeviceId(cleanGuestId) : { profile: null };
   const guestExtra = cleanGuestId
@@ -1271,6 +1413,7 @@ export async function mergeGuestDataIntoUser(params: {
     cleanGuestId,
     params.localSnapshot
   );
+  merged.guestMergedAt = new Date().toISOString();
 
   return saveMergedUserToDb(merged, cleanGuestId);
 }

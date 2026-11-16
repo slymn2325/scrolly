@@ -499,7 +499,7 @@ async function resolveServerGifForFact({
   return { gifQuery, gifUrl: null, source: 'none', skippedReason: 'no_clean_match' };
 }
 
-async function backfillMissingFactGifs(pool, { maxPerRun = 12 } = {}) {
+async function backfillMissingFactGifs(pool, { maxPerRun = 10 } = {}) {
   const CIRCUIT_BREAKER = 3;
   const REQUEST_GAP_MS = 350;
   const giphyKey = String(process.env.GIPHY_API_KEY || '').trim();
@@ -2061,9 +2061,9 @@ function resolveTargetCardsPerRun(argv = process.argv, env = process.env) {
       break;
     }
   }
-  const parsed = Number.parseInt(String(rawCount ?? '25'), 10);
-  if (!Number.isFinite(parsed) || parsed <= 0) return 25;
-  return Math.min(100, Math.max(1, parsed));
+  const parsed = Number.parseInt(String(rawCount ?? '8'), 10);
+  if (!Number.isFinite(parsed) || parsed <= 0) return 8;
+  return Math.min(10, Math.max(1, parsed));
 }
 
 function buildBatchPlan(targetTotal) {
@@ -2481,7 +2481,7 @@ async function main() {
 
     let backfillStats = { attempted: 0, updated: 0, queryUpdated: 0, skippedReason: null };
     try {
-      backfillStats = await backfillMissingFactGifs(pool, { maxPerRun: 12 });
+      backfillStats = await backfillMissingFactGifs(pool, { maxPerRun: 10 });
     } catch (backfillErr) {
       console.warn(
         '[generateFacts] GIF backfill pass skipped due to error:',

@@ -25,7 +25,12 @@ export function getEmailFromAddress(): string {
 }
 
 export function getContactRecipientEmail(): string {
-  return (process.env.CONTACT_RECIPIENT_EMAIL || '').trim() || DEFAULT_CONTACT_RECIPIENT;
+  // Accept both names: checklist CONTACT_RECEIVER_EMAIL + legacy CONTACT_RECIPIENT_EMAIL.
+  return (
+    (process.env.CONTACT_RECEIVER_EMAIL || '').trim() ||
+    (process.env.CONTACT_RECIPIENT_EMAIL || '').trim() ||
+    DEFAULT_CONTACT_RECIPIENT
+  );
 }
 
 function stripHeaderBreaks(value: string): string {

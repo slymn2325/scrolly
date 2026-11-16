@@ -644,17 +644,12 @@ export async function upsertProfileState(
       ? sanitizeHandle(input.handle)
       : prev?.handle || '';
 
+  // Never trust client XP — only server awards (/api/events, quiz) mutate XP.
   const prevXp = prev?.xp ?? 0;
-  const reqXp =
-    typeof input.xp === 'number' ? sanitizeNonNegInt(input.xp, prevXp) : prevXp;
-  const boundedXp = Math.max(prevXp, Math.min(prevXp + 15_000, reqXp));
+  const boundedXp = prevXp;
 
   const prevWeekly = prev?.weeklyXp ?? 0;
-  const reqWeekly =
-    typeof input.weeklyXp === 'number'
-      ? sanitizeNonNegInt(input.weeklyXp, prevWeekly)
-      : prevWeekly;
-  const boundedWeekly = Math.max(prevWeekly, Math.min(prevWeekly + 15_000, reqWeekly));
+  const boundedWeekly = prevWeekly;
 
   const prevQuizDate = sanitizeDateStr(prev?.lastDailyQuizDate);
   const rawIncomingDate = sanitizeDateStr(input.lastDailyQuizDate);
@@ -1106,9 +1101,11 @@ export async function recordQuizSubmission(input: {
 
   const username = sanitizeUsername(input.username);
   const handle = sanitizeHandle(input.handle);
-  const safeScore = sanitizeNonNegInt(input.score, 0, 5000);
+  // Cap client-reported quiz score before any XP award (anti-farm).
+  const safeScore = sanitizeNonNegInt(input.score, 0, 100);
   const safeCorrect = sanitizeNonNegInt(input.correctCount, 0, 100);
   const safeTotal = sanitizeNonNegInt(input.totalQuestions, 1, 100);
+  const xpAward = Math.min(50, safeScore);
   const cleanClientDate = sanitizeDateStr(input.clientDate);
   const quizDate =
     cleanClientDate && isDateNearUtc(cleanClientDate)
@@ -1152,8 +1149,8 @@ export async function recordQuizSubmission(input: {
       userId: prev?.userId ?? null,
       username,
       handle: handle || prev?.handle || '',
-      xp: (prev?.xp ?? 0) + safeScore,
-      weeklyXp: (prev?.weeklyXp ?? 0) + safeScore,
+      xp: (prev?.xp ?? 0) + xpAward,
+      weeklyXp: (prev?.weeklyXp ?? 0) + xpAward,
       dailyBestScore: nextDailyBest,
       lastDailyQuizDate: nextDailyDate,
       streak: Math.max(prev?.streak ?? 0, earnedActivity ? 1 : 0),
@@ -1174,11 +1171,38 @@ export async function recordQuizSubmission(input: {
   const pool = getPool();
   const earnedStreak = safeScore > 0 || safeCorrect > 0 ? 1 : 0;
 
-  await pool.query(
-    `INSERT INTO quiz_submissions (device_id, username, mode, score, correct_count, total_questions, quiz_date)
-     VALUES ($1, $2, $3, $4, $5, $6, $7)`,
-    [cleanId, username, input.mode, safeScore, safeCorrect, safeTotal, quizDate]
-  );
+  if (input.mode === 'daily') {
+    const quizInsert = await pool.query<{ id: number }>(
+      `INSERT INTO quiz_submissions (device_id, username, mode, score, correct_count, total_questions, quiz_date)
+       SELECT $1, $2, $3, $4, $5, $6, $7
+       WHERE NOT EXISTS (
+         SELECT 1 FROM quiz_submissions
+         WHERE device_id = $1 AND mode = 'daily' AND quiz_date = $7
+       )
+       RETURNING id`,
+      [cleanId, username, input.mode, safeScore, safeCorrect, safeTotal, quizDate]
+    );
+    if ((quizInsert.rowCount ?? 0) === 0) {
+      // Replay of same-day daily quiz: update display score only, no XP.
+      await pool.query(
+        `UPDATE profiles
+         SET username = $2,
+             handle = CASE WHEN TRIM($3) <> '' THEN $3 ELSE COALESCE(handle, '') END,
+             daily_best_score = GREATEST(COALESCE(daily_best_score, 0), $4),
+             last_daily_quiz_date = $5,
+             updated_at = NOW()
+         WHERE device_id = $1`,
+        [cleanId, username, handle, safeScore, quizDate]
+      );
+      return { persisted: true };
+    }
+  } else {
+    await pool.query(
+      `INSERT INTO quiz_submissions (device_id, username, mode, score, correct_count, total_questions, quiz_date)
+       VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+      [cleanId, username, input.mode, safeScore, safeCorrect, safeTotal, quizDate]
+    );
+  }
 
   await pool.query(
     `INSERT INTO profiles (
@@ -1209,7 +1233,7 @@ export async function recordQuizSubmission(input: {
       cleanId,
       username,
       handle,
-      safeScore,
+      xpAward,
       input.mode === 'daily' ? safeScore : 0,
       input.mode === 'daily' ? quizDate : '',
       quizDate,
