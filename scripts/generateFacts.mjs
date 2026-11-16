@@ -2193,6 +2193,7 @@ export {
   fetchGifCandidate,
   getHourlyGifQuotaStatus,
   lockGifQuotaForWindow,
+  main,
   pickGiphyCandidateUrl,
   pickTenorCandidateUrl,
   resetGifQuotaForTest,
@@ -2211,8 +2212,12 @@ const isDirectExecution =
   path.resolve(process.argv[1]) === __filename;
 
 if (isDirectExecution) {
-  main().catch((err) => {
-    console.error('[generateFacts] Fatal error:', err);
-    process.exit(1);
-  });
+  main()
+    .then(() => {
+      process.exit(0);
+    })
+    .catch((err) => {
+      console.error('[generateFacts] Fatal error:', err);
+      process.exit(1);
+    });
 }

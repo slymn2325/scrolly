@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start -p $PORT",
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "generate-facts": "node scripts/generate-facts.mjs"
   },
   "dependencies": {
     "canvas-confetti": "^1.9.3",
