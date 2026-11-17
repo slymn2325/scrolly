@@ -2,6 +2,10 @@
 
 import React from 'react';
 import type { Language } from '@/i18n/translations';
+import { translations } from '@/i18n/translations';
+
+const focusRing =
+  'focus-visible:outline focus-visible:outline-[3px] focus-visible:outline-offset-2 focus-visible:outline-cik-focus';
 
 export default function QuizSectionSwitch({
   section,
@@ -10,6 +14,7 @@ export default function QuizSectionSwitch({
   section: 'quiz' | 'leaderboard';
   lang: Language;
 }) {
+  const t = translations[lang];
   const choose = (next: 'quiz' | 'leaderboard') => {
     window.dispatchEvent(new CustomEvent('scrolly-quiz-section', { detail: { section: next } }));
   };
@@ -20,8 +25,10 @@ export default function QuizSectionSwitch({
       aria-selected={section === id}
       data-testid={`quiz-section-${id}`}
       onClick={() => choose(id)}
-      className={`min-h-[40px] w-full rounded-full text-sm font-semibold transition-colors duration-150 ${
-        section === id ? 'bg-white text-slate-900 shadow-pill' : 'text-slate-700 dark:text-slate-200'
+      className={`cik-headline min-h-11 w-full rounded-pill px-4 ${focusRing} ${
+        section === id
+          ? 'bg-cik-bg-elevated text-cik-text shadow-e1'
+          : 'bg-transparent text-cik-text'
       }`}
     >
       {label}
@@ -30,11 +37,11 @@ export default function QuizSectionSwitch({
   return (
     <div
       role="tablist"
-      aria-label={lang === 'tr' ? 'Quiz ve liderlik' : 'Quiz and leaderboard'}
-      className="mx-auto mb-3 grid w-full max-w-[280px] grid-cols-2 gap-1 rounded-full bg-violet-soft p-1"
+      aria-label={t.quizSectionAria}
+      className="mb-4 grid w-full grid-cols-2 gap-1 rounded-pill bg-cik-pink p-1"
     >
       {item('quiz', 'Quiz')}
-      {item('leaderboard', lang === 'tr' ? 'Liderlik' : 'Leaderboard')}
+      {item('leaderboard', t.quizSectionRank)}
     </div>
   );
 }
