@@ -1,6 +1,8 @@
 import type { Metadata, Viewport } from 'next';
+import { headers } from 'next/headers';
 import DocScrollFrame from '@/components/DocScrollFrame';
 import RootHtmlShell from '@/components/RootHtmlShell';
+import { BRAND_OG_IMAGE } from '@/lib/homeMetadata';
 import './globals.css';
 
 export const metadata: Metadata = {
@@ -25,6 +27,7 @@ export const metadata: Metadata = {
     description:
       'Discover mind-blowing facts in Turkish & English, play instant 5-card memory quizzes, and share your Wordle-style score card.',
     type: 'website',
+    images: [BRAND_OG_IMAGE],
   },
   other: {
     'google-adsense-account': 'ca-pub-1368005726792126',
@@ -41,13 +44,21 @@ export const viewport: Viewport = {
   ],
 };
 
-export default function RootLayout({
+async function documentLang(): Promise<'en' | 'tr'> {
+  const headerList = await headers();
+  const requested =
+    headerList.get('x-scrolly-lang') || headerList.get('x-middleware-request-x-scrolly-lang');
+  return requested === 'en' ? 'en' : 'tr';
+}
+
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const lang = await documentLang();
   return (
-    <RootHtmlShell lang="tr">
+    <RootHtmlShell lang={lang}>
       <DocScrollFrame>{children}</DocScrollFrame>
     </RootHtmlShell>
   );
