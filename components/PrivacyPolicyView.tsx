@@ -2,7 +2,8 @@
 
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { ArrowLeft, Cookie, Database, ShieldCheck } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Cookie, Database, Home, ShieldCheck } from 'lucide-react';
+import HtmlLangSync from '@/components/HtmlLangSync';
 import SiteTrustFooter from '@/components/SiteTrustFooter';
 import { type Language } from '@/i18n/translations';
 import { loadUserMemory } from '@/utils/userMemory';
@@ -95,33 +96,35 @@ export default function PrivacyPolicyView() {
   }, []);
 
   const copy = POLICY_COPY[lang];
+  const isEn = lang === 'en';
 
   return (
-    <div className="min-h-screen bg-[#FFFDF9] text-ink dark:bg-[#0D0A19] dark:text-white">
-      <main className="px-4 pt-8 pb-6 sm:px-6 sm:pt-12">
-        <div className="mx-auto max-w-2xl">
-          {/* Top Bar */}
-          <div className="flex flex-wrap items-center justify-between gap-3">
+    <>
+      <HtmlLangSync lang={lang} />
+      <div lang={isEn ? 'en-US' : 'tr-TR'} className="min-h-dvh w-full overflow-x-clip bg-cik-bg text-cik-text">
+        <header className="material-thin sticky top-0 z-hud border-b border-cik-line">
+          <div className="mx-auto flex max-w-[42.5rem] items-center justify-between gap-3 px-4 py-3">
             <Link
               href="/"
               data-testid="privacy-back-link"
-              className="inline-flex items-center gap-2 rounded-full border border-amber-200 bg-white px-4 py-2 text-xs font-extrabold text-ink shadow-sm transition hover:bg-amber-50 dark:border-white/15 dark:bg-white/10 dark:text-white"
+              className="cik-footnote inline-flex h-11 items-center gap-2 rounded-pill border border-cik-line bg-cik-surface px-4 text-cik-text"
             >
-              <ArrowLeft className="h-4 w-4" />
+              <ChevronLeft className="h-5 w-5" aria-hidden="true" />
               <span>{copy.backLabel}</span>
             </Link>
 
             <div
               role="group"
-              aria-label="Language switch"
-              className="inline-flex items-center rounded-full border border-amber-200 bg-white p-0.5 text-xs font-black shadow-sm dark:border-white/15 dark:bg-white/10"
+              aria-label={isEn ? 'Language' : 'Dil'}
+              className="inline-flex items-center gap-1 rounded-pill border border-cik-line bg-cik-surface p-1"
             >
               <button
                 type="button"
                 onClick={() => setLang('tr')}
                 data-testid="privacy-lang-tr"
-                className={`rounded-full px-3 py-1 transition ${
-                  lang === 'tr' ? 'bg-ink text-white dark:bg-violet-600' : 'text-ink/70 dark:text-white/70'
+                aria-pressed={lang === 'tr'}
+                className={`cik-footnote inline-flex h-11 min-w-11 items-center justify-center rounded-pill px-3 ${
+                  lang === 'tr' ? 'bg-cik-berry text-cik-on-berry' : 'text-cik-text-2'
                 }`}
               >
                 TR
@@ -130,103 +133,101 @@ export default function PrivacyPolicyView() {
                 type="button"
                 onClick={() => setLang('en')}
                 data-testid="privacy-lang-en"
-                className={`rounded-full px-3 py-1 transition ${
-                  lang === 'en' ? 'bg-ink text-white dark:bg-violet-600' : 'text-ink/70 dark:text-white/70'
+                aria-pressed={lang === 'en'}
+                className={`cik-footnote inline-flex h-11 min-w-11 items-center justify-center rounded-pill px-3 ${
+                  lang === 'en' ? 'bg-cik-berry text-cik-on-berry' : 'text-cik-text-2'
                 }`}
               >
                 EN
               </button>
             </div>
           </div>
+        </header>
 
-          {/* Policy Card */}
-          <article className="mt-6 rounded-3xl border-2 border-amber-200/90 bg-white p-6 shadow-xl dark:border-violet-800/40 dark:bg-[#171228] sm:p-8">
-            <div className="inline-flex items-center gap-1.5 rounded-full bg-violet-100 px-3 py-1 text-xs font-extrabold text-violet-800 dark:bg-violet-900/60 dark:text-violet-200">
-              <ShieldCheck className="h-4 w-4" />
+        <main className="mx-auto max-w-[42.5rem] px-4 pb-8 pt-6">
+          <nav aria-label="Breadcrumb" className="cik-footnote mb-4 flex items-center gap-2 text-cik-text-2">
+            <Link href="/" className="inline-flex items-center gap-1 text-cik-text">
+              <Home className="h-4 w-4" aria-hidden="true" />
+              <span>{isEn ? 'Home' : 'Ana sayfa'}</span>
+            </Link>
+            <ChevronRight className="h-4 w-4" aria-hidden="true" />
+            <span className="text-cik-text">{isEn ? 'Privacy' : 'Gizlilik'}</span>
+          </nav>
+
+          <article className="rounded-sticker border border-cik-line bg-cik-surface p-5 shadow-e1">
+            <p className="cik-footnote inline-flex items-center gap-2 rounded-pill bg-cik-pink px-3 py-1 text-cik-text">
+              <ShieldCheck className="h-4 w-4" aria-hidden="true" />
               <span>{copy.badge}</span>
-            </div>
-
-            <h1 className="mt-3 font-display text-3xl font-bold text-ink dark:text-white">
-              {copy.title}
-            </h1>
-            <p className="mt-1 text-xs font-bold text-ink/55 dark:text-violet-200/65">{copy.updated}</p>
-
-            <p className="mt-5 text-sm leading-relaxed text-ink/85 dark:text-violet-100/90">
-              {copy.intro}
             </p>
+            <h1 className="cik-title-1 mt-3 text-cik-text">{copy.title}</h1>
+            <p className="cik-caption-1 mt-2 text-cik-text-2">{copy.updated}</p>
 
-            <div className="mt-6 grid gap-3 sm:grid-cols-2">
-              <div className="flex items-start gap-2.5 rounded-2xl border border-amber-100 bg-amber-50/70 p-3.5 dark:border-white/10 dark:bg-white/5">
-                <Database className="mt-0.5 h-4 w-4 shrink-0 text-amber-600 dark:text-amber-300" />
-                <span className="text-xs font-bold text-ink/80 dark:text-violet-100">
-                  localStorage &amp; merak_user_summary
-                </span>
+            <div className="cik-body mt-6 space-y-6 text-cik-text">
+              <p>{copy.intro}</p>
+
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div className="flex items-start gap-3 rounded-cik-lg border border-cik-line bg-cik-surface-2 p-4">
+                  <Database className="mt-1 h-4 w-4 shrink-0 text-cik-butter-text" aria-hidden="true" />
+                  <span className="cik-footnote">localStorage &amp; merak_user_summary</span>
+                </div>
+                <div className="flex items-start gap-3 rounded-cik-lg border border-cik-line bg-cik-surface-2 p-4">
+                  <Cookie className="mt-1 h-4 w-4 shrink-0 text-cik-cta" aria-hidden="true" />
+                  <span className="cik-footnote">Google AdSense (ca-pub-1368005726792126)</span>
+                </div>
               </div>
-              <div className="flex items-start gap-2.5 rounded-2xl border border-violet-100 bg-violet-50/70 p-3.5 dark:border-white/10 dark:bg-white/5">
-                <Cookie className="mt-0.5 h-4 w-4 shrink-0 text-violet-600 dark:text-violet-300" />
-                <span className="text-xs font-bold text-ink/80 dark:text-violet-100">
-                  Google AdSense (ca-pub-1368005726792126)
-                </span>
+
+              <div className="space-y-5">
+                {copy.sections.map((section) => (
+                  <section key={section.heading} className="space-y-2">
+                    <h2 className="cik-headline text-cik-text">{section.heading}</h2>
+                    <p className="text-cik-text-2">{section.body}</p>
+                  </section>
+                ))}
               </div>
-            </div>
 
-            <div className="mt-7 space-y-5">
-              {copy.sections.map((section) => (
-                <section key={section.heading} className="space-y-1.5">
-                  <h2 className="font-display text-base font-bold text-ink dark:text-white">
-                    {section.heading}
-                  </h2>
-                  <p className="text-sm leading-relaxed text-ink/80 dark:text-violet-100/80">
-                    {section.body}
-                  </p>
-                </section>
-              ))}
-            </div>
-
-            <div className="mt-6 rounded-2xl border border-emerald-200/80 bg-emerald-50/70 px-4 py-3 text-xs dark:border-emerald-700/40 dark:bg-emerald-950/30">
-              <span className="font-bold text-ink/80 dark:text-violet-100">
-                {copy.controllerLabel}{' '}
-              </span>
-              <a
-                href="mailto:contact@scrolly.live"
-                data-testid="privacy-contact-email"
-                className="font-extrabold text-emerald-800 underline underline-offset-4 hover:text-emerald-950 dark:text-emerald-300"
-              >
-                contact@scrolly.live
-              </a>
-            </div>
-
-            <div className="mt-6 flex flex-wrap items-center justify-between gap-3 border-t border-amber-100 pt-5 dark:border-white/10">
-              <div className="flex flex-wrap items-center gap-4">
+              <div className="rounded-cik-lg border border-cik-line bg-cik-mint px-4 py-3 text-cik-mint-text">
+                <span className="cik-footnote">{copy.controllerLabel} </span>
                 <a
-                  href="https://adssettings.google.com"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-xs font-extrabold text-violet-700 underline underline-offset-4 hover:text-violet-900 dark:text-violet-300"
+                  href="mailto:contact@scrolly.live"
+                  data-testid="privacy-contact-email"
+                  className="cik-footnote underline decoration-cik-line underline-offset-4"
                 >
-                  {copy.adSettingsLabel}
-                </a>
-                <a
-                  href="https://www.aboutads.info/choices/"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-xs font-extrabold text-violet-700 underline underline-offset-4 hover:text-violet-900 dark:text-violet-300"
-                >
-                  {copy.aboutAdsLabel}
+                  contact@scrolly.live
                 </a>
               </div>
-              <Link
-                href={lang === 'en' ? '/contact?lang=en' : '/contact'}
-                className="rounded-full bg-ink px-4 py-2 text-xs font-extrabold text-white transition hover:opacity-90 dark:bg-violet-600"
-              >
-                {copy.contactLinkLabel}
-              </Link>
+
+              <div className="flex flex-wrap items-center justify-between gap-3 border-t border-cik-line pt-5">
+                <div className="flex flex-wrap items-center gap-4">
+                  <a
+                    href="https://adssettings.google.com"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="cik-footnote text-cik-cta underline decoration-cik-line underline-offset-4"
+                  >
+                    {copy.adSettingsLabel}
+                  </a>
+                  <a
+                    href="https://www.aboutads.info/choices/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="cik-footnote text-cik-cta underline decoration-cik-line underline-offset-4"
+                  >
+                    {copy.aboutAdsLabel}
+                  </a>
+                </div>
+                <Link
+                  href={lang === 'en' ? '/contact?lang=en' : '/contact'}
+                  className="cik-footnote inline-flex h-11 items-center rounded-pill bg-cik-cta px-4 text-cik-on-cta"
+                >
+                  {copy.contactLinkLabel}
+                </Link>
+              </div>
             </div>
           </article>
-        </div>
-      </main>
+        </main>
 
-      <SiteTrustFooter lang={lang} />
-    </div>
+        <SiteTrustFooter lang={lang} />
+      </div>
+    </>
   );
 }
