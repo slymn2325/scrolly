@@ -1,9 +1,14 @@
 const MOTION_IMAGE = /\/(?:200|giphy|giphy-downsized(?:-medium)?)\.(?:webp|gif)(?:$|[?#])/i;
 
+function isGiphyHost(hostname: string): boolean {
+  const host = hostname.toLowerCase();
+  return host === 'giphy.com' || host.endsWith('.giphy.com');
+}
+
 export function giphyIdFromUrl(url: string): string | null {
   try {
     const parsed = new URL(url);
-    if (!parsed.hostname.endsWith('giphy.com')) return null;
+    if (parsed.protocol !== 'https:' || !isGiphyHost(parsed.hostname)) return null;
     const parts = parsed.pathname.split('/').filter(Boolean);
     if (parts[0] === 'media') {
       const next = parts[1] || '';
