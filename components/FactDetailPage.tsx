@@ -520,7 +520,7 @@ export default function FactDetailPage({
                 <span
                   lang={lang}
                   className={`inline-flex items-center gap-1 text-[10px] font-black uppercase tracking-wider ${
-                    darkMode ? 'text-white/60' : 'text-[#1E1B2E]/55'
+                    darkMode ? 'text-white' : 'text-ink'
                   }`}
                 >
                   <img
