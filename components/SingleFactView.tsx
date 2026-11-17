@@ -44,7 +44,7 @@ import FactIcon from '@/components/FactIcon';
 import FloatingBackground from '@/components/FloatingBackground';
 import SiteTrustFooter from '@/components/SiteTrustFooter';
 import StickyAdBanner from '@/components/StickyAdBanner';
-import { getCategoryMeta, type Language, translations } from '@/i18n/translations';
+import { discoveryCtaLabel, getCategoryMeta, type Language, translations } from '@/i18n/translations';
 import { formatValueWithUnit } from '@/lib/formatUnit';
 import { fetchTopicGifFromApi, syncProfileToApi, trackEvent } from '@/lib/telemetry';
 import { createScrollaRoom, getOrCreateScrollaPlayerId } from '@/utils/duelLobby';
@@ -81,6 +81,8 @@ interface SingleFactViewProps {
   relatedFacts: FactCard[];
   initialLang: Language;
   hasExplicitLang?: boolean;
+  catalogCount: number;
+  articleBody?: string;
 }
 
 interface BreakdownCardItem {
@@ -91,14 +93,36 @@ interface BreakdownCardItem {
   kind: 'mechanism' | 'context' | 'evidence';
 }
 
+function normalizeDetailCopy(value: string): string {
+  return value.replace(/\s+/g, ' ').trim().toLowerCase();
+}
+
+function withoutRepeatedInsight(segment: string, keyInsight: string): string {
+  const insight = normalizeDetailCopy(keyInsight);
+  const trimmed = segment.trim();
+  if (!trimmed) return '';
+  if (!insight) return trimmed;
+  if (normalizeDetailCopy(trimmed) === insight) return '';
+  const sentences = trimmed
+    .split(/(?<=[.!?])\s+/)
+    .map((sentence) => sentence.trim())
+    .filter(Boolean);
+  if (sentences.length === 0) return trimmed;
+  const kept = sentences.filter((sentence) => normalizeDetailCopy(sentence) !== insight);
+  if (kept.length === 0) return '';
+  if (kept.length === sentences.length) return trimmed;
+  return kept.join(' ');
+}
+
 function buildBreakdownCards(
   articleText: string,
   category: FactCard['category'],
-  lang: Language
+  lang: Language,
+  keyInsight: string
 ): BreakdownCardItem[] {
   const rawParagraphs = articleText
     .split(/\n{2,}/)
-    .map((p) => p.trim())
+    .map((paragraph) => withoutRepeatedInsight(paragraph, keyInsight))
     .filter(Boolean);
 
   let segments = [...rawParagraphs];
@@ -109,6 +133,13 @@ function buildBreakdownCards(
       segments = [sentences.slice(0, mid).join(' '), sentences.slice(mid).join(' ')].filter(Boolean);
     }
   }
+  segments = segments
+    .map((segment) => withoutRepeatedInsight(segment, keyInsight))
+    .filter((segment, index, list) => {
+      const norm = normalizeDetailCopy(segment);
+      if (!norm) return false;
+      return list.findIndex((item) => normalizeDetailCopy(item) === norm) === index;
+    });
 
   const isHistorical = category === 'history';
   const titlesTr = isHistorical
@@ -133,6 +164,8 @@ export default function SingleFactView({
   relatedFacts,
   initialLang,
   hasExplicitLang = true,
+  catalogCount,
+  articleBody = '',
 }: SingleFactViewProps) {
   const router = useRouter();
   const [lang, setLang] = useState<Language>(initialLang);
@@ -241,19 +274,54 @@ export default function SingleFactView({
         {
           factText: content.factText,
           deepDiveDetail: content.deepDiveDetail,
+          articleBody,
           tag: content.tag,
           sourceHint: content.sourceHint,
           quiz: content.quiz,
         },
         lang
       ),
-    [content.factText, content.deepDiveDetail, content.tag, content.sourceHint, content.quiz, lang]
+    [
+      articleBody,
+      content.factText,
+      content.deepDiveDetail,
+      content.tag,
+      content.sourceHint,
+      content.quiz,
+      lang,
+    ]
   );
 
   const breakdownCards = useMemo(
-    () => buildBreakdownCards(detailArticle.article, fact.category, lang),
-    [detailArticle.article, fact.category, lang]
+    () =>
+      detailArticle.isLongForm
+        ? []
+        : buildBreakdownCards(
+            detailArticle.article,
+            fact.category,
+            lang,
+            detailHighlights.keyInsight
+          ),
+    [detailArticle.article, detailArticle.isLongForm, detailHighlights.keyInsight, fact.category, lang]
   );
+
+  const longFormParagraphs = useMemo(
+    () =>
+      detailArticle.isLongForm
+        ? detailArticle.article
+            .split(/\n{2,}/)
+            .map((paragraph) => paragraph.trim())
+            .filter(Boolean)
+        : [],
+    [detailArticle.article, detailArticle.isLongForm]
+  );
+
+  const insightNorm = normalizeDetailCopy(detailHighlights.keyInsight);
+  const insightAlreadyVisible =
+    insightNorm.length > 0 &&
+    (normalizeDetailCopy(content.factText).includes(insightNorm) ||
+      longFormParagraphs.some((paragraph) => normalizeDetailCopy(paragraph).includes(insightNorm)) ||
+      breakdownCards.some((card) => normalizeDetailCopy(card.body).includes(insightNorm)));
 
   const preparedQuiz = useMemo(
     () => prepareQuizOptions(content.quiz, `${fact.id}-${lang}`),
@@ -809,7 +877,8 @@ export default function SingleFactView({
               )}
             </div>
 
-            {/* Card 2: Key Mechanism / Insight */}
+            {/* Card 2: Key Mechanism / Insight. Hidden when that sentence is already in the body. */}
+            {insightAlreadyVisible ? null : (
             <div className="rounded-2xl border border-violet-200/80 bg-white/95 p-4 shadow-sm dark:border-violet-500/30 dark:bg-white/5 sm:col-span-1">
               <span className="inline-flex items-center gap-1 text-[11px] font-black uppercase tracking-wider text-violet-700 dark:text-violet-300">
                 <Lightbulb className="h-3.5 w-3.5" />
@@ -819,6 +888,7 @@ export default function SingleFactView({
                 {detailHighlights.keyInsight}
               </p>
             </div>
+            )}
 
             {/* Card 3: Quick Stats & Category Rank */}
             <div className="hidden">
@@ -876,6 +946,19 @@ export default function SingleFactView({
               <span>{t.whyHowHeader}</span>
             </h2>
 
+            {longFormParagraphs.length > 0 ? (
+              <div className="rounded-2xl border border-white/90 bg-white/95 p-4 shadow-sm dark:border-white/10 dark:bg-white/5 sm:p-5">
+                {longFormParagraphs.map((paragraph, index) => (
+                  <p
+                    key={`${index}-${paragraph.slice(0, 24)}`}
+                    className="mt-3 text-sm leading-relaxed text-ink/85 first:mt-0 dark:text-violet-100/85 sm:text-[15px]"
+                  >
+                    {paragraph}
+                  </p>
+                ))}
+              </div>
+            ) : null}
+
             <div className="grid gap-3">
               {breakdownCards.map((card) => (
                 <div
@@ -915,7 +998,6 @@ export default function SingleFactView({
               href={resolvedSourceUrl}
               target="_blank"
               rel="noopener noreferrer"
-              aria-label={`${t.seoVerifiedSource}: ${resolvedSourceName}`}
               data-testid="detail-source-card"
               className="group relative z-10 mt-5 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-emerald-200/90 bg-emerald-50/85 px-4 py-3.5 text-xs font-semibold text-emerald-950 transition hover:border-emerald-400 hover:bg-emerald-50 dark:border-emerald-500/30 dark:bg-emerald-950/40 dark:text-emerald-100"
             >
@@ -949,7 +1031,6 @@ export default function SingleFactView({
             </a>
           ) : (
             <aside
-              aria-label={t.seoVerifiedSource}
               data-testid="detail-source-card"
               className="relative z-10 mt-5 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-emerald-200/80 bg-emerald-50/75 px-4 py-3.5 text-xs font-semibold text-emerald-950 dark:border-emerald-500/30 dark:bg-emerald-950/40 dark:text-emerald-100"
             >
@@ -1287,7 +1368,7 @@ export default function SingleFactView({
               className="inline-flex items-center gap-2.5 rounded-full border border-violet-300 bg-white px-7 py-3.5 font-display text-sm font-bold text-violet-900 shadow-sm hover:bg-violet-50 dark:border-violet-500/40 dark:bg-white/10 dark:text-white dark:hover:bg-white/15 sm:text-base"
             >
               <Sparkles className="h-4 w-4 text-violet-600 dark:text-violet-300" />
-              <span>{t.seoCtaButton}</span>
+              <span>{discoveryCtaLabel(lang, catalogCount)}</span>
             </motion.span>
           </Link>
         </div>

@@ -1,9 +1,11 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import SingleFactView from '@/components/SingleFactView';
+import { getSampleArticleBody } from '@/data/sampleArticleBodies';
 import { getCategoryMeta, type Language } from '@/i18n/translations';
 import { getAllFactsServer, getFactBySlugServer } from '@/lib/db';
 import type { FactCard } from '@/types/fact';
+import { buildFactDocumentTitle, buildFactMetaDescription } from '@/utils/factSeo';
 import {
   buildCategoryHref,
   buildFactHref,
@@ -48,11 +50,12 @@ export async function buildFactMetadata(slug: string, lang: Language): Promise<M
   const canonicalUrl = lang === 'en' ? enUrl : trUrl;
   const ogImageUrl = `https://scrolly.live/fact/${primarySlug}/opengraph-image`;
   const title = fact[lang].title;
-  const description = fact[lang].factText;
+  const documentTitle = buildFactDocumentTitle(title);
+  const description = buildFactMetaDescription(fact[lang].factText);
   const catMeta = getCategoryMeta(fact.category);
 
   return {
-    title: `${title} | Scrolly`,
+    title: documentTitle,
     description,
     keywords: [catMeta.label[lang], fact[lang].tag, 'Scrolly', 'Scrolla'].filter(
       (item): item is string => Boolean(item)
@@ -121,16 +124,27 @@ export default async function FactDetailPageContent({
   const categoryUrl = `https://scrolly.live${buildCategoryHref(categoryRouteSlug, lang)}`;
   const ogImageUrl = `https://scrolly.live/fact/${primarySlug}/opengraph-image`;
   const publishedIso = fact.createdAt || '2026-01-01T00:00:00.000Z';
+  const sampleArticleBody = getSampleArticleBody(
+    [fact.id, fact.slug, content.slug, fact.tr.slug, fact.en.slug],
+    lang
+  );
   const enrichedArticle = buildFactDetailArticle(
     {
       factText: content.factText,
       deepDiveDetail: content.deepDiveDetail,
+      articleBody: sampleArticleBody,
       tag: content.tag,
       sourceHint: content.sourceHint,
       quiz: content.quiz,
     },
     lang
   );
+  const lead = content.factText.trim();
+  const articleCopy = enrichedArticle.article.trim();
+  const articleBody =
+    articleCopy && articleCopy.toLowerCase() !== lead.toLowerCase()
+      ? `${lead}\n\n${articleCopy}`
+      : lead || articleCopy;
 
   const correctQuizAnswer =
     content.quiz.options[content.quiz.correctIndex] ?? content.quiz.options[0];
@@ -181,8 +195,8 @@ export default async function FactDetailPageContent({
         '@id': `${canonicalUrl}#article`,
         headline: content.title,
         description: content.factText,
-        articleBody: `${content.factText}\n\n${enrichedArticle.article}`,
-        inLanguage: lang,
+        articleBody,
+        inLanguage: lang === 'en' ? 'en' : 'tr',
         educationalLevel: 'Beginner to Intermediate',
         learningResourceType: 'Micro-learning Fact Card',
         datePublished: publishedIso,
@@ -266,6 +280,8 @@ export default async function FactDetailPageContent({
         relatedFacts={relatedFacts}
         initialLang={lang}
         hasExplicitLang
+        catalogCount={allFacts.length}
+        articleBody={sampleArticleBody}
       />
     </>
   );

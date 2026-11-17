@@ -392,17 +392,38 @@ export function buildStructuredDetailHighlights(
   };
 }
 
-/** Build a vivid, non-repetitive detail article from localized fact fields (≠ short teaser). */
+function omitMatchingSentences(
+  text: string,
+  banned: string,
+  normalize: (value: string) => string
+): string {
+  const source = text.trim();
+  const blocked = banned.trim();
+  if (!source || !blocked) return source;
+  const blockedNorm = normalize(blocked);
+  const sentences = source
+    .split(/(?<=[.!?])\s+/)
+    .map((sentence) => sentence.trim())
+    .filter(Boolean);
+  if (sentences.length === 0) return normalize(source) === blockedNorm ? '' : source;
+  const kept = sentences.filter((sentence) => normalize(sentence) !== blockedNorm);
+  if (kept.length === 0) return '';
+  if (kept.length === sentences.length) return source;
+  return kept.join(' ');
+}
+
+/** Build a detail article from localized fact fields. Quiz explanation stays in the insight chip. */
 export function buildFactDetailArticle(
   localized: {
     factText: string;
     deepDiveDetail: string;
+    articleBody?: string;
     tag?: string;
     sourceHint?: string;
     quiz?: { question?: string; explanation?: string; options?: string[]; correctIndex?: number };
   },
   lang: 'tr' | 'en' = 'tr'
-): { article: string; wordCount: number; differsFromTeaser: boolean } {
+): { article: string; wordCount: number; differsFromTeaser: boolean; isLongForm: boolean } {
   const teaser = (localized.factText || '').trim();
   const deep = (localized.deepDiveDetail || '').trim();
   const explanation = (localized.quiz?.explanation || '').trim();
@@ -417,28 +438,21 @@ export function buildFactDetailArticle(
 
   const normalize = (s: string) => s.replace(/\s+/g, ' ').trim().toLowerCase();
   const normTeaser = normalize(teaser);
-
-  const blocks: string[] = [];
-  if (deep && normalize(deep) !== normTeaser) {
-    blocks.push(deep);
+  const provided = (localized.articleBody || '').trim();
+  if (provided) {
+    const providedWords = provided.split(/\s+/).filter(Boolean).length;
+    return {
+      article: provided,
+      wordCount: providedWords,
+      differsFromTeaser: normalize(provided) !== normTeaser,
+      isLongForm: providedWords >= 200,
+    };
   }
 
-  // Deduplicate quiz explanation at sentence level against existing deep-dive narrative
-  if (explanation) {
-    const currentNorm = normalize(blocks.join(' '));
-    const sentences = explanation
-      .split(/(?<=[.!?])\s+/)
-      .map((s) => s.trim())
-      .filter(Boolean);
-    const freshSentences = sentences.filter((sentence) => {
-      const normSent = normalize(sentence);
-      if (normSent.length < 12) return !currentNorm.includes(normSent);
-      return !currentNorm.includes(normSent.slice(0, Math.min(48, normSent.length)));
-    });
-    const freshExplanation = freshSentences.join(' ').trim();
-    if (freshExplanation && normalize(freshExplanation) !== normTeaser) {
-      blocks.push(freshExplanation);
-    }
+  const deepWithoutInsight = omitMatchingSentences(deep, explanation, normalize);
+  const blocks: string[] = [];
+  if (deepWithoutInsight && normalize(deepWithoutInsight) !== normTeaser) {
+    blocks.push(deepWithoutInsight);
   }
 
   const currentWords = blocks.join(' ').split(/\s+/).filter(Boolean).length;
@@ -465,10 +479,10 @@ export function buildFactDetailArticle(
 
   let article = blocks.filter(Boolean).join('\n\n').trim();
   if (!article) {
-    article = deep || teaser || explanation;
+    article = deepWithoutInsight || teaser;
   }
 
   const wordCount = article.split(/\s+/).filter(Boolean).length;
   const differsFromTeaser = normalize(article) !== normTeaser;
-  return { article, wordCount, differsFromTeaser };
+  return { article, wordCount, differsFromTeaser, isLongForm: false };
 }

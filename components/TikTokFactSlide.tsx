@@ -728,9 +728,10 @@ export default function TikTokFactSlide({
                   onDoubleClick={(e) => e.stopPropagation()}
                   onPointerDown={(e) => e.stopPropagation()}
                   onTouchStart={(e) => e.stopPropagation()}
-                  className="pointer-events-auto inline-flex min-h-[26px] items-center gap-1 rounded-full border border-white/15 bg-white/10 px-2.5 py-0.5 text-[10px] font-extrabold text-white/90 transition hover:bg-white/20 hover:text-white"
+                  aria-label={lang === 'tr' ? 'Kaynak' : 'Source'}
+                  className="pointer-events-auto inline-flex min-h-[26px] items-center gap-1 rounded-full border border-ink bg-ink px-2.5 py-0.5 text-[10px] font-extrabold text-white transition hover:bg-[#2A2444]"
                 >
-                  <Info className="h-3 w-3 shrink-0" aria-hidden="true" />
+                  <Info className="h-3 w-3 shrink-0 text-white" aria-hidden="true" />
                   <span>{lang === 'tr' ? 'Kaynak' : 'Source'}</span>
                 </button>
 

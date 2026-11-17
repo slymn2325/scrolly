@@ -514,7 +514,7 @@ export default function DesktopFeedSideRail({
             >
               <p
                 className={`text-[10px] font-black uppercase tracking-wider ${
-                  darkMode ? 'text-white/65' : 'text-[#1E1B2E]/65'
+                  darkMode ? 'text-white' : 'text-ink'
                 }`}
               >
                 {lang === 'tr' ? 'Kaynak' : 'Source'}

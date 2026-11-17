@@ -354,7 +354,6 @@ export const translations = {
     // Single SEO Page
     backToFeed: 'Ana Keşif Akışına Dön',
     seoMiniQuizTitle: 'Bu Bilgiyi Test Et (Mini Soru)',
-    seoCtaButton: '1.000+ İlginç Bilgiyi Keşfetmeye Başla →',
     seoRelatedTitle: 'Benzer Merak Kartları',
     seoReadingTime: 'sn okuma',
     seoVerifiedSource: 'Bilimsel Kaynak',
@@ -602,7 +601,6 @@ export const translations = {
     // Single SEO Page
     backToFeed: 'Back to Discovery Feed',
     seoMiniQuizTitle: 'Test This Fact (Quick Quiz)',
-    seoCtaButton: 'Start Exploring 1,000+ Curiosities →',
     seoRelatedTitle: 'More Facts You Might Like',
     seoReadingTime: 'sec read',
     seoVerifiedSource: 'Verified Source',
@@ -719,3 +717,13 @@ export const translations = {
 } as const;
 
 export type TranslationDict = (typeof translations)[Language];
+
+/** Fact-page discovery link. Uses the loaded catalog size, not a fixed "1.000+" claim. */
+export function discoveryCtaLabel(lang: Language, count: number): string {
+  const safeCount = Number.isFinite(count) && count > 0 ? Math.round(count) : 0;
+  const formatted = new Intl.NumberFormat(lang === 'en' ? 'en-US' : 'tr-TR').format(safeCount);
+  if (lang === 'en') {
+    return `Start Exploring ${formatted} Curiosities →`;
+  }
+  return `${formatted} İlginç Bilgiyi Keşfetmeye Başla →`;
+}
