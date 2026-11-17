@@ -14,6 +14,58 @@ const CATEGORY_ACCENT_HEX: Record<CategoryId, string> = {
   statistics: '#6366F1',
 };
 
+const SOYULAN_S_PATH =
+  'M328 186c-6-44-46-70-102-70-62 0-104 32-110 86h54c4-26 24-42 56-42 28 0 46 12 48 34 2 24-18 34-68 46-62 14-100 40-96 92 4 56 52 90 122 90 70 0 116-36 124-94h-56c-6 30-28 50-68 50-34 0-56-16-58-42-2-26 22-38 74-50 58-14 94-42 90-100Z';
+
+function drawSoyulanS(
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  size: number
+): void {
+  const scale = size / 512;
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.scale(scale, scale);
+
+  drawRoundedRect(ctx, 0, 0, 512, 512, 114);
+  ctx.fillStyle = '#FFD6E6';
+  ctx.fill();
+
+  drawRoundedRect(ctx, 36, 36, 440, 440, 92);
+  ctx.fillStyle = '#FFF4F7';
+  ctx.fill();
+  ctx.strokeStyle = '#ffffff';
+  ctx.lineWidth = 16;
+  ctx.stroke();
+
+  ctx.fillStyle = '#FFE8A3';
+  ctx.fill(new Path2D('M384 36h52c22 0 40 18 40 40v52L384 36Z'));
+  ctx.fillStyle = '#FFC29B';
+  ctx.fill(new Path2D('M384 36l92 92v-12c0-6-2-12-6-16L400 42c-4-4-10-6-16-6h-0Z'));
+
+  const flap = new Path2D('M384 36l92 92h-56c-20 0-36-16-36-36V36Z');
+  ctx.fillStyle = '#FFF4F7';
+  ctx.fill(flap);
+  ctx.strokeStyle = '#ffffff';
+  ctx.lineWidth = 6;
+  ctx.stroke(flap);
+
+  ctx.fillStyle = '#5B2A43';
+  ctx.fill(new Path2D(SOYULAN_S_PATH));
+
+  ctx.fillStyle = '#FF8DB8';
+  ctx.beginPath();
+  ctx.arc(148, 140, 14, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = '#CFF5E7';
+  ctx.beginPath();
+  ctx.arc(176, 118, 8, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.restore();
+}
+
 function drawRoundedRect(
   ctx: CanvasRenderingContext2D,
   x: number,
@@ -277,6 +329,11 @@ export async function generateDiplomaCertificateImage(
   ctx.fillStyle = '#4338CA';
   ctx.font = '800 24px system-ui, -apple-system, Segoe UI, sans-serif';
   ctx.fillText(`scrolly.live  •  ${t.drawerBadges}: ${memory.badges.length}/${categoryList.length}`, WIDTH - 110, 998);
+
+  ctx.save();
+  ctx.globalAlpha = 0.14;
+  drawSoyulanS(ctx, (WIDTH - 360) / 2, (HEIGHT - 360) / 2 - 20, 360);
+  ctx.restore();
 
   const blob = await new Promise<Blob>((resolve, reject) => {
     canvas.toBlob((out) => {

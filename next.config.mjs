@@ -85,13 +85,16 @@ const legacyFactRedirects = [
 const nextConfig = {
   poweredByHeader: false,
   images: {
-    unoptimized: true,
+    formats: ['image/avif', 'image/webp'],
     remotePatterns: [
       { protocol: 'https', hostname: '**.giphy.com' },
       { protocol: 'https', hostname: '**.pexels.com' },
       { protocol: 'https', hostname: '**.pixabay.com' },
       { protocol: 'https', hostname: 'upload.wikimedia.org' },
     ],
+  },
+  experimental: {
+    optimizePackageImports: ['lucide-react'],
   },
   async headers() {
     return [
@@ -127,6 +130,25 @@ const nextConfig = {
       },
       {
         source: '/icons/:path*',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'public, max-age=31536000, immutable',
+          },
+        ],
+      },
+      {
+        source: '/brand/:path*',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'public, max-age=31536000, immutable',
+          },
+        ],
+      },
+      {
+        source:
+          '/:file(icon\\.svg|icon-192\\.png|icon-512\\.png|apple-touch-icon\\.png|favicon\\.ico|favicon\\.svg)',
         headers: [
           {
             key: 'Cache-Control',

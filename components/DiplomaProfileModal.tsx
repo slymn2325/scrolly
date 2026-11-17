@@ -1,176 +1,46 @@
 'use client';
 
 import React, { useEffect, useRef, useState } from 'react';
-import dynamic from 'next/dynamic';
-import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import confetti from 'canvas-confetti';
-import { useEscapeClose } from '@/utils/useEscapeClose';
-import { motion } from 'framer-motion';
-import {
-  Bell,
-  BellOff,
-  Bookmark,
-  BookMarked,
-  Download,
-  ExternalLink,
-  Heart,
-  LogOut,
-  Mail,
-  MailCheck,
-  RotateCcw,
-  Settings,
-  Share2,
-  Trash2,
-  Volume2,
-  X,
-} from 'lucide-react';
+import { motion, useReducedMotion } from 'framer-motion';
+import { X } from 'lucide-react';
 import { checkIsStandalone } from '@/components/PwaInstallPrompt';
 import ProfileHeaderTools from '@/components/ProfileHeaderTools';
+import IconButton from '@/components/cikartma/IconButton';
+import DiplomaBadges from '@/components/profile/DiplomaBadges';
+import ProfileHeader from '@/components/profile/ProfileHeader';
+import ProfileTabs, { type ProfilePane } from '@/components/profile/ProfileTabs';
+import SavedList from '@/components/profile/SavedList';
+import SettingsSheet from '@/components/profile/SettingsSheet';
+import StatsSummary from '@/components/profile/StatsSummary';
+import StickerAlbum from '@/components/profile/StickerAlbum';
+import { profileCopy } from '@/components/profile/copy';
 import {
-  CATEGORIES,
-  FEED_EXPERIENCE_COPY,
-  type CategoryFilter,
+  COOKIE_CHOICE_EVENT,
+  paintAppearance,
+  paintLanguage,
+  prefersDarkScheme,
+  readCookieChoice,
+  readHapticsEnabled,
+  writeHapticsEnabled,
+} from '@/components/profile/persist';
+import { useEscapeClose } from '@/utils/useEscapeClose';
+import {
   type CategoryId,
-  getCategoryMeta,
   type Language,
   translations,
-  VOCABULARY_META,
 } from '@/i18n/translations';
+import { applyAppearance, type AppearanceMode } from '@/lib/theme';
+import { motionSpring, motionTiming } from '@/lib/motion';
+import { applyGoogleConsentChoice } from '@/utils/consent';
 import { generateDiplomaCertificateImage } from '@/utils/diplomaCanvasGenerator';
-import { formatPhoneticForDisplay } from '@/utils/phoneticDisplay';
-import {
-  buildFactHref,
-  type FactCard,
-  getFactPrimarySlug,
-} from '@/utils/factsData';
-import { DOCK_ICON_MAP, STATE_ILLUSTRATION_PATHS, UI_ICON_PATHS } from '@/utils/icons8Assets';
+import type { FactCard } from '@/utils/factsData';
 import { loadLikedFactIds, removeLikedFact } from '@/utils/likedFacts';
-import {
-  loadSavedFactIds,
-  removeSavedFact,
-  SAVED_FACTS_UPDATED_EVENT,
-} from '@/utils/savedFacts';
-import { getLeagueInfo, type UserMemoryState } from '@/utils/userMemory';
-import type { SavedVocabularyEntry, VocabPartOfSpeech } from '@/types/vocabulary';
-import {
-  loadSavedVocabNotebook,
-  removeSavedVocabWord,
-  speakVocabularyText,
-} from '@/utils/vocabNotebook';
-
-const TopicRadarChart = dynamic(() => import('@/components/TopicRadarChart'), { ssr: false });
-
-const VOCAB_POS_LABELS: Record<VocabPartOfSpeech, { tr: string; en: string }> = {
-  isim: { tr: 'İsim', en: 'Noun' },
-  sıfat: { tr: 'Sıfat', en: 'Adjective' },
-  fiil: { tr: 'Fiil', en: 'Verb' },
-  zarf: { tr: 'Zarf', en: 'Adverb' },
-  edat: { tr: 'Edat', en: 'Preposition' },
-};
-
-interface FactArchiveSectionProps {
-  title: string;
-  count: number;
-  icon: React.ReactNode;
-  testId: string;
-  emptyText: string;
-  facts: FactCard[];
-  lang: Language;
-  removeTestIdPrefix: string;
-  removeAriaVerb: string;
-  onButtonPop: () => void;
-  onRemoveFact: (factId: string) => void;
-}
-
-function FactArchiveSection({
-  title,
-  count,
-  icon,
-  testId,
-  emptyText,
-  facts,
-  lang,
-  removeTestIdPrefix,
-  removeAriaVerb,
-  onButtonPop,
-  onRemoveFact,
-}: FactArchiveSectionProps) {
-  return (
-    <div>
-      <h3 className="mb-2 flex items-center gap-1.5 text-xs font-extrabold uppercase tracking-wider text-ink/65 dark:text-violet-200/70">
-        {icon}
-        <span>
-          {title} ({count})
-        </span>
-      </h3>
-      <div data-testid={testId}>
-        {facts.length === 0 ? (
-          <div className="flex items-center gap-3 rounded-2xl border border-dashed border-slate-300 bg-white/50 p-3 dark:border-white/20 dark:bg-white/[0.02]">
-            <img
-              src={STATE_ILLUSTRATION_PATHS.emptyBookmark}
-              alt=""
-              aria-hidden="true"
-              width={40}
-              height={40}
-              loading="lazy"
-              decoding="async"
-              className="h-10 w-10 shrink-0 object-contain opacity-90"
-            />
-            <p className="text-xs font-medium text-ink/65 dark:text-violet-200/70">
-              {emptyText}
-            </p>
-          </div>
-        ) : (
-          <div className="space-y-2">
-            {facts.map((fact) => {
-              const catMeta = getCategoryMeta(fact.category);
-              return (
-              <div
-                key={fact.id}
-                className="flex items-start justify-between gap-2 rounded-2xl border border-slate-100 bg-white p-3 text-xs font-bold text-ink shadow-sm dark:border-white/10 dark:bg-white/5 dark:text-white"
-              >
-                <Link
-                  href={buildFactHref(getFactPrimarySlug(fact), lang)}
-                  onClick={onButtonPop}
-                  className="flex min-w-0 flex-1 items-start gap-2 transition hover:text-violet-700 dark:hover:text-violet-200"
-                >
-                  <img
-                    src={catMeta.iconPath}
-                    alt=""
-                    aria-hidden="true"
-                    width={16}
-                    height={16}
-                    decoding="async"
-                    className="mt-0.5 h-4 w-4 shrink-0 object-contain"
-                  />
-                  <span className="line-clamp-2">{fact[lang].title}</span>
-                </Link>
-                <div className="flex shrink-0 items-center gap-1">
-                  <ExternalLink className="h-3.5 w-3.5 text-ink/45 dark:text-violet-300" aria-hidden />
-                  <button
-                    type="button"
-                    data-testid={`${removeTestIdPrefix}-${fact.id}`}
-                    onClick={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      onButtonPop();
-                      onRemoveFact(fact.id);
-                    }}
-                    aria-label={`${fact[lang].title} ${removeAriaVerb}`}
-                    className="relative z-10 inline-flex h-9 w-9 items-center justify-center rounded-full bg-rose-50 text-rose-600 transition hover:bg-rose-100 dark:bg-rose-950/50 dark:text-rose-300 dark:hover:bg-rose-900/60"
-                  >
-                    <Trash2 className="h-3.5 w-3.5" />
-                  </button>
-                </div>
-              </div>
-              );
-            })}
-          </div>
-        )}
-      </div>
-    </div>
-  );
-}
+import { loadSavedFactIds, removeSavedFact, SAVED_FACTS_UPDATED_EVENT } from '@/utils/savedFacts';
+import { getLeagueInfo, saveUserMemory, type UserMemoryState } from '@/utils/userMemory';
+import type { SavedVocabularyEntry } from '@/types/vocabulary';
+import { loadSavedVocabNotebook, removeSavedVocabWord } from '@/utils/vocabNotebook';
 
 interface DiplomaProfileModalProps {
   open: boolean;
@@ -178,6 +48,7 @@ interface DiplomaProfileModalProps {
   memory: UserMemoryState;
   allFacts: FactCard[];
   presentation?: 'modal' | 'page';
+  notebookFocus?: number;
   onUpdateNickname: (nick: string) => void;
   onToggleNotifications: () => void;
   onSelectCategoryFromConstellation: (category: CategoryId) => void;
@@ -189,12 +60,21 @@ interface DiplomaProfileModalProps {
   onCelebrateLeague: () => void;
 }
 
+function resolvedAppearance(memory: UserMemoryState): AppearanceMode {
+  if (memory.appearance === 'light' || memory.appearance === 'dark' || memory.appearance === 'system') {
+    return memory.appearance;
+  }
+  if (memory.themeCustomized && memory.darkMode) return 'dark';
+  return 'light';
+}
+
 export default function DiplomaProfileModal({
   open,
   lang,
   memory,
   allFacts,
   presentation = 'modal',
+  notebookFocus = 0,
   onUpdateNickname,
   onToggleNotifications,
   onSelectCategoryFromConstellation,
@@ -205,21 +85,57 @@ export default function DiplomaProfileModal({
   onButtonPop,
   onCelebrateLeague,
 }: DiplomaProfileModalProps) {
+  const router = useRouter();
+  const reduced = useReducedMotion() === true;
   const isPage = presentation === 'page';
+  const [uiLang, setUiLang] = useState<Language>(lang);
+  const [pane, setPane] = useState<ProfilePane>(notebookFocus > 0 ? 'saved' : 'ozet');
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [appearance, setAppearance] = useState<AppearanceMode>(resolvedAppearance(memory));
+  const [hapticsOn, setHapticsOn] = useState(true);
+  const [cookieChoice, setCookieChoice] = useState<'granted' | 'denied' | 'unknown'>('unknown');
   const [justReset, setJustReset] = useState(false);
   const [exportingDiploma, setExportingDiploma] = useState(false);
-  const [diplomaStatusMsg, setDiplomaStatusMsg] = useState<string | null>(null);
+  const [toast, setToast] = useState<{ message: string; testId?: string; undo?: () => void } | null>(null);
   const [isStandalone, setIsStandalone] = useState(false);
   const [savedVocab, setSavedVocab] = useState<SavedVocabularyEntry[]>([]);
   const [savedIds, setSavedIds] = useState<string[]>([]);
   const [likedIds, setLikedIds] = useState<string[]>([]);
   const [authEmail, setAuthEmail] = useState<string | null>(null);
   const [signingOut, setSigningOut] = useState(false);
-  const [pane, setPane] = useState<'ozet' | 'album' | 'saved' | 'diploma' | 'settings'>('ozet');
+  const [offline, setOffline] = useState(false);
+  const [nickFocus, setNickFocus] = useState(0);
+  const [paintedDark, setPaintedDark] = useState(false);
   const scrollBodyRef = useRef<HTMLDivElement>(null);
-  const t = translations[lang];
-  const copy = FEED_EXPERIENCE_COPY[lang];
-  const league = getLeagueInfo(memory.xp, lang);
+  const appearanceRef = useRef<AppearanceMode | null>(memory.appearance ?? null);
+  const t = translations[uiLang];
+  const copy = profileCopy(uiLang);
+  const league = getLeagueInfo(memory.xp, uiLang);
+
+  useEffect(() => {
+    setUiLang(lang);
+  }, [lang]);
+
+  useEffect(() => {
+    if (notebookFocus <= 0) return;
+    setPane('saved');
+  }, [notebookFocus]);
+
+  useEffect(() => {
+    setPaintedDark(document.documentElement.classList.contains('dark'));
+  }, [appearance, memory.darkMode, open]);
+
+  useEffect(() => {
+    if (memory.appearance) {
+      appearanceRef.current = memory.appearance;
+      setAppearance(memory.appearance);
+    }
+  }, [memory.appearance]);
+
+  useEffect(() => {
+    setHapticsOn(readHapticsEnabled());
+    setCookieChoice(memory.cookieAccepted ? readCookieChoice() : 'unknown');
+  }, [memory.cookieAccepted, open]);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -231,17 +147,12 @@ export default function DiplomaProfileModal({
         setAuthEmail(null);
       }
     };
-
     readAuthEmail();
     const onAuthChanged = (event: Event) => {
       const detail = (event as CustomEvent<{ user?: { email?: string } | null }>).detail;
-      if (detail && 'user' in detail) {
-        setAuthEmail(detail.user?.email?.trim() || null);
-      } else {
-        readAuthEmail();
-      }
+      if (detail && 'user' in detail) setAuthEmail(detail.user?.email?.trim() || null);
+      else readAuthEmail();
     };
-
     window.addEventListener('scrolly-auth-changed', onAuthChanged as EventListener);
     window.addEventListener('storage', readAuthEmail);
     return () => {
@@ -250,36 +161,11 @@ export default function DiplomaProfileModal({
     };
   }, [open]);
 
-  const handleLogout = async () => {
-    if (signingOut) return;
-    onButtonPop();
-    setSigningOut(true);
-    try {
-      await fetch('/api/auth/logout', {
-        method: 'POST',
-        credentials: 'same-origin',
-      });
-    } catch {
-      // Clear local session state even if offline
-    } finally {
-      try {
-        window.localStorage.removeItem('scrolly_auth_user_email');
-      } catch {
-        // Ignore storage restrictions
-      }
-      setAuthEmail(null);
-      window.dispatchEvent(new CustomEvent('scrolly-auth-changed', { detail: { user: null } }));
-      setSigningOut(false);
-    }
-  };
-
   useEffect(() => {
     setIsStandalone(checkIsStandalone());
     if (!open) return;
     const resetTop = () => {
-      if (scrollBodyRef.current) {
-        scrollBodyRef.current.scrollTop = 0;
-      }
+      if (scrollBodyRef.current) scrollBodyRef.current.scrollTop = 0;
     };
     resetTop();
     const rafId = requestAnimationFrame(resetTop);
@@ -304,33 +190,90 @@ export default function DiplomaProfileModal({
     };
   }, [open]);
 
-  useEscapeClose(open && !isPage, onClose);
+  useEffect(() => {
+    const sync = () => setOffline(typeof navigator !== 'undefined' && navigator.onLine === false);
+    sync();
+    window.addEventListener('online', sync);
+    window.addEventListener('offline', sync);
+    return () => {
+      window.removeEventListener('online', sync);
+      window.removeEventListener('offline', sync);
+    };
+  }, []);
+
+  useEscapeClose(open && !isPage && !settingsOpen, onClose);
 
   const savedIdSet = new Set([...savedIds, ...memory.favoriteIds]);
   const likedIdSet = new Set(likedIds);
-  const savedFacts = allFacts.filter((f) => savedIdSet.has(f.id));
-  const likedFacts = allFacts.filter((f) => likedIdSet.has(f.id));
-  const categoryList = CATEGORIES.filter((c) => c.id !== 'all');
-  const affinityCategories = [...categoryList, VOCABULARY_META];
-  const getAffinityWeight = (catId: CategoryFilter): number => {
-    if (catId === 'vocabulary') {
-      return Math.max(memory.categoryWeights.vocabulary ?? 0, savedVocab.length);
-    }
-    return memory.categoryWeights[catId as CategoryId] ?? 0;
+  const savedFacts = allFacts.filter((fact) => savedIdSet.has(fact.id));
+  const likedFacts = allFacts.filter((fact) => likedIdSet.has(fact.id));
+
+  const withAppearance = (base: UserMemoryState): UserMemoryState => {
+    if (!appearanceRef.current) return base;
+    return applyAppearance(base, appearanceRef.current, prefersDarkScheme());
   };
-  const maxWeight = Math.max(1, ...affinityCategories.map((c) => getAffinityWeight(c.id)));
+
+  const chooseAppearance = (mode: AppearanceMode) => {
+    onButtonPop();
+    appearanceRef.current = mode;
+    const next = paintAppearance(memory, mode);
+    saveUserMemory(next);
+    setAppearance(mode);
+  };
+
+  const chooseLanguage = (nextLang: Language) => {
+    onButtonPop();
+    const next = { ...withAppearance(memory), lang: nextLang };
+    saveUserMemory(next);
+    paintLanguage(nextLang);
+    setUiLang(nextLang);
+    if (typeof window === 'undefined') return;
+    const path = window.location.pathname;
+    const onEn = path === '/en' || path === '/en/';
+    const onTr = path === '/';
+    if (!onEn && !onTr) return;
+    if ((nextLang === 'en' && onEn) || (nextLang === 'tr' && onTr)) return;
+    const url = new URL(window.location.href);
+    url.pathname = nextLang === 'en' ? '/en' : '/';
+    url.searchParams.delete('lang');
+    router.push(`${url.pathname}${url.search}${url.hash}`);
+  };
+
+  const chooseCookie = (choice: 'granted' | 'denied') => {
+    onButtonPop();
+    applyGoogleConsentChoice(choice);
+    setCookieChoice(choice);
+    saveUserMemory({ ...withAppearance(memory), cookieAccepted: true });
+    window.dispatchEvent(new CustomEvent(COOKIE_CHOICE_EVENT, { detail: choice }));
+  };
+
+  const handleLogout = async () => {
+    if (signingOut) return;
+    onButtonPop();
+    setSigningOut(true);
+    try {
+      await fetch('/api/auth/logout', { method: 'POST', credentials: 'same-origin' });
+    } catch {
+      // Clear the local session even when the network is down.
+    } finally {
+      try {
+        window.localStorage.removeItem('scrolly_auth_user_email');
+      } catch {
+        // Ignore storage restrictions.
+      }
+      setAuthEmail(null);
+      window.dispatchEvent(new CustomEvent('scrolly-auth-changed', { detail: { user: null } }));
+      setSigningOut(false);
+    }
+  };
 
   const handleCelebrate = () => {
     onButtonPop();
     onCelebrateLeague();
     try {
-      confetti({
-        particleCount: 70,
-        spread: 65,
-        origin: { y: 0.5 },
-      });
+      confetti({ particleCount: 24, spread: 65, origin: { y: 0.5 } });
     } catch {
-      // Ignore confetti issues in headless mode
+      // Ignore confetti failures in headless runs.
     }
   };
 
@@ -341,8 +284,7 @@ export default function DiplomaProfileModal({
     document.body.appendChild(link);
     link.click();
     link.remove();
-    setDiplomaStatusMsg(t.diplomaDownloadedToast);
-    setTimeout(() => setDiplomaStatusMsg(null), 2400);
+    setToast({ message: t.diplomaDownloadedToast, testId: 'diploma-status-toast' });
   };
 
   const handleDownloadDiploma = async () => {
@@ -350,8 +292,10 @@ export default function DiplomaProfileModal({
     onButtonPop();
     setExportingDiploma(true);
     try {
-      const asset = await generateDiplomaCertificateImage(memory, allFacts, lang);
+      const asset = await generateDiplomaCertificateImage(memory, allFacts, uiLang);
       triggerDiplomaDownload(asset.dataUrl);
+    } catch {
+      setToast({ message: copy.error });
     } finally {
       setExportingDiploma(false);
     }
@@ -362,9 +306,8 @@ export default function DiplomaProfileModal({
     onButtonPop();
     setExportingDiploma(true);
     try {
-      const asset = await generateDiplomaCertificateImage(memory, allFacts, lang);
+      const asset = await generateDiplomaCertificateImage(memory, allFacts, uiLang);
       if (
-        typeof navigator !== 'undefined' &&
         typeof navigator.canShare === 'function' &&
         navigator.canShare({ files: [asset.file] }) &&
         typeof navigator.share === 'function'
@@ -377,10 +320,12 @@ export default function DiplomaProfileModal({
           });
           return;
         } catch {
-          // User dismissed share or share unavailable -> fallback to PNG download
+          // Fall back to a PNG download when share is dismissed.
         }
       }
       triggerDiplomaDownload(asset.dataUrl);
+    } catch {
+      setToast({ message: copy.error });
     } finally {
       setExportingDiploma(false);
     }
@@ -388,716 +333,249 @@ export default function DiplomaProfileModal({
 
   if (!open) return null;
 
+  const shell = isPage
+    ? 'absolute inset-0 z-20 flex h-full w-full flex-col bg-cik-bg text-cik-text'
+    : 'cik-scrim absolute inset-0 z-20 flex h-full w-full items-end justify-center p-4 sm:items-center';
+
   return (
+    <div
+      role={isPage ? 'region' : 'dialog'}
+      aria-modal={isPage ? undefined : true}
+      aria-label={t.diplomaTitle}
+      data-testid="diploma-modal"
+      data-presentation={presentation}
+      className={shell}
+    >
+      <motion.div
+        initial={reduced ? { opacity: 0 } : { opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={reduced ? motionTiming.reducedFade : motionSpring.dockTab}
+        className={
+          isPage
+            ? 'relative flex h-full w-full flex-col overflow-hidden pb-[calc(env(safe-area-inset-bottom)+64px)] lg:pb-0'
+            : 'cik-sheet relative flex max-h-[calc(100dvh-64px)] w-full max-w-lg flex-col overflow-hidden bg-cik-surface text-cik-text'
+        }
+      >
         <div
-          role={isPage ? 'region' : 'dialog'}
-          aria-modal={isPage ? undefined : true}
-          aria-label={t.diplomaTitle}
-          data-testid="diploma-modal"
-          data-presentation={presentation}
-          className={
-            isPage
-              ? 'absolute inset-0 z-20 flex h-full w-full flex-col bg-cik-bg text-cik-text'
-              : 'absolute inset-0 z-20 flex h-full w-full items-center justify-center bg-[#0B0B11]/85 p-3 backdrop-blur-sm'
-          }
+          className={`flex shrink-0 items-center justify-between gap-3 px-4 pb-2 ${
+            isPage ? 'pt-[calc(env(safe-area-inset-top)+16px)] lg:px-8 lg:pt-6' : 'pt-4'
+          }`}
         >
-          <motion.div
-            initial={isPage ? { opacity: 0.94, y: 8 } : { opacity: 0.94, scale: 0.97, y: 8 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            transition={{ duration: 0.14, ease: [0.23, 1, 0.32, 1] }}
-            className={
-              isPage
-                ? 'relative flex h-full w-full flex-col overflow-hidden pb-[calc(env(safe-area-inset-bottom,16px)+100px)] lg:pb-0'
-                : 'relative mb-[92px] flex max-h-[82dvh] w-full max-w-[430px] md:max-w-2xl flex-col overflow-hidden rounded-3xl border-2 border-amber-200 bg-[#FFFDF9] shadow-2xl dark:border-violet-700/50 dark:bg-[#0B0B11]'
-            }
-          >
-            {/* Header */}
-            <div
-              className={`flex shrink-0 items-center justify-between border-b border-amber-100 px-5 pb-4 dark:border-white/10 ${
-                isPage ? 'pt-[calc(env(safe-area-inset-top,20px)+16px)] lg:pt-4' : 'pt-4'
-              }`}
-            >
-              <div className="flex items-center gap-2.5">
-                <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-violet-100 p-1.5 dark:bg-violet-900/60">
-                  <img
-                    src={DOCK_ICON_MAP.diploma}
-                    alt=""
-                    aria-hidden="true"
-                    width={28}
-                    height={28}
-                    loading="eager"
-                    decoding="sync"
-                    className="h-7 w-7 object-contain"
-                  />
-                </div>
-                <h2 className="font-display text-lg font-bold text-cik-text">
-                  {t.diplomaTitle}
-                </h2>
-              </div>
-              <button
-                type="button"
-                data-testid="profile-settings-btn"
-                aria-pressed={pane === 'settings'}
-                onClick={() => {
-                  onButtonPop();
-                  setPane((current) => (current === 'settings' ? 'ozet' : 'settings'));
-                }}
-                className="inline-flex h-11 items-center gap-2 rounded-pill bg-cik-pink px-3 text-sm font-bold text-cik-text"
-              >
-                <Settings className="h-5 w-5" strokeWidth={2} />
-                <span>{t.profileSettings}</span>
-              </button>
-
-              {!isPage && (
-              <motion.button
-                type="button"
-                whileTap={{ scale: 0.92 }}
-                onClick={() => {
-                  onButtonPop();
-                  onClose();
-                }}
-                aria-label="Close"
-                data-testid="diploma-close-btn"
-                className="flex h-11 w-11 items-center justify-center rounded-full bg-slate-100 text-ink/75 hover:bg-slate-200 dark:bg-white/10 dark:text-violet-100"
-              >
-                <X className="h-4 w-4" />
-              </motion.button>
-              )}
-            </div>
-
-            {/* Scrollable Body */}
-            <div
-              ref={scrollBodyRef}
-              data-testid="diploma-scroll-body"
-              className={`no-scrollbar min-h-0 flex-1 space-y-4 overflow-y-auto px-5 pt-4 ${
-                isPage ? 'pb-8 lg:pb-6' : 'pb-5'
-              }`}
-            >
-              <div className="no-scrollbar flex w-full min-w-0 gap-1 overflow-x-auto pb-2" role="tablist" aria-label={t.diplomaTitle}>
-                {(
-                  [
-                    ['ozet', t.profileTabSummary],
-                    ['album', t.profileTabAlbum],
-                    ['saved', t.profileTabSaved],
-                    ['diploma', t.profileTabDiploma],
-                  ] as const
-                ).map(([id, label]) => (
-                  <button
-                    key={id}
-                    type="button"
-                    role="tab"
-                    aria-selected={pane === id}
-                    data-testid={`profile-tab-${id}`}
-                    onClick={() => setPane(id)}
-                    className={`inline-flex h-11 min-w-0 flex-1 items-center justify-center whitespace-nowrap rounded-pill px-3 text-xs font-bold sm:text-sm ${
-                      pane === id ? 'bg-cik-berry text-slate-900' : 'bg-white text-slate-900 dark:text-slate-100'
-                    }`}
-                  >
-                    {label}
-                  </button>
-                ))}
-              </div>
-              <div className={pane === 'settings' ? 'space-y-3' : 'hidden'}>
-              {/* Account Sync Status / Non-blocking Email OTP CTA */}
-              {authEmail ? (
-                <div
-                  data-testid="diploma-auth-connected"
-                  className="flex flex-wrap items-center justify-between gap-2.5 rounded-2xl border border-emerald-200 bg-emerald-50/80 px-3.5 py-2.5 dark:border-emerald-700/50 dark:bg-emerald-950/40"
-                >
-                  <div className="flex min-w-0 items-center gap-2.5">
-                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-emerald-500/15 text-emerald-700 dark:text-emerald-300">
-                      <MailCheck className="h-4 w-4" />
-                    </div>
-                    <div className="min-w-0">
-                      <p className="text-[10px] font-black uppercase tracking-wider text-emerald-700 dark:text-emerald-300">
-                        {lang === 'tr' ? 'E-posta Hesabı Bağlı' : 'Connected Account'}
-                      </p>
-                      <p
-                        data-testid="diploma-auth-email"
-                        className="truncate text-xs font-extrabold text-ink dark:text-white"
-                      >
-                        {authEmail}
-                      </p>
-                    </div>
-                  </div>
-                  <button
-                    type="button"
-                    disabled={signingOut}
-                    onClick={() => void handleLogout()}
-                    data-testid="diploma-logout-btn"
-                    className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-rose-200 bg-white px-3 py-1.5 text-[11px] font-extrabold text-rose-700 transition-colors hover:bg-rose-50 disabled:opacity-60 dark:border-rose-700/50 dark:bg-rose-950/50 dark:text-rose-200 dark:hover:bg-rose-900/60"
-                  >
-                    <LogOut className="h-3.5 w-3.5" />
-                    <span>{lang === 'tr' ? 'Çıkış Yap' : 'Sign Out'}</span>
-                  </button>
-                </div>
-              ) : (
-                <div
-                  data-testid="diploma-auth-cta"
-                  className="flex flex-wrap items-center justify-between gap-2.5 rounded-2xl border border-violet-200 bg-violet-50/80 px-3.5 py-2.5 dark:border-violet-700/50 dark:bg-violet-950/40"
-                >
-                  <div className="min-w-0 flex-1">
-                    <p className="text-xs font-extrabold text-ink dark:text-white">
-                      {lang === 'tr'
-                        ? 'XP, seri ve defterini yedekle'
-                        : 'Back up your XP, streak & saved cards'}
-                    </p>
-                    <p className="mt-0.5 text-[11px] font-medium text-ink/70 dark:text-violet-200/80">
-                      {lang === 'tr'
-                        ? 'Şifresiz tek kullanımlık kod ile cihazlar arasında eşitle.'
-                        : 'Sync across devices with a quick passwordless email code.'}
-                    </p>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      onButtonPop();
-                      window.dispatchEvent(
-                        new CustomEvent('scrolly-open-auth', { detail: { trigger: 'profile' } })
-                      );
-                    }}
-                    data-testid="diploma-connect-email-btn"
-                    className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-violet-600 px-3.5 py-2 text-[11px] font-extrabold text-white shadow-sm transition-colors hover:bg-violet-700"
-                  >
-                    <Mail className="h-3.5 w-3.5 shrink-0" />
-                    <span>
-                      {lang === 'tr'
-                        ? 'E-posta ile Hesabını Bağla / Giriş Yap'
-                        : 'Connect Email / Sign In'}
-                    </span>
-                  </button>
-                </div>
-              )}
-
-              <ProfileHeaderTools lang={lang} />
-              </div>
-              <button
-                type="button"
-                data-testid="profile-scrolla-card"
-                onClick={() => {
-                  onButtonPop();
-                  window.dispatchEvent(new CustomEvent('scrolly-open-duel'));
-                }}
-                className={`rounded-2xl border border-cik-line bg-white px-4 py-3 text-left lg:hidden ${
-                  pane === 'ozet' ? '' : 'hidden'
-                }`}
-              >
-                <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-mute">Scrolla</p>
-                <p className="mt-1 text-sm font-semibold text-ink">{lang === 'tr' ? '1v1 bilgi düellosu' : '1v1 fact duel'}</p>
-              </button>
-              {/* Explorer Nickname */}
-              <div>
-                <label
-                  htmlFor="diploma-nickname-input"
-                  className="block text-xs font-extrabold text-ink/75 dark:text-violet-200/80"
-                >
-                  {t.diplomaNickLabel}
-                </label>
-                <input
-                  id="diploma-nickname-input"
-                  type="text"
-                  data-testid="diploma-nickname-input"
-                  value={memory.nickname}
-                  onChange={(e) => onUpdateNickname(e.target.value)}
-                  maxLength={24}
-                  className="mt-1.5 w-full rounded-2xl border border-amber-200 bg-white px-3.5 py-2 text-sm font-bold text-slate-900 focus:border-violet-500 focus:outline-none focus:ring-2 focus:ring-violet-400/50 dark:border-white/15 dark:bg-slate-900 dark:text-slate-100"
-                />
-              </div>
-
-              {/* Weekly League Diploma Certificate Card */}
-              <div
-                data-testid="weekly-diploma-card"
-                className={`relative overflow-hidden rounded-3xl border-[3px] border-white bg-cik-butter p-4 text-center shadow-sticker ${
-                  pane === 'diploma' ? '' : 'hidden'
-                }`}
-              >
-                <img
-                  src={UI_ICON_PATHS.verifiedSeal}
-                  alt=""
-                  aria-hidden="true"
-                  className="absolute right-3 top-3 h-8 w-8 object-contain opacity-90 drop-shadow-sm"
-                />
-                <p className="text-[10px] font-black uppercase tracking-widest text-amber-700 dark:text-amber-300">
-                  {t.diplomaWeeklyCert}
-                </p>
-                <div className="my-2 flex justify-center">
-                  <img
-                    src={league.shieldIcon}
-                    alt={league.label}
-                    data-testid="diploma-league-shield"
-                    className="h-14 w-14 object-contain drop-shadow-md"
-                  />
-                </div>
-                <h3 className="font-display text-xl font-bold text-ink dark:text-white">
-                  {league.label}
-                </h3>
-                <p className="mt-0.5 text-xs font-bold text-ink/70 dark:text-violet-200/80">
-                  {memory.nickname} • {memory.xp} XP
-                </p>
-
-                <div className="mt-3 flex flex-wrap items-center justify-center gap-2">
-                  <motion.button
-                    type="button"
-                    whileTap={{ scale: 0.94 }}
-                    onClick={handleCelebrate}
-                    data-testid="diploma-celebrate-btn"
-                    className="inline-flex min-h-[42px] items-center gap-1.5 rounded-full bg-amber-400 px-3.5 py-2 text-xs font-black text-ink shadow-sm hover:bg-amber-300 whitespace-normal break-words leading-snug"
-                  >
-                    <span>{t.diplomaCelebrateBtn}</span>
-                  </motion.button>
-
-                  <motion.button
-                    type="button"
-                    whileTap={{ scale: 0.94 }}
-                    disabled={exportingDiploma}
-                    onClick={handleDownloadDiploma}
-                    data-testid="diploma-download-btn"
-                    className="inline-flex min-h-[42px] items-center gap-1.5 rounded-full bg-ink px-3.5 py-2 text-xs font-black text-white shadow-sm hover:opacity-90 disabled:opacity-60 dark:bg-violet-600 whitespace-normal break-words leading-snug"
-                  >
-                    <Download className="h-3.5 w-3.5 shrink-0" />
-                    <span>{t.diplomaDownloadPngBtn}</span>
-                  </motion.button>
-
-                  <motion.button
-                    type="button"
-                    whileTap={{ scale: 0.94 }}
-                    disabled={exportingDiploma}
-                    onClick={handleShareDiploma}
-                    data-testid="diploma-share-btn"
-                    className="inline-flex min-h-[42px] items-center gap-1.5 rounded-full border border-ink/20 bg-white/85 px-3.5 py-2 text-xs font-black text-ink shadow-sm hover:bg-white disabled:opacity-60 dark:border-white/20 dark:bg-white/10 dark:text-white whitespace-normal break-words leading-snug"
-                  >
-                    <Share2 className="h-3.5 w-3.5 shrink-0" />
-                    <span>{t.diplomaSharePngBtn}</span>
-                  </motion.button>
-                </div>
-
-                {diplomaStatusMsg && (
-                  <p
-                    data-testid="diploma-status-toast"
-                    className="mt-2 text-[11px] font-extrabold text-emerald-700 dark:text-emerald-300"
-                  >
-                    ✓ {diplomaStatusMsg}
-                  </p>
-                )}
-              </div>
-
-              <div className={pane === 'ozet' ? 'space-y-4' : 'hidden'}>
-              {/* Interactive 7-Axis DataMB Topic Radar */}
-              <TopicRadarChart
-                lang={lang}
-                memory={memory}
-                allFacts={allFacts}
-                onExploreCategory={(cat) => {
-                  onClose();
-                  onSelectCategoryFromConstellation(cat);
-                }}
-                onButtonPop={onButtonPop}
-              />
-
-              {/* Key Metrics Strip */}
-              <div className="grid grid-cols-3 gap-2">
-                <div className="rounded-2xl border border-amber-200/70 bg-amber-50/70 p-3 text-center dark:border-white/10 dark:bg-white/5">
-                  <img
-                    src={UI_ICON_PATHS.xpSparkles}
-                    alt=""
-                    aria-hidden="true"
-                    className="mx-auto h-5 w-5 object-contain"
-                  />
-                  <p className="mt-1 text-lg font-extrabold text-ink dark:text-white">{memory.xp}</p>
-                  <p className="text-[10px] font-bold text-ink/60 dark:text-violet-200/70">XP</p>
-                </div>
-                <div className="rounded-2xl border border-violet-200/70 bg-pastel-lavender/50 p-3 text-center dark:border-white/10 dark:bg-white/5">
-                  <img
-                    src={UI_ICON_PATHS.verifiedSeal}
-                    alt=""
-                    aria-hidden="true"
-                    className="mx-auto h-5 w-5 object-contain"
-                  />
-                  <p className="mt-1 text-lg font-extrabold text-ink dark:text-white">
-                    {memory.seenIds.length}
-                  </p>
-                  <p className="text-[10px] font-bold text-ink/60 dark:text-violet-200/70">
-                    {t.drawerDiscovered}
-                  </p>
-                </div>
-                <div className="rounded-2xl border border-rose-200/70 bg-pastel-coral/50 p-3 text-center dark:border-white/10 dark:bg-white/5">
-                  <img
-                    src={UI_ICON_PATHS.streakFire}
-                    alt=""
-                    aria-hidden="true"
-                    className="mx-auto h-5 w-5 object-contain"
-                  />
-                  <p className="mt-1 text-lg font-extrabold text-ink dark:text-white">
-                    {memory.streakDays}
-                  </p>
-                  <p className="text-[10px] font-bold text-ink/60 dark:text-violet-200/70">
-                    {t.drawerStreak}
-                  </p>
-                </div>
-              </div>
-
-              </div>
-
-              <div className={pane === 'diploma' ? '' : 'hidden'}>
-              {/* Category Badges */}
-              <div>
-                <h3 className="mb-2 text-xs font-extrabold uppercase tracking-wider text-ink/65 dark:text-violet-200/70">
-                  {t.drawerBadges} ({memory.badges.length})
-                </h3>
-                {memory.badges.length === 0 ? (
-                  <p className="rounded-2xl border border-dashed border-slate-300 p-3 text-xs font-medium text-ink/60 dark:border-white/20 dark:text-violet-200/60">
-                    {t.drawerNoBadges}
-                  </p>
-                ) : (
-                  <div className="flex flex-wrap gap-1.5">
-                    {memory.badges.map((badgeId) => {
-                      const meta = getCategoryMeta(badgeId);
-                      return (
-                        <span
-                          key={badgeId}
-                          className={`inline-flex items-center gap-1.5 rounded-full ${meta.bgClass} px-2.5 py-1 text-[11px] font-bold ${meta.accentText}`}
-                        >
-                          <img
-                            src={meta.iconPath}
-                            alt=""
-                            aria-hidden="true"
-                            className="h-4 w-4 object-contain"
-                          />
-                          <span>{meta.badge[lang]}</span>
-                        </span>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
-              </div>
-
-              <div className={pane === 'ozet' ? '' : 'hidden'}>
-              {/* Topic Affinity (all 7 fact categories + Language Learning) */}
-              <div>
-                <h3 className="mb-2 text-xs font-extrabold uppercase tracking-wider text-ink/65 dark:text-violet-200/70">
-                  {t.drawerAffinity}
-                </h3>
-                <div className="space-y-1.5 rounded-2xl border border-slate-100 bg-white p-3 dark:border-white/10 dark:bg-white/5">
-                  {affinityCategories.map((cat) => {
-                    const weight = getAffinityWeight(cat.id);
-                    const pct = Math.round((weight / maxWeight) * 100);
-                    return (
-                      <div key={cat.id} className="space-y-0.5">
-                        <div className="flex justify-between text-[11px] font-bold text-ink/80 dark:text-violet-100">
-                          <span className="inline-flex items-center gap-1.5">
-                            <img
-                              src={cat.iconPath}
-                              alt=""
-                              aria-hidden="true"
-                              className="h-4 w-4 object-contain"
-                            />
-                            <span>{cat.label[lang]}</span>
-                          </span>
-                          <span>{weight}</span>
-                        </div>
-                        <div className="h-1.5 w-full overflow-hidden rounded-full bg-slate-100 dark:bg-white/10">
-                          <div
-                            style={{ width: `${Math.max(4, pct)}%` }}
-                            className={`h-full rounded-full ${cat.accentBg}`}
-                          />
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-              </div>
-
-              <div className={pane === 'album' ? 'space-y-3' : 'hidden'} data-testid="profile-album">
-                <h3 className="font-display text-[22px] font-bold leading-7 text-cik-text">{t.profileTabAlbum}</h3>
-                {memory.seenIds.length === 0 ? (
-                  <div className="flex flex-col items-center gap-2 rounded-sticker border-[3px] border-white bg-white p-4 text-center shadow-sticker">
-                    <img src="/assets/fluent/empty-nest.png" alt="" width={72} height={72} className="h-[72px] w-[72px] object-contain" />
-                    <p className="text-sm font-bold text-cik-muted">
-                      {lang === 'tr' ? 'Henüz toplanan çıkartma yok.' : 'No stickers collected yet.'}
-                    </p>
-                  </div>
-                ) : (
-                  <div className="grid grid-cols-2 gap-3">
-                    {allFacts
-                      .filter((fact) => memory.seenIds.includes(fact.id))
-                      .slice(0, 8)
-                      .map((fact, index) => (
-                        <div
-                          key={fact.id}
-                          className="rounded-sticker border-[3px] border-white bg-cik-pink p-3 shadow-sticker"
-                          style={{ transform: `rotate(${index % 2 === 0 ? -2 : 1}deg)` }}
-                        >
-                          <p className="line-clamp-3 text-sm font-bold leading-5 text-cik-text">{fact[lang].title}</p>
-                        </div>
-                      ))}
-                  </div>
-                )}
-              </div>
-
-              <div className={pane === 'saved' ? 'space-y-4' : 'hidden'}>
-              {/* 1. Saved Facts Archive */}
-              <FactArchiveSection
-                title={t.diplomaSavedArchive}
-                count={savedFacts.length}
-                icon={<Bookmark className="h-3.5 w-3.5 text-amber-500" />}
-                testId="diploma-saved-list"
-                emptyText={t.diplomaNoSavedFacts}
-                facts={savedFacts}
-                lang={lang}
-                removeTestIdPrefix="diploma-unsave"
-                removeAriaVerb={lang === 'tr' ? 'kaydını kaldır' : 'remove from saved'}
-                onButtonPop={onButtonPop}
-                onRemoveFact={(factId) => {
-                  removeSavedFact(factId);
-                  setSavedIds(loadSavedFactIds());
-                  if (memory.favoriteIds.includes(factId)) {
-                    onRemoveFavorite(factId);
-                  }
-                }}
-              />
-
-              {/* 2. Double-Tap / ❤️ Liked Facts Archive */}
-              <FactArchiveSection
-                title={t.diplomaLikedArchive}
-                count={likedFacts.length}
-                icon={<Heart className="h-3.5 w-3.5 text-rose-500" />}
-                testId="diploma-liked-list"
-                emptyText={t.diplomaNoLikedFacts}
-                facts={likedFacts}
-                lang={lang}
-                removeTestIdPrefix="diploma-unlike"
-                removeAriaVerb={lang === 'tr' ? 'beğenisini kaldır' : 'remove from likes'}
-                onButtonPop={onButtonPop}
-                onRemoveFact={(factId) => {
-                  removeLikedFact(factId);
-                  setLikedIds(loadLikedFactIds());
-                }}
-              />
-
-              {/* Kelime Defteri */}
-              <div>
-                <h3 className="mb-2 flex items-center gap-1.5 text-xs font-extrabold uppercase tracking-wider text-ink/65 dark:text-violet-200/70">
-                  <BookMarked className="h-3.5 w-3.5 text-indigo-500" />
-                  <span>
-                    {copy.vocabNotebookTitle} ({savedVocab.length})
-                  </span>
-                </h3>
-                <div data-testid="diploma-vocab-notebook">
-                  {savedVocab.length === 0 ? (
-                    <div className="flex items-center gap-3 rounded-2xl border border-dashed border-slate-300 bg-white/50 p-3 dark:border-white/20 dark:bg-white/[0.02]">
-                      <img
-                        src={STATE_ILLUSTRATION_PATHS.emptyBookmark}
-                        alt=""
-                        aria-hidden="true"
-                        width={40}
-                        height={40}
-                        loading="lazy"
-                        decoding="async"
-                        className="h-10 w-10 shrink-0 object-contain opacity-90"
-                      />
-                      <p className="flex items-center gap-1.5 text-xs font-medium text-ink/65 dark:text-violet-200/70">
-                        <span>
-                          {lang === 'tr'
-                            ? 'Henüz kelime kaydetmedin. Kelime kartlarında sağdaki Kaydet butonuna dokun.'
-                            : 'No saved words yet. Tap Save on Vocabulary cards.'}
-                        </span>
-                      </p>
-                    </div>
-                  ) : (
-                    <div className="space-y-2">
-                      {savedVocab.map((entry) => (
-                        <div
-                          key={entry.id}
-                          className="flex items-start justify-between gap-2 rounded-2xl border border-indigo-100 bg-indigo-50/70 p-3 text-xs dark:border-indigo-400/20 dark:bg-indigo-950/40"
-                        >
-                          <div className="min-w-0">
-                            <p className="font-black text-indigo-800 dark:text-indigo-200">
-                              {entry.word}{' '}
-                              <span
-                                data-phonetic="true"
-                                aria-label={formatPhoneticForDisplay(entry.phonetic)}
-                                className="font-mono text-[10px] font-semibold text-slate-500"
-                              >
-                                {formatPhoneticForDisplay(entry.phonetic)}
-                              </span>
-                            </p>
-                            <p className="font-bold text-emerald-700 dark:text-emerald-300">
-                              {entry.meaningTr} ·{' '}
-                              {VOCAB_POS_LABELS[entry.partOfSpeech]?.[lang] ?? entry.partOfSpeech}
-                            </p>
-                            <p className="mt-0.5 line-clamp-2 text-[11px] text-slate-600 dark:text-slate-300">
-                              {entry.exampleEn}
-                            </p>
-                          </div>
-                          <div className="flex shrink-0 items-center gap-1">
-                            <button
-                              type="button"
-                              onClick={() => {
-                                onButtonPop();
-                                speakVocabularyText(entry.word, 'en-US', 0.9);
-                              }}
-                              aria-label={`${copy.listenEn}: ${entry.word}`}
-                              className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-indigo-600 text-white"
-                            >
-                              <Volume2 className="h-4 w-4" />
-                            </button>
-                            <button
-                              type="button"
-                              data-testid={`diploma-vocab-remove-${entry.id}`}
-                              onClick={() => {
-                                onButtonPop();
-                                setSavedVocab(removeSavedVocabWord(entry.word));
-                              }}
-                              aria-label={
-                                lang === 'tr'
-                                  ? `${entry.word} kelimesini defterden sil`
-                                  : `Remove ${entry.word} from notebook`
-                              }
-                              className="relative z-10 inline-flex h-9 w-9 items-center justify-center rounded-full bg-rose-50 text-rose-600 transition hover:bg-rose-100 dark:bg-rose-950/50 dark:text-rose-300 dark:hover:bg-rose-900/60"
-                            >
-                              <Trash2 className="h-3.5 w-3.5" />
-                            </button>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              </div>
-              </div>
-
-              <div className={pane === 'settings' ? 'space-y-3' : 'hidden'}>
-              {/* Notifications Toggle */}
-              <motion.button
-                type="button"
-                whileTap={{ scale: 0.96 }}
-                onClick={() => {
-                  onButtonPop();
-                  onToggleNotifications();
-                }}
-                data-testid="diploma-notifications-btn"
-                className="flex w-full min-h-[48px] items-center justify-between gap-2 rounded-2xl border border-violet-200 bg-pastel-lavender/40 px-4 py-2.5 text-left text-xs font-extrabold text-violet-950 dark:border-violet-700/50 dark:bg-violet-950/40 dark:text-violet-100 whitespace-normal break-words leading-snug"
-              >
-                <span className="inline-flex items-center gap-2">
-                  {memory.notificationsEnabled ? (
-                    <Bell className="h-4 w-4 shrink-0 text-emerald-600 dark:text-emerald-400" />
-                  ) : (
-                    <BellOff className="h-4 w-4 shrink-0 text-ink/50 dark:text-violet-300" />
-                  )}
-                  <span>{t.diplomaNotificationsLabel}</span>
-                </span>
-                <span className="shrink-0 rounded-full bg-white px-2.5 py-1 text-[10px] font-black text-ink shadow-sm dark:bg-white/10 dark:text-white">
-                  {memory.notificationsEnabled
-                    ? t.diplomaNotificationsOn
-                    : t.diplomaNotificationsOff}
-                </span>
-              </motion.button>
-
-              {/* Scroll-bottom Profile Reset & Trust Links (visible when scrolled to bottom) */}
-              <div className="mt-6 rounded-2xl border border-amber-200/80 bg-white/80 px-4 py-3.5 dark:border-white/10 dark:bg-white/[0.03]">
-                {justReset && (
-                  <p className="mb-2 text-center text-xs font-bold text-emerald-600 dark:text-emerald-400">
-                    {t.drawerResetConfirm}
-                  </p>
-                )}
-                <motion.button
-                  type="button"
-                  whileTap={{ scale: 0.94 }}
-                  onClick={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    onButtonPop();
-                    onResetMemory();
-                    setSavedIds([]);
-                    setLikedIds([]);
-                    setSavedVocab([]);
-                    setJustReset(true);
-                    setTimeout(() => setJustReset(false), 3000);
-                  }}
-                  data-testid="diploma-reset-btn"
-                  className="relative z-20 flex w-full min-h-[48px] items-center justify-center gap-2 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-2.5 text-xs font-extrabold text-rose-700 hover:bg-rose-100 dark:border-rose-700/50 dark:bg-rose-950/40 dark:text-rose-300 whitespace-normal break-words leading-snug"
-                >
-                  <RotateCcw className="h-3.5 w-3.5" />
-                  <span>{t.drawerReset}</span>
-                </motion.button>
-
-              <div className="mt-2.5 flex flex-wrap items-center justify-center gap-x-4 gap-y-1.5">
-                {onRequestPwaInstall && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      onButtonPop();
-                      onRequestPwaInstall();
-                    }}
-                    data-testid="diploma-pwa-install-link"
-                    className={`cursor-pointer text-[11px] font-extrabold underline underline-offset-4 transition ${
-                      isStandalone
-                        ? 'text-emerald-600 decoration-emerald-400/50 hover:text-emerald-700 dark:text-emerald-300 dark:hover:text-emerald-200'
-                        : 'text-violet-700 decoration-violet-400/40 hover:text-violet-900 dark:text-violet-300 dark:hover:text-white'
-                    }`}
-                  >
-                    {isStandalone ? t.pwaInstalledBtn : t.pwaManualInstallLink}
-                  </button>
-                )}
-
-                <Link
-                  href="/privacy"
-                  onClick={() => {
-                    onButtonPop();
-                    onClose();
-                  }}
-                  data-testid="diploma-privacy-link"
-                  className="text-[11px] font-bold text-ink/55 underline decoration-ink/25 underline-offset-4 transition hover:text-ink dark:text-violet-200/65 dark:decoration-violet-300/30 dark:hover:text-white"
-                >
-                  {lang === 'tr' ? 'Gizlilik Politikası' : 'Privacy Policy'}
-                </Link>
-                <span className="inline-flex flex-wrap items-center justify-center gap-1">
-                  <Link
-                    href={lang === 'en' ? '/contact?lang=en' : '/contact'}
-                    onClick={() => {
-                      onButtonPop();
-                      onClose();
-                    }}
-                    data-testid="diploma-contact-link"
-                    className="text-[11px] font-bold text-ink/55 underline decoration-ink/25 underline-offset-4 transition hover:text-ink dark:text-violet-200/65 dark:decoration-violet-300/30 dark:hover:text-white"
-                  >
-                    {lang === 'tr' ? 'İletişim' : 'Contact'}
-                  </Link>
-                  <a
-                    href="mailto:contact@scrolly.live"
-                    data-testid="diploma-contact-email"
-                    className="text-[11px] font-extrabold text-violet-700 underline decoration-violet-400/40 underline-offset-4 transition hover:text-violet-900 dark:text-violet-300 dark:hover:text-white"
-                  >
-                    (contact@scrolly.live)
-                  </a>
-                </span>
-                <Link
-                  href={lang === 'en' ? '/about?lang=en' : '/about'}
-                  onClick={() => {
-                    onButtonPop();
-                    onClose();
-                  }}
-                  className="text-[11px] font-bold text-ink/55 underline decoration-ink/25 underline-offset-4 transition hover:text-ink dark:text-violet-200/65 dark:decoration-violet-300/30 dark:hover:text-white"
-                >
-                  {lang === 'tr' ? 'Hakkımızda' : 'About'}
-                </Link>
-                <Link
-                  href={lang === 'en' ? '/terms?lang=en' : '/terms'}
-                  onClick={() => {
-                    onButtonPop();
-                    onClose();
-                  }}
-                  className="text-[11px] font-bold text-ink/55 underline decoration-ink/25 underline-offset-4 transition hover:text-ink dark:text-violet-200/65 dark:decoration-violet-300/30 dark:hover:text-white"
-                >
-                  {lang === 'tr' ? 'Kullanım Koşulları' : 'Terms'}
-                </Link>
-              </div>
-            </div>
-            </div>
-            </div>
-          </motion.div>
+          <h2 className="cik-title-3 min-w-0 truncate text-cik-text">{t.dockDiploma}</h2>
+          <div className="flex items-center gap-2">
+            <ProfileHeaderTools
+              lang={uiLang}
+              dark={paintedDark}
+              soundOn={memory.soundEnabled}
+              settingsOpen={settingsOpen}
+              onOpenSettings={() => {
+                onButtonPop();
+                setSettingsOpen(true);
+              }}
+              onToggleTheme={() => chooseAppearance(document.documentElement.classList.contains('dark') ? 'light' : 'dark')}
+              onToggleSound={() => {
+                onButtonPop();
+                window.dispatchEvent(new CustomEvent('scrolly-toggle-sound'));
+              }}
+            />
+            {!isPage ? (
+              <IconButton data-testid="diploma-close-btn" label={t.sheetClose} onClick={() => { onButtonPop(); onClose(); }}>
+                <X size={20} strokeWidth={2} aria-hidden="true" />
+              </IconButton>
+            ) : null}
+          </div>
         </div>
+
+        <div
+          ref={scrollBodyRef}
+          data-testid="diploma-scroll-body"
+          className={`no-scrollbar min-h-0 flex-1 overflow-y-auto px-4 pb-8 ${isPage ? 'lg:px-8' : ''}`}
+        >
+          <ProfileHeader
+            lang={uiLang}
+            memory={memory}
+            focusNonce={nickFocus}
+            onUpdateNickname={(nick) => {
+              onButtonPop();
+              onUpdateNickname(nick);
+            }}
+          />
+          <div className="mt-4">
+            <ProfileTabs lang={uiLang} pane={pane} onSelect={setPane} />
+          </div>
+
+          <div
+            id="profile-panel-ozet"
+            role="tabpanel"
+            aria-labelledby="profile-tab-ozet"
+            className={pane === 'ozet' ? 'mt-4' : 'hidden'}
+          >
+            <StatsSummary
+              lang={uiLang}
+              memory={memory}
+              allFacts={allFacts}
+              onExploreCategory={(category) => {
+                onClose();
+                onSelectCategoryFromConstellation(category);
+              }}
+              onButtonPop={onButtonPop}
+              onOpenScrolla={() => {
+                onButtonPop();
+                window.dispatchEvent(new CustomEvent('scrolly-open-duel'));
+              }}
+            />
+          </div>
+
+          <div
+            id="profile-panel-album"
+            role="tabpanel"
+            aria-labelledby="profile-tab-album"
+            className={pane === 'album' ? 'mt-4' : 'hidden'}
+          >
+            <StickerAlbum
+              lang={uiLang}
+              seenIds={memory.seenIds}
+              allFacts={allFacts}
+              onBackToFeed={() => {
+                onButtonPop();
+                onClose();
+              }}
+            />
+          </div>
+
+          <div
+            id="profile-panel-saved"
+            role="tabpanel"
+            aria-labelledby="profile-tab-saved"
+            className={pane === 'saved' ? 'mt-4' : 'hidden'}
+          >
+            <SavedList
+              lang={uiLang}
+              vocabFocus={notebookFocus}
+              savedFacts={savedFacts}
+              likedFacts={likedFacts}
+              vocab={savedVocab}
+              offline={offline}
+              onButtonPop={onButtonPop}
+              onToast={(message, undo) => setToast(message ? { message, undo } : null)}
+              onBackToFeed={() => {
+                onButtonPop();
+                onClose();
+              }}
+              onRemoveSaved={(factId) => {
+                removeSavedFact(factId);
+                setSavedIds(loadSavedFactIds());
+                if (memory.favoriteIds.includes(factId)) onRemoveFavorite(factId);
+              }}
+              onRemoveLiked={(factId) => {
+                removeLikedFact(factId);
+                setLikedIds(loadLikedFactIds());
+              }}
+              onRemoveVocab={(entry) => setSavedVocab(removeSavedVocabWord(entry.word))}
+            />
+          </div>
+
+          <div
+            id="profile-panel-diploma"
+            role="tabpanel"
+            aria-labelledby="profile-tab-diploma"
+            className={pane === 'diploma' ? 'mt-4' : 'hidden'}
+          >
+            <DiplomaBadges
+              lang={uiLang}
+              memory={memory}
+              allFacts={allFacts}
+              exporting={exportingDiploma}
+              onCelebrate={handleCelebrate}
+              onDownload={() => void handleDownloadDiploma()}
+              onShare={() => void handleShareDiploma()}
+            />
+          </div>
+        </div>
+      </motion.div>
+
+      <SettingsSheet
+        open={settingsOpen}
+        lang={uiLang}
+        memory={memory}
+        appearance={appearance}
+        hapticsOn={hapticsOn}
+        cookieChoice={cookieChoice}
+        authEmail={authEmail}
+        signingOut={signingOut}
+        isStandalone={isStandalone}
+        showPwa={Boolean(onRequestPwaInstall)}
+        justReset={justReset}
+        onClose={() => setSettingsOpen(false)}
+        onAppearance={chooseAppearance}
+        onLanguage={chooseLanguage}
+        onToggleSound={() => {
+          onButtonPop();
+          window.dispatchEvent(new CustomEvent('scrolly-toggle-sound'));
+        }}
+        onToggleHaptics={() => {
+          onButtonPop();
+          const next = !hapticsOn;
+          setHapticsOn(next);
+          writeHapticsEnabled(next);
+        }}
+        onToggleNotifications={() => {
+          onButtonPop();
+          void onToggleNotifications();
+        }}
+        onCookie={chooseCookie}
+        onConnect={() => {
+          onButtonPop();
+          window.dispatchEvent(new CustomEvent('scrolly-open-auth', { detail: { trigger: 'profile' } }));
+        }}
+        onLogout={() => void handleLogout()}
+        onEditNickname={() => setNickFocus((value) => value + 1)}
+        onReset={() => {
+          onButtonPop();
+          onResetMemory();
+          setSavedIds([]);
+          setLikedIds([]);
+          setSavedVocab([]);
+          setJustReset(true);
+          appearanceRef.current = null;
+          setAppearance('light');
+          document.documentElement.classList.remove('dark');
+          window.setTimeout(() => setJustReset(false), 3000);
+        }}
+        onPwa={() => {
+          onButtonPop();
+          onRequestPwaInstall?.();
+        }}
+        onNavigate={() => {
+          onButtonPop();
+          onClose();
+        }}
+      />
+
+      {toast ? (
+        <div
+          className="pointer-events-none fixed inset-x-0 z-toast flex justify-center px-4"
+          style={{ bottom: 'calc(env(safe-area-inset-bottom) + 64px)' }}
+        >
+          <div
+            role="status"
+            aria-live="polite"
+            data-testid={toast.testId}
+            className="cik-toast pointer-events-auto flex max-w-full items-center gap-3 rounded-pill bg-cik-surface px-4 py-2 text-cik-text"
+          >
+            <p className="cik-callout">{toast.message}</p>
+            {toast.undo ? (
+              <button type="button" onClick={toast.undo} className="cik-headline h-11 px-3 text-cik-cta">
+                {copy.undo}
+              </button>
+            ) : (
+              <button type="button" onClick={() => setToast(null)} className="cik-headline h-11 px-3 text-cik-cta">
+                {t.sheetClose}
+              </button>
+            )}
+          </div>
+        </div>
+      ) : null}
+    </div>
   );
 }

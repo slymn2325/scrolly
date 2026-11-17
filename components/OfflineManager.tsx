@@ -1,10 +1,11 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { AnimatePresence, motion } from 'framer-motion';
+import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { X } from 'lucide-react';
 import { type Language, translations } from '@/i18n/translations';
-import { STATE_ILLUSTRATION_PATHS } from '@/utils/icons8Assets';
+import { STATE_ILLUSTRATION_PATHS } from '@/utils/fluentAssets';
+import { motionTiming } from '@/lib/motion';
 
 interface OfflineManagerProps {
   lang: Language;
@@ -24,6 +25,7 @@ const PREFETCH_FACT_SHARDS = [
 export default function OfflineManager({ lang }: OfflineManagerProps) {
   const [isOffline, setIsOffline] = useState(false);
   const [dismissed, setDismissed] = useState(false);
+  const reduced = useReducedMotion() === true;
   const t = translations[lang];
 
   useEffect(() => {
@@ -43,7 +45,6 @@ export default function OfflineManager({ lang }: OfflineManagerProps) {
     window.addEventListener('online', handleOnline);
     window.addEventListener('offline', handleOffline);
 
-    // Evict stale pre-v3 offline cache buckets if present & register updated Service Worker
     if ('caches' in window) {
       caches
         .keys()
@@ -68,7 +69,6 @@ export default function OfflineManager({ lang }: OfflineManagerProps) {
         });
     }
 
-    // Only prefetch JSON fact shards when installed & launched in standalone PWA mode
     const isStandalonePwa =
       (typeof window.matchMedia === 'function' &&
         window.matchMedia('(display-mode: standalone)').matches) ||
@@ -111,38 +111,40 @@ export default function OfflineManager({ lang }: OfflineManagerProps) {
 
   return (
     <AnimatePresence>
-      {isOffline && !dismissed && (
-        <div className="pointer-events-none fixed inset-x-0 top-[calc(env(safe-area-inset-top,12px)+98px)] z-[19] mx-auto flex w-full max-w-[360px] justify-center px-3 lg:hidden">
+      {isOffline && !dismissed ? (
+        <div className="pointer-events-none fixed inset-x-0 top-[calc(env(safe-area-inset-top)+64px)] z-toast mx-auto flex w-full max-w-md justify-center px-4 lg:hidden">
           <motion.div
-            initial={{ opacity: 0, y: -12 }}
+            initial={reduced ? { opacity: 0 } : { opacity: 0, y: -8 }}
             animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -12 }}
+            exit={{ opacity: 0 }}
+            transition={motionTiming.reducedFade}
             data-testid="offline-mode-banner"
+            className="pointer-events-auto"
           >
-            <div className="pointer-events-auto inline-flex items-center gap-1.5 whitespace-nowrap rounded-full border border-emerald-400/50 bg-emerald-950/90 py-1 pl-2.5 pr-1.5 text-[10.5px] font-extrabold text-emerald-100 shadow-lg backdrop-blur-xl">
+            <div className="material-thick flex items-center gap-2 rounded-pill border border-cik-line py-1 pl-3 pr-1 text-cik-text shadow-e1">
               <img
                 src={STATE_ILLUSTRATION_PATHS.offlineState}
                 alt=""
                 aria-hidden="true"
-                width={16}
-                height={16}
+                width={24}
+                height={24}
                 decoding="async"
-                className="h-4 w-4 shrink-0 object-contain"
+                className="h-6 w-6 shrink-0 object-contain"
               />
-              <span>{t.offlineReadyBanner}</span>
+              <span className="cik-caption-1">{t.offlineReadyBanner}</span>
               <button
                 type="button"
                 onClick={() => setDismissed(true)}
                 aria-label={lang === 'tr' ? 'Kapat' : 'Dismiss'}
                 data-testid="offline-banner-close-btn"
-                className="ml-0.5 flex h-7 w-7 items-center justify-center rounded-full bg-white/10 text-emerald-100 transition hover:bg-white/20"
+                className="inline-flex h-11 w-11 items-center justify-center rounded-pill text-cik-text"
               >
-                <X className="h-3.5 w-3.5" aria-hidden="true" />
+                <X className="h-5 w-5" aria-hidden="true" />
               </button>
             </div>
           </motion.div>
         </div>
-      )}
+      ) : null}
     </AnimatePresence>
   );
 }

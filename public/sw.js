@@ -1,4 +1,4 @@
-const CACHE_VERSION = 'v13';
+const CACHE_VERSION = 'v14';
 const CACHE_NAME = `scrolly-offline-${CACHE_VERSION}`;
 const MAX_RUNTIME_ENTRIES = 60;
 
@@ -6,8 +6,8 @@ const MAX_RUNTIME_ENTRIES = 60;
 const PRECACHE_URLS = [
   '/',
   '/manifest.webmanifest',
-  '/icons/icon-192.png?v=3',
-  '/icon.svg?v=3',
+  '/icons/icon-192.png?v=20261117b',
+  '/icon.svg?v=20261117b',
 ];
 
 const AD_AND_TRACKING_PATTERNS = [

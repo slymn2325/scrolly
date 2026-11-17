@@ -23,7 +23,7 @@ import { ENABLE_COMPETITIVE_TABS } from '@/lib/featureFlags';
 import { trackEvent } from '@/lib/telemetry';
 import type { FactCard } from '@/types/fact';
 import { getFactUrl } from '@/utils/factsData';
-import { UI_ICON_PATHS } from '@/utils/icons8Assets';
+import { UI_ICON_PATHS } from '@/utils/fluentAssets';
 import { safeExternalHref } from '@/utils/phoneticDisplay';
 import {
   buildFactDetailArticle,
@@ -134,12 +134,12 @@ export default function FactDetailPage({
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, transition: { duration: 0.01 } }}
       transition={{ duration: 0.14, ease: [0.23, 1, 0.32, 1] }}
-      className="relative z-30 flex h-full w-full flex-col overflow-hidden bg-[#FFFDF9] text-slate-900 dark:bg-[#111115] dark:text-slate-100"
+      className="relative z-hud flex h-full w-full flex-col overflow-hidden bg-cik-bg text-cik-text"
     >
       {/* Top Page Bar */}
       <div
         className={`flex shrink-0 items-center justify-between gap-3 border-b px-4 pb-3 pt-[calc(env(safe-area-inset-top,14px)+14px)] lg:pt-4 ${
-          darkMode ? 'border-white/10 bg-[#111115]' : 'border-[#1E1B2E]/10 bg-[#FFFDF9]'
+          darkMode ? 'border-cik-line bg-cik-bg' : 'border-cik-line bg-cik-bg'
         }`}
       >
         <button
@@ -150,10 +150,10 @@ export default function FactDetailPage({
           }}
           aria-label={t.tiktokBackFrontBtn}
           data-testid="detail-close-btn"
-          className={`inline-flex h-10 items-center gap-2 rounded-full border px-3.5 text-xs font-extrabold transition active:scale-95 ${
+          className={`inline-flex h-10 items-center gap-2 rounded-pill border px-3.5 text-xs font-extrabold transition active:scale-95 ${
             darkMode
-              ? 'border-white/15 bg-white/10 text-white hover:bg-white/15'
-              : 'border-[#1E1B2E]/15 bg-white text-[#1E1B2E] hover:bg-slate-50'
+              ? 'border-cik-line bg-cik-surface text-cik-text hover:bg-cik-surface'
+              : 'border-cik-line bg-cik-surface text-cik-text hover:bg-cik-surface-2'
           }`}
         >
           <ArrowLeft className="h-4 w-4 shrink-0" />
@@ -161,8 +161,8 @@ export default function FactDetailPage({
         </button>
 
         <div
-          className={`inline-flex w-fit items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-extrabold ${
-            darkMode ? 'bg-white/10 text-white' : 'bg-[#1E1B2E]/[0.08] text-[#1E1B2E]'
+          className={`inline-flex w-fit items-center gap-1.5 rounded-pill px-3 py-1.5 text-xs font-extrabold ${
+            darkMode ? 'bg-cik-surface text-cik-text' : 'bg-cik-bg text-cik-text'
           }`}
         >
           <img src={catMeta.iconPath} alt="" aria-hidden="true" className="h-4 w-4 object-contain" />
@@ -174,57 +174,49 @@ export default function FactDetailPage({
       <div className="no-scrollbar flex min-h-0 flex-1 flex-col overflow-y-auto px-4 py-4 sm:px-5">
         <div className="flex-1 space-y-4">
           {/* Visual Hero Banner */}
-          <div
-            className="relative overflow-hidden rounded-2xl border p-4"
-            style={{
-              borderColor: `${fact.accentColor}40`,
-              background: darkMode
-                ? `linear-gradient(135deg, ${fact.accentColor}2A 0%, rgba(17,17,22,0.92) 100%)`
-                : `linear-gradient(135deg, ${fact.accentColor}1C 0%, #FFFFFF 100%)`,
-            }}
-          >
+          <div className="relative overflow-hidden rounded-sticker border border-cik-line bg-cik-pink p-5">
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0 flex-1">
                 <div className="flex flex-wrap items-center gap-2">
                   <span
-                    className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider text-white"
-                    style={{ backgroundColor: fact.accentColor || '#7C3AED' }}
+                    className="inline-flex items-center gap-1.5 rounded-pill px-2.5 py-0.5 cik-caption-2 font-black uppercase tracking-wider text-cik-text"
+                    style={{ backgroundColor: fact.accentColor || 'var(--cik-cta)' }}
                   >
                     <span>{fact.emoji || catMeta.emoji}</span>
                     <span>{detailHighlights.topicTag}</span>
                   </span>
                   <span
-                    className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[10px] font-black ${
+                    className={`inline-flex items-center gap-1 rounded-pill px-2.5 py-0.5 cik-caption-2 font-black ${
                       darkMode
-                        ? 'bg-amber-400/20 text-amber-300'
-                        : 'bg-amber-100 text-amber-800'
+                        ? 'bg-cik-butter text-cik-butter-text'
+                        : 'bg-cik-butter text-cik-butter-text'
                     }`}
                   >
                     <Zap className="h-3 w-3" />
                     <span>{fact.readingTimeSec || 18}s · +15 XP</span>
                   </span>
                 </div>
-                <h2 className="mt-2.5 font-display text-xl font-bold leading-snug whitespace-normal break-words">
+                <h2 className="cik-title-1 mt-3 text-cik-text">
                   {localized.title}
                 </h2>
               </div>
               <div
                 className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border ${
                   darkMode
-                    ? 'border-white/15 bg-black/35'
-                    : 'border-[#1E1B2E]/10 bg-white shadow-sm'
+                    ? 'border-cik-line bg-cik-surface'
+                    : 'border-cik-line bg-cik-surface shadow-sm'
                 }`}
               >
                 <FactIcon
                   name={fact.iconName}
                   className="h-6 w-6"
-                  style={{ color: fact.accentColor || '#7C3AED' }}
+                  style={{ color: fact.accentColor || 'var(--cik-cta)' }}
                 />
               </div>
             </div>
 
             {effectiveGifUrl && !gifFailed ? (
-              <div className="relative mt-3 h-44 w-full overflow-hidden rounded-xl border border-white/15">
+              <div className="relative mt-3 h-44 w-full overflow-hidden rounded-xl border border-cik-line">
                 <CardMediaStage
                   url={effectiveGifUrl}
                   posterUrl={fact.posterUrl}
@@ -235,7 +227,7 @@ export default function FactDetailPage({
                   failed={gifFailed}
                   onFailed={() => setGifFailed(true)}
                 />
-                <div className="absolute inset-0 z-[4] bg-gradient-to-t from-black/55 via-transparent to-transparent" />
+                <div className="absolute inset-0 z-content bg-cik-bg/20" />
               </div>
             ) : (
               <div className="mt-3">
@@ -257,13 +249,13 @@ export default function FactDetailPage({
             <div
               className={`rounded-2xl border px-3.5 py-2.5 ${
                 darkMode
-                  ? 'border-white/10 bg-white/[0.04]'
-                  : 'border-[#1E1B2E]/10 bg-white'
+                  ? 'border-cik-line bg-cik-surface'
+                  : 'border-cik-line bg-cik-surface'
               }`}
             >
               <p
-                className={`flex items-center gap-1.5 text-[10px] font-black uppercase tracking-wider ${
-                  darkMode ? 'text-violet-300' : 'text-violet-700'
+                className={`flex items-center gap-1.5 cik-caption-2 font-black uppercase tracking-wider ${
+                  darkMode ? 'text-cik-cta' : 'text-cik-cta'
                 }`}
               >
                 <img
@@ -279,7 +271,7 @@ export default function FactDetailPage({
               </p>
               <p
                 className={`mt-1 text-xs font-semibold leading-relaxed ${
-                  darkMode ? 'text-white/85' : 'text-[#1E1B2E]/85'
+                  darkMode ? 'text-cik-text' : 'text-cik-text'
                 }`}
               >
                 {localized.factText}
@@ -288,13 +280,13 @@ export default function FactDetailPage({
             <div
               className={`rounded-2xl border px-3.5 py-2.5 ${
                 darkMode
-                  ? 'border-white/10 bg-white/[0.04]'
-                  : 'border-[#1E1B2E]/10 bg-white'
+                  ? 'border-cik-line bg-cik-surface'
+                  : 'border-cik-line bg-cik-surface'
               }`}
             >
               <p
-                className={`flex items-center gap-1.5 text-[10px] font-black uppercase tracking-wider ${
-                  darkMode ? 'text-sky-300' : 'text-sky-700'
+                className={`flex items-center gap-1.5 cik-caption-2 font-black uppercase tracking-wider ${
+                  darkMode ? 'text-cik-cta' : 'text-cik-cta'
                 }`}
               >
                 <img
@@ -310,7 +302,7 @@ export default function FactDetailPage({
               </p>
               <p
                 className={`mt-1 text-xs font-semibold leading-relaxed ${
-                  darkMode ? 'text-white/85' : 'text-[#1E1B2E]/85'
+                  darkMode ? 'text-cik-text' : 'text-cik-text'
                 }`}
               >
                 {detailHighlights.curiosityHook}
@@ -322,13 +314,13 @@ export default function FactDetailPage({
           <div
             className={`rounded-2xl border p-4 pb-24 ${
               darkMode
-                ? 'border-white/10 bg-white/[0.03]'
-                : 'border-[#1E1B2E]/10 bg-white'
+                ? 'border-cik-line bg-cik-surface'
+                : 'border-cik-line bg-cik-surface'
             }`}
           >
             <p
-              className={`mb-2 flex items-center gap-1.5 text-[10px] font-black uppercase tracking-wider ${
-                darkMode ? 'text-white/55' : 'text-[#1E1B2E]/55'
+              className={`mb-2 flex items-center gap-1.5 cik-caption-2 font-black uppercase tracking-wider ${
+                darkMode ? 'text-cik-text' : 'text-cik-text'
               }`}
             >
               <img
@@ -345,8 +337,8 @@ export default function FactDetailPage({
             <p
               data-testid="fact-detail-article"
               data-differs-from-teaser={detailArticle.differsFromTeaser ? 'true' : 'false'}
-              className={`whitespace-pre-wrap text-[14.5px] leading-relaxed break-words ${
-                darkMode ? 'text-white/90' : 'text-[#1E1B2E]/85'
+              className={`whitespace-pre-wrap cik-body leading-relaxed break-words ${
+                darkMode ? 'text-cik-text' : 'text-cik-text'
               }`}
             >
               {detailArticle.article}
@@ -357,8 +349,8 @@ export default function FactDetailPage({
           <div
             className={`rounded-2xl border p-3.5 ${
               darkMode
-                ? 'border-amber-400/25 bg-amber-400/10'
-                : 'border-amber-300 bg-amber-50'
+                ? 'border-cik-line bg-cik-butter'
+                : 'border-cik-line bg-cik-butter'
             }`}
           >
             <div className="flex items-center gap-1.5">
@@ -369,8 +361,8 @@ export default function FactDetailPage({
                 className="h-4 w-4 object-contain"
               />
               <p
-                className={`text-[10px] font-black uppercase tracking-wider ${
-                  darkMode ? 'text-amber-300' : 'text-amber-800'
+                className={`cik-caption-2 font-black uppercase tracking-wider ${
+                  darkMode ? 'text-cik-butter-text' : 'text-cik-butter-text'
                 }`}
               >
                 {lang === 'tr' ? 'Kilit Bilimsel İçgörü' : 'Key Scientific Insight'}
@@ -378,7 +370,7 @@ export default function FactDetailPage({
             </div>
             <p
               className={`mt-1 text-xs font-bold leading-relaxed ${
-                darkMode ? 'text-white/90' : 'text-[#1E1B2E]/90'
+                darkMode ? 'text-cik-text' : 'text-cik-text'
               }`}
             >
               {detailHighlights.keyInsight}
@@ -391,26 +383,26 @@ export default function FactDetailPage({
               data-testid="detail-mini-quiz"
               className={`rounded-2xl border p-4 ${
                 darkMode
-                  ? 'border-violet-400/30 bg-violet-500/10'
-                  : 'border-violet-200 bg-violet-50/70'
+                  ? 'border-cik-line bg-cik-pink'
+                  : 'border-cik-line bg-cik-pink'
               }`}
             >
               <div className="flex items-center justify-between gap-2">
                 <span
-                  className={`inline-flex items-center gap-1 text-[10px] font-black uppercase tracking-wider ${
-                    darkMode ? 'text-violet-300' : 'text-violet-700'
+                  className={`inline-flex items-center gap-1 cik-caption-2 font-black uppercase tracking-wider ${
+                    darkMode ? 'text-cik-cta' : 'text-cik-cta'
                   }`}
                 >
                   <Sparkles className="h-3.5 w-3.5" />
                   <span>{lang === 'tr' ? 'Hızlı Kavrama Testi' : 'Quick Knowledge Check'}</span>
                 </span>
                 <span
-                  className={`rounded-full px-2 py-0.5 text-[10px] font-black ${
+                  className={`rounded-pill px-2 py-0.5 cik-caption-2 font-black ${
                     miniQuizChoice !== null && miniQuizChoice === localized.quiz.correctIndex
-                      ? 'bg-emerald-500 text-white'
+                      ? 'bg-cik-mint text-cik-text'
                       : darkMode
-                        ? 'bg-amber-400/20 text-amber-300'
-                        : 'bg-amber-100 text-amber-800'
+                        ? 'bg-cik-butter text-cik-butter-text'
+                        : 'bg-cik-butter text-cik-butter-text'
                   }`}
                 >
                   {miniQuizChoice !== null && miniQuizChoice === localized.quiz.correctIndex
@@ -427,17 +419,17 @@ export default function FactDetailPage({
                   const answered = miniQuizChoice !== null;
                   const isCorrectOpt = idx === localized.quiz.correctIndex;
                   let optStyle = darkMode
-                    ? 'border-white/15 bg-white/5 text-white hover:bg-white/10'
-                    : 'border-[#1E1B2E]/15 bg-white text-[#1E1B2E] hover:bg-violet-50';
+                    ? 'border-cik-line bg-cik-surface text-cik-text hover:bg-cik-surface'
+                    : 'border-cik-line bg-cik-surface text-cik-text hover:bg-cik-pink';
                   if (answered) {
                     if (isCorrectOpt) {
-                      optStyle = 'border-emerald-500 bg-emerald-500/20 text-emerald-500 dark:text-emerald-200';
+                      optStyle = 'border-cik-line bg-cik-mint text-cik-mint-text';
                     } else if (picked) {
-                      optStyle = 'border-rose-500 bg-rose-500/20 text-rose-500 dark:text-rose-200';
+                      optStyle = 'border-cik-line bg-cik-rose text-cik-rose-text';
                     } else {
                       optStyle = darkMode
-                        ? 'border-white/10 bg-white/[0.02] text-white/45'
-                        : 'border-[#1E1B2E]/10 bg-white/50 text-[#1E1B2E]/45';
+                        ? 'border-cik-line bg-cik-surface text-cik-text'
+                        : 'border-cik-line bg-cik-surface text-cik-text';
                     }
                   }
                   return (
@@ -461,11 +453,11 @@ export default function FactDetailPage({
                           onWrongSound?.();
                         }
                       }}
-                      className={`flex min-h-[40px] w-full items-center justify-between gap-2 rounded-xl border px-3 py-2 text-left text-[11px] font-bold transition active:scale-[0.99] ${optStyle}`}
+                      className={`flex min-h-11 w-full items-center justify-between gap-2 rounded-xl border px-3 py-2 text-left cik-caption-2 font-bold transition active:scale-[0.99] ${optStyle}`}
                     >
                       <span className="whitespace-normal break-words leading-snug">{opt}</span>
                       {answered && isCorrectOpt && (
-                        <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-500" />
+                        <CheckCircle2 className="h-4 w-4 shrink-0 text-cik-mint-text" />
                       )}
                     </button>
                   );
@@ -473,8 +465,8 @@ export default function FactDetailPage({
               </div>
               {miniQuizChoice !== null && localized.quiz.explanation && (
                 <p
-                  className={`mt-2.5 text-[11px] font-semibold leading-relaxed ${
-                    darkMode ? 'text-white/80' : 'text-[#1E1B2E]/80'
+                  className={`mt-2.5 cik-caption-2 font-semibold leading-relaxed ${
+                    darkMode ? 'text-cik-text' : 'text-cik-text'
                   }`}
                 >
                   {localized.quiz.explanation}
@@ -492,10 +484,10 @@ export default function FactDetailPage({
                 void trackEvent(factSlug, fact.category, 'duel');
                 onOpenDuel(fact);
               }}
-              className="flex w-full items-center justify-between gap-3 rounded-2xl border border-violet-400/40 bg-gradient-to-r from-violet-600/90 to-fuchsia-600/90 px-4 py-3 text-left text-white shadow-lg shadow-violet-500/20 transition hover:brightness-110"
+              className="flex min-h-12 w-full items-center justify-between gap-3 rounded-cik-lg bg-cik-cta px-4 py-3 text-left text-cik-on-cta shadow-sticker"
             >
               <div className="min-w-0">
-                <p className="text-[10px] font-black uppercase tracking-wider text-violet-100">
+                <p className="cik-caption-2 font-black uppercase tracking-wider text-cik-cta">
                   Scrolla 1v1
                 </p>
                 <p className="text-xs font-extrabold">
@@ -513,17 +505,17 @@ export default function FactDetailPage({
             data-testid="fact-source-box"
             className={`flex flex-col gap-2.5 rounded-2xl border px-4 py-3 text-xs ${
               darkMode
-                ? 'border-white/15 bg-white/5'
-                : 'border-[#1E1B2E]/[0.12] bg-white'
+                ? 'border-cik-line bg-cik-surface'
+                : 'border-cik-line bg-cik-surface'
             }`}
           >
-            <div className={`flex items-start gap-2 font-bold ${darkMode ? 'text-white/90' : 'text-[#1E1B2E]'}`}>
-              <BookOpen className={`mt-0.5 h-4 w-4 shrink-0 ${darkMode ? 'text-violet-300' : 'text-violet-600'}`} />
+            <div className={`flex items-start gap-2 font-bold ${darkMode ? 'text-cik-text' : 'text-cik-text'}`}>
+              <BookOpen className={`mt-0.5 h-4 w-4 shrink-0 ${darkMode ? 'text-cik-cta' : 'text-cik-cta'}`} />
               <div className="min-w-0 flex-1">
                 <span
                   lang={lang}
-                  className={`inline-flex items-center gap-1 text-[10px] font-black uppercase tracking-wider ${
-                    darkMode ? 'text-white' : 'text-ink'
+                  className={`inline-flex items-center gap-1 cik-caption-2 font-black uppercase tracking-wider ${
+                    darkMode ? 'text-cik-text' : 'text-cik-text'
                   }`}
                 >
                   <img
@@ -541,7 +533,7 @@ export default function FactDetailPage({
             </div>
             <div
               className={`flex flex-wrap items-center justify-between gap-2 border-t pt-2 ${
-                darkMode ? 'border-white/10' : 'border-[#1E1B2E]/10'
+                darkMode ? 'border-cik-line' : 'border-cik-line'
               }`}
             >
               {resolvedSourceUrl ? (
@@ -550,24 +542,24 @@ export default function FactDetailPage({
                   target="_blank"
                   rel="noopener noreferrer"
                   data-testid="fact-source-link"
-                  className={`inline-flex min-h-[36px] items-center gap-1 rounded-full px-3 py-1 text-[11px] font-extrabold ${
+                  className={`inline-flex min-h-11 items-center gap-1 rounded-pill px-3 py-1 cik-caption-2 font-extrabold ${
                     darkMode
-                      ? 'bg-violet-500/25 text-violet-100'
-                      : 'bg-violet-100 text-violet-800'
+                      ? 'bg-cik-pink text-cik-cta'
+                      : 'bg-cik-pink text-cik-cta'
                   }`}
                 >
                   <span>{t.verifySourceCta}</span>
                   <ExternalLink className="h-3 w-3 shrink-0" />
                 </a>
               ) : (
-                <span className={`text-[11px] font-semibold ${darkMode ? 'text-white/70' : 'text-[#1E1B2E]/65'}`}>
+                <span className={`cik-caption-2 font-semibold ${darkMode ? 'text-cik-text' : 'text-cik-text'}`}>
                   {localized.sourceHint}
                 </span>
               )}
               <Link
                 href={factUrl}
-                className={`inline-flex min-h-[36px] items-center gap-1 font-extrabold hover:underline ${
-                  darkMode ? 'text-white/80' : 'text-[#1E1B2E]/75'
+                className={`inline-flex min-h-11 items-center gap-1 font-extrabold hover:underline ${
+                  darkMode ? 'text-cik-text' : 'text-cik-text'
                 }`}
               >
                 <span>{t.readFullPage}</span>
@@ -585,7 +577,7 @@ export default function FactDetailPage({
             ) ? (
               <p
                 data-testid="detail-media-credit"
-                className="border-t pt-2 text-[11px] font-bold text-slate-900 dark:text-slate-100"
+                className="border-t pt-2 cik-caption-2 font-bold text-cik-text"
               >
                 {mediaCreditLine(
                   detectMediaProvider({
@@ -606,8 +598,8 @@ export default function FactDetailPage({
       <div
         className={`flex shrink-0 flex-wrap items-center gap-2 border-t px-4 py-3 pb-[max(14px,env(safe-area-inset-bottom))] sm:px-5 ${
           darkMode
-            ? 'border-white/10 bg-[#111115]'
-            : 'border-[#1E1B2E]/10 bg-[#FFFDF9]'
+            ? 'border-cik-line bg-cik-bg'
+            : 'border-cik-line bg-cik-bg'
         }`}
       >
         <motion.button
@@ -620,8 +612,8 @@ export default function FactDetailPage({
           data-testid="flip-back-btn"
           className={`flex min-h-[46px] flex-1 items-center justify-center gap-2 rounded-2xl border px-4 text-xs font-extrabold ${
             darkMode
-              ? 'border-white/15 bg-white/10 text-white'
-              : 'border-[#1E1B2E]/15 bg-white text-[#1E1B2E]'
+              ? 'border-cik-line bg-cik-surface text-cik-text'
+              : 'border-cik-line bg-cik-surface text-cik-text'
           }`}
         >
           <RotateCcw className="h-4 w-4 shrink-0" />
@@ -637,8 +629,8 @@ export default function FactDetailPage({
           data-testid="next-card-btn"
           className={`flex min-h-[46px] flex-1 items-center justify-center gap-2 rounded-2xl px-4 text-xs font-extrabold ${
             darkMode
-              ? 'bg-white text-[#09090B]'
-              : 'bg-[#1E1B2E] text-white'
+              ? 'bg-cik-surface text-cik-text'
+              : 'bg-cik-bg text-cik-text'
           }`}
         >
           <span>{lang === 'tr' ? 'Sonraki Bilgiye Kaydır' : t.tiktokNextSlideBtn}</span>

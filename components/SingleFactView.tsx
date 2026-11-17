@@ -41,7 +41,6 @@ import CardMediaStage from '@/components/CardMediaStage';
 import CategoryMotionArt from '@/components/CategoryMotionArt';
 import DeferredAdSense from '@/components/DeferredAdSense';
 import FactIcon from '@/components/FactIcon';
-import FloatingBackground from '@/components/FloatingBackground';
 import SiteTrustFooter from '@/components/SiteTrustFooter';
 import StickyAdBanner from '@/components/StickyAdBanner';
 import { discoveryCtaLabel, getCategoryMeta, type Language, translations } from '@/i18n/translations';
@@ -61,7 +60,7 @@ import {
   CATEGORY_ILLUSTRATION_MAP,
   CATEGORY_SUB_ICON_MAP,
   UI_ICON_PATHS,
-} from '@/utils/icons8Assets';
+} from '@/utils/fluentAssets';
 import { safeExternalHref } from '@/utils/phoneticDisplay';
 import { prepareQuizOptions } from '@/utils/recommendation';
 import { playCelebration, playDing, playPop, playWrong } from '@/utils/soundEngine';
@@ -461,11 +460,14 @@ export default function SingleFactView({
         syncMemorySnapshot(updated);
       }
       try {
+        const colors = ['--cik-cta', '--cik-mint', '--cik-butter']
+          .map((name) => getComputedStyle(document.documentElement).getPropertyValue(name).trim())
+          .filter(Boolean);
         confetti({
           particleCount: 45,
           spread: 60,
           origin: { y: 0.72 },
-          colors: [fact.accentColor || '#7C3AED', '#34D399', '#FBBF24'],
+          ...(colors.length > 0 ? { colors } : {}),
         });
       } catch {
         // Ignore confetti errors in headless browsers
@@ -519,19 +521,16 @@ export default function SingleFactView({
   const optionLetters = ['A', 'B', 'C'] as const;
 
   return (
-    <div className="relative min-h-screen pb-24 text-ink dark:text-violet-50">
-      <FloatingBackground />
-
-      {/* Top Sticky Bar */}
-      <header className="sticky top-0 z-30 border-b border-amber-100/80 bg-[#FFFDF9]/90 backdrop-blur-md dark:border-white/10 dark:bg-[#0F0D1A]/90">
-        <div className="mx-auto flex max-w-4xl items-center justify-between gap-2 px-4 py-3">
+    <div className="relative min-h-screen bg-cik-bg pb-24 text-cik-text">
+      <header className="material-thin sticky top-0 z-hud border-b border-cik-line">
+        <div className="mx-auto flex max-w-[42.5rem] items-center justify-between gap-2 px-4 py-3">
           <Link
             href={feedOpenHref}
             onClick={() => {
               vibrateTap(12);
               playPop(soundEnabled);
             }}
-            className="inline-flex min-h-[40px] items-center gap-2 rounded-full border border-amber-200 bg-white px-3.5 py-1.5 text-xs font-bold text-ink shadow-pill hover:bg-amber-50 dark:border-white/15 dark:bg-white/10 dark:text-white dark:hover:bg-white/15 sm:text-sm"
+            className="inline-flex min-h-11 items-center gap-2 rounded-pill border border-cik-line bg-cik-surface px-3.5 py-1.5 text-xs font-bold text-cik-text shadow-e1 hover:bg-cik-butter sm:text-sm"
           >
             <ArrowLeft className="h-4 w-4" />
             <span>{t.backToFeed}</span>
@@ -539,13 +538,13 @@ export default function SingleFactView({
 
           <div className="flex items-center gap-2">
             {/* Gamified XP Counter */}
-            <span className="hidden items-center gap-1 rounded-full border border-violet-200 bg-pastel-lavender px-3 py-1 text-xs font-black text-violet-900 dark:border-violet-600/40 dark:bg-violet-900/50 dark:text-violet-100 sm:inline-flex">
+            <span className="hidden items-center gap-1 rounded-pill border border-cik-line bg-cik-pink px-3 py-1 text-xs font-black text-cik-cta sm:inline-flex">
               <img src={UI_ICON_PATHS.xpSparkles} alt="" aria-hidden="true" className="h-3.5 w-3.5 object-contain" />
               <span>{userXp} XP</span>
             </span>
 
             {/* TR | EN Switcher */}
-            <div className="inline-flex items-center rounded-full border border-amber-200 bg-white p-0.5 shadow-pill dark:border-white/15 dark:bg-white/10">
+            <div className="inline-flex items-center rounded-pill border border-cik-line bg-cik-surface p-0.5 shadow-e1">
               {(['tr', 'en'] as Language[]).map((code) => {
                 const active = lang === code;
                 return (
@@ -555,10 +554,10 @@ export default function SingleFactView({
                     whileTap={{ scale: 0.94 }}
                     onClick={() => handleLangSwitch(code)}
                     data-testid={`seo-lang-${code}`}
-                    className={`rounded-full px-2.5 py-1 text-xs font-extrabold uppercase ${
+                    className={`rounded-pill px-2.5 py-1 text-xs font-extrabold uppercase ${
                       active
-                        ? 'bg-ink text-white dark:bg-violet-600'
-                        : 'text-ink/60 hover:text-ink dark:text-violet-200/70 dark:hover:text-white'
+                        ? 'bg-cik-cta text-cik-on-cta'
+                        : 'text-cik-text hover:text-cik-text'
                     }`}
                   >
                     {code.toUpperCase()}
@@ -573,10 +572,10 @@ export default function SingleFactView({
               whileTap={{ scale: 0.94 }}
               onClick={handleToggleSound}
               aria-label={soundEnabled ? t.soundOn : t.soundOff}
-              className={`flex h-9 w-9 items-center justify-center rounded-full border shadow-pill ${
+              className={`flex h-9 w-9 items-center justify-center rounded-pill border shadow-e1 ${
                 soundEnabled
-                  ? 'border-teal-200 bg-pastel-mint text-teal-800 dark:border-teal-500/40 dark:bg-teal-900/50 dark:text-teal-200'
-                  : 'border-slate-200 bg-white text-slate-400 dark:border-white/15 dark:bg-white/10'
+                  ? 'border-cik-line bg-cik-pink text-cik-mint-text'
+                  : 'border-cik-line bg-cik-surface text-cik-text'
               }`}
             >
               {soundEnabled ? <Volume2 className="h-4 w-4" /> : <VolumeX className="h-4 w-4" />}
@@ -586,29 +585,29 @@ export default function SingleFactView({
       </header>
 
       {/* Main Content */}
-      <main className="mx-auto max-w-3xl px-4 pt-5 sm:pt-8">
+      <main className="mx-auto max-w-[42.5rem] px-4 pt-6">
         {/* Semantic Breadcrumb Navigation */}
         <nav
           aria-label="Breadcrumb"
-          className="mb-4 flex flex-wrap items-center gap-1.5 text-xs font-semibold text-ink/65 dark:text-violet-200/70"
+          className="mb-4 flex flex-wrap items-center gap-1.5 text-xs font-semibold text-cik-text"
         >
           <Link
             href="/"
-            className="inline-flex items-center gap-1 hover:text-violet-700 hover:underline dark:hover:text-violet-300"
+            className="inline-flex items-center gap-1 hover:text-cik-cta hover:underline"
           >
             <Home className="h-3.5 w-3.5" />
             <span>{lang === 'tr' ? 'Ana Sayfa' : 'Home'}</span>
           </Link>
-          <ChevronRight className="h-3.5 w-3.5 text-ink/40 dark:text-white/30" />
+          <ChevronRight className="h-3.5 w-3.5 text-cik-text" />
           <Link
             href={categoryHref}
-            className="inline-flex items-center gap-1 hover:text-violet-700 hover:underline dark:hover:text-violet-300"
+            className="inline-flex items-center gap-1 hover:text-cik-cta hover:underline"
           >
             <span>{catMeta.emoji}</span>
             <span>{catMeta.label[lang]}</span>
           </Link>
-          <ChevronRight className="h-3.5 w-3.5 text-ink/40 dark:text-white/30" />
-          <span className="truncate font-bold text-ink/85 dark:text-white/90">{content.title}</span>
+          <ChevronRight className="h-3.5 w-3.5 text-cik-text" />
+          <span className="truncate font-bold text-cik-text">{content.title}</span>
         </nav>
 
         {/* Hero Fact Article with Category Aura */}
@@ -621,12 +620,12 @@ export default function SingleFactView({
             boxShadow: `0 24px 60px -18px ${fact.accentColor}40`,
           }}
           data-fact-surface="true"
-          className={`relative overflow-hidden rounded-3xl border-2 ${catMeta.borderClass} p-5 sm:p-8`}
+          className={`relative overflow-hidden rounded-sticker border-2 border-cik-line p-5 sm:p-8`}
         >
           {/* Subtle category color aura glow */}
           <div
             aria-hidden="true"
-            className="pointer-events-none absolute -right-16 -top-16 h-56 w-56 rounded-full opacity-25 blur-3xl"
+            className="pointer-events-none absolute -right-16 -top-16 h-56 w-56 rounded-pill opacity-25 blur-3xl"
             style={{ backgroundColor: fact.accentColor }}
           />
 
@@ -635,19 +634,19 @@ export default function SingleFactView({
             <div className="flex flex-wrap items-center gap-2">
               <Link
                 href={categoryHref}
-                className={`inline-flex items-center gap-1.5 rounded-full ${catMeta.pillBg} px-3.5 py-1 text-xs font-extrabold ${catMeta.accentText} hover:opacity-90`}
+                className={`inline-flex items-center gap-1.5 rounded-pill bg-cik-pink px-3.5 py-1 text-xs font-extrabold text-cik-cta hover:opacity-90`}
               >
                 <span>{catMeta.emoji}</span>
                 <span>{catMeta.label[lang]}</span>
               </Link>
               <span
-                className="inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-extrabold text-white shadow-sm"
-                style={{ backgroundColor: fact.accentColor || '#7C3AED' }}
+                className="inline-flex items-center gap-1 rounded-pill px-3 py-1 text-xs font-extrabold text-cik-text shadow-sm"
+                style={{ backgroundColor: fact.accentColor || 'var(--cik-cta)' }}
               >
                 <Sparkles className="h-3 w-3" />
                 <span>{detailHighlights.topicTag}</span>
               </span>
-              <span className="inline-flex items-center gap-1 rounded-full bg-white/90 px-3 py-1 text-xs font-bold text-ink/70 dark:bg-white/10 dark:text-violet-100">
+              <span className="inline-flex items-center gap-1 rounded-pill bg-cik-surface px-3 py-1 text-xs font-bold text-cik-text">
                 <Clock className="h-3.5 w-3.5" />
                 {fact.readingTimeSec ?? 20} {t.seoReadingTime}
               </span>
@@ -657,10 +656,10 @@ export default function SingleFactView({
               type="button"
               whileTap={{ scale: 0.94 }}
               onClick={handleToggleFavorite}
-              className={`inline-flex items-center gap-1.5 rounded-full border px-3.5 py-1.5 text-xs font-bold transition-colors ${
+              className={`inline-flex items-center gap-1.5 rounded-pill border px-3.5 py-1.5 text-xs font-bold transition-colors ${
                 isFavorite
-                  ? 'border-rose-300 bg-rose-500 text-white'
-                  : 'border-white bg-white/90 text-ink/75 hover:text-rose-600 dark:border-white/15 dark:bg-white/10 dark:text-white'
+                  ? 'border-cik-line bg-cik-rose text-cik-text'
+                  : 'border-cik-line bg-cik-surface text-cik-text hover:text-cik-rose-text'
               }`}
             >
               <Heart className={`h-3.5 w-3.5 ${isFavorite ? 'fill-current' : ''}`} />
@@ -676,17 +675,17 @@ export default function SingleFactView({
                 color: fact.accentColor,
                 borderColor: `${fact.accentColor}44`,
               }}
-              className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl border bg-white/95 shadow-sm dark:bg-white/10 sm:h-16 sm:w-16"
+              className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl border bg-cik-surface shadow-sm sm:h-16 sm:w-16"
             >
               <FactIcon name={fact.iconName} className="h-7 w-7 sm:h-8 sm:w-8" />
             </div>
             <div>
-              <h1 className="font-display text-2xl font-bold leading-tight text-ink dark:text-white sm:text-3xl">
+              <h1 className="cik-title-1 text-cik-text">
                 {content.title}
               </h1>
               <p
                 data-geo-summary="true"
-                className="mt-2.5 text-base font-medium leading-relaxed text-ink/90 dark:text-violet-100/90 sm:text-lg"
+                className="cik-body mt-3 text-cik-text"
               >
                 {content.factText}
               </p>
@@ -696,7 +695,7 @@ export default function SingleFactView({
           {/* Interactive Bounded Visual Showcase: Cached GIF + Motion Canvas + SVG/PNG Illustration */}
           <div
             data-testid="detail-visual-stage"
-            className="relative mt-6 h-60 w-full overflow-hidden rounded-3xl border border-white/60 bg-[#0A0914] shadow-lg dark:border-white/15 sm:h-72"
+            className="relative mt-6 h-60 w-full overflow-hidden rounded-sticker border border-cik-line bg-cik-bg shadow-e1 sm:h-72"
           >
             <CategoryMotionArt
               factId={fact.id}
@@ -730,27 +729,27 @@ export default function SingleFactView({
             {/* Dark Readability Scrim */}
             <div
               aria-hidden="true"
-              className="pointer-events-none absolute inset-0 z-[3] bg-gradient-to-t from-black/85 via-black/35 to-black/30"
+              className="pointer-events-none absolute inset-0 z-content bg-cik-bg/20"
             />
 
             {/* Top HUD Pills */}
             <div className="pointer-events-none relative z-10 flex items-center justify-between gap-2 p-3.5">
-              <span className="inline-flex items-center gap-1.5 rounded-full border border-white/20 bg-black/55 px-3 py-1 text-[11px] font-extrabold text-white backdrop-blur-md">
+              <span className="inline-flex items-center gap-1.5 rounded-pill border border-cik-line bg-cik-surface px-3 py-1 cik-caption-2 font-extrabold text-cik-text backdrop-blur-md">
                 {resolvedGifUrl && !gifFailed ? (
                   <>
-                    <Eye className="h-3.5 w-3.5 text-emerald-300" />
+                    <Eye className="h-3.5 w-3.5 text-cik-mint-text" />
                     <span>{lang === 'tr' ? 'Görsel' : 'Visual'}</span>
                   </>
                 ) : (
                   <>
-                    <Sparkles className="h-3.5 w-3.5 text-amber-300" />
+                    <Sparkles className="h-3.5 w-3.5 text-cik-butter-text" />
                     <span>{lang === 'tr' ? 'Etkileşimli Sahne' : 'Interactive Scene'}</span>
                   </>
                 )}
               </span>
 
               {fact.visualQuery && (
-                <span className="hidden rounded-full border border-white/15 bg-black/45 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-white/80 backdrop-blur-md sm:inline-flex">
+                <span className="hidden rounded-pill border border-cik-line bg-cik-surface px-2.5 py-1 cik-caption-2 font-bold uppercase tracking-wider text-cik-text backdrop-blur-md sm:inline-flex">
                   {fact.visualQuery}
                 </span>
               )}
@@ -759,18 +758,18 @@ export default function SingleFactView({
             {/* Bottom HUD: Category Illustration + Hook */}
             <div className="pointer-events-none absolute inset-x-0 bottom-0 z-10 flex items-end justify-between gap-3 p-4">
               <div className="flex items-center gap-3">
-                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-white/25 bg-white/15 p-1.5 backdrop-blur-md">
+                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-cik-line bg-cik-surface p-1.5 backdrop-blur-md">
                   <img
                     src={catIllustration}
                     alt={catMeta.label[lang]}
                     className="h-9 w-9 object-contain drop-shadow"
                   />
                 </div>
-                <div className="min-w-0 text-white">
-                  <p className="text-[11px] font-black uppercase tracking-wider text-amber-300">
+                <div className="min-w-0 text-cik-text">
+                  <p className="cik-caption-2 font-black uppercase tracking-wider text-cik-butter-text">
                     {fact.emoji ?? catMeta.emoji} {detailHighlights.topicTag}
                   </p>
-                  <p className="line-clamp-1 text-xs font-bold text-white/90 sm:text-sm">
+                  <p className="line-clamp-1 text-xs font-bold text-cik-text sm:text-sm">
                     {detailHighlights.sourceNote}
                   </p>
                 </div>
@@ -791,20 +790,20 @@ export default function SingleFactView({
             className="relative z-10 mt-6 grid gap-3 sm:grid-cols-3"
           >
             {/* Card 1: Interactive Key Number / Guess Challenge */}
-            <div className="rounded-2xl border border-amber-200/80 bg-white/95 p-4 shadow-sm dark:border-amber-500/30 dark:bg-white/5 sm:col-span-1">
+            <div className="rounded-2xl border border-cik-line bg-cik-surface p-4 shadow-sm sm:col-span-1">
               <div className="flex items-center justify-between gap-1.5">
-                <span className="inline-flex items-center gap-1 text-[11px] font-black uppercase tracking-wider text-amber-700 dark:text-amber-300">
+                <span className="inline-flex items-center gap-1 cik-caption-2 font-black uppercase tracking-wider text-cik-butter-text">
                   <Target className="h-3.5 w-3.5" />
                   <span>{lang === 'tr' ? 'Kilit Sayı / Tahmin' : 'Key Metric'}</span>
                 </span>
-                <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-black text-amber-800 dark:bg-amber-900/50 dark:text-amber-200">
+                <span className="rounded-pill bg-cik-butter px-2 py-0.5 cik-caption-2 font-black text-cik-butter-text">
                   +20 XP
                 </span>
               </div>
 
               {guessQaAnswer ? (
                 <div className="mt-2">
-                  <p className="text-xs font-bold leading-snug text-ink/85 dark:text-white/90">
+                  <p className="text-xs font-bold leading-snug text-cik-text">
                     {guessQaAnswer.prompt}
                   </p>
 
@@ -816,7 +815,7 @@ export default function SingleFactView({
                             key={opt}
                             type="button"
                             onClick={() => handleLockDetailGuess(bIdx)}
-                            className="rounded-xl border border-amber-200 bg-amber-50/70 px-2.5 py-1.5 text-left text-xs font-bold text-ink transition hover:bg-amber-100 dark:border-amber-500/30 dark:bg-white/10 dark:text-white"
+                            className="rounded-xl border border-cik-line bg-cik-butter px-2.5 py-1.5 text-left text-xs font-bold text-cik-text transition hover:bg-cik-butter"
                           >
                             {opt}
                           </button>
@@ -824,7 +823,7 @@ export default function SingleFactView({
                       </div>
                     ) : (
                       <div className="mt-2.5 space-y-2">
-                        <div className="flex items-center justify-between text-xs font-black text-violet-700 dark:text-violet-300">
+                        <div className="flex items-center justify-between text-xs font-black text-cik-cta">
                           <span>{lang === 'tr' ? 'Tahminin:' : 'Your guess:'}</span>
                           <span>
                             {guessQaAnswer.unit
@@ -846,7 +845,7 @@ export default function SingleFactView({
                           type="button"
                           onClick={() => handleLockDetailGuess()}
                           data-testid="detail-guess-reveal-btn"
-                          className="w-full rounded-xl bg-amber-500 px-3 py-1.5 text-xs font-extrabold text-white shadow-sm hover:bg-amber-600"
+                          className="w-full rounded-xl bg-cik-butter px-3 py-1.5 text-xs font-extrabold text-cik-text shadow-sm hover:bg-cik-butter"
                         >
                           {lang === 'tr' ? 'Tahmini Kilitle' : 'Lock Guess'}
                         </button>
@@ -857,16 +856,16 @@ export default function SingleFactView({
                       initial={{ opacity: 0, scale: 0.95 }}
                       animate={{ opacity: 1, scale: 1 }}
                       data-testid="fact-key-highlight"
-                      className="mt-2.5 rounded-xl border border-emerald-300 bg-emerald-50 p-2.5 dark:border-emerald-500/40 dark:bg-emerald-950/50"
+                      className="mt-2.5 rounded-xl border border-cik-line bg-cik-mint p-2.5"
                     >
-                      <p className="text-[10px] font-black uppercase tracking-wider text-emerald-700 dark:text-emerald-300">
+                      <p className="cik-caption-2 font-black uppercase tracking-wider text-cik-mint-text">
                         {lang === 'tr' ? 'Gerçek Değer' : 'Verified Number'}
                       </p>
-                      <p className="mt-0.5 font-display text-lg font-extrabold text-emerald-950 dark:text-white">
+                      <p className="mt-0.5 font-display text-lg font-extrabold text-cik-mint-text">
                         {guessQaAnswer.answer}
                       </p>
                       {guessSelectedBinary !== null && (
-                        <p className="mt-0.5 text-[11px] font-semibold text-emerald-800 dark:text-emerald-200">
+                        <p className="mt-0.5 cik-caption-2 font-semibold text-cik-mint-text">
                           {guessSelectedBinary === guessQaAnswer.correctOptionIndex
                             ? lang === 'tr'
                               ? 'Tam isabet! +20 XP'
@@ -880,7 +879,7 @@ export default function SingleFactView({
                   )}
                 </div>
               ) : (
-                <p className="mt-2 text-xs font-semibold leading-relaxed text-ink/80 dark:text-violet-100/85">
+                <p className="mt-2 text-xs font-semibold leading-relaxed text-cik-text">
                   {detailHighlights.curiosityHook}
                 </p>
               )}
@@ -888,12 +887,12 @@ export default function SingleFactView({
 
             {/* Card 2: Key Mechanism / Insight. Hidden when that sentence is already in the body. */}
             {insightAlreadyVisible ? null : (
-            <div className="rounded-2xl border border-violet-200/80 bg-white/95 p-4 shadow-sm dark:border-violet-500/30 dark:bg-white/5 sm:col-span-1">
-              <span className="inline-flex items-center gap-1 text-[11px] font-black uppercase tracking-wider text-violet-700 dark:text-violet-300">
+            <div className="rounded-2xl border border-cik-line bg-cik-surface p-4 shadow-sm sm:col-span-1">
+              <span className="inline-flex items-center gap-1 cik-caption-2 font-black uppercase tracking-wider text-cik-cta">
                 <Lightbulb className="h-3.5 w-3.5" />
                 <span>{lang === 'tr' ? 'Kilit Mekanizma' : 'Key Insight'}</span>
               </span>
-              <p className="mt-2 text-xs font-semibold leading-relaxed text-ink/85 dark:text-violet-100/90 sm:text-[13px]">
+              <p className="mt-2 text-xs font-semibold leading-relaxed text-cik-text sm:cik-footnote">
                 {detailHighlights.keyInsight}
               </p>
             </div>
@@ -902,11 +901,11 @@ export default function SingleFactView({
             {/* Card 3: Quick Stats & Category Rank */}
             <div className="hidden">
               <div>
-                <span className="inline-flex items-center gap-1 text-[11px] font-black uppercase tracking-wider text-teal-700 dark:text-teal-300">
+                <span className="inline-flex items-center gap-1 cik-caption-2 font-black uppercase tracking-wider text-cik-mint-text">
                   <Flame className="h-3.5 w-3.5" />
                   <span>{lang === 'tr' ? 'Keşif Özeti' : 'Discovery Snapshot'}</span>
                 </span>
-                <p className="mt-2 flex items-center gap-2 font-display text-base font-bold text-ink dark:text-white">
+                <p className="mt-2 flex items-center gap-2 font-display text-base font-bold text-cik-text">
                   <img
                     src={catMeta.iconPath}
                     alt=""
@@ -918,12 +917,12 @@ export default function SingleFactView({
                   />
                   <span>{catMeta.label[lang]}</span>
                 </p>
-                <p className="mt-1 text-xs font-semibold text-ink/70 dark:text-violet-200/75">
+                <p className="mt-1 text-xs font-semibold text-cik-text">
                   {detailHighlights.topicTag}
                 </p>
               </div>
-              <div className="mt-3 flex flex-wrap items-center gap-1.5 border-t border-slate-100 pt-2.5 text-[11px] font-extrabold text-ink/75 dark:border-white/10 dark:text-violet-200">
-                <span className="inline-flex items-center gap-1 rounded-full bg-teal-50 px-2 py-0.5 text-teal-800 dark:bg-teal-900/50 dark:text-teal-200">
+              <div className="mt-3 flex flex-wrap items-center gap-1.5 border-t border-cik-line pt-2.5 cik-caption-2 font-extrabold text-cik-text">
+                <span className="inline-flex items-center gap-1 rounded-pill bg-cik-mint px-2 py-0.5 text-cik-mint-text">
                   <img
                     src={UI_ICON_PATHS.lightning}
                     alt=""
@@ -935,7 +934,7 @@ export default function SingleFactView({
                   />
                   <span>{fact.readingTimeSec ?? 20}s</span>
                 </span>
-                <span className="rounded-full bg-violet-50 px-2 py-0.5 text-violet-800 dark:bg-violet-900/50 dark:text-violet-200">
+                <span className="rounded-pill bg-cik-pink px-2 py-0.5 text-cik-cta">
                   {detailArticle.wordCount} {lang === 'tr' ? 'kelime' : 'words'}
                 </span>
               </div>
@@ -949,18 +948,18 @@ export default function SingleFactView({
           >
             <h2
               id="scientific-explanation-heading"
-              className="flex items-center gap-2 text-xs font-extrabold uppercase tracking-wider text-violet-700 dark:text-violet-300"
+              className="flex items-center gap-2 text-xs font-extrabold uppercase tracking-wider text-cik-cta"
             >
               <Microscope className="h-4 w-4" />
               <span>{t.whyHowHeader}</span>
             </h2>
 
             {longFormParagraphs.length > 0 ? (
-              <div className="rounded-2xl border border-white/90 bg-white/95 p-4 shadow-sm dark:border-white/10 dark:bg-white/5 sm:p-5">
+              <div className="rounded-2xl border border-cik-line bg-cik-surface p-4 shadow-sm sm:p-5">
                 {longFormParagraphs.map((paragraph, index) => (
                   <p
                     key={`${index}-${paragraph.slice(0, 24)}`}
-                    className="mt-3 text-sm leading-relaxed text-ink/85 first:mt-0 dark:text-violet-100/85 sm:text-[15px]"
+                    className="mt-3 text-sm leading-relaxed text-cik-text first:mt-0 sm:cik-subhead"
                   >
                     {paragraph}
                   </p>
@@ -972,28 +971,28 @@ export default function SingleFactView({
               {breakdownCards.map((card) => (
                 <div
                   key={card.id}
-                  style={{ borderLeftColor: fact.accentColor || '#7C3AED' }}
-                  className="rounded-2xl border border-l-4 border-white/90 bg-white/95 p-4 shadow-sm dark:border-white/10 dark:bg-white/5 sm:p-5"
+                  style={{ borderLeftColor: fact.accentColor || 'var(--cik-cta)' }}
+                  className="rounded-2xl border border-l-4 border-cik-line bg-cik-surface p-4 shadow-sm sm:p-5"
                 >
                   <div className="flex items-center gap-2">
                     <span
                       style={{ backgroundColor: `${fact.accentColor}22`, color: fact.accentColor }}
-                      className="inline-flex h-6 items-center justify-center rounded-full px-2 text-[11px] font-black"
+                      className="inline-flex h-6 items-center justify-center rounded-pill px-2 cik-caption-2 font-black"
                     >
                       {card.indexLabel}
                     </span>
-                    <h3 className="flex items-center gap-1.5 font-display text-sm font-bold text-ink dark:text-white sm:text-base">
+                    <h3 className="flex items-center gap-1.5 font-display text-sm font-bold text-cik-text sm:text-base">
                       {card.kind === 'mechanism' ? (
-                        <Microscope className="h-4 w-4 text-violet-600 dark:text-violet-300" />
+                        <Microscope className="h-4 w-4 text-cik-cta" />
                       ) : card.kind === 'context' ? (
-                        <Sparkles className="h-4 w-4 text-amber-500" />
+                        <Sparkles className="h-4 w-4 text-cik-butter-text" />
                       ) : (
-                        <Layers className="h-4 w-4 text-teal-600 dark:text-teal-300" />
+                        <Layers className="h-4 w-4 text-cik-mint-text" />
                       )}
                       <span>{card.title}</span>
                     </h3>
                   </div>
-                  <p className="mt-2 text-sm leading-relaxed text-ink/85 dark:text-violet-100/85 sm:text-[15px]">
+                  <p className="mt-2 text-sm leading-relaxed text-cik-text sm:cik-subhead">
                     {card.body}
                   </p>
                 </div>
@@ -1008,10 +1007,10 @@ export default function SingleFactView({
               target="_blank"
               rel="noopener noreferrer"
               data-testid="detail-source-card"
-              className="group relative z-10 mt-5 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-emerald-200/90 bg-emerald-50/85 px-4 py-3.5 text-xs font-semibold text-emerald-950 transition hover:border-emerald-400 hover:bg-emerald-50 dark:border-emerald-500/30 dark:bg-emerald-950/40 dark:text-emerald-100"
+              className="group relative z-10 mt-5 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-cik-line bg-cik-mint px-4 py-3.5 text-xs font-semibold text-cik-mint-text transition hover:border-cik-line hover:bg-cik-mint"
             >
               <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white shadow-sm dark:bg-white/10">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-cik-surface shadow-sm">
                   <img
                     src={UI_ICON_PATHS.verifiedSeal}
                     alt=""
@@ -1023,17 +1022,17 @@ export default function SingleFactView({
                   />
                 </div>
                 <div>
-                  <div className="flex items-center gap-1.5 text-[11px] font-extrabold uppercase tracking-wider text-emerald-800/85 dark:text-emerald-300">
+                  <div className="flex items-center gap-1.5 cik-caption-2 font-extrabold uppercase tracking-wider text-cik-mint-text">
                     <ShieldCheck className="h-3.5 w-3.5" />
                     <span>{t.seoVerifiedSource}</span>
                   </div>
-                  <div className="mt-0.5 flex items-center gap-1.5 text-sm font-bold text-ink dark:text-white">
-                    <BookOpen className="h-3.5 w-3.5 shrink-0 text-amber-600 dark:text-amber-300" />
+                  <div className="mt-0.5 flex items-center gap-1.5 text-sm font-bold text-cik-text">
+                    <BookOpen className="h-3.5 w-3.5 shrink-0 text-cik-butter-text" />
                     <span>{resolvedSourceName}</span>
                   </div>
                 </div>
               </div>
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-white px-3.5 py-2 text-xs font-extrabold text-violet-700 shadow-sm ring-1 ring-violet-200 transition group-hover:bg-violet-600 group-hover:text-white dark:bg-white/10 dark:text-violet-200 dark:ring-white/20">
+              <span className="inline-flex items-center gap-1.5 rounded-pill bg-cik-surface px-3.5 py-2 text-xs font-extrabold text-cik-cta shadow-sm ring-1 ring-cik-focus transition group-hover:bg-cik-pink group-hover:text-cik-text">
                 <span>{t.verifySourceCta}</span>
                 <ExternalLink className="h-3.5 w-3.5" />
               </span>
@@ -1041,18 +1040,18 @@ export default function SingleFactView({
           ) : (
             <aside
               data-testid="detail-source-card"
-              className="relative z-10 mt-5 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-emerald-200/80 bg-emerald-50/75 px-4 py-3.5 text-xs font-semibold text-emerald-950 dark:border-emerald-500/30 dark:bg-emerald-950/40 dark:text-emerald-100"
+              className="relative z-10 mt-5 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-cik-line bg-cik-mint px-4 py-3.5 text-xs font-semibold text-cik-mint-text"
             >
               <div className="flex items-center gap-2.5">
-                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-emerald-600/15 text-emerald-700 dark:text-emerald-300">
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-cik-mint text-cik-mint-text">
                   <ShieldCheck className="h-4 w-4" />
                 </div>
                 <div>
-                  <div className="text-[11px] font-extrabold uppercase tracking-wider text-emerald-800/80 dark:text-emerald-300">
+                  <div className="cik-caption-2 font-extrabold uppercase tracking-wider text-cik-mint-text">
                     {t.seoVerifiedSource}
                   </div>
-                  <div className="flex items-center gap-1.5 text-sm font-bold text-ink dark:text-white">
-                    <BookOpen className="h-3.5 w-3.5 shrink-0 text-amber-600 dark:text-amber-300" />
+                  <div className="flex items-center gap-1.5 text-sm font-bold text-cik-text">
+                    <BookOpen className="h-3.5 w-3.5 shrink-0 text-cik-butter-text" />
                     <span>{resolvedSourceName}</span>
                   </div>
                 </div>
@@ -1060,15 +1059,15 @@ export default function SingleFactView({
             </aside>
           )}
           {mediaCredit ? (
-            <p data-testid="detail-media-credit" className="relative z-10 mt-2 text-xs font-bold text-slate-900 dark:text-slate-100">
+            <p data-testid="detail-media-credit" className="relative z-10 mt-2 text-xs font-bold text-cik-text">
               {mediaCredit}
             </p>
           ) : null}
         </motion.article>
 
         {/* Gamified Primary CTAs: Scrolla Challenge + Open in Feed */}
-        <div className="mt-6 rounded-3xl border-2 border-violet-200 bg-gradient-to-r from-violet-50 via-fuchsia-50 to-amber-50 p-5 text-center shadow-sm dark:border-violet-600/40 dark:from-violet-950/60 dark:via-fuchsia-950/40 dark:to-amber-950/30 sm:p-6">
-          <p className="inline-flex items-center justify-center gap-1.5 text-xs font-black uppercase tracking-wider text-violet-700 dark:text-violet-300">
+        <div className="mt-6 rounded-sticker border border-cik-line bg-cik-pink p-5 text-center shadow-e1">
+          <p className="inline-flex items-center justify-center gap-1.5 text-xs font-black uppercase tracking-wider text-cik-cta">
             <img
               src={UI_ICON_PATHS.lightning}
               alt=""
@@ -1080,7 +1079,7 @@ export default function SingleFactView({
             />
             <span>{lang === 'tr' ? 'Scrolla Arena & Etkileşimli Akış' : 'Scrolla Arena & Interactive Feed'}</span>
           </p>
-          <p className="mt-1 text-sm font-medium text-ink/80 dark:text-violet-100/85">
+          <p className="mt-1 text-sm font-medium text-cik-text">
             {lang === 'tr'
               ? 'Bu konudan 6 haneli Scrolla 1v1 odası kur ya da kartı tam ekran keşif akışında aç!'
               : 'Launch a 6-character Scrolla 1v1 duel from this topic or open it in the full-screen feed!'}
@@ -1093,7 +1092,7 @@ export default function SingleFactView({
               disabled={creatingScrolla}
               onClick={handleScrollaChallenge}
               data-testid="scrolla-challenge-cta"
-              className="inline-flex min-h-[48px] items-center gap-2 rounded-full bg-gradient-to-r from-violet-600 via-fuchsia-600 to-rose-500 px-6 py-3 font-display text-sm font-bold text-white shadow-cozy-lg disabled:opacity-70 sm:text-base"
+              className="cik-headline inline-flex min-h-12 items-center gap-2 rounded-pill bg-cik-cta px-6 py-3 text-cik-on-cta shadow-sticker disabled:opacity-40"
             >
               {creatingScrolla ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
@@ -1109,7 +1108,7 @@ export default function SingleFactView({
                     ? "Scrolla'da Meydan Oku"
                     : 'Challenge in Scrolla'}
               </span>
-              <span className="rounded-full bg-white/20 px-2 py-0.5 text-[10px] font-black uppercase">
+              <span className="rounded-pill bg-cik-surface px-2 py-0.5 cik-caption-2 font-black uppercase">
                 1v1
               </span>
             </motion.button>
@@ -1119,9 +1118,9 @@ export default function SingleFactView({
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.94 }}
                 data-testid="seo-explore-cta"
-                className="inline-flex min-h-[48px] items-center gap-2 rounded-full border-2 border-violet-300 bg-white px-5 py-3 font-display text-sm font-bold text-violet-900 shadow-sm hover:bg-violet-50 dark:border-violet-500/40 dark:bg-white/10 dark:text-white dark:hover:bg-white/15 sm:text-base"
+                className="inline-flex min-h-12 items-center gap-2 rounded-pill border-2 border-cik-line bg-cik-surface px-5 py-3 font-display text-sm font-bold text-cik-cta shadow-sm hover:bg-cik-pink sm:text-base"
               >
-                <Play className="h-4 w-4 fill-current text-violet-600 dark:text-violet-300" />
+                <Play className="h-4 w-4 fill-current text-cik-cta" />
                 <span>
                   {lang === 'tr' ? 'Bu Kartı Akışta Aç →' : 'Open in Interactive Feed →'}
                 </span>
@@ -1131,7 +1130,7 @@ export default function SingleFactView({
             <Link
               href={categoryHref}
               onClick={() => playPop(soundEnabled)}
-              className="inline-flex min-h-[44px] items-center gap-1.5 rounded-full border border-violet-200 bg-white/90 px-4 py-2.5 text-xs font-extrabold text-violet-800 hover:bg-violet-50 dark:border-white/15 dark:bg-white/5 dark:text-violet-200 sm:text-sm"
+              className="inline-flex min-h-[44px] items-center gap-1.5 rounded-pill border border-cik-line bg-cik-surface px-4 py-2.5 text-xs font-extrabold text-cik-cta hover:bg-cik-pink sm:text-sm"
             >
               <span>{catMeta.emoji}</span>
               <span>
@@ -1146,20 +1145,20 @@ export default function SingleFactView({
         {/* Engaging Inline Topic Quiz Card */}
         <section
           data-testid="seo-mini-quiz"
-          className="mt-6 rounded-3xl border-2 border-violet-200 bg-white p-6 shadow-cozy dark:border-violet-600/50 dark:bg-[#17122B] sm:p-8"
+          className="mt-6 rounded-sticker border-2 border-cik-line bg-cik-surface p-6 shadow-e1 sm:p-8"
         >
           <div className="flex flex-wrap items-center justify-between gap-2">
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-pastel-lavender px-3 py-1 text-xs font-extrabold text-violet-800 dark:bg-violet-900/60 dark:text-violet-200">
+            <span className="inline-flex items-center gap-1.5 rounded-pill bg-cik-pink px-3 py-1 text-xs font-extrabold text-cik-cta">
               <Brain className="h-3.5 w-3.5" />
               {t.seoMiniQuizTitle}
             </span>
-            <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2.5 py-1 text-[11px] font-black text-amber-800 dark:bg-amber-900/50 dark:text-amber-200">
+            <span className="inline-flex items-center gap-1 rounded-pill bg-cik-butter px-2.5 py-1 cik-caption-2 font-black text-cik-butter-text">
               <Sparkles className="h-3 w-3" />
               {isCorrect ? '+25 XP ✓' : '+25 XP'}
             </span>
           </div>
 
-          <h2 className="mt-3 font-display text-lg font-bold text-ink dark:text-white sm:text-xl">
+          <h2 className="mt-3 font-display text-lg font-bold text-cik-text sm:text-xl">
             {content.quiz.question}
           </h2>
 
@@ -1168,17 +1167,17 @@ export default function SingleFactView({
               const selected = selectedOption === idx;
               const correctOpt = idx === preparedQuiz.correctIndex;
               let style =
-                'border-slate-200 bg-slate-50/80 text-ink hover:border-violet-300 hover:bg-pastel-lavender/40 dark:border-white/15 dark:bg-white/5 dark:text-violet-100 dark:hover:border-violet-400';
+                'border-cik-line bg-cik-surface-2 text-cik-text hover:border-cik-line hover:bg-cik-pink/40';
               if (hasAnswered) {
                 if (correctOpt) {
                   style =
-                    'border-emerald-400 bg-emerald-50 text-emerald-950 font-bold dark:border-emerald-500/70 dark:bg-emerald-950/60 dark:text-emerald-100';
+                    'border-cik-line bg-cik-mint text-cik-mint-text font-bold';
                 } else if (selected) {
                   style =
-                    'border-rose-400 bg-rose-50 text-rose-900 dark:border-rose-500/70 dark:bg-rose-950/60 dark:text-rose-100';
+                    'border-cik-line bg-cik-rose text-cik-rose-text';
                 } else {
                   style =
-                    'border-slate-100 bg-slate-50/40 text-ink/45 dark:border-white/5 dark:bg-white/5 dark:text-white/40';
+                    'border-cik-line bg-cik-surface-2 text-cik-text';
                 }
               }
 
@@ -1189,16 +1188,16 @@ export default function SingleFactView({
                   whileTap={!hasAnswered ? { scale: 0.97 } : undefined}
                   disabled={hasAnswered}
                   onClick={() => handleSelectQuizOption(idx)}
-                  className={`flex min-h-[48px] items-center justify-between gap-3 rounded-2xl border-2 px-4 py-3 text-left text-sm font-semibold transition-[background-color,border-color,color,transform] duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400 whitespace-normal break-words leading-snug ${style}`}
+                  className={`flex min-h-12 items-center justify-between gap-3 rounded-2xl border-2 px-4 py-3 text-left text-sm font-semibold transition-[background-color,border-color,color,transform] duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cik-focus whitespace-normal break-words leading-snug ${style}`}
                 >
                   <div className="flex items-center gap-3">
                     <span
                       className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-lg text-xs font-black ${
                         hasAnswered && correctOpt
-                          ? 'bg-emerald-600 text-white'
+                          ? 'bg-cik-mint text-cik-text'
                           : hasAnswered && selected
-                            ? 'bg-rose-500 text-white'
-                            : 'bg-white text-violet-700 shadow-sm dark:bg-white/10 dark:text-violet-200'
+                            ? 'bg-cik-rose text-cik-text'
+                            : 'bg-cik-surface text-cik-cta shadow-sm'
                       }`}
                     >
                       {optionLetters[idx] ?? idx + 1}
@@ -1206,10 +1205,10 @@ export default function SingleFactView({
                     <span>{opt}</span>
                   </div>
                   {hasAnswered && correctOpt && (
-                    <CheckCircle2 className="h-5 w-5 shrink-0 text-emerald-600 dark:text-emerald-400" />
+                    <CheckCircle2 className="h-5 w-5 shrink-0 text-cik-mint-text" />
                   )}
                   {hasAnswered && selected && !correctOpt && (
-                    <XCircle className="h-5 w-5 shrink-0 text-rose-500 dark:text-rose-400" />
+                    <XCircle className="h-5 w-5 shrink-0 text-cik-rose-text" />
                   )}
                 </motion.button>
               );
@@ -1222,8 +1221,8 @@ export default function SingleFactView({
               animate={{ opacity: 1, y: 0 }}
               className={`mt-4 rounded-2xl p-4 text-xs sm:text-sm ${
                 isCorrect
-                  ? 'border border-emerald-200 bg-emerald-50 text-emerald-950 dark:border-emerald-700/50 dark:bg-emerald-950/50 dark:text-emerald-100'
-                  : 'border border-rose-200 bg-rose-50 text-rose-950 dark:border-rose-700/50 dark:bg-rose-950/50 dark:text-rose-100'
+                  ? 'border border-cik-line bg-cik-mint text-cik-mint-text'
+                  : 'border border-cik-line bg-cik-rose text-cik-rose-text'
               }`}
             >
               <div className="flex flex-wrap items-center justify-between gap-2">
@@ -1232,7 +1231,7 @@ export default function SingleFactView({
                     ? `${t.quizCorrect} (+25 XP)`
                     : `${t.quizWrong} (+5 XP)`}
                 </p>
-                <span className="text-[11px] font-bold opacity-75">
+                <span className="cik-caption-2 font-bold opacity-75">
                   {catMeta.emoji} {detailHighlights.topicTag}
                 </span>
               </div>
@@ -1243,7 +1242,7 @@ export default function SingleFactView({
                 <button
                   type="button"
                   onClick={handleScrollaChallenge}
-                  className="inline-flex items-center gap-1.5 rounded-full bg-violet-600 px-3.5 py-1.5 text-xs font-extrabold text-white shadow-sm hover:bg-violet-700"
+                  className="inline-flex items-center gap-1.5 rounded-pill bg-cik-pink px-3.5 py-1.5 text-xs font-extrabold text-cik-text shadow-sm hover:bg-cik-pink"
                 >
                   <Swords className="h-3.5 w-3.5" />
                   <span>{lang === 'tr' ? "Scrolla'da Yarış" : 'Race in Scrolla'}</span>
@@ -1251,7 +1250,7 @@ export default function SingleFactView({
                 <Link
                   href="/"
                   onClick={() => playPop(soundEnabled)}
-                  className="inline-flex items-center gap-1 rounded-full border border-violet-200 bg-white px-3.5 py-1.5 text-xs font-bold text-violet-800 hover:bg-violet-50 dark:border-white/15 dark:bg-white/10 dark:text-white"
+                  className="inline-flex items-center gap-1 rounded-pill border border-cik-line bg-cik-surface px-3.5 py-1.5 text-xs font-bold text-cik-cta hover:bg-cik-pink"
                 >
                   <Compass className="h-3.5 w-3.5" />
                   <span>{lang === 'tr' ? 'Yeni Kartlar Keşfet' : 'Explore More'}</span>
@@ -1264,10 +1263,10 @@ export default function SingleFactView({
         {/* Social Share Buttons Bar (WhatsApp, X, Copy Link) */}
         <div
           data-testid="single-fact-share-bar"
-          className="mt-5 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-ink/10 bg-white/90 px-4 py-3 shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/5"
+          className="mt-5 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-ink/10 bg-cik-surface px-4 py-3 shadow-sm backdrop-blur-sm"
         >
-          <div className="flex items-center gap-2 text-xs font-extrabold uppercase tracking-wider text-ink/60 dark:text-violet-200/75">
-            <Share2 className="h-3.5 w-3.5 text-violet-600 dark:text-violet-300" />
+          <div className="flex items-center gap-2 text-xs font-extrabold uppercase tracking-wider text-cik-text">
+            <Share2 className="h-3.5 w-3.5 text-cik-cta" />
             <span>{lang === 'tr' ? 'Bu Bilgiyi Paylaş' : 'Share This Fact'}</span>
           </div>
           <div className="flex flex-wrap items-center gap-2">
@@ -1278,7 +1277,7 @@ export default function SingleFactView({
               target="_blank"
               rel="noopener noreferrer"
               data-testid="share-whatsapp-btn"
-              className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/10 px-3.5 py-2 text-xs font-bold text-emerald-700 transition-colors hover:bg-emerald-500/20 dark:text-emerald-300"
+              className="inline-flex items-center gap-1.5 rounded-pill bg-cik-mint px-3.5 py-2 text-xs font-bold text-cik-mint-text transition-colors hover:bg-cik-mint"
             >
               <MessageCircle className="h-3.5 w-3.5" />
               <span>WhatsApp</span>
@@ -1290,7 +1289,7 @@ export default function SingleFactView({
               target="_blank"
               rel="noopener noreferrer"
               data-testid="share-x-btn"
-              className="inline-flex items-center gap-1.5 rounded-full bg-slate-900/5 px-3.5 py-2 text-xs font-bold text-ink transition-colors hover:bg-slate-900/10 dark:bg-white/10 dark:text-white"
+              className="inline-flex items-center gap-1.5 rounded-pill bg-cik-surface-2 px-3.5 py-2 text-xs font-bold text-cik-text transition-colors hover:bg-cik-surface-2"
             >
               <span className="font-mono text-xs font-black leading-none">𝕏</span>
               <span>{lang === 'tr' ? "X'te Paylaş" : 'Post on X'}</span>
@@ -1306,11 +1305,11 @@ export default function SingleFactView({
                 setCopiedLink(true);
                 window.setTimeout(() => setCopiedLink(false), 2000);
               }}
-              className="inline-flex items-center gap-1.5 rounded-full border border-violet-200 bg-violet-50 px-3.5 py-2 text-xs font-bold text-violet-800 transition-colors hover:bg-violet-100 dark:border-violet-500/40 dark:bg-violet-900/40 dark:text-violet-200"
+              className="inline-flex items-center gap-1.5 rounded-pill border border-cik-line bg-cik-pink px-3.5 py-2 text-xs font-bold text-cik-cta transition-colors hover:bg-cik-pink"
             >
               {copiedLink ? (
                 <>
-                  <Check className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-300" />
+                  <Check className="h-3.5 w-3.5 text-cik-mint-text" />
                   <span>{lang === 'tr' ? 'Kopyalandı!' : 'Copied!'}</span>
                 </>
               ) : (
@@ -1326,13 +1325,13 @@ export default function SingleFactView({
         {/* Compact GEO Question & Answer Knowledge Cards */}
         <section
           aria-labelledby="fact-qa-heading"
-          className="mt-6 rounded-3xl border border-slate-200 bg-white/95 p-5 shadow-sm dark:border-white/10 dark:bg-[#17122B] sm:p-6"
+          className="mt-6 rounded-sticker border border-cik-line bg-cik-surface p-5 shadow-sm sm:p-6"
         >
           <h2
             id="fact-qa-heading"
-            className="flex items-center gap-2 font-display text-base font-bold text-ink dark:text-white sm:text-lg"
+            className="flex items-center gap-2 font-display text-base font-bold text-cik-text sm:text-lg"
           >
-            <HelpCircle className="h-5 w-5 text-violet-600 dark:text-violet-300" />
+            <HelpCircle className="h-5 w-5 text-cik-cta" />
             <span>
               {lang === 'tr'
                 ? 'Hızlı Soru & Cevap Kartları'
@@ -1342,31 +1341,31 @@ export default function SingleFactView({
 
           <div className="mt-4 grid gap-3 sm:grid-cols-2">
             {guessQaAnswer && (
-              <div className="rounded-2xl border border-amber-100 bg-amber-50/70 p-4 dark:border-amber-500/30 dark:bg-amber-950/30">
-                <p className="text-[11px] font-black uppercase tracking-wider text-amber-800 dark:text-amber-300">
+              <div className="rounded-2xl border border-cik-line bg-cik-butter p-4">
+                <p className="cik-caption-2 font-black uppercase tracking-wider text-cik-butter-text">
                   {lang === 'tr' ? 'Tahmin Özeti' : 'Quick Guess'}
                 </p>
-                <p className="mt-1 text-xs font-extrabold text-ink dark:text-white">
+                <p className="mt-1 text-xs font-extrabold text-cik-text">
                   {guessQaAnswer.prompt}
                 </p>
-                <p className="mt-2 inline-block rounded-full bg-white px-3 py-1 text-xs font-extrabold text-amber-900 shadow-sm dark:bg-white/10 dark:text-amber-200">
+                <p className="mt-2 inline-block rounded-pill bg-cik-surface px-3 py-1 text-xs font-extrabold text-cik-butter-text shadow-sm">
                   {guessQaAnswer.answer}
                 </p>
               </div>
             )}
 
             <div
-              className={`rounded-2xl border border-violet-100 bg-violet-50/60 p-4 dark:border-violet-500/30 dark:bg-violet-950/30 ${
+              className={`rounded-2xl border border-cik-line bg-cik-pink p-4 ${
                 !guessQaAnswer ? 'sm:col-span-2' : ''
               }`}
             >
-              <p className="text-[11px] font-black uppercase tracking-wider text-violet-800 dark:text-violet-300">
+              <p className="cik-caption-2 font-black uppercase tracking-wider text-cik-cta">
                 {lang === 'tr' ? 'Bilgi Kontrolü' : 'Fact Check'}
               </p>
-              <p className="mt-1 text-xs font-extrabold text-ink dark:text-white">
+              <p className="mt-1 text-xs font-extrabold text-cik-text">
                 {content.quiz.question}
               </p>
-              <p className="mt-2 inline-block rounded-full bg-white px-3 py-1 text-xs font-extrabold text-violet-900 shadow-sm dark:bg-white/10 dark:text-violet-200">
+              <p className="mt-2 inline-block rounded-pill bg-cik-surface px-3 py-1 text-xs font-extrabold text-cik-cta shadow-sm">
                 {correctQuizAnswer}
               </p>
             </div>
@@ -1379,9 +1378,9 @@ export default function SingleFactView({
             <motion.span
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.94 }}
-              className="inline-flex items-center gap-2.5 rounded-full border border-violet-300 bg-white px-7 py-3.5 font-display text-sm font-bold text-violet-900 shadow-sm hover:bg-violet-50 dark:border-violet-500/40 dark:bg-white/10 dark:text-white dark:hover:bg-white/15 sm:text-base"
+              className="inline-flex items-center gap-2.5 rounded-pill border border-cik-line bg-cik-surface px-7 py-3.5 font-display text-sm font-bold text-cik-cta shadow-sm hover:bg-cik-pink sm:text-base"
             >
-              <Sparkles className="h-4 w-4 text-violet-600 dark:text-violet-300" />
+              <Sparkles className="h-4 w-4 text-cik-cta" />
               <span>{discoveryCtaLabel(lang, catalogCount)}</span>
             </motion.span>
           </Link>
@@ -1391,12 +1390,12 @@ export default function SingleFactView({
         {relatedFacts.length > 0 && (
           <section className="mt-10" aria-labelledby="related-facts-heading">
             <div className="mb-3 flex items-center justify-between gap-2">
-              <h3 id="related-facts-heading" className="font-display text-lg font-bold text-ink dark:text-white">
+              <h3 id="related-facts-heading" className="font-display text-lg font-bold text-cik-text">
                 {t.seoRelatedTitle}
               </h3>
               <Link
                 href={categoryHref}
-                className="text-xs font-extrabold text-violet-700 hover:underline dark:text-violet-300"
+                className="text-xs font-extrabold text-cik-cta hover:underline"
               >
                 {lang === 'tr' ? 'Kategoriyi Gör →' : 'View Category →'}
               </Link>
@@ -1412,7 +1411,7 @@ export default function SingleFactView({
                     key={rel.id}
                     href={relHref}
                     onClick={() => playPop(soundEnabled)}
-                    className={`flex flex-col justify-between rounded-2xl border ${relMeta.borderClass} bg-white p-4 shadow-sm transition-transform hover:-translate-y-0.5 dark:border-white/10 dark:bg-[#17122B]`}
+                    className={`flex flex-col justify-between rounded-2xl border border-cik-line bg-cik-surface p-4 shadow-sm transition-transform hover:-translate-y-0.5`}
                   >
                     <div>
                       <div className="flex items-center justify-between">
@@ -1427,18 +1426,18 @@ export default function SingleFactView({
                             className="h-6 w-6 object-contain"
                           />
                         </div>
-                        <span className={`text-[11px] font-extrabold ${relMeta.accentText}`}>
+                        <span className={`cik-caption-2 font-extrabold text-cik-cta`}>
                           {relMeta.label[lang]}
                         </span>
                       </div>
-                      <h4 className="mt-2 text-sm font-bold leading-snug text-ink dark:text-white">
+                      <h4 className="mt-2 text-sm font-bold leading-snug text-cik-text">
                         {rel[lang].title}
                       </h4>
-                      <p className="mt-1 line-clamp-2 text-xs text-ink/65 dark:text-violet-200/75">
+                      <p className="mt-1 line-clamp-2 text-xs text-cik-text">
                         {rel[lang].factText}
                       </p>
                     </div>
-                    <span className="mt-3 inline-flex items-center gap-1 text-xs font-bold text-violet-700 dark:text-violet-300">
+                    <span className="mt-3 inline-flex items-center gap-1 text-xs font-bold text-cik-cta">
                       <span>{t.readFullPage}</span>
                       <ArrowRight className="h-3 w-3" />
                     </span>

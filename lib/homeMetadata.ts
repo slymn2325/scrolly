@@ -1,7 +1,15 @@
 import type { Metadata } from 'next';
+import { fitDocumentTitle } from '@/utils/factSeo';
 
 const HOME_TR = 'https://scrolly.live/';
 const HOME_EN = 'https://scrolly.live/en';
+
+export const BRAND_OG_IMAGE = {
+  url: '/opengraph-image',
+  width: 1200,
+  height: 630,
+  alt: 'Scrolly',
+} as const;
 
 const HOME_COPY = {
   tr: {
@@ -18,9 +26,11 @@ const HOME_COPY = {
 
 export function buildHomeMetadata(lang: 'tr' | 'en'): Metadata {
   const copy = HOME_COPY[lang];
+  const title = fitDocumentTitle(copy.title);
   const canonical = lang === 'en' ? HOME_EN : HOME_TR;
+  const image = { ...BRAND_OG_IMAGE, alt: title };
   return {
-    title: copy.title,
+    title,
     description: copy.description,
     alternates: {
       canonical,
@@ -31,17 +41,19 @@ export function buildHomeMetadata(lang: 'tr' | 'en'): Metadata {
       },
     },
     openGraph: {
-      title: copy.title,
+      title,
       description: copy.description,
       url: canonical,
       siteName: 'Scrolly',
       locale: lang === 'en' ? 'en_US' : 'tr_TR',
       type: 'website',
+      images: [image],
     },
     twitter: {
       card: 'summary_large_image',
-      title: copy.title,
+      title,
       description: copy.description,
+      images: [image.url],
     },
   };
 }

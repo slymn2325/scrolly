@@ -14,31 +14,47 @@ export default function OpenGraphImage() {
           width: '100%',
           height: '100%',
           display: 'flex',
-          flexDirection: 'column',
-          justifyContent: 'space-between',
-          padding: '60px 68px',
-          background: 'linear-gradient(135deg, #FFFDF9 0%, #EDE9FE 52%, #DDD6FE 100%)',
+          background: '#FFF4F7',
+          padding: '36px',
           fontFamily: 'sans-serif',
-          color: '#1E1B2E',
         }}
       >
         <div
           style={{
             display: 'flex',
-            alignItems: 'center',
+            flexDirection: 'column',
             justifyContent: 'space-between',
             width: '100%',
+            height: '100%',
+            background: '#FFFFFF',
+            borderRadius: '36px',
+            border: '3px solid #F3C5D6',
+            borderBottom: '10px solid #FF8DB8',
+            padding: '44px 52px 36px',
           }}
         >
-          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-            <BrandLogo size={64} id="og-brand" />
-            <div style={{ display: 'flex', flexDirection: 'column' }}>
-              <span style={{ fontSize: '32px', fontWeight: 800, color: '#1E1B2E' }}>
-                Scrolly
-              </span>
-              <span style={{ fontSize: '18px', fontWeight: 600, color: '#5B21B6' }}>
-                scrolly.live
-              </span>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
+            <div
+              style={{
+                display: 'flex',
+                fontSize: '56px',
+                fontWeight: 800,
+                lineHeight: 1.12,
+                color: '#3F1D30',
+              }}
+            >
+              Tek Saniyede Bilimsel Mikro Keşifler
+            </div>
+            <div
+              style={{
+                display: 'flex',
+                fontSize: '26px',
+                fontWeight: 600,
+                lineHeight: 1.38,
+                color: '#7A4A63',
+              }}
+            >
+              Uzay, Doğa, Bilim, Tarih, İnsan Vücudu ve TR/EN Dil Öğrenme · Doğrulanmış kaynaklarla Reels deneyimi.
             </div>
           </div>
 
@@ -46,106 +62,35 @@ export default function OpenGraphImage() {
             style={{
               display: 'flex',
               alignItems: 'center',
-              gap: '10px',
-              padding: '12px 24px',
-              borderRadius: '9999px',
-              background: '#FFFFFF',
-              border: '2px solid #DDD6FE',
-              fontSize: '20px',
-              fontWeight: 800,
-              color: '#5B21B6',
+              justifyContent: 'space-between',
+              width: '100%',
             }}
           >
-            <span>TR / EN Bilingual Micro-Learning</span>
-          </div>
-        </div>
-
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-          <div
-            style={{
-              display: 'flex',
-              fontSize: '58px',
-              fontWeight: 800,
-              lineHeight: 1.12,
-              color: '#1E1B2E',
-            }}
-          >
-            Tek Saniyede Bilimsel Mikro Keşifler
-          </div>
-          <div
-            style={{
-              display: 'flex',
-              fontSize: '28px',
-              fontWeight: 500,
-              lineHeight: 1.38,
-              color: '#4338CA',
-            }}
-          >
-            Uzay, Doğa, Bilim, Tarih, İnsan Vücudu ve TR/EN Dil Öğrenme · Doğrulanmış kaynaklarla 100dvh Reels deneyimi.
-          </div>
-        </div>
-
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            width: '100%',
-            paddingTop: '22px',
-            borderTop: '2px solid rgba(91,33,182,0.14)',
-          }}
-        >
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '10px',
-              padding: '10px 22px',
-              borderRadius: '9999px',
-              background: '#ECFDF5',
-              border: '1.5px solid #A7F3D0',
-              fontSize: '20px',
-              fontWeight: 700,
-              color: '#065F46',
-            }}
-          >
-            <svg
-              width="20"
-              height="20"
-              viewBox="0 0 24 24"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
+            <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+              <BrandLogo size={72} id="og-brand" title="Scrolly" />
+              <div style={{ display: 'flex', flexDirection: 'column' }}>
+                <span style={{ fontSize: '28px', fontWeight: 800, color: '#3F1D30' }}>Scrolly</span>
+                <span style={{ fontSize: '22px', fontWeight: 700, color: '#7A4A63' }}>scrolly.live</span>
+              </div>
+            </div>
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                padding: '12px 22px',
+                borderRadius: '999px',
+                background: '#FFD6E6',
+                color: '#3F1D30',
+                fontSize: '20px',
+                fontWeight: 800,
+              }}
             >
-              <path
-                d="M20 6L9 17L4 12"
-                stroke="#065F46"
-                strokeWidth="3"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
-            <span>Peer-Reviewed Primary Sources</span>
-          </div>
-
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              padding: '10px 24px',
-              borderRadius: '9999px',
-              background: '#1E1B2E',
-              color: '#FFFFFF',
-              fontSize: '20px',
-              fontWeight: 700,
-            }}
-          >
-            <span>Explore Free</span>
+              TR / EN
+            </div>
           </div>
         </div>
       </div>
     ),
-    {
-      ...size,
-    }
+    { ...size }
   );
 }

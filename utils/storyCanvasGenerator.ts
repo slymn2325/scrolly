@@ -1,6 +1,6 @@
 import { getCategoryMeta, type Language, translations } from '@/i18n/translations';
 import { detectMediaProvider } from '@/lib/mediaProvider';
-import type { CategoryId, FactCard } from '@/types/fact';
+import type { FactCard } from '@/types/fact';
 import { staticPosterUrl } from '@/utils/cardMediaUrl';
 import { getFactPrimarySlug } from '@/utils/factsData';
 import {
@@ -23,74 +23,8 @@ export interface ProxiedMediaFileResult {
   mimeType: string;
 }
 
-const STORY_PALETTE: Record<
-  CategoryId,
-  { top: string; mid: string; bottom: string; orb1: string; orb2: string; badgeBg: string; badgeText: string }
-> = {
-  space: {
-    top: '#1E1148',
-    mid: '#31186E',
-    bottom: '#140C2E',
-    orb1: 'rgba(167, 139, 250, 0.35)',
-    orb2: 'rgba(56, 189, 248, 0.25)',
-    badgeBg: 'rgba(167, 139, 250, 0.26)',
-    badgeText: '#EDE9FE',
-  },
-  nature: {
-    top: '#0D3B38',
-    mid: '#115E59',
-    bottom: '#082221',
-    orb1: 'rgba(52, 211, 153, 0.34)',
-    orb2: 'rgba(45, 212, 191, 0.25)',
-    badgeBg: 'rgba(52, 211, 153, 0.24)',
-    badgeText: '#D1FAE5',
-  },
-  human_body: {
-    top: '#4C132A',
-    mid: '#7A1F42',
-    bottom: '#250A17',
-    orb1: 'rgba(251, 113, 133, 0.35)',
-    orb2: 'rgba(251, 191, 36, 0.2)',
-    badgeBg: 'rgba(251, 113, 133, 0.25)',
-    badgeText: '#FFE4E6',
-  },
-  history: {
-    top: '#432B0B',
-    mid: '#784E14',
-    bottom: '#221508',
-    orb1: 'rgba(251, 191, 36, 0.32)',
-    orb2: 'rgba(245, 158, 11, 0.22)',
-    badgeBg: 'rgba(251, 191, 36, 0.24)',
-    badgeText: '#FEF3C7',
-  },
-  science: {
-    top: '#0D3256',
-    mid: '#0E4E80',
-    bottom: '#071B32',
-    orb1: 'rgba(56, 189, 248, 0.35)',
-    orb2: 'rgba(167, 139, 250, 0.24)',
-    badgeBg: 'rgba(56, 189, 248, 0.24)',
-    badgeText: '#E0F2FE',
-  },
-  records: {
-    top: '#4A1245',
-    mid: '#791D6E',
-    bottom: '#230823',
-    orb1: 'rgba(244, 114, 182, 0.35)',
-    orb2: 'rgba(251, 191, 36, 0.22)',
-    badgeBg: 'rgba(244, 114, 182, 0.24)',
-    badgeText: '#FCE7F3',
-  },
-  statistics: {
-    top: '#171C54',
-    mid: '#312E81',
-    bottom: '#0C0F32',
-    orb1: 'rgba(99, 102, 241, 0.36)',
-    orb2: 'rgba(34, 211, 238, 0.26)',
-    badgeBg: 'rgba(99, 102, 241, 0.26)',
-    badgeText: '#E0E7FF',
-  },
-};
+const SOYULAN_S_PATH =
+  'M328 186c-6-44-46-70-102-70-62 0-104 32-110 86h54c4-26 24-42 56-42 28 0 46 12 48 34 2 24-18 34-68 46-62 14-100 40-96 92 4 56 52 90 122 90 70 0 116-36 124-94h-56c-6 30-28 50-68 50-34 0-56-16-58-42-2-26 22-38 74-50 58-14 94-42 90-100Z';
 
 function drawRoundedRect(
   ctx: CanvasRenderingContext2D,
@@ -114,32 +48,53 @@ function drawRoundedRect(
   ctx.closePath();
 }
 
-function drawBrandMark(
+/** Same geometry as `public/brand/01-peel-s.svg`. */
+export function drawSoyulanS(
   ctx: CanvasRenderingContext2D,
   x: number,
   y: number,
   size: number
 ): void {
-  const gradient = ctx.createLinearGradient(x, y, x + size, y + size);
-  gradient.addColorStop(0, '#6B4BFF');
-  gradient.addColorStop(1, '#FF7A59');
+  const scale = size / 512;
   ctx.save();
-  drawRoundedRect(ctx, x, y, size, size, size * 0.22);
-  ctx.fillStyle = gradient;
+  ctx.translate(x, y);
+  ctx.scale(scale, scale);
+
+  drawRoundedRect(ctx, 0, 0, 512, 512, 114);
+  ctx.fillStyle = '#FFD6E6';
   ctx.fill();
-  ctx.fillStyle = 'rgba(255,255,255,0.38)';
-  drawRoundedRect(ctx, x + size * 0.18, y + size * 0.22, size * 0.58, size * 0.16, size * 0.06);
+
+  drawRoundedRect(ctx, 36, 36, 440, 440, 92);
+  ctx.fillStyle = '#FFF4F7';
   ctx.fill();
-  ctx.fillStyle = '#FFFFFF';
-  drawRoundedRect(ctx, x + size * 0.26, y + size * 0.44, size * 0.52, size * 0.22, size * 0.06);
-  ctx.fill();
-  ctx.strokeStyle = '#FFFFFF';
-  ctx.lineWidth = Math.max(2, size * 0.07);
-  ctx.lineCap = 'round';
-  ctx.beginPath();
-  ctx.moveTo(x + size * 0.22, y + size * 0.8);
-  ctx.quadraticCurveTo(x + size * 0.55, y + size * 0.42, x + size * 0.82, y + size * 0.2);
+  ctx.strokeStyle = '#ffffff';
+  ctx.lineWidth = 16;
   ctx.stroke();
+
+  ctx.fillStyle = '#FFE8A3';
+  ctx.fill(new Path2D('M384 36h52c22 0 40 18 40 40v52L384 36Z'));
+  ctx.fillStyle = '#FFC29B';
+  ctx.fill(new Path2D('M384 36l92 92v-12c0-6-2-12-6-16L400 42c-4-4-10-6-16-6h-0Z'));
+
+  const flap = new Path2D('M384 36l92 92h-56c-20 0-36-16-36-36V36Z');
+  ctx.fillStyle = '#FFF4F7';
+  ctx.fill(flap);
+  ctx.strokeStyle = '#ffffff';
+  ctx.lineWidth = 6;
+  ctx.stroke(flap);
+
+  ctx.fillStyle = '#5B2A43';
+  ctx.fill(new Path2D(SOYULAN_S_PATH));
+
+  ctx.fillStyle = '#FF8DB8';
+  ctx.beginPath();
+  ctx.arc(148, 140, 14, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = '#CFF5E7';
+  ctx.beginPath();
+  ctx.arc(176, 118, 8, 0, Math.PI * 2);
+  ctx.fill();
+
   ctx.restore();
 }
 
@@ -304,7 +259,7 @@ function drawStoryTextBlock(
 ): void {
   ctx.textAlign = 'center';
   ctx.textBaseline = 'top';
-  ctx.fillStyle = '#FFFFFF';
+  ctx.fillStyle = '#3F1D30';
   ctx.font = `700 ${options.titleFontSize}px "Fredoka", "Plus Jakarta Sans", system-ui, sans-serif`;
   const titleLines = wrapCanvasText(ctx, options.title, options.textMaxWidth).slice(
     0,
@@ -326,12 +281,12 @@ function drawStoryTextBlock(
     8,
     4
   );
-  ctx.fillStyle = options.accentColor || '#FBBF24';
+  ctx.fillStyle = options.accentColor || '#FF8DB8';
   ctx.fill();
 
   y += options.dividerBottomGap;
   ctx.font = `500 ${options.bodyFontSize}px "Plus Jakarta Sans", system-ui, sans-serif`;
-  ctx.fillStyle = 'rgba(255, 255, 255, 0.92)';
+  ctx.fillStyle = '#7A4A63';
   const fitLines = Math.max(2, Math.floor((options.maxBottomY - y) / options.bodyLineHeight));
   const bodyLines = wrapCanvasText(ctx, options.factText, options.textMaxWidth).slice(
     0,
@@ -360,7 +315,6 @@ export async function generateStoryCardImage(
 
   const t = translations[lang];
   const catMeta = getCategoryMeta(fact.category);
-  const palette = STORY_PALETTE[fact.category] ?? STORY_PALETTE.space;
   const localized = fact[lang];
   const rawGifUrl = fact.gifUrl?.trim() || '';
   const posterStill = staticPosterUrl(rawGifUrl, fact.posterUrl);
@@ -381,102 +335,53 @@ export async function generateStoryCardImage(
     loadCanvasImageWithTimeout(heroSrc, 6000),
   ]);
 
-  // 1. Aurora Background Gradient (1080 x 1920)
-  const bgGrad = ctx.createLinearGradient(0, 0, width, height);
-  bgGrad.addColorStop(0, palette.top);
-  bgGrad.addColorStop(0.52, palette.mid);
-  bgGrad.addColorStop(1, palette.bottom);
-  ctx.fillStyle = bgGrad;
+  ctx.fillStyle = '#FFF4F7';
   ctx.fillRect(0, 0, width, height);
 
-  // 2. Corner Glowing Geometric Light Rings & Ambient Orbs
-  const drawGlow = (cx: number, cy: number, radius: number, color: string) => {
-    const grad = ctx.createRadialGradient(cx, cy, radius * 0.1, cx, cy, radius);
-    grad.addColorStop(0, color);
-    grad.addColorStop(1, 'rgba(0,0,0,0)');
-    ctx.fillStyle = grad;
-    ctx.beginPath();
-    ctx.arc(cx, cy, radius, 0, Math.PI * 2);
-    ctx.fill();
-  };
-  drawGlow(150, 260, 440, palette.orb1);
-  drawGlow(930, 1580, 490, palette.orb2);
+  const cardX = 56;
+  const cardY = 48;
+  const cardW = width - 112;
+  const cardH = 1664;
 
-  // Subtle decorative orbital arcs
-  ctx.save();
-  ctx.strokeStyle = 'rgba(255, 255, 255, 0.12)';
+  drawRoundedRect(ctx, cardX, cardY + 10, cardW, cardH, 48);
+  ctx.fillStyle = '#FF8DB8';
+  ctx.fill();
+
+  drawRoundedRect(ctx, cardX, cardY, cardW, cardH, 48);
+  ctx.fillStyle = '#FFFFFF';
+  ctx.fill();
+  ctx.strokeStyle = '#F3C5D6';
   ctx.lineWidth = 3;
-  ctx.beginPath();
-  ctx.arc(140, 200, 240, 0, Math.PI * 2);
   ctx.stroke();
-  ctx.beginPath();
-  ctx.arc(960, 1740, 290, 0, Math.PI * 2);
-  ctx.stroke();
-  ctx.restore();
 
-  // 3. Top Header Row: Left Category Pill + Right Scrolly Brand Stamp
   const catLabelText = catMeta.label[lang].toUpperCase();
   ctx.font = '800 30px "Plus Jakarta Sans", system-ui, sans-serif';
   const catIconSpace = catImg ? 56 : 0;
   const catTextWithFallback = catImg ? catLabelText : `${fact.emoji ?? catMeta.emoji}  ${catLabelText}`;
   const catWidth = Math.max(280, ctx.measureText(catTextWithFallback).width + 72 + catIconSpace);
+  const catX = cardX + 28;
+  const catY = cardY + 28;
 
-  drawRoundedRect(ctx, 72, 92, catWidth, 74, 37);
-  ctx.fillStyle = palette.badgeBg;
+  drawRoundedRect(ctx, catX, catY, catWidth, 64, 32);
+  ctx.fillStyle = '#FFD6E6';
   ctx.fill();
-  ctx.strokeStyle = 'rgba(255,255,255,0.35)';
-  ctx.lineWidth = 2;
-  ctx.stroke();
 
   if (catImg) {
-    ctx.drawImage(catImg, 92, 104, 48, 48);
+    ctx.drawImage(catImg, catX + 16, catY + 8, 48, 48);
   }
-  ctx.fillStyle = palette.badgeText;
+  ctx.fillStyle = '#3F1D30';
   ctx.textAlign = 'left';
   ctx.textBaseline = 'middle';
-  ctx.fillText(catTextWithFallback, catImg ? 152 : 108, 130);
-
-  // Right Scrolly brand stamp
-  const brandText = t.brandName;
-  ctx.font = '800 32px "Fredoka", "Plus Jakarta Sans", system-ui, sans-serif';
-  const brandW = ctx.measureText(brandText).width + 64 + 58;
-  const brandX = width - 72 - brandW;
-  drawRoundedRect(ctx, brandX, 92, brandW, 74, 37);
-  ctx.fillStyle = 'rgba(255,255,255,0.16)';
-  ctx.fill();
-  drawBrandMark(ctx, brandX + 14, 104, 50);
-  ctx.fillStyle = '#FFFFFF';
-  ctx.fillText(brandText, brandX + 74, 130);
-
-  // 4. Center Frosted Glass Typography Card
-  const cardX = 68;
-  const cardY = 212;
-  const cardW = width - 136;
-  const cardH = 1326;
-
-  ctx.save();
-  ctx.shadowColor = 'rgba(0, 0, 0, 0.34)';
-  ctx.shadowBlur = 46;
-  ctx.shadowOffsetY = 20;
-  drawRoundedRect(ctx, cardX, cardY, cardW, cardH, 56);
-  ctx.fillStyle = 'rgba(255, 255, 255, 0.14)';
-  ctx.fill();
-  ctx.restore();
-
-  drawRoundedRect(ctx, cardX, cardY, cardW, cardH, 56);
-  ctx.strokeStyle = 'rgba(255, 255, 255, 0.34)';
-  ctx.lineWidth = 3;
-  ctx.stroke();
+  ctx.fillText(catTextWithFallback, catImg ? catX + 72 : catX + 24, catY + 32);
 
   const textMaxW = cardW - 112;
-  const srcY = cardY + cardH - 96;
+  const srcY = cardY + cardH - 220;
 
   if (gifImg && gifImg.naturalWidth > 0 && gifImg.naturalHeight > 0) {
-    // Top Visual Hero Window (y: 232..760) with object-fit: cover + bottom dark gradient + GIPHY badge
     const heroX = cardX + 28;
-    const heroY = 232;
+    const heroY = cardY + 112;
     const heroW = cardW - 56;
-    const heroH = 528;
+    const heroH = 560;
 
     ctx.save();
     drawRoundedRect(ctx, heroX, heroY, heroW, heroH, 40);
@@ -496,18 +401,11 @@ export async function generateStoryCardImage(
       sy = (gifImg.naturalHeight - sh) / 2;
     }
     ctx.drawImage(gifImg, sx, sy, sw, sh, heroX, heroY, heroW, heroH);
-
-    // Smooth bottom gradient scrim
-    const heroScrim = ctx.createLinearGradient(0, heroY + heroH * 0.4, 0, heroY + heroH);
-    heroScrim.addColorStop(0, 'rgba(10, 10, 14, 0)');
-    heroScrim.addColorStop(1, 'rgba(10, 10, 14, 0.86)');
-    ctx.fillStyle = heroScrim;
-    ctx.fillRect(heroX, heroY, heroW, heroH);
     ctx.restore();
 
     drawRoundedRect(ctx, heroX, heroY, heroW, heroH, 40);
-    ctx.strokeStyle = 'rgba(255, 255, 255, 0.22)';
-    ctx.lineWidth = 2;
+    ctx.strokeStyle = '#F3C5D6';
+    ctx.lineWidth = 3;
     ctx.stroke();
 
     drawStoryTextBlock(ctx, {
@@ -517,7 +415,7 @@ export async function generateStoryCardImage(
       maxBottomY: srcY - 26,
       title: localized.title,
       factText: localized.factText,
-      accentColor: fact.accentColor || '#FBBF24',
+      accentColor: fact.accentColor || '#FF8DB8',
       titleFontSize: 48,
       titleLineHeight: 60,
       maxTitleLines: 3,
@@ -538,30 +436,28 @@ export async function generateStoryCardImage(
     }
 
     ctx.save();
-    drawRoundedRect(ctx, width / 2 - 84, cardY + 70, 168, 168, 84);
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.22)';
+    drawRoundedRect(ctx, width / 2 - 84, cardY + 120, 168, 168, 84);
+    ctx.fillStyle = '#FFD6E6';
     ctx.fill();
-    ctx.strokeStyle = 'rgba(255, 255, 255, 0.38)';
-    ctx.lineWidth = 3;
-    ctx.stroke();
     if (catImg) {
-      ctx.drawImage(catImg, width / 2 - 58, cardY + 96, 116, 116);
+      ctx.drawImage(catImg, width / 2 - 58, cardY + 146, 116, 116);
     } else {
       ctx.font = '74px system-ui, sans-serif';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
-      ctx.fillText(fact.emoji ?? catMeta.emoji, width / 2, cardY + 154);
+      ctx.fillStyle = '#3F1D30';
+      ctx.fillText(fact.emoji ?? catMeta.emoji, width / 2, cardY + 204);
     }
     ctx.restore();
 
     drawStoryTextBlock(ctx, {
       canvasWidth: width,
       textMaxWidth: textMaxW,
-      startY: cardY + 280,
+      startY: cardY + 330,
       maxBottomY: srcY - 28,
       title: localized.title,
       factText: localized.factText,
-      accentColor: fact.accentColor || '#FBBF24',
+      accentColor: fact.accentColor || '#FF8DB8',
       titleFontSize: 56,
       titleLineHeight: 72,
       maxTitleLines: 4,
@@ -588,80 +484,51 @@ export async function generateStoryCardImage(
   ctx.font = '700 26px "Plus Jakarta Sans", system-ui, sans-serif';
   const srcW = Math.min(textMaxW, ctx.measureText(sourceLabel).width + 64);
   drawRoundedRect(ctx, width / 2 - srcW / 2, srcY, srcW, 56, 28);
-  ctx.fillStyle = 'rgba(0, 0, 0, 0.34)';
+  ctx.fillStyle = '#FFF4F7';
   ctx.fill();
-  ctx.fillStyle = 'rgba(255, 255, 255, 0.88)';
+  ctx.strokeStyle = '#F3C5D6';
+  ctx.lineWidth = 2;
+  ctx.stroke();
+  ctx.fillStyle = '#7A4A63';
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
-  ctx.fillText(sourceLabel, width / 2, srcY + 29, srcW - 36);
+  ctx.fillText(sourceLabel, width / 2, srcY + 28, srcW - 36);
 
-  // 5. Bottom CTA Pill & Stylish Viral scrolly.live Branding Pill
+  const ctaY = srcY + 76;
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
-  drawRoundedRect(ctx, 88, 1582, width - 176, 102, 51);
-  ctx.fillStyle = 'rgba(255, 255, 255, 0.94)';
+  drawRoundedRect(ctx, cardX + 28, ctaY, cardW - 56, 88, 44);
+  ctx.fillStyle = '#C44569';
   ctx.fill();
 
   if (verifiedSealImg) {
-    ctx.drawImage(verifiedSealImg, 120, 1608, 50, 50);
+    ctx.drawImage(verifiedSealImg, cardX + 48, ctaY + 19, 50, 50);
   }
-  ctx.font = '800 31px "Plus Jakarta Sans", system-ui, sans-serif';
-  ctx.fillStyle = '#1E1B2E';
-  ctx.fillText(t.storyCtaLine, verifiedSealImg ? width / 2 + 16 : width / 2, 1633, width - 290);
+  ctx.font = '800 30px "Plus Jakarta Sans", system-ui, sans-serif';
+  ctx.fillStyle = '#FFFFFF';
+  ctx.fillText(
+    t.storyCtaLine,
+    verifiedSealImg ? width / 2 + 16 : width / 2,
+    ctaY + 44,
+    cardW - 180
+  );
 
-  // Stylish scrolly.live watermark pill + short viral callout CTA
-  const viralCtaText =
-    lang === 'tr' ? 'Kaydır, Keşfet & 1v1 Oyna' : 'Scroll, Discover & Play 1v1';
-  const domainText = 'scrolly.live';
-  const pillW = 790;
-  const pillH = 74;
-  const pillX = (width - pillW) / 2;
-  const pillY = 1718;
-
-  ctx.save();
-  drawRoundedRect(ctx, pillX, pillY, pillW, pillH, 37);
-  ctx.fillStyle = 'rgba(10, 10, 18, 0.56)';
-  ctx.fill();
-  ctx.strokeStyle = 'rgba(255, 255, 255, 0.34)';
-  ctx.lineWidth = 2.5;
-  ctx.stroke();
-
-  // Brand inner badge inside the footer pill
-  ctx.font = '800 28px "Fredoka", "Plus Jakarta Sans", system-ui, sans-serif';
-  const domainBadgeW = ctx.measureText(domainText).width + 58;
-  drawRoundedRect(ctx, pillX + 12, pillY + 11, domainBadgeW, 52, 26);
-  ctx.fillStyle = 'rgba(124, 58, 237, 0.92)';
-  ctx.fill();
-
-  ctx.beginPath();
-  ctx.arc(pillX + 34, pillY + 37, 6, 0, Math.PI * 2);
-  ctx.fillStyle = '#34D399';
-  ctx.fill();
-
+  const mark = 96;
+  const lockupY = 1764;
+  drawSoyulanS(ctx, 64, lockupY, mark);
   ctx.textAlign = 'left';
   ctx.textBaseline = 'middle';
-  ctx.fillStyle = '#FFFFFF';
-  ctx.fillText(domainText, pillX + 48, pillY + 38);
+  ctx.fillStyle = '#3F1D30';
+  ctx.font = '800 40px "Fredoka", "Plus Jakarta Sans", system-ui, sans-serif';
+  ctx.fillText('scrolly.live', 64 + mark + 20, lockupY + mark / 2);
 
-  // Callout CTA right side inside the pill
-  ctx.font = '700 26px "Plus Jakarta Sans", system-ui, sans-serif';
-  ctx.fillStyle = 'rgba(255, 255, 255, 0.94)';
-  const calloutX = pillX + 12 + domainBadgeW + 22;
-  const maxCalloutW = pillX + pillW - 24 - calloutX;
-  ctx.fillText(viralCtaText, calloutX, pillY + 38, maxCalloutW);
-  ctx.restore();
-
-  // Crisp subtle bilingual caption beneath watermark pill
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'middle';
+  ctx.textAlign = 'right';
+  ctx.fillStyle = '#7A4A63';
   ctx.font = '700 22px "Plus Jakarta Sans", system-ui, sans-serif';
-  ctx.fillStyle = 'rgba(255, 255, 255, 0.72)';
   ctx.fillText(
-    lang === 'tr'
-      ? 'Doğrulanmış Mikro Bilgi · TR | EN'
-      : 'Verified Micro-Knowledge · TR | EN',
-    width / 2,
-    1834
+    lang === 'tr' ? 'Doğrulanmış Mikro Bilgi · TR | EN' : 'Verified Micro-Knowledge · TR | EN',
+    width - 64,
+    lockupY + mark / 2
   );
 
   const safeSlug =

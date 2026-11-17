@@ -1,5 +1,7 @@
 import type { MetadataRoute } from 'next';
 
+const ICON_VERSION = '20261117b';
+
 export default function manifest(): MetadataRoute.Manifest {
   return {
     id: '/',
@@ -12,43 +14,48 @@ export default function manifest(): MetadataRoute.Manifest {
     display: 'standalone',
     orientation: 'portrait',
     background_color: '#FFF4F7',
-    theme_color: '#5B2A43',
+    theme_color: '#FFF4F7',
     icons: [
       {
-        src: '/icon-192.png?v=20261117',
+        src: `/icon-192.png?v=${ICON_VERSION}`,
         sizes: '192x192',
         type: 'image/png',
         purpose: 'any',
       },
       {
-        src: '/icon-192.png?v=20261117',
-        sizes: '192x192',
-        type: 'image/png',
-        purpose: 'maskable',
-      },
-      {
-        src: '/icon-512.png?v=20261117',
+        src: `/icon-512.png?v=${ICON_VERSION}`,
         sizes: '512x512',
         type: 'image/png',
         purpose: 'any',
       },
       {
-        src: '/icon-512.png?v=20261117',
+        src: `/icons/maskable-512.png?v=${ICON_VERSION}`,
         sizes: '512x512',
         type: 'image/png',
         purpose: 'maskable',
       },
       {
-        src: '/icon.svg?v=20261117',
+        src: `/icon.svg?v=${ICON_VERSION}`,
         sizes: 'any',
         type: 'image/svg+xml',
         purpose: 'any',
       },
       {
-        src: '/apple-touch-icon.png?v=20261117',
+        src: `/apple-touch-icon.png?v=${ICON_VERSION}`,
         sizes: '180x180',
         type: 'image/png',
         purpose: 'any',
+      },
+      {
+        src: `/favicon.ico?v=${ICON_VERSION}`,
+        sizes: '48x48',
+        type: 'image/x-icon',
+      },
+      {
+        src: `/icons/mask-icon.svg?v=${ICON_VERSION}`,
+        sizes: 'any',
+        type: 'image/svg+xml',
+        purpose: 'monochrome',
       },
     ],
   };

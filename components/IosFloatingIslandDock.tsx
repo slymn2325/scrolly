@@ -1,11 +1,12 @@
 'use client';
 
 import React from 'react';
-import { motion } from 'framer-motion';
+import { motion, useReducedMotion } from 'framer-motion';
 import { type Language, translations } from '@/i18n/translations';
-import type { DockTabId } from '@/utils/icons8Assets';
+import type { DockTabId } from '@/utils/fluentAssets';
 import Icon from '@/components/cikartma/Icon';
 import type { IconName } from '@/lib/iconMap';
+import { motionSpring, motionTiming } from '@/lib/motion';
 
 export type { DockTabId };
 
@@ -38,57 +39,59 @@ export default function IosFloatingIslandDock({
   chromeBlocked = false,
 }: IosFloatingIslandDockProps) {
   const t = translations[lang];
+  const reduced = useReducedMotion() === true;
+  const highlightedTab = activeTab === 'language' ? 'explore' : activeTab;
 
   return (
     <div
       data-testid="ios-floating-dock-shell"
-      className={`pointer-events-none fixed inset-x-0 bottom-[max(10px,env(safe-area-inset-bottom))] z-40 mx-auto w-full max-w-[440px] px-4 ${
-        chromeBlocked ? 'opacity-40' : ''
+      inert={chromeBlocked ? true : undefined}
+      className={`pointer-events-none fixed inset-x-0 bottom-0 z-dock mx-auto w-full max-w-md px-4 pb-[max(8px,env(safe-area-inset-bottom))] ${
+        chromeBlocked ? 'pointer-events-none opacity-0' : ''
       }`}
     >
       <nav
-        aria-label="Kesfet Quiz Siralama Scrolla Profil"
+        aria-label={TABS.map((tab) => t[tab.labelKey]).join(' · ')}
         data-testid="ios-floating-dock"
         className={`${
           chromeBlocked ? 'pointer-events-none' : 'pointer-events-auto'
-        } flex w-full items-center justify-between rounded-pill border-[3px] border-white bg-cik-surface px-1.5 py-1 text-cik-text shadow-sticker`}
+        } material-thin flex w-full items-end justify-between gap-2 rounded-pill px-2 py-1 text-cik-text shadow-e1`}
       >
         {TABS.map((tab) => {
-          const highlightedTab = activeTab === 'language' ? 'explore' : activeTab;
           const isActive = highlightedTab === tab.id;
           const label = t[tab.labelKey];
           return (
             <motion.button
               key={tab.id}
               type="button"
-              whileTap={{ scale: 0.96 }}
+              whileTap={reduced ? undefined : { scale: 0.96 }}
+              transition={reduced ? motionTiming.reducedFade : motionSpring.buttonRelease}
               onClick={() => onSelectTab(tab.id)}
               data-testid={`dock-tab-${tab.id}`}
               aria-label={label}
               aria-current={isActive ? 'page' : undefined}
-              className={`relative flex h-11 min-w-0 flex-1 flex-col items-center justify-center gap-0.5 rounded-pill px-1 ${
-                isActive ? 'text-cik-cta' : 'text-cik-muted'
+              className={`relative flex min-h-12 min-w-11 flex-1 flex-col items-center justify-center gap-1 rounded-pill px-1 ${
+                isActive ? 'text-cik-cta' : 'text-cik-text-2'
               }`}
             >
-              {isActive && (
-                <motion.span
-                  layoutId="ios-island-pill"
-                  className="absolute inset-0 rounded-pill bg-cik-pink"
-                />
-              )}
-              <span className="relative z-10 flex items-center justify-center">
-                <Icon name={tab.icon} size={24} tone={isActive ? 'active' : 'muted'} />
-                {tab.id === 'quiz' && showQuizDot && (
-                  <span data-testid="quiz-live-dot" className="absolute -right-1 -top-1 h-2.5 w-2.5 rounded-full bg-cik-cta ring-2 ring-white" />
-                )}
-              </span>
-              <span
-                className={`relative z-10 max-w-full whitespace-nowrap text-[10px] font-bold leading-none sm:text-[11px] ${
-                  isActive ? 'text-cik-cta' : 'text-slate-900 dark:text-slate-100'
-                }`}
+              <motion.span
+                className="relative flex h-6 w-6 items-center justify-center"
+                animate={isActive && !reduced ? { scale: [1, 1.12, 1] } : { scale: 1 }}
+                transition={reduced ? motionTiming.reducedFade : motionSpring.dockTab}
               >
-                {label}
-              </span>
+                <Icon name={tab.icon} size={24} tone={isActive ? 'active' : 'muted'} />
+                {tab.id === 'quiz' && showQuizDot ? (
+                  <span
+                    data-testid="quiz-live-dot"
+                    className="absolute -right-1 -top-1 h-2 w-2 rounded-pill bg-cik-cta ring-2 ring-cik-bg"
+                  />
+                ) : null}
+              </motion.span>
+              <span className="cik-caption-1 max-w-full truncate whitespace-nowrap">{label}</span>
+              <span
+                aria-hidden="true"
+                className={`h-1 w-1 rounded-pill ${isActive ? 'bg-cik-cta' : 'bg-transparent'}`}
+              />
             </motion.button>
           );
         })}

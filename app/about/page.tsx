@@ -3,6 +3,8 @@ import Link from 'next/link';
 import { BookOpen, Compass, Cpu, ShieldCheck, Sparkles } from 'lucide-react';
 import TrustPageShell from '@/components/TrustPageShell';
 import type { Language } from '@/i18n/translations';
+import { BRAND_OG_IMAGE } from '@/lib/homeMetadata';
+import { fitDocumentTitle } from '@/utils/factSeo';
 
 export const revalidate = 3600;
 
@@ -18,16 +20,20 @@ export async function generateMetadata({ searchParams }: PageProps): Promise<Met
   const query = await searchParams;
   const lang = resolveLang(query?.lang);
   const canonicalUrl = 'https://scrolly.live/about';
+  const title = fitDocumentTitle(
+    lang === 'en'
+      ? 'About Scrolly & Editorial Methodology | scrolly.live'
+      : 'Hakkımızda ve Editöryal Metodoloji | Scrolly'
+  );
+  const description =
+    lang === 'en'
+      ? 'Learn how Scrolly curates, verifies, and translates interactive bilingual micro-learning cards using primary scientific sources.'
+      : 'Scrolly’nin doğrulanmış bilimsel kaynaklara dayalı iki dilli mikro öğrenme kartlarını nasıl hazırladığını ve yayın politikasını inceleyin.';
+  const image = { ...BRAND_OG_IMAGE, alt: title };
 
   return {
-    title:
-      lang === 'en'
-        ? 'About Scrolly & Editorial Methodology | scrolly.live'
-        : 'Hakkımızda ve Editöryal Metodoloji | Scrolly',
-    description:
-      lang === 'en'
-        ? 'Learn how Scrolly curates, verifies, and translates interactive bilingual micro-learning cards using primary scientific sources.'
-        : 'Scrolly’nin doğrulanmış bilimsel kaynaklara dayalı iki dilli mikro öğrenme kartlarını nasıl hazırladığını ve yayın politikasını inceleyin.',
+    title,
+    description,
     alternates: {
       canonical: canonicalUrl,
       languages: {
@@ -37,7 +43,7 @@ export async function generateMetadata({ searchParams }: PageProps): Promise<Met
       },
     },
     openGraph: {
-      title: lang === 'en' ? 'About Scrolly | scrolly.live' : 'Hakkımızda | Scrolly',
+      title: fitDocumentTitle(lang === 'en' ? 'About Scrolly | scrolly.live' : 'Hakkımızda | Scrolly'),
       description:
         lang === 'en'
           ? 'Editorial standards, primary source verification, and bilingual micro-learning architecture at Scrolly.'
@@ -45,6 +51,13 @@ export async function generateMetadata({ searchParams }: PageProps): Promise<Met
       url: canonicalUrl,
       siteName: 'Scrolly',
       type: 'website',
+      images: [image],
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title,
+      description,
+      images: [image.url],
     },
   };
 }

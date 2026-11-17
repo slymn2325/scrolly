@@ -1,9 +1,10 @@
 'use client';
 
 import React, { useEffect, useRef, useState } from 'react';
-import { AnimatePresence, motion } from 'framer-motion';
+import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { X } from 'lucide-react';
 import { type Language } from '@/i18n/translations';
+import { motionTiming } from '@/lib/motion';
 
 const ADSENSE_CLIENT_ID = 'ca-pub-1368005726792126';
 const ADSENSE_STICKY_SLOT_ID = process.env.NEXT_PUBLIC_ADSENSE_STICKY_SLOT_ID;
@@ -27,8 +28,11 @@ export default function StickyAdBanner({
 }: StickyAdBannerProps) {
   const insRef = useRef<HTMLModElement | null>(null);
   const pushedRef = useRef(false);
+  const reduced = useReducedMotion() === true;
   const [isOnline, setIsOnline] = useState(true);
   const [adStatus, setAdStatus] = useState<'idle' | 'filled' | 'unfilled' | 'failed'>('idle');
+  const [lift, setLift] = useState(16);
+  const [sheetOpen, setSheetOpen] = useState(false);
 
   const shouldAttemptLiveAd =
     visible &&
@@ -51,6 +55,29 @@ export default function StickyAdBanner({
       window.removeEventListener('offline', onOffline);
     };
   }, []);
+
+  useEffect(() => {
+    const measure = () => {
+      const dock = document.querySelector('[data-testid="ios-floating-dock"]');
+      const cookie = document.documentElement.dataset.cikCookie === 'open';
+      const dockClearance = dock ? 64 : 16;
+      const cookieClearance = cookie ? 44 + 8 : 0;
+      setLift(dockClearance + cookieClearance);
+    };
+    measure();
+    const observer = new MutationObserver(measure);
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['data-cik-cookie'] });
+    const onChrome = (event: Event) => {
+      const detail = (event as CustomEvent<{ open?: boolean }>).detail;
+      setSheetOpen(Boolean(detail?.open));
+      measure();
+    };
+    window.addEventListener('scrolly-chrome-block', onChrome as EventListener);
+    return () => {
+      observer.disconnect();
+      window.removeEventListener('scrolly-chrome-block', onChrome as EventListener);
+    };
+  }, [visible]);
 
   useEffect(() => {
     const insEl = insRef.current;
@@ -82,48 +109,47 @@ export default function StickyAdBanner({
     return () => observer.disconnect();
   }, [shouldAttemptLiveAd]);
 
-  if (!shouldAttemptLiveAd) {
+  if (!shouldAttemptLiveAd || sheetOpen) {
     return null;
   }
 
   return (
     <AnimatePresence>
       <motion.aside
-        initial={{ opacity: 0, y: 30 }}
-        animate={{ opacity: isAdFilled ? 1 : 0, y: 0 }}
-        exit={{ opacity: 0, y: 30 }}
-        transition={{ duration: 0.25 }}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: isAdFilled ? 1 : 0 }}
+        exit={{ opacity: 0 }}
+        transition={reduced ? motionTiming.reducedFade : { duration: 0.15 }}
         aria-hidden={!isAdFilled}
         aria-label={lang === 'tr' ? 'Reklam Alanı' : 'Advertisement'}
         data-ad-slot="sticky-bottom-banner"
         data-testid="sticky-ad-banner"
-        className={`fixed bottom-16 left-3 right-3 z-20 mx-auto max-w-3xl sm:bottom-3 ${
+        className={`fixed inset-x-0 z-dock mx-auto w-full max-w-3xl px-4 ${
           isAdFilled ? 'pointer-events-auto' : 'pointer-events-none'
         }`}
+        style={{ bottom: `calc(env(safe-area-inset-bottom, 0px) + ${lift}px)` }}
       >
-        <div className="relative rounded-2xl border border-slate-200/90 bg-white/95 px-3.5 pb-2.5 pt-2 shadow-cozy backdrop-blur-md dark:border-white/15 dark:bg-[#1A162B]/95 sm:px-4">
+        <div className="relative h-16 overflow-hidden rounded-cik-lg border border-cik-line bg-cik-surface shadow-e1">
+          <div className="pointer-events-none absolute left-3 top-2 z-content">
+            <span className="cik-caption-2 rounded-pill bg-cik-pink px-2 py-1 text-cik-text">
+              {lang === 'tr' ? 'Reklam' : 'Ad'}
+            </span>
+          </div>
           {isAdFilled && (
-            <div className="mb-1 flex items-center justify-between">
-              <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-wider text-slate-700 dark:bg-white/10 dark:text-slate-200">
-                {lang === 'tr' ? 'Reklam' : 'Advertisement'}
-              </span>
-              <motion.button
-                type="button"
-                whileTap={{ scale: 0.94 }}
-                onClick={onDismiss}
-                aria-label={lang === 'tr' ? 'Reklamı kapat' : 'Close advertisement'}
-                data-testid="sticky-ad-close-btn"
-                className="flex h-11 w-11 items-center justify-center rounded-full text-ink/75 transition-colors hover:bg-slate-100 hover:text-ink dark:text-white/80 dark:hover:bg-white/10"
-              >
-                <X className="h-4 w-4" />
-              </motion.button>
-            </div>
+            <button
+              type="button"
+              onClick={onDismiss}
+              aria-label={lang === 'tr' ? 'Reklamı kapat' : 'Close advertisement'}
+              data-testid="sticky-ad-close-btn"
+              className="absolute right-0 top-0 z-content inline-flex h-11 w-11 items-center justify-center rounded-pill text-cik-text"
+            >
+              <X size={16} strokeWidth={2} aria-hidden="true" />
+            </button>
           )}
-
           <ins
             ref={insRef}
-            className="adsbygoogle"
-            style={{ display: 'block', width: '100%', minHeight: '60px' }}
+            className="adsbygoogle block h-16 w-full"
+            style={{ display: 'block', width: '100%', height: '64px' }}
             data-ad-client={ADSENSE_CLIENT_ID}
             data-ad-slot={ADSENSE_STICKY_SLOT_ID}
             data-ad-format="horizontal"

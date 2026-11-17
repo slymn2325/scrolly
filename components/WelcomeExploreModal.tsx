@@ -2,10 +2,11 @@
 
 import React, { useEffect, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { Dices, UserCheck } from 'lucide-react';
+import { Dices, UserCheck, X } from 'lucide-react';
 import { type Language } from '@/i18n/translations';
 import BrandLogo from '@/components/BrandLogo';
-import { UI_ICON_PATHS } from '@/utils/icons8Assets';
+import Button from '@/components/cikartma/Button';
+import { motionTiming } from '@/lib/motion';
 import { isGenericDefaultNickname } from '@/utils/userMemory';
 
 export const WELCOME_DISMISS_KEY = 'scrolly_welcome_dismissed_v1';
@@ -109,65 +110,46 @@ export default function WelcomeExploreModal({
           aria-label={title}
           data-testid="welcome-explore-modal"
           data-presentation="page"
-          className="absolute inset-0 z-[70] flex min-h-full w-full flex-col overflow-y-auto no-scrollbar bg-[#0A0A0E] text-white"
+          className="absolute inset-0 z-modal flex min-h-full w-full flex-col overflow-y-auto bg-cik-bg text-cik-text"
         >
           <motion.form
             onSubmit={handleSubmit}
-            initial={{ opacity: 0, scale: 0.92, y: 16 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.94, y: 12 }}
-            transition={{ type: 'spring', stiffness: 340, damping: 26 }}
-            className="relative mx-auto flex min-h-full w-full max-w-[460px] flex-col justify-center px-5 pt-[calc(env(safe-area-inset-top,18px)+28px)] pb-[calc(env(safe-area-inset-bottom,18px)+28px)] text-white"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={motionTiming.reducedFade}
+            className="relative mx-auto flex min-h-full w-full max-w-md flex-col justify-center px-4 py-8"
           >
-            <div
-              aria-hidden="true"
-              className="pointer-events-none absolute -right-10 -top-10 h-40 w-40 rounded-full bg-violet-500/30 blur-3xl"
-            />
-            <div className="mb-3 flex items-center justify-between gap-3">
-              <div className="flex items-center gap-3">
-                <BrandLogo size={56} id="welcome-brand" />
-                <div>
-                  <p className="font-display text-3xl font-black tracking-tight leading-none">Scrolly</p>
-                  <p className="mt-1 text-[11px] font-semibold tracking-wide text-violet-200/75">
-                    {lang === 'tr' ? 'Kaydır · Öğren · Merak Et' : 'Scroll · Learn · Wonder'}
-                  </p>
-                </div>
+            <div className="mb-4 flex items-center gap-3">
+              <BrandLogo size={40} id="welcome-brand" />
+              <div>
+                <p className="cik-title-2 text-cik-text">Scrolly</p>
+                <p className="cik-caption-2 text-cik-text-2">
+                  {lang === 'tr' ? 'Kaydır · Öğren · Şaşır' : 'Scroll · Learn · Wonder'}
+                </p>
               </div>
-              <span className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-violet-400/30 bg-violet-500/15 px-2.5 py-1 text-[10px] font-black uppercase tracking-wider text-violet-200">
-                <img
-                  src={UI_ICON_PATHS.xpSparkles}
-                  alt=""
-                  aria-hidden="true"
-                  width={12}
-                  height={12}
-                  decoding="async"
-                  className="h-3 w-3 object-contain"
-                />
-                <span>{lang === 'tr' ? 'Kâşif Modu' : 'Explorer Pass'}</span>
-              </span>
             </div>
 
-            <h2 className="mt-3 font-display text-xl font-bold leading-snug">{title}</h2>
-            <p className="mt-1.5 text-sm font-medium leading-relaxed text-white/75">{body}</p>
+            <h2 className="cik-title-3 text-cik-text">{title}</h2>
+            <p className="cik-body mt-2 text-cik-text-2">{body}</p>
 
-            {/* Gamified Nickname Selector */}
-            <div className="mt-4 rounded-2xl border border-white/[0.12] bg-white/[0.05] p-3.5">
+            <div className="mt-4 rounded-cik-lg border border-cik-line bg-cik-surface p-4 shadow-e1">
               <div className="flex items-center justify-between gap-2">
                 <label
                   htmlFor="welcome-nickname-input"
-                  className="inline-flex items-center gap-1.5 text-[11px] font-extrabold uppercase tracking-wider text-violet-200"
+                  className="cik-footnote inline-flex items-center gap-2 text-cik-text"
                 >
-                  <UserCheck className="h-3.5 w-3.5" />
-                  <span>{lang === 'tr' ? 'Kâşif Takma Adın' : 'Your Explorer Nickname'}</span>
+                  <UserCheck className="h-4 w-4" aria-hidden="true" />
+                  <span>{lang === 'tr' ? 'Takma adın' : 'Your nickname'}</span>
                 </label>
                 <button
                   type="button"
                   data-testid="welcome-roll-nickname-btn"
                   onClick={handleRollNew}
-                  className="inline-flex items-center gap-1 rounded-full border border-white/15 bg-white/10 px-2.5 py-1 text-[10px] font-bold text-white/90 transition hover:bg-white/20"
+                  className="cik-caption-1 inline-flex h-11 items-center gap-2 rounded-pill border border-cik-line bg-cik-surface-2 px-3 text-cik-text"
                 >
-                  <Dices className="h-3 w-3 text-amber-300" />
-                  <span>{lang === 'tr' ? 'Rastgele Seç' : 'Roll'}</span>
+                  <Dices className="h-4 w-4" aria-hidden="true" />
+                  <span>{lang === 'tr' ? 'Rastgele' : 'Roll'}</span>
                 </button>
               </div>
 
@@ -179,27 +161,23 @@ export default function WelcomeExploreModal({
                 value={nicknameInput}
                 onChange={(e) => setNicknameInput(e.target.value)}
                 placeholder={systemSuggested}
-                className="mt-2 w-full rounded-xl border border-white/15 bg-black/40 px-3 py-2.5 text-sm font-bold text-white placeholder:text-white/60 focus:border-violet-400 focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-400"
+                className="cik-body mt-3 h-11 w-full rounded-cik-sm border border-cik-line bg-cik-surface-2 px-3 text-cik-text placeholder:text-cik-text-3 focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-cik-focus"
               />
 
-              <p className="mt-1.5 text-[11px] font-semibold text-white/55">
+              <p className="cik-caption-1 mt-2 text-cik-text-2">
                 {nicknameInput.trim()
                   ? lang === 'tr'
-                    ? `Özel adınla devam edeceksin: ${nicknameInput.trim()}`
-                    : `Joining as: ${nicknameInput.trim()}`
+                    ? `Bu adla devam: ${nicknameInput.trim()}`
+                    : `Continuing as ${nicknameInput.trim()}`
                   : lang === 'tr'
-                    ? `Boş bırakırsan sistem seçimiyle başlarsın: "${systemSuggested}"`
-                    : `Leave blank to continue with: "${systemSuggested}"`}
+                    ? `Boş bırakırsan: ${systemSuggested}`
+                    : `Leave blank for ${systemSuggested}`}
               </p>
             </div>
 
-            <button
-              type="submit"
-              data-testid="welcome-start-btn"
-              className="relative z-10 mt-5 flex h-12 w-full items-center justify-center gap-2 rounded-full bg-gradient-to-r from-violet-500 via-fuchsia-500 to-amber-400 text-sm font-black text-white shadow-lg shadow-violet-500/25 transition active:scale-[0.98]"
-            >
-              <span>{cta}</span>
-            </button>
+            <Button type="submit" data-testid="welcome-start-btn" className="relative z-10 mt-5 w-full">
+              {cta}
+            </Button>
           </motion.form>
         </div>
       )}
@@ -300,20 +278,20 @@ interface ValuePropBannerProps {
 export function ValuePropBanner({ visible, lang, onDismiss }: ValuePropBannerProps) {
   if (!visible) return null;
   return (
-    <div className="pointer-events-none absolute inset-x-3 top-[calc(env(safe-area-inset-top,12px)+4.75rem)] z-[46] flex justify-center">
+    <div className="pointer-events-none absolute inset-x-4 top-[calc(env(safe-area-inset-top)+64px)] z-toast flex justify-center">
       <div
         data-testid="value-prop-line"
-        className="pointer-events-auto flex max-w-[440px] items-start gap-2 rounded-2xl border border-white/15 bg-[#12121D]/92 px-3 py-2 text-[12px] font-semibold leading-snug text-white shadow-lg"
+        className="material-thick pointer-events-auto flex max-w-md items-start gap-2 rounded-cik-lg border border-cik-line px-3 py-2 text-cik-text shadow-e1"
       >
-        <p>{VALUE_PROP_TR}</p>
+        <p className="cik-footnote">{valuePropLine(lang)}</p>
         <button
           type="button"
           data-testid="value-prop-dismiss"
           onClick={onDismiss}
           aria-label={lang === 'tr' ? 'Kapat' : 'Dismiss'}
-          className="mt-0.5 shrink-0 rounded-full px-1 text-sm leading-none text-white/70"
+          className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-pill text-cik-text"
         >
-          ×
+          <X className="h-5 w-5" aria-hidden="true" />
         </button>
       </div>
     </div>

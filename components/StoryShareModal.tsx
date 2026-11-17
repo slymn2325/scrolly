@@ -1,16 +1,21 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
-import { motion } from 'framer-motion';
-import { ArrowLeft, Check, Copy, Download, Film, Loader2, MessageCircle, Share2 } from 'lucide-react';
+import React, { useEffect, useId, useLayoutEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
+import { AnimatePresence, motion, useDragControls, useReducedMotion } from 'framer-motion';
+import { Check, Copy, Download, Film, MessageCircle, Share2, X } from 'lucide-react';
 import BrandLogo from '@/components/BrandLogo';
+import IconButton from '@/components/cikartma/IconButton';
+import Skeleton from '@/components/cikartma/Skeleton';
 import { type Language, translations } from '@/i18n/translations';
 import { detectMediaProvider } from '@/lib/mediaProvider';
+import { fetchCardMediaFromApi } from '@/lib/telemetry';
+import { sheetDismiss, sheetTransition } from '@/lib/motion';
 import type { FactCard } from '@/types/fact';
 import { motionVideoUrl, staticPosterUrl } from '@/utils/cardMediaUrl';
 import { getFactPrimarySlug, getFactUrl } from '@/utils/factsData';
+import { resolveFallbackVisualQuery } from '@/utils/topicMotif';
 import { canonicalFactShareUrl } from '@/utils/viralShare';
-import { UI_ICON_PATHS } from '@/utils/icons8Assets';
 import {
   fetchProxiedMediaFile,
   type GeneratedCanvasAsset,
@@ -18,42 +23,79 @@ import {
 } from '@/utils/storyCanvasGenerator';
 import { useEscapeClose } from '@/utils/useEscapeClose';
 
-function StoryPreviewMedia({ fact }: { fact: FactCard }) {
-  const poster = staticPosterUrl(fact.gifUrl, fact.posterUrl);
-  const video = motionVideoUrl(fact.gifUrl, fact.mediaType);
-  if (poster) {
-    return (
-      <img
-        src={poster}
-        alt=""
-        data-testid="story-preview-img"
-        className="absolute inset-0 h-full w-full object-cover"
-      />
-    );
-  }
-  if (video) {
+const FOCUSABLE =
+  'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
+
+/** The still the open card is already showing, so the share frame matches it. */
+function visibleCardStill(): string | null {
+  if (typeof document === 'undefined') return null;
+  const viewH = window.innerHeight;
+  let bestSrc = '';
+  let bestVisible = 0;
+  document.querySelectorAll('[data-testid="card-topic-gif"]').forEach((node) => {
+    if (!(node instanceof HTMLImageElement)) return;
+    const box = node.getBoundingClientRect();
+    const visible = Math.max(0, Math.min(box.bottom, viewH) - Math.max(box.top, 0));
+    const raw = node.currentSrc || node.src;
+    if (!raw || visible <= bestVisible) return;
+    bestVisible = visible;
+    bestSrc = raw;
+  });
+  if (bestSrc) return bestSrc;
+  document.querySelectorAll('video').forEach((node) => {
+    if (!(node instanceof HTMLVideoElement)) return;
+    const box = node.getBoundingClientRect();
+    const visible = Math.max(0, Math.min(box.bottom, viewH) - Math.max(box.top, 0));
+    const poster = node.poster || '';
+    if (!poster || visible <= bestVisible) return;
+    bestVisible = visible;
+    bestSrc = poster;
+  });
+  return bestSrc || null;
+}
+
+function stillFromMedia(url?: string | null, posterUrl?: string | null, mediaType?: string | null): string | null {
+  const poster = staticPosterUrl(url, posterUrl);
+  if (poster) return poster;
+  const rawPoster = (posterUrl || '').trim();
+  if (rawPoster.startsWith('https://') || rawPoster.startsWith('/')) return rawPoster;
+  const video = motionVideoUrl(url, mediaType);
+  if (video) return video;
+  const src = (url || '').trim();
+  if (src.startsWith('https://') || src.startsWith('/')) return src;
+  return null;
+}
+
+function StoryPreviewMedia({ src, onReady }: { src: string; onReady: (ok: boolean) => void }) {
+  const isVideo = /\.mp4(?:$|[?#])/i.test(src);
+  if (isVideo) {
     return (
       <video
-        src={video}
+        src={src}
         muted
         playsInline
-        preload="metadata"
+        autoPlay
+        preload="auto"
         data-testid="story-preview-img"
+        onLoadedData={() => onReady(true)}
+        onError={() => onReady(false)}
         className="absolute inset-0 h-full w-full object-cover"
       />
     );
   }
-  if (fact.gifUrl && !/\.mp4(?:\?|$)/i.test(fact.gifUrl)) {
-    return (
-      <img
-        src={fact.gifUrl}
-        alt=""
-        data-testid="story-preview-img"
-        className="absolute inset-0 h-full w-full object-cover"
-      />
-    );
-  }
-  return null;
+  return (
+    <img
+      ref={(node) => {
+        if (node?.complete && node.naturalWidth > 0) onReady(true);
+      }}
+      src={src}
+      alt=""
+      data-testid="story-preview-img"
+      onLoad={() => onReady(true)}
+      onError={() => onReady(false)}
+      className="absolute inset-0 h-full w-full object-cover"
+    />
+  );
 }
 
 interface StoryShareModalProps {
@@ -71,6 +113,15 @@ export default function StoryShareModal({
   onClose,
   onButtonPop,
 }: StoryShareModalProps) {
+  const titleId = useId();
+  const panelRef = useRef<HTMLDivElement>(null);
+  const layerRef = useRef<HTMLDivElement>(null);
+  const dragControls = useDragControls();
+  const reduced = useReducedMotion() === true;
+  const [mounted, setMounted] = useState(false);
+  const [previewHasImage, setPreviewHasImage] = useState(false);
+  const [previewSrc, setPreviewSrc] = useState<string | null>(null);
+  const apiTriedRef = useRef(false);
   const [asset, setAsset] = useState<GeneratedCanvasAsset | null>(null);
   const [generating, setGenerating] = useState(false);
   const [copiedLink, setCopiedLink] = useState(false);
@@ -82,6 +133,115 @@ export default function StoryShareModal({
   const t = translations[lang];
 
   useEscapeClose(open, onClose);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    setPreviewHasImage(false);
+    setPreviewSrc(null);
+    apiTriedRef.current = false;
+  }, [fact, open]);
+
+  useEffect(() => {
+    if (!open || !fact) return;
+    let cancelled = false;
+    const local = stillFromMedia(fact.gifUrl, fact.posterUrl, fact.mediaType);
+    const dom = visibleCardStill();
+    const first = dom || local;
+    if (first) {
+      setPreviewSrc(first);
+      return;
+    }
+    const query =
+      fact.visualQuery?.trim() ||
+      resolveFallbackVisualQuery({
+        category: fact.category,
+        title: fact.en.title,
+        factText: fact.en.factText,
+        tag: fact.en.tag,
+      });
+    void fetchCardMediaFromApi(query, getFactPrimarySlug(fact), false).then((media) => {
+      if (cancelled) return;
+      apiTriedRef.current = true;
+      const next = stillFromMedia(media?.url, media?.posterUrl, media?.mediaType);
+      if (next) setPreviewSrc(next);
+      else {
+        setPreviewHasImage(false);
+      }
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [open, fact]);
+
+  useEffect(() => {
+    if (!open) return;
+    window.dispatchEvent(new CustomEvent('scrolly-chrome-block', { detail: { open: true } }));
+    return () => {
+      window.dispatchEvent(new CustomEvent('scrolly-chrome-block', { detail: { open: false } }));
+    };
+  }, [open]);
+
+  useLayoutEffect(() => {
+    if (!open) return;
+    const backdrop = document.querySelector<HTMLElement>('[data-testid="story-share-backdrop"]');
+    if (!backdrop) return;
+    const previous = backdrop.style.visibility;
+    backdrop.style.visibility = 'hidden';
+    return () => {
+      backdrop.style.visibility = previous;
+    };
+  }, [open]);
+
+  useEffect(() => {
+    if (!open || !mounted) return;
+    const previouslyFocused = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    panelRef.current?.focus();
+
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key !== 'Tab' || !panelRef.current) return;
+      const focusable = Array.from(panelRef.current.querySelectorAll<HTMLElement>(FOCUSABLE));
+      if (focusable.length === 0) {
+        event.preventDefault();
+        panelRef.current.focus();
+        return;
+      }
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      const active = document.activeElement;
+      if (event.shiftKey && (active === first || active === panelRef.current)) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && active === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    };
+
+    document.addEventListener('keydown', onKey);
+    return () => {
+      document.removeEventListener('keydown', onKey);
+      previouslyFocused?.focus();
+    };
+  }, [open, mounted]);
+
+  useEffect(() => {
+    if (!open || !mounted) return;
+    const layer = layerRef.current;
+    const changed: HTMLElement[] = [];
+    Array.from(document.body.children).forEach((node) => {
+      if (!(node instanceof HTMLElement)) return;
+      if (layer && node === layer) return;
+      if (node.hasAttribute('inert')) return;
+      node.setAttribute('inert', '');
+      changed.push(node);
+    });
+    return () => {
+      changed.forEach((node) => node.removeAttribute('inert'));
+    };
+  }, [open, mounted]);
 
   useEffect(() => {
     if (!open || !fact) {
@@ -160,7 +320,6 @@ export default function StoryShareModal({
         if (err instanceof Error && err.name === 'AbortError') {
           return;
         }
-        // Non-abort share rejection falls through to PNG download + quick-share menu
       }
     }
 
@@ -198,9 +357,7 @@ export default function StoryShareModal({
               text: shareText,
               url: shareUrl,
             });
-            setGifStatusMsg(
-              lang === 'tr' ? 'Hareketli GIF paylaşıldı ✓' : 'Animated GIF shared ✓'
-            );
+            setGifStatusMsg(lang === 'tr' ? 'Hareketli GIF paylaşıldı' : 'Animated GIF shared');
             return;
           } catch (err) {
             if (err instanceof Error && err.name === 'AbortError') {
@@ -211,9 +368,7 @@ export default function StoryShareModal({
 
         triggerDownload(media.objectUrl, media.filename, false);
         setGifStatusMsg(
-          lang === 'tr'
-            ? `İndirildi: ${media.filename} ✓`
-            : `Downloaded: ${media.filename} ✓`
+          lang === 'tr' ? `İndirildi: ${media.filename}` : `Downloaded: ${media.filename}`,
         );
       } finally {
         window.setTimeout(() => URL.revokeObjectURL(media.objectUrl), 1500);
@@ -221,8 +376,8 @@ export default function StoryShareModal({
     } catch {
       setGifStatusMsg(
         lang === 'tr'
-          ? 'GIF indirilemedi, hikaye kartı PNG ile paylaşabilirsin.'
-          : 'Could not fetch animated GIF; use Story PNG share above.'
+          ? 'GIF indirilemedi. Hikaye kartını PNG olarak paylaşabilirsin.'
+          : 'Could not fetch the GIF. Share the story card as a PNG.',
       );
     } finally {
       setDownloadingGif(false);
@@ -245,189 +400,219 @@ export default function StoryShareModal({
     setTimeout(() => setCopiedLink(false), 2400);
   };
 
-  const { shareUrl, shareText } = fact
-    ? buildSharePayload(fact)
-    : { shareUrl: 'https://scrolly.live', shareText: t.brandName };
-  const primaryShareLabel =
-    lang === 'tr'
-      ? "GIF'li Hikaye Kartını Paylaş / İndir"
-      : 'Share / Download GIF Story Card';
-  const animatedGifBtnLabel =
-    lang === 'tr' ? "Hareketli GIF'i İndir / Paylaş" : 'Download / Share Animated GIF';
+  const markPreview = (ok: boolean) => {
+    if (ok) {
+      setPreviewHasImage(true);
+      return;
+    }
+    if (!apiTriedRef.current && fact) {
+      apiTriedRef.current = true;
+      const query =
+        fact.visualQuery?.trim() ||
+        resolveFallbackVisualQuery({
+          category: fact.category,
+          title: fact.en.title,
+          factText: fact.en.factText,
+          tag: fact.en.tag,
+        });
+      void fetchCardMediaFromApi(query, getFactPrimarySlug(fact), false).then((media) => {
+        const next = stillFromMedia(media?.url, media?.posterUrl, media?.mediaType);
+        if (next && next !== previewSrc) {
+          setPreviewHasImage(false);
+          setPreviewSrc(next);
+          return;
+        }
+        setPreviewHasImage(false);
+      });
+      return;
+    }
+    setPreviewHasImage(false);
+  };
 
-  if (!open || !fact) return null;
+  if (!mounted || !open || !fact) return null;
 
-  return (
-    <motion.div
-      aria-label={t.storyModalTitle}
-      data-testid="story-share-modal"
-      data-presentation="page"
-      onClick={(e) => e.stopPropagation()}
-      initial={{ opacity: 0.96, y: 8 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.14, ease: [0.23, 1, 0.32, 1] }}
-      className="relative z-30 flex h-full w-full flex-col overflow-hidden bg-[#FFFDF9] text-[#1E1B2E] dark:bg-[#0B0B11] dark:text-white"
-    >
-      <div className="no-scrollbar flex h-full w-full flex-col overflow-y-auto px-4 pt-[calc(env(safe-area-inset-top,14px)+14px)] pb-[calc(env(safe-area-inset-bottom,16px)+24px)] sm:px-5 lg:pt-5">
-            <div className="mb-3 flex items-center justify-between gap-2 border-b border-ink/10 pb-3 dark:border-white/10">
-              <motion.button
-                type="button"
-                whileTap={{ scale: 0.94 }}
-                onClick={() => {
-                  onButtonPop();
-                  onClose();
-                }}
-                aria-label="Close"
-                data-testid="story-close-btn"
-                className="inline-flex h-10 items-center gap-1.5 rounded-full border border-ink/15 bg-white px-3.5 text-xs font-extrabold text-ink transition hover:bg-slate-50 dark:border-white/15 dark:bg-white/10 dark:text-white dark:hover:bg-white/15"
-              >
-                <ArrowLeft className="h-4 w-4 shrink-0" />
-                <span>{lang === 'tr' ? 'Karta Dön' : 'Back to Card'}</span>
-              </motion.button>
+  const { shareUrl, shareText } = buildSharePayload(fact);
+  const provider = detectMediaProvider({
+    gifUrl: fact.gifUrl,
+    posterUrl: fact.posterUrl,
+    videoUrl: fact.gifUrl,
+  });
+  const providerLabel = provider?.id === 'wikimedia' ? 'Wikimedia' : provider?.label;
+  const animatedGifBtnLabel = lang === 'tr' ? 'GIF paylaş' : 'Share GIF';
 
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-violet-100 px-3 py-1 text-[11px] font-black text-violet-800 dark:bg-violet-500/20 dark:text-violet-200">
-                <img src={UI_ICON_PATHS.xpSparkles} alt="" aria-hidden="true" className="h-4 w-4 object-contain" />
-                <span>9:16 Story</span>
-              </span>
-            </div>
-
-            <div className="flex items-center gap-2.5">
+  return createPortal(
+    <AnimatePresence>
+      <div
+        ref={layerRef}
+        data-cik-layer="sheet"
+        className="fixed inset-0 z-sheet flex items-end justify-center"
+        role="presentation"
+      >
+        <motion.div
+          className="cik-scrim absolute inset-0"
+          aria-hidden="true"
+          onClick={onClose}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0, transition: sheetTransition(reduced, 'close') }}
+          transition={sheetTransition(reduced, 'open')}
+        />
+        <motion.div
+          ref={panelRef}
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby={titleId}
+          tabIndex={-1}
+          data-testid="story-share-modal"
+          drag={reduced ? false : 'y'}
+          dragControls={dragControls}
+          dragListener={false}
+          dragConstraints={{ top: 0 }}
+          dragElastic={0.2}
+          dragMomentum={false}
+          onDragEnd={(_, info) => {
+            const height = panelRef.current?.getBoundingClientRect().height ?? 1;
+            const pulled = info.offset.y > height * sheetDismiss.distanceRatio;
+            const flung = info.velocity.y > sheetDismiss.velocityPxPerSec;
+            if (pulled || flung) onClose();
+          }}
+          initial={reduced ? { opacity: 0 } : { y: '100%' }}
+          animate={reduced ? { opacity: 1 } : { y: 0 }}
+          exit={
+            reduced
+              ? { opacity: 0, transition: sheetTransition(true, 'close') }
+              : { y: '100%', transition: sheetTransition(false, 'close') }
+          }
+          transition={sheetTransition(reduced, 'open')}
+          className="cik-sheet relative flex max-h-[calc(100dvh-64px)] w-full max-w-lg flex-col bg-cik-surface text-cik-text"
+        >
+          <div
+            className="flex h-11 w-full items-center justify-center"
+            style={{ touchAction: 'none' }}
+            onPointerDown={(event) => {
+              if (reduced) return;
+              dragControls.start(event);
+            }}
+          >
+            <span aria-hidden="true" className="h-1 w-8 rounded-pill bg-cik-line" />
+          </div>
+          <div className="flex items-center gap-2 px-4 pb-2">
+            <h2 id={titleId} className="cik-title-3 min-w-0 flex-1 truncate text-cik-text">
+              {t.storyModalTitle}
+            </h2>
+            <span className="cik-footnote inline-flex h-8 shrink-0 items-center rounded-pill bg-cik-pink px-3 text-cik-text">
+              9:16
+            </span>
+            <IconButton label={t.sheetClose} data-testid="story-close-btn" onClick={onClose} className="shrink-0">
+              <X size={20} strokeWidth={2} aria-hidden="true" />
+            </IconButton>
+          </div>
+          <div className="min-h-0 flex-1 overflow-y-auto px-4 pb-5">
+            <div className="flex items-center gap-3">
               <BrandLogo size={40} id="story-share-brand" />
-              <div>
-                <h2 className="font-display text-lg font-bold text-ink dark:text-white">
-                  {t.storyModalTitle}
-                </h2>
-                <p className="text-[11px] font-medium text-ink/65 dark:text-violet-200/75">
-                  {t.storyModalSubtitle}
-                </p>
-              </div>
+              <p className="cik-subhead text-cik-text-2">{t.storyModalSubtitle}</p>
             </div>
 
-            {/* 9:16 Live Story Preview */}
-            <div className="mt-3.5 flex flex-col items-center">
-              <div className="relative aspect-[9/16] w-44 overflow-hidden rounded-2xl border-2 border-white/80 bg-slate-950 shadow-xl dark:border-white/20 sm:w-48">
-                <StoryPreviewMedia fact={fact} />
-                <div className="absolute inset-x-0 bottom-0 z-[2] bg-gradient-to-t from-black/85 via-black/45 to-transparent px-3 pb-3 pt-10">
-                  <p className="line-clamp-4 text-[11px] font-extrabold leading-snug text-white">{fact[lang].title}</p>
-                  <p className="mt-1 text-[10px] font-black tracking-wide text-white">scrolly.live</p>
-                  {(() => {
-                    const provider = detectMediaProvider({
-                      gifUrl: fact.gifUrl,
-                      posterUrl: fact.posterUrl,
-                      videoUrl: fact.gifUrl,
-                    });
-                    const label = provider?.id === 'wikimedia' ? 'Wikimedia' : provider?.label;
-                    return label ? (
-                      <p className="mt-0.5 text-[9px] font-bold text-white/80">{label}</p>
-                    ) : null;
-                  })()}
+            <div className="relative mx-auto mt-4 aspect-[9/16] w-40 overflow-hidden rounded-cik-lg bg-cik-pink">
+              {previewSrc ? <StoryPreviewMedia src={previewSrc} onReady={markPreview} /> : null}
+              {!previewHasImage && <Skeleton className="absolute inset-0 h-full w-full rounded-cik-lg" />}
+              {previewHasImage && (
+                <div className="absolute inset-x-0 bottom-0 bg-cik-text px-3 py-3">
+                  <p className="cik-caption-2 line-clamp-4 text-cik-bg">{fact[lang].title}</p>
+                  <p className="cik-caption-2 mt-1 text-cik-bg">scrolly.live</p>
+                  {providerLabel ? <p className="cik-caption-2 mt-1 text-cik-bg">{providerLabel}</p> : null}
                 </div>
-                {generating ? (
-                  <div className="absolute right-2 top-2 z-[3] rounded-full bg-black/50 p-1 text-white">
-                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                    <span className="sr-only">{t.storyGenerating}</span>
-                  </div>
-                ) : null}
-              </div>
+              )}
             </div>
+
+            {generating && !asset ? (
+              <p className="cik-caption-2 mt-3 text-center text-cik-text-2">{t.storyGenerating}</p>
+            ) : null}
 
             {downloadedFeedback && (
-              <p className="mt-2 text-center text-xs font-extrabold text-emerald-600 dark:text-emerald-400">
-                {t.storyDownloadSavedToast}
-              </p>
+              <p className="cik-footnote mt-3 text-center text-cik-mint-text">{t.storyDownloadSavedToast}</p>
             )}
 
             {gifStatusMsg && (
-              <p
-                data-testid="story-gif-status"
-                className="mt-1.5 text-center text-[11px] font-extrabold text-violet-700 dark:text-violet-300"
-              >
+              <p data-testid="story-gif-status" className="cik-footnote mt-2 text-center text-cik-text-2">
                 {gifStatusMsg}
               </p>
             )}
 
-            {/* Primary Story CTA + GIF Download + PNG / Copy Actions */}
-            <div className="mt-3.5 flex flex-col gap-2">
+            <div className="mt-4 flex flex-col gap-2">
               <motion.button
                 type="button"
-                whileTap={{ scale: 0.95 }}
+                whileTap={reduced ? undefined : { scale: 0.96 }}
                 disabled={!asset}
                 onClick={handleNativeShare}
                 data-testid="story-share-native-btn"
-                className="flex w-full items-center justify-center gap-2 rounded-full bg-gradient-to-r from-fuchsia-600 via-violet-600 to-indigo-600 px-4 py-3 text-xs font-extrabold text-white shadow-cozy disabled:opacity-50 sm:text-sm"
+                className="cik-headline flex h-11 w-full items-center justify-center gap-2 rounded-pill bg-cik-cta px-4 text-cik-on-cta disabled:opacity-40"
               >
-                <Share2 className="h-4 w-4 shrink-0" />
-                <span>{primaryShareLabel}</span>
+                <Share2 size={16} strokeWidth={2} aria-hidden="true" />
+                <span>{t.storyShareNativeBtn}</span>
               </motion.button>
 
               {fact.gifUrl && (
                 <motion.button
                   type="button"
-                  whileTap={{ scale: 0.95 }}
+                  whileTap={reduced ? undefined : { scale: 0.96 }}
                   disabled={downloadingGif}
                   onClick={() => void handleShareOrDownloadAnimatedGif()}
                   data-testid="story-animated-gif-btn"
-                  className="flex w-full items-center justify-center gap-2 rounded-2xl border border-violet-400/60 bg-violet-100/80 px-3 py-2.5 text-xs font-extrabold text-violet-950 transition hover:bg-violet-200/80 disabled:opacity-60 dark:border-violet-500/45 dark:bg-violet-950/60 dark:text-violet-100"
+                  className="cik-footnote flex h-11 w-full items-center justify-center gap-2 rounded-pill border border-cik-line bg-cik-surface-2 px-4 text-cik-text disabled:opacity-40"
                 >
-                  {downloadingGif ? (
-                    <Loader2 className="h-4 w-4 shrink-0 animate-spin" />
-                  ) : (
-                    <Film className="h-4 w-4 shrink-0" />
-                  )}
-                  <span>{animatedGifBtnLabel}</span>
+                  <Film size={16} strokeWidth={2} aria-hidden="true" />
+                  <span>{downloadingGif ? (lang === 'tr' ? 'Hazırlanıyor' : 'Preparing') : animatedGifBtnLabel}</span>
                 </motion.button>
               )}
 
               <div className="grid grid-cols-2 gap-2">
                 <motion.button
                   type="button"
-                  whileTap={{ scale: 0.95 }}
+                  whileTap={reduced ? undefined : { scale: 0.96 }}
                   disabled={!asset}
                   onClick={handleDownloadPng}
                   data-testid="story-download-btn"
-                  className="flex items-center justify-center gap-1.5 rounded-2xl border-2 border-ink bg-white py-2.5 text-xs font-extrabold text-ink hover:bg-slate-50 disabled:opacity-50 dark:border-violet-400 dark:bg-white/10 dark:text-white"
+                  className="cik-footnote flex h-11 items-center justify-center gap-2 rounded-pill border border-cik-line bg-cik-surface px-3 text-cik-text disabled:opacity-40"
                 >
-                  <Download className="h-4 w-4 shrink-0" />
+                  <Download size={16} strokeWidth={2} aria-hidden="true" />
                   <span>{t.storyDownloadBtn}</span>
                 </motion.button>
 
                 <motion.button
                   type="button"
-                  whileTap={{ scale: 0.95 }}
+                  whileTap={reduced ? undefined : { scale: 0.96 }}
                   onClick={handleCopyLink}
                   data-testid="story-copy-link-btn"
                   data-share-url={canonicalCopyUrl}
-                  className={`flex items-center justify-center gap-1.5 rounded-2xl py-2.5 text-xs font-extrabold transition-colors ${
-                    copiedLink
-                      ? 'bg-emerald-600 text-white'
-                      : 'border border-amber-300 bg-amber-50 text-amber-950 dark:border-white/20 dark:bg-white/10 dark:text-violet-100'
+                  className={`cik-footnote flex h-11 items-center justify-center gap-2 rounded-pill px-3 ${
+                    copiedLink ? 'bg-cik-mint text-cik-mint-text' : 'bg-cik-surface-2 text-cik-text'
                   }`}
                 >
-                  {copiedLink ? <Check className="h-4 w-4 shrink-0" /> : <Copy className="h-4 w-4 shrink-0" />}
+                  {copiedLink ? (
+                    <Check size={16} strokeWidth={2} aria-hidden="true" />
+                  ) : (
+                    <Copy size={16} strokeWidth={2} aria-hidden="true" />
+                  )}
                   <span>{copiedLink ? t.copiedLink : t.storyCopyLinkBtn}</span>
                 </motion.button>
               </div>
 
               {showQuickShareMenu && (
-                <div
-                  data-testid="story-quick-share-menu"
-                  className="mt-1 rounded-2xl border border-violet-300/80 bg-violet-50/90 p-2.5 dark:border-violet-500/40 dark:bg-violet-950/50"
-                >
-                  <p className="mb-2 text-center text-[11px] font-black text-violet-900 dark:text-violet-200">
-                    {lang === 'tr'
-                      ? 'Görsel indirildi! Hemen paylaş:'
-                      : 'Story image saved! Quick share:'}
+                <div data-testid="story-quick-share-menu" className="rounded-cik-lg bg-cik-pink p-3">
+                  <p className="cik-footnote mb-2 text-center text-cik-text">
+                    {lang === 'tr' ? 'Görsel indi. Paylaş:' : 'Image saved. Share it:'}
                   </p>
-                  <div className="grid grid-cols-3 gap-1.5">
+                  <div className="grid grid-cols-3 gap-2">
                     <a
                       href={`https://wa.me/?text=${encodeURIComponent(`${shareText}\n${shareUrl}`)}`}
                       target="_blank"
                       rel="noopener noreferrer"
                       onClick={onButtonPop}
                       data-testid="story-quick-whatsapp"
-                      className="flex min-h-[38px] items-center justify-center gap-1 rounded-xl bg-[#25D366] px-2 text-[11px] font-extrabold text-white"
+                      className="cik-caption-1 flex h-11 items-center justify-center gap-1 rounded-pill bg-cik-mint px-2 text-cik-mint-text"
                     >
-                      <MessageCircle className="h-3.5 w-3.5 shrink-0" />
+                      <MessageCircle size={16} strokeWidth={2} aria-hidden="true" />
                       <span>WhatsApp</span>
                     </a>
                     <a
@@ -436,19 +621,19 @@ export default function StoryShareModal({
                       rel="noopener noreferrer"
                       onClick={onButtonPop}
                       data-testid="story-quick-x"
-                      className="flex min-h-[38px] items-center justify-center gap-1 rounded-xl bg-[#111827] px-2 text-[11px] font-extrabold text-white"
+                      className="cik-caption-1 flex h-11 items-center justify-center gap-1 rounded-pill bg-cik-text px-2 text-cik-bg"
                     >
-                      <Share2 className="h-3.5 w-3.5 shrink-0" />
+                      <Share2 size={16} strokeWidth={2} aria-hidden="true" />
                       <span>X</span>
                     </a>
                     <button
                       type="button"
                       onClick={() => void handleCopyLink()}
                       data-testid="story-quick-copy"
-                      className="flex min-h-[38px] items-center justify-center gap-1 rounded-xl bg-violet-600 px-2 text-[11px] font-extrabold text-white"
+                      className="cik-caption-1 flex h-11 items-center justify-center gap-1 rounded-pill bg-cik-cta px-2 text-cik-on-cta"
                     >
-                      <Copy className="h-3.5 w-3.5 shrink-0" />
-                      <span>{copiedLink ? '✓' : lang === 'tr' ? 'Kopyala' : 'Copy'}</span>
+                      <Copy size={16} strokeWidth={2} aria-hidden="true" />
+                      <span>{copiedLink ? (lang === 'tr' ? 'Kopya' : 'Copied') : lang === 'tr' ? 'Kopyala' : 'Copy'}</span>
                     </button>
                   </div>
                 </div>
@@ -456,5 +641,8 @@ export default function StoryShareModal({
             </div>
           </div>
         </motion.div>
+      </div>
+    </AnimatePresence>,
+    document.body,
   );
 }

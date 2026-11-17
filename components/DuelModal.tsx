@@ -1,7 +1,8 @@
 'use client';
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { motion } from 'framer-motion';
+import { motion, useReducedMotion } from 'framer-motion';
+import { Button, Toast } from '@/components/cikartma';
 import {
   Bot,
   Check,
@@ -147,6 +148,7 @@ export default function DuelModal({
   const [isBotPractice, setIsBotPractice] = useState(false);
   const [botLocalRoom, setBotLocalRoom] = useState<ScrollaRoom | null>(null);
   const [copied, setCopied] = useState(false);
+  const [codeCopied, setCodeCopied] = useState(false);
   const [busyAction, setBusyAction] = useState<string | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [countdownSec, setCountdownSec] = useState<number | null>(null);
@@ -705,6 +707,19 @@ export default function DuelModal({
     setTimeout(() => setCopied(false), 2500);
   };
 
+  const handleCopyRoomCode = async () => {
+    if (!activeRoom) return;
+    const code = botLocalRoom && !room ? 'BOT-TEST' : activeRoom.code;
+    onButtonPop();
+    try {
+      await navigator.clipboard.writeText(code);
+    } catch {
+      // Ignore clipboard failure
+    }
+    setCodeCopied(true);
+    setTimeout(() => setCodeCopied(false), 1600);
+  };
+
   const isHost = Boolean(activeRoom && activeRoom.hostId === myPlayerId);
   const bothSeated = Boolean(activeRoom && activeRoom.players.length === 2);
   const allReady = Boolean(
@@ -722,13 +737,14 @@ export default function DuelModal({
       : `⚔️ ${cleanName} challenged you to Scrolla 1v1 Arena! Room Code: ${activeRoom.code} (${activeRoom.questionCount} qs)\n${duelUrl}`
     : '';
 
+  const reduced = useReducedMotion() === true;
   const shellClass = isPage
-    ? 'absolute inset-0 z-20 flex h-full w-full flex-col bg-[#FFFDF9] text-slate-900 dark:bg-[#0B0B11] dark:text-slate-100'
-    : 'absolute inset-0 z-20 flex h-full w-full items-center justify-center bg-[#0B0B11]/85 p-3 backdrop-blur-sm';
+    ? 'absolute inset-0 z-content flex h-full w-full flex-col bg-cik-bg text-cik-text'
+    : 'absolute inset-0 z-modal flex h-full w-full items-center justify-center bg-cik-text/30 p-4';
 
   const panelClass = isPage
-    ? 'relative flex h-full w-full flex-col overflow-y-auto no-scrollbar px-4 pb-[calc(env(safe-area-inset-bottom,16px)+100px)] pt-[calc(env(safe-area-inset-top,20px)+16px)] lg:pb-6 lg:pt-6'
-    : 'relative mb-[92px] max-h-[84dvh] w-full max-w-[440px] overflow-y-auto no-scrollbar rounded-3xl border-2 border-violet-200 bg-[#FFFDF9] p-5 shadow-2xl dark:border-violet-500/40 dark:bg-[#0B0B11] sm:p-6 md:max-w-2xl';
+    ? 'relative flex h-full w-full flex-col overflow-y-auto px-4 pb-[calc(env(safe-area-inset-bottom)+6rem)] pt-[calc(env(safe-area-inset-top)+1rem)] md:px-6 lg:px-8 lg:pb-8 lg:pt-8'
+    : 'relative max-h-[84dvh] w-full max-w-xl overflow-y-auto rounded-sheet bg-cik-bg-elevated p-5 pb-[calc(env(safe-area-inset-bottom)+6rem)] text-cik-text shadow-e3';
 
   if (!open) return null;
 
@@ -742,9 +758,9 @@ export default function DuelModal({
           className={shellClass}
         >
           <motion.div
-            initial={isPage ? { opacity: 1, y: 0 } : { opacity: 0.94, scale: 0.97, y: 8 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            transition={{ duration: 0.14, ease: [0.23, 1, 0.32, 1] }}
+            initial={reduced || isPage ? { opacity: 1, y: 0 } : { opacity: 0, y: 24 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={reduced ? { duration: 0.15 } : { type: 'spring', stiffness: 380, damping: 38 }}
             className={panelClass}
           >
             {!isPage && (
@@ -754,7 +770,7 @@ export default function DuelModal({
                 onClick={onClose}
                 aria-label="Close"
                 data-testid="duel-close-btn"
-                className="absolute right-3 top-3 flex h-11 w-11 items-center justify-center rounded-full bg-slate-100 text-ink/75 hover:bg-slate-200 dark:bg-white/10 dark:text-violet-100"
+                className="absolute right-3 top-3 flex h-11 w-11 items-center justify-center rounded-full bg-cik-surface-2 text-cik-text-2 hover:bg-cik-surface-2"
               >
                 <X className="h-4 w-4" />
               </motion.button>
@@ -777,14 +793,14 @@ export default function DuelModal({
                 </div>
                 <div className="min-w-0">
                   <div className="flex items-center gap-2">
-                    <h2 className="font-display text-xl font-black tracking-tight text-ink dark:text-white">
+                    <h2 className="font-display text-xl font-black tracking-tight text-cik-text">
                       {t.duelTitle}
                     </h2>
-                    <span className="rounded-full bg-gradient-to-r from-violet-600 to-indigo-600 px-2 py-0.5 text-[10px] font-black uppercase text-white">
-                      LIVE 1v1
+                    <span className="cik-caption-2 rounded-pill bg-cik-cta px-2 py-1 text-cik-on-cta">
+                      {lang === 'tr' ? 'Canlı' : 'Live'}
                     </span>
                   </div>
-                  <p className="text-xs font-semibold text-ink/70 dark:text-violet-200/80">
+                  <p className="text-xs font-semibold text-cik-text-2">
                     {t.duelSubtitle}
                   </p>
                 </div>
@@ -794,7 +810,7 @@ export default function DuelModal({
             {errorMsg && (
               <div
                 data-testid="duel-error-banner"
-                className="mt-3 flex items-center gap-2 rounded-2xl border border-rose-300 bg-rose-50 px-3 py-2 text-xs font-bold text-rose-800 dark:border-rose-700/60 dark:bg-rose-950/50 dark:text-rose-200"
+                className="mt-3 flex items-center gap-2 rounded-2xl border border-cik-line bg-cik-rose px-3 py-2 text-xs font-bold text-cik-rose-text"
               >
                 <ShieldAlert className="h-4 w-4 shrink-0" />
                 <span>{errorMsg}</span>
@@ -802,12 +818,14 @@ export default function DuelModal({
             )}
 
             {phase === 'setup' && (
-              <div className="mt-4 space-y-4">
+              <div className="mt-4 flex flex-col gap-4">
+                <section className="rounded-cik-lg bg-cik-surface p-5 shadow-e1">
+                <h3 className="cik-title-3 mb-4 text-cik-text">{t.duelCreateTitle}</h3>
                 {/* Nickname */}
                 <div>
                   <label
                     htmlFor="duel-nickname-input"
-                    className="block text-xs font-extrabold text-ink/75 dark:text-violet-200"
+                    className="block text-xs font-extrabold text-cik-text-2"
                   >
                     {t.duelNameLabel}
                   </label>
@@ -817,42 +835,13 @@ export default function DuelModal({
                     value={nickname}
                     onChange={(e) => setNickname(e.target.value)}
                     maxLength={24}
-                    className="mt-1.5 w-full rounded-2xl border border-violet-200 bg-white px-3.5 py-2.5 text-sm font-bold text-slate-900 focus:border-violet-500 focus:outline-none focus:ring-2 focus:ring-violet-400/50 dark:border-white/15 dark:bg-slate-900 dark:text-slate-100"
+                    className="mt-1.5 w-full rounded-2xl border border-cik-line bg-cik-bg-elevated px-3.5 py-2.5 text-sm font-bold text-cik-text focus:border-violet-500 focus-visible:outline focus-visible:outline-[3px] focus-visible:outline-offset-2 focus-visible:outline-cik-focus"
                   />
-                </div>
-
-                {/* Join existing room by 6-char code */}
-                <div className="rounded-2xl border border-violet-200 bg-violet-50/70 p-3.5 dark:border-violet-700/50 dark:bg-violet-950/35">
-                  <p className="text-[11px] font-black uppercase tracking-wider text-violet-700 dark:text-violet-300">
-                    {lang === 'tr' ? 'Kısa Oda Kodu ile Katıl' : 'Join with 6-Char Room Code'}
-                  </p>
-                  <div className="mt-2 flex items-center gap-2">
-                    <input
-                      type="text"
-                      value={joinCodeInput}
-                      onChange={(e) => setJoinCodeInput(normalizeRoomCode(e.target.value))}
-                      placeholder="K8M2P9"
-                      maxLength={6}
-                      data-testid="duel-join-code-input"
-                      className="min-w-0 flex-1 rounded-xl border border-violet-300 bg-white px-3 py-2 font-mono text-sm font-black tracking-widest text-ink uppercase focus:border-violet-600 focus:outline-none focus:ring-2 focus:ring-violet-400/50 dark:border-white/20 dark:bg-black/35 dark:text-white"
-                    />
-                    <motion.button
-                      type="button"
-                      whileTap={{ scale: 0.94 }}
-                      disabled={busyAction === 'join' || normalizeRoomCode(joinCodeInput).length !== 6}
-                      onClick={() => void joinRoomByCode(joinCodeInput)}
-                      data-testid="duel-join-code-btn"
-                      className="inline-flex min-h-[40px] items-center gap-1.5 rounded-xl bg-violet-600 px-3.5 py-2 text-xs font-extrabold text-white shadow-sm disabled:opacity-45"
-                    >
-                      <LogIn className="h-3.5 w-3.5" />
-                      <span>{lang === 'tr' ? 'Katıl' : 'Join'}</span>
-                    </motion.button>
-                  </div>
                 </div>
 
                 {/* Category + Count + Create */}
                 <div>
-                  <p className="text-xs font-extrabold text-ink/75 dark:text-violet-200">
+                  <p className="text-xs font-extrabold text-cik-text-2">
                     {lang === 'tr' ? 'Arena Kategorisi' : 'Arena Topic'}
                   </p>
                   <div data-testid="duel-category-picker" className="mt-2 flex flex-wrap gap-1.5">
@@ -867,10 +856,10 @@ export default function DuelModal({
                             onButtonPop();
                             setCategory(cat.id);
                           }}
-                          className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1.5 text-[11px] font-extrabold transition-[background-color,border-color,color] duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400 ${
+                          className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1.5 cik-caption-2 font-extrabold transition-[background-color,border-color,color] duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400 ${
                             active
-                              ? 'border-ink bg-ink text-white dark:border-violet-300 dark:bg-violet-600'
-                              : 'border-violet-200 bg-white text-ink dark:border-white/15 dark:bg-white/10 dark:text-white'
+                              ? 'border-cik-line bg-ink text-cik-on-cta'
+                              : 'border-cik-line bg-cik-bg-elevated text-cik-text'
                           }`}
                         >
                           <img
@@ -887,7 +876,7 @@ export default function DuelModal({
                 </div>
 
                 <div>
-                  <p className="text-xs font-extrabold text-ink/75 dark:text-violet-200">
+                  <p className="text-xs font-extrabold text-cik-text-2">
                     {lang === 'tr' ? 'Soru Sayısı' : 'Question Count'}
                   </p>
                   <div data-testid="duel-count-picker" className="mt-2 grid grid-cols-4 gap-2">
@@ -904,8 +893,8 @@ export default function DuelModal({
                           }}
                           className={`min-h-[44px] rounded-2xl border-2 text-sm font-black transition ${
                             active
-                              ? 'border-ink bg-ink text-white dark:border-violet-300 dark:bg-violet-600'
-                              : 'border-violet-200 bg-white text-ink dark:border-white/15 dark:bg-white/10 dark:text-white'
+                              ? 'border-cik-line bg-ink text-cik-on-cta'
+                              : 'border-cik-line bg-cik-bg-elevated text-cik-text'
                           }`}
                         >
                           {count}
@@ -916,18 +905,18 @@ export default function DuelModal({
                 </div>
 
                 {/* Explicit solo practice toggle (real P2P online lobby stays default) */}
-                <div className="rounded-2xl border border-slate-200/80 bg-white/80 p-3 dark:border-white/10 dark:bg-white/5">
+                <div className="rounded-2xl border border-cik-line bg-cik-bg-elevated p-3">
                   <div className="flex items-center justify-between gap-2">
                     <div className="min-w-0">
-                      <p className="inline-flex items-center gap-1.5 text-xs font-extrabold text-ink dark:text-white">
-                        <Bot className="h-3.5 w-3.5 text-violet-600 dark:text-violet-300" />
+                      <p className="inline-flex items-center gap-1.5 text-xs font-extrabold text-cik-text">
+                        <Bot className="h-3.5 w-3.5 text-cik-cta" />
                         <span>
                           {lang === 'tr'
                             ? 'Yerel Test / Bot Rakip ile Dene'
                             : 'Practice with Local Bot Opponent'}
                         </span>
                       </p>
-                      <p className="mt-0.5 text-[11px] font-medium text-ink/60 dark:text-violet-200/75">
+                      <p className="mt-0.5 cik-caption-2 font-medium text-cik-text-3">
                         {lang === 'tr'
                           ? 'Varsayılan mod gerçek 2 oyunculu odadır; solo test için açabilirsin.'
                           : 'Default creates a live 2-player room; enable this for instant solo practice.'}
@@ -944,12 +933,12 @@ export default function DuelModal({
                       }}
                       className={`relative inline-flex h-7 w-12 shrink-0 items-center rounded-full border transition-colors ${
                         isBotPractice
-                          ? 'border-violet-600 bg-violet-600'
-                          : 'border-slate-300 bg-slate-200 dark:border-white/20 dark:bg-white/15'
+                          ? 'border-violet-600 bg-cik-cta'
+                          : 'border-cik-line bg-cik-pink'
                       }`}
                     >
                       <span
-                        className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform ${
+                        className={`inline-block h-5 w-5 transform rounded-full bg-cik-bg-elevated shadow transition-transform ${
                           isBotPractice ? 'translate-x-6' : 'translate-x-0.5'
                         }`}
                       />
@@ -963,7 +952,7 @@ export default function DuelModal({
                   disabled={busyAction === 'create'}
                   onClick={() => void handleCreateRoom()}
                   data-testid="duel-create-lobby-btn"
-                  className="flex w-full min-h-[52px] items-center justify-center gap-2 rounded-full bg-gradient-to-r from-violet-600 via-fuchsia-600 to-amber-500 px-4 py-3 text-sm font-black text-white shadow-cozy disabled:opacity-60"
+                  className="cik-headline flex w-full min-h-14 items-center justify-center gap-2 rounded-pill bg-cik-cta px-4 text-cik-on-cta shadow-sticker disabled:opacity-40"
                 >
                   <Swords className="h-4 w-4 shrink-0" />
                   <span>
@@ -980,6 +969,32 @@ export default function DuelModal({
                           : 'Create Scrolla Room'}
                   </span>
                 </motion.button>
+                </section>
+
+                {/* Join existing room by 6-char code */}
+                <section className="rounded-cik-lg bg-cik-surface p-5 shadow-e1">
+                  <p className="cik-title-3 text-cik-text">{t.duelJoinTitle}</p>
+                  <div className="mt-4 flex items-center gap-2">
+                    <input
+                      type="text"
+                      value={joinCodeInput}
+                      onChange={(e) => setJoinCodeInput(normalizeRoomCode(e.target.value))}
+                      placeholder="K8M2P9"
+                      maxLength={6}
+                      data-testid="duel-join-code-input"
+                      aria-label={t.duelJoinTitle}
+                      className="cik-title-3 min-h-14 min-w-0 flex-1 rounded-cik-md border border-cik-line bg-cik-bg-elevated px-4 font-mono tracking-widest text-cik-text uppercase focus-visible:outline focus-visible:outline-[3px] focus-visible:outline-offset-2 focus-visible:outline-cik-focus"
+                    />
+                    <Button
+                      data-testid="duel-join-code-btn"
+                      disabled={busyAction === 'join' || normalizeRoomCode(joinCodeInput).length !== 6}
+                      onClick={() => void joinRoomByCode(joinCodeInput)}
+                    >
+                      <LogIn size={20} strokeWidth={2} aria-hidden="true" />
+                      <span>{lang === 'tr' ? 'Katıl' : 'Join'}</span>
+                    </Button>
+                  </div>
+                </section>
               </div>
             )}
 
@@ -988,10 +1003,10 @@ export default function DuelModal({
                 {/* Room code badge */}
                 <div
                   data-testid="duel-lobby-meta"
-                  className="flex items-center justify-between gap-3 rounded-2xl border-2 border-violet-300/80 bg-gradient-to-r from-violet-100/80 via-white to-amber-100/70 p-3.5 dark:border-violet-600/60 dark:from-violet-950/60 dark:via-[#1E1935] dark:to-amber-950/35"
+                  className="flex items-center justify-between gap-4 rounded-cik-lg bg-cik-surface p-5 shadow-e1"
                 >
                   <div>
-                    <p className="text-[10px] font-black uppercase tracking-wider text-violet-700 dark:text-violet-300">
+                    <p className="cik-footnote text-cik-text-2">
                       {botLocalRoom && !room
                         ? lang === 'tr'
                           ? 'Yerel Antrenman Modu'
@@ -1000,16 +1015,18 @@ export default function DuelModal({
                           ? 'Scrolla Oda Kodu'
                           : 'Scrolla Room Code'}
                     </p>
-                    <p
+                    <button
+                      type="button"
                       data-testid="duel-room-code"
-                      className="mt-0.5 font-mono text-2xl font-black tracking-[0.2em] text-ink dark:text-white"
+                      onClick={() => void handleCopyRoomCode()}
+                      className="mt-1 block bg-transparent text-left font-mono text-[28px] leading-[34px] tracking-[0.16em] text-cik-text focus-visible:outline focus-visible:outline-[3px] focus-visible:outline-offset-2 focus-visible:outline-cik-focus"
                     >
                       {botLocalRoom && !room ? 'BOT-TEST' : activeRoom.code}
-                    </p>
+                    </button>
                   </div>
-                  <div className="text-right text-xs font-bold text-ink/75 dark:text-violet-200/85">
+                  <div className="text-right text-xs font-bold text-cik-text-2">
                     <p>{activeRoom.questionCount} {lang === 'tr' ? 'soru' : 'qs'}</p>
-                    <p className="text-[11px] uppercase">
+                    <p className="cik-caption-2 uppercase">
                       {activeRoom.category === 'all'
                         ? lang === 'tr'
                           ? 'Karma'
@@ -1024,15 +1041,15 @@ export default function DuelModal({
                 {/* Human-readable Shared Pack ("Ortak paket") preview — never raw IDs */}
                 <div
                   data-testid="duel-shared-pack"
-                  className="rounded-2xl border border-slate-200/85 bg-white/85 px-3.5 py-2.5 dark:border-white/10 dark:bg-white/[0.04]"
+                  className="rounded-2xl border border-cik-line bg-cik-surface px-3.5 py-2.5"
                 >
-                  <div className="flex items-center justify-between gap-2 text-[10px] font-black uppercase tracking-wider text-ink/60 dark:text-violet-200/75">
+                  <div className="flex items-center justify-between gap-2 cik-caption-2 font-black uppercase tracking-wider text-cik-text-3">
                     <span>{lang === 'tr' ? 'Ortak paket' : 'Shared pack'}</span>
                     <span>
                       {activeRoom.questionCount} {lang === 'tr' ? 'kart' : 'cards'}
                     </span>
                   </div>
-                  <p className="mt-1 text-xs font-bold leading-relaxed text-ink/85 dark:text-violet-100">
+                  <p className="mt-1 text-xs font-bold leading-relaxed text-cik-text">
                     {packPreviewItems.join(' · ')}
                   </p>
                 </div>
@@ -1043,9 +1060,9 @@ export default function DuelModal({
                     initial={{ scale: 0.92, opacity: 0 }}
                     animate={{ scale: 1, opacity: 1 }}
                     data-testid="duel-countdown-banner"
-                    className="flex flex-col items-center justify-center rounded-2xl border-2 border-violet-400 bg-gradient-to-r from-violet-600 via-indigo-600 to-violet-700 px-4 py-4 text-center text-white shadow-lg"
+                    className="flex flex-col items-center justify-center rounded-2xl border-2 border-cik-berry bg-gradient-to-r from-violet-600 via-indigo-600 to-violet-700 px-4 py-4 text-center text-cik-on-cta shadow-lg"
                   >
-                    <p className="inline-flex items-center gap-1.5 text-[11px] font-black uppercase tracking-widest text-amber-100">
+                    <p className="inline-flex items-center gap-1.5 cik-caption-2 font-black uppercase tracking-widest text-amber-100">
                       <Sparkles className="h-3.5 w-3.5" />
                       <span>{lang === 'tr' ? 'Arena Başlıyor' : 'Arena Starting'}</span>
                     </p>
@@ -1069,49 +1086,49 @@ export default function DuelModal({
                         data-testid={`duel-player-${player.id}`}
                         className={`flex items-center justify-between gap-2 rounded-2xl border px-3.5 py-3 ${
                           isMe
-                            ? 'border-violet-400 bg-violet-50/70 dark:border-violet-500/60 dark:bg-violet-950/45'
-                            : 'border-violet-200 bg-white dark:border-white/15 dark:bg-white/10'
+                            ? 'border-cik-berry bg-cik-pink'
+                            : 'border-cik-line bg-cik-bg-elevated'
                         }`}
                       >
                         <div className="flex min-w-0 items-center gap-2.5">
-                          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-lg dark:bg-black/30">
+                          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-cik-surface-2 text-lg">
                             {player.id === BOT_PLAYER_ID || player.emoji === '🤖' ? (
-                              <Bot className="h-5 w-5 text-violet-600 dark:text-violet-300" aria-hidden="true" />
+                              <Bot className="h-5 w-5 text-cik-cta" aria-hidden="true" />
                             ) : player.emoji && player.emoji !== '⚡' ? (
                               player.emoji
                             ) : (
-                              <Zap className="h-4 w-4 text-violet-600 dark:text-violet-300" aria-hidden="true" />
+                              <Zap className="h-4 w-4 text-cik-cta" aria-hidden="true" />
                             )}
                           </span>
                           <div className="min-w-0">
                             <div className="flex flex-wrap items-center gap-1.5">
-                              <p className="truncate text-sm font-black text-ink dark:text-white">
+                              <p className="cik-headline text-cik-text">
                                 {player.name}
                               </p>
                               {isMe && (
-                                <span className="rounded-full bg-violet-600 px-1.5 py-0.5 text-[9px] font-black text-white">
+                                <span className="rounded-full bg-cik-cta px-1.5 py-0.5 cik-caption-2 font-black text-cik-on-cta">
                                   {t.youTag}
                                 </span>
                               )}
                               {playerIsHost && (
                                 <span
                                   data-testid="duel-host-badge"
-                                  className="inline-flex items-center gap-1 rounded-full bg-amber-400/25 px-2 py-0.5 text-[10px] font-black text-amber-800 dark:bg-amber-400/20 dark:text-amber-300"
+                                  className="inline-flex items-center gap-1 rounded-full bg-cik-butter px-2 py-0.5 cik-caption-2 font-black text-cik-butter-text"
                                 >
                                   <Crown className="h-3 w-3" />
                                   <span>{lang === 'tr' ? 'Lobi Lideri' : 'Room Leader'}</span>
                                 </span>
                               )}
                             </div>
-                            <p className="inline-flex items-center gap-1 text-[11px] font-bold text-ink/65 dark:text-violet-200/80">
+                            <p className="inline-flex items-center gap-1 cik-caption-2 font-bold text-cik-text-2">
                               {player.ready ? (
                                 <>
-                                  <CheckCircle2 className="h-3.5 w-3.5 shrink-0 text-emerald-500" aria-hidden="true" />
+                                  <CheckCircle2 className="h-3.5 w-3.5 shrink-0 text-cik-mint-text" aria-hidden="true" />
                                   <span>{lang === 'tr' ? 'Hazır' : 'Ready'}</span>
                                 </>
                               ) : (
                                 <>
-                                  <Clock className="h-3.5 w-3.5 shrink-0 text-amber-500" aria-hidden="true" />
+                                  <Clock className="h-3.5 w-3.5 shrink-0 text-cik-butter-text" aria-hidden="true" />
                                   <span>{lang === 'tr' ? 'Hazırlanıyor' : 'Getting ready'}</span>
                                 </>
                               )}
@@ -1124,12 +1141,12 @@ export default function DuelModal({
                             <div
                               data-testid={`duel-player-reaction-${player.id}`}
                               title={player.reactionGif.title || player.name}
-                              className="flex shrink-0 items-center overflow-hidden rounded-xl border border-violet-300/70 bg-white/90 p-0.5 shadow-sm dark:border-violet-500/40 dark:bg-black/40"
+                              className="flex shrink-0 items-center overflow-hidden rounded-xl border border-cik-line bg-cik-bg-elevated p-0.5 shadow-sm"
                             >
                               <img
                                 src={player.reactionGif.url}
                                 alt={player.reactionGif.title || player.name}
-                                className="h-8 w-11 rounded-lg object-cover bg-[#0A0A0E]"
+                                className="h-8 w-11 rounded-lg object-cover bg-cik-surface-2"
                               />
                             </div>
                           )}
@@ -1139,10 +1156,10 @@ export default function DuelModal({
                               disabled={busyAction === 'ready' || activeRoom.status === 'countdown'}
                               data-testid="duel-ready-toggle"
                               onClick={() => void handleToggleSelfReady()}
-                              className={`min-h-[40px] rounded-full px-3.5 text-xs font-black transition ${
+                              className={`min-h-11 rounded-full px-3.5 text-xs font-black transition ${
                                 player.ready
-                                  ? 'bg-emerald-600 text-white shadow-sm'
-                                  : 'bg-ink text-white hover:bg-violet-700 dark:bg-violet-600'
+                                  ? 'bg-cik-mint text-cik-on-cta shadow-sm'
+                                  : 'bg-ink text-cik-on-cta hover:bg-cik-cta'
                               }`}
                             >
                               {player.ready
@@ -1157,10 +1174,10 @@ export default function DuelModal({
                             <>
                               <span
                                 data-testid={`duel-opponent-status-${player.id}`}
-                                className={`rounded-full px-2.5 py-1 text-[11px] font-extrabold ${
+                                className={`rounded-full px-2.5 py-1 cik-caption-2 font-extrabold ${
                                   player.ready
-                                    ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/50 dark:text-emerald-300'
-                                    : 'bg-slate-100 text-slate-600 dark:bg-white/10 dark:text-violet-200'
+                                    ? 'bg-cik-mint text-cik-mint-text'
+                                    : 'bg-cik-surface-2 text-cik-text-2'
                                 }`}
                               >
                                 {player.ready
@@ -1178,7 +1195,7 @@ export default function DuelModal({
                                   data-testid="duel-kick-btn"
                                   onClick={() => void handleKickOpponent(player.id)}
                                   title={lang === 'tr' ? 'Odadan At' : 'Kick from room'}
-                                  className="inline-flex min-h-[36px] items-center gap-1 rounded-full border border-rose-300 bg-rose-50 px-2.5 text-[11px] font-extrabold text-rose-700 hover:bg-rose-100 dark:border-rose-700/60 dark:bg-rose-950/50 dark:text-rose-200"
+                                  className="inline-flex min-h-11 items-center gap-1 rounded-full border border-cik-line bg-cik-rose px-2.5 cik-caption-2 font-extrabold text-cik-rose-text hover:bg-cik-rose"
                                 >
                                   <UserMinus className="h-3.5 w-3.5" />
                                   <span>{lang === 'tr' ? 'Odadan At' : 'Kick'}</span>
@@ -1194,7 +1211,7 @@ export default function DuelModal({
                   {activeRoom.players.length < 2 && (
                     <div
                       data-testid="duel-waiting-slot"
-                      className="space-y-2 rounded-2xl border border-dashed border-violet-300 bg-white/60 px-3.5 py-3 text-xs font-bold text-ink/65 dark:border-white/20 dark:bg-white/5 dark:text-violet-200/80"
+                      className="space-y-2 rounded-2xl border border-dashed border-cik-line bg-cik-surface px-3.5 py-3 text-xs font-bold text-cik-text-2"
                     >
                       <div className="flex items-center justify-between gap-2">
                         <span className="inline-flex items-center gap-2">
@@ -1205,7 +1222,7 @@ export default function DuelModal({
                               : 'Waiting for opponent... Share invite link or room code'}
                           </span>
                         </span>
-                        <span className="font-mono text-[11px] font-black text-violet-700 dark:text-violet-300">
+                        <span className="font-mono cik-caption-2 font-black text-cik-text-2">
                           1/2
                         </span>
                       </div>
@@ -1214,7 +1231,7 @@ export default function DuelModal({
                           type="button"
                           data-testid="duel-bot-toggle-lobby"
                           onClick={handleEnableBotInLobby}
-                          className="inline-flex items-center gap-1.5 rounded-full border border-violet-300 bg-violet-50 px-3 py-1.5 text-[11px] font-extrabold text-violet-800 transition hover:bg-violet-100 dark:border-violet-500/40 dark:bg-violet-950/60 dark:text-violet-200"
+                          className="inline-flex items-center gap-1.5 rounded-full border border-cik-line bg-cik-pink px-3 py-1.5 cik-caption-2 font-extrabold text-cik-text transition hover:bg-cik-surface"
                         >
                           <Bot className="h-3.5 w-3.5" />
                           <span>
@@ -1230,7 +1247,7 @@ export default function DuelModal({
 
                 <p
                   data-testid="duel-ready-status"
-                  className="text-center text-xs font-extrabold text-ink/70 dark:text-violet-200/80"
+                  className="text-center text-xs font-extrabold text-cik-text-2"
                 >
                   {lang === 'tr'
                     ? `Hazır oyuncular: ${readyCount}/2`
@@ -1246,13 +1263,13 @@ export default function DuelModal({
                       onButtonPop();
                       setShowReactionDrawer((prev) => !prev);
                     }}
-                    className="flex w-full items-center justify-between gap-2 rounded-2xl border border-violet-300/70 bg-violet-50/80 px-3.5 py-2 text-xs font-extrabold text-violet-900 transition hover:bg-violet-100/80 dark:border-violet-600/50 dark:bg-violet-950/45 dark:text-violet-100"
+                    className="flex w-full items-center justify-between gap-2 rounded-2xl border border-cik-line bg-cik-pink px-3.5 py-2 text-xs font-extrabold text-cik-text transition hover:bg-cik-surface"
                   >
                     <span className="inline-flex items-center gap-1.5">
-                      <Film className="h-3.5 w-3.5 shrink-0 text-violet-600 dark:text-violet-300" aria-hidden="true" />
+                      <Film className="h-3.5 w-3.5 shrink-0 text-cik-cta" aria-hidden="true" />
                       <span>{lang === 'tr' ? 'GIF ile Tepki Gönder' : 'Send Reaction GIF'}</span>
                     </span>
-                    <span className="text-[11px] font-black text-violet-600 dark:text-violet-300">
+                    <span className="cik-caption-2 font-black text-cik-cta">
                       {showReactionDrawer
                         ? lang === 'tr'
                           ? 'Gizle'
@@ -1282,7 +1299,7 @@ export default function DuelModal({
                     disabled={!allReady || activeRoom.status === 'countdown' || busyAction === 'start'}
                     onClick={() => void handleHostStart()}
                     data-testid="start-duel-btn"
-                    className="flex w-full min-h-[52px] items-center justify-center gap-2 rounded-full bg-gradient-to-r from-violet-600 to-rose-500 px-4 py-3 text-sm font-black text-white shadow-cozy disabled:cursor-not-allowed disabled:opacity-45"
+                    className="cik-headline flex w-full min-h-14 items-center justify-center gap-2 rounded-pill bg-cik-cta px-4 text-cik-on-cta shadow-sticker disabled:cursor-not-allowed disabled:opacity-40"
                   >
                     <Play className="h-4 w-4 shrink-0 fill-current" />
                     <span>
@@ -1306,7 +1323,7 @@ export default function DuelModal({
                 ) : (
                   <div
                     data-testid="duel-guest-wait-banner"
-                    className="rounded-full border border-violet-300/70 bg-violet-50 px-4 py-3 text-center text-xs font-extrabold text-violet-900 dark:border-violet-700/60 dark:bg-violet-950/50 dark:text-violet-200"
+                    className="rounded-full border border-cik-line bg-cik-pink px-4 py-3 text-center text-xs font-extrabold text-cik-text"
                   >
                     {activeRoom.status === 'countdown' ? (
                       <span className="inline-flex items-center justify-center gap-1.5 tabular-nums">
@@ -1337,10 +1354,10 @@ export default function DuelModal({
                 {/* Share link + Social (real P2P server rooms only) */}
                 {!botLocalRoom ? (
                   <div className="space-y-2.5 pt-1">
-                    <div className="rounded-2xl border border-violet-200 bg-pastel-lavender/40 p-3 dark:border-violet-700/50 dark:bg-violet-950/40">
+                    <div className="rounded-2xl border border-cik-line bg-cik-surface-2 p-3">
                       <p
                         data-testid="duel-link-preview"
-                        className="truncate font-mono text-xs font-bold text-violet-900 dark:text-violet-200"
+                        className="truncate font-mono text-xs font-bold text-cik-text"
                       >
                         {duelUrl}
                       </p>
@@ -1351,10 +1368,10 @@ export default function DuelModal({
                       whileTap={{ scale: 0.94 }}
                       onClick={() => void handleCopyDuel()}
                       data-testid="copy-duel-link-btn"
-                      className={`flex w-full min-h-[48px] items-center justify-center gap-2 rounded-2xl px-4 py-2.5 text-sm font-extrabold transition-colors ${
+                      className={`flex w-full min-h-12 items-center justify-center gap-2 rounded-2xl px-4 py-2.5 text-sm font-extrabold transition-colors ${
                         copied
-                          ? 'bg-emerald-600 text-white'
-                          : 'border-2 border-ink bg-white text-ink hover:bg-slate-50 dark:border-violet-400 dark:bg-white/10 dark:text-white'
+                          ? 'bg-cik-mint text-cik-on-cta'
+                          : 'border-2 border-cik-line bg-cik-bg-elevated text-cik-text hover:bg-cik-surface'
                       }`}
                     >
                       {copied ? <Check className="h-4 w-4 shrink-0" /> : <Copy className="h-4 w-4 shrink-0" />}
@@ -1368,7 +1385,7 @@ export default function DuelModal({
                         rel="noopener noreferrer"
                         whileTap={{ scale: 0.94 }}
                         onClick={onButtonPop}
-                        className="flex min-h-[48px] items-center justify-center gap-1.5 rounded-2xl bg-[#25D366] px-3 py-2.5 text-center text-xs font-extrabold text-white"
+                        className="flex min-h-12 items-center justify-center gap-1.5 rounded-2xl bg-cik-cta px-3 py-2.5 text-center text-xs font-extrabold text-cik-on-cta"
                       >
                         <MessageCircle className="h-4 w-4 shrink-0" />
                         <span>{t.duelShareWhatsapp}</span>
@@ -1379,7 +1396,7 @@ export default function DuelModal({
                         rel="noopener noreferrer"
                         whileTap={{ scale: 0.94 }}
                         onClick={onButtonPop}
-                        className="flex min-h-[48px] items-center justify-center gap-1.5 rounded-2xl bg-[#111827] px-3 py-2.5 text-center text-xs font-extrabold text-white"
+                        className="flex min-h-12 items-center justify-center gap-1.5 rounded-2xl bg-cik-text px-3 py-2.5 text-center text-xs font-extrabold text-cik-on-cta"
                       >
                         <Share2 className="h-4 w-4 shrink-0" />
                         <span>{t.duelShareX}</span>
@@ -1389,10 +1406,10 @@ export default function DuelModal({
                 ) : (
                   <div
                     data-testid="duel-bot-mode-note"
-                    className="rounded-2xl border border-violet-200/80 bg-violet-50/70 px-3.5 py-2.5 text-center text-[11px] font-bold text-violet-900 dark:border-violet-700/50 dark:bg-violet-950/40 dark:text-violet-200"
+                    className="rounded-2xl border border-cik-line bg-cik-pink px-3.5 py-2.5 text-center cik-caption-2 font-bold text-cik-text"
                   >
                     <span className="inline-flex items-center justify-center gap-1.5">
-                      <Bot className="h-3.5 w-3.5 shrink-0 text-violet-600 dark:text-violet-300" aria-hidden="true" />
+                      <Bot className="h-3.5 w-3.5 shrink-0 text-cik-cta" aria-hidden="true" />
                       <span>
                         {lang === 'tr'
                           ? 'Yerel Test / Bot modu aktif: arkadaş davet linki için normal oda kurabilirsin.'
@@ -1406,13 +1423,14 @@ export default function DuelModal({
                   type="button"
                   data-testid="duel-back-setup-btn"
                   onClick={() => void handleLeaveLobby()}
-                  className="w-full text-center text-[11px] font-extrabold text-ink/60 underline-offset-2 hover:underline dark:text-violet-200/80"
+                  className="w-full text-center cik-caption-2 font-extrabold text-cik-text-3 underline-offset-2 hover:underline"
                 >
                   {lang === 'tr' ? 'Odadan ayrıl ve ayarlara dön' : 'Leave room & back to setup'}
                 </button>
               </div>
             )}
           </motion.div>
+          <Toast message={codeCopied ? t.duelCodeCopied : copied ? t.duelLinkCopied : null} />
         </div>
   );
 }

@@ -221,7 +221,7 @@ export default async function FactDetailPageContent({
           url: 'https://scrolly.live',
           logo: {
             '@type': 'ImageObject',
-            url: 'https://scrolly.live/icon.svg?v=20261117',
+            url: 'https://scrolly.live/icon.svg?v=20261117b',
           },
         },
         citation: resolvedSourceUrl || resolvedSourceName,
@@ -248,7 +248,7 @@ export default async function FactDetailPageContent({
             '@type': 'ListItem',
             position: 1,
             name: lang === 'tr' ? 'Ana Sayfa' : 'Home',
-            item: 'https://scrolly.live',
+            item: lang === 'en' ? 'https://scrolly.live/en' : 'https://scrolly.live',
           },
           {
             '@type': 'ListItem',
