@@ -4,6 +4,25 @@ import React, { useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
 import { motionVideoUrl, staticPosterUrl } from '@/utils/cardMediaUrl';
 
+/** Card stage widths: phone, tablet, lg 520, xl 560. Not 100vw. */
+const CARD_IMAGE_SIZES =
+  '(min-width: 1280px) 560px, (min-width: 1024px) 520px, (min-width: 768px) 720px, 390px';
+const VISIBLE_BEFORE_VIDEO_MS = 600;
+
+type NetworkConnection = EventTarget & { saveData?: boolean };
+
+function networkConnection(): NetworkConnection | null {
+  if (typeof navigator === 'undefined') return null;
+  const connection = (navigator as Navigator & { connection?: NetworkConnection }).connection;
+  return connection ?? null;
+}
+
+function shouldSkipMotion(): boolean {
+  if (typeof window === 'undefined') return true;
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return true;
+  return networkConnection()?.saveData === true;
+}
+
 export default function CardMediaStage({
   url,
   posterUrl,
@@ -29,6 +48,7 @@ export default function CardMediaStage({
   testId?: string;
   onFailed?: () => void;
 }) {
+  const rootRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const [posterFailed, setPosterFailed] = useState(false);
   const [videoFailed, setVideoFailed] = useState(false);
@@ -36,7 +56,8 @@ export default function CardMediaStage({
   const poster = failed ? null : staticPosterUrl(url, posterUrl);
   const videoUrl = failed || videoFailed ? null : motionVideoUrl(url, mediaType);
   const showPoster = Boolean(poster) && !posterFailed;
-  const showVideo = Boolean(videoUrl) && allowMotion && isActive;
+  const preloadPoster = priority && !poster?.includes('magnifying-glass');
+  const showVideo = Boolean(videoUrl) && allowMotion && isActive && !shouldSkipMotion();
   const showFallback = !showPoster && !showVideo && (failed || empty || posterFailed);
 
   useEffect(() => {
@@ -45,36 +66,65 @@ export default function CardMediaStage({
   }, [url, posterUrl]);
 
   useEffect(() => {
-    if (!isActive || !videoUrl) {
-      setAllowMotion(false);
-      return;
-    }
-    if (!priority) {
-      setAllowMotion(true);
-      return;
-    }
-    let cancelled = false;
-    let idleId = 0;
+    const root = rootRef.current;
     let timerId = 0;
-    const arm = () => {
-      if (!cancelled) setAllowMotion(true);
-    };
-    const start = () => {
-      if (typeof window.requestIdleCallback === 'function') {
-        idleId = window.requestIdleCallback(arm, { timeout: 2000 });
-      } else {
-        timerId = window.setTimeout(arm, 1200);
+    let cancelled = false;
+    setAllowMotion(false);
+
+    const clearTimer = () => {
+      if (timerId) {
+        window.clearTimeout(timerId);
+        timerId = 0;
       }
     };
-    if (document.readyState === 'complete') start();
-    else window.addEventListener('load', start, { once: true });
+    const stop = () => {
+      clearTimer();
+      if (!cancelled) setAllowMotion(false);
+    };
+    const arm = () => {
+      clearTimer();
+      if (shouldSkipMotion()) {
+        stop();
+        return;
+      }
+      timerId = window.setTimeout(() => {
+        if (!cancelled && !shouldSkipMotion()) setAllowMotion(true);
+      }, VISIBLE_BEFORE_VIDEO_MS);
+    };
+
+    if (!isActive || !videoUrl || !root || shouldSkipMotion()) {
+      return () => {
+        cancelled = true;
+        clearTimer();
+      };
+    }
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        const visible = Boolean(entry?.isIntersecting && entry.intersectionRatio >= 0.55);
+        if (visible) arm();
+        else stop();
+      },
+      { threshold: [0, 0.55, 1] }
+    );
+    observer.observe(root);
+
+    const motionQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
+    const onPreference = () => {
+      if (shouldSkipMotion()) stop();
+    };
+    motionQuery.addEventListener('change', onPreference);
+    const connection = networkConnection();
+    connection?.addEventListener('change', onPreference);
+
     return () => {
       cancelled = true;
-      window.removeEventListener('load', start);
-      if (idleId && typeof window.cancelIdleCallback === 'function') window.cancelIdleCallback(idleId);
-      if (timerId) window.clearTimeout(timerId);
+      clearTimer();
+      observer.disconnect();
+      motionQuery.removeEventListener('change', onPreference);
+      connection?.removeEventListener('change', onPreference);
     };
-  }, [isActive, priority, videoUrl]);
+  }, [isActive, videoUrl]);
 
   useEffect(() => {
     const node = videoRef.current;
@@ -96,15 +146,16 @@ export default function CardMediaStage({
   }, [isActive, showVideo, videoUrl]);
 
   return (
-    <>
+    <div ref={rootRef} className="pointer-events-none absolute inset-0">
       {showPoster && poster ? (
         <Image
           src={poster}
           alt={title}
           fill
-          preload={priority}
-          loading={priority ? undefined : 'lazy'}
-          sizes="100vw"
+          preload={preloadPoster}
+          fetchPriority={preloadPoster ? 'high' : 'auto'}
+          loading={preloadPoster ? undefined : 'lazy'}
+          sizes={CARD_IMAGE_SIZES}
           data-testid={testId}
           onError={() => {
             setPosterFailed(true);
@@ -136,6 +187,6 @@ export default function CardMediaStage({
           <p className="font-display text-2xl font-semibold leading-tight text-white line-clamp-3">{title}</p>
         </div>
       ) : null}
-    </>
+    </div>
   );
 }

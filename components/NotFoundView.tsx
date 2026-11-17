@@ -19,6 +19,8 @@ export default function NotFoundView({ lang = 'tr' }: NotFoundViewProps) {
           width={72}
           height={72}
           decoding="async"
+          loading="lazy"
+          fetchPriority="low"
           className="mx-auto h-[72px] w-[72px] object-contain"
         />
 
