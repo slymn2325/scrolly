@@ -418,7 +418,7 @@ export default function FactDetailPage({
               <p className="mt-2 text-xs font-extrabold leading-snug">
                 {localized.quiz.question}
               </p>
-              <div className="mt-2.5 grid grid-cols-1 gap-1.5 sm:grid-cols-2">
+              <div className="mt-2.5 grid grid-cols-1 gap-1.5">
                 {localized.quiz.options.map((opt, idx) => {
                   const picked = miniQuizChoice === idx;
                   const answered = miniQuizChoice !== null;
@@ -458,7 +458,7 @@ export default function FactDetailPage({
                           onWrongSound?.();
                         }
                       }}
-                      className={`flex min-h-[40px] items-center justify-between gap-2 rounded-xl border px-3 py-2 text-left text-[11px] font-bold transition ${optStyle}`}
+                      className={`flex min-h-[40px] w-full items-center justify-between gap-2 rounded-xl border px-3 py-2 text-left text-[11px] font-bold transition active:scale-[0.99] ${optStyle}`}
                     >
                       <span className="whitespace-normal break-words leading-snug">{opt}</span>
                       {answered && isCorrectOpt && (

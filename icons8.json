@@ -50,7 +50,9 @@
         "localPath": "/assets/icons8/illustrations/not-found-binoculars.png",
         "width": 456,
         "height": 456,
-        "usedIn": ["components/NotFoundView.tsx"]
+        "usedIn": [
+          "components/NotFoundView.tsx"
+        ]
       },
       {
         "key": "errorWarning",
@@ -60,7 +62,10 @@
         "localPath": "/assets/icons8/illustrations/error-warning.png",
         "width": 456,
         "height": 456,
-        "usedIn": ["components/ErrorFallbackView.tsx", "app/global-error.tsx"]
+        "usedIn": [
+          "components/ErrorFallbackView.tsx",
+          "app/global-error.tsx"
+        ]
       },
       {
         "key": "welcomeTelescope",
@@ -70,7 +75,9 @@
         "localPath": "/assets/icons8/illustrations/welcome-telescope.png",
         "width": 456,
         "height": 456,
-        "usedIn": ["components/WelcomeExploreModal.tsx"]
+        "usedIn": [
+          "components/WelcomeExploreModal.tsx"
+        ]
       },
       {
         "key": "emptyBookmark",
@@ -80,7 +87,9 @@
         "localPath": "/assets/icons8/illustrations/empty-bookmark.png",
         "width": 456,
         "height": 456,
-        "usedIn": ["components/DiplomaProfileModal.tsx"]
+        "usedIn": [
+          "components/DiplomaProfileModal.tsx"
+        ]
       }
     ],
     "icons": [
@@ -92,7 +101,9 @@
         "isFree": true,
         "size": 64,
         "localPath": "/assets/icons8/icons/ui-bookmark.png",
-        "usedIn": ["components/DiplomaProfileModal.tsx"]
+        "usedIn": [
+          "components/DiplomaProfileModal.tsx"
+        ]
       },
       {
         "key": "target",
@@ -102,7 +113,9 @@
         "isFree": false,
         "size": 64,
         "localPath": "/assets/icons8/icons/ui-target.png",
-        "usedIn": ["components/FactDetailPage.tsx"]
+        "usedIn": [
+          "components/FactDetailPage.tsx"
+        ]
       },
       {
         "key": "microscope",
@@ -112,7 +125,9 @@
         "isFree": false,
         "size": 64,
         "localPath": "/assets/icons8/icons/ui-microscope.png",
-        "usedIn": ["components/FactDetailPage.tsx"]
+        "usedIn": [
+          "components/FactDetailPage.tsx"
+        ]
       },
       {
         "key": "openBook",
@@ -122,7 +137,9 @@
         "isFree": false,
         "size": 64,
         "localPath": "/assets/icons8/icons/ui-open-book.png",
-        "usedIn": ["components/FactDetailPage.tsx"]
+        "usedIn": [
+          "components/FactDetailPage.tsx"
+        ]
       },
       {
         "key": "lock",
@@ -132,7 +149,9 @@
         "isFree": false,
         "size": 64,
         "localPath": "/assets/icons8/icons/ui-lock.png",
-        "usedIn": ["utils/icons8Assets.ts"]
+        "usedIn": [
+          "utils/icons8Assets.ts"
+        ]
       },
       {
         "key": "lightning",
@@ -142,7 +161,9 @@
         "isFree": false,
         "size": 64,
         "localPath": "/assets/icons8/icons/ui-lightning.png",
-        "usedIn": ["components/SingleFactView.tsx"]
+        "usedIn": [
+          "components/SingleFactView.tsx"
+        ]
       },
       {
         "key": "tap",
@@ -152,7 +173,10 @@
         "isFree": false,
         "size": 64,
         "localPath": "/assets/icons8/icons/ui-tap.png",
-        "usedIn": ["components/TikTokFactSlide.tsx", "components/VocabularySlide.tsx"]
+        "usedIn": [
+          "components/TikTokFactSlide.tsx",
+          "components/VocabularySlide.tsx"
+        ]
       },
       {
         "key": "slowSpeed",
@@ -162,8 +186,52 @@
         "isFree": false,
         "size": 64,
         "localPath": "/assets/icons8/icons/ui-slow-speed.png",
-        "usedIn": ["components/VocabularySlide.tsx"]
+        "usedIn": [
+          "components/VocabularySlide.tsx"
+        ]
+      },
+      {
+        "key": "trophy",
+        "localPath": "/assets/icons8/icons/ui-trophy.png",
+        "style": "fluency",
+        "usedIn": [
+          "components/LeaderboardModal.tsx"
+        ]
+      },
+      {
+        "key": "shield",
+        "localPath": "/assets/icons8/icons/ui-shield.png",
+        "style": "fluency",
+        "usedIn": [
+          "utils/icons8Assets.ts"
+        ]
+      },
+      {
+        "key": "sword",
+        "localPath": "/assets/icons8/icons/ui-sword.png",
+        "style": "fluency",
+        "usedIn": [
+          "utils/icons8Assets.ts",
+          "components/DesktopLeftNav.tsx"
+        ]
+      },
+      {
+        "key": "explorer",
+        "localPath": "/assets/icons8/icons/ui-explorer.png",
+        "style": "fluency",
+        "usedIn": [
+          "components/LeaderboardModal.tsx"
+        ]
+      },
+      {
+        "key": "quizCenter",
+        "localPath": "/assets/icons8/icons/ui-quiz-center.png",
+        "style": "fluency",
+        "usedIn": [
+          "components/QuizHubModal.tsx"
+        ]
       }
     ]
-  }
+  },
+  "note": "UI overhaul 2026-11-17: fluency replacements downloaded via Icons8 CDN because Icons8 MCP returned 401 in this cloud agent; Stitch used via HTTP MCP; Wonder tokens+artboards created."
 }

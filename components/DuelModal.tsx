@@ -719,7 +719,7 @@ export default function DuelModal({
 
   const panelClass = isPage
     ? 'relative flex h-full w-full flex-col overflow-y-auto no-scrollbar px-4 pb-[calc(env(safe-area-inset-bottom,16px)+100px)] pt-[calc(env(safe-area-inset-top,20px)+16px)] lg:pb-6 lg:pt-6'
-    : 'relative mb-[92px] max-h-[84dvh] w-full max-w-[440px] overflow-y-auto no-scrollbar rounded-3xl border-2 border-amber-200 bg-[#FFFDF9] p-5 shadow-2xl dark:border-violet-700/50 dark:bg-[#0B0B11] sm:p-6 md:max-w-2xl';
+    : 'relative mb-[92px] max-h-[84dvh] w-full max-w-[440px] overflow-y-auto no-scrollbar rounded-3xl border-2 border-violet-200 bg-[#FFFDF9] p-5 shadow-2xl dark:border-violet-500/40 dark:bg-[#0B0B11] sm:p-6 md:max-w-2xl';
 
   if (!open) return null;
 
@@ -771,7 +771,7 @@ export default function DuelModal({
                     <h2 className="font-display text-xl font-black tracking-tight text-ink dark:text-white">
                       {t.duelTitle}
                     </h2>
-                    <span className="rounded-full bg-gradient-to-r from-amber-500 to-rose-500 px-2 py-0.5 text-[10px] font-black uppercase text-white">
+                    <span className="rounded-full bg-gradient-to-r from-violet-600 to-indigo-600 px-2 py-0.5 text-[10px] font-black uppercase text-white">
                       LIVE 1v1
                     </span>
                   </div>
@@ -808,7 +808,7 @@ export default function DuelModal({
                     value={nickname}
                     onChange={(e) => setNickname(e.target.value)}
                     maxLength={24}
-                    className="mt-1.5 w-full rounded-2xl border border-amber-200 bg-white px-3.5 py-2.5 text-sm font-bold text-ink focus:border-violet-500 focus:outline-none focus:ring-2 focus:ring-violet-400/50 dark:border-white/15 dark:bg-white/10 dark:text-white"
+                    className="mt-1.5 w-full rounded-2xl border border-violet-200 bg-white px-3.5 py-2.5 text-sm font-bold text-ink focus:border-violet-500 focus:outline-none focus:ring-2 focus:ring-violet-400/50 dark:border-white/15 dark:bg-white/10 dark:text-white"
                   />
                 </div>
 
@@ -861,7 +861,7 @@ export default function DuelModal({
                           className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1.5 text-[11px] font-extrabold transition-[background-color,border-color,color] duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400 ${
                             active
                               ? 'border-ink bg-ink text-white dark:border-violet-300 dark:bg-violet-600'
-                              : 'border-amber-200 bg-white text-ink dark:border-white/15 dark:bg-white/10 dark:text-white'
+                              : 'border-violet-200 bg-white text-ink dark:border-white/15 dark:bg-white/10 dark:text-white'
                           }`}
                         >
                           <img
@@ -896,7 +896,7 @@ export default function DuelModal({
                           className={`min-h-[44px] rounded-2xl border-2 text-sm font-black transition ${
                             active
                               ? 'border-ink bg-ink text-white dark:border-violet-300 dark:bg-violet-600'
-                              : 'border-amber-200 bg-white text-ink dark:border-white/15 dark:bg-white/10 dark:text-white'
+                              : 'border-violet-200 bg-white text-ink dark:border-white/15 dark:bg-white/10 dark:text-white'
                           }`}
                         >
                           {count}
@@ -1034,7 +1034,7 @@ export default function DuelModal({
                     initial={{ scale: 0.92, opacity: 0 }}
                     animate={{ scale: 1, opacity: 1 }}
                     data-testid="duel-countdown-banner"
-                    className="flex flex-col items-center justify-center rounded-2xl border-2 border-amber-400 bg-gradient-to-r from-amber-500 via-rose-500 to-violet-600 px-4 py-4 text-center text-white shadow-lg"
+                    className="flex flex-col items-center justify-center rounded-2xl border-2 border-violet-400 bg-gradient-to-r from-violet-600 via-indigo-600 to-violet-700 px-4 py-4 text-center text-white shadow-lg"
                   >
                     <p className="inline-flex items-center gap-1.5 text-[11px] font-black uppercase tracking-widest text-amber-100">
                       <Sparkles className="h-3.5 w-3.5" />
@@ -1061,7 +1061,7 @@ export default function DuelModal({
                         className={`flex items-center justify-between gap-2 rounded-2xl border px-3.5 py-3 ${
                           isMe
                             ? 'border-violet-400 bg-violet-50/70 dark:border-violet-500/60 dark:bg-violet-950/45'
-                            : 'border-amber-200 bg-white dark:border-white/15 dark:bg-white/10'
+                            : 'border-violet-200 bg-white dark:border-white/15 dark:bg-white/10'
                         }`}
                       >
                         <div className="flex min-w-0 items-center gap-2.5">

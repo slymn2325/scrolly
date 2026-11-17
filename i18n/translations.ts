@@ -121,7 +121,7 @@ export const CATEGORIES: CategoryMeta[] = [
   {
     id: 'statistics',
     emoji: '📊',
-    iconPath: '/assets/icons8/illustrations/statistics.svg',
+    iconPath: '/assets/icons8/illustrations/statistics.png',
     label: { tr: 'İstatistik', en: 'Statistics' },
     badge: { tr: 'Veri Kahini', en: 'Data Oracle' },
     bgClass: 'bg-[#E8EBFF]',

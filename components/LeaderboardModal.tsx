@@ -248,16 +248,16 @@ export default function LeaderboardModal({
             {/* Header */}
             <div className="flex items-center justify-between gap-2 pr-10 sm:pr-0">
               <div className="flex items-center gap-2.5">
-                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-amber-100/80 p-1.5 dark:bg-amber-900/40">
+                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-violet-100/80 p-1.5 dark:bg-violet-900/40">
                   <img
-                    src={DOCK_ICON_MAP.leaderboard}
+                    src={UI_ICON_PATHS.trophy}
                     alt=""
                     aria-hidden="true"
                     width={32}
                     height={32}
                     loading="eager"
                     decoding="sync"
-                    className="h-8 w-8 object-contain"
+                    className="h-8 w-8 object-contain drop-shadow-sm"
                   />
                 </div>
                 <div>
@@ -461,7 +461,7 @@ export default function LeaderboardModal({
                   className="rounded-2xl border border-dashed border-slate-200 bg-white/80 p-6 text-center dark:border-white/15 dark:bg-white/5"
                 >
                   <img
-                    src={DOCK_ICON_MAP.leaderboard}
+                    src={UI_ICON_PATHS.explorer}
                     alt=""
                     aria-hidden="true"
                     width={44}

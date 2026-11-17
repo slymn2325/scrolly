@@ -112,14 +112,10 @@ export default function IosFloatingIslandDock({
             className={`relative flex min-h-[44px] min-w-0 flex-1 flex-col items-center justify-center gap-0.5 rounded-full px-1 py-1.5 transition-colors ${
               darkMode
                 ? isActive
-                  ? tab.id === 'duel'
-                    ? 'text-fuchsia-200'
-                    : 'text-white'
+                  ? 'text-white'
                   : 'text-white/75 hover:text-white'
                 : isActive
-                  ? tab.id === 'duel'
-                    ? 'text-violet-800'
-                    : 'text-[#1E1B2E]'
+                  ? 'text-[#1E1B2E]'
                   : 'text-[#1E1B2E]/80 hover:text-[#1E1B2E]'
             }`}
           >
@@ -128,13 +124,9 @@ export default function IosFloatingIslandDock({
                 layoutId="ios-island-pill"
                 transition={{ type: 'spring', stiffness: 420, damping: 30 }}
                 className={`absolute inset-0 rounded-full border shadow-sm ${
-                  tab.id === 'duel'
-                    ? darkMode
-                      ? 'border-fuchsia-400/40 bg-gradient-to-br from-violet-500/25 to-fuchsia-500/20'
-                      : 'border-violet-300/80 bg-gradient-to-br from-violet-100/95 to-fuchsia-100/85'
-                    : darkMode
-                      ? 'border-white/25 bg-white/15'
-                      : 'border-[#1E1B2E]/[0.12] bg-[#1E1B2E]/[0.08]'
+                  darkMode
+                    ? 'border-white/25 bg-white/15'
+                    : 'border-[#1E1B2E]/[0.12] bg-[#1E1B2E]/[0.08]'
                 }`}
               />
             )}
@@ -148,12 +140,20 @@ export default function IosFloatingIslandDock({
                 height={24}
                 loading="eager"
                 decoding="sync"
-                className={`object-contain transition-transform duration-200 ${
+                className={`object-contain transition-transform duration-200 drop-shadow-sm ${
                   isCenter ? 'h-6 w-6' : 'h-[22px] w-[22px]'
                 } ${isActive ? 'scale-110' : 'opacity-100'}`}
               />
               {tab.id === 'duel' && (
-                <span className="absolute -right-3 -top-1 rounded-full bg-gradient-to-r from-violet-500 to-fuchsia-500 px-1 py-[1px] text-[8px] font-black leading-none text-white shadow-sm">
+                <span
+                  className={`absolute -right-3 -top-1 rounded-md px-1 py-[1px] text-[8px] font-black leading-none ${
+                    isActive
+                      ? 'bg-violet-600 text-white'
+                      : darkMode
+                        ? 'border border-white/20 bg-white/10 text-white/80'
+                        : 'border border-[#1E1B2E]/15 bg-[#1E1B2E]/[0.06] text-[#1E1B2E]/75'
+                  }`}
+                >
                   1v1
                 </span>
               )}

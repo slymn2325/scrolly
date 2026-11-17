@@ -449,6 +449,7 @@ export default function HomeClient({ initialFacts, initialVocabulary }: HomeClie
   authUserRef.current = authUser;
   const [authPromptOpen, setAuthPromptOpen] = useState(false);
   const [authNudgeOpen, setAuthNudgeOpen] = useState(false);
+  const [insightDrawerOpen, setInsightDrawerOpen] = useState(false);
   const [authTrigger, setAuthTrigger] = useState<AuthTriggerSource | string>('manual');
   const [miniOnboardingDismissed, setMiniOnboardingDismissed] = useState(true);
   const guestSaveNudgeShownRef = useRef(false);
@@ -1509,8 +1510,11 @@ export default function HomeClient({ initialFacts, initialVocabulary }: HomeClie
     if (tab === 'quiz') setActiveQuiz(null);
     setActiveTab(tab);
 
-    if ((tab === 'leaderboard' || tab === 'duel') && memoryRef.current.xp > 0) {
-      triggerGuestAuthNudge(tab);
+    // Floating auth card only on Profile / Leaderboard tops (never covers duel chrome)
+    if ((tab === 'leaderboard' || tab === 'diploma') && memoryRef.current.xp > 0) {
+      triggerGuestAuthNudge(tab === 'diploma' ? 'profile' : 'leaderboard');
+    } else {
+      setAuthNudgeOpen(false);
     }
   };
 
@@ -1794,7 +1798,11 @@ export default function HomeClient({ initialFacts, initialVocabulary }: HomeClie
           }}
         />
 
-      {/* TikTok-style left rail (desktop only) */}
+      <div
+        data-testid="reels-desktop-grid"
+        className="relative flex h-full min-h-0 w-full min-w-0 md:grid md:grid-cols-[72px_minmax(0,1fr)] xl:grid-cols-[220px_minmax(0,1fr)_340px]"
+      >
+      {/* Left rail: icons-only 768–1279, full labels ≥1280 */}
       <DesktopLeftNav
         activeTab={activeTab}
         lang={lang}
@@ -1805,12 +1813,21 @@ export default function HomeClient({ initialFacts, initialVocabulary }: HomeClie
         accountLabel={authUser?.nickname || memory.nickname || null}
         accountEmail={authUser?.email || null}
         onSelectTab={handleDockSelectTab}
+        onBindEmail={
+          authUser
+            ? undefined
+            : () => {
+                setAuthTrigger('manual');
+                setAuthNudgeOpen(false);
+                setAuthPromptOpen(true);
+              }
+        }
       />
 
       {/* Main feed region: ambient fills gutters behind the stage */}
       <div
         data-testid="reels-main-region"
-        className="relative z-10 flex min-h-0 min-w-0 flex-1 items-stretch justify-center"
+        className="relative z-10 flex min-h-0 min-w-0 flex-1 items-stretch justify-center xl:col-start-2"
       >
         {/* Blurred ambient card-color fill (letterbox feel, not empty void) */}
         <div
@@ -2141,9 +2158,9 @@ export default function HomeClient({ initialFacts, initialVocabulary }: HomeClie
           </div>
         )}
 
-        {/* Bottom dock: mobile + tablet only (desktop uses left nav). Hide on full-page sub-views */}
+        {/* Bottom dock: phone only (<768). md+ uses left rail. */}
         {!isExploreSubPageOpen && !showWelcome && !chromeBlocked && (
-          <div className="lg:hidden">
+          <div className="md:hidden">
             <IosFloatingIslandDock
               activeTab={activeTab}
               lang={lang}
@@ -2157,7 +2174,157 @@ export default function HomeClient({ initialFacts, initialVocabulary }: HomeClie
       </div>
 
         {showExploreFeed && (
+          <>
+            <DesktopFeedSideRail
+              mode="actions"
+              lang={lang}
+              darkMode={isDark}
+              activeFact={activeFact}
+              activeSlide={activeSlide}
+              isGuessLocked={activeFact ? Boolean(lockedFactIds[activeFact.id]) : false}
+              isLiked={activeFactLiked}
+              isSaved={isCurrentSlideSaved}
+              likesCount={activeFactLikesCount}
+              onLike={() => {
+                if (!activeFact) return;
+                window.dispatchEvent(
+                  new CustomEvent('scrolly-card-action', {
+                    detail: { factId: activeFact.id, action: 'like' },
+                  })
+                );
+              }}
+              onSave={() => {
+                if (activeFact) {
+                  window.dispatchEvent(
+                    new CustomEvent('scrolly-card-action', {
+                      detail: { factId: activeFact.id, action: 'save' },
+                    })
+                  );
+                  return;
+                }
+                if (activeSlide?.type === 'vocabulary') {
+                  vibrateDoubleTap(12);
+                  playPopDing(soundEnabled);
+                  const { saved } = toggleSaveVocabularyCard(activeSlide.card);
+                  setSavedVocabWords(
+                    loadSavedVocabNotebook().map((entry) => entry.word.toLowerCase())
+                  );
+                  showToast(
+                    saved
+                      ? lang === 'tr'
+                        ? 'Kelime defterine eklendi'
+                        : 'Saved to Word Notebook'
+                      : lang === 'tr'
+                        ? 'Kelime defterinden çıkarıldı'
+                        : 'Removed from Word Notebook'
+                  );
+                  if (saved && !guestSaveNudgeShownRef.current) {
+                    guestSaveNudgeShownRef.current = true;
+                    triggerGuestAuthNudge('save');
+                  }
+                }
+              }}
+              onDetail={() => {
+                if (activeFact) {
+                  window.dispatchEvent(
+                    new CustomEvent('scrolly-card-action', {
+                      detail: { factId: activeFact.id, action: 'detail' },
+                    })
+                  );
+                  return;
+                }
+                if (activeSlide?.type === 'vocabulary') {
+                  window.dispatchEvent(
+                    new CustomEvent('scrolly-card-action', {
+                      detail: { vocabId: activeSlide.card.id, action: 'detail' },
+                    })
+                  );
+                }
+              }}
+              onDuel={() => {
+                if (activeFact) {
+                  window.dispatchEvent(
+                    new CustomEvent('scrolly-card-action', {
+                      detail: { factId: activeFact.id, action: 'duel' },
+                    })
+                  );
+                  return;
+                }
+                if (seedFact) {
+                  handleOpenDuelFromCard(seedFact);
+                }
+              }}
+              onShare={() => {
+                if (!activeFact) return;
+                window.dispatchEvent(
+                  new CustomEvent('scrolly-card-action', {
+                    detail: { factId: activeFact.id, action: 'share' },
+                  })
+                );
+              }}
+              onPrev={() => {
+                vibrateTap(10);
+                feedRef.current?.scrollToPrev();
+              }}
+              onNext={() => {
+                vibrateTap(10);
+                feedRef.current?.scrollToNext();
+              }}
+            />
+            {/* 1024–1279: Insight as slide-over drawer */}
+            <button
+              type="button"
+              data-testid="insight-drawer-open-btn"
+              onClick={() => setInsightDrawerOpen(true)}
+              className={`absolute right-3 top-1/2 z-30 hidden -translate-y-1/2 rounded-2xl border px-2.5 py-3 text-[10px] font-black uppercase tracking-wider backdrop-blur-md lg:flex xl:hidden ${
+                isDark
+                  ? 'border-white/15 bg-[#13131A]/90 text-white'
+                  : 'border-[#1E1B2E]/15 bg-white/95 text-[#1E1B2E] shadow-sm'
+              }`}
+            >
+              {lang === 'tr' ? 'Insight' : 'Insight'}
+            </button>
+            {insightDrawerOpen && (
+              <div
+                data-testid="insight-drawer"
+                className="absolute inset-0 z-40 hidden lg:flex xl:hidden"
+              >
+                <button
+                  type="button"
+                  aria-label={lang === 'tr' ? 'Kapat' : 'Close'}
+                  className="absolute inset-0 bg-slate-950/60 backdrop-blur-sm"
+                  onClick={() => setInsightDrawerOpen(false)}
+                />
+                <div className="absolute inset-y-3 right-3 flex w-[min(340px,92vw)]">
+                  <DesktopFeedSideRail
+                    mode="insight"
+                    lang={lang}
+                    darkMode={isDark}
+                    activeFact={activeFact}
+                    activeSlide={activeSlide}
+                    isGuessLocked={activeFact ? Boolean(lockedFactIds[activeFact.id]) : false}
+                    isLiked={activeFactLiked}
+                    isSaved={isCurrentSlideSaved}
+                    likesCount={activeFactLikesCount}
+                    onPrev={() => feedRef.current?.scrollToPrev()}
+                    onNext={() => feedRef.current?.scrollToNext()}
+                  />
+                </div>
+              </div>
+            )}
+          </>
+        )}
+        </div>
+      </div>
+
+      {/* ≥1280: real 340px Insight column */}
+      {showExploreFeed && (
+        <div
+          data-testid="desktop-insight-column"
+          className="relative z-10 hidden min-h-0 items-center justify-center px-3 py-4 xl:flex"
+        >
           <DesktopFeedSideRail
+            mode="insight"
             lang={lang}
             darkMode={isDark}
             activeFact={activeFact}
@@ -2166,83 +2333,6 @@ export default function HomeClient({ initialFacts, initialVocabulary }: HomeClie
             isLiked={activeFactLiked}
             isSaved={isCurrentSlideSaved}
             likesCount={activeFactLikesCount}
-            onLike={() => {
-              if (!activeFact) return;
-              window.dispatchEvent(
-                new CustomEvent('scrolly-card-action', {
-                  detail: { factId: activeFact.id, action: 'like' },
-                })
-              );
-            }}
-            onSave={() => {
-              if (activeFact) {
-                window.dispatchEvent(
-                  new CustomEvent('scrolly-card-action', {
-                    detail: { factId: activeFact.id, action: 'save' },
-                  })
-                );
-                return;
-              }
-              if (activeSlide?.type === 'vocabulary') {
-                vibrateDoubleTap(12);
-                playPopDing(soundEnabled);
-                const { saved } = toggleSaveVocabularyCard(activeSlide.card);
-                setSavedVocabWords(
-                  loadSavedVocabNotebook().map((entry) => entry.word.toLowerCase())
-                );
-                showToast(
-                  saved
-                    ? lang === 'tr'
-                      ? 'Kelime defterine eklendi'
-                      : 'Saved to Word Notebook'
-                    : lang === 'tr'
-                      ? 'Kelime defterinden çıkarıldı'
-                      : 'Removed from Word Notebook'
-                );
-                if (saved && !guestSaveNudgeShownRef.current) {
-                  guestSaveNudgeShownRef.current = true;
-                  triggerGuestAuthNudge('save');
-                }
-              }
-            }}
-            onDetail={() => {
-              if (activeFact) {
-                window.dispatchEvent(
-                  new CustomEvent('scrolly-card-action', {
-                    detail: { factId: activeFact.id, action: 'detail' },
-                  })
-                );
-                return;
-              }
-              if (activeSlide?.type === 'vocabulary') {
-                window.dispatchEvent(
-                  new CustomEvent('scrolly-card-action', {
-                    detail: { vocabId: activeSlide.card.id, action: 'detail' },
-                  })
-                );
-              }
-            }}
-            onDuel={() => {
-              if (activeFact) {
-                window.dispatchEvent(
-                  new CustomEvent('scrolly-card-action', {
-                    detail: { factId: activeFact.id, action: 'duel' },
-                  })
-                );
-                return;
-              }
-              if (seedFact) {
-                handleOpenDuelFromCard(seedFact);
-              }
-            }}
-            onShare={() => {
-              if (!activeFact) return;
-              window.dispatchEvent(
-                new CustomEvent('scrolly-card-action', {
-                  detail: { factId: activeFact.id, action: 'share' },
-                })
-              );
-            }}
             onPrev={() => {
               vibrateTap(10);
               feedRef.current?.scrollToPrev();
@@ -2252,8 +2342,8 @@ export default function HomeClient({ initialFacts, initialVocabulary }: HomeClie
               feedRef.current?.scrollToNext();
             }}
           />
-        )}
         </div>
+      )}
       </div>
 
       {/* Rendered directly under desktop shell so lg:right-6 lg:bottom-6 docks outside the centered stage */}
@@ -2292,7 +2382,14 @@ export default function HomeClient({ initialFacts, initialVocabulary }: HomeClie
       />
       <LazyAuthPrompt
         open={authPromptOpen}
-        nudgeOpen={authNudgeOpen && !authUser && !showWelcome && !activeQuiz}
+        nudgeOpen={
+          authNudgeOpen &&
+          !authUser &&
+          !showWelcome &&
+          !activeQuiz &&
+          (activeTab === 'leaderboard' || activeTab === 'diploma')
+        }
+        nudgePlacement={activeTab === 'diploma' || activeTab === 'leaderboard' ? 'page-top' : 'hidden'}
         trigger={authTrigger}
         lang={lang}
         darkMode={isDark}

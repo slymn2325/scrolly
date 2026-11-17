@@ -65,6 +65,8 @@ export type AuthTriggerSource =
 interface LazyAuthPromptProps {
   open: boolean;
   nudgeOpen: boolean;
+  /** Mobile Profile/Leaderboard tops only — never a sticky desktop overlay */
+  nudgePlacement?: 'page-top' | 'hidden';
   trigger?: AuthTriggerSource | string;
   lang: Language;
   darkMode?: boolean;
@@ -159,6 +161,7 @@ function mapOtpError(code: string | undefined, lang: Language, cooldownSec?: num
 export default function LazyAuthPrompt({
   open,
   nudgeOpen,
+  nudgePlacement = 'page-top',
   trigger = 'manual',
   lang,
   darkMode = true,
@@ -260,15 +263,15 @@ export default function LazyAuthPrompt({
   return (
     <>
       <AnimatePresence>
-        {nudgeOpen && !open && (
+        {nudgeOpen && !open && nudgePlacement === 'page-top' && (
           <motion.div
             key="lazy-auth-nudge"
-            initial={{ opacity: 0, y: 12, scale: 0.96 }}
+            initial={{ opacity: 0, y: -8, scale: 0.98 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 10, scale: 0.96 }}
+            exit={{ opacity: 0, y: -6, scale: 0.98 }}
             transition={{ duration: 0.2 }}
             data-testid="lazy-auth-nudge"
-            className="pointer-events-none fixed inset-x-3 bottom-[calc(env(safe-area-inset-bottom,16px)+90px)] z-50 mx-auto flex max-w-md justify-center lg:bottom-6"
+            className="pointer-events-none fixed inset-x-3 top-[calc(env(safe-area-inset-top,12px)+12px)] z-50 mx-auto flex max-w-md justify-center md:hidden"
           >
             <div
               className={`pointer-events-auto flex w-full items-center gap-3 rounded-2xl border px-3.5 py-2.5 shadow-2xl ${
@@ -324,7 +327,7 @@ export default function LazyAuthPrompt({
             aria-modal="true"
             aria-labelledby="lazy-auth-title"
             data-testid="lazy-auth-prompt"
-            className="fixed inset-0 z-[90] flex items-end justify-center bg-black/65 p-0 sm:items-center sm:p-4"
+            className="fixed inset-0 z-[90] flex items-end justify-center bg-slate-950/75 p-0 backdrop-blur-md sm:items-center sm:p-4"
             onClick={onCloseModal}
           >
             <motion.div

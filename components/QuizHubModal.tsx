@@ -105,16 +105,16 @@ export default function QuizHubModal({
             {/* Header Hero */}
             <div className="flex items-center justify-between gap-3 rounded-2xl border border-violet-200/70 bg-gradient-to-br from-pastel-lavender/75 via-white to-amber-50/75 p-3.5 dark:border-violet-600/40 dark:from-violet-950/70 dark:via-[#1D1635] dark:to-amber-950/35">
               <div className="flex min-w-0 items-center gap-3">
-                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-violet-500 to-fuchsia-500 p-1.5 text-white shadow-md">
+                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-violet-500 to-indigo-600 p-1.5 text-white shadow-md">
                   <img
-                    src={STATE_ILLUSTRATION_PATHS.quizCelebration}
+                    src={UI_ICON_PATHS.quizCenter}
                     alt=""
                     aria-hidden="true"
                     width={36}
                     height={36}
                     loading="eager"
                     decoding="sync"
-                    className="h-9 w-9 object-contain"
+                    className="h-9 w-9 object-contain drop-shadow-sm"
                   />
                 </div>
                 <div className="min-w-0 flex-1">
@@ -156,17 +156,45 @@ export default function QuizHubModal({
               ))}
             </div>
 
-            <div className="mt-4 flex flex-col gap-3">
+            <div
+              data-testid="quiz-hub-progress-strip"
+              className="mt-3 flex items-center justify-between gap-3 rounded-2xl border border-violet-200/70 bg-violet-50/70 px-3 py-2 dark:border-violet-500/30 dark:bg-violet-950/40"
+            >
+              <div className="flex items-center gap-2 text-xs font-extrabold text-ink dark:text-white">
+                <img
+                  src={UI_ICON_PATHS.streakFire}
+                  alt=""
+                  aria-hidden="true"
+                  width={16}
+                  height={16}
+                  className="h-4 w-4 object-contain"
+                />
+                <span>
+                  {lang === 'tr' ? 'Seri & hazırlık' : 'Streak & ready'} · {clampedRecent}/5
+                </span>
+              </div>
+              <span className="rounded-full bg-violet-600/15 px-2 py-0.5 text-[10px] font-black text-violet-800 dark:text-violet-200">
+                {dailyCompleted
+                  ? lang === 'tr'
+                    ? `Günlük ✓ ${dailyBestScore} XP`
+                    : `Daily ✓ ${dailyBestScore} XP`
+                  : lang === 'tr'
+                    ? 'Günlük açık'
+                    : 'Daily open'}
+              </span>
+            </div>
+
+            <div className="mt-3 flex flex-col gap-2.5">
               {/* 1. Daily Sprint (5 Q / 60s) */}
               <motion.button
                 type="button"
-                whileTap={{ scale: 0.96 }}
+                whileTap={{ scale: 0.99 }}
                 onClick={() => {
                   onButtonPop();
                   onSelectMode('daily');
                 }}
                 data-testid="start-daily-sprint-btn"
-                className="flex w-full items-center justify-between gap-3 rounded-2xl border-2 border-amber-300 bg-gradient-to-r from-amber-50 to-orange-50 p-4 text-left shadow-sm transition hover:brightness-[0.98] dark:border-amber-600/60 dark:from-amber-950/50 dark:to-orange-950/40"
+                className="flex w-full items-center justify-between gap-3 rounded-2xl border-2 border-violet-300 bg-gradient-to-r from-violet-50 to-indigo-50 p-3.5 text-left shadow-sm transition hover:brightness-[0.98] active:scale-[0.99] dark:border-violet-500/50 dark:from-violet-950/50 dark:to-indigo-950/40"
               >
                 <div className="flex min-w-0 flex-1 items-start gap-3">
                   <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-400/25 text-amber-700 dark:text-amber-300">
@@ -199,13 +227,13 @@ export default function QuizHubModal({
               {/* 2. Weekly Marathon (10 Q / 90s) */}
               <motion.button
                 type="button"
-                whileTap={{ scale: 0.96 }}
+                whileTap={{ scale: 0.99 }}
                 onClick={() => {
                   onButtonPop();
                   onSelectMode('weekly');
                 }}
                 data-testid="start-weekly-marathon-btn"
-                className="flex w-full items-center justify-between gap-3 rounded-2xl border-2 border-violet-300 bg-gradient-to-r from-pastel-lavender/60 to-sky-50 p-4 text-left shadow-sm transition hover:brightness-[0.98] dark:border-violet-600/60 dark:from-violet-950/60 dark:to-indigo-950/50"
+                className="flex w-full items-center justify-between gap-3 rounded-2xl border-2 border-violet-300 bg-gradient-to-r from-pastel-lavender/60 to-sky-50 p-3.5 text-left shadow-sm transition hover:brightness-[0.98] active:scale-[0.99] dark:border-violet-600/60 dark:from-violet-950/60 dark:to-indigo-950/50"
               >
                 <div className="flex min-w-0 flex-1 items-start gap-3">
                   <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-violet-500/20 text-violet-700 dark:text-violet-300">
@@ -232,13 +260,13 @@ export default function QuizHubModal({
               {/* 3. Classic Memory Quiz (3 Q from last 5 cards) */}
               <motion.button
                 type="button"
-                whileTap={{ scale: 0.96 }}
+                whileTap={{ scale: 0.99 }}
                 onClick={() => {
                   onButtonPop();
                   onSelectMode('memory');
                 }}
                 data-testid="start-memory-quiz-btn"
-                className="flex w-full items-center justify-between gap-3 rounded-2xl border-2 border-teal-200 bg-gradient-to-r from-pastel-mint/55 to-white p-4 text-left shadow-sm transition hover:brightness-[0.98] dark:border-teal-700/60 dark:from-teal-950/50 dark:to-[#1F1A36]"
+                className="flex w-full items-center justify-between gap-3 rounded-2xl border-2 border-teal-200 bg-gradient-to-r from-pastel-mint/55 to-white p-3.5 text-left shadow-sm transition hover:brightness-[0.98] active:scale-[0.99] dark:border-teal-700/60 dark:from-teal-950/50 dark:to-[#1F1A36]"
               >
                 <div className="flex min-w-0 flex-1 items-start gap-3">
                   <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-teal-500/20 text-teal-700 dark:text-teal-300">
@@ -277,13 +305,13 @@ export default function QuizHubModal({
               {/* 4. Word Lab Vocabulary Quiz (5 curated B1-C2 vocab cards) */}
               <motion.button
                 type="button"
-                whileTap={{ scale: 0.96 }}
+                whileTap={{ scale: 0.99 }}
                 onClick={() => {
                   onButtonPop();
                   onSelectMode('vocabulary');
                 }}
                 data-testid="start-vocab-quiz-btn"
-                className="flex w-full items-center justify-between gap-3 rounded-2xl border-2 border-indigo-200 bg-gradient-to-r from-indigo-50/80 to-sky-50/75 p-4 text-left shadow-sm transition hover:brightness-95 dark:border-indigo-500/45 dark:from-indigo-950/60 dark:to-[#17162E]"
+                className="flex w-full items-center justify-between gap-3 rounded-2xl border-2 border-indigo-200 bg-gradient-to-r from-indigo-50/80 to-sky-50/75 p-3.5 text-left shadow-sm transition hover:brightness-95 active:scale-[0.99] dark:border-indigo-500/45 dark:from-indigo-950/60 dark:to-[#17162E]"
               >
                 <div className="flex min-w-0 flex-1 items-start gap-3">
                   <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-indigo-500/20 text-indigo-700 dark:text-indigo-300">

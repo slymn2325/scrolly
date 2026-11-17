@@ -14,11 +14,11 @@ const POLICY_COPY = {
     title: 'Gizlilik Politikası',
     updated: 'Son güncelleme: Kasım 2026 • scrolly.live',
     intro:
-      'Scrolly (https://scrolly.live), kullanıcılarından kayıt veya kişisel hesap oluşturma talep etmeden iki dilli bilimsel mikro keşif deneyimi sunar. Bu sayfa anonim tarayıcı depolamasının, temel işlevsel çerezlerin, Google Analytics/Tag Manager ölçümlerinin ve Google AdSense reklam teknolojilerinin nasıl çalıştığını şeffaf biçimde açıklar.',
+      'Scrolly (https://scrolly.live) iki dilli bilimsel mikro keşif deneyimi sunar. Misafir olarak anonim tarayıcı depolamasıyla ilerleyebilir; isteğe bağlı olarak şifresiz e-posta OTP ile ilerlemenizi cihazlar arasında senkronize edebilirsiniz. Bu sayfa yerel depolamayı, isteğe bağlı hesap bağlamayı, çerezleri, analitiği ve AdSense kullanımını açıklar.',
     sections: [
       {
-        heading: '1. Kişisel Hesap Olmadan Anonim Yerel Depolama',
-        body: 'Scrolly ad, soyad, e-posta adresi veya şifre toplamaz. Okuduğunuz kartlar, günlük seri puanınız, XP seviyeniz, dil seçiminiz (TR/EN) ve favorileriniz yalnızca cihazınızdaki tarayıcı hafızasında (localStorage anahtarları: merak_user_state_v1, scrolly_device_id, scrolly_offline_events) ve küçük bir işlevsel özet çerezinde (merak_user_summary) saklanır. İstediğiniz zaman Diploma ekranındaki "Hafızayı Sıfırla" butonuyla tüm yerel verilerinizi anında temizleyebilirsiniz.',
+        heading: '1. Misafir Depolama ve İsteğe Bağlı E-posta OTP',
+        body: 'Varsayılan olarak Scrolly ad-soyad veya şifre toplamaz. Okuduğunuz kartlar, seri, XP, dil (TR/EN) ve favoriler cihazınızdaki localStorage (merak_user_state_v1, scrolly_device_id, scrolly_offline_events) ve işlevsel özet çerezinde (merak_user_summary) kalır. İsterseniz “E-posta Bağla” ile tek kullanımlık 6 haneli OTP kodu alarak ilerlemenizi hesabınıza taşıyabilirsiniz — kalıcı şifre tutulmaz. Diploma ekranındaki “Hafızayı Sıfırla” yerel veriyi temizler.',
       },
       {
         heading: '2. Çevrimdışı PWA Önbelleği',
@@ -52,11 +52,11 @@ const POLICY_COPY = {
     title: 'Privacy Policy',
     updated: 'Last updated: November 2026 • scrolly.live',
     intro:
-      'Scrolly (https://scrolly.live) delivers an interactive bilingual micro-discovery experience without requiring registration or personal user accounts. This policy transparently explains how anonymous local browser storage, functional cookies, analytics measurement, and Google AdSense advertising cookies operate on our platform.',
+      'Scrolly (https://scrolly.live) delivers bilingual micro-discovery. You can explore as a guest with anonymous local storage, or optionally link a passwordless email OTP account to sync progress across devices. This policy explains local storage, optional account linking, cookies, analytics, and AdSense.',
     sections: [
       {
-        heading: '1. Registration-Free Anonymous Local Storage',
-        body: 'Scrolly does not collect names, email addresses, or passwords. Your read card history, daily streak, XP score, language preference (TR/EN), and favorites remain strictly on your device using browser localStorage keys (merak_user_state_v1, scrolly_device_id, scrolly_offline_events) and a lightweight functional summary cookie (merak_user_summary). You can erase all local data at any time using "Reset Memory" inside the Explorer Diploma modal.',
+        heading: '1. Guest Storage & Optional Email OTP',
+        body: 'By default Scrolly does not collect names or passwords. Card history, streak, XP, language (TR/EN), and favorites stay on-device via localStorage (merak_user_state_v1, scrolly_device_id, scrolly_offline_events) and a functional summary cookie (merak_user_summary). You may optionally use “Link Email” to receive a one-time 6-digit OTP and merge progress into an account — no permanent password is stored. “Reset Memory” in the Explorer Diploma clears local data.',
       },
       {
         heading: '2. Offline PWA Caching',

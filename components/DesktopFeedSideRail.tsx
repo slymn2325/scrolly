@@ -29,6 +29,8 @@ const PART_OF_SPEECH_LABELS: Record<VocabPartOfSpeech, { tr: string; en: string 
   edat: { tr: 'Edat', en: 'Preposition' },
 };
 
+export type DesktopRailMode = 'cluster' | 'actions' | 'insight';
+
 interface DesktopFeedSideRailProps {
   onPrev: () => void;
   onNext: () => void;
@@ -45,6 +47,7 @@ interface DesktopFeedSideRailProps {
   onDetail?: () => void;
   onDuel?: () => void;
   onShare?: () => void;
+  mode?: DesktopRailMode;
 }
 
 /**
@@ -67,8 +70,11 @@ export default function DesktopFeedSideRail({
   onDetail,
   onDuel,
   onShare,
+  mode = 'cluster',
 }: DesktopFeedSideRailProps) {
   const [shortcutsOpen, setShortcutsOpen] = useState(false);
+  const showActions = mode === 'cluster' || mode === 'actions';
+  const showInsight = mode === 'cluster' || mode === 'insight';
 
   const stepBtn = darkMode
     ? 'border-white/20 bg-white/10 text-white hover:bg-white/20'
@@ -170,9 +176,17 @@ export default function DesktopFeedSideRail({
   return (
     <div
       data-testid="desktop-feed-side-cluster"
-      className="hidden shrink-0 items-center gap-5 lg:flex"
+      data-mode={mode}
+      className={
+        mode === 'insight'
+          ? 'flex h-full min-h-0 w-full max-w-[340px] shrink-0 flex-col'
+          : mode === 'actions'
+            ? 'hidden shrink-0 items-center lg:flex'
+            : 'hidden shrink-0 items-center gap-5 lg:flex'
+      }
     >
       {/* 1. Ordered action bar + Up/Down steppers (Like → Save → Detail → 1v1 → Share) */}
+      {showActions && (
       <aside
         data-testid="desktop-feed-side-rail"
         data-theme={darkMode ? 'dark' : 'light'}
@@ -299,14 +313,17 @@ export default function DesktopFeedSideRail({
           ↑ ↓
         </p>
       </aside>
+      )}
 
-      {/* 2. Large Desktop Right Panel (xl:): Non-Duplicating Insight / Source & Keyboard Shortcuts */}
-      {slideSummary && (
+      {/* 2. Insight / Source panel — xl column or drawer host */}
+      {showInsight && slideSummary && (
         <aside
           data-testid="desktop-info-shortcut-panel"
-          className={`hidden w-[300px] shrink-0 flex-col gap-3 rounded-3xl border p-4 backdrop-blur-xl xl:flex ${
+          className={`flex w-full max-w-[340px] shrink-0 flex-col gap-3 overflow-y-auto rounded-3xl border p-4 backdrop-blur-xl ${
+            mode === 'cluster' ? 'hidden xl:flex' : 'flex h-full max-h-[min(92dvh,920px)]'
+          } ${
             darkMode
-              ? 'border-white/15 bg-[#13131A]/90 text-white shadow-2xl'
+              ? 'border-white/15 bg-[#13131A]/95 text-white shadow-2xl'
               : 'border-[#1E1B2E]/10 bg-white/95 text-[#1E1B2E] shadow-xl'
           }`}
         >

@@ -24,7 +24,7 @@ export default tseslint.config(
     },
   },
   {
-    files: ['scripts/**/*.cjs', 'scripts/**/*.mjs'],
+    files: ['scripts/**/*.{cjs,mjs,js}'],
     languageOptions: {
       globals: {
         require: 'readonly',
@@ -45,6 +45,9 @@ export default tseslint.config(
         setTimeout: 'readonly',
         clearTimeout: 'readonly',
       },
+    },
+    rules: {
+      '@typescript-eslint/no-require-imports': 'off',
     },
   },
   {

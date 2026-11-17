@@ -10,7 +10,7 @@ export const CATEGORY_ILLUSTRATION_MAP: Record<CategoryId, string> = {
   history: '/assets/icons8/illustrations/history.png',
   science: '/assets/icons8/illustrations/science.png',
   records: '/assets/icons8/illustrations/records.png',
-  statistics: '/assets/icons8/illustrations/statistics.svg',
+  statistics: '/assets/icons8/illustrations/statistics.png',
 };
 
 export const CATEGORY_SUB_ICON_MAP: Record<CategoryId, string> = {
@@ -20,7 +20,7 @@ export const CATEGORY_SUB_ICON_MAP: Record<CategoryId, string> = {
   history: '/assets/icons8/illustrations/history-sub.png',
   science: '/assets/icons8/illustrations/science-sub.png',
   records: '/assets/icons8/illustrations/records-sub.png',
-  statistics: '/assets/icons8/illustrations/statistics-sub.svg',
+  statistics: '/assets/icons8/illustrations/statistics.png',
 };
 
 export const DOCK_ICON_MAP: Record<DockTabId, string> = {
@@ -49,6 +49,11 @@ export const UI_ICON_PATHS = {
   lightning: '/assets/icons8/icons/ui-lightning.png',
   tap: '/assets/icons8/icons/ui-tap.png',
   slowSpeed: '/assets/icons8/icons/ui-slow-speed.png',
+  trophy: '/assets/icons8/icons/ui-trophy.png',
+  shield: '/assets/icons8/icons/ui-shield.png',
+  sword: '/assets/icons8/icons/ui-sword.png',
+  explorer: '/assets/icons8/icons/ui-explorer.png',
+  quizCenter: '/assets/icons8/icons/ui-quiz-center.png',
 } as const;
 
 export const LEAGUE_SHIELD_MAP: Record<LeagueTierId, string> = {
