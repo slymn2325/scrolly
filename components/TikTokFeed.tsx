@@ -1,9 +1,11 @@
 'use client';
 
 import React, { forwardRef, useCallback, useEffect, useImperativeHandle, useLayoutEffect, useMemo, useRef, useState } from 'react';
-import { AnimatePresence, motion } from 'framer-motion';
-import { ArrowLeft, ChevronDown } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { Check, ChevronDown } from 'lucide-react';
 import BrandLogo from '@/components/BrandLogo';
+import Sheet from '@/components/cikartma/Sheet';
+import Skeleton from '@/components/cikartma/Skeleton';
 import NotificationsBell from '@/components/NotificationsBell';
 import NativeAdSlide from '@/components/NativeAdSlide';
 import QuizCtaSlide from '@/components/QuizCtaSlide';
@@ -11,15 +13,18 @@ import TikTokFactSlide from '@/components/TikTokFactSlide';
 import VocabularySlide from '@/components/VocabularySlide';
 import {
   CATEGORY_SELECTOR_OPTIONS,
+  FEED_EXPERIENCE_COPY,
   getCategoryMeta,
+  translations,
   type CategoryFilter,
   type CategoryId,
+  type CategoryMeta,
   type Language,
 } from '@/i18n/translations';
 import type { FactCard } from '@/types/fact';
 import type { VocabularyCard } from '@/types/vocabulary';
 import { getVocabularyFacts } from '@/data/vocabularyFacts';
-import { CATEGORY_ILLUSTRATION_MAP, DOCK_ICON_MAP, UI_ICON_PATHS } from '@/utils/icons8Assets';
+import { UI_ICON_PATHS } from '@/utils/fluentAssets';
 import { markFactSeenInStorage } from '@/utils/seenFacts';
 
 const useIsomorphicLayoutEffect = typeof window !== 'undefined' ? useLayoutEffect : useEffect;
@@ -139,6 +144,7 @@ const TikTokFeed = forwardRef<TikTokFeedHandle, TikTokFeedProps>(function TikTok
   suppressUrlSyncRef.current = suppressUrlSync;
   const [activeIndex, setActiveIndex] = useState<number>(safeInitialIndex);
   const [isCategoryDrawerOpen, setIsCategoryDrawerOpen] = useState<boolean>(false);
+  const [showCategorySkeleton, setShowCategorySkeleton] = useState(false);
   const ignoreCategoryToggleRef = useRef(false);
   const closeCategoryPicker = useCallback(() => {
     ignoreCategoryToggleRef.current = true;
@@ -516,25 +522,22 @@ const TikTokFeed = forwardRef<TikTokFeedHandle, TikTokFeedProps>(function TikTok
     return () => container.removeEventListener('wheel', handleWheel);
   }, [getStepAnchorIndex, scrollToSlide]);
 
-  // Close Category Explorer page on Escape key & block dock while full-page picker is active
   useEffect(() => {
     window.dispatchEvent(
       new CustomEvent('scrolly-chrome-block', { detail: { open: isCategoryDrawerOpen } })
     );
-    if (!isCategoryDrawerOpen) return;
-    const handleEsc = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        setIsCategoryDrawerOpen(false);
-      }
-    };
-    window.addEventListener('keydown', handleEsc);
     return () => {
-      window.removeEventListener('keydown', handleEsc);
       window.dispatchEvent(
         new CustomEvent('scrolly-chrome-block', { detail: { open: false } })
       );
     };
   }, [isCategoryDrawerOpen]);
+
+  useEffect(() => {
+    if (!showCategorySkeleton) return;
+    const timer = window.setTimeout(() => setShowCategorySkeleton(false), 400);
+    return () => window.clearTimeout(timer);
+  }, [showCategorySkeleton, activeCategory]);
 
   // When a card detail overlay is open, disable HUD hit-testing so close/back controls stay reachable
   useEffect(() => {
@@ -651,99 +654,36 @@ const TikTokFeed = forwardRef<TikTokFeedHandle, TikTokFeedProps>(function TikTok
         </div>
       </header>
 
-      {/* Full-page Category Explorer: integrated page instead of floating dropdown */}
-      <AnimatePresence>
-        {isCategoryDrawerOpen && (
-          <motion.div
-            key="category-drawer"
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 16 }}
-            transition={{ duration: 0.2, ease: 'easeOut' }}
-            data-testid="category-drawer"
-            data-presentation="page"
-            className="pointer-events-auto absolute inset-0 z-[70] flex h-full w-full flex-col overflow-hidden bg-[#FFF8F2] text-slate-900 dark:bg-[#141418] dark:text-slate-100"
-          >
-            {/* Top Navigation Bar */}
-            <div
-              className="flex shrink-0 items-center justify-between gap-3 border-b border-cik-line bg-cik-bg px-4 pb-3 pt-[calc(env(safe-area-inset-top,14px)+14px)]"
-            >
-              <button
-                type="button"
-                onClick={(event) => {
-                  event.preventDefault();
-                  event.stopPropagation();
-                  onButtonPop();
-                  closeCategoryPicker();
-                }}
-                className={`inline-flex h-10 items-center gap-2 rounded-full border px-3.5 text-xs font-extrabold transition active:scale-95 ${
-                  darkMode
-                    ? 'border-white/15 bg-white/10 text-white hover:bg-white/15'
-                    : 'border-[#1E1B2E]/15 bg-white text-[#1E1B2E] hover:bg-slate-50'
-                }`}
-              >
-                <ArrowLeft className="h-4 w-4 shrink-0" />
-                <span>{lang === 'tr' ? 'Keşfe Dön' : 'Back to Feed'}</span>
-              </button>
+      <CategoryPickerSheet
+        open={isCategoryDrawerOpen}
+        lang={lang}
+        activeCategory={activeCategory}
+        onClose={() => {
+          onButtonPop();
+          closeCategoryPicker();
+        }}
+        onPick={(catId) => {
+          onButtonPop();
+          onSelectCategory(catId);
+          closeCategoryPicker();
+          scrollToSlide(0);
+          setShowCategorySkeleton(true);
+        }}
+      />
 
-              <span
-                className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[11px] font-black uppercase tracking-wider ${
-                  darkMode ? 'bg-violet-500/20 text-violet-200' : 'bg-violet-100 text-violet-800'
-                }`}
-              >
-                <img src={DOCK_ICON_MAP.explore} alt="" aria-hidden="true" className="h-4 w-4 object-contain" />
-                <span>{lang === 'tr' ? 'Konu Seç' : 'Choose Topic'}</span>
-              </span>
-            </div>
-
-            {/* Category Explorer Grid */}
-            <div className="no-scrollbar flex-1 overflow-y-auto px-4 py-5 pb-[calc(env(safe-area-inset-bottom,16px)+28px)]">
-              <div className="grid grid-cols-2 gap-3 pb-8">
-                {CATEGORY_SELECTOR_OPTIONS.map((cat) => {
-                  const isActive = activeCategory === cat.id;
-                  const labelText =
-                    cat.id === 'all' ? (lang === 'tr' ? 'Tümü (Genel)' : 'All (General)') : cat.label[lang];
-                  const artPath =
-                    cat.id === 'all'
-                      ? DOCK_ICON_MAP.explore
-                      : cat.id === 'vocabulary'
-                        ? '/assets/fluent/books.png'
-                        : CATEGORY_ILLUSTRATION_MAP[cat.id];
-                  return (
-                    <button
-                      key={cat.id}
-                      type="button"
-                      onClick={(event) => {
-                        event.preventDefault();
-                        event.stopPropagation();
-                        onButtonPop();
-                        onSelectCategory(cat.id);
-                        closeCategoryPicker();
-                      }}
-                      data-testid={`category-option-${cat.id}`}
-                      className={`group relative flex min-h-[104px] flex-col justify-between rounded-sticker border-[3px] border-white p-4 text-left shadow-sticker ${
-                        isActive ? 'bg-cik-berry text-cik-text' : 'bg-cik-surface text-cik-text'
-                      }`}
-                    >
-                      <div className="flex w-full items-start">
-                        <span className="flex h-10 w-10 shrink-0 items-center justify-center overflow-visible rounded-xl bg-white/95">
-                          <img
-                            src={artPath}
-                            alt=""
-                            aria-hidden="true"
-                            className="h-10 w-10 shrink-0 object-contain"
-                          />
-                        </span>
-                      </div>
-                      <span className="text-xs font-extrabold leading-snug">{labelText}</span>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {showCategorySkeleton ? (
+        <div
+          className="pointer-events-none absolute inset-0 z-content flex items-center justify-center bg-cik-bg px-4"
+          aria-hidden="true"
+        >
+          <div className="flex w-full max-w-md flex-col gap-3">
+            <Skeleton className="aspect-[4/5] w-full rounded-sticker" />
+            <Skeleton className="h-6 w-2/3" />
+            <Skeleton className="h-4 w-full" />
+            <Skeleton className="h-11 w-full rounded-pill" />
+          </div>
+        </div>
+      ) : null}
 
       {/* Vertical Full-Bleed TikTok Snap Scroll Container (Windowed DOM Virtualization: activeIndex - 2 .. activeIndex + 2) */}
       <div
@@ -762,7 +702,7 @@ const TikTokFeed = forwardRef<TikTokFeedHandle, TikTokFeedProps>(function TikTok
             <button
               type="button"
               onClick={() => onSelectCategory('all')}
-              className="rounded-full bg-white px-4 py-2 text-xs font-black text-[#09090B]"
+              className="cik-footnote h-11 rounded-pill bg-cik-cta px-4 text-cik-on-cta"
             >
               {lang === 'tr' ? 'Tüm Kategorileri Aç' : 'Show All Categories'}
             </button>
@@ -855,3 +795,74 @@ const TikTokFeed = forwardRef<TikTokFeedHandle, TikTokFeedProps>(function TikTok
 });
 
 export default TikTokFeed;
+
+function pickerLabel(cat: CategoryMeta, lang: Language): string {
+  if (cat.id === 'all') return FEED_EXPERIENCE_COPY[lang].categoryAll;
+  if (cat.id === 'vocabulary') return translations[lang].dockLanguage;
+  return cat.label[lang];
+}
+
+const PICKER_OPTIONS: CategoryMeta[] = [
+  ...CATEGORY_SELECTOR_OPTIONS.filter((cat) => cat.id === 'all'),
+  ...CATEGORY_SELECTOR_OPTIONS.filter((cat) => cat.id !== 'all' && cat.id !== 'vocabulary'),
+  ...CATEGORY_SELECTOR_OPTIONS.filter((cat) => cat.id === 'vocabulary'),
+];
+
+function CategoryPickerSheet({
+  open,
+  lang,
+  activeCategory,
+  onClose,
+  onPick,
+}: {
+  open: boolean;
+  lang: Language;
+  activeCategory: CategoryFilter;
+  onClose: () => void;
+  onPick: (catId: CategoryFilter) => void;
+}) {
+  return (
+    <Sheet open={open} title={lang === 'tr' ? 'Konu Seç' : 'Choose Topic'} onClose={onClose}>
+      <div data-testid="category-drawer" data-presentation="sheet" className="grid grid-cols-2 gap-3">
+        {PICKER_OPTIONS.map((cat) => {
+          const isActive = activeCategory === cat.id;
+          return (
+            <button
+              key={cat.id}
+              type="button"
+              onClick={(event) => {
+                event.preventDefault();
+                event.stopPropagation();
+                onPick(cat.id);
+              }}
+              data-testid={`category-option-${cat.id}`}
+              aria-pressed={isActive}
+              className={`relative flex min-h-[52px] flex-col items-start gap-3 rounded-sticker border-4 border-cik-sticker-rim p-4 text-left shadow-sticker ${
+                isActive ? 'bg-cik-berry text-cik-on-berry' : 'bg-cik-pink text-cik-text'
+              }`}
+            >
+              {isActive ? (
+                <Check
+                  className="absolute right-3 top-3"
+                  size={20}
+                  strokeWidth={2}
+                  aria-hidden="true"
+                />
+              ) : null}
+              <img
+                src={cat.iconPath}
+                alt=""
+                aria-hidden="true"
+                width={40}
+                height={40}
+                decoding="async"
+                className="h-10 w-10 object-contain"
+              />
+              <span className="cik-headline">{pickerLabel(cat, lang)}</span>
+            </button>
+          );
+        })}
+      </div>
+    </Sheet>
+  );
+}
