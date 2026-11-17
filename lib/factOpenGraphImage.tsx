@@ -1,4 +1,5 @@
 import { ImageResponse } from 'next/og';
+import BrandLogo from '@/components/BrandLogo';
 import { getCategoryMeta, type Language } from '@/i18n/translations';
 import { getFactBySlugServer } from '@/lib/db';
 import type { FactCard } from '@/types/fact';
@@ -54,22 +55,7 @@ export function renderFactOpenGraphImage(fact: FactCard | null, lang: Language) 
           }}
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                width: '54px',
-                height: '54px',
-                borderRadius: '16px',
-                background: accentColor,
-                color: '#FFFFFF',
-                fontSize: '28px',
-                fontWeight: 800,
-              }}
-            >
-              S
-            </div>
+            <BrandLogo size={54} id="fact-og-brand" />
             <div style={{ display: 'flex', flexDirection: 'column' }}>
               <span style={{ fontSize: '28px', fontWeight: 800, color: '#18181B' }}>Scrolly</span>
               <span style={{ fontSize: '16px', fontWeight: 600, color: '#52525B' }}>scrolly.live</span>

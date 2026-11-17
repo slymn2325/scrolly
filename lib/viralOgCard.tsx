@@ -1,4 +1,5 @@
 import { ImageResponse } from 'next/og';
+import BrandLogo from '@/components/BrandLogo';
 import { dailyPuzzleNumber, parseIsoDate } from '@/utils/viralShare';
 
 export const VIRAL_OG_SIZE = { width: 1200, height: 630 };
@@ -20,22 +21,7 @@ function card(kicker: string, title: string, subtitle: string) {
         }}
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              width: '64px',
-              height: '64px',
-              borderRadius: '18px',
-              background: '#7C3AED',
-              color: '#FFFFFF',
-              fontSize: '32px',
-              fontWeight: 800,
-            }}
-          >
-            S
-          </div>
+          <BrandLogo size={64} id="viral-og-brand" />
           <div style={{ display: 'flex', flexDirection: 'column' }}>
             <span style={{ fontSize: '28px', fontWeight: 800 }}>Scrolly</span>
             <span style={{ fontSize: '18px', color: '#6D28D9' }}>scrolly.live</span>

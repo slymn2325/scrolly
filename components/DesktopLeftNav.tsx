@@ -4,6 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { Mail, WifiOff } from 'lucide-react';
 import { type Language } from '@/i18n/translations';
 import { UI_ICON_PATHS, type DockTabId } from '@/utils/icons8Assets';
+import BrandLogo from '@/components/BrandLogo';
 import Icon from '@/components/cikartma/Icon';
 import type { IconName } from '@/lib/iconMap';
 
@@ -37,7 +38,7 @@ const NAV_ITEMS: Array<{
 }> = [
   { id: 'explore', tr: 'Keşfet', en: 'Explore', icon: 'explore' },
   { id: 'quiz', tr: 'Quiz', en: 'Quiz', icon: 'quiz' },
-  { id: 'language', tr: 'Dil', en: 'Language', icon: 'languages' },
+  { id: 'leaderboard', tr: 'Sıralama', en: 'Leaderboard', icon: 'leaderboard' },
   { id: 'duel', tr: 'Scrolla', en: 'Scrolla', icon: 'duel' },
   { id: 'diploma', tr: 'Profil', en: 'Profile', icon: 'profile' },
 ];
@@ -70,7 +71,8 @@ export default function DesktopLeftNav({
     };
   }, []);
 
-  const statusText = TAB_STATUS_COPY[activeTab]?.[lang] ?? TAB_STATUS_COPY.explore[lang];
+  const highlightedTab = activeTab === 'language' ? 'explore' : activeTab;
+  const statusText = TAB_STATUS_COPY[highlightedTab]?.[lang] ?? TAB_STATUS_COPY.explore[lang];
 
   return (
     <aside
@@ -79,7 +81,7 @@ export default function DesktopLeftNav({
       className="relative z-30 hidden h-full w-[232px] shrink-0 flex-col border-r border-cik-line bg-cik-bg px-4 py-5 text-cik-text lg:flex"
     >
         <div className="mb-6 flex items-center gap-2 px-2">
-          <img src="/brand/01-peel-s.svg" alt="" width={44} height={44} className="h-11 w-11" />
+          <BrandLogo size={44} id="desktop-nav-brand" />
           <div>
             <p className="font-display text-2xl font-extrabold tracking-tight text-cik-text">Scrolly</p>
             <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-cik-muted">
@@ -90,7 +92,7 @@ export default function DesktopLeftNav({
 
       <nav className="flex flex-1 flex-col gap-1" aria-label="Desktop main">
         {NAV_ITEMS.map((item) => {
-          const active = activeTab === item.id;
+          const active = highlightedTab === item.id;
           return (
             <button
               key={item.id}

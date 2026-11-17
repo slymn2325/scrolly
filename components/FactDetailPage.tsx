@@ -134,7 +134,7 @@ export default function FactDetailPage({
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, transition: { duration: 0.01 } }}
       transition={{ duration: 0.14, ease: [0.23, 1, 0.32, 1] }}
-      className="backface-hidden absolute inset-0 z-30 flex h-full w-full flex-col overflow-hidden bg-[#FFFDF9] text-slate-900 dark:bg-[#111115] dark:text-slate-100"
+      className="relative z-30 flex h-full w-full flex-col overflow-hidden bg-[#FFFDF9] text-slate-900 dark:bg-[#111115] dark:text-slate-100"
     >
       {/* Top Page Bar */}
       <div

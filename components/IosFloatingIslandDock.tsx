@@ -21,11 +21,11 @@ interface IosFloatingIslandDockProps {
 const TABS: Array<{
   id: DockTabId;
   icon: IconName;
-  labelKey: 'dockExplore' | 'dockQuiz' | 'dockLanguage' | 'dockDuel' | 'dockDiploma';
+  labelKey: 'dockExplore' | 'dockQuiz' | 'dockLeaderboard' | 'dockDuel' | 'dockDiploma';
 }> = [
   { id: 'explore', icon: 'explore', labelKey: 'dockExplore' },
   { id: 'quiz', icon: 'quiz', labelKey: 'dockQuiz' },
-  { id: 'language', icon: 'languages', labelKey: 'dockLanguage' },
+  { id: 'leaderboard', icon: 'leaderboard', labelKey: 'dockLeaderboard' },
   { id: 'duel', icon: 'duel', labelKey: 'dockDuel' },
   { id: 'diploma', icon: 'profile', labelKey: 'dockDiploma' },
 ];
@@ -47,14 +47,15 @@ export default function IosFloatingIslandDock({
       }`}
     >
       <nav
-        aria-label="Kesfet Quiz Dil Scrolla Profil"
+        aria-label="Kesfet Quiz Siralama Scrolla Profil"
         data-testid="ios-floating-dock"
         className={`${
           chromeBlocked ? 'pointer-events-none' : 'pointer-events-auto'
         } flex w-full items-center justify-between rounded-pill border-[3px] border-white bg-cik-surface px-1.5 py-1 text-cik-text shadow-sticker`}
       >
         {TABS.map((tab) => {
-          const isActive = activeTab === tab.id;
+          const highlightedTab = activeTab === 'language' ? 'explore' : activeTab;
+          const isActive = highlightedTab === tab.id;
           const label = t[tab.labelKey];
           return (
             <motion.button

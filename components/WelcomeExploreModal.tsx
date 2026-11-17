@@ -4,7 +4,8 @@ import React, { useEffect, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Dices, UserCheck } from 'lucide-react';
 import { type Language } from '@/i18n/translations';
-import { STATE_ILLUSTRATION_PATHS, UI_ICON_PATHS } from '@/utils/icons8Assets';
+import BrandLogo from '@/components/BrandLogo';
+import { UI_ICON_PATHS } from '@/utils/icons8Assets';
 import { isGenericDefaultNickname } from '@/utils/userMemory';
 
 export const WELCOME_DISMISS_KEY = 'scrolly_welcome_dismissed_v1';
@@ -124,17 +125,7 @@ export default function WelcomeExploreModal({
             />
             <div className="mb-3 flex items-center justify-between gap-3">
               <div className="flex items-center gap-3">
-                <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl border border-violet-400/25 bg-gradient-to-br from-violet-500/20 via-indigo-500/15 to-sky-400/15 p-1.5 shadow-lg shadow-violet-950/50">
-                  <img
-                    src={STATE_ILLUSTRATION_PATHS.welcomeTelescope}
-                    alt=""
-                    aria-hidden="true"
-                    width={44}
-                    height={44}
-                    decoding="async"
-                    className="h-11 w-11 object-contain drop-shadow"
-                  />
-                </div>
+                <BrandLogo size={56} id="welcome-brand" />
                 <div>
                   <p className="font-display text-3xl font-black tracking-tight leading-none">Scrolly</p>
                   <p className="mt-1 text-[11px] font-semibold tracking-wide text-violet-200/75">

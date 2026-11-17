@@ -2,7 +2,8 @@
 
 import React, { forwardRef, useCallback, useEffect, useImperativeHandle, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { ArrowLeft, Check, ChevronDown } from 'lucide-react';
+import { ArrowLeft, ChevronDown } from 'lucide-react';
+import BrandLogo from '@/components/BrandLogo';
 import NotificationsBell from '@/components/NotificationsBell';
 import NativeAdSlide from '@/components/NativeAdSlide';
 import QuizCtaSlide from '@/components/QuizCtaSlide';
@@ -138,6 +139,14 @@ const TikTokFeed = forwardRef<TikTokFeedHandle, TikTokFeedProps>(function TikTok
   suppressUrlSyncRef.current = suppressUrlSync;
   const [activeIndex, setActiveIndex] = useState<number>(safeInitialIndex);
   const [isCategoryDrawerOpen, setIsCategoryDrawerOpen] = useState<boolean>(false);
+  const ignoreCategoryToggleRef = useRef(false);
+  const closeCategoryPicker = useCallback(() => {
+    ignoreCategoryToggleRef.current = true;
+    setIsCategoryDrawerOpen(false);
+    window.setTimeout(() => {
+      ignoreCategoryToggleRef.current = false;
+    }, 400);
+  }, []);
   const [chromeBlocked, setChromeBlocked] = useState<boolean>(false);
   const activeCategoryMeta = getCategoryMeta(activeCategory);
   const categoryTriggerLabel =
@@ -565,14 +574,16 @@ const TikTokFeed = forwardRef<TikTokFeedHandle, TikTokFeedProps>(function TikTok
         }`}
       >
         <div
-          className={`relative z-10 min-w-0 flex-1 ${
+          className={`relative z-10 flex min-w-0 flex-1 items-center gap-2 ${
             chromeBlocked ? 'pointer-events-none' : 'pointer-events-auto'
           }`}
         >
+          <BrandLogo size={36} id="feed-header-brand" className="lg:hidden" />
           <motion.button
             type="button"
             whileTap={{ scale: 0.96 }}
             onClick={() => {
+              if (ignoreCategoryToggleRef.current) return;
               onButtonPop();
               setIsCategoryDrawerOpen((prev) => !prev);
             }}
@@ -651,7 +662,7 @@ const TikTokFeed = forwardRef<TikTokFeedHandle, TikTokFeedProps>(function TikTok
             transition={{ duration: 0.2, ease: 'easeOut' }}
             data-testid="category-drawer"
             data-presentation="page"
-            className="pointer-events-auto absolute inset-0 z-[70] flex h-full w-full flex-col overflow-hidden bg-white/95 text-slate-900 backdrop-blur-xl dark:bg-slate-900/95 dark:text-slate-100"
+            className="pointer-events-auto absolute inset-0 z-[70] flex h-full w-full flex-col overflow-hidden bg-[#FFF8F2] text-slate-900 dark:bg-[#141418] dark:text-slate-100"
           >
             {/* Top Navigation Bar */}
             <div
@@ -659,9 +670,11 @@ const TikTokFeed = forwardRef<TikTokFeedHandle, TikTokFeedProps>(function TikTok
             >
               <button
                 type="button"
-                onClick={() => {
+                onClick={(event) => {
+                  event.preventDefault();
+                  event.stopPropagation();
                   onButtonPop();
-                  setIsCategoryDrawerOpen(false);
+                  closeCategoryPicker();
                 }}
                 className={`inline-flex h-10 items-center gap-2 rounded-full border px-3.5 text-xs font-extrabold transition active:scale-95 ${
                   darkMode
@@ -700,17 +713,19 @@ const TikTokFeed = forwardRef<TikTokFeedHandle, TikTokFeedProps>(function TikTok
                     <button
                       key={cat.id}
                       type="button"
-                      onClick={() => {
+                      onClick={(event) => {
+                        event.preventDefault();
+                        event.stopPropagation();
                         onButtonPop();
                         onSelectCategory(cat.id);
-                        setIsCategoryDrawerOpen(false);
+                        closeCategoryPicker();
                       }}
                       data-testid={`category-option-${cat.id}`}
                       className={`group relative flex min-h-[104px] flex-col justify-between rounded-sticker border-[3px] border-white p-4 text-left shadow-sticker ${
                         isActive ? 'bg-cik-berry text-cik-text' : 'bg-cik-surface text-cik-text'
                       }`}
                     >
-                      <div className="flex w-full items-start justify-between gap-2">
+                      <div className="flex w-full items-start">
                         <span className="flex h-10 w-10 shrink-0 items-center justify-center overflow-visible rounded-xl bg-white/95">
                           <img
                             src={artPath}
@@ -719,13 +734,6 @@ const TikTokFeed = forwardRef<TikTokFeedHandle, TikTokFeedProps>(function TikTok
                             className="h-10 w-10 shrink-0 object-contain"
                           />
                         </span>
-                        {isActive ? (
-                          <span className="flex h-5 w-5 items-center justify-center rounded-full bg-white/25 text-white">
-                            <Check className="h-3 w-3" aria-hidden="true" />
-                          </span>
-                        ) : (
-                          <span className="h-5 w-5 shrink-0" aria-hidden="true" />
-                        )}
                       </div>
                       <span className="text-xs font-extrabold leading-snug">{labelText}</span>
                     </button>

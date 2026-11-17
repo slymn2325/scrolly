@@ -221,7 +221,7 @@ export default async function FactDetailPageContent({
           url: 'https://scrolly.live',
           logo: {
             '@type': 'ImageObject',
-            url: 'https://scrolly.live/icon',
+            url: 'https://scrolly.live/icon.svg?v=20261117',
           },
         },
         citation: resolvedSourceUrl || resolvedSourceName,
