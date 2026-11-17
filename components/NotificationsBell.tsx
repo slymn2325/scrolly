@@ -67,11 +67,11 @@ export default function NotificationsBell({ lang }: { lang: Language }) {
         aria-label={label}
         aria-expanded={open}
         onClick={() => setOpen(true)}
-        className="relative inline-flex h-11 w-11 items-center justify-center rounded-pill text-cik-text"
+        className="relative flex h-10 w-10 items-center justify-center rounded-full border border-black/5 bg-white/95 text-neutral-900 shadow-sm backdrop-blur-md hover:bg-white"
       >
         <Bell size={20} strokeWidth={2} aria-hidden="true" />
         {unread > 0 && (
-          <span className="cik-caption-2 absolute right-0 top-0 flex h-[18px] min-w-[18px] items-center justify-center rounded-pill bg-cik-cta px-1 leading-none text-cik-on-cta">
+          <span className="absolute -right-1 -top-1 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-semibold leading-none text-white">
             {unread > 9 ? '9+' : unread}
           </span>
         )}

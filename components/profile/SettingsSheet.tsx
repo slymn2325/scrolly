@@ -129,9 +129,9 @@ export default function SettingsSheet({
   const t = translations[lang];
   const copy = profileCopy(lang);
   const [confirmReset, setConfirmReset] = useState(false);
-  const contactHref = lang === 'en' ? '/contact?lang=en' : '/contact';
-  const aboutHref = lang === 'en' ? '/about?lang=en' : '/about';
-  const termsHref = lang === 'en' ? '/terms?lang=en' : '/terms';
+  const contactHref = lang === 'en' ? '/contact?lang=en&from=profile' : '/contact?from=profile';
+  const aboutHref = lang === 'en' ? '/about?lang=en&from=profile' : '/about?from=profile';
+  const termsHref = lang === 'en' ? '/terms?lang=en&from=profile' : '/terms?from=profile';
 
   const closeAll = () => {
     setConfirmReset(false);
@@ -269,19 +269,21 @@ export default function SettingsSheet({
           <section className="overflow-hidden rounded-cik-lg bg-cik-surface shadow-e1">
             <p className="cik-footnote px-4 pt-3 text-cik-text-2">{copy.legal}</p>
             <div className="flex flex-col">
-              <Link data-testid="diploma-privacy-link" href="/privacy" onClick={onNavigate} className="cik-headline flex min-h-[52px] items-center px-4 text-cik-text">
+              <Link data-testid="diploma-privacy-link" href="/privacy?from=profile" onClick={onNavigate} className="px-4 py-2.5 text-sm text-cik-text">
                 {copy.privacy}
               </Link>
-              <Link data-testid="diploma-contact-link" href={contactHref} onClick={onNavigate} className="cik-headline flex min-h-[52px] items-center border-t border-cik-line px-4 text-cik-text">
-                {copy.contact}
-              </Link>
-              <a data-testid="diploma-contact-email" href="mailto:contact@scrolly.live" className="cik-footnote flex min-h-[52px] items-center border-t border-cik-line px-4 text-cik-cta">
-                contact@scrolly.live
-              </a>
-              <Link href={aboutHref} onClick={onNavigate} className="cik-headline flex min-h-[52px] items-center border-t border-cik-line px-4 text-cik-text">
+              <div className="flex items-center justify-between gap-3 border-t border-cik-line px-4 py-2.5">
+                <Link data-testid="diploma-contact-link" href={contactHref} onClick={onNavigate} className="text-sm text-cik-text">
+                  {copy.contact}
+                </Link>
+                <a data-testid="diploma-contact-email" href="mailto:contact@scrolly.live" className="text-xs text-pink-600">
+                  contact@scrolly.live
+                </a>
+              </div>
+              <Link href={aboutHref} onClick={onNavigate} className="border-t border-cik-line px-4 py-2.5 text-sm text-cik-text">
                 {copy.about}
               </Link>
-              <Link href={termsHref} onClick={onNavigate} className="cik-headline flex min-h-[52px] items-center border-t border-cik-line px-4 text-cik-text">
+              <Link href={termsHref} onClick={onNavigate} className="border-t border-cik-line px-4 py-2.5 text-sm text-cik-text">
                 {copy.terms}
               </Link>
               {showPwa ? (
@@ -289,7 +291,7 @@ export default function SettingsSheet({
                   type="button"
                   data-testid="diploma-pwa-install-link"
                   onClick={onPwa}
-                  className="cik-headline flex min-h-[52px] items-center border-t border-cik-line px-4 text-left text-cik-text"
+                  className="border-t border-cik-line px-4 py-2.5 text-left text-sm text-cik-text"
                 >
                   {isStandalone ? t.pwaInstalledBtn : t.pwaManualInstallLink}
                 </button>

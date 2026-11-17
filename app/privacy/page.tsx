@@ -18,6 +18,11 @@ export const metadata: Metadata = {
   },
 };
 
-export default function PrivacyPage() {
-  return <PrivacyPolicyView />;
+interface PageProps {
+  searchParams: Promise<{ from?: string }>;
+}
+
+export default async function PrivacyPage({ searchParams }: PageProps) {
+  const query = await searchParams;
+  return <PrivacyPolicyView returnToProfile={query.from === 'profile'} />;
 }

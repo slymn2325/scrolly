@@ -9,7 +9,7 @@ import { fitDocumentTitle } from '@/utils/factSeo';
 export const revalidate = 3600;
 
 interface PageProps {
-  searchParams: Promise<{ lang?: string }>;
+  searchParams: Promise<{ lang?: string; from?: string }>;
 }
 
 function resolveLang(langParam?: string): Language {
@@ -118,6 +118,7 @@ export default async function AboutPage({ searchParams }: PageProps) {
     <TrustPageShell
       routePath="/about"
       lang={lang}
+      returnToProfile={query.from === 'profile'}
       badge={isEn ? 'Editorial Mission & Standards' : 'Editöryal Misyon ve Standartlar'}
       title={
         isEn

@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useMemo } from 'react';
-import { Swords } from 'lucide-react';
 import TopicRadarChart from '@/components/TopicRadarChart';
 import { profileCopy } from '@/components/profile/copy';
 import { type CategoryId, type Language, translations } from '@/i18n/translations';
@@ -15,7 +14,6 @@ interface StatsSummaryProps {
   allFacts: FactCard[];
   onExploreCategory: (category: CategoryId) => void;
   onButtonPop: () => void;
-  onOpenScrolla: () => void;
 }
 
 function formatDay(iso: string): string {
@@ -52,7 +50,6 @@ export default function StatsSummary({
   allFacts,
   onExploreCategory,
   onButtonPop,
-  onOpenScrolla,
 }: StatsSummaryProps) {
   const t = translations[lang];
   const copy = profileCopy(lang);
@@ -125,16 +122,6 @@ export default function StatsSummary({
         </div>
         <p className="cik-footnote mt-2 text-cik-text-2">{league.label}</p>
       </section>
-
-      <button
-        type="button"
-        data-testid="profile-scrolla-card"
-        onClick={onOpenScrolla}
-        className="cik-headline inline-flex h-11 items-center gap-2 self-start rounded-pill bg-cik-pink px-4 text-cik-text shadow-e1"
-      >
-        <Swords size={20} strokeWidth={2} aria-hidden="true" />
-        <span>{copy.scrolla}</span>
-      </button>
     </div>
   );
 }

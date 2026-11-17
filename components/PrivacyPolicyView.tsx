@@ -4,6 +4,7 @@ import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { ChevronLeft, ChevronRight, Cookie, Database, Home, ShieldCheck } from 'lucide-react';
 import HtmlLangSync from '@/components/HtmlLangSync';
+import ProfileReturnControl from '@/components/ProfileReturnControl';
 import SiteTrustFooter from '@/components/SiteTrustFooter';
 import { type Language } from '@/i18n/translations';
 import { loadUserMemory } from '@/utils/userMemory';
@@ -87,7 +88,7 @@ const POLICY_COPY = {
   },
 } as const;
 
-export default function PrivacyPolicyView() {
+export default function PrivacyPolicyView({ returnToProfile = false }: { returnToProfile?: boolean }) {
   const [lang, setLang] = useState<Language>('tr');
 
   useEffect(() => {
@@ -104,14 +105,14 @@ export default function PrivacyPolicyView() {
       <div lang={isEn ? 'en-US' : 'tr-TR'} className="min-h-dvh w-full overflow-x-clip bg-cik-bg text-cik-text">
         <header className="material-thin sticky top-0 z-hud border-b border-cik-line">
           <div className="mx-auto flex max-w-[42.5rem] items-center justify-between gap-3 px-4 py-3">
-            <Link
-              href="/"
-              data-testid="privacy-back-link"
+            <ProfileReturnControl
+              returnToProfile={returnToProfile}
+              testId="privacy-back-link"
               className="cik-footnote inline-flex h-11 items-center gap-2 rounded-pill border border-cik-line bg-cik-surface px-4 text-cik-text"
             >
               <ChevronLeft className="h-5 w-5" aria-hidden="true" />
               <span>{copy.backLabel}</span>
-            </Link>
+            </ProfileReturnControl>
 
             <div
               role="group"
@@ -146,10 +147,13 @@ export default function PrivacyPolicyView() {
 
         <main className="mx-auto max-w-[42.5rem] px-4 pb-8 pt-6">
           <nav aria-label="Breadcrumb" className="cik-footnote mb-4 flex items-center gap-2 text-cik-text-2">
-            <Link href="/" className="inline-flex items-center gap-1 text-cik-text">
+            <ProfileReturnControl
+              returnToProfile={returnToProfile}
+              className="inline-flex items-center gap-1 text-cik-text"
+            >
               <Home className="h-4 w-4" aria-hidden="true" />
               <span>{isEn ? 'Home' : 'Ana sayfa'}</span>
-            </Link>
+            </ProfileReturnControl>
             <ChevronRight className="h-4 w-4" aria-hidden="true" />
             <span className="text-cik-text">{isEn ? 'Privacy' : 'Gizlilik'}</span>
           </nav>

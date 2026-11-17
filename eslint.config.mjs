@@ -71,6 +71,7 @@ const LEGACY_PALETTE_FILES = [
   'components/TopicRadarChart.tsx',
   'components/sketch/BodyHistorySketches.tsx',
   'components/NativeAdSlide.tsx',
+  'components/NotificationsBell.tsx',
   'components/PoweredByGiphyBadge.tsx',
   'components/ProfileHeaderTools.tsx',
   'components/PwaInstallGuideModal.tsx',
