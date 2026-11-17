@@ -1,8 +1,8 @@
 import { NextResponse } from 'next/server';
 import {
   ALLOWED_MEDIA_HOSTS,
+  buildSafeMediaUrlString,
   isBadMediaUrlRequest,
-  safeMediaParts,
 } from '@/lib/mediaProxyPolicy';
 import { checkRateLimit, extractClientIp } from '@/lib/rateLimit';
 
@@ -24,29 +24,9 @@ const ALLOWED_MEDIA_MIME_PREFIXES = [
   'video/mp4',
 ] as const;
 
-function rebuildSafeMediaUrl(parsed: URL): URL | null {
-  const parts = safeMediaParts(parsed);
-  if (!parts) return null;
+function safeMediaFetchUrl(parsed: URL): string | null {
   if (!ALLOWED_MEDIA_HOSTS.has(parsed.hostname.toLowerCase())) return null;
-  if (!ALLOWED_MEDIA_HOSTS.has(parts.verifiedHost)) return null;
-
-  const pathAndQuery = `${parts.pathname}${parts.search}`;
-  if (!pathAndQuery.startsWith('/') || pathAndQuery.startsWith('//') || pathAndQuery.includes('\\')) {
-    return null;
-  }
-
-  const verifiedHost = parts.verifiedHost;
-  const safeUrl = new URL(pathAndQuery, `https://${verifiedHost}`);
-  if (
-    safeUrl.protocol !== 'https:' ||
-    safeUrl.hostname !== verifiedHost ||
-    safeUrl.username !== '' ||
-    safeUrl.password !== '' ||
-    safeUrl.port !== ''
-  ) {
-    return null;
-  }
-  return safeUrl;
+  return buildSafeMediaUrlString(parsed);
 }
 
 function resolveExtensionFromMime(mimeType: string): string {
@@ -131,12 +111,12 @@ async function fetchWithSafeRedirects(
   let currentUrl = initialUrl;
 
   for (let hop = 0; hop <= MAX_REDIRECT_HOPS; hop += 1) {
-    const safeUrl = rebuildSafeMediaUrl(currentUrl);
+    const safeUrl = safeMediaFetchUrl(currentUrl);
     if (!safeUrl) {
       return { ok: false, status: 403, error: 'forbidden_url' };
     }
 
-    const res = await fetch(safeUrl.toString(), {
+    const res = await fetch(safeUrl, {
       method: 'GET',
       redirect: 'manual',
       signal: AbortSignal.timeout(UPSTREAM_TIMEOUT_MS),
@@ -159,7 +139,7 @@ async function fetchWithSafeRedirects(
         return { ok: false, status: 403, error: 'forbidden_redirect_target' };
       }
 
-      if (!rebuildSafeMediaUrl(redirectedUrl)) {
+      if (!safeMediaFetchUrl(redirectedUrl)) {
         return { ok: false, status: 403, error: 'forbidden_redirect_target' };
       }
 
@@ -170,7 +150,7 @@ async function fetchWithSafeRedirects(
     if (res.url) {
       try {
         const resolvedUrl = new URL(res.url);
-        if (!rebuildSafeMediaUrl(resolvedUrl)) {
+        if (!safeMediaFetchUrl(resolvedUrl)) {
           await res.body?.cancel().catch(() => {});
           return { ok: false, status: 403, error: 'forbidden_redirect_target' };
         }
@@ -180,7 +160,7 @@ async function fetchWithSafeRedirects(
       }
     }
 
-    return { ok: true, response: res, finalUrl: safeUrl };
+    return { ok: true, response: res, finalUrl: new URL(safeUrl) };
   }
 
   return { ok: false, status: 502, error: 'too_many_redirects' };
@@ -234,7 +214,7 @@ export async function GET(request: Request) {
     );
   }
 
-  if (!ALLOWED_MEDIA_HOSTS.has(targetUrl.hostname.toLowerCase()) || !rebuildSafeMediaUrl(targetUrl)) {
+  if (!safeMediaFetchUrl(targetUrl)) {
     return NextResponse.json(
       { ok: false, error: 'forbidden_url' },
       { status: 403, headers: NO_STORE_HEADERS }

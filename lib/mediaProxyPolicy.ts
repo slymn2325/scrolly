@@ -24,12 +24,6 @@ const ALLOWED_MEDIA_HOST_LIST = [
 
 export const ALLOWED_MEDIA_HOSTS: ReadonlySet<string> = new Set(ALLOWED_MEDIA_HOST_LIST);
 
-export interface SafeMediaParts {
-  verifiedHost: string;
-  pathname: string;
-  search: string;
-}
-
 function stripHostDecorations(hostname: string): string {
   let host = hostname.trim().toLowerCase();
   if (host.startsWith('[') && host.endsWith(']')) {
@@ -123,48 +117,191 @@ export function isBlockedMediaHost(hostname: string): boolean {
   return false;
 }
 
-/**
- * Returns the allowlisted host constant when `hostname` matches exactly.
- * The returned string is one of ALLOWED_MEDIA_HOST_LIST, not the request bytes.
- */
-export function verifiedMediaHost(hostname: string): string | null {
-  const host = hostname.toLowerCase();
-  if (!ALLOWED_MEDIA_HOSTS.has(host)) return null;
-  for (const allowed of ALLOWED_MEDIA_HOST_LIST) {
-    if (allowed === host) return allowed;
-  }
-  return null;
-}
-
 export function isBadMediaUrlRequest(parsed: URL): boolean {
   return parsed.protocol !== 'https:' || parsed.username !== '' || parsed.password !== '';
 }
 
-function isSafePathAndQuery(pathAndQuery: string): boolean {
-  return (
-    pathAndQuery.startsWith('/') &&
-    !pathAndQuery.startsWith('//') &&
-    !pathAndQuery.includes('\\') &&
-    !pathAndQuery.includes('\0')
-  );
+/**
+ * Each branch returns a string literal so the request origin is not the caller's host text.
+ */
+function allowedMediaOrigin(hostname: string): string | null {
+  switch (hostname) {
+    case 'images.pexels.com':
+      return 'https://images.pexels.com';
+    case 'videos.pexels.com':
+      return 'https://videos.pexels.com';
+    case 'cdn.pixabay.com':
+      return 'https://cdn.pixabay.com';
+    case 'pixabay.com':
+      return 'https://pixabay.com';
+    case 'media.giphy.com':
+      return 'https://media.giphy.com';
+    case 'media0.giphy.com':
+      return 'https://media0.giphy.com';
+    case 'media1.giphy.com':
+      return 'https://media1.giphy.com';
+    case 'media2.giphy.com':
+      return 'https://media2.giphy.com';
+    case 'media3.giphy.com':
+      return 'https://media3.giphy.com';
+    case 'media4.giphy.com':
+      return 'https://media4.giphy.com';
+    case 'i.giphy.com':
+      return 'https://i.giphy.com';
+    case 'upload.wikimedia.org':
+      return 'https://upload.wikimedia.org';
+    case 'commons.wikimedia.org':
+      return 'https://commons.wikimedia.org';
+    case 'images.unsplash.com':
+      return 'https://images.unsplash.com';
+    case 'apod.nasa.gov':
+      return 'https://apod.nasa.gov';
+    case 'images-assets.nasa.gov':
+      return 'https://images-assets.nasa.gov';
+    default:
+      return null;
+  }
+}
+
+function encodePathSegment(decoded: string): string {
+  return encodeURIComponent(decoded)
+    .replaceAll('%3A', ':')
+    .replaceAll('%2C', ',')
+    .replaceAll('%40', '@')
+    .replaceAll('%24', '$')
+    .replaceAll('%3B', ';')
+    .replaceAll('%2B', '+')
+    .replaceAll('%3D', '=')
+    .replaceAll('%26', '&');
+}
+
+function encodeMediaPath(pathname: string): string | null {
+  if (pathname === '/') return '/';
+  if (
+    !pathname.startsWith('/') ||
+    pathname.startsWith('//') ||
+    pathname.includes('\\') ||
+    pathname.includes('\0')
+  ) {
+    return null;
+  }
+
+  const segments = pathname.split('/');
+  let encoded = '';
+  for (let index = 1; index < segments.length; index += 1) {
+    const segment = segments[index] ?? '';
+    if (segment.length === 0 || segment === '.' || segment === '..') return null;
+    let decoded: string;
+    try {
+      decoded = decodeURIComponent(segment);
+    } catch {
+      return null;
+    }
+    if (
+      decoded.length === 0 ||
+      decoded === '.' ||
+      decoded === '..' ||
+      decoded.includes('/') ||
+      decoded.includes('\\') ||
+      decoded.includes('\0') ||
+      decoded.includes('?') ||
+      decoded.includes('#')
+    ) {
+      return null;
+    }
+    encoded += `/${encodePathSegment(decoded)}`;
+  }
+  return encoded.length > 0 ? encoded : null;
+}
+
+function encodeMediaQuery(search: string): string | null {
+  if (search.length === 0) return '';
+  if (!search.startsWith('?') || search.includes('\\') || search.includes('\0') || search.includes('#')) {
+    return null;
+  }
+
+  const params = new URLSearchParams(search);
+  let encoded = '';
+  for (const [key, value] of params) {
+    const pair = `${encodeURIComponent(key)}=${encodeURIComponent(value)}`;
+    encoded = encoded.length === 0 ? `?${pair}` : `${encoded}&${pair}`;
+  }
+  return encoded;
+}
+
+function confirmedMediaUrl(safeUrl: string, hostname: string): string | null {
+  let rebuilt: URL;
+  try {
+    rebuilt = new URL(safeUrl);
+  } catch {
+    return null;
+  }
+  if (
+    rebuilt.protocol !== 'https:' ||
+    rebuilt.hostname !== hostname ||
+    rebuilt.username !== '' ||
+    rebuilt.password !== '' ||
+    rebuilt.port !== '' ||
+    !ALLOWED_MEDIA_HOSTS.has(rebuilt.hostname)
+  ) {
+    return null;
+  }
+  return safeUrl;
 }
 
 /**
- * Validate a parsed URL and return path pieces tied to an allowlisted host.
- * Callers must rebuild `new URL(pathname + search, https://verifiedHost)` before fetch.
+ * Absolute https URL whose host is an allowlist literal and whose path and
+ * query were passed through encodeURIComponent. Returns null when the URL
+ * must not be fetched.
  */
-export function safeMediaParts(parsed: URL): SafeMediaParts | null {
+export function buildSafeMediaUrlString(parsed: URL): string | null {
   if (parsed.protocol !== 'https:') return null;
   if (parsed.username !== '' || parsed.password !== '') return null;
   if (parsed.port !== '') return null;
   if (isBlockedMediaHost(parsed.hostname)) return null;
-  const verifiedHost = verifiedMediaHost(parsed.hostname.toLowerCase());
-  if (!verifiedHost || !ALLOWED_MEDIA_HOSTS.has(parsed.hostname.toLowerCase())) return null;
-  const pathAndQuery = `${parsed.pathname}${parsed.search}`;
-  if (!isSafePathAndQuery(pathAndQuery)) return null;
-  return {
-    verifiedHost,
-    pathname: parsed.pathname,
-    search: parsed.search,
-  };
+
+  const hostname = parsed.hostname.toLowerCase();
+  if (!ALLOWED_MEDIA_HOSTS.has(hostname)) return null;
+  if (!allowedMediaOrigin(hostname)) return null;
+
+  const path = encodeMediaPath(parsed.pathname);
+  const query = encodeMediaQuery(parsed.search);
+  if (path === null || query === null) return null;
+
+  switch (hostname) {
+    case 'images.pexels.com':
+      return confirmedMediaUrl(`https://images.pexels.com${path}${query}`, hostname);
+    case 'videos.pexels.com':
+      return confirmedMediaUrl(`https://videos.pexels.com${path}${query}`, hostname);
+    case 'cdn.pixabay.com':
+      return confirmedMediaUrl(`https://cdn.pixabay.com${path}${query}`, hostname);
+    case 'pixabay.com':
+      return confirmedMediaUrl(`https://pixabay.com${path}${query}`, hostname);
+    case 'media.giphy.com':
+      return confirmedMediaUrl(`https://media.giphy.com${path}${query}`, hostname);
+    case 'media0.giphy.com':
+      return confirmedMediaUrl(`https://media0.giphy.com${path}${query}`, hostname);
+    case 'media1.giphy.com':
+      return confirmedMediaUrl(`https://media1.giphy.com${path}${query}`, hostname);
+    case 'media2.giphy.com':
+      return confirmedMediaUrl(`https://media2.giphy.com${path}${query}`, hostname);
+    case 'media3.giphy.com':
+      return confirmedMediaUrl(`https://media3.giphy.com${path}${query}`, hostname);
+    case 'media4.giphy.com':
+      return confirmedMediaUrl(`https://media4.giphy.com${path}${query}`, hostname);
+    case 'i.giphy.com':
+      return confirmedMediaUrl(`https://i.giphy.com${path}${query}`, hostname);
+    case 'upload.wikimedia.org':
+      return confirmedMediaUrl(`https://upload.wikimedia.org${path}${query}`, hostname);
+    case 'commons.wikimedia.org':
+      return confirmedMediaUrl(`https://commons.wikimedia.org${path}${query}`, hostname);
+    case 'images.unsplash.com':
+      return confirmedMediaUrl(`https://images.unsplash.com${path}${query}`, hostname);
+    case 'apod.nasa.gov':
+      return confirmedMediaUrl(`https://apod.nasa.gov${path}${query}`, hostname);
+    case 'images-assets.nasa.gov':
+      return confirmedMediaUrl(`https://images-assets.nasa.gov${path}${query}`, hostname);
+    default:
+      return null;
+  }
 }
