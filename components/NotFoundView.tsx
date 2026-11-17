@@ -20,6 +20,8 @@ export default function NotFoundView({ lang = 'tr' }: NotFoundViewProps) {
             width={80}
             height={80}
             decoding="async"
+            loading="lazy"
+            fetchPriority="low"
             className="h-20 w-20 object-contain drop-shadow-sm"
           />
         </div>

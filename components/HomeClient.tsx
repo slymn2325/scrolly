@@ -33,7 +33,7 @@ import WelcomeExploreModal, {
   persistWelcomeDismissed,
   readValuePropDismissed,
 } from '@/components/WelcomeExploreModal';
-import MemoryQuizCard, { type ActiveQuizMode } from '@/components/MemoryQuizCard';
+import type { ActiveQuizMode } from '@/components/MemoryQuizCard';
 import OfflineManager from '@/components/OfflineManager';
 import PwaInstallGuideModal from '@/components/PwaInstallGuideModal';
 import PwaInstallPrompt, {
@@ -42,8 +42,6 @@ import PwaInstallPrompt, {
   type BeforeInstallPromptEvent,
 } from '@/components/PwaInstallPrompt';
 import type { QuizModeChoice } from '@/components/QuizHubModal';
-import ShareResultModal from '@/components/ShareResultModal';
-import StoryShareModal from '@/components/StoryShareModal';
 import TikTokFeed, { type FeedSlideItem, type TikTokFeedHandle } from '@/components/TikTokFeed';
 import { DIAGRAM_INTERACTED_STORAGE_KEY } from '@/components/InteractiveSketchArt';
 import {
@@ -160,10 +158,13 @@ import {
   type UserMemoryState,
 } from '@/utils/userMemory';
 
+const MemoryQuizCard = dynamic(() => import('@/components/MemoryQuizCard'), { ssr: false });
 const LeaderboardModal = dynamic(() => import('@/components/LeaderboardModal'), { ssr: false });
 const QuizHubModal = dynamic(() => import('@/components/QuizHubModal'), { ssr: false });
 const DuelModal = dynamic(() => import('@/components/DuelModal'), { ssr: false });
 const DiplomaProfileModal = dynamic(() => import('@/components/DiplomaProfileModal'), { ssr: false });
+const StoryShareModal = dynamic(() => import('@/components/StoryShareModal'), { ssr: false });
+const ShareResultModal = dynamic(() => import('@/components/ShareResultModal'), { ssr: false });
 
 interface ActiveQuizSession {
   key: string;
@@ -806,14 +807,16 @@ export default function HomeClient({ initialFacts, initialVocabulary, initialLan
         }
       }
 
+      const FIRST_PAGE_LIMIT = 30;
       const PAGE_SIZE = 200;
       const MAX_PAGES = 20;
       let workingPool: FactCardType[] | undefined;
       let loadedAnyPage = false;
+      let offset = 0;
 
       for (let page = 0; page < MAX_PAGES && !cancelled; page += 1) {
-        const offset = page * PAGE_SIZE;
-        const pageRes = await fetchPaginatedFactsFromApi({ offset, limit: PAGE_SIZE });
+        const limit = page === 0 ? FIRST_PAGE_LIMIT : PAGE_SIZE;
+        const pageRes = await fetchPaginatedFactsFromApi({ offset, limit });
         if (!pageRes || pageRes.facts.length === 0 || cancelled) {
           break;
         }
@@ -825,6 +828,7 @@ export default function HomeClient({ initialFacts, initialVocabulary, initialLan
           }
         }
         workingPool = applyFactBatch(pageRes.facts) ?? workingPool;
+        offset += pageRes.facts.length;
         if (!pageRes.hasMore) {
           break;
         }
