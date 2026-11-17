@@ -20,6 +20,8 @@ import LazyAuthPrompt, {
   persistAuthNudgeDismissed,
   type AuthTriggerSource,
 } from '@/components/LazyAuthPrompt';
+import { GUESS_CORRECT_EVENT } from '@/components/celebrations/events';
+import { clearCelebrationFlags } from '@/components/celebrations/storage';
 import MiniOnboardingHint, {
   clearMiniOnboardingDismissed,
   persistMiniOnboardingDismissed,
@@ -460,7 +462,7 @@ export default function HomeClient({ initialFacts, initialVocabulary, initialLan
     quizDate?: string;
   } | null>(null);
   const [showWelcome, setShowWelcome] = useState(false);
-  const [valuePropDismissed, setValuePropDismissed] = useState(true);
+  const [, setValuePropDismissed] = useState(true);
   const [ambientAccent, setAmbientAccent] = useState('#818CF8');
   const [authUser, setAuthUser] = useState<AuthUserDto | null>(null);
   const authUserRef = useRef<AuthUserDto | null>(null);
@@ -1335,6 +1337,9 @@ export default function HomeClient({ initialFacts, initialVocabulary, initialLan
       vibrateTap(12);
       if (accurate) {
         playDing(soundEnabled);
+        if (xpAmount >= 20 && typeof window !== 'undefined') {
+          window.dispatchEvent(new CustomEvent(GUESS_CORRECT_EVENT, { detail: { xp: xpAmount } }));
+        }
       } else {
         playPop(soundEnabled);
       }
@@ -1693,6 +1698,7 @@ export default function HomeClient({ initialFacts, initialVocabulary, initialLan
     clearValuePropDismissed();
     clearAuthNudgeDismissed();
     clearMiniOnboardingDismissed();
+    clearCelebrationFlags();
     clearScrollaPlayerId();
     try {
       window.localStorage.removeItem(DIAGRAM_INTERACTED_STORAGE_KEY);
@@ -2012,16 +2018,21 @@ export default function HomeClient({ initialFacts, initialVocabulary, initialLan
         <OfflineManager lang={lang} />
 
         <MiniOnboardingHint
-          visible={
-            showExploreFeed &&
-            !showWelcome &&
-            !chromeBlocked &&
-            valuePropDismissed &&
-            !miniOnboardingDismissed
-          }
+          visible={showExploreFeed && !showWelcome && !chromeBlocked && !miniOnboardingDismissed}
           xp={memory.xp}
           lang={lang}
           darkMode={isDark}
+          cookieAccepted={memory.cookieAccepted}
+          onSelectCategory={handleSelectCategory}
+          onConsent={() => {
+            vibrateTap(12);
+            playPop(soundEnabled);
+            setMemory((prev) => {
+              const updated = { ...prev, cookieAccepted: true };
+              saveUserMemory(updated);
+              return updated;
+            });
+          }}
           onDismiss={() => {
             persistMiniOnboardingDismissed();
             setMiniOnboardingDismissed(true);

@@ -45,7 +45,6 @@ const LEGACY_PALETTE_FILES = [
   'components/LazyAuthPrompt.tsx',
   'components/LeaderboardModal.tsx',
   'components/MemoryQuizCard.tsx',
-  'components/MiniOnboardingHint.tsx',
   'components/ContactInteractiveSection.tsx',
   'components/CookieBanner.tsx',
   'components/DailySprintLanding.tsx',
