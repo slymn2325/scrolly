@@ -91,6 +91,7 @@ const nextConfig = {
       { protocol: 'https', hostname: '**.pexels.com' },
       { protocol: 'https', hostname: '**.pixabay.com' },
       { protocol: 'https', hostname: 'upload.wikimedia.org' },
+      { protocol: 'https', hostname: 'thumb.wikimedia.org' },
     ],
   },
   experimental: {

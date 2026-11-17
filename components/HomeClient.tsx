@@ -4,7 +4,6 @@ import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useSta
 import dynamic from 'next/dynamic';
 import { useRouter } from 'next/navigation';
 import { AnimatePresence, motion } from 'framer-motion';
-import { X } from 'lucide-react';
 import CookieBanner from '@/components/CookieBanner';
 import DeferredAdSense from '@/components/DeferredAdSense';
 import ErrorBoundary from '@/components/ErrorBoundary';
@@ -508,7 +507,7 @@ export default function HomeClient({ initialFacts, initialVocabulary, initialLan
   const [incomingDuel, setIncomingDuel] = useState<DuelPayload | null>(null);
   const [incomingRoomCode, setIncomingRoomCode] = useState<string | null>(null);
   const [storyShareFact, setStoryShareFact] = useState<FactCardType | null>(null);
-  const [detailState, setDetailState] = useState<{
+  const [activeDetailCard, setActiveDetailCard] = useState<{
     fact: FactCardType;
     resolvedGifUrl?: string | null;
   } | null>(null);
@@ -535,7 +534,6 @@ export default function HomeClient({ initialFacts, initialVocabulary, initialLan
   authUserRef.current = authUser;
   const [authPromptOpen, setAuthPromptOpen] = useState(false);
   const [authNudgeOpen, setAuthNudgeOpen] = useState(false);
-  const [insightDrawerOpen, setInsightDrawerOpen] = useState(false);
   const [authTrigger, setAuthTrigger] = useState<AuthTriggerSource | string>('manual');
   const [miniOnboardingDismissed, setMiniOnboardingDismissed] = useState(true);
   const guestSaveNudgeShownRef = useRef(false);
@@ -1262,27 +1260,17 @@ export default function HomeClient({ initialFacts, initialVocabulary, initialLan
       setActiveQuiz(null);
       setActiveTab('duel');
     };
-    const onSection = (event: Event) => {
-      const section = (event as CustomEvent<{ section?: string }>).detail?.section;
-      if (section === 'leaderboard') setActiveTab('leaderboard');
-      if (section === 'quiz') {
-        setActiveQuiz(null);
-        setActiveTab('quiz');
-      }
-    };
     window.addEventListener('scrolly-toggle-theme', onTheme);
     window.addEventListener('scrolly-set-appearance', onAppearance as EventListener);
     window.addEventListener('scrolly-set-cookie', onCookie as EventListener);
     window.addEventListener('scrolly-toggle-sound', onSound);
     window.addEventListener('scrolly-open-duel', onDuel);
-    window.addEventListener('scrolly-quiz-section', onSection as EventListener);
     return () => {
       window.removeEventListener('scrolly-toggle-theme', onTheme);
       window.removeEventListener('scrolly-set-appearance', onAppearance as EventListener);
       window.removeEventListener('scrolly-set-cookie', onCookie as EventListener);
       window.removeEventListener('scrolly-toggle-sound', onSound);
       window.removeEventListener('scrolly-open-duel', onDuel);
-      window.removeEventListener('scrolly-quiz-section', onSection as EventListener);
     };
   }, [handleToggleDarkMode, handleToggleSound]);
 
@@ -1296,7 +1284,7 @@ export default function HomeClient({ initialFacts, initialVocabulary, initialLan
   const handleSelectCategory = (cat: CategoryFilter) => {
     vibrateTap(12);
     playPop(soundEnabled);
-    setDetailState(null);
+    setActiveDetailCard(null);
     setShowPwaGuideModal(false);
     restoredFeedSessionRef.current = null;
     requestedFactSlugRef.current = null;
@@ -1587,7 +1575,7 @@ export default function HomeClient({ initialFacts, initialVocabulary, initialLan
       if (detail?.tab !== 'diploma') return;
       if (detail.section === 'vocab') setNotebookFocus((current) => current + 1);
       setActiveQuiz(null);
-      setDetailState(null);
+      setActiveDetailCard(null);
       setStoryShareFact(null);
       setShareModalData(null);
       setActiveTab('diploma');
@@ -1741,9 +1729,9 @@ export default function HomeClient({ initialFacts, initialVocabulary, initialLan
     vibrateTap(12);
     playPop(soundEnabled);
     const hadSubPage = Boolean(
-      detailState || storyShareFact || shareModalData || showPwaGuideModal
+      activeDetailCard || storyShareFact || shareModalData || showPwaGuideModal
     );
-    setDetailState(null);
+    setActiveDetailCard(null);
     setShowPwaGuideModal(false);
     setStoryShareFact(null);
     setShareModalData(null);
@@ -1786,7 +1774,7 @@ export default function HomeClient({ initialFacts, initialVocabulary, initialLan
   const closeOverlayToExplore = () => {
     vibrateTap(12);
     playPop(soundEnabled);
-    setDetailState(null);
+    setActiveDetailCard(null);
     setShowPwaGuideModal(false);
     setStoryShareFact(null);
     setShareModalData(null);
@@ -1851,7 +1839,7 @@ export default function HomeClient({ initialFacts, initialVocabulary, initialLan
     setActiveQuiz(null);
     setShareModalData(null);
     setStoryShareFact(null);
-    setDetailState(null);
+    setActiveDetailCard(null);
     setManualPwaOpen(false);
     setShowPwaGuideModal(false);
     setShowWelcome(false);
@@ -2072,7 +2060,7 @@ export default function HomeClient({ initialFacts, initialVocabulary, initialLan
 
       <div
         data-testid="reels-desktop-grid"
-        className="relative mx-auto flex h-full min-h-0 w-full min-w-0 max-w-[1520px] lg:grid lg:grid-cols-[232px_minmax(0,1fr)] xl:grid-cols-[232px_minmax(0,1fr)_320px]"
+        className="relative mx-auto flex h-full min-h-0 w-full min-w-0 max-w-[1520px] lg:grid lg:grid-cols-[232px_minmax(0,1fr)]"
       >
       {/* Left rail: icons-only 768–1279, full labels ≥1280 */}
       <DesktopLeftNav
@@ -2110,7 +2098,7 @@ export default function HomeClient({ initialFacts, initialVocabulary, initialLan
       >
         <div
           data-testid="reels-stage-row"
-          className="relative z-10 flex h-full w-full items-stretch justify-center md:items-center"
+          className="relative z-10 flex h-full w-full items-stretch justify-center md:items-center lg:flex-row lg:items-center lg:justify-center lg:gap-6 xl:gap-8"
         >
         <style>{`
           @media (min-width: 768px) and (max-width: 1023px) {
@@ -2139,7 +2127,7 @@ export default function HomeClient({ initialFacts, initialVocabulary, initialLan
         `}</style>
         <div
           data-testid="reels-phone-frame"
-          className="stage-card relative z-10 mx-auto flex h-full w-full min-w-0 flex-none flex-col overflow-hidden bg-cik-bg text-cik-text md:rounded-sticker md:shadow-sticker"
+          className="stage-card relative z-10 flex h-full w-full min-w-0 shrink-0 flex-col overflow-hidden bg-cik-bg text-cik-text md:rounded-sticker md:shadow-sticker"
         >
         <DeferredAdSense />
         <OfflineManager lang={lang} />
@@ -2181,8 +2169,8 @@ export default function HomeClient({ initialFacts, initialVocabulary, initialLan
         <div
           className={
             showExploreFeed
-              ? 'relative h-full w-full'
-              : 'pointer-events-none invisible absolute inset-0 h-full w-full'
+              ? 'relative h-full min-h-0 w-full flex-1'
+              : 'hidden'
           }
           aria-hidden={!showExploreFeed}
         >
@@ -2207,7 +2195,7 @@ export default function HomeClient({ initialFacts, initialVocabulary, initialLan
             onToggleDarkMode={handleToggleDarkMode}
             onToggleSound={handleToggleSound}
             onFlipCard={handleFlipCard}
-            onOpenDetail={(fact, resolvedGifUrl) => setDetailState({ fact, resolvedGifUrl })}
+            onOpenDetail={(fact, resolvedGifUrl) => setActiveDetailCard({ fact, resolvedGifUrl })}
             onDoubleTapLike={handleDoubleTapLike}
             onDwellRead={handleDwellRead}
             onMarkFactSeen={(fact) => {
@@ -2238,40 +2226,27 @@ export default function HomeClient({ initialFacts, initialVocabulary, initialLan
           />
         </div>
 
-        {detailState && (
+        {activeDetailCard && (
           <div
             data-testid="detail-modal-backdrop"
-            className="absolute inset-0 z-50 flex items-center justify-center bg-black/50 p-3"
-            onClick={() => setDetailState(null)}
+            className="absolute inset-0 z-50 flex h-full w-full flex-col bg-cik-bg"
           >
-            <div
-              className="relative h-[min(92%,820px)] w-full max-w-[480px] overflow-hidden rounded-3xl"
-              onClick={(event) => event.stopPropagation()}
-            >
-              <button
-                type="button"
-                aria-label={lang === 'tr' ? 'Kapat' : 'Close'}
-                data-testid="detail-modal-close"
-                onClick={() => setDetailState(null)}
-                className="absolute right-3 top-3 z-[80] flex h-10 w-10 items-center justify-center rounded-full bg-white text-slate-900 shadow-md"
-              >
-                <X className="h-4 w-4" />
-              </button>
+            <div className="relative flex h-full min-h-0 w-full flex-col overflow-hidden bg-cik-bg text-cik-text">
               <FactDetailPage
-                key={`fact-detail-${detailState.fact.id}`}
-                fact={detailState.fact}
+                key={`fact-detail-${activeDetailCard.fact.id}`}
+                fact={activeDetailCard.fact}
                 lang={lang}
                 darkMode={isDark}
-                resolvedGifUrl={detailState.resolvedGifUrl}
-                onClose={() => setDetailState(null)}
+                resolvedGifUrl={activeDetailCard.resolvedGifUrl}
+                onClose={() => setActiveDetailCard(null)}
                 onNextCard={() => {
-                  setDetailState(null);
+                  setActiveDetailCard(null);
                   requestAnimationFrame(() => {
                     feedRef.current?.scrollToNext();
                   });
                 }}
                 onOpenDuel={(fact) => {
-                  setDetailState(null);
+                  setActiveDetailCard(null);
                   handleOpenDuelFromCard(fact);
                 }}
                 onButtonPop={() => playPop(soundEnabled)}
@@ -2349,14 +2324,6 @@ export default function HomeClient({ initialFacts, initialVocabulary, initialLan
             onSelectMode={handleStartQuizMode}
             onClose={closeOverlayToExplore}
             onButtonPop={() => playPop(soundEnabled)}
-            onOpenScrolla={() => {
-              vibrateTap(12);
-              playPop(soundEnabled);
-              setActiveQuiz(null);
-              setIncomingDuel(null);
-              setIncomingRoomCode(null);
-              setActiveTab('duel');
-            }}
           />
         )}
 
@@ -2541,11 +2508,7 @@ export default function HomeClient({ initialFacts, initialVocabulary, initialLan
               }}
               onDetail={() => {
                 if (activeFact) {
-                  window.dispatchEvent(
-                    new CustomEvent('scrolly-card-action', {
-                      detail: { factId: activeFact.id, action: 'detail' },
-                    })
-                  );
+                  setActiveDetailCard({ fact: activeFact, resolvedGifUrl: activeFact.gifUrl ?? null });
                   return;
                 }
                 if (activeSlide?.type === 'vocabulary') {
@@ -2556,26 +2519,9 @@ export default function HomeClient({ initialFacts, initialVocabulary, initialLan
                   );
                 }
               }}
-              onDuel={() => {
-                if (activeFact) {
-                  window.dispatchEvent(
-                    new CustomEvent('scrolly-card-action', {
-                      detail: { factId: activeFact.id, action: 'duel' },
-                    })
-                  );
-                  return;
-                }
-                if (seedFact) {
-                  handleOpenDuelFromCard(seedFact);
-                }
-              }}
               onShare={() => {
                 if (!activeFact) return;
-                window.dispatchEvent(
-                  new CustomEvent('scrolly-card-action', {
-                    detail: { factId: activeFact.id, action: 'share' },
-                  })
-                );
+                setStoryShareFact(activeFact);
               }}
               onPrev={() => {
                 vibrateTap(10);
@@ -2586,107 +2532,34 @@ export default function HomeClient({ initialFacts, initialVocabulary, initialLan
                 feedRef.current?.scrollToNext();
               }}
             />
-            {/* 1024–1279: Insight as slide-over drawer */}
-            <button
-              type="button"
-              data-testid="insight-drawer-open-btn"
-              onClick={() => setInsightDrawerOpen(true)}
-              className="cik-footnote absolute right-3 top-1/2 z-rail hidden min-h-11 -translate-y-1/2 items-center rounded-pill bg-cik-surface px-3 text-cik-text shadow-e1 lg:inline-flex xl:hidden"
+            <div
+              data-testid="desktop-insight-column"
+              className="hidden h-full min-h-0 w-[300px] shrink-0 items-center self-center lg:flex xl:w-[320px]"
             >
-              {lang === 'tr' ? 'Bağlam' : 'Context'}
-            </button>
-            {insightDrawerOpen && (
-              <div
-                data-testid="insight-drawer"
-                className="absolute inset-0 z-40 hidden lg:flex xl:hidden"
-              >
-                <button
-                  type="button"
-                  aria-label={lang === 'tr' ? 'Kapat' : 'Close'}
-                  className="cik-scrim absolute inset-0"
-                  onClick={() => setInsightDrawerOpen(false)}
-                />
-                <div className="absolute inset-y-4 right-4 flex w-[min(320px,92vw)]">
-                  <DesktopFeedSideRail
-                    mode="insight"
-                    lang={lang}
-                    darkMode={isDark}
-                    activeFact={activeFact}
-                    activeSlide={activeSlide}
-                    isGuessLocked={activeFact ? Boolean(lockedFactIds[activeFact.id]) : false}
-                    isLiked={activeFactLiked}
-                    isSaved={isCurrentSlideSaved}
-                    likesCount={activeFactLikesCount}
-                    onSave={() => {
-                      if (!activeFact) return;
-                      window.dispatchEvent(
-                        new CustomEvent('scrolly-card-action', {
-                          detail: { factId: activeFact.id, action: 'save' },
-                        })
-                      );
-                    }}
-                    onDetail={() => {
-                      if (!activeFact) return;
-                      window.dispatchEvent(
-                        new CustomEvent('scrolly-card-action', {
-                          detail: { factId: activeFact.id, action: 'detail' },
-                        })
-                      );
-                    }}
-                    onPrev={() => feedRef.current?.scrollToPrev()}
-                    onNext={() => feedRef.current?.scrollToNext()}
-                  />
-                </div>
-              </div>
-            )}
+              <DesktopFeedSideRail
+                mode="insight"
+                lang={lang}
+                darkMode={isDark}
+                activeFact={activeFact}
+                activeSlide={activeSlide}
+                isGuessLocked={activeFact ? Boolean(lockedFactIds[activeFact.id]) : false}
+                isLiked={activeFactLiked}
+                isSaved={isCurrentSlideSaved}
+                likesCount={activeFactLikesCount}
+                onPrev={() => {
+                  vibrateTap(10);
+                  feedRef.current?.scrollToPrev();
+                }}
+                onNext={() => {
+                  vibrateTap(10);
+                  feedRef.current?.scrollToNext();
+                }}
+              />
+            </div>
           </>
         )}
         </div>
       </main>
-
-      {/* ≥1280: 320px pastel context column */}
-      {showExploreFeed && (
-        <div
-          data-testid="desktop-insight-column"
-          className="relative z-10 hidden h-full min-h-0 w-[320px] items-center py-4 xl:flex"
-        >
-          <DesktopFeedSideRail
-            mode="insight"
-            lang={lang}
-            darkMode={isDark}
-            activeFact={activeFact}
-            activeSlide={activeSlide}
-            isGuessLocked={activeFact ? Boolean(lockedFactIds[activeFact.id]) : false}
-            isLiked={activeFactLiked}
-            isSaved={isCurrentSlideSaved}
-            likesCount={activeFactLikesCount}
-            onSave={() => {
-              if (!activeFact) return;
-              window.dispatchEvent(
-                new CustomEvent('scrolly-card-action', {
-                  detail: { factId: activeFact.id, action: 'save' },
-                })
-              );
-            }}
-            onDetail={() => {
-              if (!activeFact) return;
-              window.dispatchEvent(
-                new CustomEvent('scrolly-card-action', {
-                  detail: { factId: activeFact.id, action: 'detail' },
-                })
-              );
-            }}
-            onPrev={() => {
-              vibrateTap(10);
-              feedRef.current?.scrollToPrev();
-            }}
-            onNext={() => {
-              vibrateTap(10);
-              feedRef.current?.scrollToNext();
-            }}
-          />
-        </div>
-      )}
       </div>
 
       {/* Rendered directly under desktop shell so lg:right-6 lg:bottom-6 docks outside the centered stage */}

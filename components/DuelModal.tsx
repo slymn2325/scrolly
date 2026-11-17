@@ -559,22 +559,6 @@ export default function DuelModal({
     }
   };
 
-  const handleEnableBotInLobby = () => {
-    onButtonPop();
-    setIsBotPractice(true);
-    if (botLocalRoom && !botLocalRoom.players.some((p) => p.id === BOT_PLAYER_ID)) {
-      setBotLocalRoom((prev) =>
-        prev
-          ? {
-              ...prev,
-              players: [...prev.players, createSimulatedBotPlayer(lang)],
-              updatedAt: new Date().toISOString(),
-            }
-          : prev
-      );
-    }
-  };
-
   const handleHostStart = async () => {
     if (!activeRoom || activeRoom.hostId !== myPlayerId) return;
     onButtonPop();
@@ -739,7 +723,7 @@ export default function DuelModal({
 
   const reduced = useReducedMotion() === true;
   const shellClass = isPage
-    ? 'absolute inset-0 z-content flex h-full w-full flex-col bg-cik-bg text-cik-text'
+    ? 'relative z-20 flex h-full min-h-0 w-full flex-1 flex-col bg-cik-bg text-cik-text'
     : 'absolute inset-0 z-modal flex h-full w-full items-center justify-center bg-cik-text/30 p-4';
 
   const panelClass = isPage
@@ -858,7 +842,7 @@ export default function DuelModal({
                           }}
                           className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1.5 cik-caption-2 font-extrabold transition-[background-color,border-color,color] duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400 ${
                             active
-                              ? 'border-cik-line bg-ink text-cik-on-cta'
+                              ? 'border-cik-line bg-ink text-white'
                               : 'border-cik-line bg-cik-bg-elevated text-cik-text'
                           }`}
                         >
@@ -893,7 +877,7 @@ export default function DuelModal({
                           }}
                           className={`min-h-[44px] rounded-2xl border-2 text-sm font-black transition ${
                             active
-                              ? 'border-cik-line bg-ink text-cik-on-cta'
+                              ? 'border-cik-line bg-ink text-white'
                               : 'border-cik-line bg-cik-bg-elevated text-cik-text'
                           }`}
                         >
@@ -901,48 +885,6 @@ export default function DuelModal({
                         </button>
                       );
                     })}
-                  </div>
-                </div>
-
-                {/* Explicit solo practice toggle (real P2P online lobby stays default) */}
-                <div className="rounded-2xl border border-cik-line bg-cik-bg-elevated p-3">
-                  <div className="flex items-center justify-between gap-2">
-                    <div className="min-w-0">
-                      <p className="inline-flex items-center gap-1.5 text-xs font-extrabold text-cik-text">
-                        <Bot className="h-3.5 w-3.5 text-cik-cta" />
-                        <span>
-                          {lang === 'tr'
-                            ? 'Yerel Test / Bot Rakip ile Dene'
-                            : 'Practice with Local Bot Opponent'}
-                        </span>
-                      </p>
-                      <p className="mt-0.5 cik-caption-2 font-medium text-cik-text-3">
-                        {lang === 'tr'
-                          ? 'Varsayılan mod gerçek 2 oyunculu odadır; solo test için açabilirsin.'
-                          : 'Default creates a live 2-player room; enable this for instant solo practice.'}
-                      </p>
-                    </div>
-                    <button
-                      type="button"
-                      role="switch"
-                      aria-checked={isBotPractice}
-                      data-testid="duel-bot-toggle-setup"
-                      onClick={() => {
-                        onButtonPop();
-                        setIsBotPractice((prev) => !prev);
-                      }}
-                      className={`relative inline-flex h-7 w-12 shrink-0 items-center rounded-full border transition-colors ${
-                        isBotPractice
-                          ? 'border-violet-600 bg-cik-cta'
-                          : 'border-cik-line bg-cik-pink'
-                      }`}
-                    >
-                      <span
-                        className={`inline-block h-5 w-5 transform rounded-full bg-cik-bg-elevated shadow transition-transform ${
-                          isBotPractice ? 'translate-x-6' : 'translate-x-0.5'
-                        }`}
-                      />
-                    </button>
                   </div>
                 </div>
 
@@ -960,13 +902,9 @@ export default function DuelModal({
                       ? lang === 'tr'
                         ? 'Oda kuruluyor...'
                         : 'Creating room...'
-                      : isBotPractice
-                        ? lang === 'tr'
-                          ? 'Bot Rakip ile Odayı Aç'
-                          : 'Open Solo Bot Lobby'
-                        : lang === 'tr'
-                          ? 'Scrolla Odası Kur'
-                          : 'Create Scrolla Room'}
+                      : lang === 'tr'
+                        ? 'Scrolla Odası Kur'
+                        : 'Create Scrolla Room'}
                   </span>
                 </motion.button>
                 </section>
@@ -1226,21 +1164,6 @@ export default function DuelModal({
                           1/2
                         </span>
                       </div>
-                      {isHost && activeRoom.status === 'lobby' && (
-                        <button
-                          type="button"
-                          data-testid="duel-bot-toggle-lobby"
-                          onClick={handleEnableBotInLobby}
-                          className="inline-flex items-center gap-1.5 rounded-full border border-cik-line bg-cik-pink px-3 py-1.5 cik-caption-2 font-extrabold text-cik-text transition hover:bg-cik-surface"
-                        >
-                          <Bot className="h-3.5 w-3.5" />
-                          <span>
-                            {lang === 'tr'
-                              ? 'Yerel Test / Bot Rakip ile Dene'
-                              : 'Practice vs Local Bot'}
-                          </span>
-                        </button>
-                      )}
                     </div>
                   )}
                 </div>
@@ -1351,9 +1274,7 @@ export default function DuelModal({
                   </div>
                 )}
 
-                {/* Share link + Social (real P2P server rooms only) */}
-                {!botLocalRoom ? (
-                  <div className="space-y-2.5 pt-1">
+                <div className="space-y-2.5 pt-1">
                     <div className="rounded-2xl border border-cik-line bg-cik-surface-2 p-3">
                       <p
                         data-testid="duel-link-preview"
@@ -1403,21 +1324,6 @@ export default function DuelModal({
                       </motion.a>
                     </div>
                   </div>
-                ) : (
-                  <div
-                    data-testid="duel-bot-mode-note"
-                    className="rounded-2xl border border-cik-line bg-cik-pink px-3.5 py-2.5 text-center cik-caption-2 font-bold text-cik-text"
-                  >
-                    <span className="inline-flex items-center justify-center gap-1.5">
-                      <Bot className="h-3.5 w-3.5 shrink-0 text-cik-cta" aria-hidden="true" />
-                      <span>
-                        {lang === 'tr'
-                          ? 'Yerel Test / Bot modu aktif: arkadaş davet linki için normal oda kurabilirsin.'
-                          : 'Local Bot Practice active: switch off Bot mode to invite a friend online.'}
-                      </span>
-                    </span>
-                  </div>
-                )}
 
                 <button
                   type="button"

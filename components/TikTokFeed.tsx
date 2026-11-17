@@ -663,17 +663,13 @@ const TikTokFeed = forwardRef<TikTokFeedHandle, TikTokFeedProps>(function TikTok
         data-chrome-blocked={chromeBlocked ? 'true' : 'false'}
         inert={chromeBlocked ? true : undefined}
         aria-hidden={chromeBlocked || undefined}
-        className={`material-thin pointer-events-none absolute inset-x-0 top-0 z-hud flex flex-nowrap items-center gap-2 px-4 transition-[transform,opacity] duration-150 motion-reduce:translate-y-0 motion-reduce:transition-none ${
+        className={`pointer-events-none absolute left-3 right-3 top-3 z-20 flex items-center justify-between gap-2 ${
           chromeBlocked
             ? 'pointer-events-none opacity-0'
             : hudTraveling
               ? '-translate-y-1 opacity-[0.92]'
               : 'opacity-100'
         }`}
-        style={{
-          height: 'calc(56px + env(safe-area-inset-top, 0px))',
-          paddingTop: 'env(safe-area-inset-top, 0px)',
-        }}
       >
         <BrandLogo size={32} id="feed-header-brand" className="pointer-events-none shrink-0 lg:hidden" />
         <motion.button
@@ -994,6 +990,7 @@ function CategoryPickerSheet({
                 event.preventDefault();
                 event.stopPropagation();
                 onPick(cat.id);
+                onClose();
               }}
               data-testid={`category-option-${cat.id}`}
               aria-pressed={isActive}

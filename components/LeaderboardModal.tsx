@@ -1,7 +1,5 @@
 'use client';
 
-import QuizSectionSwitch from '@/components/QuizSectionSwitch';
-
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { motion, useReducedMotion } from 'framer-motion';
 import { Button, EmptyState, IconButton, LeagueBadge, Skeleton } from '@/components/cikartma';
@@ -215,7 +213,7 @@ export default function LeaderboardModal({
   if (!open) return null;
 
   const shell = isPage
-    ? 'absolute inset-0 z-content flex h-full w-full flex-col bg-cik-bg text-cik-text'
+    ? 'relative z-20 flex h-full min-h-0 w-full flex-1 flex-col bg-cik-bg text-cik-text'
     : 'absolute inset-0 z-modal flex h-full w-full items-center justify-center bg-cik-text/30 p-4';
   const panel = isPage
     ? 'relative flex h-full w-full flex-col overflow-hidden px-4 pt-[calc(env(safe-area-inset-top)+1rem)] pb-[calc(env(safe-area-inset-bottom)+6rem)] md:px-6 lg:px-8 lg:pb-8 lg:pt-8'
@@ -246,7 +244,6 @@ export default function LeaderboardModal({
 
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0 flex-1">
-            <QuizSectionSwitch section="leaderboard" lang={lang} />
             <h2 className="cik-title-3 text-cik-text">{t.leaderboardTitle}</h2>
             <p className="cik-footnote mt-1 inline-flex items-center gap-2 text-cik-text-2">
               <Radio

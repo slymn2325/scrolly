@@ -334,7 +334,7 @@ export default function DiplomaProfileModal({
   if (!open) return null;
 
   const shell = isPage
-    ? 'absolute inset-0 z-20 flex h-full w-full flex-col bg-cik-bg text-cik-text'
+    ? 'relative z-20 flex h-full min-h-0 w-full flex-1 flex-col bg-cik-bg text-cik-text'
     : 'cik-scrim absolute inset-0 z-20 flex h-full w-full items-end justify-center p-4 sm:items-center';
 
   return (
