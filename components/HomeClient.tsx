@@ -8,34 +8,13 @@ import { X } from 'lucide-react';
 import CookieBanner from '@/components/CookieBanner';
 import DeferredAdSense from '@/components/DeferredAdSense';
 import ErrorBoundary from '@/components/ErrorBoundary';
-import FactDetailPage from '@/components/FactDetailPage';
 import { applyGoogleConsentChoice } from '@/utils/consent';
 import type { DuelChallengeConfig } from '@/components/DuelModal';
-import DesktopFeedSideRail from '@/components/DesktopFeedSideRail';
 import DesktopLeftNav from '@/components/DesktopLeftNav';
 import IosFloatingIslandDock, { type DockTabId } from '@/components/IosFloatingIslandDock';
-import LazyAuthPrompt, {
-  clearAuthNudgeDismissed,
-  isAuthNudgeCoolingDown,
-  persistAuthNudgeDismissed,
-  type AuthTriggerSource,
-} from '@/components/LazyAuthPrompt';
-import MiniOnboardingHint, {
-  clearMiniOnboardingDismissed,
-  persistMiniOnboardingDismissed,
-  readMiniOnboardingDismissed,
-} from '@/components/MiniOnboardingHint';
-import WelcomeExploreModal, {
-  clearNicknameAsked,
-  clearValuePropDismissed,
-  clearWelcomeDismissed,
-  consumeNicknamePrompt,
-  persistWelcomeDismissed,
-  readValuePropDismissed,
-} from '@/components/WelcomeExploreModal';
+import type { AuthTriggerSource } from '@/components/LazyAuthPrompt';
 import type { ActiveQuizMode } from '@/components/MemoryQuizCard';
 import OfflineManager from '@/components/OfflineManager';
-import PwaInstallGuideModal from '@/components/PwaInstallGuideModal';
 import PwaInstallPrompt, {
   checkIsStandalone,
   clearPwaDismissed,
@@ -43,14 +22,12 @@ import PwaInstallPrompt, {
 } from '@/components/PwaInstallPrompt';
 import type { QuizModeChoice } from '@/components/QuizHubModal';
 import TikTokFeed, { type FeedSlideItem, type TikTokFeedHandle } from '@/components/TikTokFeed';
-import { DIAGRAM_INTERACTED_STORAGE_KEY } from '@/components/InteractiveSketchArt';
 import {
   translations,
   type CategoryFilter,
   type CategoryId,
   type Language,
 } from '@/i18n/translations';
-import { getVocabularyFacts } from '@/data/vocabularyFacts';
 import type { AuthUserDto } from '@/types/auth';
 import type { VocabularyCard } from '@/types/vocabulary';
 import {
@@ -75,14 +52,7 @@ import {
   type FactCard as FactCardType,
   interleaveFactsByCategory,
 } from '@/utils/factsData';
-import { decodeDuelPayload, type DuelPayload } from '@/utils/duelCodec';
-import {
-  clearScrollaPlayerId,
-  completeScrollaRoom,
-  getOrCreateScrollaPlayerId,
-  resolveFactsByIds,
-  vocabCardToFactCard,
-} from '@/utils/duelLobby';
+import type { DuelPayload } from '@/utils/duelCodec';
 import { clearLikedFacts, isFactLiked, loadLikedFactIds } from '@/utils/likedFacts';
 import {
   clearSavedFacts,
@@ -106,22 +76,13 @@ import {
   vibrateSuccess,
   vibrateTap,
 } from '@/utils/haptics';
-import {
-  fisherYatesShuffle,
-  generateMemoryQuizFromRecent,
-  type QuizQuestionItem,
-} from '@/utils/recommendation';
+import { fisherYatesShuffle, type QuizQuestionItem } from '@/utils/recommendation';
 import {
   buildSeenLookup,
   clearSeenSlugsStorage,
   getFactSeenTimestamp,
   isFactSeen,
 } from '@/utils/seenFacts';
-import {
-  getDailySeedKey,
-  getWeeklySeedKey,
-  pickSeededFacts,
-} from '@/utils/seededRandom';
 import {
   playCelebration,
   playDing,
@@ -132,7 +93,6 @@ import {
   playWhoosh,
   playWrong,
 } from '@/utils/soundEngine';
-import { submitQuizScoreToLeaderboard } from '@/utils/supabaseLeaderboard';
 import { parseIsoDate } from '@/utils/viralShare';
 import {
   addUserXp,
@@ -165,6 +125,110 @@ const DuelModal = dynamic(() => import('@/components/DuelModal'), { ssr: false }
 const DiplomaProfileModal = dynamic(() => import('@/components/DiplomaProfileModal'), { ssr: false });
 const StoryShareModal = dynamic(() => import('@/components/StoryShareModal'), { ssr: false });
 const ShareResultModal = dynamic(() => import('@/components/ShareResultModal'), { ssr: false });
+const WelcomeExploreModal = dynamic(() => import('@/components/WelcomeExploreModal'), { ssr: false });
+const MiniOnboardingHint = dynamic(() => import('@/components/MiniOnboardingHint'), { ssr: false });
+const FactDetailPage = dynamic(() => import('@/components/FactDetailPage'), { ssr: false });
+const PwaInstallGuideModal = dynamic(() => import('@/components/PwaInstallGuideModal'), { ssr: false });
+const DesktopFeedSideRail = dynamic(() => import('@/components/DesktopFeedSideRail'), { ssr: false });
+const LazyAuthPrompt = dynamic(() => import('@/components/LazyAuthPrompt'), { ssr: false });
+
+const WELCOME_DISMISS_KEY = 'scrolly_welcome_dismissed_v1';
+const NICKNAME_ASKED_KEY = 'scrolly_nickname_asked_v1';
+const VALUE_PROP_DISMISSED_KEY = 'scrolly_value_prop_dismissed_v1';
+const MINI_ONBOARDING_DISMISSED_KEY = 'scrolly_mini_onboarding_dismissed_v1';
+const DIAGRAM_INTERACTED_STORAGE_KEY = 'scrolly_diagram_interacted';
+const AUTH_NUDGE_DISMISS_KEY = 'scrolly_auth_nudge_dismissed_until';
+const AUTH_NUDGE_COOLDOWN_MS = 24 * 60 * 60 * 1000;
+
+function readStorageFlag(key: string): boolean {
+  if (typeof window === 'undefined') return true;
+  try {
+    return window.localStorage.getItem(key) === '1';
+  } catch {
+    return false;
+  }
+}
+
+function writeStorageFlag(key: string): void {
+  if (typeof window === 'undefined') return;
+  try {
+    window.localStorage.setItem(key, '1');
+  } catch {
+    // Ignore private-mode storage failures
+  }
+}
+
+function removeStorageFlag(key: string): void {
+  if (typeof window === 'undefined') return;
+  try {
+    window.localStorage.removeItem(key);
+  } catch {
+    // Ignore private-mode storage failures
+  }
+}
+
+function readMiniOnboardingDismissed(): boolean {
+  return readStorageFlag(MINI_ONBOARDING_DISMISSED_KEY);
+}
+
+function persistMiniOnboardingDismissed(): void {
+  writeStorageFlag(MINI_ONBOARDING_DISMISSED_KEY);
+}
+
+function clearMiniOnboardingDismissed(): void {
+  removeStorageFlag(MINI_ONBOARDING_DISMISSED_KEY);
+}
+
+function readValuePropDismissed(): boolean {
+  return readStorageFlag(VALUE_PROP_DISMISSED_KEY);
+}
+
+function persistWelcomeDismissed(): void {
+  writeStorageFlag(WELCOME_DISMISS_KEY);
+}
+
+function clearWelcomeDismissed(): void {
+  removeStorageFlag(WELCOME_DISMISS_KEY);
+}
+
+function clearNicknameAsked(): void {
+  removeStorageFlag(NICKNAME_ASKED_KEY);
+}
+
+function clearValuePropDismissed(): void {
+  removeStorageFlag(VALUE_PROP_DISMISSED_KEY);
+}
+
+function consumeNicknamePrompt(isGeneric: boolean): boolean {
+  if (readStorageFlag(NICKNAME_ASKED_KEY)) return false;
+  writeStorageFlag(NICKNAME_ASKED_KEY);
+  return isGeneric;
+}
+
+function isAuthNudgeCoolingDown(): boolean {
+  if (typeof window === 'undefined') return true;
+  try {
+    const raw = window.localStorage.getItem(AUTH_NUDGE_DISMISS_KEY);
+    if (!raw) return false;
+    const until = Number(raw);
+    return Number.isFinite(until) && Date.now() < until;
+  } catch {
+    return false;
+  }
+}
+
+function persistAuthNudgeDismissed(): void {
+  if (typeof window === 'undefined') return;
+  try {
+    window.localStorage.setItem(AUTH_NUDGE_DISMISS_KEY, String(Date.now() + AUTH_NUDGE_COOLDOWN_MS));
+  } catch {
+    // Ignore private-mode storage failures
+  }
+}
+
+function clearAuthNudgeDismissed(): void {
+  removeStorageFlag(AUTH_NUDGE_DISMISS_KEY);
+}
 
 interface ActiveQuizSession {
   key: string;
@@ -573,23 +637,26 @@ export default function HomeClient({ initialFacts, initialVocabulary, initialLan
       setActiveCategory('vocabulary');
       setDeckFacts([]);
       setActiveFact(null);
-      const vocabBase =
-        initialVocabulary && initialVocabulary.length > 0
-          ? initialVocabulary
-          : getVocabularyFacts();
-      const targetIdx = requestedVocabId
-        ? Math.max(
-            0,
-            vocabBase.findIndex(
-              (c) =>
-                c.id === requestedVocabId ||
-                c.word.toLowerCase() === requestedVocabId.toLowerCase()
+      const placeVocab = (vocabBase: VocabularyCard[]) => {
+        const targetIdx = requestedVocabId
+          ? Math.max(
+              0,
+              vocabBase.findIndex(
+                (c) =>
+                  c.id === requestedVocabId ||
+                  c.word.toLowerCase() === requestedVocabId.toLowerCase()
+              )
             )
-          )
-        : 0;
-      activeSlideIndexRef.current = targetIdx;
-      setExploreSlideIndex(targetIdx);
-      setSuppressInitialFactSync(false);
+          : 0;
+        activeSlideIndexRef.current = targetIdx;
+        setExploreSlideIndex(targetIdx);
+        setSuppressInitialFactSync(false);
+      };
+      if (initialVocabulary && initialVocabulary.length > 0) {
+        placeVocab(initialVocabulary);
+      } else {
+        void import('@/data/vocabularyFacts').then((mod) => placeVocab(mod.getVocabularyFacts()));
+      }
       return;
     }
 
@@ -871,6 +938,10 @@ export default function HomeClient({ initialFacts, initialVocabulary, initialLan
         setActiveTab('duel');
         setShowWelcome(false);
       } else if (duelParam) {
+        const [{ decodeDuelPayload }, { resolveFactsByIds }] = await Promise.all([
+          import('@/utils/duelCodec'),
+          import('@/utils/duelLobby'),
+        ]);
         const decoded = decodeDuelPayload(duelParam);
         if (decoded && decoded.cardIds.length > 0) {
           // Legacy base64 duel URL fallback: opens lobby without auto-starting
@@ -886,6 +957,7 @@ export default function HomeClient({ initialFacts, initialVocabulary, initialLan
           setShowWelcome(false);
         }
       } else if (openQuizParam === 'daily') {
+        const { pickSeededFacts } = await import('@/utils/seededRandom');
         const quizDate = linkedQuizDate || getTodayDateString();
         const dailyFacts = pickSeededFacts(activePool, 5, `daily-${quizDate}`);
         setActiveQuiz({
@@ -1406,63 +1478,67 @@ export default function HomeClient({ initialFacts, initialVocabulary, initialLan
   const handleStartQuizMode = (choice: QuizModeChoice) => {
     vibrateTap(12);
     setActiveTab('quiz');
-
     const pool = allFactsRef.current;
-    if (choice === 'daily') {
-      const quizDate = getTodayDateString();
-      const dailyFacts = pickSeededFacts(pool, 5, `daily-${quizDate}`);
+    const recentIds = memory.recentFiveIds;
+    const seed = seedFact;
+    const vocabAlreadyLoaded = mergedVocabulary;
+    void (async () => {
+      const seeded = await import('@/utils/seededRandom');
+      if (choice === 'daily') {
+        const quizDate = getTodayDateString();
+        const dailyFacts = seeded.pickSeededFacts(pool, 5, `daily-${quizDate}`);
+        setActiveQuiz({
+          key: `daily-${quizDate}-${Date.now()}`,
+          mode: 'daily',
+          questions: dailyFacts.map((fact) => ({ fact })),
+          quizDate,
+        });
+        return;
+      }
+      if (choice === 'weekly') {
+        const weeklyFacts = seeded.pickSeededFacts(pool, 10, seeded.getWeeklySeedKey());
+        setActiveQuiz({
+          key: `weekly-${Date.now()}`,
+          mode: 'weekly',
+          questions: weeklyFacts.map((fact) => ({ fact })),
+        });
+        return;
+      }
+      if (choice === 'vocabulary') {
+        const vocabMod =
+          vocabAlreadyLoaded.length > 0 ? null : await import('@/data/vocabularyFacts');
+        const vocabPool =
+          vocabAlreadyLoaded.length > 0 ? vocabAlreadyLoaded : vocabMod!.getVocabularyFacts();
+        const { vocabCardToFactCard } = await import('@/utils/duelLobby');
+        const pickedVocab = seeded.pickSeededFacts(
+          vocabPool,
+          5,
+          `${seeded.getDailySeedKey()}-vocab-${Date.now()}`
+        );
+        setActiveQuiz({
+          key: `vocabulary-${Date.now()}`,
+          mode: 'vocabulary',
+          questions: pickedVocab.map((card) => ({
+            fact: vocabCardToFactCard(card, vocabPool),
+          })),
+        });
+        return;
+      }
+      const { generateMemoryQuizFromRecent } = await import('@/utils/recommendation');
+      const memQuestions = generateMemoryQuizFromRecent(recentIds, pool, seed);
       setActiveQuiz({
-        key: `daily-${quizDate}-${Date.now()}`,
-        mode: 'daily',
-        questions: dailyFacts.map((fact) => ({ fact })),
-        quizDate,
+        key: `memory-${Date.now()}`,
+        mode: 'memory',
+        questions: memQuestions,
       });
-      return;
-    }
-
-    if (choice === 'weekly') {
-      const weeklyFacts = pickSeededFacts(pool, 10, getWeeklySeedKey());
-      setActiveQuiz({
-        key: `weekly-${Date.now()}`,
-        mode: 'weekly',
-        questions: weeklyFacts.map((fact) => ({ fact })),
-      });
-      return;
-    }
-
-    if (choice === 'vocabulary') {
-      const vocabPool = mergedVocabulary.length > 0 ? mergedVocabulary : getVocabularyFacts();
-      const pickedVocab = pickSeededFacts(
-        vocabPool,
-        5,
-        `${getDailySeedKey()}-vocab-${Date.now()}`
-      );
-      setActiveQuiz({
-        key: `vocabulary-${Date.now()}`,
-        mode: 'vocabulary',
-        questions: pickedVocab.map((card) => ({
-          fact: vocabCardToFactCard(card, vocabPool),
-        })),
-      });
-      return;
-    }
-
-    const memQuestions = generateMemoryQuizFromRecent(
-      memory.recentFiveIds,
-      pool,
-      seedFact
-    );
-    setActiveQuiz({
-      key: `memory-${Date.now()}`,
-      mode: 'memory',
-      questions: memQuestions,
-    });
+    })();
   };
 
   const handleStartDuel = (config: DuelChallengeConfig) => {
     vibrateTap(12);
     const activePool = allFactsRef.current;
     const questionCount = Math.max(1, config.questionCount || config.factIds.length || 5);
+    void import('@/utils/duelLobby').then(({ resolveFactsByIds }) => {
     let duelFacts = resolveFactsByIds(activePool, config.factIds);
     if (duelFacts.length < questionCount) {
       for (const candidate of activePool) {
@@ -1479,6 +1555,7 @@ export default function HomeClient({ initialFacts, initialVocabulary, initialLan
       mode: 'duel',
       questions: duelFacts.map((fact) => ({ fact })),
       duelConfig: config,
+    });
     });
   };
 
@@ -1534,7 +1611,7 @@ export default function HomeClient({ initialFacts, initialVocabulary, initialLan
 
     setMemory(updated);
 
-    submitQuizScoreToLeaderboard({
+    const scorePayload = {
       playerId: updated.playerId,
       nickname: updated.nickname,
       quizMode: storageQuizMode,
@@ -1542,13 +1619,19 @@ export default function HomeClient({ initialFacts, initialVocabulary, initialLan
       durationSec: elapsedSec,
       correctCount: results.filter(Boolean).length,
       questionCount: results.length,
+    };
+    void import('@/utils/supabaseLeaderboard').then(({ submitQuizScoreToLeaderboard }) => {
+      submitQuizScoreToLeaderboard(scorePayload);
     });
 
     const duelPlayerId = duelConfig?.myPlayerId || updated.playerId;
-    if (isRealServerDuel && duelConfig?.duelId) {
-      void completeScrollaRoom(duelConfig.duelId, duelPlayerId, totalBonusXp, {
-        elapsedSec,
-        answers: results,
+    const duelRoomId = duelConfig?.duelId;
+    if (isRealServerDuel && duelRoomId) {
+      void import('@/utils/duelLobby').then(({ completeScrollaRoom }) => {
+        void completeScrollaRoom(duelRoomId, duelPlayerId, totalBonusXp, {
+          elapsedSec,
+          answers: results,
+        });
       });
     }
 
@@ -1564,7 +1647,7 @@ export default function HomeClient({ initialFacts, initialVocabulary, initialLan
       quizDate: finishedSession?.quizDate,
     });
 
-    if (consumeNicknamePrompt(updated.nickname, isGenericDefaultNickname(updated.nickname))) {
+    if (consumeNicknamePrompt(isGenericDefaultNickname(updated.nickname))) {
       setShowWelcome(true);
     }
 
@@ -1672,7 +1755,6 @@ export default function HomeClient({ initialFacts, initialVocabulary, initialLan
     clearValuePropDismissed();
     clearAuthNudgeDismissed();
     clearMiniOnboardingDismissed();
-    clearScrollaPlayerId();
     try {
       window.localStorage.removeItem(DIAGRAM_INTERACTED_STORAGE_KEY);
     } catch {
@@ -1681,8 +1763,10 @@ export default function HomeClient({ initialFacts, initialVocabulary, initialLan
     const { previousDeviceId } = resetTelemetryClientState();
 
     const fresh = resetUserMemory();
-    // Keep Scrolla / duel identity aligned with the fresh player id.
-    getOrCreateScrollaPlayerId(fresh.playerId);
+    void import('@/utils/duelLobby').then(({ clearScrollaPlayerId, getOrCreateScrollaPlayerId }) => {
+      clearScrollaPlayerId();
+      getOrCreateScrollaPlayerId(fresh.playerId);
+    });
 
     setMemory(fresh);
     setMiniOnboardingDismissed(false);
@@ -1852,7 +1936,7 @@ export default function HomeClient({ initialFacts, initialVocabulary, initialLan
 
   const isDark = memory.darkMode;
   const mergedVocabulary = useMemo(() => {
-    const staticVocab = getVocabularyFacts();
+    const staticVocab = initialVocabulary ?? [];
     if (dbVocabulary.length === 0) return staticVocab;
     const seenWords = new Set<string>();
     const seenIds = new Set<string>();
@@ -1865,7 +1949,7 @@ export default function HomeClient({ initialFacts, initialVocabulary, initialLan
       merged.push(card);
     }
     return merged;
-  }, [dbVocabulary]);
+  }, [dbVocabulary, initialVocabulary]);
   const mergedSavedFactIds = useMemo(
     () => Array.from(new Set([...savedIds, ...memory.favoriteIds])),
     [savedIds, memory.favoriteIds]
@@ -1901,8 +1985,9 @@ export default function HomeClient({ initialFacts, initialVocabulary, initialLan
         data-theme={isDark ? 'dark' : 'light'}
         className="relative flex h-[100dvh] w-screen overflow-hidden select-none bg-cik-bg text-cik-text"
       >
+        {showWelcome ? (
         <WelcomeExploreModal
-          open={showWelcome}
+          open
           lang={lang}
           initialNickname={memory.nickname}
           onStart={(chosenNickname) => {
@@ -1915,6 +2000,7 @@ export default function HomeClient({ initialFacts, initialVocabulary, initialLan
             playPop(soundEnabled);
           }}
         />
+        ) : null}
 
       <div
         data-testid="reels-desktop-grid"
@@ -1976,14 +2062,9 @@ export default function HomeClient({ initialFacts, initialVocabulary, initialLan
         <DeferredAdSense />
         <OfflineManager lang={lang} />
 
+        {showExploreFeed && !showWelcome && !chromeBlocked && valuePropDismissed && !miniOnboardingDismissed ? (
         <MiniOnboardingHint
-          visible={
-            showExploreFeed &&
-            !showWelcome &&
-            !chromeBlocked &&
-            valuePropDismissed &&
-            !miniOnboardingDismissed
-          }
+          visible
           xp={memory.xp}
           lang={lang}
           darkMode={isDark}
@@ -1992,6 +2073,7 @@ export default function HomeClient({ initialFacts, initialVocabulary, initialLan
             setMiniOnboardingDismissed(true);
           }}
         />
+        ) : null}
 
         <PwaInstallPrompt
           key={`pwa-${clientResetEpoch}`}
@@ -2245,13 +2327,15 @@ export default function HomeClient({ initialFacts, initialVocabulary, initialLan
           />
         )}
 
+        {showPwaGuideModal ? (
         <PwaInstallGuideModal
-          open={showPwaGuideModal}
+          open
           lang={lang}
           darkMode={isDark}
           onClose={() => setShowPwaGuideModal(false)}
           onButtonPop={() => playPop(soundEnabled)}
         />
+        ) : null}
 
         {storyShareFact && (
           <div
@@ -2539,6 +2623,7 @@ export default function HomeClient({ initialFacts, initialVocabulary, initialLan
           });
         }}
       />
+      {(authPromptOpen || authNudgeOpen) ? (
       <LazyAuthPrompt
         open={authPromptOpen}
         nudgeOpen={
@@ -2577,6 +2662,7 @@ export default function HomeClient({ initialFacts, initialVocabulary, initialLan
           );
         }}
       />
+      ) : null}
       <AnimatePresence>
         {toastMessage && (
           <motion.div
