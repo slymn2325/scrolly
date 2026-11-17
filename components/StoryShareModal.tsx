@@ -9,10 +9,12 @@ import IconButton from '@/components/cikartma/IconButton';
 import Skeleton from '@/components/cikartma/Skeleton';
 import { type Language, translations } from '@/i18n/translations';
 import { detectMediaProvider } from '@/lib/mediaProvider';
+import { fetchCardMediaFromApi } from '@/lib/telemetry';
 import { sheetDismiss, sheetTransition } from '@/lib/motion';
 import type { FactCard } from '@/types/fact';
 import { motionVideoUrl, staticPosterUrl } from '@/utils/cardMediaUrl';
 import { getFactPrimarySlug, getFactUrl } from '@/utils/factsData';
+import { resolveFallbackVisualQuery } from '@/utils/topicMotif';
 import { canonicalFactShareUrl } from '@/utils/viralShare';
 import {
   fetchProxiedMediaFile,
@@ -24,31 +26,56 @@ import { useEscapeClose } from '@/utils/useEscapeClose';
 const FOCUSABLE =
   'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
 
-function StoryPreviewMedia({ fact, onReady }: { fact: FactCard; onReady: (ok: boolean) => void }) {
-  const poster = staticPosterUrl(fact.gifUrl, fact.posterUrl);
-  const video = motionVideoUrl(fact.gifUrl, fact.mediaType);
-  if (poster) {
-    return (
-      <img
-        ref={(node) => {
-          if (node?.complete && node.naturalWidth > 0) onReady(true);
-        }}
-        src={poster}
-        alt=""
-        data-testid="story-preview-img"
-        onLoad={() => onReady(true)}
-        onError={() => onReady(false)}
-        className="absolute inset-0 h-full w-full object-cover"
-      />
-    );
-  }
-  if (video) {
+/** The still the open card is already showing, so the share frame matches it. */
+function visibleCardStill(): string | null {
+  if (typeof document === 'undefined') return null;
+  const viewH = window.innerHeight;
+  let bestSrc = '';
+  let bestVisible = 0;
+  document.querySelectorAll('[data-testid="card-topic-gif"]').forEach((node) => {
+    if (!(node instanceof HTMLImageElement)) return;
+    const box = node.getBoundingClientRect();
+    const visible = Math.max(0, Math.min(box.bottom, viewH) - Math.max(box.top, 0));
+    const raw = node.currentSrc || node.src;
+    if (!raw || visible <= bestVisible) return;
+    bestVisible = visible;
+    bestSrc = raw;
+  });
+  if (bestSrc) return bestSrc;
+  document.querySelectorAll('video').forEach((node) => {
+    if (!(node instanceof HTMLVideoElement)) return;
+    const box = node.getBoundingClientRect();
+    const visible = Math.max(0, Math.min(box.bottom, viewH) - Math.max(box.top, 0));
+    const poster = node.poster || '';
+    if (!poster || visible <= bestVisible) return;
+    bestVisible = visible;
+    bestSrc = poster;
+  });
+  return bestSrc || null;
+}
+
+function stillFromMedia(url?: string | null, posterUrl?: string | null, mediaType?: string | null): string | null {
+  const poster = staticPosterUrl(url, posterUrl);
+  if (poster) return poster;
+  const rawPoster = (posterUrl || '').trim();
+  if (rawPoster.startsWith('https://') || rawPoster.startsWith('/')) return rawPoster;
+  const video = motionVideoUrl(url, mediaType);
+  if (video) return video;
+  const src = (url || '').trim();
+  if (src.startsWith('https://') || src.startsWith('/')) return src;
+  return null;
+}
+
+function StoryPreviewMedia({ src, onReady }: { src: string; onReady: (ok: boolean) => void }) {
+  const isVideo = /\.mp4(?:$|[?#])/i.test(src);
+  if (isVideo) {
     return (
       <video
-        src={video}
+        src={src}
         muted
         playsInline
-        preload="metadata"
+        autoPlay
+        preload="auto"
         data-testid="story-preview-img"
         onLoadedData={() => onReady(true)}
         onError={() => onReady(false)}
@@ -56,22 +83,19 @@ function StoryPreviewMedia({ fact, onReady }: { fact: FactCard; onReady: (ok: bo
       />
     );
   }
-  if (fact.gifUrl && !/\.mp4(?:\?|$)/i.test(fact.gifUrl)) {
-    return (
-      <img
-        ref={(node) => {
-          if (node?.complete && node.naturalWidth > 0) onReady(true);
-        }}
-        src={fact.gifUrl}
-        alt=""
-        data-testid="story-preview-img"
-        onLoad={() => onReady(true)}
-        onError={() => onReady(false)}
-        className="absolute inset-0 h-full w-full object-cover"
-      />
-    );
-  }
-  return null;
+  return (
+    <img
+      ref={(node) => {
+        if (node?.complete && node.naturalWidth > 0) onReady(true);
+      }}
+      src={src}
+      alt=""
+      data-testid="story-preview-img"
+      onLoad={() => onReady(true)}
+      onError={() => onReady(false)}
+      className="absolute inset-0 h-full w-full object-cover"
+    />
+  );
 }
 
 interface StoryShareModalProps {
@@ -95,8 +119,9 @@ export default function StoryShareModal({
   const dragControls = useDragControls();
   const reduced = useReducedMotion() === true;
   const [mounted, setMounted] = useState(false);
-  const [previewReady, setPreviewReady] = useState(false);
   const [previewHasImage, setPreviewHasImage] = useState(false);
+  const [previewSrc, setPreviewSrc] = useState<string | null>(null);
+  const apiTriedRef = useRef(false);
   const [asset, setAsset] = useState<GeneratedCanvasAsset | null>(null);
   const [generating, setGenerating] = useState(false);
   const [copiedLink, setCopiedLink] = useState(false);
@@ -114,9 +139,42 @@ export default function StoryShareModal({
   }, []);
 
   useEffect(() => {
-    setPreviewReady(false);
     setPreviewHasImage(false);
+    setPreviewSrc(null);
+    apiTriedRef.current = false;
   }, [fact, open]);
+
+  useEffect(() => {
+    if (!open || !fact) return;
+    let cancelled = false;
+    const local = stillFromMedia(fact.gifUrl, fact.posterUrl, fact.mediaType);
+    const dom = visibleCardStill();
+    const first = dom || local;
+    if (first) {
+      setPreviewSrc(first);
+      return;
+    }
+    const query =
+      fact.visualQuery?.trim() ||
+      resolveFallbackVisualQuery({
+        category: fact.category,
+        title: fact.en.title,
+        factText: fact.en.factText,
+        tag: fact.en.tag,
+      });
+    void fetchCardMediaFromApi(query, getFactPrimarySlug(fact), false).then((media) => {
+      if (cancelled) return;
+      apiTriedRef.current = true;
+      const next = stillFromMedia(media?.url, media?.posterUrl, media?.mediaType);
+      if (next) setPreviewSrc(next);
+      else {
+        setPreviewHasImage(false);
+      }
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [open, fact]);
 
   useEffect(() => {
     if (!open) return;
@@ -342,19 +400,34 @@ export default function StoryShareModal({
     setTimeout(() => setCopiedLink(false), 2400);
   };
 
-  const hasVisual = Boolean(
-    fact &&
-      (staticPosterUrl(fact.gifUrl, fact.posterUrl) ||
-        motionVideoUrl(fact.gifUrl, fact.mediaType) ||
-        (fact.gifUrl && !/\.mp4(?:\?|$)/i.test(fact.gifUrl))),
-  );
-
-  useEffect(() => {
-    if (open && fact && !hasVisual) {
-      setPreviewHasImage(false);
-      setPreviewReady(true);
+  const markPreview = (ok: boolean) => {
+    if (ok) {
+      setPreviewHasImage(true);
+      return;
     }
-  }, [open, fact, hasVisual]);
+    if (!apiTriedRef.current && fact) {
+      apiTriedRef.current = true;
+      const query =
+        fact.visualQuery?.trim() ||
+        resolveFallbackVisualQuery({
+          category: fact.category,
+          title: fact.en.title,
+          factText: fact.en.factText,
+          tag: fact.en.tag,
+        });
+      void fetchCardMediaFromApi(query, getFactPrimarySlug(fact), false).then((media) => {
+        const next = stillFromMedia(media?.url, media?.posterUrl, media?.mediaType);
+        if (next && next !== previewSrc) {
+          setPreviewHasImage(false);
+          setPreviewSrc(next);
+          return;
+        }
+        setPreviewHasImage(false);
+      });
+      return;
+    }
+    setPreviewHasImage(false);
+  };
 
   if (!mounted || !open || !fact) return null;
 
@@ -441,25 +514,14 @@ export default function StoryShareModal({
             </div>
 
             <div className="relative mx-auto mt-4 aspect-[9/16] w-40 overflow-hidden rounded-cik-lg bg-cik-pink">
-              {!previewReady && <Skeleton className="absolute inset-0 h-full w-full rounded-cik-lg" />}
-              <div className={previewHasImage ? 'opacity-100' : 'opacity-0'}>
-                <StoryPreviewMedia
-                  fact={fact}
-                  onReady={(ok) => {
-                    setPreviewHasImage(ok);
-                    setPreviewReady(true);
-                  }}
-                />
-              </div>
-              {previewReady && previewHasImage && (
+              {previewSrc ? <StoryPreviewMedia src={previewSrc} onReady={markPreview} /> : null}
+              {!previewHasImage && <Skeleton className="absolute inset-0 h-full w-full rounded-cik-lg" />}
+              {previewHasImage && (
                 <div className="absolute inset-x-0 bottom-0 bg-cik-text px-3 py-3">
                   <p className="cik-caption-2 line-clamp-4 text-cik-bg">{fact[lang].title}</p>
                   <p className="cik-caption-2 mt-1 text-cik-bg">scrolly.live</p>
                   {providerLabel ? <p className="cik-caption-2 mt-1 text-cik-bg">{providerLabel}</p> : null}
                 </div>
-              )}
-              {previewReady && !previewHasImage && (
-                <p className="cik-footnote absolute inset-x-3 bottom-4 line-clamp-4 text-cik-text">{fact[lang].title}</p>
               )}
             </div>
 
