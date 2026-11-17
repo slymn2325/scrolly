@@ -1,17 +1,10 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" fill="none">
-  <defs>
-    <linearGradient id="scrolly-bg" x1="96" y1="48" x2="960" y2="980" gradientUnits="userSpaceOnUse">
-      <stop offset="0%" stop-color="#6B4BFF"/>
-      <stop offset="100%" stop-color="#FF7A59"/>
-    </linearGradient>
-  </defs>
-  <rect width="1024" height="1024" rx="224" fill="url(#scrolly-bg)"/>
-  <g fill="#FFFFFF">
-    <rect x="250" y="214" width="430" height="168" rx="48" opacity="0.28"/>
-    <rect x="292" y="318" width="430" height="176" rx="48" opacity="0.5"/>
-    <rect x="334" y="430" width="430" height="196" rx="52" opacity="0.94"/>
-  </g>
-  <path d="M250 760C390 620 470 560 560 470C650 380 730 300 820 188" stroke="#FFFFFF" stroke-width="36" stroke-linecap="round" fill="none"/>
-  <circle cx="820" cy="188" r="28" fill="#FFFFFF"/>
-  <path d="M868 132l14 36 36 14-36 14-14 36-14-36-36-14 36-14-14-36z" fill="#FFFFFF"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="none">
+  <rect width="512" height="512" rx="114" fill="#FFD6E6"/>
+  <rect x="36" y="36" width="440" height="440" rx="92" fill="#FFF4F7" stroke="#fff" stroke-width="16"/>
+  <path d="M384 36h52c22 0 40 18 40 40v52L384 36Z" fill="#FFE8A3"/>
+  <path d="M384 36l92 92v-12c0-6-2-12-6-16L400 42c-4-4-10-6-16-6h-0Z" fill="#FFC29B"/>
+  <path d="M384 36l92 92h-56c-20 0-36-16-36-36V36Z" fill="#FFF4F7" stroke="#fff" stroke-width="6"/>
+  <path d="M328 186c-6-44-46-70-102-70-62 0-104 32-110 86h54c4-26 24-42 56-42 28 0 46 12 48 34 2 24-18 34-68 46-62 14-100 40-96 92 4 56 52 90 122 90 70 0 116-36 124-94h-56c-6 30-28 50-68 50-34 0-56-16-58-42-2-26 22-38 74-50 58-14 94-42 90-100Z" fill="#5B2A43"/>
+  <circle cx="148" cy="140" r="14" fill="#FF8DB8"/>
+  <circle cx="176" cy="118" r="8" fill="#CFF5E7"/>
 </svg>

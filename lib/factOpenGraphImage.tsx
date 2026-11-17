@@ -22,7 +22,7 @@ const FALLBACK = {
 export function renderFactOpenGraphImage(fact: FactCard | null, lang: Language) {
   const copy = FALLBACK[lang];
   const content = fact?.[lang];
-  const accentColor = fact?.accentColor || '#7C3AED';
+  const accentColor = fact?.accentColor || '#C44569';
   const catMeta = getCategoryMeta(fact?.category || 'science');
   const titleText = content?.title || copy.title;
   const summaryTextRaw = content?.factText || copy.summary;
@@ -37,121 +37,103 @@ export function renderFactOpenGraphImage(fact: FactCard | null, lang: Language) 
           width: '100%',
           height: '100%',
           display: 'flex',
-          flexDirection: 'column',
-          justifyContent: 'space-between',
-          padding: '56px 64px',
-          background: `linear-gradient(135deg, #FFFDF9 0%, #F5F3FF 55%, ${accentColor}1E 100%)`,
+          background: '#FFF4F7',
+          padding: '36px',
           fontFamily: 'sans-serif',
-          color: '#18181B',
-          position: 'relative',
         }}
       >
         <div
           style={{
             display: 'flex',
-            alignItems: 'center',
+            flexDirection: 'column',
             justifyContent: 'space-between',
             width: '100%',
+            height: '100%',
+            background: '#FFFFFF',
+            borderRadius: '36px',
+            border: '3px solid #F3C5D6',
+            borderBottom: '10px solid #FF8DB8',
+            padding: '40px 48px 32px',
           }}
         >
-          <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-            <BrandLogo size={54} id="fact-og-brand" />
-            <div style={{ display: 'flex', flexDirection: 'column' }}>
-              <span style={{ fontSize: '28px', fontWeight: 800, color: '#18181B' }}>Scrolly</span>
-              <span style={{ fontSize: '16px', fontWeight: 600, color: '#52525B' }}>scrolly.live</span>
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'flex-end',
+              width: '100%',
+            }}
+          >
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '10px',
+                padding: '10px 20px',
+                borderRadius: '999px',
+                background: '#FFD6E6',
+                color: '#3F1D30',
+                fontSize: '22px',
+                fontWeight: 800,
+              }}
+            >
+              <span>{catMeta.emoji}</span>
+              <span>{catMeta.label[lang]}</span>
+            </div>
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            <div
+              style={{
+                display: 'flex',
+                fontSize: titleText.length > 52 ? '44px' : '52px',
+                fontWeight: 800,
+                lineHeight: 1.15,
+                color: '#3F1D30',
+              }}
+            >
+              {titleText}
+            </div>
+            <div
+              style={{
+                display: 'flex',
+                fontSize: '26px',
+                fontWeight: 600,
+                lineHeight: 1.4,
+                color: '#7A4A63',
+              }}
+            >
+              {summaryText}
             </div>
           </div>
           <div
             style={{
               display: 'flex',
               alignItems: 'center',
-              gap: '10px',
-              padding: '12px 24px',
-              borderRadius: '9999px',
-              background: '#FFFFFF',
-              border: `2px solid ${accentColor}44`,
-              fontSize: '22px',
-              fontWeight: 800,
-              color: accentColor,
+              justifyContent: 'space-between',
+              width: '100%',
             }}
           >
-            <span>{catMeta.emoji}</span>
-            <span>{catMeta.label[lang]}</span>
-          </div>
-        </div>
-        <div
-          style={{
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '20px',
-            marginTop: '16px',
-            marginBottom: '16px',
-          }}
-        >
-          <div
-            style={{
-              display: 'flex',
-              fontSize: titleText.length > 52 ? '46px' : '54px',
-              fontWeight: 800,
-              lineHeight: 1.15,
-              color: '#18181B',
-            }}
-          >
-            {titleText}
-          </div>
-          <div
-            style={{
-              display: 'flex',
-              fontSize: '26px',
-              fontWeight: 500,
-              lineHeight: 1.4,
-              color: '#3F3F46',
-            }}
-          >
-            {summaryText}
-          </div>
-        </div>
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            width: '100%',
-            paddingTop: '20px',
-            borderTop: '2px solid rgba(24,24,27,0.08)',
-          }}
-        >
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '10px',
-              padding: '10px 20px',
-              borderRadius: '9999px',
-              background: '#ECFDF5',
-              border: '1.5px solid #A7F3D0',
-              fontSize: '20px',
-              fontWeight: 700,
-              color: '#065F46',
-            }}
-          >
-            <span>
-              {copy.source}: {sourceName}
-            </span>
-          </div>
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              padding: '10px 22px',
-              borderRadius: '9999px',
-              background: '#18181B',
-              color: '#FFFFFF',
-              fontSize: '20px',
-              fontWeight: 700,
-            }}
-          >
-            <span>scrolly.live</span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+              <BrandLogo size={64} id="fact-og-brand" title="Scrolly" />
+              <span style={{ fontSize: '24px', fontWeight: 800, color: '#3F1D30' }}>scrolly.live</span>
+            </div>
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                padding: '10px 18px',
+                borderRadius: '999px',
+                background: '#FFF4F7',
+                border: `2px solid ${accentColor}`,
+                fontSize: '20px',
+                fontWeight: 700,
+                color: '#3F1D30',
+              }}
+            >
+              <span>
+                {copy.source}: {sourceName}
+              </span>
+            </div>
           </div>
         </div>
       </div>
