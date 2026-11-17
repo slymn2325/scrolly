@@ -220,12 +220,12 @@ export default function LeaderboardModal({
           data-presentation={presentation}
           className={
             isPage
-              ? 'absolute inset-0 z-20 flex h-full w-full flex-col bg-[#FFFDF9] dark:bg-[#0B0B11]'
+              ? 'absolute inset-0 z-20 flex h-full w-full flex-col bg-[#FFFDF9] text-slate-900 dark:bg-[#0B0B11] dark:text-slate-100'
               : 'absolute inset-0 z-20 flex h-full w-full items-center justify-center bg-[#0B0B11]/85 p-3 backdrop-blur-sm'
           }
         >
           <motion.div
-            initial={isPage ? { opacity: 0.94, y: 8 } : { opacity: 0.94, scale: 0.97, y: 8 }}
+            initial={isPage ? { opacity: 1, y: 0 } : { opacity: 0.94, scale: 0.97, y: 8 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             transition={{ duration: 0.14, ease: [0.23, 1, 0.32, 1] }}
             className={

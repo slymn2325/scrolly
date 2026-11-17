@@ -3,9 +3,10 @@
 import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { ArrowLeft, Check, Copy, Download, Film, Loader2, MessageCircle, Share2, Sparkles } from 'lucide-react';
-import PoweredByGiphyBadge from '@/components/PoweredByGiphyBadge';
 import { type Language, translations } from '@/i18n/translations';
+import { detectMediaProvider } from '@/lib/mediaProvider';
 import type { FactCard } from '@/types/fact';
+import { motionVideoUrl, staticPosterUrl } from '@/utils/cardMediaUrl';
 import { getFactPrimarySlug, getFactUrl } from '@/utils/factsData';
 import { canonicalFactShareUrl } from '@/utils/viralShare';
 import { UI_ICON_PATHS } from '@/utils/icons8Assets';
@@ -15,6 +16,44 @@ import {
   generateStoryCardImage,
 } from '@/utils/storyCanvasGenerator';
 import { useEscapeClose } from '@/utils/useEscapeClose';
+
+function StoryPreviewMedia({ fact }: { fact: FactCard }) {
+  const poster = staticPosterUrl(fact.gifUrl, fact.posterUrl);
+  const video = motionVideoUrl(fact.gifUrl, fact.mediaType);
+  if (poster) {
+    return (
+      <img
+        src={poster}
+        alt=""
+        data-testid="story-preview-img"
+        className="absolute inset-0 h-full w-full object-cover"
+      />
+    );
+  }
+  if (video) {
+    return (
+      <video
+        src={video}
+        muted
+        playsInline
+        preload="metadata"
+        data-testid="story-preview-img"
+        className="absolute inset-0 h-full w-full object-cover"
+      />
+    );
+  }
+  if (fact.gifUrl && !/\.mp4(?:\?|$)/i.test(fact.gifUrl)) {
+    return (
+      <img
+        src={fact.gifUrl}
+        alt=""
+        data-testid="story-preview-img"
+        className="absolute inset-0 h-full w-full object-cover"
+      />
+    );
+  }
+  return null;
+}
 
 interface StoryShareModalProps {
   open: boolean;
@@ -267,28 +306,27 @@ export default function StoryShareModal({
 
             {/* 9:16 Live Story Preview */}
             <div className="mt-3.5 flex flex-col items-center">
-              <div className="relative aspect-[9/16] w-44 overflow-hidden rounded-2xl border-2 border-white/80 bg-[#0A0A0E] shadow-xl dark:border-white/20 sm:w-48">
-                {generating || !asset ? (
-                  <div className="flex h-full w-full flex-col items-center justify-center gap-2 text-center text-xs font-bold text-white/80">
-                    <Loader2 className="h-6 w-6 animate-spin text-violet-400" />
-                    <span className="px-4">{t.storyGenerating}</span>
-                  </div>
-                ) : (
-                  <img
-                    src={asset.dataUrl}
-                    alt={fact[lang].title}
-                    loading="lazy"
-                    data-testid="story-preview-img"
-                    className="h-full w-full object-cover"
-                  />
-                )}
-              </div>
-
-              {fact.gifUrl && (
-                <div className="mt-2 flex justify-center">
-                  <PoweredByGiphyBadge compact lang={lang} />
+              <div className="relative aspect-[9/16] w-44 overflow-hidden rounded-2xl border-2 border-white/80 bg-slate-950 shadow-xl dark:border-white/20 sm:w-48">
+                <StoryPreviewMedia fact={fact} />
+                <div className="absolute inset-x-0 bottom-0 z-[2] bg-gradient-to-t from-black/85 via-black/45 to-transparent px-3 pb-3 pt-10">
+                  <p className="line-clamp-4 text-[11px] font-extrabold leading-snug text-white">{fact[lang].title}</p>
+                  <p className="mt-1 text-[10px] font-black tracking-wide text-white">scrolly.live</p>
+                  {detectMediaProvider({
+                    gifUrl: fact.gifUrl,
+                    posterUrl: fact.posterUrl,
+                    mediaSource: fact.mediaSource,
+                    mediaProvider: fact.mediaSource,
+                  })?.id === 'giphy' ? (
+                    <p className="mt-0.5 text-[9px] font-bold text-white/80">Giphy</p>
+                  ) : null}
                 </div>
-              )}
+                {generating ? (
+                  <div className="absolute right-2 top-2 z-[3] rounded-full bg-black/50 p-1 text-white">
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    <span className="sr-only">{t.storyGenerating}</span>
+                  </div>
+                ) : null}
+              </div>
             </div>
 
             {downloadedFeedback && (

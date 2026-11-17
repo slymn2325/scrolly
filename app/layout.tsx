@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from 'next';
+import DocScrollFrame from '@/components/DocScrollFrame';
 import RootHtmlShell from '@/components/RootHtmlShell';
 import './globals.css';
 
@@ -50,7 +51,7 @@ export default function RootLayout({
 }>) {
   return (
     <RootHtmlShell lang="tr">
-      <div className="h-[100dvh] min-h-0 overflow-hidden">{children}</div>
+      <DocScrollFrame>{children}</DocScrollFrame>
     </RootHtmlShell>
   );
 }

@@ -14,7 +14,7 @@ import {
   Sparkles,
   Swords,
 } from 'lucide-react';
-import PoweredByGiphyBadge from '@/components/PoweredByGiphyBadge';
+import { detectMediaProvider, mediaCreditLine } from '@/lib/mediaProvider';
 import type { FeedSlideItem } from '@/components/TikTokFeed';
 import { getCategoryMeta, type Language } from '@/i18n/translations';
 import type { FactCard } from '@/types/fact';
@@ -76,9 +76,8 @@ export default function DesktopFeedSideRail({
   const showActions = mode === 'cluster' || mode === 'actions';
   const showInsight = mode === 'cluster' || mode === 'insight';
 
-  const stepBtn = darkMode
-    ? 'border-white/20 bg-white/10 text-white hover:bg-white/20'
-    : 'border-[#1E1B2E]/15 bg-white/95 text-[#1E1B2E] hover:bg-white shadow-sm';
+  const stepBtn =
+    'border-slate-200 bg-white/95 text-slate-900 shadow-sm hover:bg-white dark:border-slate-600 dark:bg-slate-900/90 dark:text-slate-100 dark:hover:bg-slate-800';
 
   const actionBtn = darkMode
     ? 'border-white/15 bg-white/[0.08] text-white/90 hover:bg-white/15 hover:border-white/25'
@@ -97,6 +96,17 @@ export default function DesktopFeedSideRail({
     localized?.sourceHint ||
     (lang === 'tr' ? 'Doğrulanmış Bilimsel Kaynak' : 'Verified Scientific Source');
   const sourceUrl = safeExternalHref(localized?.sourceUrl || activeFact?.sourceUrl);
+  const mediaCredit = activeFact
+    ? mediaCreditLine(
+        detectMediaProvider({
+          gifUrl: activeFact.gifUrl,
+          posterUrl: activeFact.posterUrl,
+          mediaSource: activeFact.mediaSource,
+          mediaProvider: activeFact.mediaSource,
+        }),
+        lang
+      )
+    : null;
   const hasGuessChallenge = Boolean(localized?.guessChallenge);
   const isAnalysisUnlocked = !hasGuessChallenge || isGuessLocked;
   const deepAnalysisText =
@@ -534,13 +544,11 @@ export default function DesktopFeedSideRail({
               ) : (
                 <p className="mt-1 text-xs font-bold">{sourceName}</p>
               )}
-              <div
-                className={`mt-2.5 flex items-center justify-between gap-2 border-t pt-2 ${
-                  darkMode ? 'border-white/10' : 'border-[#1E1B2E]/10'
-                }`}
-              >
-                <PoweredByGiphyBadge compact lang={lang} />
-              </div>
+              {mediaCredit ? (
+                <p className="mt-2.5 border-t border-slate-200 pt-2 text-[11px] font-bold text-slate-900 dark:border-slate-700 dark:text-slate-100">
+                  {mediaCredit}
+                </p>
+              ) : null}
             </div>
           )}
 

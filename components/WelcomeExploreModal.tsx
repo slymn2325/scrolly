@@ -309,7 +309,7 @@ interface ValuePropBannerProps {
 export function ValuePropBanner({ visible, lang, onDismiss }: ValuePropBannerProps) {
   if (!visible) return null;
   return (
-    <div className="pointer-events-none absolute inset-x-3 top-[calc(env(safe-area-inset-top,12px)+10px)] z-[46] flex justify-center">
+    <div className="pointer-events-none absolute inset-x-3 top-[calc(env(safe-area-inset-top,12px)+4.75rem)] z-[46] flex justify-center">
       <div
         data-testid="value-prop-line"
         className="pointer-events-auto flex max-w-[440px] items-start gap-2 rounded-2xl border border-white/15 bg-[#12121D]/92 px-3 py-2 text-[12px] font-semibold leading-snug text-white shadow-lg"

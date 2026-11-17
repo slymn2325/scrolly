@@ -45,6 +45,7 @@ import FloatingBackground from '@/components/FloatingBackground';
 import SiteTrustFooter from '@/components/SiteTrustFooter';
 import StickyAdBanner from '@/components/StickyAdBanner';
 import { discoveryCtaLabel, getCategoryMeta, type Language, translations } from '@/i18n/translations';
+import { detectMediaProvider, mediaCreditLine } from '@/lib/mediaProvider';
 import { formatValueWithUnit } from '@/lib/formatUnit';
 import { fetchTopicGifFromApi, syncProfileToApi, trackEvent } from '@/lib/telemetry';
 import { createScrollaRoom, getOrCreateScrollaPlayerId } from '@/utils/duelLobby';
@@ -252,6 +253,15 @@ export default function SingleFactView({
   const resolvedSourceName =
     content.sourceName || fact.sourceName || content.sourceHint;
   const resolvedSourceUrl = safeExternalHref(content.sourceUrl || fact.sourceUrl);
+  const mediaCredit = mediaCreditLine(
+    detectMediaProvider({
+      gifUrl: resolvedGifUrl || fact.gifUrl,
+      posterUrl: fact.posterUrl,
+      mediaSource: fact.mediaSource,
+      mediaProvider: fact.mediaSource,
+    }),
+    lang
+  );
 
   const detailHighlights = useMemo(
     () =>
@@ -710,7 +720,6 @@ export default function SingleFactView({
                 mediaSource={fact.mediaSource}
                 isActive
                 priority
-                showBadge={false}
                 testId="detail-gif-preview"
                 title={content.title}
                 failed={gifFailed}
@@ -1050,6 +1059,11 @@ export default function SingleFactView({
               </div>
             </aside>
           )}
+          {mediaCredit ? (
+            <p data-testid="detail-media-credit" className="relative z-10 mt-2 text-xs font-bold text-slate-900 dark:text-slate-100">
+              {mediaCredit}
+            </p>
+          ) : null}
         </motion.article>
 
         {/* Gamified Primary CTAs: Scrolla Challenge + Open in Feed */}

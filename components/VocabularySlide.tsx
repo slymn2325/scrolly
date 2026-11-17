@@ -5,7 +5,6 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { BookMarked, Check, ChevronDown, ChevronUp, Globe, Sparkles, Volume2 } from 'lucide-react';
 import CardMediaStage from '@/components/CardMediaStage';
 import FullBleedReelsCanvas from '@/components/FullBleedReelsCanvas';
-import PoweredByGiphyBadge from '@/components/PoweredByGiphyBadge';
 import { FEED_EXPERIENCE_COPY, type Language } from '@/i18n/translations';
 import type { VocabPartOfSpeech, VocabularyCard } from '@/types/vocabulary';
 import { vibrateTap } from '@/utils/haptics';
@@ -149,13 +148,6 @@ function buildVocabQuizChoices(card: VocabularyCard): {
     options: sanitized,
     correctIdx: safeCorrectIdx,
   };
-}
-
-function handleContainWheel(e: React.WheelEvent<HTMLElement>) {
-  const el = e.currentTarget;
-  if (el.scrollHeight > el.clientHeight + 1) {
-    e.stopPropagation();
-  }
 }
 
 export default function VocabularySlide({
@@ -340,7 +332,7 @@ export default function VocabularySlide({
           background:
             'radial-gradient(circle at 50% 35%, rgba(129, 140, 248, 0.28) 0%, #10101D 60%, #0A0A0E 100%)',
         }}
-        className="relative h-[188px] sm:h-[220px] w-full shrink-0 overflow-hidden bg-[#0A0A0E] lg:h-auto lg:aspect-video lg:max-h-[42%]"
+        className="relative h-[30%] max-h-[210px] w-full shrink-0 overflow-hidden bg-[#0A0A0E]"
       >
         <svg
           aria-hidden="true"
@@ -398,10 +390,7 @@ export default function VocabularySlide({
       {/* Scrollable card body below the reserved GIF stage — never clips word header or collides with Save button */}
       <div
         ref={bodyScrollRef}
-        data-scroll-contain="true"
-        onWheel={handleContainWheel}
-        style={{ overscrollBehavior: 'contain' }}
-        className={`relative z-10 min-h-0 flex-1 w-full overflow-y-auto no-scrollbar px-4 pt-2.5 pr-16 sm:pr-20 lg:pr-5 ${
+        className={`relative z-10 flex min-h-0 w-full flex-1 flex-col overflow-hidden px-4 pt-2.5 pr-16 sm:pr-20 lg:pr-5 ${
           cookieBannerVisible
             ? 'pb-[calc(env(safe-area-inset-bottom,16px)+216px)] lg:pb-8'
             : 'pb-[calc(env(safe-area-inset-bottom,16px)+104px)] lg:pb-8'
@@ -419,11 +408,6 @@ export default function VocabularySlide({
                 {lang === 'tr' ? 'DİL ÖĞRENME' : 'WORD LAB'} • {posLabel.toUpperCase()} • {cefrLabel}
               </span>
             </span>
-            {resolvedGifUrl && !gifFailed && (
-              <div className="pointer-events-auto">
-                <PoweredByGiphyBadge micro lang={lang} />
-              </div>
-            )}
           </div>
 
           {/* 2. Word Header + Phonetic (tappable to toggle drawer) & Dual Audio Controls */}
@@ -545,9 +529,9 @@ export default function VocabularySlide({
                 transition={{ duration: 0.22 }}
                 data-testid="vocab-expanded-drawer"
                 onClick={(e) => e.stopPropagation()}
-                className="overflow-hidden"
+                className="flex min-h-0 flex-1 flex-col overflow-hidden"
               >
-                <div className="mt-1 space-y-2.5 rounded-3xl border border-white/15 bg-[#13131A]/95 p-4 shadow-xl backdrop-blur-md">
+                <div className="mt-1 flex min-h-0 flex-1 flex-col gap-2.5 overflow-hidden rounded-3xl border border-white/15 bg-[#13131A]/95 p-4 shadow-xl backdrop-blur-md">
                   <div className="flex items-center justify-between gap-2">
                     <span className="text-[10px] font-black uppercase tracking-wider text-indigo-200/80">
                       {lang === 'tr' ? 'Bağlam & Anlam Tahmini' : 'Context & Meaning Quiz'}
@@ -579,7 +563,12 @@ export default function VocabularySlide({
                   {/* Spacious wrap-safe quiz options — 3rd/4th always fully readable */}
                   <div
                     data-testid="vocab-quick-guess"
-                    className="rounded-xl border border-amber-300/25 bg-amber-400/10 p-3"
+                    data-choice-scroll="true"
+                    onWheel={(event) => {
+                      const el = event.currentTarget;
+                      if (el.scrollHeight > el.clientHeight + 1) event.stopPropagation();
+                    }}
+                    className="min-h-0 flex-1 overflow-y-auto overscroll-contain rounded-xl border border-amber-300/25 bg-amber-400/10 p-3"
                   >
                     <div className="mb-2 flex items-center justify-between gap-2">
                       <p className="text-xs font-extrabold leading-snug text-white sm:text-sm whitespace-normal break-words">

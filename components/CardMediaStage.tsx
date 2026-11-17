@@ -4,28 +4,15 @@ import React, { useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
 import { motionVideoUrl, staticPosterUrl } from '@/utils/cardMediaUrl';
 
-function badgeLabel(mediaType?: string | null, mediaSource?: string | null): string | null {
-  const source = (mediaSource || '').toLowerCase();
-  const type = (mediaType || '').toLowerCase();
-  if (source === 'giphy') return 'POWERED BY GIPHY';
-  if (source === 'wikimedia') return 'COMMONS · WIKIMEDIA';
-  if (source === 'pexels' && type === 'image') return 'PHOTO · PEXELS';
-  if (source === 'pexels') return 'VIDEO · PEXELS';
-  if (source === 'pixabay') return 'VIDEO · PIXABAY';
-  return null;
-}
-
 export default function CardMediaStage({
   url,
   posterUrl,
   mediaType,
-  mediaSource,
   isActive,
   title,
   failed = false,
   empty = false,
   priority = false,
-  showBadge = true,
   testId = 'card-topic-gif',
   onFailed,
 }: {
@@ -39,7 +26,6 @@ export default function CardMediaStage({
   empty?: boolean;
   /** First card: preload the still poster. Next.js 16 name for the old priority prop. */
   priority?: boolean;
-  showBadge?: boolean;
   testId?: string;
   onFailed?: () => void;
 }) {
@@ -52,7 +38,6 @@ export default function CardMediaStage({
   const showPoster = Boolean(poster) && !posterFailed;
   const showVideo = Boolean(videoUrl) && allowMotion && isActive;
   const showFallback = !showPoster && !showVideo && (failed || empty || posterFailed);
-  const badge = showBadge ? badgeLabel(videoUrl ? 'video' : mediaType, mediaSource) : null;
 
   useEffect(() => {
     setPosterFailed(false);
@@ -150,11 +135,6 @@ export default function CardMediaStage({
         >
           <p className="font-display text-2xl font-semibold leading-tight text-white line-clamp-3">{title}</p>
         </div>
-      ) : null}
-      {badge ? (
-        <span className="absolute bottom-3 left-3 z-[6] rounded-full bg-black/55 px-2 py-1 text-[9px] font-bold tracking-wide text-white">
-          {badge}
-        </span>
       ) : null}
     </>
   );

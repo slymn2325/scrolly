@@ -12,16 +12,16 @@ const config: Config = {
     extend: {
       colors: {
         cik: {
-          bg: '#FFF4F7',
-          surface: '#FFFFFF',
-          text: '#5B2A43',
-          muted: '#8A5670',
-          pink: '#FFD6E6',
-          berry: '#FF8DB8',
-          cta: '#C44569',
-          mint: '#CFF5E7',
-          butter: '#FFE8A3',
-          line: '#F3C5D6',
+          bg: 'var(--cik-bg)',
+          surface: 'var(--cik-surface)',
+          text: 'var(--cik-text)',
+          muted: 'var(--cik-muted)',
+          pink: 'var(--cik-pink)',
+          berry: 'var(--cik-berry)',
+          cta: 'var(--cik-cta)',
+          mint: 'var(--cik-mint)',
+          butter: 'var(--cik-butter)',
+          line: 'var(--cik-line)',
         },
         'cik-dark': {
           bg: '#2A1B2F',

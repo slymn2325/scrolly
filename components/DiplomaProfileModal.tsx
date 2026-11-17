@@ -473,7 +473,7 @@ export default function DiplomaProfileModal({
                 isPage ? 'pb-8 lg:pb-6' : 'pb-5'
               }`}
             >
-              <div className="flex gap-2 overflow-x-auto pb-2" role="tablist" aria-label={t.diplomaTitle}>
+              <div className="no-scrollbar flex w-full min-w-0 gap-1 overflow-x-auto pb-2" role="tablist" aria-label={t.diplomaTitle}>
                 {(
                   [
                     ['ozet', t.profileTabSummary],
@@ -489,8 +489,8 @@ export default function DiplomaProfileModal({
                     aria-selected={pane === id}
                     data-testid={`profile-tab-${id}`}
                     onClick={() => setPane(id)}
-                    className={`inline-flex h-11 shrink-0 items-center rounded-pill px-3 text-[13px] font-bold ${
-                      pane === id ? 'bg-cik-berry text-cik-text' : 'bg-white text-cik-muted'
+                    className={`inline-flex h-11 min-w-0 flex-1 items-center justify-center whitespace-nowrap rounded-pill px-3 text-xs font-bold sm:text-sm ${
+                      pane === id ? 'bg-cik-berry text-slate-900' : 'bg-white text-slate-900 dark:text-slate-100'
                     }`}
                   >
                     {label}
@@ -600,7 +600,7 @@ export default function DiplomaProfileModal({
                   value={memory.nickname}
                   onChange={(e) => onUpdateNickname(e.target.value)}
                   maxLength={24}
-                  className="mt-1.5 w-full rounded-2xl border border-amber-200 bg-white px-3.5 py-2 text-sm font-bold text-ink focus:border-violet-500 focus:outline-none focus:ring-2 focus:ring-violet-400/50 dark:border-white/15 dark:bg-white/10 dark:text-white"
+                  className="mt-1.5 w-full rounded-2xl border border-amber-200 bg-white px-3.5 py-2 text-sm font-bold text-slate-900 focus:border-violet-500 focus:outline-none focus:ring-2 focus:ring-violet-400/50 dark:border-white/15 dark:bg-slate-900 dark:text-slate-100"
                 />
               </div>
 

@@ -145,8 +145,8 @@ export default async function AboutPage({ searchParams }: PageProps) {
           </div>
           <p className="mt-2 text-xs leading-relaxed text-ink/80 dark:text-violet-100/85">
             {isEn
-              ? 'Hands-on Quick Guess challenges, interactive SVG sketch simulations, and 5-card Memory Sprints reinforce retention rather than passive scrolling.'
-              : 'Pasif tüketim yerine Hızlı Tahmin meydan okumaları, etkileşimli SVG bilimsel eskizler ve 5 kartlık Hafıza Quizleri ile kalıcı öğrenme sağlanır.'}
+              ? 'Hands-on Quick Guess challenges, interactive SVG sketch simulations, and 5-card Memory Sprints reinforce retention rather than passive scrolling. Card media comes from the provider actually used on that card: Pexels, Pixabay, Giphy, Wikimedia Commons, Unsplash, or NASA.'
+              : 'Pasif tüketim yerine Hızlı Tahmin meydan okumaları, etkileşimli SVG bilimsel eskizler ve 5 kartlık Hafıza Quizleri ile kalıcı öğrenme sağlanır. Kart görseli, o kartta gerçekten kullanılan sağlayıcıdan gelir: Pexels, Pixabay, Giphy, Wikimedia Commons, Unsplash veya NASA.'}
           </p>
         </div>
       </div>
