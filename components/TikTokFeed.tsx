@@ -2,7 +2,7 @@
 
 import React, { forwardRef, useCallback, useEffect, useImperativeHandle, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
-import { Check, ChevronDown } from 'lucide-react';
+import { Check, ChevronDown, Globe } from 'lucide-react';
 import BrandLogo from '@/components/BrandLogo';
 import Sheet from '@/components/cikartma/Sheet';
 import Skeleton from '@/components/cikartma/Skeleton';
@@ -663,7 +663,7 @@ const TikTokFeed = forwardRef<TikTokFeedHandle, TikTokFeedProps>(function TikTok
         data-chrome-blocked={chromeBlocked ? 'true' : 'false'}
         inert={chromeBlocked ? true : undefined}
         aria-hidden={chromeBlocked || undefined}
-        className={`material-thin pointer-events-none absolute inset-x-0 top-0 z-hud flex items-center gap-2 px-4 transition-[transform,opacity] duration-150 motion-reduce:translate-y-0 motion-reduce:transition-none ${
+        className={`material-thin pointer-events-none absolute inset-x-0 top-0 z-hud flex flex-nowrap items-center gap-2 px-4 transition-[transform,opacity] duration-150 motion-reduce:translate-y-0 motion-reduce:transition-none ${
           chromeBlocked
             ? 'pointer-events-none opacity-0'
             : hudTraveling
@@ -686,7 +686,7 @@ const TikTokFeed = forwardRef<TikTokFeedHandle, TikTokFeedProps>(function TikTok
           }}
           aria-expanded={isCategoryDrawerOpen}
           data-testid="choose-category-btn"
-          className={`inline-flex h-11 min-w-0 max-w-[44vw] items-center gap-2 rounded-pill bg-cik-surface px-3 text-cik-text shadow-e1 ${
+          className={`inline-flex h-11 min-w-0 max-w-[44vw] shrink items-center gap-2 overflow-hidden rounded-pill bg-cik-surface px-3 text-cik-text shadow-e1 ${
             chromeBlocked ? 'pointer-events-none' : 'pointer-events-auto'
           }`}
         >
@@ -714,34 +714,7 @@ const TikTokFeed = forwardRef<TikTokFeedHandle, TikTokFeedProps>(function TikTok
             chromeBlocked ? 'pointer-events-none' : 'pointer-events-auto'
           }`}
         >
-          <div
-            role="group"
-            aria-label={lang === 'tr' ? 'Dil' : 'Language'}
-            className="flex shrink-0 items-center rounded-pill bg-cik-surface p-1 shadow-e1"
-          >
-            <button
-              type="button"
-              onClick={() => onChangeLang('tr')}
-              data-testid="lang-btn-tr"
-              aria-pressed={lang === 'tr'}
-              className={`cik-footnote inline-flex h-11 min-w-11 items-center justify-center rounded-pill px-3 ${
-                lang === 'tr' ? 'bg-cik-berry text-cik-on-berry' : 'text-cik-text-2'
-              }`}
-            >
-              TR
-            </button>
-            <button
-              type="button"
-              onClick={() => onChangeLang('en')}
-              data-testid="lang-btn-en"
-              aria-pressed={lang === 'en'}
-              className={`cik-footnote inline-flex h-11 min-w-11 items-center justify-center rounded-pill px-3 ${
-                lang === 'en' ? 'bg-cik-berry text-cik-on-berry' : 'text-cik-text-2'
-              }`}
-            >
-              EN
-            </button>
-          </div>
+          <LanguageMenu lang={lang} blocked={chromeBlocked} onChangeLang={onChangeLang} />
           <NotificationsBell lang={lang} />
         </div>
       </header>
@@ -891,6 +864,97 @@ const TikTokFeed = forwardRef<TikTokFeedHandle, TikTokFeedProps>(function TikTok
 });
 
 export default TikTokFeed;
+
+function LanguageMenu({
+  lang,
+  blocked,
+  onChangeLang,
+}: {
+  lang: Language;
+  blocked: boolean;
+  onChangeLang: (lang: Language) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const rootRef = useRef<HTMLDivElement>(null);
+  const buttonRef = useRef<HTMLButtonElement>(null);
+  const label = lang === 'tr' ? 'Dil' : 'Language';
+
+  useEffect(() => {
+    if (blocked) setOpen(false);
+  }, [blocked]);
+
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key !== 'Escape') return;
+      event.preventDefault();
+      setOpen(false);
+      buttonRef.current?.focus();
+    };
+    const onPointer = (event: PointerEvent) => {
+      const root = rootRef.current;
+      if (root && event.target instanceof Node && root.contains(event.target)) return;
+      setOpen(false);
+    };
+    document.addEventListener('keydown', onKey);
+    document.addEventListener('pointerdown', onPointer);
+    return () => {
+      document.removeEventListener('keydown', onKey);
+      document.removeEventListener('pointerdown', onPointer);
+    };
+  }, [open]);
+
+  const pick = (next: Language) => {
+    onChangeLang(next);
+    setOpen(false);
+    buttonRef.current?.focus();
+  };
+
+  return (
+    <div ref={rootRef} className="relative shrink-0">
+      <button
+        ref={buttonRef}
+        type="button"
+        data-testid="lang-menu-btn"
+        aria-label={label}
+        aria-haspopup="menu"
+        aria-expanded={open}
+        onClick={() => setOpen((prev) => !prev)}
+        className="inline-flex h-11 w-11 items-center justify-center rounded-pill bg-cik-surface text-cik-text shadow-e1"
+      >
+        <Globe size={20} strokeWidth={2} aria-hidden="true" />
+      </button>
+      {open ? (
+        <div
+          role="menu"
+          aria-label={label}
+          data-testid="lang-menu"
+          className="absolute right-0 top-[calc(100%+8px)] z-hud flex w-max min-w-16 flex-col gap-1 rounded-cik-md bg-cik-bg-elevated p-2 shadow-e3"
+        >
+          {(['tr', 'en'] as const).map((code) => {
+            const selected = lang === code;
+            return (
+              <button
+                key={code}
+                type="button"
+                role="menuitemradio"
+                aria-checked={selected}
+                data-testid={code === 'tr' ? 'lang-btn-tr' : 'lang-btn-en'}
+                onClick={() => pick(code)}
+                className={`cik-footnote flex h-11 items-center justify-between gap-3 rounded-cik-sm px-3 ${
+                  selected ? 'bg-cik-berry text-cik-on-berry' : 'text-cik-text'
+                }`}
+              >
+                <span>{code === 'tr' ? 'TR' : 'EN'}</span>
+                {selected ? <Check size={16} strokeWidth={2} aria-hidden="true" /> : <span className="w-4" aria-hidden="true" />}
+              </button>
+            );
+          })}
+        </div>
+      ) : null}
+    </div>
+  );
+}
 
 function pickerLabel(cat: CategoryMeta, lang: Language): string {
   if (cat.id === 'all') return FEED_EXPERIENCE_COPY[lang].categoryAll;
