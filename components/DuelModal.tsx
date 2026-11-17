@@ -40,6 +40,8 @@ import {
   type ScrollaPlayer,
   type ScrollaRoom,
 } from '@/lib/duelStore';
+import { isGenericDefaultNickname } from '@/utils/userMemory';
+import { duelInviteUrl } from '@/utils/viralShare';
 import type { FactCard } from '@/types/fact';
 import type { DuelKind, DuelPayload } from '@/utils/duelCodec';
 import {
@@ -264,6 +266,13 @@ export default function DuelModal({
       setSendingReaction(false);
     }
   }, [open, defaultNickname, t.duelDefaultName]);
+
+  useEffect(() => {
+    if (!open || !defaultNickname) return;
+    setNickname((current) =>
+      isGenericDefaultNickname(current) ? defaultNickname : current
+    );
+  }, [defaultNickname, open]);
 
   // Sync incoming room code (?duel=K8M2P9) or legacy base64 payload once per open/code
   useEffect(() => {
@@ -681,7 +690,7 @@ export default function DuelModal({
     if (!room || botLocalRoom) return '';
     const origin =
       typeof window !== 'undefined' ? window.location.origin : 'https://scrolly.live';
-    return `${origin}/?tab=duel&room=${room.code}`;
+    return duelInviteUrl(room.code, lang === 'en' ? 'en' : 'tr', origin);
   }, [botLocalRoom, room]);
 
   const handleCopyDuel = async () => {
