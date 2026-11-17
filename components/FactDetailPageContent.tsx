@@ -248,7 +248,7 @@ export default async function FactDetailPageContent({
             '@type': 'ListItem',
             position: 1,
             name: lang === 'tr' ? 'Ana Sayfa' : 'Home',
-            item: 'https://scrolly.live',
+            item: lang === 'en' ? 'https://scrolly.live/en' : 'https://scrolly.live',
           },
           {
             '@type': 'ListItem',
