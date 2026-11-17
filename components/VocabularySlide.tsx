@@ -23,6 +23,7 @@ interface VocabularySlideProps {
   lang: Language;
   darkMode?: boolean;
   isActive?: boolean;
+  priority?: boolean;
   cookieBannerVisible?: boolean;
   onButtonPop: () => void;
   onEarnXp?: (xp: number, source?: string) => void;
@@ -161,6 +162,7 @@ export default function VocabularySlide({
   card,
   lang,
   isActive = true,
+  priority = false,
   cookieBannerVisible = false,
   onButtonPop,
   onEarnXp,
@@ -375,6 +377,7 @@ export default function VocabularySlide({
           mediaType={card.mediaType}
           mediaSource={card.mediaSource}
           isActive={isActive}
+          priority={priority}
           title={card.word}
           failed={gifFailed}
           empty={!resolvedGifUrl && gifFailed}

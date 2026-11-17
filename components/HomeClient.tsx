@@ -1,13 +1,14 @@
 'use client';
 
 import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import dynamic from 'next/dynamic';
 import { AnimatePresence, motion } from 'framer-motion';
 import CookieBanner from '@/components/CookieBanner';
-import DiplomaProfileModal from '@/components/DiplomaProfileModal';
+import DeferredAdSense from '@/components/DeferredAdSense';
 import ErrorBoundary from '@/components/ErrorBoundary';
 import FactDetailPage from '@/components/FactDetailPage';
 import { applyGoogleConsentChoice } from '@/utils/consent';
-import DuelModal, { type DuelChallengeConfig } from '@/components/DuelModal';
+import type { DuelChallengeConfig } from '@/components/DuelModal';
 import DesktopFeedSideRail from '@/components/DesktopFeedSideRail';
 import DesktopLeftNav from '@/components/DesktopLeftNav';
 import IosFloatingIslandDock, { type DockTabId } from '@/components/IosFloatingIslandDock';
@@ -17,7 +18,6 @@ import LazyAuthPrompt, {
   persistAuthNudgeDismissed,
   type AuthTriggerSource,
 } from '@/components/LazyAuthPrompt';
-import LeaderboardModal from '@/components/LeaderboardModal';
 import MiniOnboardingHint, {
   clearMiniOnboardingDismissed,
   persistMiniOnboardingDismissed,
@@ -36,7 +36,7 @@ import PwaInstallPrompt, {
   clearPwaDismissed,
   type BeforeInstallPromptEvent,
 } from '@/components/PwaInstallPrompt';
-import QuizHubModal, { type QuizModeChoice } from '@/components/QuizHubModal';
+import type { QuizModeChoice } from '@/components/QuizHubModal';
 import ShareResultModal from '@/components/ShareResultModal';
 import StoryShareModal from '@/components/StoryShareModal';
 import TikTokFeed, { type FeedSlideItem, type TikTokFeedHandle } from '@/components/TikTokFeed';
@@ -151,6 +151,11 @@ import {
   updateUserNickname,
   type UserMemoryState,
 } from '@/utils/userMemory';
+
+const LeaderboardModal = dynamic(() => import('@/components/LeaderboardModal'), { ssr: false });
+const QuizHubModal = dynamic(() => import('@/components/QuizHubModal'), { ssr: false });
+const DuelModal = dynamic(() => import('@/components/DuelModal'), { ssr: false });
+const DiplomaProfileModal = dynamic(() => import('@/components/DiplomaProfileModal'), { ssr: false });
 
 interface ActiveQuizSession {
   key: string;
@@ -1906,6 +1911,7 @@ export default function HomeClient({ initialFacts, initialVocabulary, initialLan
           data-testid="reels-phone-frame"
           className="stage-card relative z-10 mx-auto flex h-full w-full min-w-0 flex-1 flex-col overflow-hidden bg-cream text-ink md:my-auto md:h-auto md:flex-none md:rounded-card"
         >
+        <DeferredAdSense />
         <OfflineManager lang={lang} />
 
         <MiniOnboardingHint

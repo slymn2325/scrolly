@@ -37,7 +37,9 @@ import {
   VolumeX,
   XCircle,
 } from 'lucide-react';
+import CardMediaStage from '@/components/CardMediaStage';
 import CategoryMotionArt from '@/components/CategoryMotionArt';
+import DeferredAdSense from '@/components/DeferredAdSense';
 import FactIcon from '@/components/FactIcon';
 import FloatingBackground from '@/components/FloatingBackground';
 import SiteTrustFooter from '@/components/SiteTrustFooter';
@@ -633,12 +635,18 @@ export default function SingleFactView({
             />
 
             {resolvedGifUrl && !gifFailed && (
-              <img
-                src={resolvedGifUrl}
-                alt={content.title}
-                onError={() => setGifFailed(true)}
-                data-testid="detail-gif-preview"
-                className="absolute inset-0 z-[2] h-full w-full object-cover"
+              <CardMediaStage
+                url={resolvedGifUrl}
+                posterUrl={fact.posterUrl}
+                mediaType={fact.mediaType}
+                mediaSource={fact.mediaSource}
+                isActive
+                priority
+                showBadge={false}
+                testId="detail-gif-preview"
+                title={content.title}
+                failed={gifFailed}
+                onFailed={() => setGifFailed(true)}
               />
             )}
 
@@ -1349,6 +1357,7 @@ export default function SingleFactView({
 
       <SiteTrustFooter lang={lang} />
 
+      <DeferredAdSense />
       <StickyAdBanner
         lang={lang}
         visible={!adDismissed}

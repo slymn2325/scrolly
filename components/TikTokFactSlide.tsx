@@ -668,6 +668,7 @@ export default function TikTokFactSlide({
             mediaType={mediaMeta?.mediaType || fact.mediaType}
             mediaSource={mediaMeta?.mediaSource || fact.mediaSource}
             isActive={isActive}
+            priority={isFirstCard}
             title={localized.title}
             failed={gifFailed}
             empty={mediaSettled && !resolvedGifUrl}

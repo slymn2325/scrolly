@@ -138,12 +138,6 @@ export default function RootHtmlShell({ lang, children }: RootHtmlShellProps) {
             })(window,document,'script','dataLayer','${GTM_ID}');
           `}
         </Script>
-        <Script
-          id="google-adsense-script"
-          strategy="afterInteractive"
-          crossOrigin="anonymous"
-          src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1368005726792126"
-        />
       </body>
     </html>
   );

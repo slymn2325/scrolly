@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useRef, useState } from 'react';
+import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import confetti from 'canvas-confetti';
 import { useEscapeClose } from '@/utils/useEscapeClose';
@@ -24,7 +25,6 @@ import {
 } from 'lucide-react';
 import { checkIsStandalone } from '@/components/PwaInstallPrompt';
 import ProfileHeaderTools from '@/components/ProfileHeaderTools';
-import TopicRadarChart from '@/components/TopicRadarChart';
 import {
   CATEGORIES,
   FEED_EXPERIENCE_COPY,
@@ -56,6 +56,8 @@ import {
   removeSavedVocabWord,
   speakVocabularyText,
 } from '@/utils/vocabNotebook';
+
+const TopicRadarChart = dynamic(() => import('@/components/TopicRadarChart'), { ssr: false });
 
 const VOCAB_POS_LABELS: Record<VocabPartOfSpeech, { tr: string; en: string }> = {
   isim: { tr: 'İsim', en: 'Noun' },

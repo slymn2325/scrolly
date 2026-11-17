@@ -91,6 +91,12 @@ const nextConfig = {
   poweredByHeader: false,
   images: {
     unoptimized: true,
+    remotePatterns: [
+      { protocol: 'https', hostname: '**.giphy.com' },
+      { protocol: 'https', hostname: '**.pexels.com' },
+      { protocol: 'https', hostname: '**.pixabay.com' },
+      { protocol: 'https', hostname: 'upload.wikimedia.org' },
+    ],
   },
   async headers() {
     return [
@@ -130,6 +136,42 @@ const nextConfig = {
           {
             key: 'Cache-Control',
             value: 'public, max-age=31536000, immutable',
+          },
+        ],
+      },
+      {
+        source: '/fact/:path*',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'public, s-maxage=3600, stale-while-revalidate=86400',
+          },
+        ],
+      },
+      {
+        source: '/en/fact/:path*',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'public, s-maxage=3600, stale-while-revalidate=86400',
+          },
+        ],
+      },
+      {
+        source: '/category/:path*',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'public, s-maxage=3600, stale-while-revalidate=86400',
+          },
+        ],
+      },
+      {
+        source: '/en/category/:path*',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'public, s-maxage=3600, stale-while-revalidate=86400',
           },
         ],
       },
