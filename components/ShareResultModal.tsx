@@ -1,13 +1,13 @@
 'use client';
 
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { motion } from 'framer-motion';
+import { animate, motion, useReducedMotion } from 'framer-motion';
 import confetti from 'canvas-confetti';
 import {
-  ArrowLeft,
   ArrowRight,
   Award,
   Check,
+  ChevronLeft,
   Clock,
   Copy,
   Film,
@@ -16,6 +16,8 @@ import {
   Share2,
   Swords,
 } from 'lucide-react';
+import { Button, Toast } from '@/components/cikartma';
+import { motionSpring } from '@/lib/motion';
 import type { DuelChallengeConfig } from '@/components/DuelModal';
 import GiphyReactionPicker, {
   type GiphyReactionItemDisplay,
@@ -314,11 +316,13 @@ export default function ShareResultModal({
 
   useEffect(() => {
     try {
+      const style = getComputedStyle(document.documentElement);
+      const token = (name: string) => style.getPropertyValue(name).trim();
       confetti({
-        particleCount: 85,
+        particleCount: 24,
         spread: 75,
         origin: { y: 0.55 },
-        colors: ['#A78BFA', '#34D399', '#FBBF24', '#FB7185', '#38BDF8'],
+        colors: [token('--cik-berry'), token('--cik-mint'), token('--cik-butter'), token('--cik-cta'), token('--cik-pink')].filter(Boolean),
       });
     } catch {
       // Ignore confetti errors in headless environments
@@ -377,142 +381,140 @@ export default function ShareResultModal({
 
   const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(fullShareText)}`;
   const xShareUrl = `https://x.com/intent/post?text=${encodeURIComponent(fullShareText)}`;
+  const reduced = useReducedMotion() === true;
+  const [shownXp, setShownXp] = useState(reduced ? earnedXp : 0);
+
+  useEffect(() => {
+    if (reduced) {
+      setShownXp(earnedXp);
+      return;
+    }
+    const controls = animate(0, earnedXp, {
+      type: 'spring',
+      stiffness: 90,
+      damping: 18,
+      onUpdate: (value) => setShownXp(Math.round(value)),
+    });
+    return () => controls.stop();
+  }, [earnedXp, reduced]);
+
+  const finishedTitle = duelConfig
+    ? duelPending
+      ? t.duelPendingTitle
+      : duelWon
+        ? t.duelWonTitle
+        : duelTie
+          ? t.duelTieTitle
+          : t.duelLostTitle
+    : quizMode === 'daily'
+      ? t.quizResultDaily
+      : quizMode === 'weekly'
+        ? t.quizResultWeekly
+        : quizMode === 'vocabulary'
+          ? t.quizResultWordLab
+          : t.quizResultMemory;
 
   return (
     <div
       aria-labelledby="share-modal-title"
       data-testid="share-result-modal"
       data-presentation="page"
-      className="absolute inset-0 z-30 flex h-full w-full flex-col overflow-hidden bg-[#FFFDF9] text-[#1E1B2E] dark:bg-[#0B0B11] dark:text-white"
+      className="absolute inset-0 z-content flex h-full w-full flex-col overflow-hidden bg-cik-bg text-cik-text"
     >
       <motion.div
-        initial={{ opacity: 0.94, y: 8 }}
+        initial={reduced ? { opacity: 1 } : { opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.14, ease: [0.23, 1, 0.32, 1] }}
-        className="no-scrollbar flex h-full w-full flex-col overflow-y-auto px-4 pt-[calc(env(safe-area-inset-top,14px)+14px)] pb-[calc(env(safe-area-inset-bottom,16px)+24px)] sm:px-5 lg:pt-5"
+        transition={reduced ? { duration: 0.15 } : motionSpring.sheetOpen}
+        className="flex h-full w-full flex-col overflow-y-auto px-4 pt-[calc(env(safe-area-inset-top)+1rem)] pb-[calc(env(safe-area-inset-bottom)+6rem)] md:px-6 lg:px-8 lg:pb-8 lg:pt-8"
       >
-        <div className="mb-3 flex items-center justify-between border-b border-ink/10 pb-3 dark:border-white/10">
-          <motion.button
-            type="button"
-            whileTap={{ scale: 0.94 }}
+        <div className="mb-4">
+          <Button
+            tone="ghost"
+            aria-label={t.sheetClose}
             onClick={() => {
               onButtonPop();
               onClose();
             }}
-            aria-label="Close modal"
-            className="inline-flex h-10 items-center gap-1.5 rounded-full border border-ink/15 bg-white px-3.5 text-xs font-extrabold text-ink transition hover:bg-slate-50 dark:border-white/15 dark:bg-white/10 dark:text-white dark:hover:bg-white/15"
           >
-            <ArrowLeft className="h-4 w-4 shrink-0" />
-            <span>{lang === 'tr' ? 'Keşfe Dön' : 'Back to Feed'}</span>
-          </motion.button>
+            <ChevronLeft size={20} strokeWidth={2} aria-hidden="true" />
+            <span>{t.quizBackToFeed}</span>
+          </Button>
         </div>
 
-        {/* Celebration Header */}
         <div className="text-center">
-          <div className="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-amber-200/80 via-rose-200/80 to-violet-200/80 p-1.5 shadow-sm dark:from-amber-500/20 dark:via-rose-500/20 dark:to-violet-500/20">
-            <img
-              src={
-                duelConfig
-                  ? STATE_ILLUSTRATION_PATHS.duelArena
-                  : STATE_ILLUSTRATION_PATHS.quizCelebration
-              }
-              alt=""
-              aria-hidden="true"
-              width={36}
-              height={36}
-              loading="eager"
-              decoding="sync"
-              className="h-9 w-9 object-contain drop-shadow-md"
-            />
-          </div>
-          <h2
-            id="share-modal-title"
-            className="font-display text-xl font-bold text-ink dark:text-white sm:text-2xl"
-          >
-            {duelConfig
-              ? duelPending
-                ? t.duelPendingTitle
-                : duelWon
-                ? t.duelWonTitle
-                : duelTie
-                ? t.duelTieTitle
-                : t.duelLostTitle
-              : t.shareModalTitle}
+          <img
+            src={
+              duelConfig ? STATE_ILLUSTRATION_PATHS.duelArena : STATE_ILLUSTRATION_PATHS.quizCelebration
+            }
+            alt=""
+            aria-hidden="true"
+            width={72}
+            height={72}
+            className="mx-auto mb-3 h-16 w-16 object-contain"
+          />
+          <h2 id="share-modal-title" className="cik-title-1 text-cik-text">
+            {finishedTitle}
           </h2>
-          <p className="mt-1 text-xs font-medium text-ink/60 dark:text-violet-200/80 sm:text-sm">
+          <p className="cik-subhead mt-2 text-cik-text-2">
             {t.shareModalScoreLabel}:{' '}
-            <strong className="text-violet-700 dark:text-violet-300">
+            <strong className="cik-tabular text-cik-text">
               {correctCount}/{totalCount}
-            </strong>{' '}
-            •{' '}
-            <strong className="text-emerald-600 dark:text-emerald-400">
-              +{earnedXp} XP
             </strong>
           </p>
+          <p className="cik-title-2 cik-tabular mt-2 text-cik-text" data-testid="share-xp-count">
+            {shownXp}
+          </p>
+          <span className="cik-footnote mt-2 inline-flex rounded-pill bg-cik-butter px-3 py-1 text-cik-butter-text">
+            +{shownXp} XP
+          </span>
         </div>
 
-        {/* VS Side-by-Side Comparison Card + Reaction GIF Drawer when playing a 1v1 Duel */}
         {duelConfig && (
-          <div className="mt-3 space-y-2.5">
-            <div
-              data-testid="duel-vs-card"
-              className="rounded-2xl border-2 border-amber-300 bg-gradient-to-r from-amber-50 via-white to-rose-50 p-3 shadow-sm dark:border-amber-600/60 dark:from-amber-950/40 dark:via-[#231D3A] dark:to-rose-950/40"
-            >
-              <p className="mb-1.5 flex items-center justify-center gap-1.5 text-center text-[11px] font-black uppercase tracking-wider text-amber-800 dark:text-amber-300">
-                <Swords className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+          <div className="mt-4 flex flex-col gap-3">
+            <div data-testid="duel-vs-card" className="rounded-cik-lg bg-cik-surface p-4 shadow-e1">
+              <p className="cik-footnote mb-3 flex items-center justify-center gap-2 text-cik-text-2">
+                <Swords size={16} strokeWidth={2} aria-hidden="true" />
                 <span>{t.vsComparisonTitle}</span>
               </p>
               <div className="grid grid-cols-3 items-center gap-2 text-center">
-                <div className="rounded-xl bg-white/90 p-2 shadow-sm dark:bg-white/10">
-                  <p className="truncate text-[10px] font-bold text-ink/60 dark:text-violet-200">
-                    {t.yourResult}
+                <div className="rounded-cik-md bg-cik-surface-2 p-3">
+                  <p className="cik-caption-2 truncate text-cik-text-2">{t.yourResult}</p>
+                  <p className="cik-title-3 cik-tabular mt-1 text-cik-mint-text">{earnedXp}</p>
+                  <p className="cik-caption-2 inline-flex items-center gap-1 text-cik-text-2">
+                    <Clock size={16} strokeWidth={2} aria-hidden="true" /> {elapsedSec}s
                   </p>
-                  <p className="mt-0.5 text-lg font-black tabular-nums text-emerald-600 dark:text-emerald-400">
-                    {earnedXp}
-                  </p>
-                  <p className="inline-flex items-center gap-0.5 text-[10px] font-bold text-ink/60 dark:text-violet-200/80">
-                    <Clock className="h-3 w-3" /> {elapsedSec}s
-                  </p>
-                  {(selfPlayer?.reactionGif?.url ||
-                    localReactions.find((r) => r.isSelf)?.url) && (
-                    <div
-                      data-testid="share-self-reaction-badge"
-                      className="mt-1.5 flex justify-center"
-                    >
+                  {(selfPlayer?.reactionGif?.url || localReactions.find((r) => r.isSelf)?.url) && (
+                    <div data-testid="share-self-reaction-badge" className="mt-2 flex justify-center">
                       <img
-                        src={
-                          selfPlayer?.reactionGif?.url ||
-                          localReactions.find((r) => r.isSelf)?.url ||
-                          ''
-                        }
+                        src={selfPlayer?.reactionGif?.url || localReactions.find((r) => r.isSelf)?.url || ''}
                         alt={challengerNickname}
-                        className="h-9 w-12 rounded-lg border border-violet-300/70 object-cover bg-[#0A0A0E]"
+                        width={48}
+                        height={36}
+                        className="h-8 w-12 rounded-cik-sm bg-cik-surface object-cover"
                       />
                     </div>
                   )}
                 </div>
-
-                <div className="font-display text-lg font-black text-rose-500">VS</div>
-
-                <div className="rounded-xl bg-white/90 p-2 shadow-sm dark:bg-white/10">
-                  <p className="truncate text-[10px] font-bold text-ink/60 dark:text-violet-200">
+                <div className="cik-headline text-cik-cta">VS</div>
+                <div className="rounded-cik-md bg-cik-surface-2 p-3">
+                  <p className="cik-caption-2 truncate text-cik-text-2">
                     {opponentPlayer?.name || duelConfig.challengerName}
                   </p>
                   {duelPending ? (
                     <p
                       data-testid="duel-opponent-waiting"
-                      className="mt-1 inline-flex items-center justify-center gap-1 rounded-lg bg-amber-100/90 px-1.5 py-1 text-[10px] font-bold leading-tight text-amber-900 animate-pulse dark:bg-amber-900/40 dark:text-amber-200"
+                      className="cik-caption-2 mt-2 inline-flex items-center justify-center gap-1 rounded-cik-sm bg-cik-butter px-2 py-1 text-cik-butter-text"
                     >
-                      <Clock className="h-3 w-3 shrink-0" aria-hidden="true" />
+                      <Clock size={16} strokeWidth={2} aria-hidden="true" />
                       <span>{t.duelWaitingOpponentScore}</span>
                     </p>
                   ) : (
                     <>
-                      <p className="mt-0.5 text-lg font-black tabular-nums text-violet-700 dark:text-violet-300">
+                      <p className="cik-title-3 cik-tabular mt-1 text-cik-text">
                         {isRealServerDuel ? opponentScore : duelConfig.targetScore}
                       </p>
-                      <p className="inline-flex items-center gap-0.5 text-[10px] font-bold tabular-nums text-ink/65 dark:text-violet-200/80">
-                        <Clock className="h-3 w-3" />{' '}
+                      <p className="cik-caption-2 cik-tabular inline-flex items-center gap-1 text-cik-text-2">
+                        <Clock size={16} strokeWidth={2} aria-hidden="true" />{' '}
                         {isRealServerDuel
                           ? typeof opponentElapsed === 'number'
                             ? `${opponentElapsed}s`
@@ -522,14 +524,13 @@ export default function ShareResultModal({
                     </>
                   )}
                   {opponentPlayer?.reactionGif?.url && (
-                    <div
-                      data-testid="share-opponent-reaction-badge"
-                      className="mt-1.5 flex justify-center"
-                    >
+                    <div data-testid="share-opponent-reaction-badge" className="mt-2 flex justify-center">
                       <img
                         src={opponentPlayer.reactionGif.url}
                         alt={opponentPlayer.reactionGif.title || opponentPlayer.name}
-                        className="h-9 w-12 rounded-lg border border-amber-300/70 object-cover bg-[#0A0A0E]"
+                        width={48}
+                        height={36}
+                        className="h-8 w-12 rounded-cik-sm bg-cik-surface object-cover"
                       />
                     </div>
                   )}
@@ -544,21 +545,13 @@ export default function ShareResultModal({
                 onButtonPop();
                 setShowReactionDrawer((prev) => !prev);
               }}
-              className="flex w-full items-center justify-between gap-2 rounded-2xl border border-violet-300/70 bg-violet-50/80 px-3.5 py-2 text-xs font-extrabold text-violet-900 transition hover:bg-violet-100/80 dark:border-violet-600/50 dark:bg-violet-950/45 dark:text-violet-100"
+              className="cik-footnote flex min-h-11 w-full items-center justify-between gap-2 rounded-cik-md bg-cik-surface px-4 text-cik-text shadow-e1 focus-visible:outline focus-visible:outline-[3px] focus-visible:outline-offset-2 focus-visible:outline-cik-focus"
             >
-              <span className="inline-flex items-center gap-1.5">
-                <Film className="h-3.5 w-3.5 shrink-0 text-violet-600 dark:text-violet-300" aria-hidden="true" />
-                <span>{lang === 'tr' ? 'GIF ile Tepki Gönder' : 'Send Reaction GIF'}</span>
+              <span className="inline-flex items-center gap-2">
+                <Film size={16} strokeWidth={2} aria-hidden="true" />
+                <span>{lang === 'tr' ? 'GIF ile tepki' : 'Reaction GIF'}</span>
               </span>
-              <span className="text-[11px] font-black text-violet-600 dark:text-violet-300">
-                {showReactionDrawer
-                  ? lang === 'tr'
-                    ? 'Gizle'
-                    : 'Hide'
-                  : lang === 'tr'
-                    ? 'Aç'
-                    : 'Open'}
-              </span>
+              <span>{showReactionDrawer ? (lang === 'tr' ? 'Gizle' : 'Hide') : lang === 'tr' ? 'Aç' : 'Open'}</span>
             </button>
 
             {showReactionDrawer && (
@@ -573,172 +566,127 @@ export default function ShareResultModal({
           </div>
         )}
 
-        {/* Wordle-Style Shareable Result Box */}
-        <div
-          data-testid="wordle-share-card"
-          className="mt-3 rounded-2xl border-2 border-violet-200 bg-gradient-to-br from-pastel-lavender/60 via-white to-pastel-mint/60 p-3 text-center shadow-sm dark:border-violet-700/60 dark:from-violet-950/60 dark:via-[#221C38] dark:to-teal-950/50"
-        >
-          <p className="text-xs font-extrabold uppercase tracking-wider text-violet-700 dark:text-violet-300">
-            {t.shareCardHeader}
-          </p>
-
-          <div className="my-2 flex flex-wrap items-center justify-center gap-1.5 text-xl tracking-widest sm:text-2xl">
+        <div data-testid="wordle-share-card" className="mt-4 rounded-cik-lg bg-cik-surface p-5 text-center shadow-e1">
+          <p className="cik-footnote text-cik-text-2">{t.shareCardHeader}</p>
+          <div className="my-4 flex flex-wrap items-center justify-center gap-2" aria-hidden="true">
             {results.map((ok, idx) => (
               <motion.span
                 key={idx}
-                initial={{ scale: 0, rotate: -20 }}
-                animate={{ scale: 1, rotate: 0 }}
-                transition={{ delay: 0.06 + idx * 0.07, type: 'spring', stiffness: 360 }}
-              >
-                {ok ? '🟩' : '🟥'}
-              </motion.span>
+                initial={reduced ? { opacity: 1 } : { scale: 0.96, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                transition={reduced ? { duration: 0.15 } : { ...motionSpring.reveal, delay: idx * 0.04 }}
+                className={`h-8 w-8 rounded-cik-sm ${ok ? 'bg-cik-mint' : 'bg-cik-rose'}`}
+              />
             ))}
           </div>
-
-          <div className="inline-flex items-center gap-1.5 rounded-full border border-amber-200 bg-pastel-sun px-3 py-1 text-xs font-extrabold text-amber-900 dark:border-amber-700/60 dark:bg-amber-900/50 dark:text-amber-200">
-            <Award className="h-3.5 w-3.5 text-amber-600 dark:text-amber-300" />
+          <div className="cik-footnote inline-flex items-center gap-2 rounded-pill bg-cik-butter px-3 py-1 text-cik-butter-text">
+            <Award size={16} strokeWidth={2} aria-hidden="true" />
             <span>
               {catMeta.emoji} {badgeLabel}
             </span>
           </div>
-
           <p
             data-testid="share-summary-text"
-            className="mt-2 select-all rounded-xl bg-white/90 px-3 py-1.5 font-mono text-[11px] font-semibold text-ink/80 dark:bg-black/30 dark:text-violet-100"
+            className="cik-caption-2 mt-3 select-all rounded-cik-md bg-cik-surface-2 px-3 py-2 font-mono text-cik-text-2"
           >
             {shareSummaryLine}
           </p>
         </div>
 
-        {/* One-Click Sharing + 1v1 Duel Challenge Generator */}
-        <div className="mt-3 flex flex-col gap-2">
-          <motion.button
-            type="button"
-            whileTap={{ scale: 0.94 }}
-            onClick={handleCopy}
-            data-testid="copy-result-btn"
-            className={`flex w-full items-center justify-center gap-2 rounded-2xl px-4 py-2 text-xs font-extrabold shadow-pill transition-colors sm:text-sm ${
-              copied
-                ? 'bg-emerald-600 text-white'
-                : 'border-2 border-ink bg-white text-ink hover:bg-slate-50 dark:border-violet-400 dark:bg-white/10 dark:text-white'
-            }`}
-          >
-            {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+        <div className="mt-4 flex flex-col gap-2">
+          <Button data-testid="copy-result-btn" className="w-full" onClick={handleCopy}>
+            {copied ? <Check size={20} strokeWidth={2} aria-hidden="true" /> : <Copy size={20} strokeWidth={2} aria-hidden="true" />}
             <span>{copied ? t.shareCopiedBtn : t.shareCopyBtn}</span>
-          </motion.button>
+          </Button>
 
           {isDailyResult && (
-            <motion.button
-              type="button"
-              whileTap={{ scale: 0.94 }}
-              onClick={() => void handleWebShare()}
-              data-testid="daily-web-share-btn"
-              className="flex w-full items-center justify-center gap-2 rounded-2xl bg-violet-600 px-4 py-2 text-xs font-extrabold text-white shadow-pill sm:text-sm"
-            >
-              <Share2 className="h-4 w-4" />
-              <span>
-                {shared
-                  ? lang === 'tr'
-                    ? 'Paylaşıldı'
-                    : 'Shared'
-                  : lang === 'tr'
-                    ? 'Paylaş'
-                    : 'Share'}
-              </span>
-            </motion.button>
+            <Button tone="ghost" data-testid="daily-web-share-btn" className="w-full" onClick={() => void handleWebShare()}>
+              <Share2 size={20} strokeWidth={2} aria-hidden="true" />
+              <span>{shared ? (lang === 'tr' ? 'Paylaşıldı' : 'Shared') : lang === 'tr' ? 'Paylaş' : 'Share'}</span>
+            </Button>
           )}
 
           {questionIds.length > 0 && (
-            <motion.button
-              type="button"
-              whileTap={{ scale: 0.94 }}
-              onClick={handleCopyDuelFromResult}
-              data-testid="copy-duel-from-result-btn"
-              className={`flex w-full items-center justify-center gap-2 rounded-2xl px-4 py-2 text-xs font-extrabold transition-colors ${
-                duelCopied
-                  ? 'bg-emerald-600 text-white'
-                  : 'border border-amber-300 bg-amber-50 text-amber-900 dark:border-amber-600/50 dark:bg-amber-950/40 dark:text-amber-200'
-              }`}
-            >
-              <Swords className="h-4 w-4" />
+            <Button tone="ghost" data-testid="copy-duel-from-result-btn" className="w-full" onClick={handleCopyDuelFromResult}>
+              <Swords size={20} strokeWidth={2} aria-hidden="true" />
               <span>{duelCopied ? t.duelLinkCopied : t.duelCopyLinkBtn}</span>
-            </motion.button>
+            </Button>
           )}
 
           <div className="grid grid-cols-2 gap-2">
-            <motion.a
+            <a
               href={whatsappUrl}
               target="_blank"
               rel="noopener noreferrer"
-              whileTap={{ scale: 0.94 }}
               onClick={onButtonPop}
               data-testid="share-whatsapp-btn"
-              className="flex items-center justify-center gap-1.5 rounded-2xl bg-[#25D366] px-3 py-2 text-xs font-extrabold text-white shadow-pill hover:brightness-95"
+              className="cik-footnote inline-flex min-h-11 items-center justify-center gap-2 rounded-pill bg-cik-cta px-4 text-cik-on-cta focus-visible:outline focus-visible:outline-[3px] focus-visible:outline-offset-2 focus-visible:outline-cik-focus"
             >
-              <MessageCircle className="h-4 w-4" />
+              <MessageCircle size={16} strokeWidth={2} aria-hidden="true" />
               <span>{t.shareWhatsAppBtn}</span>
-            </motion.a>
-
-            <motion.a
+            </a>
+            <a
               href={xShareUrl}
               target="_blank"
               rel="noopener noreferrer"
-              whileTap={{ scale: 0.94 }}
               onClick={onButtonPop}
               data-testid="share-x-btn"
-              className="flex items-center justify-center gap-1.5 rounded-2xl bg-[#111827] px-3 py-2 text-xs font-extrabold text-white shadow-pill hover:bg-black"
+              className="cik-footnote inline-flex min-h-11 items-center justify-center gap-2 rounded-pill bg-cik-text px-4 text-cik-bg focus-visible:outline focus-visible:outline-[3px] focus-visible:outline-offset-2 focus-visible:outline-cik-focus"
             >
-              <Share2 className="h-4 w-4" />
+              <Share2 size={16} strokeWidth={2} aria-hidden="true" />
               <span>{t.shareXBtn}</span>
-            </motion.a>
+            </a>
           </div>
         </div>
 
         {!authEmail && (
           <div
             data-testid="share-auth-cta"
-            className="mt-3 flex flex-wrap items-center justify-between gap-2 rounded-2xl border border-violet-200/80 bg-violet-50/75 px-3.5 py-2.5 text-xs dark:border-violet-600/35 dark:bg-violet-950/35"
+            className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-cik-lg bg-cik-surface p-4 shadow-e1"
           >
-            <span className="font-bold text-ink/80 dark:text-violet-100">
-              {lang === 'tr'
-                ? 'Kazandığın XP’yi kalıcı olarak sakla'
-                : 'Keep your earned XP synced'}
+            <span className="cik-subhead text-cik-text">
+              {lang === 'tr' ? 'Kazandığın XP’yi sakla' : 'Keep your earned XP'}
             </span>
-            <button
-              type="button"
+            <Button
               onClick={() => {
                 onButtonPop();
-                window.dispatchEvent(
-                  new CustomEvent('scrolly-open-auth', { detail: { trigger: 'quiz' } })
-                );
+                window.dispatchEvent(new CustomEvent('scrolly-open-auth', { detail: { trigger: 'quiz' } }));
               }}
-              className="inline-flex items-center gap-1.5 rounded-full bg-violet-600 px-3 py-1.5 text-[11px] font-extrabold text-white transition-colors hover:bg-violet-700"
             >
-              <Mail className="h-3.5 w-3.5 shrink-0" />
-              <span>
-                {lang === 'tr'
-                  ? 'E-posta ile Hesabını Bağla / Giriş Yap'
-                  : 'Connect Email / Sign In'}
-              </span>
-            </button>
+              <Mail size={16} strokeWidth={2} aria-hidden="true" />
+              <span>{lang === 'tr' ? 'Hesabı bağla' : 'Connect account'}</span>
+            </Button>
           </div>
         )}
 
-        {/* Continue Button */}
-        <motion.button
-          type="button"
-          whileTap={{ scale: 0.94 }}
-          onClick={() => {
-            onButtonPop();
-            onClose();
-          }}
-          data-testid="share-continue-btn"
-          className="mt-2.5 flex w-full items-center justify-center gap-2 rounded-full bg-violet-600 py-2.5 text-sm font-extrabold text-white shadow-cozy hover:bg-violet-700"
-        >
-          <span>{t.shareContinueBtn}</span>
-          <ArrowRight className="h-4 w-4" />
-        </motion.button>
+        <div className="mt-4 grid grid-cols-2 gap-2">
+          <Button
+            tone="ghost"
+            data-testid="quiz-play-again-btn"
+            className="w-full"
+            onClick={() => {
+              onButtonPop();
+              window.dispatchEvent(
+                new CustomEvent('scrolly-quiz-replay', { detail: { quizMode: quizMode ?? 'memory' } })
+              );
+            }}
+          >
+            {t.quizPlayAgain}
+          </Button>
+          <Button
+            data-testid="share-continue-btn"
+            className="w-full"
+            onClick={() => {
+              onButtonPop();
+              onClose();
+            }}
+          >
+            <span>{t.quizBackToFeed}</span>
+            <ArrowRight size={20} strokeWidth={2} aria-hidden="true" />
+          </Button>
+        </div>
       </motion.div>
+      <Toast message={copied ? t.shareCopiedBtn : null} />
     </div>
   );
 }
