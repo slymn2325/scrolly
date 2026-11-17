@@ -74,7 +74,6 @@ const LEGACY_PALETTE_FILES = [
   'components/sketch/BodyHistorySketches.tsx',
   'components/NativeAdSlide.tsx',
   'components/PoweredByGiphyBadge.tsx',
-  'components/PrivacyPolicyView.tsx',
   'components/ProfileHeaderTools.tsx',
   'components/PwaInstallGuideModal.tsx',
   'components/QuizCtaSlide.tsx',
