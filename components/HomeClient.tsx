@@ -4,6 +4,7 @@ import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useSta
 import dynamic from 'next/dynamic';
 import { useRouter } from 'next/navigation';
 import { AnimatePresence, motion } from 'framer-motion';
+import { X } from 'lucide-react';
 import CookieBanner from '@/components/CookieBanner';
 import DeferredAdSense from '@/components/DeferredAdSense';
 import ErrorBoundary from '@/components/ErrorBoundary';
@@ -1762,9 +1763,7 @@ export default function HomeClient({ initialFacts, initialVocabulary, initialLan
     setShowPwaGuideModal(true);
   }, [showToast]);
 
-  const isExploreSubPageOpen = Boolean(
-    detailState || storyShareFact || shareModalData || showPwaGuideModal
-  );
+  const isExploreSubPageOpen = Boolean(shareModalData || showPwaGuideModal);
   const cookieBannerVisible =
     !memory.cookieAccepted &&
     activeTab === 'explore' &&
@@ -1948,7 +1947,7 @@ export default function HomeClient({ initialFacts, initialVocabulary, initialLan
         {/* Stage + attached desktop vertical actions + up/down rail + xl info panel */}
         <div
           data-testid="reels-stage-row"
-          className="relative z-10 flex h-full w-full max-w-none items-stretch justify-center lg:h-[100dvh] lg:w-auto lg:max-w-none lg:items-center lg:gap-2 lg:px-2"
+          className="relative z-10 flex h-full w-full max-w-none items-stretch justify-center lg:h-[100dvh] lg:w-full lg:max-w-none lg:items-center lg:gap-2 lg:px-2"
         >
         {/* Immersive vertical stage: full-bleed on mobile/tablet; proportional 88dvh showcase on desktop */}
         <div
@@ -2047,34 +2046,52 @@ export default function HomeClient({ initialFacts, initialVocabulary, initialLan
           />
         </div>
 
-        <AnimatePresence>
-          {detailState && (
-            <FactDetailPage
-              key={`fact-detail-${detailState.fact.id}`}
-              fact={detailState.fact}
-              lang={lang}
-              darkMode={isDark}
-              resolvedGifUrl={detailState.resolvedGifUrl}
-              onClose={() => setDetailState(null)}
-              onNextCard={() => {
-                setDetailState(null);
-                requestAnimationFrame(() => {
-                  feedRef.current?.scrollToNext();
-                });
-              }}
-              onOpenDuel={(fact) => {
-                setDetailState(null);
-                handleOpenDuelFromCard(fact);
-              }}
-              onButtonPop={() => playPop(soundEnabled)}
-              onEarnXp={(xpAmount) => {
-                setMemory((prev) => addUserXp(prev, xpAmount, 'detail'));
-              }}
-              onSuccessSound={() => playDing(soundEnabled)}
-              onWrongSound={() => playWrong(soundEnabled)}
-            />
-          )}
-        </AnimatePresence>
+        {detailState && (
+          <div
+            data-testid="detail-modal-backdrop"
+            className="absolute inset-0 z-50 flex items-center justify-center bg-black/50 p-3"
+            onClick={() => setDetailState(null)}
+          >
+            <div
+              className="relative h-[min(92%,820px)] w-full max-w-[480px] overflow-hidden rounded-3xl"
+              onClick={(event) => event.stopPropagation()}
+            >
+              <button
+                type="button"
+                aria-label={lang === 'tr' ? 'Kapat' : 'Close'}
+                data-testid="detail-modal-close"
+                onClick={() => setDetailState(null)}
+                className="absolute right-3 top-3 z-[80] flex h-10 w-10 items-center justify-center rounded-full bg-white text-slate-900 shadow-md"
+              >
+                <X className="h-4 w-4" />
+              </button>
+              <FactDetailPage
+                key={`fact-detail-${detailState.fact.id}`}
+                fact={detailState.fact}
+                lang={lang}
+                darkMode={isDark}
+                resolvedGifUrl={detailState.resolvedGifUrl}
+                onClose={() => setDetailState(null)}
+                onNextCard={() => {
+                  setDetailState(null);
+                  requestAnimationFrame(() => {
+                    feedRef.current?.scrollToNext();
+                  });
+                }}
+                onOpenDuel={(fact) => {
+                  setDetailState(null);
+                  handleOpenDuelFromCard(fact);
+                }}
+                onButtonPop={() => playPop(soundEnabled)}
+                onEarnXp={(xpAmount) => {
+                  setMemory((prev) => addUserXp(prev, xpAmount, 'detail'));
+                }}
+                onSuccessSound={() => playDing(soundEnabled)}
+                onWrongSound={() => playWrong(soundEnabled)}
+              />
+            </div>
+          </div>
+        )}
 
         {activeQuiz && (
           <div
@@ -2217,13 +2234,35 @@ export default function HomeClient({ initialFacts, initialVocabulary, initialLan
           onButtonPop={() => playPop(soundEnabled)}
         />
 
-        <StoryShareModal
-          open={Boolean(storyShareFact)}
-          fact={storyShareFact}
-          lang={lang}
-          onClose={() => setStoryShareFact(null)}
-          onButtonPop={() => playPop(soundEnabled)}
-        />
+        {storyShareFact && (
+          <div
+            data-testid="story-share-backdrop"
+            className="absolute inset-0 z-50 flex items-center justify-center bg-black/50 p-3"
+            onClick={() => setStoryShareFact(null)}
+          >
+            <div
+              className="relative h-[min(92%,820px)] w-full max-w-[440px] overflow-hidden rounded-3xl"
+              onClick={(event) => event.stopPropagation()}
+            >
+              <button
+                type="button"
+                aria-label={lang === 'tr' ? 'Kapat' : 'Close'}
+                data-testid="story-share-close"
+                onClick={() => setStoryShareFact(null)}
+                className="absolute right-3 top-3 z-[80] flex h-10 w-10 items-center justify-center rounded-full bg-white text-slate-900 shadow-md"
+              >
+                <X className="h-4 w-4" />
+              </button>
+              <StoryShareModal
+                open
+                fact={storyShareFact}
+                lang={lang}
+                onClose={() => setStoryShareFact(null)}
+                onButtonPop={() => playPop(soundEnabled)}
+              />
+            </div>
+          </div>
+        )}
 
         {shareModalData && (
           <ShareResultModal

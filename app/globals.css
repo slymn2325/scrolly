@@ -270,16 +270,19 @@ html.scrolly-doc-scroll body {
 @media (min-width: 1024px) {
   [data-testid="reels-phone-frame"].stage-card,
   [data-testid="reels-phone-frame"] {
-    width: 100%;
+    width: min(100%, 520px);
+    min-width: min(100%, 320px);
     max-width: 520px;
     height: min(86dvh, 780px);
     max-height: min(86dvh, 780px);
+    flex: none;
   }
 }
 
 @media (min-width: 1280px) {
   [data-testid="reels-phone-frame"].stage-card,
   [data-testid="reels-phone-frame"] {
+    width: min(100%, 560px);
     max-width: 560px;
   }
 }

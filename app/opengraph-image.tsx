@@ -1,4 +1,5 @@
 import { ImageResponse } from 'next/og';
+import BrandLogo from '@/components/BrandLogo';
 
 export const runtime = 'nodejs';
 export const alt = 'Scrolly — Reels Tarzı İki Dilli Mikro Keşif Platformu';
@@ -30,22 +31,7 @@ export default function OpenGraphImage() {
           }}
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                width: '64px',
-                height: '64px',
-                borderRadius: '18px',
-                background: 'linear-gradient(135deg, #6D28D9 0%, #4F46E5 100%)',
-                color: '#FFFFFF',
-                fontSize: '34px',
-                fontWeight: 800,
-              }}
-            >
-              S
-            </div>
+            <BrandLogo size={64} id="og-brand" />
             <div style={{ display: 'flex', flexDirection: 'column' }}>
               <span style={{ fontSize: '32px', fontWeight: 800, color: '#1E1B2E' }}>
                 Scrolly

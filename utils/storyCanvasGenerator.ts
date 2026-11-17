@@ -114,6 +114,35 @@ function drawRoundedRect(
   ctx.closePath();
 }
 
+function drawBrandMark(
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  size: number
+): void {
+  const gradient = ctx.createLinearGradient(x, y, x + size, y + size);
+  gradient.addColorStop(0, '#6B4BFF');
+  gradient.addColorStop(1, '#FF7A59');
+  ctx.save();
+  drawRoundedRect(ctx, x, y, size, size, size * 0.22);
+  ctx.fillStyle = gradient;
+  ctx.fill();
+  ctx.fillStyle = 'rgba(255,255,255,0.38)';
+  drawRoundedRect(ctx, x + size * 0.18, y + size * 0.22, size * 0.58, size * 0.16, size * 0.06);
+  ctx.fill();
+  ctx.fillStyle = '#FFFFFF';
+  drawRoundedRect(ctx, x + size * 0.26, y + size * 0.44, size * 0.52, size * 0.22, size * 0.06);
+  ctx.fill();
+  ctx.strokeStyle = '#FFFFFF';
+  ctx.lineWidth = Math.max(2, size * 0.07);
+  ctx.lineCap = 'round';
+  ctx.beginPath();
+  ctx.moveTo(x + size * 0.22, y + size * 0.8);
+  ctx.quadraticCurveTo(x + size * 0.55, y + size * 0.42, x + size * 0.82, y + size * 0.2);
+  ctx.stroke();
+  ctx.restore();
+}
+
 function wrapCanvasText(
   ctx: CanvasRenderingContext2D,
   text: string,
@@ -407,20 +436,17 @@ export async function generateStoryCardImage(
   ctx.textBaseline = 'middle';
   ctx.fillText(catTextWithFallback, catImg ? 152 : 108, 130);
 
-  // Right Scrolly Brand Stamp (with verified 3D seal)
+  // Right Scrolly brand stamp
   const brandText = t.brandName;
   ctx.font = '800 32px "Fredoka", "Plus Jakarta Sans", system-ui, sans-serif';
-  const sealSpace = verifiedSealImg ? 50 : 0;
-  const brandW = ctx.measureText(brandText).width + 64 + sealSpace;
+  const brandW = ctx.measureText(brandText).width + 64 + 58;
   const brandX = width - 72 - brandW;
   drawRoundedRect(ctx, brandX, 92, brandW, 74, 37);
   ctx.fillStyle = 'rgba(255,255,255,0.16)';
   ctx.fill();
-  if (verifiedSealImg) {
-    ctx.drawImage(verifiedSealImg, brandX + 20, 107, 44, 44);
-  }
+  drawBrandMark(ctx, brandX + 14, 104, 50);
   ctx.fillStyle = '#FFFFFF';
-  ctx.fillText(brandText, brandX + (verifiedSealImg ? 74 : 29), 130);
+  ctx.fillText(brandText, brandX + 74, 130);
 
   // 4. Center Frosted Glass Typography Card
   const cardX = 68;
@@ -552,13 +578,13 @@ export async function generateStoryCardImage(
   const mediaProvider = detectMediaProvider({
     gifUrl: fact.gifUrl,
     posterUrl: fact.posterUrl,
-    mediaSource: fact.mediaSource,
-    mediaProvider: fact.mediaSource,
+    videoUrl: fact.gifUrl,
   });
-  const sourceLabel =
-    mediaProvider?.id === 'giphy'
-      ? `📚 ${localized.sourceHint} · Giphy`
-      : `📚 ${localized.sourceHint}`;
+  const providerName =
+    mediaProvider?.id === 'wikimedia' ? 'Wikimedia' : mediaProvider?.label;
+  const sourceLabel = providerName
+    ? `📚 ${localized.sourceHint} · ${providerName}`
+    : `📚 ${localized.sourceHint}`;
   ctx.font = '700 26px "Plus Jakarta Sans", system-ui, sans-serif';
   const srcW = Math.min(textMaxW, ctx.measureText(sourceLabel).width + 64);
   drawRoundedRect(ctx, width / 2 - srcW / 2, srcY, srcW, 56, 28);

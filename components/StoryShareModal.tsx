@@ -2,7 +2,8 @@
 
 import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
-import { ArrowLeft, Check, Copy, Download, Film, Loader2, MessageCircle, Share2, Sparkles } from 'lucide-react';
+import { ArrowLeft, Check, Copy, Download, Film, Loader2, MessageCircle, Share2 } from 'lucide-react';
+import BrandLogo from '@/components/BrandLogo';
 import { type Language, translations } from '@/i18n/translations';
 import { detectMediaProvider } from '@/lib/mediaProvider';
 import type { FactCard } from '@/types/fact';
@@ -265,7 +266,7 @@ export default function StoryShareModal({
       initial={{ opacity: 0.96, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.14, ease: [0.23, 1, 0.32, 1] }}
-      className="backface-hidden absolute inset-0 z-30 flex h-full w-full flex-col overflow-hidden bg-[#FFFDF9] text-[#1E1B2E] dark:bg-[#0B0B11] dark:text-white"
+      className="relative z-30 flex h-full w-full flex-col overflow-hidden bg-[#FFFDF9] text-[#1E1B2E] dark:bg-[#0B0B11] dark:text-white"
     >
       <div className="no-scrollbar flex h-full w-full flex-col overflow-y-auto px-4 pt-[calc(env(safe-area-inset-top,14px)+14px)] pb-[calc(env(safe-area-inset-bottom,16px)+24px)] sm:px-5 lg:pt-5">
             <div className="mb-3 flex items-center justify-between gap-2 border-b border-ink/10 pb-3 dark:border-white/10">
@@ -291,9 +292,7 @@ export default function StoryShareModal({
             </div>
 
             <div className="flex items-center gap-2.5">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-fuchsia-500 to-violet-600 text-white shadow-sm">
-                <Sparkles className="h-5 w-5" />
-              </div>
+              <BrandLogo size={40} id="story-share-brand" />
               <div>
                 <h2 className="font-display text-lg font-bold text-ink dark:text-white">
                   {t.storyModalTitle}
@@ -311,14 +310,17 @@ export default function StoryShareModal({
                 <div className="absolute inset-x-0 bottom-0 z-[2] bg-gradient-to-t from-black/85 via-black/45 to-transparent px-3 pb-3 pt-10">
                   <p className="line-clamp-4 text-[11px] font-extrabold leading-snug text-white">{fact[lang].title}</p>
                   <p className="mt-1 text-[10px] font-black tracking-wide text-white">scrolly.live</p>
-                  {detectMediaProvider({
-                    gifUrl: fact.gifUrl,
-                    posterUrl: fact.posterUrl,
-                    mediaSource: fact.mediaSource,
-                    mediaProvider: fact.mediaSource,
-                  })?.id === 'giphy' ? (
-                    <p className="mt-0.5 text-[9px] font-bold text-white/80">Giphy</p>
-                  ) : null}
+                  {(() => {
+                    const provider = detectMediaProvider({
+                      gifUrl: fact.gifUrl,
+                      posterUrl: fact.posterUrl,
+                      videoUrl: fact.gifUrl,
+                    });
+                    const label = provider?.id === 'wikimedia' ? 'Wikimedia' : provider?.label;
+                    return label ? (
+                      <p className="mt-0.5 text-[9px] font-bold text-white/80">{label}</p>
+                    ) : null;
+                  })()}
                 </div>
                 {generating ? (
                   <div className="absolute right-2 top-2 z-[3] rounded-full bg-black/50 p-1 text-white">
