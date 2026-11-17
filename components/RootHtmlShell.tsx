@@ -45,7 +45,7 @@ const ROOT_SCHEMA_JSON_LD = {
       email: 'contact@scrolly.live',
       logo: {
         '@type': 'ImageObject',
-        url: 'https://scrolly.live/icon.svg?v=20261117',
+        url: 'https://scrolly.live/icon.svg?v=20261117b',
       },
       contactPoint: {
         '@type': 'ContactPoint',

@@ -501,6 +501,7 @@ export default function HomeClient({ initialFacts, initialVocabulary, initialLan
   const toastTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const [activeTab, setActiveTab] = useState<DockTabId>('explore');
+  const [notebookFocus, setNotebookFocus] = useState(0);
   const [chromeBlocked, setChromeBlocked] = useState(false);
   const [suppressInitialFactSync, setSuppressInitialFactSync] = useState(false);
   const [activeQuiz, setActiveQuiz] = useState<ActiveQuizSession | null>(null);
@@ -1563,6 +1564,41 @@ export default function HomeClient({ initialFacts, initialVocabulary, initialLan
       });
     })();
   };
+  const startQuizModeRef = useRef(handleStartQuizMode);
+  startQuizModeRef.current = handleStartQuizMode;
+
+  useEffect(() => {
+    const onReplay = (event: Event) => {
+      const mode = (event as CustomEvent<{ quizMode?: string }>).detail?.quizMode;
+      setShareModalData(null);
+      if (mode === 'duel') {
+        setActiveQuiz(null);
+        setActiveTab('duel');
+        return;
+      }
+      const choice: QuizModeChoice =
+        mode === 'daily' || mode === 'weekly' || mode === 'vocabulary' || mode === 'memory'
+          ? mode
+          : 'memory';
+      startQuizModeRef.current(choice);
+    };
+    const onOpenTab = (event: Event) => {
+      const detail = (event as CustomEvent<{ tab?: string; section?: string }>).detail;
+      if (detail?.tab !== 'diploma') return;
+      if (detail.section === 'vocab') setNotebookFocus((current) => current + 1);
+      setActiveQuiz(null);
+      setDetailState(null);
+      setStoryShareFact(null);
+      setShareModalData(null);
+      setActiveTab('diploma');
+    };
+    window.addEventListener('scrolly-quiz-replay', onReplay);
+    window.addEventListener('scrolly-open-tab', onOpenTab);
+    return () => {
+      window.removeEventListener('scrolly-quiz-replay', onReplay);
+      window.removeEventListener('scrolly-open-tab', onOpenTab);
+    };
+  }, []);
 
   const handleStartDuel = (config: DuelChallengeConfig) => {
     vibrateTap(12);
@@ -1730,6 +1766,7 @@ export default function HomeClient({ initialFacts, initialVocabulary, initialLan
       return;
     }
 
+    if (tab === 'diploma') setNotebookFocus(0);
     if (tab === 'duel') {
       setShowWelcome(false);
     }
@@ -2345,6 +2382,7 @@ export default function HomeClient({ initialFacts, initialVocabulary, initialLan
           <DiplomaProfileModal
             open
             presentation="page"
+            notebookFocus={notebookFocus}
             lang={lang}
             memory={memory}
             allFacts={allFacts}
@@ -2392,33 +2430,13 @@ export default function HomeClient({ initialFacts, initialVocabulary, initialLan
         ) : null}
 
         {storyShareFact && (
-          <div
-            data-testid="story-share-backdrop"
-            className="absolute inset-0 z-50 flex items-center justify-center bg-black/50 p-3"
-            onClick={() => setStoryShareFact(null)}
-          >
-            <div
-              className="relative h-[min(92%,820px)] w-full max-w-[440px] overflow-hidden rounded-3xl"
-              onClick={(event) => event.stopPropagation()}
-            >
-              <button
-                type="button"
-                aria-label={lang === 'tr' ? 'Kapat' : 'Close'}
-                data-testid="story-share-close"
-                onClick={() => setStoryShareFact(null)}
-                className="absolute right-3 top-3 z-[80] flex h-10 w-10 items-center justify-center rounded-full bg-white text-slate-900 shadow-md"
-              >
-                <X className="h-4 w-4" />
-              </button>
-              <StoryShareModal
-                open
-                fact={storyShareFact}
-                lang={lang}
-                onClose={() => setStoryShareFact(null)}
-                onButtonPop={() => playPop(soundEnabled)}
-              />
-            </div>
-          </div>
+          <StoryShareModal
+            open
+            fact={storyShareFact}
+            lang={lang}
+            onClose={() => setStoryShareFact(null)}
+            onButtonPop={() => playPop(soundEnabled)}
+          />
         )}
 
         {shareModalData && (
@@ -2456,7 +2474,7 @@ export default function HomeClient({ initialFacts, initialVocabulary, initialLan
         )}
 
         {/* Bottom dock: phone only (<768). md+ uses left rail. */}
-        {!isExploreSubPageOpen && !showWelcome && !chromeBlocked && (
+        {!isExploreSubPageOpen && !showWelcome && (
           <div className="lg:hidden">
             <IosFloatingIslandDock
               activeTab={activeTab}
@@ -2464,7 +2482,7 @@ export default function HomeClient({ initialFacts, initialVocabulary, initialLan
               darkMode={isDark}
               showQuizDot={showQuizDot}
               onSelectTab={handleDockSelectTab}
-              chromeBlocked={chromeBlocked || showWelcome}
+              chromeBlocked={chromeBlocked}
             />
           </div>
         )}

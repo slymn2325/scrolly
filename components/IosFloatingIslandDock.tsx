@@ -45,6 +45,7 @@ export default function IosFloatingIslandDock({
   return (
     <div
       data-testid="ios-floating-dock-shell"
+      inert={chromeBlocked ? true : undefined}
       className={`pointer-events-none fixed inset-x-0 bottom-0 z-dock mx-auto w-full max-w-md px-4 pb-[max(8px,env(safe-area-inset-bottom))] ${
         chromeBlocked ? 'pointer-events-none opacity-0' : ''
       }`}

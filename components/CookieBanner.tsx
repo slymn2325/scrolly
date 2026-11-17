@@ -52,18 +52,7 @@ export default function CookieBanner({
       const view = window.innerHeight;
       const dock = document.querySelector('[data-testid="ios-floating-dock"]');
       const dockTop = dock?.getBoundingClientRect().top ?? view - 72;
-      let stripBottom = dockTop - 8;
-      const controls = document.querySelectorAll(
-        '[data-testid="guess-submit-btn"], [data-testid^="guess-binary-"]',
-      );
-      controls.forEach((node) => {
-        const box = node.getBoundingClientRect();
-        const onScreen = box.height > 0 && box.width > 0 && box.top >= 0 && box.bottom <= view;
-        if (!onScreen) return;
-        const stripTop = stripBottom - 44;
-        const hits = box.bottom > stripTop + 1 && box.top < stripBottom - 1;
-        if (hits) stripBottom = Math.min(stripBottom, box.top - 8);
-      });
+      const stripBottom = dockTop - 8;
       const next = Math.max(16, Math.round(view - stripBottom));
       setBottomPx((prev) => (prev === next ? prev : next));
     };

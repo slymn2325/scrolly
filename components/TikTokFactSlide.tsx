@@ -108,7 +108,7 @@ export default function TikTokFactSlide({
   isFirstCard = false,
   isActive = true,
   isGuessLocked = false,
-  cookieBannerVisible: _cookieBannerVisible = false,
+  cookieBannerVisible = false,
   onFlip,
   onDoubleTapLike,
   onDwellRead,
@@ -716,7 +716,11 @@ export default function TikTokFactSlide({
 
         <div
           data-testid="fact-card-front"
-          className={`relative z-content flex min-h-0 w-full flex-1 flex-col overflow-hidden bg-cik-bg px-4 pb-[calc(72px+env(safe-area-inset-bottom)+16px)] pr-16 pt-3 text-cik-text md:pr-5 lg:px-5 lg:pb-5 ${isFlipped ? 'hidden' : ''}`}
+          className={`relative z-content flex min-h-0 w-full flex-1 flex-col overflow-hidden bg-cik-bg px-4 pr-16 pt-3 text-cik-text md:pr-5 lg:px-5 lg:pb-5 ${
+            cookieBannerVisible
+              ? 'pb-[calc(72px+env(safe-area-inset-bottom)+68px)]'
+              : 'pb-[calc(72px+env(safe-area-inset-bottom)+16px)]'
+          } ${isFlipped ? 'hidden' : ''}`}
         >
           <div className="pointer-events-none relative z-content flex min-h-0 w-full flex-1 flex-col overflow-hidden">
             <div className="mb-2 flex shrink-0 flex-wrap items-center gap-2">

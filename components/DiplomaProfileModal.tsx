@@ -48,6 +48,7 @@ interface DiplomaProfileModalProps {
   memory: UserMemoryState;
   allFacts: FactCard[];
   presentation?: 'modal' | 'page';
+  notebookFocus?: number;
   onUpdateNickname: (nick: string) => void;
   onToggleNotifications: () => void;
   onSelectCategoryFromConstellation: (category: CategoryId) => void;
@@ -73,6 +74,7 @@ export default function DiplomaProfileModal({
   memory,
   allFacts,
   presentation = 'modal',
+  notebookFocus = 0,
   onUpdateNickname,
   onToggleNotifications,
   onSelectCategoryFromConstellation,
@@ -87,7 +89,7 @@ export default function DiplomaProfileModal({
   const reduced = useReducedMotion() === true;
   const isPage = presentation === 'page';
   const [uiLang, setUiLang] = useState<Language>(lang);
-  const [pane, setPane] = useState<ProfilePane>('ozet');
+  const [pane, setPane] = useState<ProfilePane>(notebookFocus > 0 ? 'saved' : 'ozet');
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [appearance, setAppearance] = useState<AppearanceMode>(resolvedAppearance(memory));
   const [hapticsOn, setHapticsOn] = useState(true);
@@ -113,6 +115,11 @@ export default function DiplomaProfileModal({
   useEffect(() => {
     setUiLang(lang);
   }, [lang]);
+
+  useEffect(() => {
+    if (notebookFocus <= 0) return;
+    setPane('saved');
+  }, [notebookFocus]);
 
   useEffect(() => {
     setPaintedDark(document.documentElement.classList.contains('dark'));
@@ -444,6 +451,7 @@ export default function DiplomaProfileModal({
           >
             <SavedList
               lang={uiLang}
+              vocabFocus={notebookFocus}
               savedFacts={savedFacts}
               likedFacts={likedFacts}
               vocab={savedVocab}

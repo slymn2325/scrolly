@@ -20,6 +20,7 @@ interface PendingRemove {
 
 interface SavedListProps {
   lang: Language;
+  vocabFocus?: number;
   savedFacts: FactCard[];
   likedFacts: FactCard[];
   vocab: SavedVocabularyEntry[];
@@ -119,6 +120,7 @@ function SwipeRow({
 
 export default function SavedList({
   lang,
+  vocabFocus = 0,
   savedFacts,
   likedFacts,
   vocab,
@@ -133,11 +135,15 @@ export default function SavedList({
   const t = translations[lang];
   const copy = profileCopy(lang);
   const feed = FEED_EXPERIENCE_COPY[lang];
-  const [filter, setFilter] = useState<SavedFilter>('saved');
+  const [filter, setFilter] = useState<SavedFilter>(vocabFocus > 0 ? 'vocab' : 'saved');
   const [hidden, setHidden] = useState<Set<string>>(new Set());
   const [openId, setOpenId] = useState<string | null>(null);
   const pendingRef = useRef<PendingRemove | null>(null);
   const timerRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    if (vocabFocus > 0) setFilter('vocab');
+  }, [vocabFocus]);
 
   useEffect(() => {
     return () => {

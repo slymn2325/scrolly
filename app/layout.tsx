@@ -16,9 +16,10 @@ export const metadata: Metadata = {
     title: 'Scrolly',
   },
   icons: {
-    icon: [{ url: '/icon.svg?v=20261117', type: 'image/svg+xml' }],
-    shortcut: ['/icon.svg?v=20261117'],
-    apple: [{ url: '/apple-touch-icon.png?v=20261117' }],
+    icon: [{ url: '/icon.svg?v=20261117b', type: 'image/svg+xml' }],
+    shortcut: ['/icon.svg?v=20261117b'],
+    apple: [{ url: '/apple-touch-icon.png?v=20261117b' }],
+    other: [{ rel: 'mask-icon', url: '/icons/mask-icon.svg?v=20261117b', color: '#5B2A43' }],
   },
   openGraph: {
     title: 'Scrolly — Reels Tarzı 3B Mikro Keşif Platformu',
