@@ -236,25 +236,25 @@ export default function TopicRadarChart({
   return (
     <div data-testid="topic-constellation" className="space-y-3">
       <div>
-        <h3 className="flex items-center gap-1.5 text-xs font-extrabold uppercase tracking-wider text-ink/65 dark:text-violet-200/70">
-          <Target className="h-3.5 w-3.5 text-blue-500" />
+        <h3 className="cik-headline flex items-center gap-2 text-cik-text">
+          <Target className="h-5 w-5 text-cik-cta" />
           <span>{t.constellationTitle}</span>
         </h3>
-        <p className="mt-0.5 text-[11px] font-medium text-ink/60 dark:text-violet-200/70">
+        <p className="cik-footnote mt-1 text-cik-text-2">
           {t.constellationSubtitle}
         </p>
       </div>
 
       {/* DataMB Style Card: Percentile Comparison Header + 7-Axis Radar SVG */}
-      <div className="overflow-visible rounded-3xl border border-slate-200/90 bg-white p-3 pb-4 shadow-sm dark:border-white/10 dark:bg-[#1E1932]">
+      <div className="overflow-visible rounded-sticker border border-cik-line bg-cik-surface p-4 shadow-e1">
         {/* 1. Compact DataMB Comparison Row */}
         <div
           data-testid="radar-percentile-table"
-          className="rounded-2xl border border-slate-200/80 bg-slate-50/75 px-1.5 py-2 sm:px-2.5 dark:border-white/10 dark:bg-white/[0.04]"
+          className="overflow-x-auto rounded-cik-lg border border-cik-line bg-cik-surface-2 px-2 py-2"
         >
-          <div className="grid grid-cols-[minmax(54px,1fr)_repeat(7,minmax(0,1fr))_minmax(26px,0.7fr)] items-center gap-0.5 sm:gap-1 text-center">
+          <div className="grid min-w-max grid-cols-[minmax(72px,1fr)_repeat(7,minmax(44px,1fr))_minmax(44px,0.7fr)] items-center gap-1 text-center">
             {/* Header Row */}
-            <div className="pl-1 text-left text-[8.5px] sm:text-[9px] font-extrabold uppercase tracking-wider text-slate-400 dark:text-violet-300/60">
+            <div className="cik-caption-2 pl-1 text-left text-cik-text-3">
               {hasAnyPersonalAccuracy ? 'LIVE' : 'DATA'}
             </div>
             {RADAR_AXES.map((catId) => {
@@ -267,10 +267,8 @@ export default function TopicRadarChart({
                   onClick={() => handleSelectAxis(catId)}
                   data-testid={`radar-table-col-${catId}`}
                   aria-label={meta.label[lang]}
-                  className={`flex flex-col items-center justify-center rounded-lg px-0.5 py-1 transition-[background-color,border-color,color] duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400 ${
-                    isSelected
-                      ? 'bg-blue-500/15 text-blue-700 ring-1 ring-blue-500/50 dark:bg-blue-500/25 dark:text-blue-200'
-                      : 'text-slate-600 hover:bg-slate-200/60 dark:text-violet-200/80 dark:hover:bg-white/10'
+                  className={`cik-caption-2 flex min-h-11 flex-col items-center justify-center rounded-cik-sm px-1 py-1 ${
+                    isSelected ? 'bg-cik-pink text-cik-text' : 'text-cik-text-2'
                   }`}
                 >
                   <img
@@ -279,13 +277,13 @@ export default function TopicRadarChart({
                     aria-hidden="true"
                     className="h-3.5 w-3.5 object-contain"
                   />
-                  <span className="mt-0.5 text-[8px] sm:text-[9.5px] font-extrabold leading-none tracking-tighter sm:tracking-tight">
+                  <span className="cik-caption-2 mt-1 leading-none">
                     {SHORT_TABLE_LABELS[catId][lang]}
                   </span>
                 </button>
               );
             })}
-            <div className="text-[8.5px] sm:text-[9px] font-black uppercase tracking-wider text-slate-500 dark:text-violet-200/70">
+            <div className="cik-caption-2 text-cik-text-2">
               {t.radarAvgCol}
             </div>
 
@@ -293,9 +291,9 @@ export default function TopicRadarChart({
             <div className="flex items-center gap-1 pl-1 pt-1.5 text-left">
               <span
                 aria-hidden="true"
-                className="h-2 w-2 shrink-0 rounded-full bg-[#3B82F6] shadow-[0_0_6px_rgba(59,130,246,0.55)]"
+                className="h-2 w-2 shrink-0 rounded-full bg-cik-cta"
               />
-              <span className="text-[9px] sm:text-[10px] font-extrabold leading-tight text-slate-700 dark:text-slate-100">
+              <span className="cik-caption-2 leading-tight text-cik-text">
                 {t.radarDiscoveryRow}
               </span>
             </div>
@@ -307,17 +305,15 @@ export default function TopicRadarChart({
                   key={`disc-${catId}`}
                   type="button"
                   onClick={() => handleSelectAxis(catId)}
-                  className={`mt-1.5 rounded-md px-0.5 py-1 text-[9px] sm:text-[10.5px] font-black tabular-nums tracking-tighter sm:tracking-normal transition-colors ${
-                    isSelected
-                      ? 'bg-blue-500/[0.12] text-blue-700 dark:bg-blue-500/20 dark:text-blue-300'
-                      : 'text-slate-800 hover:bg-slate-200/50 dark:text-white dark:hover:bg-white/10'
+                  className={`cik-caption-2 mt-2 min-h-11 rounded-cik-sm px-1 py-1 tabular-nums ${
+                    isSelected ? 'bg-cik-pink text-cik-text' : 'text-cik-text'
                   }`}
                 >
                   {stat.discoveryPct}%
                 </button>
               );
             })}
-            <div className="mt-1.5 text-[9px] sm:text-[10.5px] font-black tabular-nums text-blue-600 dark:text-blue-400">
+            <div className="cik-caption-2 mt-2 tabular-nums text-cik-cta">
               {avgDiscoveryPct}%
             </div>
 
@@ -325,9 +321,9 @@ export default function TopicRadarChart({
             <div className="flex items-center gap-1 pl-1 pt-1 text-left">
               <span
                 aria-hidden="true"
-                className="h-2 w-2 shrink-0 rounded-full bg-[#EC4899] shadow-[0_0_6px_rgba(236,72,153,0.55)]"
+                className="h-2 w-2 shrink-0 rounded-full bg-cik-berry"
               />
-              <span className="text-[9px] sm:text-[10px] font-extrabold leading-tight text-slate-600 dark:text-violet-200/80">
+              <span className="cik-caption-2 leading-tight text-cik-text-2">
                 {t.radarAccuracyRow}
               </span>
             </div>
@@ -339,19 +335,15 @@ export default function TopicRadarChart({
                   key={`acc-${catId}`}
                   type="button"
                   onClick={() => handleSelectAxis(catId)}
-                  className={`mt-1 rounded-md px-0.5 py-1 text-[9px] sm:text-[10.5px] font-bold tabular-nums tracking-tighter sm:tracking-normal transition-colors ${
-                    isSelected
-                      ? 'bg-pink-500/[0.12] text-pink-700 dark:bg-pink-500/20 dark:text-pink-300'
-                      : stat.hasPersonalAccuracy
-                        ? 'text-pink-600 hover:bg-pink-500/10 dark:text-pink-300 dark:hover:bg-white/10'
-                        : 'text-slate-500 hover:bg-slate-200/50 dark:text-violet-300/70 dark:hover:bg-white/10'
+                  className={`cik-caption-2 mt-1 min-h-11 rounded-cik-sm px-1 py-1 tabular-nums ${
+                    isSelected ? 'bg-cik-pink text-cik-text' : 'text-cik-text-2'
                   }`}
                 >
                   {stat.accuracyDisplayPct}%
                 </button>
               );
             })}
-            <div className="mt-1 text-[9px] sm:text-[10.5px] font-black tabular-nums text-pink-600 dark:text-pink-400">
+            <div className="cik-caption-2 mt-1 tabular-nums text-cik-cta">
               {avgAccuracyPct}%
             </div>
           </div>
@@ -378,9 +370,9 @@ export default function TopicRadarChart({
                   <polygon
                     key={`ring-${level}`}
                     points={ringPts}
-                    fill={level === 100 ? 'rgba(148, 163, 184, 0.04)' : 'none'}
+                    fill="none"
+                    stroke="var(--cik-line)"
                     strokeWidth={1}
-                    className="stroke-[#CBD5E1] dark:stroke-white/[0.12]"
                   />
                 );
               })}
@@ -396,12 +388,8 @@ export default function TopicRadarChart({
                     y1={0}
                     x2={end.x}
                     y2={end.y}
+                    stroke={isSelected ? 'var(--cik-cta)' : 'var(--cik-line)'}
                     strokeWidth={isSelected ? 1.75 : 1}
-                    className={
-                      isSelected
-                        ? 'stroke-blue-500/75 dark:stroke-blue-400/75'
-                        : 'stroke-[#CBD5E1] dark:stroke-white/[0.12]'
-                    }
                   />
                 );
               })}
@@ -414,9 +402,10 @@ export default function TopicRadarChart({
                     key={`tick-${level}`}
                     x={pos.x + 3.5}
                     y={pos.y + 3}
-                    fontSize={7.5}
+                    fontSize={11}
                     fontWeight={700}
-                    className="fill-slate-400 dark:fill-violet-300/45 select-none pointer-events-none"
+                    fill="var(--cik-text-3)"
+                    className="pointer-events-none select-none"
                   >
                     {level}
                   </text>
@@ -434,8 +423,8 @@ export default function TopicRadarChart({
                   initial={false}
                   animate={{ points: pinkPolygonPoints }}
                   transition={{ type: 'spring', stiffness: 200, damping: 22 }}
-                  fill="rgba(236, 72, 153, 0.16)"
-                  stroke="#EC4899"
+                  fill="color-mix(in srgb, var(--cik-berry) 28%, transparent)"
+                  stroke="var(--cik-berry)"
                   strokeWidth={2}
                   strokeLinejoin="round"
                 />
@@ -445,8 +434,8 @@ export default function TopicRadarChart({
                   initial={false}
                   animate={{ points: bluePolygonPoints }}
                   transition={{ type: 'spring', stiffness: 200, damping: 22 }}
-                  fill="rgba(59, 130, 246, 0.20)"
-                  stroke="#3B82F6"
+                  fill="color-mix(in srgb, var(--cik-cta) 24%, transparent)"
+                  stroke="var(--cik-cta)"
                   strokeWidth={2.5}
                   strokeLinejoin="round"
                 />
@@ -462,8 +451,8 @@ export default function TopicRadarChart({
                       animate={{ cx: pt.x, cy: pt.y }}
                       transition={{ type: 'spring', stiffness: 220, damping: 22 }}
                       r={isSelected ? 4.8 : 4}
-                      fill="#EC4899"
-                      stroke="#FFFFFF"
+                      fill="var(--cik-berry)"
+                      stroke="var(--cik-sticker-rim)"
                       strokeWidth={1.2}
                       className="cursor-pointer"
                       onClick={() => handleSelectAxis(catId)}
@@ -487,8 +476,8 @@ export default function TopicRadarChart({
                           animate={{ cx: pt.x, cy: pt.y }}
                           transition={{ type: 'spring', stiffness: 220, damping: 22 }}
                           r={8.5}
-                          fill="rgba(59, 130, 246, 0.18)"
-                          stroke="#3B82F6"
+                          fill="color-mix(in srgb, var(--cik-cta) 24%, transparent)"
+                          stroke="var(--cik-cta)"
                           strokeWidth={1.5}
                         />
                       )}
@@ -497,8 +486,8 @@ export default function TopicRadarChart({
                         animate={{ cx: pt.x, cy: pt.y }}
                         transition={{ type: 'spring', stiffness: 220, damping: 22 }}
                         r={isSelected ? 5.5 : 4.5}
-                        fill="#3B82F6"
-                        stroke="#FFFFFF"
+                        fill="var(--cik-cta)"
+                        stroke="var(--cik-sticker-rim)"
                         strokeWidth={1.4}
                       />
                       <circle cx={pt.x} cy={pt.y} r={14} fill="transparent" />
@@ -524,10 +513,10 @@ export default function TopicRadarChart({
                 data-testid={`constellation-node-${catId}`}
                 aria-label={meta.label[lang]}
                 style={placement.style}
-                className={`absolute flex max-w-[94px] sm:max-w-[130px] items-center gap-1 rounded-full border px-2 py-1 text-[10px] sm:text-[11px] font-extrabold leading-tight transition-[background-color,border-color,color,transform,box-shadow] duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400 ${placement.className} ${
+                className={`cik-caption-2 absolute flex max-w-[8rem] items-center gap-1 rounded-pill border px-2 py-1 leading-tight ${placement.className} ${
                   isSelected
-                    ? 'border-blue-500 bg-blue-50 text-blue-800 shadow-sm ring-2 ring-blue-500/40 dark:border-blue-400 dark:bg-blue-950/85 dark:text-blue-100'
-                    : 'border-slate-200/90 bg-white/95 text-slate-700 hover:border-blue-300 dark:border-white/15 dark:bg-[#26203E]/95 dark:text-violet-100'
+                    ? 'border-cik-berry bg-cik-pink text-cik-text'
+                    : 'border-cik-line bg-cik-surface text-cik-text-2'
                 }`}
               >
                 <img
@@ -548,10 +537,10 @@ export default function TopicRadarChart({
       {/* 3. Selected Axis Info & Action Bar */}
       <div
         data-testid="radar-selected-info"
-        className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 rounded-2xl border border-blue-200/80 bg-blue-50/75 px-3.5 py-2.5 dark:border-blue-500/25 dark:bg-blue-950/25"
+        className="flex flex-col justify-between gap-3 rounded-cik-lg border border-cik-line bg-cik-surface-2 p-4 sm:flex-row sm:items-center"
       >
         <div className="min-w-0 flex-1">
-          <div className="flex flex-wrap items-center gap-1.5 text-xs font-extrabold text-ink dark:text-white">
+          <div className="cik-footnote flex flex-wrap items-center gap-2 text-cik-text">
             <img
               src={selectedMeta.iconPath}
               alt=""
@@ -560,7 +549,7 @@ export default function TopicRadarChart({
             />
             <span>{selectedMeta.label[lang]}</span>
             {selectedStats.hasBadge && (
-              <span className="inline-flex items-center gap-1 rounded-full bg-amber-300/35 px-1.5 py-0.5 text-[10px] font-black text-amber-800 dark:text-amber-300">
+              <span className="cik-caption-2 inline-flex items-center gap-1 rounded-pill bg-cik-butter px-2 py-1 text-cik-butter-text">
                 <img
                   src={UI_ICON_PATHS.badgeStar}
                   alt=""
@@ -571,13 +560,13 @@ export default function TopicRadarChart({
               </span>
             )}
           </div>
-          <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-[11px] font-bold text-slate-700 dark:text-violet-200/85">
-            <span className="inline-flex items-center gap-1 text-blue-700 dark:text-blue-300">
+          <div className="cik-caption-2 mt-1 flex flex-wrap items-center gap-3 text-cik-text-2">
+            <span className="inline-flex items-center gap-1 text-cik-text">
               <Compass className="h-3 w-3 shrink-0" />
               <span>{formattedDiscoverySummary}</span>
             </span>
-            <span className="inline-flex items-center gap-1 text-pink-600 dark:text-pink-300">
-              <span aria-hidden="true" className="h-1.5 w-1.5 rounded-full bg-[#EC4899]" />
+            <span className="inline-flex items-center gap-1 text-cik-text-2">
+              <span aria-hidden="true" className="h-2 w-2 rounded-full bg-cik-berry" />
               <span>{formattedAccuracySummary}</span>
             </span>
           </div>
@@ -591,7 +580,7 @@ export default function TopicRadarChart({
             onExploreCategory(selectedId);
           }}
           data-testid="constellation-jump-btn"
-          className="inline-flex min-h-[38px] w-full sm:w-auto shrink-0 items-center justify-center gap-1.5 rounded-full bg-ink px-3.5 py-1.5 text-[11px] font-black text-white shadow-sm hover:opacity-95 dark:bg-blue-600 whitespace-normal break-words leading-snug"
+          className="cik-footnote inline-flex h-11 w-full shrink-0 items-center justify-center gap-2 rounded-pill bg-cik-cta px-4 text-cik-on-cta sm:w-auto"
         >
           <span>{t.constellationExploreCategoryBtn}</span>
         </motion.button>
