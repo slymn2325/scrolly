@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from 'next';
+import { headers } from 'next/headers';
 import RootHtmlShell from '@/components/RootHtmlShell';
 import './globals.css';
 
@@ -40,13 +41,20 @@ export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
   viewportFit: 'cover',
-  themeColor: '#0A0A0E',
+  themeColor: '#14111C',
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  return <RootHtmlShell lang="tr">{children}</RootHtmlShell>;
+  const headerList = await headers();
+  const requested = headerList.get('x-scrolly-lang') || headerList.get('x-middleware-request-x-scrolly-lang');
+  const lang = requested === 'en' ? 'en' : 'tr';
+  return (
+    <RootHtmlShell lang={lang}>
+      <div className="h-[100dvh] min-h-0 overflow-hidden">{children}</div>
+    </RootHtmlShell>
+  );
 }

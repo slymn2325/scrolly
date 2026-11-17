@@ -13,7 +13,6 @@ import {
   type CategoryFilter,
   type CategoryId,
   type Language,
-  translations,
 } from '@/i18n/translations';
 import type { FactCard } from '@/types/fact';
 import type { VocabularyCard } from '@/types/vocabulary';
@@ -82,7 +81,7 @@ const TikTokFeed = forwardRef<TikTokFeedHandle, TikTokFeedProps>(function TikTok
     deckFacts,
     lang,
     darkMode,
-    soundEnabled,
+    soundEnabled: _soundEnabled,
     activeCategory,
     favoriteIds,
     cardsSinceLastQuiz,
@@ -93,8 +92,6 @@ const TikTokFeed = forwardRef<TikTokFeedHandle, TikTokFeedProps>(function TikTok
     initialSlideIndex = 0,
     onSelectCategory,
     onChangeLang,
-    onToggleDarkMode,
-    onToggleSound,
     onFlipCard,
     onOpenDetail,
     onDoubleTapLike,
@@ -142,7 +139,6 @@ const TikTokFeed = forwardRef<TikTokFeedHandle, TikTokFeedProps>(function TikTok
   const [activeIndex, setActiveIndex] = useState<number>(safeInitialIndex);
   const [isCategoryDrawerOpen, setIsCategoryDrawerOpen] = useState<boolean>(false);
   const [chromeBlocked, setChromeBlocked] = useState<boolean>(false);
-  const t = translations[lang];
   const activeCategoryMeta = getCategoryMeta(activeCategory);
   const categoryTriggerLabel =
     activeCategory === 'all'
@@ -166,12 +162,11 @@ const TikTokFeed = forwardRef<TikTokFeedHandle, TikTokFeedProps>(function TikTok
     return merged;
   }, [vocabularyCards]);
 
-  // Dil Ogrenme = vocab-only. Genel = facts + 1 vocab every 4-5 cards. Category = filtered facts.
+  // Dil Ogrenme = vocab-only. Genel = facts only. Category = filtered facts.
   const slides: FeedSlideItem[] = useMemo(() => {
     const items: FeedSlideItem[] = [];
     let adCount = 0;
     let ctaCount = 0;
-    let vocabCursor = 0;
 
     if (activeCategory === 'vocabulary') {
       return vocabPool.map((card, idx) => ({
@@ -182,22 +177,11 @@ const TikTokFeed = forwardRef<TikTokFeedHandle, TikTokFeedProps>(function TikTok
       }));
     }
 
-    const insertVocabEvery = 5;
     deckFacts.forEach((fact, idx) => {
       items.push({ type: 'fact', key: `fact-${fact.id}-${idx}`, fact, factIndex: idx });
       const position = idx + 1;
 
-      if (activeCategory === 'all' && vocabPool.length > 0 && position % insertVocabEvery === 0) {
-        const card = vocabPool[vocabCursor % vocabPool.length];
-        items.push({
-          type: 'vocabulary',
-          key: `vocab-mix-${card.id}-${vocabCursor}`,
-          card,
-          vocabIndex: vocabCursor,
-        });
-        vocabCursor += 1;
-      }
-
+      // Genel / Keşfet never mixes vocabulary. Word Lab is the Dil tab only.
       const hasMoreFacts = idx < deckFacts.length - 1;
       if (!hasMoreFacts) return;
 
@@ -665,64 +649,12 @@ const TikTokFeed = forwardRef<TikTokFeedHandle, TikTokFeedProps>(function TikTok
             chromeBlocked ? 'pointer-events-none' : 'pointer-events-auto'
           }`}
         >
-          <motion.button
-            type="button"
-            whileTap={{ scale: 0.92 }}
-            onClick={onToggleDarkMode}
-            title={darkMode ? t.lightModeOn : t.darkModeOn}
-            aria-label={darkMode ? t.lightModeOn : t.darkModeOn}
-            aria-pressed={!darkMode}
-            data-testid="theme-toggle-btn"
-            className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full border transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400 ${
-              darkMode
-                ? 'border-white/25 bg-[#12121A]/95 text-amber-200 hover:bg-[#1C1C28]'
-                : 'border-[#1E1B2E]/25 bg-white text-[#1E1B2E] shadow-sm hover:bg-slate-50'
-            }`}
-          >
-            <img
-              src={darkMode ? UI_ICON_PATHS.themeSun : UI_ICON_PATHS.themeMoon}
-              alt=""
-              aria-hidden="true"
-              className={`h-4 w-4 object-contain ${darkMode ? '' : 'brightness-90 contrast-125'}`}
-            />
-          </motion.button>
-
-          <motion.button
-            type="button"
-            whileTap={{ scale: 0.92 }}
-            onClick={onToggleSound}
-            title={soundEnabled ? t.soundOn : t.soundOff}
-            aria-label={soundEnabled ? t.soundOn : t.soundOff}
-            aria-pressed={soundEnabled}
-            data-testid="sound-toggle-btn"
-            className={`relative flex h-9 w-9 shrink-0 items-center justify-center rounded-full border transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400 ${
-              soundEnabled
-                ? darkMode
-                  ? 'border-emerald-400/50 bg-emerald-500/20 text-emerald-100 hover:bg-emerald-500/30'
-                  : 'border-emerald-600/40 bg-emerald-50 text-emerald-900 shadow-sm hover:bg-emerald-100'
-                : darkMode
-                  ? 'border-white/25 bg-[#12121A]/95 text-white hover:bg-[#1C1C28]'
-                  : 'border-[#1E1B2E]/25 bg-white text-[#1E1B2E] shadow-sm hover:bg-slate-50'
-            }`}
-          >
-            <img
-              src={soundEnabled ? UI_ICON_PATHS.soundOn : UI_ICON_PATHS.soundOff}
-              alt=""
-              aria-hidden="true"
-              className={`h-4 w-4 object-contain ${darkMode ? '' : 'brightness-90 contrast-125'}`}
-            />
-            <span
-              aria-hidden="true"
-              className={`absolute -right-0.5 -top-0.5 h-2.5 w-2.5 rounded-full ring-2 ${
-                darkMode ? 'ring-[#0A0A0E]' : 'ring-white'
-              } ${soundEnabled ? 'bg-emerald-500' : 'bg-slate-400 dark:bg-white/45'}`}
-            />
-          </motion.button>
+          
 
           <div
             role="group"
             aria-label="Language switch"
-            className={`flex h-9 shrink-0 items-center gap-0.5 rounded-full border p-0.5 text-[10px] font-black transition-colors ${
+            className={`flex h-9 shrink-0 items-center gap-1.5 rounded-full border p-0.5 text-[10px] font-black transition-colors ${
               darkMode
                 ? 'border-white/25 bg-[#12121A]/95 text-white'
                 : 'border-[#1E1B2E]/25 bg-white text-[#1E1B2E] shadow-sm'

@@ -4,7 +4,6 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import {
   Bookmark,
-  ChevronDown,
   ChevronUp,
   Heart,
   Info,
@@ -15,7 +14,6 @@ import {
 import CategoryMotionArt from '@/components/CategoryMotionArt';
 import FactDetailPage from '@/components/FactDetailPage';
 import GuessWidget from '@/components/GuessWidget';
-import PoweredByGiphyBadge from '@/components/PoweredByGiphyBadge';
 import { getCategoryMeta, type Language, translations } from '@/i18n/translations';
 import { ENABLE_COMPETITIVE_TABS } from '@/lib/featureFlags';
 import { trackEvent, fetchTopicGifFromApi } from '@/lib/telemetry';
@@ -24,7 +22,6 @@ import { cryptoRandomInt } from '@/utils/cryptoRandom';
 import { maskFactAnswerSpoiler } from '@/utils/factsData';
 import { vibrateTap } from '@/utils/haptics';
 import { isFactLiked, toggleLikedFact } from '@/utils/likedFacts';
-import { UI_ICON_PATHS } from '@/utils/icons8Assets';
 import { markFactSeenInStorage } from '@/utils/seenFacts';
 import { resolveFallbackVisualQuery } from '@/utils/topicMotif';
 
@@ -76,7 +73,7 @@ export default function TikTokFactSlide({
   isFirstCard = false,
   isActive = true,
   isGuessLocked = false,
-  cookieBannerVisible = false,
+  cookieBannerVisible: _cookieBannerVisible = false,
   onFlip,
   onDoubleTapLike,
   onDwellRead,
@@ -360,7 +357,7 @@ export default function TikTokFactSlide({
   const baseDisplayLikes =
     typeof fact.likesCount === 'number' ? Math.max(0, fact.likesCount) : baseLikesCount;
   // Liked adds +1 locally; unlike removes that +1. Never tied to favorite/save.
-  const displayLikes = Math.max(0, baseDisplayLikes + (isLiked ? 1 : 0));
+  const _displayLikes = Math.max(0, baseDisplayLikes + (isLiked ? 1 : 0));
 
   useEffect(() => {
     if (!isFlipped) return;
@@ -611,20 +608,25 @@ export default function TikTokFactSlide({
         contain: 'layout style paint',
         willChange: isFlipping || isDragging ? 'transform' : 'auto',
       }}
-      className="reels-slide relative flex h-full w-full shrink-0 cursor-pointer items-center justify-center overflow-hidden select-none bg-[#0A0A0E]"
+      className="reels-slide relative flex h-full w-full shrink-0 flex-col overflow-hidden select-none bg-cream text-ink"
     >
       {/* Subtle unblurred dark stage glow */}
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute inset-0"
+        className="pointer-events-none absolute inset-0 hidden"
         style={{
           background: `radial-gradient(circle at 50% 34%, ${fact.accentColor}26 0%, #0A0A0E 58%, #0A0A0E 100%)`,
         }}
       />
 
-      <div className="perspective-1000 relative mx-auto h-full w-full overflow-hidden bg-[#0A0A0E]">
+      <div className="perspective-1000 relative mx-auto flex h-full w-full flex-col overflow-hidden bg-cream">
         {/* Full-bleed live visual backdrop + framed upper/mid GIF media stage */}
-        <div className="pointer-events-none absolute inset-0 overflow-hidden bg-[#0A0A0E]">
+        <div className="pointer-events-none relative h-[38%] min-h-[150px] w-full shrink-0 overflow-hidden bg-night-2">
+          <div className="pointer-events-none absolute inset-x-3 top-2 z-20 flex gap-1" aria-hidden="true">
+            {Array.from({ length: 5 }).map((_, bar) => (
+              <span key={bar} className={`h-[3px] flex-1 rounded-full ${bar === 0 ? 'bg-white' : 'bg-white/35'}`} />
+            ))}
+          </div>
           <CategoryMotionArt
             variant="hero"
             factId={fact.id}
@@ -642,7 +644,18 @@ export default function TikTokFactSlide({
           />
 
           {/* Full-screen live topic GIF */}
-          {resolvedGifUrl && !gifFailed && (
+          {resolvedGifUrl && !gifFailed && (/\.mp4(\?|$)/i.test(resolvedGifUrl) ? (
+            <video
+              src={resolvedGifUrl}
+              autoPlay={isActive}
+              loop
+              muted
+              playsInline
+              preload="metadata"
+              data-testid="card-topic-video"
+              className="pointer-events-none absolute inset-0 z-[2] h-full w-full object-cover"
+            />
+          ) : (
             <img
               ref={gifImgRef}
               src={resolvedGifUrl}
@@ -652,31 +665,23 @@ export default function TikTokFactSlide({
               data-testid="card-topic-gif"
               onLoad={() => setGifLoaded(true)}
               onError={() => setGifFailed(true)}
-              className={`pointer-events-none absolute inset-0 z-[2] h-full w-full object-cover brightness-105 contrast-105 transition-opacity duration-500 ${
-                gifLoaded ? 'opacity-95' : 'opacity-0'
+              className={`pointer-events-none absolute inset-0 z-[2] h-full w-full object-cover transition-opacity duration-500 ${
+                gifLoaded ? 'opacity-100' : 'opacity-0'
               }`}
             />
-          )}
+          ))}
 
           {/* Bottom legibility gradient */}
           <div
             aria-hidden="true"
-            className={`pointer-events-none absolute inset-x-0 bottom-0 z-[5] transition-[height,opacity] duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] ${
-              isDetailsOpen
-                ? 'h-[78%] bg-gradient-to-t from-[#0A0A0E] via-[#0A0A0E]/95 to-transparent'
-                : 'h-[52%] bg-gradient-to-t from-[#0A0A0E] via-[#0A0A0E]/85 to-transparent'
-            }`}
+            className="pointer-events-none absolute inset-x-0 bottom-0 z-[5] h-24 bg-gradient-to-b from-transparent to-[#FFF6EC]"
           />
         </div>
 
         {/* Bottom collapsed headline + expandable story & guess drawer */}
         <div
           data-testid="fact-card-front"
-          className={`backface-hidden relative z-10 flex h-full w-full flex-col justify-end overflow-hidden px-4 pt-20 pr-14 sm:pr-16 lg:pr-5 ${
-            cookieBannerVisible
-              ? 'pb-[calc(env(safe-area-inset-bottom,16px)+200px)] lg:pb-6'
-              : 'pb-[calc(env(safe-area-inset-bottom,16px)+84px)] lg:pb-6'
-          } ${isFlipped ? 'pointer-events-none opacity-0' : 'opacity-100'}`}
+          className={`lumen-cream-panel backface-hidden relative z-10 flex min-h-0 w-full flex-1 flex-col overflow-y-auto bg-cream px-5 pt-3 text-ink ${isFlipped ? 'pointer-events-none opacity-0' : 'opacity-100'}`}
         >
           <div
             data-scroll-contain={isDetailsOpen ? 'true' : undefined}
@@ -725,11 +730,7 @@ export default function TikTokFactSlide({
                   <span>{lang === 'tr' ? 'Kaynak' : 'Source'}</span>
                 </button>
 
-                {resolvedGifUrl && !gifFailed && (
-                  <div className="pointer-events-auto">
-                    <PoweredByGiphyBadge micro lang={lang} />
-                  </div>
-                )}
+                
               </div>
             </div>
 
@@ -749,34 +750,13 @@ export default function TikTokFactSlide({
             >
               <h2
                 data-testid="fact-headline"
-                className="font-display text-xl font-bold leading-snug text-white text-left whitespace-normal break-words drop-shadow sm:text-2xl"
+                className="font-display text-[26px] font-semibold leading-[1.18] tracking-[-0.02em] text-ink line-clamp-3"
               >
                 {localized.title}
               </h2>
-              {!isDetailsOpen && (
-                <span className="mt-2 inline-flex min-h-[34px] items-center gap-1.5 rounded-full border border-white/15 bg-white/10 px-3 py-1 text-[11px] font-bold text-white/90 backdrop-blur-sm transition-colors duration-200 group-hover:border-white/25 group-hover:bg-white/15 group-hover:text-white">
-                  <img
-                    src={UI_ICON_PATHS.tap}
-                    alt=""
-                    aria-hidden="true"
-                    width={14}
-                    height={14}
-                    decoding="async"
-                    className="h-3.5 w-3.5 shrink-0 object-contain"
-                  />
-                  <span>
-                    {lang === 'tr'
-                      ? 'Hikaye ve tahmin için başlığa dokun'
-                      : 'Tap headline for story & quiz'}
-                  </span>
-                  <ChevronDown className="h-3.5 w-3.5 shrink-0 text-violet-300" aria-hidden="true" />
-                </span>
-              )}
             </button>
-
             <AnimatePresence initial={false}>
-              {isDetailsOpen && (
-                <motion.div
+                              <motion.div
                   key="details-drawer"
                   data-testid="fact-details-drawer"
                   initial={{ opacity: 0, height: 0, y: 8 }}
@@ -790,7 +770,7 @@ export default function TikTokFactSlide({
                     onDoubleClick={(e) => e.stopPropagation()}
                     onPointerDown={(e) => e.stopPropagation()}
                     onTouchStart={(e) => e.stopPropagation()}
-                    className="mt-2 rounded-3xl border border-white/15 bg-[#13131A]/95 p-4 shadow-xl backdrop-blur-md"
+                    className="mt-2"
                   >
                     <div className="mb-1.5 flex items-center justify-end">
                       <button
@@ -801,7 +781,7 @@ export default function TikTokFactSlide({
                           onButtonPop();
                           setIsDetailsOpen(false);
                         }}
-                        className="inline-flex min-h-[28px] items-center gap-1 rounded-full border border-white/15 bg-white/10 px-2.5 py-0.5 text-[10px] font-extrabold text-white/90 transition-colors duration-150 hover:bg-white/20 hover:text-white"
+                        className="hidden"
                       >
                         <ChevronUp className="h-3 w-3 shrink-0" aria-hidden="true" />
                         <span>{lang === 'tr' ? 'Daralt' : 'Collapse'}</span>
@@ -810,7 +790,7 @@ export default function TikTokFactSlide({
 
                     <p
                       data-testid="fact-body"
-                      className="mb-2.5 text-xs font-medium leading-relaxed text-white/90 whitespace-normal break-words sm:text-sm"
+                      className="mb-3 line-clamp-3 text-[15px] font-normal leading-[1.55] text-mute"
                     >
                       {maskedFactText}
                     </p>
@@ -850,7 +830,6 @@ export default function TikTokFactSlide({
                     )}
                   </div>
                 </motion.div>
-              )}
             </AnimatePresence>
           </div>
         </div>
@@ -861,11 +840,7 @@ export default function TikTokFactSlide({
             data-testid="reels-action-column"
             onClick={(e) => e.stopPropagation()}
             onDoubleClick={(e) => e.stopPropagation()}
-            className={`absolute ${
-              cookieBannerVisible
-                ? 'bottom-[calc(env(safe-area-inset-bottom,16px)+204px)]'
-                : 'bottom-[calc(env(safe-area-inset-bottom,16px)+84px)]'
-            } right-2 z-20 flex flex-col items-center gap-2.5 lg:hidden`}
+            className="absolute right-3 top-[12%] z-20 flex flex-col items-center gap-2.5 md:hidden"
           >
             <motion.button
               type="button"
@@ -879,20 +854,12 @@ export default function TikTokFactSlide({
             >
               <span
                 className={`flex h-11 w-11 items-center justify-center rounded-full border border-white/20 backdrop-blur-md transition-[background-color,color,transform] duration-200 ${
-                  isLiked ? 'bg-rose-500 text-white' : 'bg-white/10 text-rose-300'
+                  isLiked ? 'bg-rose-500 text-white' : 'bg-white text-rose-500 shadow-pill'
                 }`}
               >
                 <Heart className={`h-5 w-5 ${isLiked ? 'fill-current' : ''}`} />
               </span>
-              <span className="tabular-nums text-[10px] font-extrabold text-white/90">
-                {displayLikes === 1
-                  ? lang === 'tr'
-                    ? '1 beğeni'
-                    : '1 like'
-                  : lang === 'tr'
-                    ? `${displayLikes} beğeni`
-                    : `${displayLikes} likes`}
-              </span>
+              
             </motion.button>
 
             <motion.button
@@ -909,13 +876,10 @@ export default function TikTokFactSlide({
             >
               <span
                 className={`flex h-11 w-11 items-center justify-center rounded-full border border-white/20 backdrop-blur-md transition-[background-color,color,transform] duration-200 ${
-                  isFavorite ? 'bg-amber-400 text-[#09090B]' : 'bg-white/10 text-amber-200'
+                  isFavorite ? 'bg-amber-400 text-[#09090B]' : 'bg-white text-ink shadow-pill'
                 }`}
               >
                 <Bookmark className={`h-5 w-5 ${isFavorite ? 'fill-current' : ''}`} />
-              </span>
-              <span className="text-[10px] font-extrabold text-white/90">
-                {lang === 'tr' ? 'Kaydet' : 'Save'}
               </span>
             </motion.button>
 
@@ -930,10 +894,9 @@ export default function TikTokFactSlide({
               data-testid="flip-card-btn"
               className="flex flex-col items-center gap-0.5"
             >
-              <span className="flex h-11 w-11 items-center justify-center rounded-full border border-white/20 bg-white/10 text-white backdrop-blur-md">
+              <span className="flex h-11 w-11 items-center justify-center rounded-full border-0 bg-white text-ink shadow-pill">
                 <RotateCw className="h-5 w-5" />
               </span>
-              <span className="text-[10px] font-extrabold text-white/90">{t.tiktokDetailBtn}</span>
             </motion.button>
 
             {ENABLE_COMPETITIVE_TABS && (
@@ -947,7 +910,7 @@ export default function TikTokFactSlide({
                 }}
                 aria-label={t.dockDuel}
                 data-testid="card-duel-btn"
-                className="flex flex-col items-center gap-0.5"
+                className="hidden"
               >
                 <span className="flex h-11 w-11 items-center justify-center rounded-full border border-violet-400/50 bg-gradient-to-br from-violet-600/90 to-fuchsia-600/90 text-white shadow-lg shadow-violet-500/30 backdrop-blur-md">
                   <Swords className="h-5 w-5" />
@@ -964,11 +927,10 @@ export default function TikTokFactSlide({
               data-testid="card-share-btn"
               className="flex flex-col items-center gap-0.5"
             >
-              <span className="flex h-11 w-11 items-center justify-center rounded-full border border-white/20 bg-white/10 text-white backdrop-blur-md">
+              <span className="flex h-11 w-11 items-center justify-center rounded-full border-0 bg-white text-ink shadow-pill">
                 <Share2 className="h-5 w-5" />
               </span>
-              <span className="text-[10px] font-extrabold text-white/90">{t.shareFact}</span>
-            </motion.button>
+                          </motion.button>
           </div>
         )}
 

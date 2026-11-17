@@ -181,7 +181,7 @@ export default function DesktopFeedSideRail({
         mode === 'insight'
           ? 'flex h-full min-h-0 w-full max-w-[340px] shrink-0 flex-col'
           : mode === 'actions'
-            ? 'hidden shrink-0 items-center lg:flex'
+            ? 'hidden shrink-0 items-center md:flex'
             : 'hidden shrink-0 items-center gap-5 lg:flex'
       }
     >
@@ -287,7 +287,7 @@ export default function DesktopFeedSideRail({
           aria-hidden="true"
         />
 
-        <div className="flex gap-1.5">
+        <div className="mt-4 flex gap-1.5">
           <button
             type="button"
             data-testid="desktop-feed-prev"

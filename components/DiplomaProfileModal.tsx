@@ -23,6 +23,7 @@ import {
   X,
 } from 'lucide-react';
 import { checkIsStandalone } from '@/components/PwaInstallPrompt';
+import ProfileHeaderTools from '@/components/ProfileHeaderTools';
 import TopicRadarChart from '@/components/TopicRadarChart';
 import {
   CATEGORIES,
@@ -526,6 +527,19 @@ export default function DiplomaProfileModal({
                 </div>
               )}
 
+              <ProfileHeaderTools lang={lang} />
+              <button
+                type="button"
+                data-testid="profile-scrolla-card"
+                onClick={() => {
+                  onButtonPop();
+                  window.dispatchEvent(new CustomEvent('scrolly-open-duel'));
+                }}
+                className="rounded-2xl border border-black/10 bg-white px-4 py-3 text-left lg:hidden"
+              >
+                <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-mute">Scrolla</p>
+                <p className="mt-1 text-sm font-semibold text-ink">{lang === 'tr' ? '1v1 bilgi düellosu' : '1v1 fact duel'}</p>
+              </button>
               {/* Explorer Nickname */}
               <div>
                 <label

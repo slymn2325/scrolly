@@ -271,7 +271,7 @@ export default function InteractiveSketchArt({
     lang === 'tr'
       ? active
         ? 'Ölçüm Aktif'
-        : 'Dokun & Simüle Et'
+        : ''
       : active
       ? 'Sim Active'
       : 'Tap & Simulate';
@@ -329,7 +329,7 @@ export default function InteractiveSketchArt({
             <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-amber-300" />
           </span>
           <span className="whitespace-nowrap">
-            {lang === 'tr' ? 'Dokun & Simüle Et' : 'Tap & Simulate'}
+            {''}
           </span>
         </div>
       )}

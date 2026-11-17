@@ -359,11 +359,12 @@ export const translations = {
     seoReadingTime: 'sn okuma',
     seoVerifiedSource: 'Bilimsel Kaynak',
     // iOS Floating Island Dock (5 tabs)
-    dockLeaderboard: 'Leaderboard',
+    dockLeaderboard: 'Liderlik',
     dockQuiz: 'Quiz',
     dockExplore: 'Keşfet',
+    dockLanguage: 'Dil',
     dockDuel: 'Scrolla',
-    dockDiploma: 'Diploma',
+    dockDiploma: 'Profil',
     // TikTok Overlay & Backface
     tiktokTapHint: 'Detay için dokun • Beğenmek için çift tıkla',
     tiktokScientificTag: 'Bilimsel Gerçek',
@@ -609,8 +610,9 @@ export const translations = {
     dockLeaderboard: 'Leaderboard',
     dockQuiz: 'Quiz',
     dockExplore: 'Explore',
+    dockLanguage: 'Language',
     dockDuel: 'Scrolla',
-    dockDiploma: 'Diploma',
+    dockDiploma: 'Profile',
     // TikTok Overlay & Backface
     tiktokTapHint: 'Tap for details • Double-tap to like',
     tiktokScientificTag: 'SCIENCE FACT',

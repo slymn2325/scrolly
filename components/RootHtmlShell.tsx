@@ -111,7 +111,7 @@ export default function RootHtmlShell({ lang, children }: RootHtmlShellProps) {
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link
-          href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
+          href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500;1,9..144,600&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
           rel="stylesheet"
         />
         <script
@@ -126,7 +126,7 @@ export default function RootHtmlShell({ lang, children }: RootHtmlShellProps) {
           }}
         />
       </head>
-      <body className="min-h-dvh overflow-x-clip overflow-y-auto bg-[var(--background)] font-sans text-[var(--foreground)] antialiased selection:bg-amber-200 selection:text-[#09090B]">
+      <body className="h-[100dvh] overflow-hidden bg-[var(--background)] font-sans text-[var(--foreground)] antialiased selection:bg-[#EDE8FF] selection:text-[#1C1730]">
         <div aria-hidden="true" className="pwa-statusbar-guard" />
         {children}
         <Script id="google-tag-manager" strategy="afterInteractive">

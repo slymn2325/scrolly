@@ -189,9 +189,9 @@ export default function GuessWidget({
       onDoubleClick={stop}
       onPointerDown={stop}
       onTouchStart={stop}
-      className="pointer-events-auto mt-1 rounded-xl border border-white/15 bg-white/[0.08] p-3 shadow-lg backdrop-blur-md"
+      className="pointer-events-auto mt-1 rounded-nest bg-[#FFF1E3] p-3 text-ink"
     >
-      <p className="mb-2 flex items-start gap-1.5 text-xs font-medium leading-snug text-white whitespace-normal break-words sm:text-sm">
+      <p className="mb-2 flex items-start gap-1.5 text-[13px] font-medium leading-snug text-ink">
         <HelpCircle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-violet-300" aria-hidden="true" />
         <span className="min-w-0 flex-1">{challenge.prompt}</span>
       </p>
@@ -218,14 +218,14 @@ export default function GuessWidget({
                     e.stopPropagation();
                     setSliderValue(Number(e.target.value));
                   }}
-                  className="h-2 w-full cursor-pointer rounded-full accent-violet-400"
+                  className="h-2 w-full cursor-pointer rounded-full accent-[#6B4BFF]"
                 />
               </div>
-              <div className="flex items-center justify-between gap-2 text-[10px] font-bold text-white/60">
+              <div className="mt-1 flex items-center justify-between gap-2 text-[11px] font-semibold text-mute">
                 <span className="truncate">{minLabelText}</span>
                 <span
                   data-testid="guess-live-value"
-                  className="shrink-0 rounded-full border border-white/15 bg-white/15 px-2 py-0.5 text-[11px] font-black tabular-nums text-white"
+                  className="font-display text-[28px] font-semibold tabular-nums text-ink"
                 >
                   {sliderValueText}
                 </span>
@@ -239,13 +239,13 @@ export default function GuessWidget({
               data-testid="guess-submit-btn"
               onClick={handleSliderSubmit}
               onDoubleClick={stop}
-              className="flex min-h-[40px] w-full items-center justify-center rounded-xl bg-white px-4 py-2 text-xs font-black text-[#09090B] shadow-sm"
+              className="mx-auto mt-2 flex min-h-[44px] min-w-[160px] items-center justify-center rounded-full bg-ink px-5 text-sm font-semibold text-cream"
             >
-              {lang === 'tr' ? 'Kilitle' : t.guessSubmitBtn}
+              {lang === 'tr' ? 'Tahmini kilitle' : 'Lock guess'}
             </motion.button>
           </div>
         ) : (
-          <div data-testid="guess-binary-grid" className="grid grid-cols-2 gap-2">
+          <div data-testid="guess-binary-grid" className="grid grid-cols-1 gap-2">
             {binaryOptions.map((opt, idx) => (
               <motion.button
                 key={`${factId}-opt-${idx}`}

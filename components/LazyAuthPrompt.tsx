@@ -327,7 +327,7 @@ export default function LazyAuthPrompt({
             aria-modal="true"
             aria-labelledby="lazy-auth-title"
             data-testid="lazy-auth-prompt"
-            className="fixed inset-0 z-[90] flex items-end justify-center bg-slate-950/75 p-0 backdrop-blur-md sm:items-center sm:p-4"
+            className="fixed inset-0 z-[90] flex items-end justify-center bg-night/80 p-0 backdrop-blur-md sm:items-center sm:p-4"
             onClick={onCloseModal}
           >
             <motion.div

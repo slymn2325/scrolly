@@ -207,7 +207,7 @@ function appendAccuracySample(
 
 export function detectBrowserLanguage(): Language {
   if (typeof navigator === 'undefined') return 'tr';
-  const lang = (navigator.language || 'en').toLowerCase();
+  const lang = (navigator.language || 'tr').toLowerCase();
   return lang.startsWith('tr') ? 'tr' : 'en';
 }
 

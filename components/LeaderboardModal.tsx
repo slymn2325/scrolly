@@ -1,5 +1,7 @@
 'use client';
 
+import QuizSectionSwitch from '@/components/QuizSectionSwitch';
+
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
 import {
@@ -261,6 +263,7 @@ export default function LeaderboardModal({
                   />
                 </div>
                 <div>
+                  <QuizSectionSwitch section="leaderboard" lang={lang} />
                   <h2 className="font-display text-lg font-bold text-ink dark:text-white">
                     {t.leaderboardTitle}
                   </h2>

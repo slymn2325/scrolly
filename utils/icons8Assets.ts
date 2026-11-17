@@ -1,7 +1,7 @@
 import type { CategoryId } from '@/types/fact';
 
 export type LeagueTierId = 'bronze' | 'silver' | 'gold' | 'platinum' | 'diamond';
-export type DockTabId = 'leaderboard' | 'quiz' | 'explore' | 'duel' | 'diploma';
+export type DockTabId = 'leaderboard' | 'quiz' | 'explore' | 'language' | 'duel' | 'diploma';
 
 export const CATEGORY_ILLUSTRATION_MAP: Record<CategoryId, string> = {
   space: '/assets/icons8/illustrations/space.png',
@@ -27,6 +27,7 @@ export const DOCK_ICON_MAP: Record<DockTabId, string> = {
   leaderboard: '/assets/icons8/icons/dock-leaderboard.png',
   quiz: '/assets/icons8/icons/dock-quiz.png',
   explore: '/assets/icons8/icons/dock-explore.png',
+  language: '/assets/icons8/icons/lang-globe.png',
   duel: '/assets/icons8/icons/dock-duel.png',
   diploma: '/assets/icons8/icons/dock-diploma.png',
 };

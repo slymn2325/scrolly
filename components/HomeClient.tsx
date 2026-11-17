@@ -133,6 +133,7 @@ import {
   addUserXp,
   boostCategoryWeight,
   completeMemoryQuiz,
+  detectBrowserLanguage,
   getDefaultUserState,
   getLeagueInfo,
   getTodayDateString,
@@ -161,6 +162,7 @@ interface ActiveQuizSession {
 interface HomeClientProps {
   initialFacts: FactCardType[];
   initialVocabulary?: VocabularyCard[];
+  initialLang?: 'tr' | 'en';
 }
 
 function mergeFactsById(base: FactCardType[], incoming: FactCardType[]): FactCardType[] {
@@ -385,7 +387,7 @@ function promoteFactToFront(
   return [match, ...deck.filter((f) => f.id !== match.id)];
 }
 
-export default function HomeClient({ initialFacts, initialVocabulary }: HomeClientProps) {
+export default function HomeClient({ initialFacts, initialVocabulary, initialLang = 'tr' }: HomeClientProps) {
   const allFactsRef = useRef<FactCardType[]>(initialFacts);
   const [allFacts, setAllFacts] = useState<FactCardType[]>(initialFacts);
   const [dbVocabulary, setDbVocabulary] = useState<VocabularyCard[]>(() => initialVocabulary ?? []);
@@ -397,7 +399,7 @@ export default function HomeClient({ initialFacts, initialVocabulary }: HomeClie
   const profileHydratedRef = useRef(false);
   const skipNextProfileSyncRef = useRef(false);
 
-  const [memory, setMemory] = useState<UserMemoryState>(() => getDefaultUserState('tr'));
+  const [memory, setMemory] = useState<UserMemoryState>(() => getDefaultUserState(initialLang));
   const memoryRef = useRef<UserMemoryState>(memory);
   memoryRef.current = memory;
   const activeSlideIndexRef = useRef(0);
@@ -466,6 +468,15 @@ export default function HomeClient({ initialFacts, initialVocabulary }: HomeClie
   // Resolve local state + ?tab= / ?category= / ?vocab= / ?fact= / ?room= synchronously before first paint
   useIsomorphicLayoutEffect(() => {
     const loaded = loadUserMemory();
+    if (typeof window !== 'undefined') {
+      const queryLang = new URLSearchParams(window.location.search).get('lang');
+      if (queryLang === 'en' || queryLang === 'tr') {
+        loaded.lang = queryLang;
+        saveUserMemory(loaded);
+      } else if (!window.localStorage.getItem('merak_user_state_v1')) {
+        loaded.lang = detectBrowserLanguage();
+      }
+    }
     setMemory(loaded);
     const seededSaved = seedSavedFactsIfUnset(loaded.favoriteIds);
     setSavedIds(seededSaved.length > 0 ? seededSaved : loadSavedFactIds());
@@ -494,6 +505,7 @@ export default function HomeClient({ initialFacts, initialVocabulary }: HomeClie
       else if (rawTab === 'leaderboard') resolvedTab = 'leaderboard';
       else if (rawTab === 'duel') resolvedTab = 'duel';
       else if (rawTab === 'profile' || rawTab === 'diploma') resolvedTab = 'diploma';
+      else if (rawTab === 'language' || rawTab === 'dil') resolvedTab = 'language';
 
       if (roomParam && isShortRoomCode(roomParam)) {
         roomCodeCandidate = normalizeRoomCode(roomParam);
@@ -519,7 +531,9 @@ export default function HomeClient({ initialFacts, initialVocabulary }: HomeClie
     }
 
     const effectiveInitialCategory: CategoryFilter =
-      requestedCategory ?? (requestedVocabId ? 'vocabulary' : 'all');
+      resolvedTab === 'language'
+        ? 'vocabulary'
+        : requestedCategory ?? (requestedVocabId ? 'vocabulary' : 'all');
 
     const restoredSession =
       !duelParam &&
@@ -1090,6 +1104,33 @@ export default function HomeClient({ initialFacts, initialVocabulary }: HomeClie
     });
   };
 
+  useEffect(() => {
+    const onTheme = () => handleToggleDarkMode();
+    const onSound = () => handleToggleSound();
+    const onDuel = () => {
+      setActiveQuiz(null);
+      setActiveTab('duel');
+    };
+    const onSection = (event: Event) => {
+      const section = (event as CustomEvent<{ section?: string }>).detail?.section;
+      if (section === 'leaderboard') setActiveTab('leaderboard');
+      if (section === 'quiz') {
+        setActiveQuiz(null);
+        setActiveTab('quiz');
+      }
+    };
+    window.addEventListener('scrolly-toggle-theme', onTheme);
+    window.addEventListener('scrolly-toggle-sound', onSound);
+    window.addEventListener('scrolly-open-duel', onDuel);
+    window.addEventListener('scrolly-quiz-section', onSection as EventListener);
+    return () => {
+      window.removeEventListener('scrolly-toggle-theme', onTheme);
+      window.removeEventListener('scrolly-toggle-sound', onSound);
+      window.removeEventListener('scrolly-open-duel', onDuel);
+      window.removeEventListener('scrolly-quiz-section', onSection as EventListener);
+    };
+  }, [handleToggleDarkMode, handleToggleSound]);
+
   const triggerGuestAuthNudge = useCallback((source: AuthTriggerSource) => {
     if (authUserRef.current || getCachedAuthUserEmail()) return;
     if (isAuthNudgeCoolingDown()) return;
@@ -1109,6 +1150,8 @@ export default function HomeClient({ initialFacts, initialVocabulary }: HomeClie
     activeSlideIndexRef.current = 0;
     setExploreSlideIndex(0);
     setActiveCategory(cat);
+    if (cat === 'vocabulary') setActiveTab('language');
+    else setActiveTab((prev) => (prev === 'language' ? 'explore' : prev));
 
     if (typeof window !== 'undefined') {
       try {
@@ -1494,12 +1537,16 @@ export default function HomeClient({ initialFacts, initialVocabulary }: HomeClie
     setStoryShareFact(null);
     setShareModalData(null);
 
-    if (tab === 'explore') {
-      const alreadyExploring = activeTab === 'explore' && !activeQuiz && !hadSubPage;
+    if (tab === 'explore' || tab === 'language') {
+      const nextCategory = tab === 'language' ? 'vocabulary' : 'all';
+      const alreadyExploring =
+        activeTab === tab && activeCategoryRef.current === nextCategory && !activeQuiz && !hadSubPage;
       setActiveQuiz(null);
       setIncomingDuel(null);
-      setActiveTab('explore');
-      if (alreadyExploring) {
+      setActiveTab(tab);
+      if (activeCategoryRef.current !== nextCategory) {
+        handleSelectCategory(nextCategory);
+      } else if (alreadyExploring && tab === 'explore') {
         refreshExploreDeck(true);
       }
       return;
@@ -1674,7 +1721,7 @@ export default function HomeClient({ initialFacts, initialVocabulary }: HomeClie
     !showWelcome &&
     !isExploreSubPageOpen &&
     !chromeBlocked;
-  const showExploreFeed = activeTab === 'explore' && !activeQuiz && !isExploreSubPageOpen;
+  const showExploreFeed = (activeTab === 'explore' || activeTab === 'language') && !activeQuiz && !isExploreSubPageOpen;
 
   // Keep URL query params cleanly synchronized with active tab & category state
   useEffect(() => {
@@ -1683,7 +1730,7 @@ export default function HomeClient({ initialFacts, initialVocabulary }: HomeClie
       const currentUrl = new URL(window.location.href);
       const before = `${currentUrl.pathname}${currentUrl.search}${currentUrl.hash}`;
 
-      if (activeTab !== 'explore' || activeQuiz) {
+      if ((activeTab !== 'explore' && activeTab !== 'language') || activeQuiz) {
         const targetTabParam =
           activeTab === 'diploma'
             ? 'profile'
@@ -1694,6 +1741,10 @@ export default function HomeClient({ initialFacts, initialVocabulary }: HomeClie
         currentUrl.searchParams.delete('vocab');
         currentUrl.searchParams.delete('category');
         currentUrl.searchParams.set('tab', targetTabParam);
+        if (targetTabParam === 'language') {
+          currentUrl.searchParams.set('category', 'vocabulary');
+          currentUrl.searchParams.delete('vocab');
+        }
         if (targetTabParam !== 'duel') {
           currentUrl.searchParams.delete('room');
           currentUrl.searchParams.delete('duel');
@@ -1779,9 +1830,7 @@ export default function HomeClient({ initialFacts, initialVocabulary }: HomeClie
       <div
         data-testid="reels-desktop-shell"
         data-theme={isDark ? 'dark' : 'light'}
-        className={`relative flex h-[100dvh] w-screen overflow-hidden select-none ${
-          isDark ? 'bg-[#0A0A0E] text-white' : 'bg-[#E8E6F0] text-[#1E1B2E]'
-        }`}
+        className="relative flex h-[100dvh] w-screen overflow-hidden select-none bg-night text-[#F6F1EA]"
       >
         <WelcomeExploreModal
           open={showWelcome}
@@ -1800,7 +1849,7 @@ export default function HomeClient({ initialFacts, initialVocabulary }: HomeClie
 
       <div
         data-testid="reels-desktop-grid"
-        className="relative flex h-full min-h-0 w-full min-w-0 md:grid md:grid-cols-[72px_minmax(0,1fr)] xl:grid-cols-[220px_minmax(0,1fr)_340px]"
+        className="relative mx-auto flex h-full min-h-0 w-full min-w-0 max-w-[1520px] lg:grid lg:grid-cols-[232px_minmax(0,1fr)]"
       >
       {/* Left rail: icons-only 768–1279, full labels ≥1280 */}
       <DesktopLeftNav
@@ -1855,13 +1904,7 @@ export default function HomeClient({ initialFacts, initialVocabulary }: HomeClie
         {/* Immersive vertical stage: full-bleed on mobile/tablet; proportional 88dvh showcase on desktop */}
         <div
           data-testid="reels-phone-frame"
-          className={`relative z-10 mx-auto flex h-full w-full min-w-0 flex-1 flex-col overflow-hidden lg:mx-0 lg:my-auto lg:h-[min(92dvh,920px)] lg:flex-none lg:rounded-[24px] lg:border lg:border-white/12 lg:shadow-[0_28px_100px_-18px_rgba(0,0,0,0.65)] ${
-            showExploreFeed
-              ? 'lg:w-[min(760px,58vw)] lg:max-w-[820px] xl:w-[min(860px,54vw)] xl:max-w-[900px]'
-              : 'lg:w-[min(820px,62vw)] lg:max-w-[900px]'
-          } ${
-            isDark ? 'bg-[#0A0A0E] text-white' : 'bg-[#F7F5FB] text-[#1E1B2E]'
-          }`}
+          className="stage-card relative z-10 mx-auto flex h-full w-full min-w-0 flex-1 flex-col overflow-hidden bg-cream text-ink md:my-auto md:h-auto md:flex-none md:rounded-card"
         >
         <OfflineManager lang={lang} />
 
@@ -2160,7 +2203,7 @@ export default function HomeClient({ initialFacts, initialVocabulary }: HomeClie
 
         {/* Bottom dock: phone only (<768). md+ uses left rail. */}
         {!isExploreSubPageOpen && !showWelcome && !chromeBlocked && (
-          <div className="md:hidden">
+          <div className="lg:hidden">
             <IosFloatingIslandDock
               activeTab={activeTab}
               lang={lang}
@@ -2276,7 +2319,7 @@ export default function HomeClient({ initialFacts, initialVocabulary }: HomeClie
               type="button"
               data-testid="insight-drawer-open-btn"
               onClick={() => setInsightDrawerOpen(true)}
-              className={`absolute right-3 top-1/2 z-30 hidden -translate-y-1/2 rounded-2xl border px-2.5 py-3 text-[10px] font-black uppercase tracking-wider backdrop-blur-md lg:flex xl:hidden ${
+              className={`absolute right-3 top-1/2 z-30 hidden -translate-y-1/2 rounded-2xl border px-2.5 py-3 text-[10px] font-black uppercase tracking-wider backdrop-blur-md ${
                 isDark
                   ? 'border-white/15 bg-[#13131A]/90 text-white'
                   : 'border-[#1E1B2E]/15 bg-white/95 text-[#1E1B2E] shadow-sm'
@@ -2321,7 +2364,7 @@ export default function HomeClient({ initialFacts, initialVocabulary }: HomeClie
       {showExploreFeed && (
         <div
           data-testid="desktop-insight-column"
-          className="relative z-10 hidden min-h-0 items-center justify-center px-3 py-4 xl:flex"
+          className="relative z-10 hidden min-h-0 items-center justify-center px-3 py-4"
         >
           <DesktopFeedSideRail
             mode="insight"

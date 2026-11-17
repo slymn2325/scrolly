@@ -4,16 +4,22 @@
 
 :root {
   /* Semantic Brand & Surface Tokens (Stitch Design System + design-tokens) */
-  --background: #FFFDF9;
-  --foreground: #1E1B2E;
-  --card: #FFFFFF;
-  --card-elevated: #F4F1FA;
+  --background: #FFF6EC;
+  --night: #14111C;
+  --night-2: #1E1A29;
+  --mute: #5E5770;
+  --guess-nest: #FFF1E3;
+  --line: rgba(28,23,48,0.08);
+  --shadow-card: 0 24px 60px -24px rgba(28,23,48,0.35);
+  --foreground: #1C1730;
+  --card: #FFFCF8;
+  --card-elevated: #FFF6EC;
   --border: oklch(0 0 0 / 0.1);
   --outline-image: oklch(0 0 0 / 0.1);
-  --primary: #7C3AED;
-  --secondary: #F59E0B;
-  --success: #10B981;
-  --destructive: #F43F5E;
+  --primary: #6B4BFF;
+  --secondary: #E8B43A;
+  --success: #1AAE8F;
+  --destructive: #E5484D;
 
   /* Radii Scale (Concentric: 24px -> 16px -> 12px) */
   --radius: 1rem;
@@ -36,8 +42,8 @@
   --bg-cream: var(--background);
   --text-ink: var(--foreground);
   --sketch-pill-bg: rgba(255, 255, 255, 0.88);
-  --scrolly-surface-reel: #0A0A0E;
-  --scrolly-surface-light: #FFFDF9;
+  --scrolly-surface-reel: #14111C;
+  --scrolly-surface-light: #FFF6EC;
   --scrolly-surface-dark-card: #17122B;
   --scrolly-accent-primary: var(--primary);
   --scrolly-accent-gold: var(--secondary);
@@ -80,9 +86,9 @@ textarea {
 
 html.dark,
 html.dark body {
-  --background: #0A0A0E;
-  --foreground: #F5F3FF;
-  --card: #13131A;
+  --background: #14111C;
+  --foreground: #F6F1EA;
+  --card: #1E1A29;
   --card-elevated: #1B1926;
   --border: oklch(1 0 0 / 0.12);
   --outline-image: oklch(1 0 0 / 0.1);
@@ -202,8 +208,81 @@ html.dark [data-fact-surface='true'] p {
     left: 0;
     right: 0;
     height: env(safe-area-inset-top, 0px);
-    background-color: #000000;
+    background-color: var(--night, #14111C);
     pointer-events: none;
     z-index: var(--z-statusbar, 9999);
   }
+}
+
+[data-testid="reels-desktop-shell"] {
+  background:
+    radial-gradient(ellipse at 50% 42%, rgba(107, 75, 255, 0.32), transparent 58%),
+    radial-gradient(ellipse at 72% 78%, rgba(255, 122, 89, 0.16), transparent 46%),
+    var(--night, #14111C);
+}
+
+@media (min-width: 768px) {
+  [data-testid="reels-phone-frame"].stage-card,
+  [data-testid="reels-phone-frame"] {
+    width: min(460px, 70vw, calc(86vh * 9 / 16));
+    height: min(86vh, 860px, calc(min(460px, 70vw) * 16 / 9));
+    max-height: calc(100dvh - 108px);
+    border-radius: 28px;
+    box-shadow: var(--shadow-card, 0 24px 60px -24px rgba(28, 23, 48, 0.35));
+    flex: none;
+  }
+
+  [data-testid="reels-phone-frame"] .reels-slide {
+    height: 100%;
+    min-height: 100%;
+  }
+}
+
+@media (min-width: 1024px) {
+  [data-testid="reels-phone-frame"] {
+    max-height: 86vh;
+  }
+}
+
+.lumen-cream-panel {
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding-bottom: calc(96px + env(safe-area-inset-bottom));
+}
+
+@media (min-width: 1024px) {
+  .lumen-cream-panel {
+    padding-bottom: 20px;
+  }
+}
+
+[data-testid="desktop-feed-side-rail"] {
+  width: 44px;
+  gap: 12px;
+  border: 0 !important;
+  background: transparent !important;
+  padding: 0 !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+}
+
+[data-testid="desktop-feed-side-rail"] > button {
+  height: 44px;
+  width: 44px;
+  min-height: 44px;
+  border-radius: 999px;
+  padding: 0;
+  justify-content: center;
+  background: rgba(255, 252, 248, 0.95);
+  color: #1c1730;
+  border: 0;
+  box-shadow: 0 6px 16px -6px rgba(28, 23, 48, 0.16);
+}
+
+[data-testid="desktop-feed-side-rail"] > button span {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
 }

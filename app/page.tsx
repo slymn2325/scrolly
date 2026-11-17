@@ -15,7 +15,14 @@ import {
 // Always render fresh Postgres facts and vocabulary on demand without stale ISR caching.
 export const dynamic = 'force-dynamic';
 
-export default async function HomePage() {
+export default async function HomePage({
+  searchParams,
+}: {
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+}) {
+  const params = await searchParams;
+  const rawLang = Array.isArray(params.lang) ? params.lang[0] : params.lang;
+  const initialLang = rawLang === 'en' ? 'en' : 'tr';
   const [allFacts, { vocabulary: initialVocabulary }] = await Promise.all([
     getAllFactsServer(),
     fetchVocabularyWithSourceServer(),
@@ -27,7 +34,7 @@ export default async function HomePage() {
       <h1 className="sr-only">
         Scrolly — Doğrulanmış İki Dilli Mikro Bilim, Uzay, Tarih ve Kültür Kartları
       </h1>
-      <HomeClient initialFacts={initialFacts} initialVocabulary={initialVocabulary} />
+      <HomeClient initialFacts={initialFacts} initialVocabulary={initialVocabulary} initialLang={initialLang} />
       <nav aria-label="Site Directory" className="sr-only">
         <h2>Scrolly Platform &amp; Editorial Index</h2>
         <ul>

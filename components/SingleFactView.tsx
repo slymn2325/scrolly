@@ -654,7 +654,7 @@ export default function SingleFactView({
                 {resolvedGifUrl && !gifFailed ? (
                   <>
                     <Eye className="h-3.5 w-3.5 text-emerald-300" />
-                    <span>{lang === 'tr' ? 'Konu GIF Önizlemesi' : 'Topic GIF Visual'}</span>
+                    <span>{lang === 'tr' ? 'Görsel' : 'Visual'}</span>
                   </>
                 ) : (
                   <>
@@ -813,7 +813,7 @@ export default function SingleFactView({
             </div>
 
             {/* Card 3: Quick Stats & Category Rank */}
-            <div className="flex flex-col justify-between rounded-2xl border border-teal-200/80 bg-white/95 p-4 shadow-sm dark:border-teal-500/30 dark:bg-white/5 sm:col-span-1">
+            <div className="hidden">
               <div>
                 <span className="inline-flex items-center gap-1 text-[11px] font-black uppercase tracking-wider text-teal-700 dark:text-teal-300">
                   <Flame className="h-3.5 w-3.5" />

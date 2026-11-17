@@ -1,5 +1,7 @@
 'use client';
 
+import QuizSectionSwitch from '@/components/QuizSectionSwitch';
+
 import React, { useEffect } from 'react';
 import { motion } from 'framer-motion';
 import {
@@ -102,6 +104,7 @@ export default function QuizHubModal({
               </motion.button>
             )}
 
+            <QuizSectionSwitch section="quiz" lang={lang} />
             {/* Header Hero */}
             <div className="flex items-center justify-between gap-3 rounded-2xl border border-violet-200/70 bg-gradient-to-br from-pastel-lavender/75 via-white to-amber-50/75 p-3.5 dark:border-violet-600/40 dark:from-violet-950/70 dark:via-[#1D1635] dark:to-amber-950/35">
               <div className="flex min-w-0 items-center gap-3">

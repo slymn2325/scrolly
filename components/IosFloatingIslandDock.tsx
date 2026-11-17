@@ -3,7 +3,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { type Language, translations } from '@/i18n/translations';
-import { ENABLE_COMPETITIVE_TABS } from '@/lib/featureFlags';
 import { DOCK_ICON_MAP, type DockTabId } from '@/utils/icons8Assets';
 
 export type { DockTabId };
@@ -29,58 +28,22 @@ export default function IosFloatingIslandDock({
   const t = translations[lang];
 
   // When ENABLE_COMPETITIVE_TABS is false, keep only the 3 core tabs: Explore | Quiz | Profile & Streak
-  const allTabs: Array<{
+  const tabs: Array<{
     id: DockTabId;
     label: string;
     iconSrc: string;
     legacyTestId: string;
   }> = [
-    {
-      id: 'leaderboard',
-      label: t.dockLeaderboard,
-      iconSrc: DOCK_ICON_MAP.leaderboard,
-      legacyTestId: 'leaderboard-btn',
-    },
-    {
-      id: 'quiz',
-      label: t.dockQuiz,
-      iconSrc: DOCK_ICON_MAP.quiz,
-      legacyTestId: 'mini-quiz-btn',
-    },
-    {
-      id: 'explore',
-      label: t.dockExplore,
-      iconSrc: DOCK_ICON_MAP.explore,
-      legacyTestId: 'explore-feed-btn',
-    },
-    {
-      id: 'duel',
-      label: t.dockDuel,
-      iconSrc: DOCK_ICON_MAP.duel,
-      legacyTestId: 'duel-btn',
-    },
-    {
-      id: 'diploma',
-      label: ENABLE_COMPETITIVE_TABS
-        ? lang === 'tr'
-          ? 'Profil'
-          : 'Profile'
-        : lang === 'tr'
-          ? 'Profil & Seri'
-          : 'Profile & Streak',
-      iconSrc: DOCK_ICON_MAP.diploma,
-      legacyTestId: 'profile-drawer-btn',
-    },
+    { id: 'explore', label: t.dockExplore, iconSrc: DOCK_ICON_MAP.explore, legacyTestId: 'explore-feed-btn' },
+    { id: 'quiz', label: t.dockQuiz, iconSrc: DOCK_ICON_MAP.quiz, legacyTestId: 'mini-quiz-btn' },
+    { id: 'language', label: t.dockLanguage, iconSrc: DOCK_ICON_MAP.language, legacyTestId: 'language-tab-btn' },
+    { id: 'diploma', label: t.dockDiploma, iconSrc: DOCK_ICON_MAP.diploma, legacyTestId: 'profile-drawer-btn' },
   ];
-
-  const tabs = ENABLE_COMPETITIVE_TABS
-    ? allTabs
-    : [allTabs[2], allTabs[1], allTabs[4]];
 
   return (
     <div
       data-testid="ios-floating-dock-shell"
-      className={`pointer-events-none absolute inset-x-0 bottom-[calc(0.75rem+env(safe-area-inset-bottom))] z-30 mx-auto w-full px-3 ${
+      className={`pointer-events-none fixed inset-x-0 bottom-[max(14px,env(safe-area-inset-bottom))] z-40 mx-auto w-full max-w-[440px] px-4 ${
         chromeBlocked ? 'opacity-40' : ''
       }`}
     >
@@ -90,11 +53,7 @@ export default function IosFloatingIslandDock({
         data-theme={darkMode ? 'dark' : 'light'}
         className={`${
           chromeBlocked ? 'pointer-events-none' : 'pointer-events-auto'
-        } flex w-full items-center justify-between rounded-full border px-2 py-1.5 backdrop-blur-md ${
-          darkMode
-            ? 'border-white/15 bg-[#111115]/[0.92] text-white shadow-[0_8px_32px_rgba(0,0,0,0.45)]'
-            : 'border-[#1E1B2E]/[0.12] bg-[#FFFDF9]/95 text-[#1E1B2E] shadow-[0_8px_28px_rgba(30,27,46,0.18)]'
-        }`}
+        } flex w-full items-center justify-between rounded-full border border-white/10 bg-[rgba(20,17,28,0.94)] px-2 py-1.5 text-white shadow-dock`}
       >
       {tabs.map((tab) => {
         const isActive = activeTab === tab.id;
@@ -115,8 +74,8 @@ export default function IosFloatingIslandDock({
                   ? 'text-white'
                   : 'text-white/75 hover:text-white'
                 : isActive
-                  ? 'text-[#1E1B2E]'
-                  : 'text-[#1E1B2E]/80 hover:text-[#1E1B2E]'
+                  ? 'text-white'
+                  : 'text-white/70 hover:text-white'
             }`}
           >
             {isActive && (
