@@ -684,13 +684,17 @@ export default function TikTokFactSlide({
 
         <div
           data-testid="fact-card-front"
-          className={`relative z-content flex min-h-0 w-full flex-1 flex-col overflow-hidden bg-cik-bg px-4 pr-16 pt-3 text-cik-text md:pr-5 lg:px-5 lg:pb-5 ${
+          className={`pointer-events-none absolute inset-0 z-content flex flex-col justify-end overflow-hidden px-4 text-cik-text md:px-5 ${
             cookieBannerVisible
               ? 'pb-[calc(72px+env(safe-area-inset-bottom)+68px)]'
               : 'pb-[calc(72px+env(safe-area-inset-bottom)+16px)]'
-          } ${isFlipped ? 'hidden' : ''}`}
+          } lg:pb-5 ${isFlipped ? 'hidden' : ''}`}
         >
-          <div className="pointer-events-none relative z-content flex min-h-0 w-full flex-1 flex-col overflow-hidden">
+          <div
+            className={`pointer-events-auto min-h-0 rounded-t-2xl bg-cik-bg px-4 pt-3 transition-all duration-300 ease-out ${
+              isExpanded ? 'max-h-[65%] overflow-y-auto' : 'overflow-hidden'
+            }`}
+          >
             <div className="mb-2 flex shrink-0 flex-wrap items-center gap-2">
               <div className="inline-flex items-center gap-1 rounded-full border border-black/10 bg-black/5 px-2.5 py-0.5 text-[11px] font-medium leading-tight text-neutral-700 hover:bg-black/10 dark:border-white/15 dark:bg-white/10 dark:text-white/80">
                 <img
@@ -759,9 +763,7 @@ export default function TikTokFactSlide({
                 onButtonPop();
                 setIsExpanded((prev) => !prev);
               }}
-              className={`pointer-events-auto mt-2 min-h-0 cursor-pointer transition-all duration-300 ease-out ${
-                isExpanded ? 'max-h-[65%] overflow-y-auto' : 'overflow-hidden'
-              }`}
+              className="pointer-events-auto mt-2 min-h-0 cursor-pointer"
             >
               <p
                 data-testid="fact-body"
@@ -781,8 +783,9 @@ export default function TikTokFactSlide({
                     : 'Read more'}
               </span>
             </div>
+          </div>
             {localized.guessChallenge && (
-              <div className="pointer-events-auto mt-2 shrink-0">
+              <div className="pointer-events-auto shrink-0 bg-cik-bg px-4 pb-3">
                 <GuessWidget
                   factId={fact.id}
                   challenge={localized.guessChallenge}
@@ -816,7 +819,6 @@ export default function TikTokFactSlide({
                 />
               </div>
             )}
-          </div>
         </div>
 
         {!isFlipped && (
