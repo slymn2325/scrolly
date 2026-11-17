@@ -580,5 +580,219 @@
     "sourceName": "NASA Jet Propulsion Laboratory",
     "sourceUrl": "https://science.nasa.gov/mission/voyager/where-are-voyager-1-and-voyager-2-now/",
     "visualQuery": "voyager space probe"
+  },
+  {
+    "id": "space-olympus-mons",
+    "slug": "olympus-mons-three-times-everest",
+    "category": "space",
+    "accentColor": "#7C3AED",
+    "iconName": "Mountain",
+    "emoji": "🌋",
+    "readingTimeSec": 18,
+    "sketchType": "olympus_mons",
+    "createdAt": "2026-11-14T00:00:00.000Z",
+    "tr": {
+      "slug": "marstaki-olympus-mons-everestin-ucte-biri",
+      "title": "Mars'taki Olympus Mons, Everest'in Neredeyse 3 Katı Yüksekliğindedir",
+      "factText": "Güneş Sistemi'nin bilinen en büyük yanardağı Olympus Mons, Mars yüzeyinden yaklaşık 21,9 km yükselir.",
+      "deepDiveDetail": "Mars'ta Dünya'daki gibi kayan tektonik plakalar olmadığı için manto sıcak noktası milyonlarca yıl aynı yere lav yığdı. Daha düşük kütleçekimi de bu kalkan yanardağının kendi ağırlığı altında çökmeden büyümesini sağladı. Tabanı Fransa'yı kaplayacak kadar geniştir.",
+      "sourceHint": "NASA Science — Mars",
+      "sourceName": "NASA Science — Mars Exploration",
+      "sourceUrl": "https://science.nasa.gov/mars/facts/",
+      "tag": "Gezegen Jeolojisi",
+      "quiz": {
+        "question": "Olympus Mons'un Dünya'daki yanardağlardan çok daha yüksek olmasının temel nedeni nedir?",
+        "options": [
+          "Hareketli plakalar olmadığı için lav hep aynı noktada birikir",
+          "Mars atmosferi yanardağı erozyondan tamamen korur",
+          "Yanardağın içi boş buzdan oluşur"
+        ],
+        "correctIndex": 0,
+        "explanation": "Kabuk kaymadığı için sıcak nokta tek bir kalkan yanardağı büyütür."
+      },
+      "guessChallenge": {
+        "type": "slider",
+        "prompt": "Olympus Mons yaklaşık kaç kilometre yüksektir?",
+        "min": 5,
+        "max": 40,
+        "step": 1,
+        "unit": "km",
+        "correctValue": 22
+      }
+    },
+    "en": {
+      "slug": "olympus-mons-three-times-everest",
+      "title": "Olympus Mons on Mars Towers Nearly Three Times Higher Than Everest",
+      "factText": "Olympus Mons, the largest known volcano in the solar system, rises about 21.9 km above the Martian surface.",
+      "deepDiveDetail": "Mars has no moving tectonic plates, so one mantle hotspot piled lava in the same place for millions of years. Lower gravity also let the shield volcano grow without collapsing. Its base is wide enough to cover France.",
+      "sourceHint": "NASA Science — Mars",
+      "sourceName": "NASA Science — Mars Exploration",
+      "sourceUrl": "https://science.nasa.gov/mars/facts/",
+      "tag": "Planetary Geology",
+      "quiz": {
+        "question": "Why could Olympus Mons grow so much taller than volcanoes on Earth?",
+        "options": [
+          "A stationary hotspot kept erupting because the crust does not drift",
+          "Martian lava is lighter than water",
+          "The volcano is a hollow ice dome"
+        ],
+        "correctIndex": 0,
+        "explanation": "Without plate tectonics, one plume built a single shield instead of a chain of smaller volcanoes."
+      },
+      "guessChallenge": {
+        "type": "slider",
+        "prompt": "About how many kilometers tall is Olympus Mons?",
+        "min": 5,
+        "max": 40,
+        "step": 1,
+        "unit": "km",
+        "correctValue": 22
+      }
+    },
+    "sourceName": "NASA Science — Mars Exploration",
+    "sourceUrl": "https://science.nasa.gov/mars/facts/",
+    "visualQuery": "mars volcano olympus"
+  },
+  {
+    "id": "space-neutron-teaspoon",
+    "slug": "teaspoon-of-neutron-star-weight",
+    "category": "space",
+    "accentColor": "#7C3AED",
+    "iconName": "Atom",
+    "emoji": "🥄",
+    "readingTimeSec": 16,
+    "createdAt": "2026-11-14T00:00:00.000Z",
+    "tr": {
+      "slug": "bir-cay-kasigi-notron-yildizi",
+      "title": "Bir Çay Kaşığı Nötron Yıldızı Maddesi Yaklaşık Bir Milyar Ton Gelir",
+      "factText": "Nötron yıldızında Güneş'e yakın bir kütle, bir kent büyüklüğündeki küreye sıkışır. Bir çay kaşığı bu maddeden yaklaşık bir milyar ton ağırlığındadır.",
+      "deepDiveDetail": "Çöken bir yıldızın çekirdeğinde protonlar ve elektronlar birleşip nötronlara dönüşür. Ortaya çıkan madde atom çekirdeği yoğunluğuna yakındır, bu yüzden minik bir hacim bile Dünya'daki dağlarla kıyaslanacak bir kütle taşır. Bu, magnetarların manyetik alanından ayrı bir yoğunluk gerçeğidir.",
+      "sourceHint": "NASA Imagine the Universe",
+      "sourceName": "NASA Imagine the Universe — Neutron Stars",
+      "sourceUrl": "https://imagine.gsfc.nasa.gov/science/objects/neutron_stars1.html",
+      "tag": "Astrofizik",
+      "quiz": {
+        "question": "Bir çay kaşığı nötron yıldızı maddesinin bu kadar ağır olmasının nedeni nedir?",
+        "options": [
+          "Madde atom çekirdeğine yakın yoğunlukta sıkıştığı için",
+          "Çay kaşığının manyetik alanı atomları altına çevirdiği için",
+          "Nötron yıldızının içi sıvı elmasla dolu olduğu için"
+        ],
+        "correctIndex": 0,
+        "explanation": "Kütle kent boyutunda bir küreye sıkıştığı için küçük bir hacim devasa bir kütle taşır."
+      },
+      "guessChallenge": {
+        "type": "binary",
+        "prompt": "Bir çay kaşığı nötron yıldızı maddesi yaklaşık bir milyar ton mudur?",
+        "options": [
+          "Evet, yaklaşık bir milyar ton",
+          "Hayır, yalnızca bir ton"
+        ],
+        "correctOptionIndex": 0
+      }
+    },
+    "en": {
+      "slug": "teaspoon-of-neutron-star-weight",
+      "title": "A Teaspoon of Neutron-Star Material Weighs About a Billion Tons",
+      "factText": "A neutron star packs about a solar mass into a city-sized sphere, so a teaspoon of that material weighs on the order of a billion tons.",
+      "deepDiveDetail": "In the collapsed core, protons and electrons fuse into neutrons and the matter approaches atomic-nucleus density. That is a density fact, separate from the magnetic fields of magnetars. Popular round numbers vary, but the scale is billions of tons per teaspoon, not ordinary rock.",
+      "sourceHint": "NASA Imagine the Universe",
+      "sourceName": "NASA Imagine the Universe — Neutron Stars",
+      "sourceUrl": "https://imagine.gsfc.nasa.gov/science/objects/neutron_stars1.html",
+      "tag": "Astrophysics",
+      "quiz": {
+        "question": "Why does a teaspoon of neutron-star material weigh so much?",
+        "options": [
+          "The matter is crushed to near nuclear density",
+          "The teaspoon is made of diamond rain",
+          "Magnetar fields turn the spoon into gold"
+        ],
+        "correctIndex": 0,
+        "explanation": "A star-sized mass squeezed into a city-sized ball makes even a teaspoon extraordinarily massive."
+      },
+      "guessChallenge": {
+        "type": "binary",
+        "prompt": "Is a teaspoon of neutron-star material about a billion tons?",
+        "options": [
+          "Yes, on the order of a billion tons",
+          "No, about one ton"
+        ],
+        "correctOptionIndex": 0
+      }
+    },
+    "sourceName": "NASA Imagine the Universe — Neutron Stars",
+    "sourceUrl": "https://imagine.gsfc.nasa.gov/science/objects/neutron_stars1.html",
+    "visualQuery": "neutron star space"
+  },
+  {
+    "id": "space-diamond-rain",
+    "slug": "diamond-rain-on-neptune-and-uranus",
+    "category": "space",
+    "accentColor": "#7C3AED",
+    "iconName": "Gem",
+    "emoji": "💎",
+    "readingTimeSec": 17,
+    "createdAt": "2026-11-14T00:00:00.000Z",
+    "tr": {
+      "slug": "neptun-ve-uranuste-elmas-yagmuru",
+      "title": "Neptün ve Uranüs'ün İçinde Elmas Yağmuru Yağabilir",
+      "factText": "Bu buz devlerinin derinliklerinde aşırı basınç, metandaki karbonu elmas yapısına sıkıştırabilir ve elmaslar aşağı doğru yağabilir.",
+      "deepDiveDetail": "Laboratuvarda hidrokarbonlar gezegen içlerine benzer basınçlara sıkıştırıldığında elmas oluştuğu görüldü. Neptün ve Uranüs modelleri bu süreci metan bakımından zengin katmanlara uygular. Bu, Titan'daki yavaş metan yağmurundan farklı bir olaydır.",
+      "sourceHint": "Nature Physics",
+      "sourceName": "Nature Physics — diamond formation in compressed hydrocarbons",
+      "sourceUrl": "https://www.nature.com/articles/nphys4257",
+      "tag": "Gezegen Bilimi",
+      "quiz": {
+        "question": "Neptün ve Uranüs modellerindeki elmas yağmuru hangi maddeden türer?",
+        "options": [
+          "Metandaki karbonun yüksek basınçta elmasa dönüşmesinden",
+          "Titan'daki metan yağmur damlalarının donmasından",
+          "Halkaların buz kristallerinin ezilmesinden"
+        ],
+        "correctIndex": 0,
+        "explanation": "Yüksek basınç hidrokarbonlardaki karbonu elmas olarak ayırır."
+      },
+      "guessChallenge": {
+        "type": "binary",
+        "prompt": "Elmas yağmuru Titan'daki metan yağmuruyla aynı olay mıdır?",
+        "options": [
+          "Hayır, buz devlerinin içindeki bir basınç sürecidir",
+          "Evet, ikisi de aynı yağmurdur"
+        ],
+        "correctOptionIndex": 0
+      }
+    },
+    "en": {
+      "slug": "diamond-rain-on-neptune-and-uranus",
+      "title": "It May Rain Diamonds Inside Neptune and Uranus",
+      "factText": "Deep inside these ice giants, extreme pressure can split carbon out of methane and squeeze it into diamond that falls inward.",
+      "deepDiveDetail": "Laser-compression experiments have formed diamond from hydrocarbons at pressures comparable to planetary interiors. Interior models apply that process to the methane-rich layers of Neptune and Uranus. It is not the slow methane rain on Titan.",
+      "sourceHint": "Nature Physics",
+      "sourceName": "Nature Physics — diamond formation in compressed hydrocarbons",
+      "sourceUrl": "https://www.nature.com/articles/nphys4257",
+      "tag": "Planetary Science",
+      "quiz": {
+        "question": "Where does the carbon in this diamond-rain model come from?",
+        "options": [
+          "Methane broken apart under ice-giant pressures",
+          "Methane raindrops on Titan",
+          "Crushed ice from Saturn's rings"
+        ],
+        "correctIndex": 0,
+        "explanation": "Experiments show hydrocarbons can yield diamond when compressed to interior-planet pressures."
+      },
+      "guessChallenge": {
+        "type": "binary",
+        "prompt": "Is diamond rain the same thing as Titan's slow methane rain?",
+        "options": [
+          "No, it is a high-pressure process inside the ice giants",
+          "Yes, they are the same rain"
+        ],
+        "correctOptionIndex": 0
+      }
+    },
+    "sourceName": "Nature Physics — diamond formation in compressed hydrocarbons",
+    "sourceUrl": "https://www.nature.com/articles/nphys4257",
+    "visualQuery": "neptune planet diamond"
   }
 ]

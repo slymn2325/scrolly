@@ -17,6 +17,7 @@ import {
 import HtmlLangSync from '@/components/HtmlLangSync';
 import SiteTrustFooter from '@/components/SiteTrustFooter';
 import { type CategoryId, getCategoryMeta, type Language } from '@/i18n/translations';
+import { CATEGORY_PAGE_SIZE, categoryPagePath, categoryPageUrl } from '@/lib/categoryPages';
 import { getAllFactsServer } from '@/lib/db';
 import {
   buildCategoryHref,
@@ -25,6 +26,7 @@ import {
   categoryIdToRouteSlug,
   categoryRouteSlugToId,
   getFactPrimarySlug,
+  isRetiredDuplicateFact,
 } from '@/utils/factsData';
 import { CATEGORY_ILLUSTRATION_MAP, CATEGORY_SUB_ICON_MAP } from '@/utils/icons8Assets';
 
@@ -61,7 +63,8 @@ const CATEGORY_DESCRIPTIONS: Record<CategoryId, { tr: string; en: string }> = {
 
 export async function buildCategoryMetadata(
   categorySlug: string,
-  lang: Language
+  lang: Language,
+  page = 1
 ): Promise<Metadata> {
   const categoryId = categoryRouteSlugToId(categorySlug);
   if (!categoryId) {
@@ -72,16 +75,17 @@ export async function buildCategoryMetadata(
 
   const catMeta = getCategoryMeta(categoryId);
   const canonicalSlug = categoryIdToRouteSlug(categoryId);
-  const trUrl = `https://scrolly.live/category/${canonicalSlug}`;
-  const enUrl = `https://scrolly.live/en/category/${canonicalSlug}`;
+  const trUrl = categoryPageUrl(canonicalSlug, 'tr', page);
+  const enUrl = categoryPageUrl(canonicalSlug, 'en', page);
   const canonicalUrl = lang === 'en' ? enUrl : trUrl;
   const description = CATEGORY_DESCRIPTIONS[categoryId][lang];
+  const pageLabel = page > 1 ? ` (${page})` : '';
 
   return {
     title:
       lang === 'tr'
-        ? `${catMeta.label.tr} Bilgi Kartları & Quiz | Scrolly`
-        : `${catMeta.label.en} Fact Cards & Micro-Learning | Scrolly`,
+        ? `${catMeta.label.tr} Bilgi Kartları & Quiz${pageLabel} | Scrolly`
+        : `${catMeta.label.en} Fact Cards & Micro-Learning${pageLabel} | Scrolly`,
     description,
     alternates: {
       canonical: canonicalUrl,
@@ -110,11 +114,13 @@ export async function buildCategoryMetadata(
 interface CategoryArchiveViewProps {
   categorySlug: string;
   lang: Language;
+  page?: number;
 }
 
 export default async function CategoryArchiveView({
   categorySlug,
   lang,
+  page = 1,
 }: CategoryArchiveViewProps) {
   const categoryId = categoryRouteSlugToId(categorySlug);
   if (!categoryId) {
@@ -122,15 +128,25 @@ export default async function CategoryArchiveView({
   }
 
   const allFacts = await getAllFactsServer();
-  const categoryFacts = allFacts.filter((f) => f.category === categoryId);
+  const categoryFacts = allFacts.filter(
+    (fact) => fact.category === categoryId && !isRetiredDuplicateFact(fact)
+  );
 
   if (categoryFacts.length === 0) {
     notFound();
   }
 
+  const pageCount = Math.max(1, Math.ceil(categoryFacts.length / CATEGORY_PAGE_SIZE));
+  if (page > pageCount) {
+    notFound();
+  }
+  const pageFacts = categoryFacts.slice((page - 1) * CATEGORY_PAGE_SIZE, page * CATEGORY_PAGE_SIZE);
+
   const catMeta = getCategoryMeta(categoryId);
   const canonicalSlug = categoryIdToRouteSlug(categoryId);
-  const canonicalUrl = `https://scrolly.live${buildCategoryHref(canonicalSlug, lang)}`;
+  const canonicalUrl = categoryPageUrl(canonicalSlug, lang, page);
+  const prevUrl = page > 1 ? categoryPagePath(canonicalSlug, lang, page - 1) : null;
+  const nextUrl = page < pageCount ? categoryPagePath(canonicalSlug, lang, page + 1) : null;
   const description = CATEGORY_DESCRIPTIONS[categoryId][lang];
 
   const jsonLd = {
@@ -156,8 +172,8 @@ export default async function CategoryArchiveView({
         '@type': 'ItemList',
         '@id': `${canonicalUrl}#itemlist`,
         name: `${catMeta.label[lang]} (${categoryFacts.length})`,
-        numberOfItems: categoryFacts.length,
-        itemListElement: categoryFacts.map((fact, idx) => ({
+        numberOfItems: pageFacts.length,
+        itemListElement: pageFacts.map((fact, idx) => ({
           '@type': 'ListItem',
           position: idx + 1,
           url: `https://scrolly.live${buildFactHref(getFactPrimarySlug(fact), lang)}`,
@@ -188,6 +204,8 @@ export default async function CategoryArchiveView({
   return (
     <>
       <HtmlLangSync lang={lang} />
+      {prevUrl && <link rel="prev" href={prevUrl} />}
+      {nextUrl && <link rel="next" href={nextUrl} />}
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{
@@ -350,7 +368,7 @@ export default async function CategoryArchiveView({
             </h2>
 
             <div className="grid gap-4 sm:grid-cols-2">
-              {categoryFacts.map((fact) => {
+              {pageFacts.map((fact) => {
                 const factContent = fact[lang];
                 const primarySlug = getFactPrimarySlug(fact);
                 const factHref = buildFactHref(primarySlug, lang);
@@ -440,6 +458,51 @@ export default async function CategoryArchiveView({
                 );
               })}
             </div>
+
+            {pageCount > 1 && (
+              <nav
+                aria-label={lang === 'tr' ? 'Sayfalar' : 'Pages'}
+                className="mt-8 flex flex-wrap items-center justify-center gap-2"
+              >
+                {prevUrl && (
+                  <Link
+                    href={prevUrl}
+                    rel="prev"
+                    className="inline-flex min-h-[44px] items-center rounded-full border border-slate-200 bg-white px-4 text-sm font-bold text-ink dark:border-white/15 dark:bg-[#18181F] dark:text-white"
+                  >
+                    {lang === 'tr' ? 'Önceki' : 'Previous'}
+                  </Link>
+                )}
+                {Array.from({ length: pageCount }, (_, index) => {
+                  const pageNumber = index + 1;
+                  const href = categoryPagePath(canonicalSlug, lang, pageNumber);
+                  const current = pageNumber === page;
+                  return (
+                    <Link
+                      key={href}
+                      href={href}
+                      aria-current={current ? 'page' : undefined}
+                      className={`inline-flex h-11 min-w-11 items-center justify-center rounded-full px-3 text-sm font-extrabold ${
+                        current
+                          ? 'bg-ink text-white dark:bg-amber-300 dark:text-[#111115]'
+                          : 'border border-slate-200 bg-white text-ink dark:border-white/15 dark:bg-[#18181F] dark:text-white'
+                      }`}
+                    >
+                      {pageNumber}
+                    </Link>
+                  );
+                })}
+                {nextUrl && (
+                  <Link
+                    href={nextUrl}
+                    rel="next"
+                    className="inline-flex min-h-[44px] items-center rounded-full border border-slate-200 bg-white px-4 text-sm font-bold text-ink dark:border-white/15 dark:bg-[#18181F] dark:text-white"
+                  >
+                    {lang === 'tr' ? 'Sonraki' : 'Next'}
+                  </Link>
+                )}
+              </nav>
+            )}
           </section>
         </main>
 

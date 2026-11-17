@@ -11,6 +11,7 @@ import {
   enrichFactWithGuessChallenge,
   getFactPrimarySlug,
   interleaveFactsByCategory,
+  isRetiredDuplicateFact,
 } from '@/utils/factsData';
 
 function normalizeFactCategory(rawCategory: unknown): CategoryId {
@@ -89,14 +90,6 @@ if (Array.isArray(generatedFactsRaw)) {
 }
 
 export const LEGACY_SLUG_TO_FACT_ID: Record<string, string> = {
-  'bir-cay-kasigi-notron-yildizi-6-milyar-ton-agirligindadir': 'space-02',
-  'notron-yildizindan-bir-cay-kasigi-madde': 'space-02',
-  'a-teaspoon-of-neutron-star-weighs-6-billion-tons': 'space-02',
-  'teaspoon-of-neutron-star-weight': 'space-02',
-  'uranus-ve-neptunde-gercekten-elmas-yagmuru-yagar': 'space-03',
-  'neptun-ve-uranuste-elmas-yagmuru': 'space-03',
-  'it-literally-rains-diamonds-on-neptune-and-uranus': 'space-03',
-  'diamond-rain-on-neptune-and-uranus': 'space-03',
   'ahtapotlarin-3-kalbi-ve-mavi-kani-vardir': 'nature-01',
   'ahtapotlarin-uc-kalbi-ve-mavi-kani': 'nature-01',
   'octopuses-have-3-hearts-and-blue-blood': 'nature-01',
@@ -129,7 +122,7 @@ const ALL_FACTS: FactCard[] = interleaveFactsByCategory([
   ...SHARDED_BY_CATEGORY.science,
   ...SHARDED_BY_CATEGORY.records,
   ...SHARDED_BY_CATEGORY.statistics,
-]);
+]).filter((fact) => !isRetiredDuplicateFact(fact));
 
 export function getAllFacts(): FactCard[] {
   return ALL_FACTS;
