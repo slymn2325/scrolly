@@ -1,10 +1,11 @@
 'use client';
 
 import React, { useEffect, useMemo, useState } from 'react';
-import { motion } from 'framer-motion';
+import { motion, useReducedMotion } from 'framer-motion';
 import { CheckCircle2, HelpCircle, RotateCw, Sparkles, Target } from 'lucide-react';
 import { FEED_EXPERIENCE_COPY, type Language, translations } from '@/i18n/translations';
 import { formatValueWithUnit } from '@/lib/formatUnit';
+import { motionSpring, pressTransition } from '@/lib/motion';
 import type { GuessChallenge } from '@/types/fact';
 import { vibrateTap } from '@/utils/haptics';
 
@@ -36,7 +37,6 @@ interface GuessWidgetProps {
 function pluralizeUnit(value: number, unit: string | undefined, lang: Language): string {
   if (!unit) return formatValueWithUnit(value, unit, lang);
   const u = unit.trim();
-  // English common singular/plural for heart(s) and generic trailing s
   if (lang === 'en') {
     const lower = u.toLowerCase();
     if (lower === 'heart' || lower === 'hearts') {
@@ -44,6 +44,12 @@ function pluralizeUnit(value: number, unit: string | undefined, lang: Language):
     }
   }
   return formatValueWithUnit(value, unit, lang);
+}
+
+function clampStep(value: number, min: number, max: number, step: number): number {
+  const snapped = Math.round(value / step) * step;
+  const rounded = Number(snapped.toFixed(4));
+  return Math.min(max, Math.max(min, rounded));
 }
 
 export default function GuessWidget({
@@ -58,6 +64,7 @@ export default function GuessWidget({
 }: GuessWidgetProps) {
   const t = translations[lang];
   const copy = FEED_EXPERIENCE_COPY[lang];
+  const reduced = useReducedMotion() === true;
 
   const isSlider = challenge.type === 'slider';
   const minVal = challenge.min ?? 0;
@@ -66,7 +73,7 @@ export default function GuessWidget({
 
   const initialSliderValue = useMemo(() => {
     const mid = (minVal + maxVal) / 2;
-    return Math.round(mid / stepVal) * stepVal;
+    return clampStep(mid, minVal, maxVal, stepVal);
   }, [minVal, maxVal, stepVal]);
 
   const [sliderValue, setSliderValue] = useState<number>(initialSliderValue);
@@ -98,10 +105,9 @@ export default function GuessWidget({
     e.stopPropagation();
   };
 
-  const handleSliderSubmit = (e: React.MouseEvent) => {
-    e.stopPropagation();
+  const lockGuess = () => {
     if (submitted) return;
-    vibrateTap(30);
+    vibrateTap(15);
     onButtonPop();
 
     const target = challenge.correctValue ?? initialSliderValue;
@@ -138,10 +144,15 @@ export default function GuessWidget({
     });
   };
 
+  const handleSliderSubmit = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    lockGuess();
+  };
+
   const handleBinaryPick = (e: React.MouseEvent, idx: number) => {
     e.stopPropagation();
     if (submitted) return;
-    vibrateTap(30);
+    vibrateTap(15);
     onButtonPop();
 
     const correctIdx = challenge.correctOptionIndex ?? 0;
@@ -162,12 +173,17 @@ export default function GuessWidget({
     });
   };
 
+  const nudgeSlider = (direction: 1 | -1, steps: number) => {
+    setSliderValue((current) => clampStep(current + direction * stepVal * steps, minVal, maxVal, stepVal));
+  };
+
   const sliderValueText = pluralizeUnit(sliderValue, challenge.unit, lang);
   const minLabelText = pluralizeUnit(minVal, challenge.unit, lang);
   const maxLabelText = pluralizeUnit(maxVal, challenge.unit, lang);
   const correctDisplay = isSlider
     ? pluralizeUnit(challenge.correctValue ?? initialSliderValue, challenge.unit, lang)
     : challenge.options?.[challenge.correctOptionIndex ?? 0] ?? '';
+  const valueIsLong = sliderValueText.length > 16;
 
   const rawTierMessage =
     tier === 'spotOn'
@@ -181,6 +197,7 @@ export default function GuessWidget({
     .trim();
 
   const binaryOptions = (challenge.options ?? []).slice(0, 2);
+  const accurate = tier === 'spotOn' || tier === 'close';
 
   return (
     <div
@@ -189,57 +206,123 @@ export default function GuessWidget({
       onDoubleClick={stop}
       onPointerDown={stop}
       onTouchStart={stop}
-      className="pointer-events-auto mt-1 rounded-nest bg-[#FFF1E3] p-3 text-ink"
+      className="pointer-events-auto mt-2 rounded-cik-md bg-cik-surface-2 p-3 text-cik-text"
     >
-      <p className="mb-2 flex items-start gap-1.5 text-[13px] font-medium leading-snug text-ink">
-        <HelpCircle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-violet-300" aria-hidden="true" />
-        <span className="min-w-0 flex-1">{challenge.prompt}</span>
+      <style>{`
+        .guess-range {
+          -webkit-appearance: none;
+          appearance: none;
+          width: 100%;
+          height: 44px;
+          margin: 0;
+          background: transparent;
+          cursor: pointer;
+        }
+        .guess-range:focus-visible {
+          outline: 3px solid var(--cik-focus);
+          outline-offset: 2px;
+        }
+        .guess-range::-webkit-slider-runnable-track {
+          height: 4px;
+          border-radius: 999px;
+          background: var(--cik-line);
+        }
+        .guess-range::-webkit-slider-thumb {
+          -webkit-appearance: none;
+          appearance: none;
+          height: 28px;
+          width: 28px;
+          margin-top: -12px;
+          border-radius: 999px;
+          border: 2px solid var(--cik-bg-elevated);
+          background: var(--cik-cta);
+          box-shadow: var(--cik-e1);
+        }
+        .guess-range::-moz-range-track {
+          height: 4px;
+          border-radius: 999px;
+          background: var(--cik-line);
+          border: 0;
+        }
+        .guess-range::-moz-range-thumb {
+          height: 28px;
+          width: 28px;
+          border-radius: 999px;
+          border: 2px solid var(--cik-bg-elevated);
+          background: var(--cik-cta);
+          box-shadow: var(--cik-e1);
+        }
+      `}</style>
+      <p className="cik-callout mb-2 flex items-start gap-2 text-cik-text">
+        <HelpCircle className="mt-0.5 h-4 w-4 shrink-0 text-cik-text-2" aria-hidden="true" />
+        <span className="line-clamp-2 min-w-0 flex-1">{challenge.prompt}</span>
       </p>
 
       {!submitted ? (
         isSlider ? (
-          <div className="flex flex-col gap-1.5">
-            <div className="flex w-full flex-col">
-              <div className="flex min-h-[36px] items-center py-0.5">
-                <input
-                  type="range"
-                  min={minVal}
-                  max={maxVal}
-                  step={stepVal}
-                  value={sliderValue}
-                  aria-label={copy.guessSliderAriaLabel}
-                  aria-valuetext={sliderValueText}
-                  data-testid="guess-slider-input"
-                  onClick={stop}
-                  onDoubleClick={stop}
-                  onPointerDown={stop}
-                  onTouchStart={stop}
-                  onChange={(e) => {
-                    e.stopPropagation();
-                    setSliderValue(Number(e.target.value));
-                  }}
-                  className="h-2 w-full cursor-pointer rounded-full accent-[#6B4BFF]"
-                />
-              </div>
-              <div className="mt-1 flex items-end justify-between gap-2 pb-2 text-[11px] font-semibold text-slate-900 dark:text-slate-100">
-                <span className="whitespace-nowrap">{minLabelText}</span>
-                <span
-                  data-testid="guess-live-value"
-                  className="font-display text-[28px] font-semibold tabular-nums text-slate-900 dark:text-slate-100"
-                >
-                  {sliderValueText}
-                </span>
-                <span className="whitespace-nowrap text-right">{maxLabelText}</span>
-              </div>
+          <div className="flex flex-col gap-2">
+            <p
+              data-testid="guess-live-value"
+              title={sliderValueText}
+              className={`cik-tabular mx-auto max-w-full truncate text-center text-cik-text ${
+                valueIsLong ? 'cik-title-3' : 'cik-title-2'
+              }`}
+            >
+              {sliderValueText}
+            </p>
+            <input
+              type="range"
+              min={minVal}
+              max={maxVal}
+              step={stepVal}
+              value={sliderValue}
+              aria-label={copy.guessSliderAriaLabel}
+              aria-valuemin={minVal}
+              aria-valuemax={maxVal}
+              aria-valuenow={sliderValue}
+              aria-valuetext={sliderValueText}
+              data-testid="guess-slider-input"
+              onClick={stop}
+              onDoubleClick={stop}
+              onPointerDown={stop}
+              onTouchStart={stop}
+              onKeyDown={(e) => {
+                if (
+                  e.key !== 'ArrowLeft' &&
+                  e.key !== 'ArrowRight' &&
+                  e.key !== 'ArrowUp' &&
+                  e.key !== 'ArrowDown'
+                ) {
+                  return;
+                }
+                e.preventDefault();
+                e.stopPropagation();
+                const direction = e.key === 'ArrowRight' || e.key === 'ArrowUp' ? 1 : -1;
+                nudgeSlider(direction, e.shiftKey ? 10 : 1);
+              }}
+              onChange={(e) => {
+                e.stopPropagation();
+                setSliderValue(clampStep(Number(e.target.value), minVal, maxVal, stepVal));
+              }}
+              className="guess-range"
+            />
+            <div className="flex items-start justify-between gap-3">
+              <span data-testid="guess-min" className="cik-footnote min-w-0 truncate text-cik-text-2">
+                {minLabelText}
+              </span>
+              <span data-testid="guess-max" className="cik-footnote min-w-0 truncate text-right text-cik-text-2">
+                {maxLabelText}
+              </span>
             </div>
 
             <motion.button
               type="button"
-              whileTap={{ scale: 0.96 }}
+              whileTap={reduced ? undefined : { scale: 0.96 }}
+              transition={pressTransition(reduced)}
               data-testid="guess-submit-btn"
               onClick={handleSliderSubmit}
               onDoubleClick={stop}
-              className="mx-auto mt-2 flex min-h-[44px] min-w-[160px] items-center justify-center rounded-full bg-ink px-5 text-sm font-semibold text-cream"
+              className="cik-headline mx-auto mt-1 flex min-h-11 min-w-[160px] items-center justify-center rounded-pill bg-cik-cta px-5 text-cik-on-cta shadow-sticker"
             >
               {lang === 'tr' ? 'Tahmini kilitle' : 'Lock guess'}
             </motion.button>
@@ -250,11 +333,12 @@ export default function GuessWidget({
               <motion.button
                 key={`${factId}-opt-${idx}`}
                 type="button"
-                whileTap={{ scale: 0.96 }}
+                whileTap={reduced ? undefined : { scale: 0.96 }}
+                transition={pressTransition(reduced)}
                 data-testid={`guess-binary-${idx}`}
                 onClick={(e) => handleBinaryPick(e, idx)}
                 onDoubleClick={stop}
-                className="flex min-h-[42px] h-auto items-center justify-center rounded-xl border border-slate-200 bg-white px-3 py-2 text-center text-xs font-extrabold leading-snug text-slate-900 whitespace-normal break-words transition hover:bg-slate-50"
+                className="cik-headline flex min-h-11 items-center justify-center rounded-cik-md border border-cik-line bg-cik-bg-elevated px-3 py-2 text-center text-cik-text"
               >
                 <span>{opt}</span>
               </motion.button>
@@ -263,41 +347,47 @@ export default function GuessWidget({
         )
       ) : (
         <motion.div
-          initial={{ opacity: 0, scale: 0.95, y: 6 }}
-          animate={{ opacity: 1, scale: 1, y: 0 }}
-          transition={{ type: 'spring', stiffness: 360, damping: 22 }}
+          initial={reduced ? { opacity: 0 } : { opacity: 0, scale: 0.96 }}
+          animate={reduced ? { opacity: 1 } : { opacity: 1, scale: 1 }}
+          transition={reduced ? { duration: 0.15 } : motionSpring.reveal}
           data-testid="guess-result-banner"
-          className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-emerald-700/30 bg-emerald-100 px-3 py-2 text-emerald-950"
+          role="status"
+          aria-live="polite"
+          className={`flex flex-wrap items-center justify-between gap-2 rounded-cik-md px-3 py-2 ${
+            accurate ? 'bg-cik-mint text-cik-mint-text' : 'bg-cik-rose text-cik-rose-text'
+          }`}
         >
           <div className="min-w-0 flex-1">
-            <div className="flex flex-wrap items-center gap-1.5 text-[11px] font-black text-emerald-950">
+            <div className="cik-footnote flex flex-wrap items-center gap-2">
               {tier === 'spotOn' ? (
-                <Target className="h-3.5 w-3.5 shrink-0" />
+                <Target className="h-4 w-4 shrink-0" aria-hidden="true" />
               ) : (
-                <CheckCircle2 className="h-3.5 w-3.5 shrink-0" />
+                <CheckCircle2 className="h-4 w-4 shrink-0" aria-hidden="true" />
               )}
-              <span className="whitespace-normal break-words leading-snug">{tierMessage}</span>
-              <span className="inline-flex shrink-0 items-center gap-0.5 rounded-full bg-amber-200 px-1.5 py-0.5 text-[10px] font-black text-slate-900">
-                <Sparkles className="h-2.5 w-2.5" />+{earnedXp} XP{isSlider ? ` · %${accuracyPct}` : ''}
+              <span className="min-w-0 leading-snug">{tierMessage}</span>
+              <span className="cik-caption-2 cik-tabular inline-flex shrink-0 items-center gap-1 rounded-pill bg-cik-butter px-2 py-1 text-cik-butter-text">
+                <Sparkles className="h-3 w-3" aria-hidden="true" />+{earnedXp} XP
+                {isSlider ? ` · %${accuracyPct}` : ''}
               </span>
             </div>
-            <p className="mt-1 text-[11px] font-bold text-slate-900 whitespace-normal break-words leading-snug">
-              {t.guessReveal}: <span className="font-black text-slate-900">{correctDisplay}</span>
+            <p className="cik-footnote mt-1">
+              {t.guessReveal}: <span className="font-extrabold">{correctDisplay}</span>
             </p>
           </div>
 
           <motion.button
             type="button"
-            whileTap={{ scale: 0.94 }}
+            whileTap={reduced ? undefined : { scale: 0.96 }}
+            transition={pressTransition(reduced)}
             data-testid="guess-flip-cta-btn"
             onClick={(e) => {
               e.stopPropagation();
               onRequestFlip();
             }}
             onDoubleClick={stop}
-            className="inline-flex min-h-[38px] shrink-0 items-center gap-1 rounded-full bg-white px-3 py-1.5 text-[10.5px] font-black text-[#09090B]"
+            className="cik-footnote inline-flex min-h-11 shrink-0 items-center gap-2 rounded-pill bg-cik-bg-elevated px-3 text-cik-text"
           >
-            <RotateCw className="h-3 w-3 shrink-0" />
+            <RotateCw className="h-4 w-4 shrink-0" aria-hidden="true" />
             <span>{t.guessFlipCta}</span>
           </motion.button>
         </motion.div>

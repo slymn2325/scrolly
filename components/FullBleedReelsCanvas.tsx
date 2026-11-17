@@ -37,7 +37,6 @@ export default function FullBleedReelsCanvas({
   category,
   accentColor,
   isActive = true,
-  lang = 'tr',
   onInteract,
   topicText = '',
   sketchType,
@@ -47,7 +46,6 @@ export default function FullBleedReelsCanvas({
   const wrapRef = useRef<HTMLDivElement>(null);
   const reduceMotion = useReducedMotion();
   const [boostUntil, setBoostUntil] = useState(0);
-  const [showHint, setShowHint] = useState(true);
   const particlesRef = useRef<Particle[]>([]);
   const ripplesRef = useRef<Array<{ x: number; y: number; t: number }>>([]);
   const tRef = useRef(0);
@@ -82,12 +80,6 @@ export default function FullBleedReelsCanvas({
   }, []);
 
   useEffect(() => {
-    if (!showHint) return;
-    const tid = window.setTimeout(() => setShowHint(false), 4200);
-    return () => window.clearTimeout(tid);
-  }, [showHint]);
-
-  useEffect(() => {
     const canvas = canvasRef.current;
     const wrap = wrapRef.current;
     if (!canvas || !wrap) return;
@@ -116,9 +108,12 @@ export default function FullBleedReelsCanvas({
 
     const drawBackground = (w: number, h: number) => {
       const g = ctx.createLinearGradient(0, 0, w, h);
-      g.addColorStop(0, '#050508');
+      const paint = getComputedStyle(document.documentElement);
+      const wash = paint.getPropertyValue('--cik-bg').trim();
+      const deep = paint.getPropertyValue('--cik-bg-elevated').trim();
+      g.addColorStop(0, wash || 'transparent');
       g.addColorStop(0.45, `rgba(${rgb.r},${rgb.g},${rgb.b},0.28)`);
-      g.addColorStop(1, '#09090B');
+      g.addColorStop(1, deep || 'transparent');
       ctx.fillStyle = g;
       ctx.fillRect(0, 0, w, h);
       const vg = ctx.createRadialGradient(w * 0.5, h * 0.35, h * 0.1, w * 0.5, h * 0.5, h * 0.85);
@@ -916,7 +911,6 @@ export default function FullBleedReelsCanvas({
     if (!rect) return;
     ripplesRef.current.push({ x: e.clientX - rect.left, y: e.clientY - rect.top, t: performance.now() });
     setBoostUntil(performance.now() + 1400);
-    setShowHint(false);
     onInteract?.();
   };
 
@@ -930,11 +924,6 @@ export default function FullBleedReelsCanvas({
       className="pointer-events-auto absolute inset-0 z-0 overflow-hidden"
     >
       <canvas ref={canvasRef} className="absolute inset-0 h-full w-full" aria-hidden="true" />
-      {showHint && isActive && !reduceMotion && (
-        <div className="pointer-events-none absolute right-3 top-[calc(env(safe-area-inset-top,12px)+104px)] z-[5] rounded-full border border-white/30 bg-[#0A0A0E]/85 hidden px-3 py-1 text-[11px] font-extrabold tracking-tight text-white shadow-[0_4px_16px_rgba(0,0,0,0.45)] backdrop-blur-md">
-          {lang === 'tr' ? 'Dokun & Hızlandır' : 'Tap & Boost'}
-        </div>
-      )}
     </div>
   );
 }
