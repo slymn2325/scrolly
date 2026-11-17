@@ -1,4 +1,9 @@
 import { NextResponse } from 'next/server';
+import {
+  ALLOWED_MEDIA_HOSTS,
+  isBadMediaUrlRequest,
+  safeMediaParts,
+} from '@/lib/mediaProxyPolicy';
 import { checkRateLimit, extractClientIp } from '@/lib/rateLimit';
 
 export const dynamic = 'force-dynamic';
@@ -19,19 +24,29 @@ const ALLOWED_MEDIA_MIME_PREFIXES = [
   'video/mp4',
 ] as const;
 
-function isAllowedGiphyProxyUrl(parsed: URL): boolean {
-  if (parsed.protocol !== 'https:') return false;
-  if (parsed.port !== '') return false;
-  if (parsed.username || parsed.password) return false;
+function rebuildSafeMediaUrl(parsed: URL): URL | null {
+  const parts = safeMediaParts(parsed);
+  if (!parts) return null;
+  if (!ALLOWED_MEDIA_HOSTS.has(parsed.hostname.toLowerCase())) return null;
+  if (!ALLOWED_MEDIA_HOSTS.has(parts.verifiedHost)) return null;
 
-  const host = parsed.hostname.toLowerCase();
-  if (!host || host.includes('..') || !/^[a-z0-9.-]+$/.test(host)) {
-    return false;
+  const pathAndQuery = `${parts.pathname}${parts.search}`;
+  if (!pathAndQuery.startsWith('/') || pathAndQuery.startsWith('//') || pathAndQuery.includes('\\')) {
+    return null;
   }
-  return (
-    host === 'giphy.com' ||
-    (host.endsWith('.giphy.com') && host.length > '.giphy.com'.length)
-  );
+
+  const verifiedHost = parts.verifiedHost;
+  const safeUrl = new URL(pathAndQuery, `https://${verifiedHost}`);
+  if (
+    safeUrl.protocol !== 'https:' ||
+    safeUrl.hostname !== verifiedHost ||
+    safeUrl.username !== '' ||
+    safeUrl.password !== '' ||
+    safeUrl.port !== ''
+  ) {
+    return null;
+  }
+  return safeUrl;
 }
 
 function resolveExtensionFromMime(mimeType: string): string {
@@ -116,7 +131,12 @@ async function fetchWithSafeRedirects(
   let currentUrl = initialUrl;
 
   for (let hop = 0; hop <= MAX_REDIRECT_HOPS; hop += 1) {
-    const res = await fetch(currentUrl.toString(), {
+    const safeUrl = rebuildSafeMediaUrl(currentUrl);
+    if (!safeUrl) {
+      return { ok: false, status: 403, error: 'forbidden_url' };
+    }
+
+    const res = await fetch(safeUrl.toString(), {
       method: 'GET',
       redirect: 'manual',
       signal: AbortSignal.timeout(UPSTREAM_TIMEOUT_MS),
@@ -134,12 +154,12 @@ async function fetchWithSafeRedirects(
 
       let redirectedUrl: URL;
       try {
-        redirectedUrl = new URL(location, currentUrl);
+        redirectedUrl = new URL(location, safeUrl);
       } catch {
         return { ok: false, status: 403, error: 'forbidden_redirect_target' };
       }
 
-      if (!isAllowedGiphyProxyUrl(redirectedUrl)) {
+      if (!rebuildSafeMediaUrl(redirectedUrl)) {
         return { ok: false, status: 403, error: 'forbidden_redirect_target' };
       }
 
@@ -150,18 +170,17 @@ async function fetchWithSafeRedirects(
     if (res.url) {
       try {
         const resolvedUrl = new URL(res.url);
-        if (!isAllowedGiphyProxyUrl(resolvedUrl)) {
+        if (!rebuildSafeMediaUrl(resolvedUrl)) {
           await res.body?.cancel().catch(() => {});
           return { ok: false, status: 403, error: 'forbidden_redirect_target' };
         }
-        return { ok: true, response: res, finalUrl: resolvedUrl };
       } catch {
         await res.body?.cancel().catch(() => {});
         return { ok: false, status: 403, error: 'forbidden_redirect_target' };
       }
     }
 
-    return { ok: true, response: res, finalUrl: currentUrl };
+    return { ok: true, response: res, finalUrl: safeUrl };
   }
 
   return { ok: false, status: 502, error: 'too_many_redirects' };
@@ -208,7 +227,14 @@ export async function GET(request: Request) {
     );
   }
 
-  if (!isAllowedGiphyProxyUrl(targetUrl)) {
+  if (isBadMediaUrlRequest(targetUrl)) {
+    return NextResponse.json(
+      { ok: false, error: 'invalid_url' },
+      { status: 400, headers: NO_STORE_HEADERS }
+    );
+  }
+
+  if (!ALLOWED_MEDIA_HOSTS.has(targetUrl.hostname.toLowerCase()) || !rebuildSafeMediaUrl(targetUrl)) {
     return NextResponse.json(
       { ok: false, error: 'forbidden_url' },
       { status: 403, headers: NO_STORE_HEADERS }
