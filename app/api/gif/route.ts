@@ -6,7 +6,6 @@ import {
   updateVocabularyGifUrlDb,
 } from '@/lib/dbActions';
 import {
-  isRenderableGifImageUrl,
   sanitizeReactionQuery,
   sanitizeVisualQuery,
   searchReactionGifs,
@@ -76,7 +75,7 @@ export async function GET(request: Request) {
   if (hasVocabLookup) {
     const dbVocabUrl = await getVocabularyGifUrlDb(vocabId || word, word);
     if (dbVocabUrl) {
-      const renderableUrl = isRenderableGifImageUrl(dbVocabUrl) ? dbVocabUrl : null;
+      const renderableUrl = dbVocabUrl.startsWith('https://') ? dbVocabUrl : null;
       return NextResponse.json(
         {
           ok: true,
@@ -102,7 +101,7 @@ export async function GET(request: Request) {
   if (slug) {
     const dbCachedUrl = await getFactGifUrlDb(slug);
     if (dbCachedUrl) {
-      const renderableUrl = isRenderableGifImageUrl(dbCachedUrl) ? dbCachedUrl : null;
+      const renderableUrl = dbCachedUrl.startsWith('https://') ? dbCachedUrl : null;
       return NextResponse.json(
         {
           ok: true,
@@ -159,12 +158,18 @@ export async function GET(request: Request) {
     category,
     expectedTerms,
   });
+  const mediaFields = {
+    mediaType: result.mediaType || (result.gifUrl && /\.mp4(\?|$)/i.test(result.gifUrl) ? 'video' : result.gifUrl ? 'gif' : null),
+    mediaSource: result.mediaSource || (result.provider === 'giphy' ? 'giphy' : null),
+    mediaCredit: result.mediaCredit || (result.provider === 'giphy' ? 'GIPHY' : null),
+    posterUrl: result.posterUrl || null,
+  };
+
   if (result.gifUrl) {
     if (hasVocabLookup) {
-      await updateVocabularyGifUrlDb(vocabId || word, result.gifUrl, effectiveQuery, word);
+      await updateVocabularyGifUrlDb(vocabId || word, result.gifUrl, effectiveQuery, word, mediaFields);
     } else if (slug) {
-      // Persist gif_url + gif_query onto Postgres facts so future requests never hit GIF APIs
-      await updateFactGifUrlDb(slug, result.gifUrl, effectiveQuery);
+      await updateFactGifUrlDb(slug, result.gifUrl, effectiveQuery, mediaFields);
     }
   }
 
@@ -173,6 +178,10 @@ export async function GET(request: Request) {
       ok: true,
       query: effectiveQuery,
       gifUrl: result.gifUrl,
+      mediaType: mediaFields.mediaType,
+      mediaSource: mediaFields.mediaSource,
+      mediaCredit: mediaFields.mediaCredit,
+      posterUrl: mediaFields.posterUrl,
       provider: result.provider,
       cached: result.cached,
       quotaExhausted: Boolean(result.quotaExhausted),

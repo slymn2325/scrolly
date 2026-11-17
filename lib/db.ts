@@ -31,6 +31,10 @@ export interface DbFactRow {
   visual_query?: string | null;
   gif_url?: string | null;
   gif_query?: string | null;
+  media_type?: string | null;
+  media_source?: string | null;
+  media_credit?: string | null;
+  poster_url?: string | null;
   quiz_tr?: FactQuizContent | null;
   quiz_en?: FactQuizContent | null;
   source_name: string | null;
@@ -438,6 +442,10 @@ export async function ensureSchema(): Promise<void> {
       );
       await pool.query(`ALTER TABLE facts ADD COLUMN IF NOT EXISTS quiz_tr JSONB;`);
       await pool.query(`ALTER TABLE facts ADD COLUMN IF NOT EXISTS quiz_en JSONB;`);
+      await pool.query(`ALTER TABLE facts ADD COLUMN IF NOT EXISTS media_type TEXT DEFAULT 'gif';`);
+      await pool.query(`ALTER TABLE facts ADD COLUMN IF NOT EXISTS media_source TEXT;`);
+      await pool.query(`ALTER TABLE facts ADD COLUMN IF NOT EXISTS media_credit TEXT;`);
+      await pool.query(`ALTER TABLE facts ADD COLUMN IF NOT EXISTS poster_url TEXT;`);
 
       await pool.query(`
         CREATE TABLE IF NOT EXISTS fact_events (
@@ -731,6 +739,10 @@ export async function ensureSchema(): Promise<void> {
       await pool.query(`ALTER TABLE vocabulary_cards ADD COLUMN IF NOT EXISTS synonyms JSONB DEFAULT '[]'::jsonb;`);
       await pool.query(`ALTER TABLE vocabulary_cards ADD COLUMN IF NOT EXISTS gif_url TEXT;`);
       await pool.query(`ALTER TABLE vocabulary_cards ADD COLUMN IF NOT EXISTS gif_query TEXT;`);
+      await pool.query(`ALTER TABLE vocabulary_cards ADD COLUMN IF NOT EXISTS media_type TEXT DEFAULT 'gif';`);
+      await pool.query(`ALTER TABLE vocabulary_cards ADD COLUMN IF NOT EXISTS media_source TEXT;`);
+      await pool.query(`ALTER TABLE vocabulary_cards ADD COLUMN IF NOT EXISTS media_credit TEXT;`);
+      await pool.query(`ALTER TABLE vocabulary_cards ADD COLUMN IF NOT EXISTS poster_url TEXT;`);
 
       await pool.query(`
         CREATE INDEX IF NOT EXISTS idx_vocabulary_cards_created
@@ -1228,6 +1240,10 @@ export function mapDbRowToFactCard(row: DbFactRow, preloadedSeedFacts?: FactCard
       visualQuery: row.visual_query?.trim() || staticMatch.visualQuery,
       gifUrl: row.gif_url?.trim() || staticMatch.gifUrl,
       gifQuery: row.gif_query?.trim() || staticMatch.gifQuery,
+      mediaType: row.media_type?.trim() || staticMatch.mediaType,
+      mediaSource: row.media_source?.trim() || staticMatch.mediaSource,
+      mediaCredit: row.media_credit?.trim() || staticMatch.mediaCredit,
+      posterUrl: row.poster_url?.trim() || staticMatch.posterUrl,
       likesCount,
       createdAt,
       sourceName: safeSourceName || staticMatch.sourceName,
@@ -1303,6 +1319,10 @@ export function mapDbRowToFactCard(row: DbFactRow, preloadedSeedFacts?: FactCard
     visualQuery: deriveFallbackVisualQuery(row),
     gifUrl: row.gif_url?.trim() || undefined,
     gifQuery: row.gif_query?.trim() || undefined,
+    mediaType: row.media_type?.trim() || undefined,
+    mediaSource: row.media_source?.trim() || undefined,
+    mediaCredit: row.media_credit?.trim() || undefined,
+    posterUrl: row.poster_url?.trim() || undefined,
     likesCount,
     createdAt,
     readingTimeSec: 20,
@@ -1480,6 +1500,10 @@ interface DbVocabularyRow {
   quiz_options: unknown;
   correct_index: number | null;
   gif_url: string | null;
+  media_type?: string | null;
+  media_source?: string | null;
+  media_credit?: string | null;
+  poster_url?: string | null;
   gif_query: string | null;
   created_at: Date | string | null;
 }
@@ -1565,7 +1589,6 @@ function sanitizeVocabGifUrl(url?: string | null): string | undefined {
   if (!url) return undefined;
   const clean = url.trim();
   if (!clean.startsWith('https://')) return undefined;
-  if (/\.(mp4|webm|mov|m4v)(?:$|[?#])/i.test(clean)) return undefined;
   return clean;
 }
 
@@ -1670,6 +1693,10 @@ export function mapDbVocabularyRow(row: DbVocabularyRow): VocabularyCard | null 
     correctIndex,
     ...(gifUrl ? { gifUrl } : {}),
     ...(gifQuery ? { gifQuery } : {}),
+    ...(row.media_type?.trim() ? { mediaType: row.media_type.trim() } : {}),
+    ...(row.media_source?.trim() ? { mediaSource: row.media_source.trim() } : {}),
+    ...(row.media_credit?.trim() ? { mediaCredit: row.media_credit.trim() } : {}),
+    ...(row.poster_url?.trim() ? { posterUrl: row.poster_url.trim() } : {}),
   };
 }
 
@@ -1731,7 +1758,8 @@ export async function fetchVocabularyWithSourceServer(): Promise<ServerVocabular
     const res = await pool.query<DbVocabularyRow>(
       `SELECT id, word, phonetic, part_of_speech, cefr_level, synonyms,
               meaning_tr, definition_en, example_en, example_tr,
-              quiz_options, correct_index, gif_url, gif_query, created_at
+              quiz_options, correct_index, gif_url, gif_query,
+              media_type, media_source, media_credit, poster_url, created_at
        FROM vocabulary_cards
        ORDER BY created_at DESC, word ASC
        LIMIT 1000`

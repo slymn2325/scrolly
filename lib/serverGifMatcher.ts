@@ -9,10 +9,10 @@ import {
 } from '@/lib/dbActions';
 import {
   hasConfiguredGifProviderKeys,
-  isRenderableGifImageUrl,
   sanitizeVisualQuery,
   searchTopicGif,
 } from '@/lib/gifService';
+import { resolveCardMedia } from '@/lib/resolveCardMedia.mjs';
 import type { CategoryId, FactCard } from '@/types/fact';
 
 /**
@@ -593,7 +593,7 @@ export async function matchAndPersistFactGifServer(
   const existingInlineUrl = String(input.gifUrl || '').trim();
   const gifQuery = buildSpecificGifQuery(input) || '';
 
-  if (existingInlineUrl && isRenderableGifImageUrl(existingInlineUrl)) {
+  if (existingInlineUrl.startsWith('https://')) {
     return {
       slug,
       gifUrl: existingInlineUrl,
@@ -618,6 +618,28 @@ export async function matchAndPersistFactGifServer(
         skippedReason: 'already_cached',
       };
     }
+  }
+
+  const directMedia = await resolveCardMedia({
+    query: gifQuery,
+    category: input.category ? String(input.category) : undefined,
+    slug,
+    isVocab: false,
+  });
+  if (directMedia.url && slug) {
+    await updateFactGifUrlDb(slug, directMedia.url, gifQuery, {
+      mediaType: directMedia.mediaType,
+      mediaSource: directMedia.mediaSource,
+      mediaCredit: directMedia.mediaCredit,
+      posterUrl: directMedia.posterUrl,
+    });
+    return {
+      slug,
+      gifUrl: directMedia.url,
+      gifQuery,
+      provider: directMedia.mediaSource === 'giphy' ? 'giphy' : 'none',
+      persisted: hasDatabaseUrl(),
+    };
   }
 
   if (!hasConfiguredGifProviderKeys()) {
@@ -759,7 +781,7 @@ export async function matchAndPersistVocabularyGifServer(
     gifQuery: input.gifQuery || undefined,
   });
 
-  if (existingInlineUrl && isRenderableGifImageUrl(existingInlineUrl)) {
+  if (existingInlineUrl.startsWith('https://')) {
     return {
       slug: lookupKey,
       gifUrl: existingInlineUrl,
@@ -784,6 +806,28 @@ export async function matchAndPersistVocabularyGifServer(
         skippedReason: 'already_cached',
       };
     }
+  }
+
+  const directMedia = await resolveCardMedia({
+    query: gifQuery,
+    category: 'vocabulary',
+    slug: lookupKey,
+    isVocab: true,
+  });
+  if (directMedia.url && lookupKey) {
+    await updateVocabularyGifUrlDb(lookupKey, directMedia.url, gifQuery, cleanWord, {
+      mediaType: directMedia.mediaType,
+      mediaSource: directMedia.mediaSource,
+      mediaCredit: directMedia.mediaCredit,
+      posterUrl: directMedia.posterUrl,
+    });
+    return {
+      slug: lookupKey,
+      gifUrl: directMedia.url,
+      gifQuery,
+      provider: directMedia.mediaSource === 'giphy' ? 'giphy' : 'none',
+      persisted: hasDatabaseUrl(),
+    };
   }
 
   if (!hasConfiguredGifProviderKeys()) {

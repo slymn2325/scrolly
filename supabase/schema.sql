@@ -33,6 +33,10 @@ create table if not exists public.facts (
 alter table public.facts add column if not exists visual_query text;
 alter table public.facts add column if not exists gif_url text;
 alter table public.facts add column if not exists gif_query text;
+alter table public.facts add column if not exists media_type text default 'gif';
+alter table public.facts add column if not exists media_source text;
+alter table public.facts add column if not exists media_credit text;
+alter table public.facts add column if not exists poster_url text;
 alter table public.facts add column if not exists quiz_tr jsonb;
 alter table public.facts add column if not exists quiz_en jsonb;
 
@@ -157,6 +161,10 @@ alter table public.vocabulary_cards add column if not exists cefr_level text def
 alter table public.vocabulary_cards add column if not exists synonyms jsonb default '[]'::jsonb;
 alter table public.vocabulary_cards add column if not exists gif_url text;
 alter table public.vocabulary_cards add column if not exists gif_query text;
+alter table public.vocabulary_cards add column if not exists media_type text default 'gif';
+alter table public.vocabulary_cards add column if not exists media_source text;
+alter table public.vocabulary_cards add column if not exists media_credit text;
+alter table public.vocabulary_cards add column if not exists poster_url text;
 
 create index if not exists idx_vocabulary_cards_created on public.vocabulary_cards (created_at desc);
 create index if not exists idx_vocabulary_cards_missing_gif

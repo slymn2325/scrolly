@@ -11,6 +11,7 @@
  *
  * Env (required in production):
  *   DATABASE_URL, GEMINI_API_KEY (or AI_API_KEY), GIPHY_API_KEY
+ *   Heroku also needs PEXELS_API_KEY and PIXABAY_API_KEY for HD video.
  *
  * Optional:
  *   TARGET_CARDS_PER_RUN (default 6 for this entry), TENOR_API_KEY,
@@ -61,7 +62,7 @@ async function run() {
   console.log(
     `[generate-facts] env check: DATABASE_URL=${process.env.DATABASE_URL ? 'set' : 'MISSING'} GEMINI/AI key=${
       geminiKeySet ? 'set' : 'MISSING'
-    } GIPHY_API_KEY=${process.env.GIPHY_API_KEY ? 'set' : 'MISSING'}`
+    } GIPHY_API_KEY=${process.env.GIPHY_API_KEY ? 'set' : 'MISSING'} PEXELS_API_KEY=${process.env.PEXELS_API_KEY ? 'set' : 'MISSING'} PIXABAY_API_KEY=${process.env.PIXABAY_API_KEY ? 'set' : 'MISSING'} — Heroku needs PEXELS_API_KEY and PIXABAY_API_KEY for HD video.`
   );
   if (!dryRun && !geminiKeySet) {
     console.error(

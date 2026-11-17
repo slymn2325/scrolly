@@ -51,6 +51,10 @@ export interface FactCard {
   visualQuery?: string;
   gifUrl?: string;
   gifQuery?: string;
+  mediaType?: string;
+  mediaSource?: string;
+  mediaCredit?: string;
+  posterUrl?: string;
   likesCount?: number;
   createdAt?: string;
   readingTimeSec?: number;

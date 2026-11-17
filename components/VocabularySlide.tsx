@@ -3,6 +3,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { BookMarked, Check, ChevronDown, ChevronUp, Globe, Sparkles, Volume2 } from 'lucide-react';
+import CardMediaStage from '@/components/CardMediaStage';
 import FullBleedReelsCanvas from '@/components/FullBleedReelsCanvas';
 import PoweredByGiphyBadge from '@/components/PoweredByGiphyBadge';
 import { FEED_EXPERIENCE_COPY, type Language } from '@/i18n/translations';
@@ -170,7 +171,7 @@ export default function VocabularySlide({
   const initialGifUrl = card.gifUrl || CLIENT_VOCAB_GIF_CACHE.get(card.id) || null;
   const [resolvedGifUrl, setResolvedGifUrl] = useState<string | null>(initialGifUrl);
   const [gifFailed, setGifFailed] = useState(false);
-  const [gifLoaded, setGifLoaded] = useState(() => isImageCachedInBrowser(initialGifUrl));
+  const [, setGifLoaded] = useState(() => isImageCachedInBrowser(initialGifUrl));
   const gifImgRef = useRef<HTMLImageElement>(null);
   const bodyScrollRef = useRef<HTMLDivElement>(null);
   const revealRef = useRef<HTMLDivElement>(null);
@@ -238,6 +239,8 @@ export default function VocabularySlide({
       if (url) {
         setResolvedGifUrl(url);
         if (isImageCachedInBrowser(url)) setGifLoaded(true);
+      } else {
+        setGifFailed(true);
       }
     });
     return () => {
@@ -366,21 +369,17 @@ export default function VocabularySlide({
           tag="vocabulary"
         />
 
-        {resolvedGifUrl && !gifFailed && (
-          <img
-            ref={gifImgRef}
-            src={resolvedGifUrl}
-            alt={card.word}
-            loading="eager"
-            decoding="sync"
-            data-testid="vocab-topic-gif"
-            onLoad={() => setGifLoaded(true)}
-            onError={() => setGifFailed(true)}
-            className={`pointer-events-none absolute inset-0 z-[2] h-full w-full object-cover brightness-105 contrast-105 transition-opacity duration-300 ${
-              gifLoaded ? 'opacity-95' : 'opacity-0'
-            }`}
-          />
-        )}
+        <CardMediaStage
+          url={gifFailed ? null : resolvedGifUrl}
+          posterUrl={card.posterUrl}
+          mediaType={card.mediaType}
+          mediaSource={card.mediaSource}
+          isActive={isActive}
+          title={card.word}
+          failed={gifFailed}
+          empty={!resolvedGifUrl && gifFailed}
+          onFailed={() => setGifFailed(true)}
+        />
 
         {/* Top HUD readability gradient & bottom blend into dark card body */}
         <div

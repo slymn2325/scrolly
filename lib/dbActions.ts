@@ -328,13 +328,17 @@ export async function getFactGifUrlDb(slugOrId: string): Promise<string | null> 
 export async function updateFactGifUrlDb(
   slugOrId: string,
   gifUrl: string,
-  gifQuery?: string
+  gifQuery?: string,
+  media?: {
+    mediaType?: string | null;
+    mediaSource?: string | null;
+    mediaCredit?: string | null;
+    posterUrl?: string | null;
+  }
 ): Promise<void> {
   if (!hasDatabaseUrl() || !slugOrId || !gifUrl) return;
-  const cleanUrl = gifUrl.trim().slice(0, 500);
-  if (!cleanUrl.startsWith('https://') || /\.(mp4|webm|mov|m4v)(?:$|[?#])/i.test(cleanUrl)) {
-    return;
-  }
+  const cleanUrl = gifUrl.trim().slice(0, 800);
+  if (!cleanUrl.startsWith('https://')) return;
   const cleanQuery = gifQuery ? gifQuery.trim().slice(0, 120) : '';
   try {
     await ensureSchema();
@@ -342,10 +346,22 @@ export async function updateFactGifUrlDb(
     await pool.query(
       `UPDATE facts
        SET gif_url = $2,
-           gif_query = COALESCE(NULLIF($3, ''), gif_query)
+           gif_query = COALESCE(NULLIF($3, ''), gif_query),
+           media_type = COALESCE(NULLIF($4, ''), media_type),
+           media_source = COALESCE(NULLIF($5, ''), media_source),
+           media_credit = COALESCE(NULLIF($6, ''), media_credit),
+           poster_url = COALESCE(NULLIF($7, ''), poster_url)
        WHERE (slug = $1 OR sketch_type = $1)
          AND (gif_url IS NULL OR TRIM(gif_url) = '')`,
-      [slugOrId.trim().slice(0, 160), cleanUrl, cleanQuery]
+      [
+        slugOrId.trim().slice(0, 160),
+        cleanUrl,
+        cleanQuery,
+        media?.mediaType || '',
+        media?.mediaSource || '',
+        media?.mediaCredit || '',
+        media?.posterUrl || '',
+      ]
     );
   } catch (err) {
     console.warn('[dbActions] updateFactGifUrlDb skipped:', err);
@@ -410,13 +426,17 @@ export async function updateVocabularyGifUrlDb(
   idOrWord: string,
   gifUrl: string,
   gifQuery = '',
-  fallbackWord?: string
+  fallbackWord?: string,
+  media?: {
+    mediaType?: string | null;
+    mediaSource?: string | null;
+    mediaCredit?: string | null;
+    posterUrl?: string | null;
+  }
 ): Promise<void> {
   if (!hasDatabaseUrl() || (!idOrWord && !fallbackWord) || !gifUrl) return;
-  const cleanUrl = gifUrl.trim().slice(0, 500);
-  if (!cleanUrl.startsWith('https://') || /\.(mp4|webm|mov|m4v)(?:$|[?#])/i.test(cleanUrl)) {
-    return;
-  }
+  const cleanUrl = gifUrl.trim().slice(0, 800);
+  if (!cleanUrl.startsWith('https://')) return;
   const primary = String(idOrWord || '').trim().slice(0, 160);
   const secondary = String(fallbackWord || idOrWord || '').trim().slice(0, 160);
   const cleanQuery = gifQuery ? gifQuery.trim().slice(0, 120) : '';
@@ -426,14 +446,27 @@ export async function updateVocabularyGifUrlDb(
     await pool.query(
       `UPDATE vocabulary_cards
        SET gif_url = $2,
-           gif_query = COALESCE(NULLIF($3, ''), gif_query)
+           gif_query = COALESCE(NULLIF($3, ''), gif_query),
+           media_type = COALESCE(NULLIF($5, ''), media_type),
+           media_source = COALESCE(NULLIF($6, ''), media_source),
+           media_credit = COALESCE(NULLIF($7, ''), media_credit),
+           poster_url = COALESCE(NULLIF($8, ''), poster_url)
        WHERE (
          id = $1
          OR LOWER(word) = LOWER($1)
          OR ($4 <> '' AND LOWER(word) = LOWER($4))
        )
          AND (gif_url IS NULL OR TRIM(gif_url) = '')`,
-      [primary || secondary, cleanUrl, cleanQuery, secondary]
+      [
+        primary || secondary,
+        cleanUrl,
+        cleanQuery,
+        secondary,
+        media?.mediaType || '',
+        media?.mediaSource || '',
+        media?.mediaCredit || '',
+        media?.posterUrl || '',
+      ]
     );
   } catch (err) {
     console.warn('[dbActions] updateVocabularyGifUrlDb skipped:', err);

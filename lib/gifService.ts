@@ -4,6 +4,7 @@ import {
   markGifHourlyQuotaExhaustedServer,
 } from '@/lib/serverGifMatcher';
 import type { CategoryId, FactCard } from '@/types/fact';
+import { resolveCardMedia } from '@/lib/resolveCardMedia.mjs';
 
 const BANNED_GIF_PATTERN =
   /(?:^|[^a-z0-9])(meme|memes|reaction|reactions|funny|anime|text|quote|quotes|caption|lol|wtf|mrw|mfw|subtitles|gif\s*text|sticker|stickers|typography|wordart|word\s*art|shrug)(?:$|[^a-z0-9])/i;
@@ -623,10 +624,33 @@ export async function searchTopicGif(
   httpStatus?: number;
   dataLength?: number;
   errorKind?: ProviderFetchResult['errorKind'];
+  mediaType?: string | null;
+  mediaSource?: string | null;
+  mediaCredit?: string | null;
+  posterUrl?: string | null;
 }> {
   const cleanQuery = sanitizeVisualQuery(rawQuery);
   if (!cleanQuery) {
     return { gifUrl: null, provider: 'none', cached: false, emptyResult: true };
+  }
+
+  const resolved = await resolveCardMedia({
+    query: cleanQuery,
+    category: options?.category ? String(options.category) : undefined,
+    slug: '',
+    isVocab: false,
+  });
+  if (resolved.url) {
+    const provider = resolved.mediaSource === 'giphy' ? 'giphy' : 'none';
+    return {
+      gifUrl: resolved.url,
+      provider,
+      cached: false,
+      mediaType: resolved.mediaType,
+      mediaSource: resolved.mediaSource,
+      mediaCredit: resolved.mediaCredit,
+      posterUrl: resolved.posterUrl,
+    };
   }
 
   const giphyKey = process.env.GIPHY_API_KEY?.trim() || '';

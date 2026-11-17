@@ -17,6 +17,10 @@ export interface VocabularyCard {
   correctIndex: 0 | 1 | 2 | 3;
   gifUrl?: string;
   gifQuery?: string;
+  mediaType?: string;
+  mediaSource?: string;
+  mediaCredit?: string;
+  posterUrl?: string;
 }
 
 export interface SavedVocabularyEntry {

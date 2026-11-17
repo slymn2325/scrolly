@@ -2,6 +2,7 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import pg from 'pg';
+import { resolveCardMedia } from '../lib/resolveCardMedia.mjs';
 
 const { Pool } = pg;
 
@@ -256,16 +257,22 @@ function buildVocabularyGifQuery({
   exampleEn = '',
   definitionEn = '',
 } = {}) {
-  return mergeKeywordSources(
+  const bare = String(word || '').trim().toLowerCase();
+  const sceneWords = extractCleanEnglishKeywords(gifQuery).filter((token) => token !== bare);
+  const merged = mergeKeywordSources(
     [
-      extractCleanEnglishKeywords(gifQuery),
+      sceneWords,
       extractCleanEnglishKeywords(exampleEn),
       extractCleanEnglishKeywords(definitionEn),
-      extractCleanEnglishKeywords(word),
     ],
-    3,
-    'english learning'
+    4,
+    'misty forest shadow'
   );
+  const tokens = String(merged || '').split(/\s+/).filter(Boolean);
+  if (tokens.length < 2 || tokens.join(' ') === bare) {
+    return 'misty forest shadow';
+  }
+  return tokens.slice(0, 4).join(' ');
 }
 
 function isCleanGifCandidateUrl(url, metaParts = []) {
@@ -449,8 +456,22 @@ async function resolveServerGifForFact({
 } = {}) {
   const gifQuery = buildGifSearchQuery({ visualQuery, titleEn, category });
   const existing = String(existingGifUrl || '').trim();
-  if (existing.startsWith('https://') && !DISALLOWED_VIDEO_EXT_PATTERN.test(existing)) {
-    return { gifQuery, gifUrl: existing, source: 'existing', skippedReason: null };
+  if (existing.startsWith('https://')) {
+    return { gifQuery, gifUrl: existing, source: 'existing', skippedReason: null, media: null };
+  }
+
+  try {
+    const media = await resolveCardMedia({
+      query: gifQuery,
+      category,
+      slug: '',
+      isVocab: false,
+    });
+    if (media?.url) {
+      return { gifQuery, gifUrl: media.url, source: media.mediaSource || 'resolved', skippedReason: null, media };
+    }
+  } catch (err) {
+    console.warn('[generateFacts] resolveCardMedia:', err instanceof Error ? err.message : err);
   }
 
   const giphyKey = String(process.env.GIPHY_API_KEY || '').trim();
@@ -669,7 +690,11 @@ async function ensureSchemaAndSeed(pool) {
       ADD COLUMN IF NOT EXISTS gif_url TEXT,
       ADD COLUMN IF NOT EXISTS gif_query TEXT,
       ADD COLUMN IF NOT EXISTS quiz_tr JSONB,
-      ADD COLUMN IF NOT EXISTS quiz_en JSONB;
+      ADD COLUMN IF NOT EXISTS quiz_en JSONB,
+      ADD COLUMN IF NOT EXISTS media_type TEXT DEFAULT 'gif',
+      ADD COLUMN IF NOT EXISTS media_source TEXT,
+      ADD COLUMN IF NOT EXISTS media_credit TEXT,
+      ADD COLUMN IF NOT EXISTS poster_url TEXT;
   `);
 
   await pool.query(`
@@ -725,7 +750,11 @@ async function ensureSchemaAndSeed(pool) {
       ADD COLUMN IF NOT EXISTS gif_url TEXT,
       ADD COLUMN IF NOT EXISTS gif_query TEXT,
       ADD COLUMN IF NOT EXISTS cefr_level TEXT DEFAULT 'B2',
-      ADD COLUMN IF NOT EXISTS synonyms JSONB DEFAULT '[]'::jsonb;
+      ADD COLUMN IF NOT EXISTS synonyms JSONB DEFAULT '[]'::jsonb,
+      ADD COLUMN IF NOT EXISTS media_type TEXT DEFAULT 'gif',
+      ADD COLUMN IF NOT EXISTS media_source TEXT,
+      ADD COLUMN IF NOT EXISTS media_credit TEXT,
+      ADD COLUMN IF NOT EXISTS poster_url TEXT;
   `);
 
   await pool.query(`
@@ -1340,7 +1369,7 @@ ALSO include a second key \`"vocabulary"\` with exactly ${vocabCount} brand-new 
 - "exampleTr": Turkish translation of that example
 - "quizOptions": array of exactly 3 Turkish meaning options
 - "correctIndex": 0 | 1 | 2 matching the correct Turkish meaning in quizOptions
-- "gifQuery": strictly 2-4 concrete visual English words depicting a real scene/action for GIF search (e.g. "strong storm comeback", "magnifying glass inspect") — NEVER Turkish and NEVER meme/reaction/anime words`
+- "gifQuery" (mediaQuery): a 2–4 word concrete cinematic scene, NEVER the bare word (elusive -> "misty forest shadow", not "elusive"). English only, no meme/reaction/anime words`
       : `\n\nInclude \`"vocabulary": []\` (0 vocabulary items in this batch).`;
 
   const userPrompt = `Create exactly ${factsCount} brand-new bilingual (TR & EN) micro-fact card${factsCount === 1 ? '' : 's'} distributed across ALL 7 categories in balanced rotation (${targetCategories.join(', ')} — cover every listed category before repeating any).
@@ -2392,6 +2421,20 @@ async function main() {
         existingSlugs.add(clean.slug);
         existingTitlesEn.add(clean.title_en.toLowerCase());
         if (insertRes.rows[0]) {
+          if (gifResolved.media?.url) {
+            await pool.query(
+              `UPDATE facts
+               SET media_type = $2, media_source = $3, media_credit = $4, poster_url = $5
+               WHERE slug = $1`,
+              [
+                clean.slug,
+                gifResolved.media.mediaType || 'gif',
+                gifResolved.media.mediaSource || null,
+                gifResolved.media.mediaCredit || null,
+                gifResolved.media.posterUrl || null,
+              ]
+            );
+          }
           console.log(
             `[generateFacts] DB write OK fact id=${insertRes.rows[0].id} slug=${clean.slug} source_url=${clean.source_url}`
           );
@@ -2412,12 +2455,16 @@ async function main() {
       }
 
       for (const vocab of validVocab.slice(0, batch.vocabCount)) {
-        const vocabGifResolved = await resolveServerGifForFact({
-          visualQuery: vocab.gifQuery || '',
-          titleEn: `${vocab.word} ${vocab.exampleEn}`,
-          category: 'science',
-          existingGifUrl: vocab.gifUrl || '',
-        });
+        const vocabGifResolved = await resolveCardMedia({
+          query: vocab.gifQuery || '',
+          category: 'vocabulary',
+          slug: vocab.id,
+          isVocab: true,
+        }).then((media) => ({
+          gifQuery: vocab.gifQuery,
+          gifUrl: media?.url || null,
+          media,
+        })).catch(() => ({ gifQuery: vocab.gifQuery, gifUrl: null, media: null }));
         vocab.gifQuery = vocab.gifQuery || vocabGifResolved.gifQuery;
         if (vocabGifResolved.gifUrl) {
           vocab.gifUrl = vocabGifResolved.gifUrl;
@@ -2455,6 +2502,21 @@ async function main() {
 
         seedVocabWords.add(vocab.word.toLowerCase());
         if (insertVocabRes.rows[0]) {
+          if (vocabGifResolved.media?.url) {
+            await pool.query(
+              `UPDATE vocabulary_cards
+               SET gif_url = $2, media_type = $3, media_source = $4, media_credit = $5, poster_url = $6
+               WHERE id = $1`,
+              [
+                vocab.id,
+                vocabGifResolved.media.url,
+                vocabGifResolved.media.mediaType || 'gif',
+                vocabGifResolved.media.mediaSource || null,
+                vocabGifResolved.media.mediaCredit || null,
+                vocabGifResolved.media.posterUrl || null,
+              ]
+            );
+          }
           insertedVocabSummary.push({
             id: insertVocabRes.rows[0].id,
             word: vocab.word,

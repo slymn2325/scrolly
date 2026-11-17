@@ -11,12 +11,13 @@ import {
   Share2,
   Swords,
 } from 'lucide-react';
+import CardMediaStage from '@/components/CardMediaStage';
 import CategoryMotionArt from '@/components/CategoryMotionArt';
 import FactDetailPage from '@/components/FactDetailPage';
 import GuessWidget from '@/components/GuessWidget';
 import { getCategoryMeta, type Language, translations } from '@/i18n/translations';
 import { ENABLE_COMPETITIVE_TABS } from '@/lib/featureFlags';
-import { trackEvent, fetchTopicGifFromApi } from '@/lib/telemetry';
+import { trackEvent, fetchCardMediaFromApi } from '@/lib/telemetry';
 import type { CategoryId, FactCard } from '@/types/fact';
 import { cryptoRandomInt } from '@/utils/cryptoRandom';
 import { maskFactAnswerSpoiler } from '@/utils/factsData';
@@ -26,6 +27,7 @@ import { markFactSeenInStorage } from '@/utils/seenFacts';
 import { resolveFallbackVisualQuery } from '@/utils/topicMotif';
 
 const CLIENT_GIF_CACHE = new Map<string, string | null>();
+const CLIENT_MEDIA_META = new Map<string, { mediaType: string | null; mediaSource: string | null; posterUrl: string | null }>();
 
 function isImageCachedInBrowser(url: string | null): boolean {
   if (!url || typeof window === 'undefined') return false;
@@ -149,8 +151,12 @@ export default function TikTokFactSlide({
 
   const initialGifUrl = fact.gifUrl || CLIENT_GIF_CACHE.get(fact.id) || null;
   const [resolvedGifUrl, setResolvedGifUrl] = useState<string | null>(initialGifUrl);
+  const [mediaMeta, setMediaMeta] = useState<{ mediaType: string | null; mediaSource: string | null; posterUrl: string | null } | null>(
+    () => CLIENT_MEDIA_META.get(fact.id) || (fact.mediaType ? { mediaType: fact.mediaType, mediaSource: fact.mediaSource || null, posterUrl: fact.posterUrl || null } : null)
+  );
+  const [mediaSettled, setMediaSettled] = useState(Boolean(initialGifUrl));
   const [gifFailed, setGifFailed] = useState(false);
-  const [gifLoaded, setGifLoaded] = useState(() => isImageCachedInBrowser(initialGifUrl));
+  const [, setGifLoaded] = useState(() => isImageCachedInBrowser(initialGifUrl));
   const gifImgRef = useRef<HTMLImageElement>(null);
 
   const effectiveVisualQuery = useMemo(
@@ -171,23 +177,36 @@ export default function TikTokFactSlide({
     if (fact.gifUrl) {
       CLIENT_GIF_CACHE.set(fact.id, fact.gifUrl);
       setResolvedGifUrl(fact.gifUrl);
+      setMediaSettled(true);
       setGifLoaded(isImageCachedInBrowser(fact.gifUrl));
       return;
     }
     if (CLIENT_GIF_CACHE.has(fact.id)) {
       const cached = CLIENT_GIF_CACHE.get(fact.id) ?? null;
       setResolvedGifUrl(cached);
+      setMediaMeta(CLIENT_MEDIA_META.get(fact.id) || null);
+      setMediaSettled(true);
       setGifLoaded(isImageCachedInBrowser(cached));
       return;
     }
     setGifLoaded(false);
     setResolvedGifUrl(null);
+    setMediaSettled(false);
     if (!isActive || !effectiveVisualQuery) return;
 
     let cancelled = false;
-    void fetchTopicGifFromApi(effectiveVisualQuery, factSlug).then((url) => {
+    void fetchCardMediaFromApi(effectiveVisualQuery, factSlug, false).then((media) => {
       if (cancelled) return;
+      const url = media?.url || null;
       CLIENT_GIF_CACHE.set(fact.id, url);
+      const meta = {
+        mediaType: media?.mediaType || null,
+        mediaSource: media?.mediaSource || null,
+        posterUrl: media?.posterUrl || null,
+      };
+      CLIENT_MEDIA_META.set(fact.id, meta);
+      setMediaMeta(meta);
+      setMediaSettled(true);
       if (url) {
         setResolvedGifUrl(url);
         if (isImageCachedInBrowser(url)) setGifLoaded(true);
@@ -643,33 +662,17 @@ export default function TikTokFactSlide({
             tag={localized.tag}
           />
 
-          {/* Full-screen live topic GIF */}
-          {resolvedGifUrl && !gifFailed && (/\.mp4(\?|$)/i.test(resolvedGifUrl) ? (
-            <video
-              src={resolvedGifUrl}
-              autoPlay={isActive}
-              loop
-              muted
-              playsInline
-              preload="metadata"
-              data-testid="card-topic-video"
-              className="pointer-events-none absolute inset-0 z-[2] h-full w-full object-cover"
-            />
-          ) : (
-            <img
-              ref={gifImgRef}
-              src={resolvedGifUrl}
-              alt={localized.title}
-              loading="eager"
-              decoding="async"
-              data-testid="card-topic-gif"
-              onLoad={() => setGifLoaded(true)}
-              onError={() => setGifFailed(true)}
-              className={`pointer-events-none absolute inset-0 z-[2] h-full w-full object-cover transition-opacity duration-500 ${
-                gifLoaded ? 'opacity-100' : 'opacity-0'
-              }`}
-            />
-          ))}
+          <CardMediaStage
+            url={gifFailed ? null : resolvedGifUrl}
+            posterUrl={mediaMeta?.posterUrl || fact.posterUrl}
+            mediaType={mediaMeta?.mediaType || fact.mediaType}
+            mediaSource={mediaMeta?.mediaSource || fact.mediaSource}
+            isActive={isActive}
+            title={localized.title}
+            failed={gifFailed}
+            empty={mediaSettled && !resolvedGifUrl}
+            onFailed={() => setGifFailed(true)}
+          />
 
           {/* Bottom legibility gradient */}
           <div

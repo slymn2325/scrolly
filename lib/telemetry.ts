@@ -422,21 +422,49 @@ export async function syncProfileToApi(payload: {
   }
 }
 
+export interface ResolvedCardMedia {
+  url: string | null;
+  mediaType: string | null;
+  mediaSource: string | null;
+  mediaCredit: string | null;
+  posterUrl: string | null;
+}
+
+export async function fetchCardMediaFromApi(
+  visualQuery: string,
+  slug?: string,
+  isVocab = false
+): Promise<ResolvedCardMedia | null> {
+  if (typeof window === 'undefined' || !visualQuery.trim()) return null;
+  try {
+    const params = new URLSearchParams({ query: visualQuery.trim() });
+    if (slug) params.set(isVocab ? 'vocabId' : 'slug', slug.trim());
+    const res = await fetch(`/api/gif?${params.toString()}`);
+    if (!res.ok) return null;
+    const json = (await res.json()) as {
+      gifUrl?: string | null;
+      mediaType?: string | null;
+      mediaSource?: string | null;
+      mediaCredit?: string | null;
+      posterUrl?: string | null;
+    };
+    const url = typeof json.gifUrl === 'string' && json.gifUrl.startsWith('https://') ? json.gifUrl : null;
+    return {
+      url,
+      mediaType: json.mediaType || null,
+      mediaSource: json.mediaSource || null,
+      mediaCredit: json.mediaCredit || null,
+      posterUrl: json.posterUrl || null,
+    };
+  } catch {
+    return null;
+  }
+}
+
 export async function fetchTopicGifFromApi(
   visualQuery: string,
   slug?: string
 ): Promise<string | null> {
-  if (typeof window === 'undefined' || !visualQuery.trim()) return null;
-  try {
-    const params = new URLSearchParams({ query: visualQuery.trim() });
-    if (slug) params.set('slug', slug.trim());
-    const res = await fetch(`/api/gif?${params.toString()}`);
-    if (!res.ok) return null;
-    const json = (await res.json()) as { ok?: boolean; gifUrl?: string | null };
-    return typeof json.gifUrl === 'string' && json.gifUrl.startsWith('https://')
-      ? json.gifUrl
-      : null;
-  } catch {
-    return null;
-  }
+  const media = await fetchCardMediaFromApi(visualQuery, slug, false);
+  return media?.url || null;
 }
