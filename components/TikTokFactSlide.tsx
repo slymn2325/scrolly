@@ -9,10 +9,8 @@ import {
   ExternalLink,
   Heart,
   Info,
-  RotateCcw,
   RotateCw,
   Share,
-  Swords,
   X,
 } from 'lucide-react';
 import CardMediaStage from '@/components/CardMediaStage';
@@ -20,7 +18,7 @@ import CategoryMotionArt from '@/components/CategoryMotionArt';
 import IconButton from '@/components/cikartma/IconButton';
 import GuessWidget from '@/components/GuessWidget';
 import { getCategoryMeta, type Language, translations } from '@/i18n/translations';
-import { ENABLE_COMPETITIVE_TABS } from '@/lib/featureFlags';
+import MediaAttributionBadge from '@/components/MediaAttributionBadge';
 import { detectMediaProvider } from '@/lib/mediaProvider';
 import { trackEvent, fetchCardMediaFromApi } from '@/lib/telemetry';
 import type { CategoryId, FactCard } from '@/types/fact';
@@ -109,7 +107,7 @@ export default function TikTokFactSlide({
   isActive = true,
   isGuessLocked = false,
   cookieBannerVisible = false,
-  onFlip,
+  onFlip: _onFlip,
   onDoubleTapLike,
   onDwellRead,
   onNextSlide: _onNextSlide,
@@ -134,7 +132,7 @@ export default function TikTokFactSlide({
     earnedXp: number;
     accuracyPct: number;
   } | null>(null);
-  const [isTextExpanded, setIsTextExpanded] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(false);
   const [cardOverlay, setCardOverlay] = useState<CardOverlay | null>(null);
   const isFlippedRef = useRef(false);
   isFlippedRef.current = isFlipped;
@@ -145,7 +143,7 @@ export default function TikTokFactSlide({
   }, [fact.id]);
 
   useEffect(() => {
-    setIsTextExpanded(false);
+    setIsExpanded(false);
     setCardOverlay(null);
   }, [fact.id]);
 
@@ -507,26 +505,13 @@ export default function TikTokFactSlide({
     vibrateTap(18);
   };
 
-  const executeFlip = () => {
-    const next = !isFlippedRef.current;
-    isFlippedRef.current = next;
-    setIsFlipping(true);
-    if (flipTimerRef.current) {
-      clearTimeout(flipTimerRef.current);
-    }
-    flipTimerRef.current = setTimeout(() => {
-      flipTimerRef.current = null;
-      setIsFlipping(false);
-    }, 260);
-
-    setIsFlipped(next);
-    if (next) {
-      markFactSeenInStorage(fact);
-      void trackEvent(factSlug, fact.category, 'detail_open', {
-        source: resolvedSourceName,
-      });
-    }
-    onFlip(fact);
+  const openSharedDetail = () => {
+    onButtonPop();
+    markFactSeenInStorage(fact);
+    void trackEvent(factSlug, fact.category, 'detail_open', {
+      source: localized.sourceName || fact.sourceName || localized.sourceHint,
+    });
+    onOpenDetail?.(fact, resolvedGifUrl);
   };
 
   const clearLongPressTimer = () => {
@@ -551,8 +536,6 @@ export default function TikTokFactSlide({
         singleTapTimerRef.current = null;
       }
       vibrateTap(22);
-      onButtonPop();
-      executeFlip();
     }, 500);
   };
 
@@ -586,14 +569,6 @@ export default function TikTokFactSlide({
       return;
     }
 
-    if (singleTapTimerRef.current) {
-      clearTimeout(singleTapTimerRef.current);
-    }
-
-    singleTapTimerRef.current = setTimeout(() => {
-      singleTapTimerRef.current = null;
-      executeFlip();
-    }, 250);
   };
 
   const handleNativeDoubleClick = (e: React.MouseEvent<HTMLDivElement>) => {
@@ -613,12 +588,6 @@ export default function TikTokFactSlide({
   const resolvedSourceName =
     localized.sourceName || fact.sourceName || localized.sourceHint;
   const resolvedSourceUrl = safeExternalHref(localized.sourceUrl || fact.sourceUrl);
-  const explanation =
-    localized.deepDiveDetail?.trim() || localized.quiz?.explanation?.trim() || localized.factText;
-  const causeEffect =
-    localized.quiz?.explanation && localized.quiz.explanation.trim() !== explanation.trim()
-      ? localized.quiz.explanation
-      : '';
   const mediaProviderLabel = providerLabelFromUrls([
     resolvedGifUrl,
     fact.gifUrl,
@@ -640,8 +609,7 @@ export default function TikTokFactSlide({
       setCardOverlay('source');
     },
     toggleFlip: () => {
-      onButtonPop();
-      executeFlip();
+      openSharedDetail();
     },
     openDuel: () => {
       void trackEvent(factSlug, fact.category, 'duel');
@@ -677,7 +645,7 @@ export default function TikTokFactSlide({
       className="reels-slide relative flex h-full w-full shrink-0 flex-col overflow-hidden select-none bg-cik-bg text-cik-text"
     >
       <div className="perspective-1000 relative mx-auto flex h-full w-full flex-col overflow-hidden bg-cik-bg">
-        <div className="pointer-events-none relative h-[clamp(168px,32dvh,300px)] w-full shrink-0 overflow-hidden bg-cik-pink">
+        <div className="pointer-events-none absolute inset-0 overflow-hidden rounded-t-[28px] bg-cik-pink">
           <CategoryMotionArt
             variant="hero"
             factId={fact.id}
@@ -710,7 +678,7 @@ export default function TikTokFactSlide({
           {/* Bottom legibility gradient */}
           <div
             aria-hidden="true"
-            className="pointer-events-none absolute inset-x-0 bottom-0 z-content h-16 bg-gradient-to-b from-transparent to-cik-bg"
+            className="pointer-events-none absolute inset-x-0 top-0 z-10 h-24 bg-gradient-to-b from-black/25 to-transparent"
           />
         </div>
 
@@ -724,20 +692,18 @@ export default function TikTokFactSlide({
         >
           <div className="pointer-events-none relative z-content flex min-h-0 w-full flex-1 flex-col overflow-hidden">
             <div className="mb-2 flex shrink-0 flex-wrap items-center gap-2">
-              <div className="inline-flex w-fit items-center gap-2 rounded-pill border border-cik-line bg-cik-pink px-2 py-1 text-cik-text">
-                <span className="flex h-4 w-4 shrink-0 items-center justify-center">
-                  <img
-                    src={catMeta.iconPath}
-                    alt=""
-                    aria-hidden="true"
-                    width={16}
-                    height={16}
-                    loading="eager"
-                    decoding="sync"
-                    className="h-4 w-4 shrink-0 object-contain"
-                  />
-                </span>
-                <span className="cik-footnote">{catMeta.label[lang]}</span>
+              <div className="inline-flex items-center gap-1 rounded-full border border-black/10 bg-black/5 px-2.5 py-0.5 text-[11px] font-medium leading-tight text-neutral-700 hover:bg-black/10 dark:border-white/15 dark:bg-white/10 dark:text-white/80">
+                <img
+                  src={catMeta.iconPath}
+                  alt=""
+                  aria-hidden="true"
+                  width={12}
+                  height={12}
+                  loading="eager"
+                  decoding="sync"
+                  className="h-3 w-3 shrink-0 object-contain"
+                />
+                <span>{catMeta.label[lang]}</span>
               </div>
 
               <button
@@ -752,9 +718,9 @@ export default function TikTokFactSlide({
                 onPointerDown={(e) => e.stopPropagation()}
                 onTouchStart={(e) => e.stopPropagation()}
                 aria-label={lang === 'tr' ? 'Kaynak' : 'Source'}
-                className="cik-footnote pointer-events-auto inline-flex min-h-11 items-center gap-2 rounded-pill bg-cik-cta px-3 text-cik-on-cta"
+                className="pointer-events-auto inline-flex items-center gap-1 rounded-full border border-black/10 bg-black/5 px-2.5 py-0.5 text-[11px] font-medium leading-tight text-neutral-700 hover:bg-black/10 dark:border-white/15 dark:bg-white/10 dark:text-white/80"
               >
-                <Info className="h-4 w-4 shrink-0" aria-hidden="true" />
+                <Info className="h-3 w-3 shrink-0" aria-hidden="true" />
                 <span>{lang === 'tr' ? 'Kaynak' : 'Source'}</span>
               </button>
             </div>
@@ -762,11 +728,11 @@ export default function TikTokFactSlide({
             <button
               type="button"
               data-testid="fact-headline-toggle"
-              aria-expanded={isTextExpanded}
+              aria-expanded={isExpanded}
               onClick={(e) => {
                 e.stopPropagation();
                 onButtonPop();
-                setIsTextExpanded((prev) => !prev);
+                setIsExpanded((prev) => !prev);
               }}
               onDoubleClick={(e) => e.stopPropagation()}
               onPointerDown={(e) => e.stopPropagation()}
@@ -775,40 +741,40 @@ export default function TikTokFactSlide({
             >
               <h2
                 data-testid="fact-headline"
-                className={`cik-title-2 cursor-pointer text-cik-text ${isTextExpanded ? 'line-clamp-none' : 'line-clamp-2'}`}
+                className="cik-title-2 cursor-pointer text-cik-text"
               >
                 {localized.title}
               </h2>
             </button>
             <div
               data-testid="fact-details-drawer"
-              data-story-scroll={isTextExpanded ? 'true' : undefined}
+              data-story-scroll={isExpanded ? 'true' : undefined}
               onWheel={(e) => {
-                if (!isTextExpanded) return;
+                if (!isExpanded) return;
                 const el = e.currentTarget;
                 if (el.scrollHeight > el.clientHeight + 1) e.stopPropagation();
               }}
               onClick={(e) => {
                 e.stopPropagation();
                 onButtonPop();
-                setIsTextExpanded((prev) => !prev);
+                setIsExpanded((prev) => !prev);
               }}
-              className={`pointer-events-auto mt-2 min-h-0 flex-1 cursor-pointer ${
-                isTextExpanded ? 'overflow-y-auto overscroll-contain' : 'overflow-hidden'
+              className={`pointer-events-auto mt-2 min-h-0 cursor-pointer transition-all duration-300 ease-out ${
+                isExpanded ? 'max-h-[65%] overflow-y-auto' : 'overflow-hidden'
               }`}
             >
               <p
                 data-testid="fact-body"
                 className={`cik-body text-cik-text-2 ${
-                  isTextExpanded ? 'line-clamp-none' : 'line-clamp-2'
+                  isExpanded ? 'line-clamp-none' : 'line-clamp-2'
                 }`}
               >
                 {maskedFactText}
               </p>
               <span className="cik-caption-2 mt-1 inline-flex text-cik-text-2">
-                {isTextExpanded
+                {isExpanded
                   ? lang === 'tr'
-                    ? 'Daralt'
+                    ? 'Daha az göster'
                     : 'Show less'
                   : lang === 'tr'
                     ? 'Devamını oku'
@@ -845,7 +811,7 @@ export default function TikTokFactSlide({
                       xp_awarded: xpAwarded,
                     });
                   }}
-                  onRequestFlip={() => executeFlip()}
+                  onRequestFlip={() => openSharedDetail()}
                   onButtonPop={onButtonPop}
                 />
               </div>
@@ -888,24 +854,11 @@ export default function TikTokFactSlide({
               data-testid="flip-card-btn"
               onClick={(e) => {
                 e.stopPropagation();
-                executeFlip();
+                openSharedDetail();
               }}
             >
               <RotateCw size={24} strokeWidth={2} />
             </IconButton>
-            {ENABLE_COMPETITIVE_TABS && (
-              <IconButton
-                label={t.dockDuel}
-                data-testid="card-duel-btn"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  void trackEvent(factSlug, fact.category, 'duel');
-                  onOpenDuel(fact);
-                }}
-              >
-                <Swords size={24} strokeWidth={2} />
-              </IconButton>
-            )}
             <IconButton label={t.shareFact} data-testid="card-share-btn" onClick={handleShareClick}>
               <Share size={24} strokeWidth={2} />
             </IconButton>
@@ -932,59 +885,6 @@ export default function TikTokFactSlide({
           </div>
         )}
 
-        {isFlipped && (
-          <div
-            data-testid="fact-card-back"
-            onClick={(e) => e.stopPropagation()}
-            onDoubleClick={(e) => e.stopPropagation()}
-            onPointerDown={(e) => e.stopPropagation()}
-            data-scroll-contain="true"
-            onWheel={(e) => e.stopPropagation()}
-            className="pointer-events-auto absolute inset-0 z-sheet flex h-full w-full flex-col overflow-hidden bg-cik-bg pt-16 text-cik-text"
-          >
-            <div className="flex items-center justify-between gap-3 border-b border-cik-line px-4 py-3">
-              <span className="cik-footnote text-cik-text-2">{t.whyHowHeader}</span>
-              <button
-                type="button"
-                data-testid="flip-back-btn"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onButtonPop();
-                  executeFlip();
-                }}
-                className="cik-footnote inline-flex min-h-11 items-center gap-2 rounded-pill bg-cik-surface px-3 text-cik-text shadow-e1"
-              >
-                <RotateCcw className="h-4 w-4" />
-                <span>{t.tiktokBackFrontBtn}</span>
-              </button>
-            </div>
-            <div className="min-h-0 flex-1 space-y-3 overflow-y-auto px-4 py-4">
-              <h3 className="cik-title-3 text-cik-text">{localized.title}</h3>
-              <p className="cik-body text-cik-text">{explanation}</p>
-              {causeEffect ? (
-                <p className="cik-body text-cik-text">
-                  <span className="font-extrabold">{lang === 'tr' ? 'Neden / Sonuç: ' : 'Cause / Effect: '}</span>
-                  {causeEffect}
-                </p>
-              ) : null}
-              {resolvedSourceUrl ? (
-                <a
-                  href={resolvedSourceUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  data-testid="fact-source-link"
-                  onClick={(e) => e.stopPropagation()}
-                  className="cik-subhead inline-flex min-h-11 items-center gap-2 text-cik-cta underline"
-                >
-                  <span>{resolvedSourceName}</span>
-                  <ExternalLink className="h-4 w-4" />
-                </a>
-              ) : (
-                <p className="cik-subhead text-cik-text">{resolvedSourceName}</p>
-              )}
-            </div>
-          </div>
-        )}
       </div>
 
       {cardOverlay === 'source' && (
@@ -1031,6 +931,17 @@ export default function TikTokFactSlide({
                 <ExternalLink className="h-3.5 w-3.5" />
               </a>
             ) : null}
+            <MediaAttributionBadge
+              className="mt-3"
+              lang={lang}
+              card={{
+                gifUrl: resolvedGifUrl || fact.gifUrl,
+                posterUrl: mediaMeta?.posterUrl || fact.posterUrl,
+                mediaSource: mediaMeta?.mediaSource || fact.mediaSource,
+                mediaProvider: fact.mediaSource,
+                mediaCredit: fact.mediaCredit,
+              }}
+            />
           </div>
         </div>
       )}

@@ -46,7 +46,9 @@ export default function DesktopLeftNav({
   onSelectTab,
   onBindEmail,
 }: DesktopLeftNavProps) {
-  const [isOffline, setIsOffline] = useState(false);
+  const [isOffline, setIsOffline] = useState(
+    () => (typeof navigator !== 'undefined' ? !navigator.onLine : false)
+  );
   const isGuest = !accountEmail;
   const highlightedTab = activeTab === 'language' ? 'explore' : activeTab;
   const locale = lang === 'en' ? 'en' : 'tr';

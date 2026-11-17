@@ -12,10 +12,9 @@ import {
   RotateCw,
   Share,
   Sparkles,
-  Swords,
 } from 'lucide-react';
 import IconButton from '@/components/cikartma/IconButton';
-import { detectMediaProvider, mediaCreditLine } from '@/lib/mediaProvider';
+import MediaAttributionBadge from '@/components/MediaAttributionBadge';
 import type { FeedSlideItem } from '@/components/TikTokFeed';
 import { getCategoryMeta, type Language } from '@/i18n/translations';
 import type { FactCard } from '@/types/fact';
@@ -46,7 +45,6 @@ interface DesktopFeedSideRailProps {
   onLike?: () => void;
   onSave?: () => void;
   onDetail?: () => void;
-  onDuel?: () => void;
   onShare?: () => void;
   mode?: DesktopRailMode;
 }
@@ -69,7 +67,6 @@ export default function DesktopFeedSideRail({
   onLike,
   onSave,
   onDetail,
-  onDuel,
   onShare,
   mode = 'cluster',
 }: DesktopFeedSideRailProps) {
@@ -89,17 +86,6 @@ export default function DesktopFeedSideRail({
     localized?.sourceHint ||
     (lang === 'tr' ? 'Doğrulanmış Bilimsel Kaynak' : 'Verified Scientific Source');
   const sourceUrl = safeExternalHref(localized?.sourceUrl || activeFact?.sourceUrl);
-  const mediaCredit = activeFact
-    ? mediaCreditLine(
-        detectMediaProvider({
-          gifUrl: activeFact.gifUrl,
-          posterUrl: activeFact.posterUrl,
-          mediaSource: activeFact.mediaSource,
-          mediaProvider: activeFact.mediaSource,
-        }),
-        lang
-      )
-    : null;
   const hasGuessChallenge = Boolean(localized?.guessChallenge);
   const isAnalysisUnlocked = !hasGuessChallenge || isGuessLocked;
   const deepAnalysisText =
@@ -184,17 +170,17 @@ export default function DesktopFeedSideRail({
       data-mode={mode}
       className={
         mode === 'insight'
-          ? 'flex h-full min-h-0 w-full max-w-[320px] shrink-0 flex-col'
+          ? 'flex h-full min-h-0 w-full shrink-0 flex-col'
           : mode === 'actions'
-            ? 'ml-3 hidden shrink-0 md:flex'
-            : 'ml-3 hidden shrink-0 items-center gap-3 lg:flex'
+            ? 'hidden shrink-0 flex-col items-center justify-center self-center gap-3 md:flex'
+            : 'hidden shrink-0 flex-col items-center justify-center self-center gap-3 lg:flex'
       }
     >
       {showActions && (
       <aside
         data-testid="desktop-feed-side-rail"
         data-theme={darkMode ? 'dark' : 'light'}
-        className="relative z-rail flex w-11 flex-col items-center gap-2"
+        className="relative flex w-11 shrink-0 flex-col items-center justify-center gap-3 self-center"
         aria-label={lang === 'tr' ? 'Kart aksiyonları ve kaydırma' : 'Card actions and navigation'}
       >
         {onLike && (
@@ -236,11 +222,6 @@ export default function DesktopFeedSideRail({
             className="disabled:opacity-40"
           >
             <RotateCw size={24} strokeWidth={2} />
-          </IconButton>
-        )}
-        {onDuel && (
-          <IconButton label="Scrolla 1v1" data-testid="desktop-action-duel" onClick={onDuel}>
-            <Swords size={24} strokeWidth={2} />
           </IconButton>
         )}
         {onShare && (
@@ -288,31 +269,6 @@ export default function DesktopFeedSideRail({
               <Sparkles className="h-4 w-4" aria-hidden="true" />
               <span>{slideSummary.xpLabel}</span>
             </span>
-          </div>
-
-          <div className="flex gap-2">
-            {onSave && (
-              <button
-                type="button"
-                onClick={onSave}
-                disabled={!canSave}
-                className="cik-footnote inline-flex min-h-11 flex-1 items-center justify-center gap-2 rounded-pill bg-cik-bg-elevated px-3 text-cik-text shadow-e1 disabled:opacity-40"
-              >
-                <Bookmark className="h-4 w-4" aria-hidden="true" />
-                {lang === 'tr' ? 'Kaydet' : 'Save'}
-              </button>
-            )}
-            {onDetail && (
-              <button
-                type="button"
-                onClick={onDetail}
-                disabled={!canDetail}
-                className="cik-footnote inline-flex min-h-11 flex-1 items-center justify-center gap-2 rounded-pill bg-cik-cta px-3 text-cik-on-cta disabled:opacity-40"
-              >
-                <RotateCw className="h-4 w-4" aria-hidden="true" />
-                {lang === 'tr' ? 'Detay' : 'Detail'}
-              </button>
-            )}
           </div>
 
           <div>
@@ -364,7 +320,19 @@ export default function DesktopFeedSideRail({
               ) : (
                 <p className="cik-footnote mt-1 text-cik-text">{sourceName}</p>
               )}
-              {mediaCredit ? <p className="cik-caption-2 mt-2 text-cik-text-2">{mediaCredit}</p> : null}
+              {activeFact ? (
+                <MediaAttributionBadge
+                  className="mt-2"
+                  lang={lang}
+                  card={{
+                    gifUrl: activeFact.gifUrl,
+                    posterUrl: activeFact.posterUrl,
+                    mediaSource: activeFact.mediaSource,
+                    mediaProvider: activeFact.mediaSource,
+                    mediaCredit: activeFact.mediaCredit,
+                  }}
+                />
+              ) : null}
             </div>
           )}
 

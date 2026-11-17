@@ -161,7 +161,7 @@ export default function CardMediaStage({
             setPosterFailed(true);
             if (!videoUrl) onFailed?.();
           }}
-          className="pointer-events-none absolute inset-0 z-[2] h-full w-full object-cover"
+          className="pointer-events-none absolute inset-0 z-[2] h-full w-full rounded-t-[28px] object-cover"
         />
       ) : null}
       {showVideo ? (
@@ -176,7 +176,7 @@ export default function CardMediaStage({
           preload="none"
           data-testid="card-topic-video"
           onError={() => setVideoFailed(true)}
-          className="pointer-events-none absolute inset-0 z-[3] h-full w-full object-cover"
+          className="pointer-events-none absolute inset-0 z-[3] h-full w-full rounded-t-[28px] object-cover"
         />
       ) : null}
       {showFallback ? (

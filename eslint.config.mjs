@@ -63,7 +63,6 @@ const LEGACY_PALETTE_FILES = [
   'components/BrandLogo.tsx',
   'components/CategoryMotionArt.tsx',
   'components/QuizHubModal.tsx',
-  'components/QuizSectionSwitch.tsx',
   'components/ShareResultModal.tsx',
   'components/StickyAdBanner.tsx',
   'components/StoryShareModal.tsx',

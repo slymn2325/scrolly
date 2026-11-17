@@ -170,13 +170,13 @@ export default function ContactInteractiveSection({ lang }: ContactInteractiveSe
       {/* Official Email Card & Editorial Guidance */}
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="rounded-2xl border-2 border-violet-200/90 bg-gradient-to-br from-violet-50 via-white to-amber-50/50 p-4 shadow-sm dark:border-violet-700/50 dark:from-violet-950/50 dark:via-[#1B1530] dark:to-violet-950/20">
-          <div className="flex items-center justify-between gap-2">
+          <div className="flex flex-wrap items-center justify-between gap-2">
             <div
               lang={isEn ? 'en-US' : 'tr-TR'}
               className="flex min-w-0 items-center gap-1.5 text-[11px] font-extrabold tracking-wide text-violet-800 dark:text-violet-300"
             >
               <Mail className="h-3.5 w-3.5 shrink-0" />
-              <span className="whitespace-nowrap">
+              <span className="min-w-0">
                 {(isEn ? 'Official Email' : 'Resmi Kurumsal E-posta').toLocaleUpperCase(
                   isEn ? 'en-US' : 'tr-TR'
                 )}

@@ -1,11 +1,9 @@
 'use client';
 
-import QuizSectionSwitch from '@/components/QuizSectionSwitch';
-
 import React, { useEffect } from 'react';
 import { motion, useReducedMotion } from 'framer-motion';
-import { BookOpen, Brain, Calendar, CheckCircle2, Swords, Timer, Trophy, X } from 'lucide-react';
-import { Button, IconButton } from '@/components/cikartma';
+import { BookOpen, Brain, Calendar, CheckCircle2, Timer, Trophy, X } from 'lucide-react';
+import { IconButton } from '@/components/cikartma';
 import { CATEGORIES, type Language, translations, VOCABULARY_META } from '@/i18n/translations';
 import { sheetTransition } from '@/lib/motion';
 import { STATE_ILLUSTRATION_PATHS } from '@/utils/icons8Assets';
@@ -23,7 +21,6 @@ interface QuizHubModalProps {
   onSelectMode: (mode: QuizModeChoice) => void;
   onClose: () => void;
   onButtonPop: () => void;
-  onOpenScrolla?: () => void;
 }
 
 const focusRing =
@@ -42,7 +39,6 @@ export default function QuizHubModal({
   onSelectMode,
   onClose,
   onButtonPop,
-  onOpenScrolla,
 }: QuizHubModalProps) {
   const t = translations[lang];
   const isPage = presentation === 'page';
@@ -123,8 +119,6 @@ export default function QuizHubModal({
           </IconButton>
         </div>
       )}
-
-      <QuizSectionSwitch section="quiz" lang={lang} />
 
       <div className="flex items-center gap-4">
         <img
@@ -221,25 +215,6 @@ export default function QuizHubModal({
         ))}
       </div>
 
-      <div className="mt-4 flex items-center justify-between gap-4 rounded-cik-lg bg-cik-surface-2 p-5">
-        <div className="flex min-w-0 items-center gap-3">
-          <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-cik-md bg-cik-pink text-cik-cta">
-            <Swords size={20} strokeWidth={2} aria-hidden="true" />
-          </span>
-          <p className="cik-subhead text-cik-text-2">{t.quizScrollaHint}</p>
-        </div>
-        {onOpenScrolla ? (
-          <Button
-            tone="ghost"
-            onClick={() => {
-              onButtonPop();
-              onOpenScrolla();
-            }}
-          >
-            {t.quizScrollaCta}
-          </Button>
-        ) : null}
-      </div>
     </>
   );
 
@@ -252,7 +227,7 @@ export default function QuizHubModal({
       data-presentation={presentation}
       className={
         isPage
-          ? 'absolute inset-0 z-content flex h-full w-full flex-col bg-cik-bg text-cik-text'
+          ? 'relative z-20 flex h-full min-h-0 w-full flex-1 flex-col bg-cik-bg text-cik-text'
           : 'absolute inset-0 z-modal flex h-full w-full items-center justify-center bg-cik-text/30 p-4'
       }
     >

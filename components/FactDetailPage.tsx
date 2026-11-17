@@ -11,16 +11,13 @@ import {
   ExternalLink,
   RotateCcw,
   Sparkles,
-  Swords,
   Zap,
 } from 'lucide-react';
 import CardMediaStage from '@/components/CardMediaStage';
 import CategoryMotionArt from '@/components/CategoryMotionArt';
 import FactIcon from '@/components/FactIcon';
-import { detectMediaProvider, mediaCreditLine } from '@/lib/mediaProvider';
+import MediaAttributionBadge from '@/components/MediaAttributionBadge';
 import { getCategoryMeta, type Language, translations } from '@/i18n/translations';
-import { ENABLE_COMPETITIVE_TABS } from '@/lib/featureFlags';
-import { trackEvent } from '@/lib/telemetry';
 import type { FactCard } from '@/types/fact';
 import { getFactUrl } from '@/utils/factsData';
 import { UI_ICON_PATHS } from '@/utils/fluentAssets';
@@ -55,7 +52,7 @@ export default function FactDetailPage({
   resolvedGifUrl,
   onClose,
   onNextCard,
-  onOpenDuel,
+  onOpenDuel: _onOpenDuel,
   onButtonPop,
   onEarnXp,
   onSuccessSound,
@@ -86,7 +83,6 @@ export default function FactDetailPage({
   const localized = fact[lang];
   const catMeta = getCategoryMeta(fact.category);
   const factUrl = getFactUrl(fact, lang);
-  const factSlug = fact.slug || fact.en.slug || fact.tr.slug || fact.id;
   const effectiveGifUrl = resolvedGifUrl ?? fact.gifUrl ?? null;
 
   const detailArticle = useMemo(
@@ -139,7 +135,7 @@ export default function FactDetailPage({
       {/* Top Page Bar */}
       <div
         className={`flex shrink-0 items-center justify-between gap-3 border-b px-4 pb-3 pt-[calc(env(safe-area-inset-top,14px)+14px)] lg:pt-4 ${
-          darkMode ? 'border-cik-line bg-cik-bg' : 'border-cik-line bg-cik-bg'
+          darkMode ? 'border-cik-line bg-cik-pink' : 'border-cik-line bg-cik-pink'
         }`}
       >
         <button
@@ -150,23 +146,15 @@ export default function FactDetailPage({
           }}
           aria-label={t.tiktokBackFrontBtn}
           data-testid="detail-close-btn"
-          className={`inline-flex h-10 items-center gap-2 rounded-pill border px-3.5 text-xs font-extrabold transition active:scale-95 ${
-            darkMode
-              ? 'border-cik-line bg-cik-surface text-cik-text hover:bg-cik-surface'
-              : 'border-cik-line bg-cik-surface text-cik-text hover:bg-cik-surface-2'
-          }`}
+          className="inline-flex h-10 shrink-0 items-center gap-2 rounded-pill border border-cik-line bg-cik-surface px-3.5 text-xs font-extrabold text-cik-text"
         >
           <ArrowLeft className="h-4 w-4 shrink-0" />
           <span>{lang === 'tr' ? 'Karta Dön' : 'Back to Card'}</span>
         </button>
 
-        <div
-          className={`inline-flex w-fit items-center gap-1.5 rounded-pill px-3 py-1.5 text-xs font-extrabold ${
-            darkMode ? 'bg-cik-surface text-cik-text' : 'bg-cik-bg text-cik-text'
-          }`}
-        >
-          <img src={catMeta.iconPath} alt="" aria-hidden="true" className="h-4 w-4 object-contain" />
-          <span>{t.whyHowHeader}</span>
+        <div className="inline-flex min-w-0 max-w-full items-center gap-1.5 rounded-pill bg-cik-bg px-3 py-1.5 text-xs font-extrabold text-cik-text">
+          <img src={catMeta.iconPath} alt="" aria-hidden="true" className="h-4 w-4 shrink-0 object-contain" />
+          <span className="min-w-0">{t.whyHowHeader}</span>
         </div>
       </div>
 
@@ -305,9 +293,22 @@ export default function FactDetailPage({
                   darkMode ? 'text-cik-text' : 'text-cik-text'
                 }`}
               >
-                {detailHighlights.curiosityHook}
-              </p>
-            </div>
+              {detailHighlights.curiosityHook}
+            </p>
+          </div>
+            {localized.quiz?.explanation ? (
+              <div
+                data-testid="detail-cause-effect"
+                className="rounded-2xl border border-cik-line bg-cik-pink px-3.5 py-2.5"
+              >
+                <p className="cik-caption-2 font-black uppercase tracking-wider text-cik-cta">
+                  {lang === 'tr' ? 'Neden / Sonuç' : 'Cause / Effect'}
+                </p>
+                <p className="mt-1 text-xs font-semibold leading-relaxed text-cik-text">
+                  {localized.quiz.explanation}
+                </p>
+              </div>
+            ) : null}
           </div>
 
           {/* Scientific Deep-Dive Narrative */}
@@ -475,31 +476,6 @@ export default function FactDetailPage({
             </div>
           )}
 
-          {/* Scrolla 1v1 Quick Duel Banner */}
-          {ENABLE_COMPETITIVE_TABS && (
-            <button
-              type="button"
-              onClick={() => {
-                onButtonPop();
-                void trackEvent(factSlug, fact.category, 'duel');
-                onOpenDuel(fact);
-              }}
-              className="flex min-h-12 w-full items-center justify-between gap-3 rounded-cik-lg bg-cik-cta px-4 py-3 text-left text-cik-on-cta shadow-sticker"
-            >
-              <div className="min-w-0">
-                <p className="cik-caption-2 font-black uppercase tracking-wider text-cik-cta">
-                  Scrolla 1v1
-                </p>
-                <p className="text-xs font-extrabold">
-                  {lang === 'tr'
-                    ? 'Bu bilgiyle arkadaşını 1v1 düelloya davet et!'
-                    : 'Challenge a friend in a Scrolla 1v1 duel!'}
-                </p>
-              </div>
-              <Swords className="h-5 w-5 shrink-0" />
-            </button>
-          )}
-
           {/* Verified Source Attribution */}
           <div
             data-testid="fact-source-box"
@@ -566,31 +542,18 @@ export default function FactDetailPage({
                 <ExternalLink className="h-3 w-3 shrink-0" />
               </Link>
             </div>
-            {mediaCreditLine(
-              detectMediaProvider({
-                gifUrl: effectiveGifUrl,
-                posterUrl: fact.posterUrl,
-                mediaSource: fact.mediaSource,
-                mediaProvider: fact.mediaSource,
-              }),
-              lang
-            ) ? (
-              <p
-                data-testid="detail-media-credit"
-                className="border-t pt-2 cik-caption-2 font-bold text-cik-text"
-              >
-                {mediaCreditLine(
-                  detectMediaProvider({
-                    gifUrl: effectiveGifUrl,
-                    posterUrl: fact.posterUrl,
-                    mediaSource: fact.mediaSource,
-                    mediaProvider: fact.mediaSource,
-                  }),
-                  lang
-                )}
-              </p>
-            ) : null}
           </div>
+          <MediaAttributionBadge
+            lang={lang}
+            card={{
+              gifUrl: effectiveGifUrl,
+              posterUrl: fact.posterUrl,
+              videoUrl: fact.gifUrl,
+              mediaSource: fact.mediaSource,
+              mediaProvider: fact.mediaSource,
+              mediaCredit: fact.mediaCredit,
+            }}
+          />
         </div>
       </div>
 
