@@ -12,31 +12,43 @@ function card(kicker: string, title: string, subtitle: string) {
           width: '100%',
           height: '100%',
           display: 'flex',
-          flexDirection: 'column',
-          justifyContent: 'space-between',
-          padding: '64px 72px',
-          background: 'linear-gradient(135deg, #FFFDF9 0%, #EDE9FE 48%, #DDD6FE 100%)',
+          background: '#FFF4F7',
+          padding: '36px',
           fontFamily: 'sans-serif',
-          color: '#1E1B2E',
         }}
       >
-        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-          <BrandLogo size={64} id="viral-og-brand" />
-          <div style={{ display: 'flex', flexDirection: 'column' }}>
-            <span style={{ fontSize: '28px', fontWeight: 800 }}>Scrolly</span>
-            <span style={{ fontSize: '18px', color: '#6D28D9' }}>scrolly.live</span>
+        <div
+          style={{
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'space-between',
+            width: '100%',
+            height: '100%',
+            background: '#FFFFFF',
+            borderRadius: '36px',
+            border: '3px solid #F3C5D6',
+            borderBottom: '10px solid #FF8DB8',
+            padding: '44px 52px 36px',
+          }}
+        >
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+            <span style={{ fontSize: '22px', fontWeight: 800, letterSpacing: '0.08em', color: '#C44569' }}>
+              {kicker}
+            </span>
+            <span style={{ fontSize: '56px', fontWeight: 800, lineHeight: 1.1, color: '#3F1D30', maxWidth: '980px' }}>
+              {title}
+            </span>
+            <span style={{ fontSize: '26px', lineHeight: 1.35, fontWeight: 600, color: '#7A4A63', maxWidth: '960px' }}>
+              {subtitle}
+            </span>
           </div>
-        </div>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-          <span style={{ fontSize: '22px', fontWeight: 700, letterSpacing: '0.08em', color: '#6D28D9' }}>
-            {kicker}
-          </span>
-          <span style={{ fontSize: '60px', fontWeight: 800, lineHeight: 1.1, maxWidth: '1000px' }}>
-            {title}
-          </span>
-          <span style={{ fontSize: '28px', lineHeight: 1.35, color: '#3F3A52', maxWidth: '980px' }}>
-            {subtitle}
-          </span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+            <BrandLogo size={72} id="viral-og-brand" title="Scrolly" />
+            <div style={{ display: 'flex', flexDirection: 'column' }}>
+              <span style={{ fontSize: '28px', fontWeight: 800, color: '#3F1D30' }}>Scrolly</span>
+              <span style={{ fontSize: '22px', fontWeight: 700, color: '#7A4A63' }}>scrolly.live</span>
+            </div>
+          </div>
         </div>
       </div>
     ),
