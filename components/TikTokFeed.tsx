@@ -19,7 +19,7 @@ import {
 import type { FactCard } from '@/types/fact';
 import type { VocabularyCard } from '@/types/vocabulary';
 import { getVocabularyFacts } from '@/data/vocabularyFacts';
-import { CATEGORY_ILLUSTRATION_MAP, DOCK_ICON_MAP, UI_ICON_PATHS } from '@/utils/icons8Assets';
+import { CATEGORY_ILLUSTRATION_MAP, DOCK_ICON_MAP } from '@/utils/icons8Assets';
 import { markFactSeenInStorage } from '@/utils/seenFacts';
 
 const useIsomorphicLayoutEffect = typeof window !== 'undefined' ? useLayoutEffect : useEffect;
@@ -148,6 +148,7 @@ const TikTokFeed = forwardRef<TikTokFeedHandle, TikTokFeedProps>(function TikTok
     }, 400);
   }, []);
   const [chromeBlocked, setChromeBlocked] = useState<boolean>(false);
+  const [hudTraveling, setHudTraveling] = useState(false);
   const activeCategoryMeta = getCategoryMeta(activeCategory);
   const categoryTriggerLabel =
     activeCategory === 'all'
@@ -536,7 +537,7 @@ const TikTokFeed = forwardRef<TikTokFeedHandle, TikTokFeedProps>(function TikTok
     };
   }, [isCategoryDrawerOpen]);
 
-  // When a card detail overlay is open, disable HUD hit-testing so close/back controls stay reachable
+  // Share, flip, and notification sheets hide the HUD. The dock listens to the same event.
   useEffect(() => {
     const onChromeBlock = (event: Event) => {
       const detail = (event as CustomEvent<{ open?: boolean }>).detail;
@@ -544,6 +545,29 @@ const TikTokFeed = forwardRef<TikTokFeedHandle, TikTokFeedProps>(function TikTok
     };
     window.addEventListener('scrolly-chrome-block', onChromeBlock as EventListener);
     return () => window.removeEventListener('scrolly-chrome-block', onChromeBlock as EventListener);
+  }, []);
+
+  // Deference: while a card is between snaps, the HUD lifts 4px and drops to 92% opacity.
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    let frame = 0;
+    const update = () => {
+      frame = 0;
+      const height = el.clientHeight || 1;
+      const offset = el.scrollTop % height;
+      const traveling = offset > 8 && height - offset > 8;
+      setHudTraveling((prev) => (prev === traveling ? prev : traveling));
+    };
+    const onScroll = () => {
+      if (frame) return;
+      frame = window.requestAnimationFrame(update);
+    };
+    el.addEventListener('scroll', onScroll, { passive: true });
+    return () => {
+      el.removeEventListener('scroll', onScroll);
+      if (frame) window.cancelAnimationFrame(frame);
+    };
   }, []);
 
   // Ambient accent + active fact/slide notification for desktop stage & side panel
@@ -566,72 +590,75 @@ const TikTokFeed = forwardRef<TikTokFeedHandle, TikTokFeedProps>(function TikTok
       data-theme={darkMode ? 'dark' : 'light'}
       className="relative mx-auto h-full w-full overflow-hidden bg-cik-bg text-cik-text"
     >
-      {/* Top HUD: sharp unblurred single horizontal row sitting above cards cleanly (z-[60]) */}
+      {/* Top HUD. Sheets set chromeBlocked: this bar goes inert and fully transparent. */}
       <header
+        data-testid="feed-hud"
         data-chrome-blocked={chromeBlocked ? 'true' : 'false'}
-        className={`pointer-events-none absolute inset-x-0 top-0 z-[60] flex items-center justify-between gap-2 px-4 pt-4 pb-2 ${
-          chromeBlocked ? 'opacity-40' : ''
+        inert={chromeBlocked ? true : undefined}
+        aria-hidden={chromeBlocked || undefined}
+        className={`material-thin pointer-events-none absolute inset-x-0 top-0 z-hud flex items-center gap-2 px-4 transition-[transform,opacity] duration-150 motion-reduce:translate-y-0 motion-reduce:transition-none ${
+          chromeBlocked
+            ? 'pointer-events-none opacity-0'
+            : hudTraveling
+              ? '-translate-y-1 opacity-[0.92]'
+              : 'opacity-100'
         }`}
+        style={{
+          height: 'calc(56px + env(safe-area-inset-top, 0px))',
+          paddingTop: 'env(safe-area-inset-top, 0px)',
+        }}
       >
-        <div
-          className={`relative z-10 flex min-w-0 flex-1 items-center gap-2 ${
+        <BrandLogo size={32} id="feed-header-brand" className="pointer-events-none shrink-0 lg:hidden" />
+        <motion.button
+          type="button"
+          whileTap={chromeBlocked ? undefined : { scale: 0.96 }}
+          onClick={() => {
+            if (ignoreCategoryToggleRef.current) return;
+            onButtonPop();
+            setIsCategoryDrawerOpen((prev) => !prev);
+          }}
+          aria-expanded={isCategoryDrawerOpen}
+          data-testid="choose-category-btn"
+          className={`inline-flex h-11 min-w-0 max-w-[44vw] items-center gap-2 rounded-pill bg-cik-surface px-3 text-cik-text shadow-e1 ${
             chromeBlocked ? 'pointer-events-none' : 'pointer-events-auto'
           }`}
         >
-          <BrandLogo size={36} id="feed-header-brand" className="lg:hidden" />
-          <motion.button
-            type="button"
-            whileTap={{ scale: 0.96 }}
-            onClick={() => {
-              if (ignoreCategoryToggleRef.current) return;
-              onButtonPop();
-              setIsCategoryDrawerOpen((prev) => !prev);
-            }}
-            aria-expanded={isCategoryDrawerOpen}
-            data-testid="choose-category-btn"
-            className="inline-flex h-11 max-w-full items-center gap-1.5 rounded-pill border-[3px] border-white bg-cik-surface px-3 text-[13px] font-bold text-cik-text shadow-sticker"
-          >
-            <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-white p-0.5 ring-1 ring-[#1E1B2E]/10 dark:ring-0">
-              <img
-                src={activeCategoryMeta.iconPath}
-                alt=""
-                aria-hidden="true"
-                className="h-3 w-3 object-contain"
-              />
-            </span>
-            <span className="truncate whitespace-nowrap">{categoryTriggerLabel}</span>
-            <ChevronDown
-              className={`h-3.5 w-3.5 shrink-0 transition-transform duration-200 ${
-                isCategoryDrawerOpen ? 'rotate-180' : ''
-              }`}
-            />
-          </motion.button>
-        </div>
+          <img
+            src={activeCategoryMeta.iconPath}
+            alt=""
+            aria-hidden="true"
+            width={24}
+            height={24}
+            className="h-6 w-6 shrink-0 object-contain"
+          />
+          <span className="cik-footnote min-w-0 truncate">{categoryTriggerLabel}</span>
+          <ChevronDown
+            size={16}
+            strokeWidth={2}
+            aria-hidden="true"
+            className={`shrink-0 transition-transform duration-150 motion-reduce:transition-none ${
+              isCategoryDrawerOpen ? 'rotate-180' : ''
+            }`}
+          />
+        </motion.button>
 
         <div
-          className={`relative z-10 flex shrink-0 items-center gap-1.5 ${
+          className={`ml-auto flex shrink-0 items-center gap-2 ${
             chromeBlocked ? 'pointer-events-none' : 'pointer-events-auto'
           }`}
         >
-          
-
           <div
             role="group"
-            aria-label="Language switch"
-            className="flex shrink-0 items-center gap-1 rounded-pill border-[3px] border-white bg-cik-surface p-0.5 text-[13px] font-bold text-cik-text shadow-sticker"
+            aria-label={lang === 'tr' ? 'Dil' : 'Language'}
+            className="flex shrink-0 items-center rounded-pill bg-cik-surface p-1 shadow-e1"
           >
-            <img
-              src={UI_ICON_PATHS.langGlobe}
-              alt=""
-              aria-hidden="true"
-              className="ml-1 h-3.5 w-3.5 shrink-0 object-contain"
-            />
             <button
               type="button"
               onClick={() => onChangeLang('tr')}
               data-testid="lang-btn-tr"
-              className={`inline-flex h-11 min-w-11 items-center justify-center rounded-pill px-2 ${
-                lang === 'tr' ? 'bg-cik-berry text-cik-text' : 'text-cik-muted'
+              aria-pressed={lang === 'tr'}
+              className={`cik-footnote inline-flex h-11 min-w-11 items-center justify-center rounded-pill px-3 ${
+                lang === 'tr' ? 'bg-cik-berry text-cik-on-berry' : 'text-cik-text-2'
               }`}
             >
               TR
@@ -640,8 +667,9 @@ const TikTokFeed = forwardRef<TikTokFeedHandle, TikTokFeedProps>(function TikTok
               type="button"
               onClick={() => onChangeLang('en')}
               data-testid="lang-btn-en"
-              className={`inline-flex h-11 min-w-11 items-center justify-center rounded-pill px-2 ${
-                lang === 'en' ? 'bg-cik-berry text-cik-text' : 'text-cik-muted'
+              aria-pressed={lang === 'en'}
+              className={`cik-footnote inline-flex h-11 min-w-11 items-center justify-center rounded-pill px-3 ${
+                lang === 'en' ? 'bg-cik-berry text-cik-on-berry' : 'text-cik-text-2'
               }`}
             >
               EN
