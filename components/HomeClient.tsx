@@ -63,7 +63,7 @@ import {
   hydrateLocalMemoryFromAuthUser,
 } from '@/lib/authClient';
 import { isShortRoomCode, normalizeRoomCode } from '@/lib/duelStore';
-import { resolveDocumentDark } from '@/lib/theme';
+import { applyAppearance, resolveDocumentDark, type AppearanceMode } from '@/lib/theme';
 import {
   fetchFactsFromApiWithCache,
   fetchPaginatedFactsFromApi,
@@ -1157,6 +1157,27 @@ export default function HomeClient({ initialFacts, initialVocabulary, initialLan
 
   useEffect(() => {
     const onTheme = () => handleToggleDarkMode();
+    const onAppearance = (event: Event) => {
+      const mode = (event as CustomEvent<AppearanceMode>).detail;
+      if (mode !== 'light' && mode !== 'dark' && mode !== 'system') return;
+      const prefersDark =
+        typeof window.matchMedia === 'function' && window.matchMedia('(prefers-color-scheme: dark)').matches;
+      setMemory((prev) => {
+        const updated = applyAppearance(prev, mode, prefersDark);
+        saveUserMemory(updated);
+        return updated;
+      });
+    };
+    const onCookie = (event: Event) => {
+      const choice = (event as CustomEvent<'granted' | 'denied'>).detail;
+      if (choice !== 'granted' && choice !== 'denied') return;
+      applyGoogleConsentChoice(choice);
+      setMemory((prev) => {
+        const updated = { ...prev, cookieAccepted: true };
+        saveUserMemory(updated);
+        return updated;
+      });
+    };
     const onSound = () => handleToggleSound();
     const onDuel = () => {
       setActiveQuiz(null);
@@ -1171,11 +1192,15 @@ export default function HomeClient({ initialFacts, initialVocabulary, initialLan
       }
     };
     window.addEventListener('scrolly-toggle-theme', onTheme);
+    window.addEventListener('scrolly-set-appearance', onAppearance as EventListener);
+    window.addEventListener('scrolly-set-cookie', onCookie as EventListener);
     window.addEventListener('scrolly-toggle-sound', onSound);
     window.addEventListener('scrolly-open-duel', onDuel);
     window.addEventListener('scrolly-quiz-section', onSection as EventListener);
     return () => {
       window.removeEventListener('scrolly-toggle-theme', onTheme);
+      window.removeEventListener('scrolly-set-appearance', onAppearance as EventListener);
+      window.removeEventListener('scrolly-set-cookie', onCookie as EventListener);
       window.removeEventListener('scrolly-toggle-sound', onSound);
       window.removeEventListener('scrolly-open-duel', onDuel);
       window.removeEventListener('scrolly-quiz-section', onSection as EventListener);
