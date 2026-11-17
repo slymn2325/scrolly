@@ -3,6 +3,7 @@
 import React, { forwardRef, useCallback, useEffect, useImperativeHandle, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { ArrowLeft, ChevronDown } from 'lucide-react';
+import NotificationsBell from '@/components/NotificationsBell';
 import NativeAdSlide from '@/components/NativeAdSlide';
 import QuizCtaSlide from '@/components/QuizCtaSlide';
 import TikTokFactSlide from '@/components/TikTokFactSlide';
@@ -558,9 +559,7 @@ const TikTokFeed = forwardRef<TikTokFeedHandle, TikTokFeedProps>(function TikTok
   return (
     <div
       data-theme={darkMode ? 'dark' : 'light'}
-      className={`relative mx-auto h-full w-full overflow-hidden ${
-        darkMode ? 'bg-[#0A0A0E] text-white' : 'bg-[#F7F5FB] text-[#1E1B2E]'
-      }`}
+      className="relative mx-auto h-full w-full overflow-hidden bg-cik-bg text-cik-text"
     >
       {/* Top HUD: sharp unblurred single horizontal row sitting above cards cleanly (z-[60]) */}
       <header
@@ -583,13 +582,7 @@ const TikTokFeed = forwardRef<TikTokFeedHandle, TikTokFeedProps>(function TikTok
             }}
             aria-expanded={isCategoryDrawerOpen}
             data-testid="choose-category-btn"
-            className={`inline-flex h-9 max-w-full items-center gap-1.5 rounded-full border px-2.5 sm:px-3 text-xs font-extrabold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400 ${
-              isCategoryDrawerOpen
-                ? 'border-violet-400 bg-violet-600 text-white'
-                : darkMode
-                  ? 'border-white/20 bg-[#12121A]/90 text-white hover:bg-[#1C1C28]'
-                  : 'border-[#1E1B2E]/20 bg-white text-[#1E1B2E] shadow-sm hover:bg-slate-50'
-            }`}
+            className="inline-flex h-11 max-w-full items-center gap-1.5 rounded-pill border-[3px] border-white bg-cik-surface px-3 text-[13px] font-bold text-cik-text shadow-sticker"
           >
             <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-white p-0.5 ring-1 ring-[#1E1B2E]/10 dark:ring-0">
               <img
@@ -618,11 +611,7 @@ const TikTokFeed = forwardRef<TikTokFeedHandle, TikTokFeedProps>(function TikTok
           <div
             role="group"
             aria-label="Language switch"
-            className={`flex h-9 shrink-0 items-center gap-1.5 rounded-full border p-0.5 text-[10px] font-black transition-colors ${
-              darkMode
-                ? 'border-white/25 bg-[#12121A]/95 text-white'
-                : 'border-[#1E1B2E]/25 bg-white text-[#1E1B2E] shadow-sm'
-            }`}
+            className="flex shrink-0 items-center gap-1 rounded-pill border-[3px] border-white bg-cik-surface p-0.5 text-[13px] font-bold text-cik-text shadow-sticker"
           >
             <img
               src={UI_ICON_PATHS.langGlobe}
@@ -634,14 +623,8 @@ const TikTokFeed = forwardRef<TikTokFeedHandle, TikTokFeedProps>(function TikTok
               type="button"
               onClick={() => onChangeLang('tr')}
               data-testid="lang-btn-tr"
-              className={`inline-flex h-7 min-w-[30px] items-center justify-center rounded-full px-2 transition-[background-color,color,transform] duration-200 ${
-                lang === 'tr'
-                  ? darkMode
-                    ? 'bg-white text-[#09090B]'
-                    : 'bg-[#1E1B2E] text-white'
-                  : darkMode
-                    ? 'text-white/80 hover:text-white'
-                    : 'text-[#1E1B2E]/75 hover:text-[#1E1B2E]'
+              className={`inline-flex h-11 min-w-11 items-center justify-center rounded-pill px-2 ${
+                lang === 'tr' ? 'bg-cik-berry text-cik-text' : 'text-cik-muted'
               }`}
             >
               TR
@@ -650,19 +633,14 @@ const TikTokFeed = forwardRef<TikTokFeedHandle, TikTokFeedProps>(function TikTok
               type="button"
               onClick={() => onChangeLang('en')}
               data-testid="lang-btn-en"
-              className={`inline-flex h-7 min-w-[30px] items-center justify-center rounded-full px-2 transition-[background-color,color,transform] duration-200 ${
-                lang === 'en'
-                  ? darkMode
-                    ? 'bg-white text-[#09090B]'
-                    : 'bg-[#1E1B2E] text-white'
-                  : darkMode
-                    ? 'text-white/80 hover:text-white'
-                    : 'text-[#1E1B2E]/75 hover:text-[#1E1B2E]'
+              className={`inline-flex h-11 min-w-11 items-center justify-center rounded-pill px-2 ${
+                lang === 'en' ? 'bg-cik-berry text-cik-text' : 'text-cik-muted'
               }`}
             >
               EN
             </button>
           </div>
+          <NotificationsBell lang={lang} />
         </div>
       </header>
 
@@ -677,15 +655,11 @@ const TikTokFeed = forwardRef<TikTokFeedHandle, TikTokFeedProps>(function TikTok
             transition={{ duration: 0.2, ease: 'easeOut' }}
             data-testid="category-drawer"
             data-presentation="page"
-            className={`pointer-events-auto absolute inset-0 z-[70] flex h-full w-full flex-col overflow-hidden ${
-              darkMode ? 'bg-[#0A0A0E] text-white' : 'bg-[#F7F5FB] text-[#1E1B2E]'
-            }`}
+            className="pointer-events-auto absolute inset-0 z-[70] flex h-full w-full flex-col overflow-hidden bg-cik-bg text-cik-text"
           >
             {/* Top Navigation Bar */}
             <div
-              className={`flex shrink-0 items-center justify-between gap-3 border-b px-4 pb-3 pt-[calc(env(safe-area-inset-top,14px)+14px)] lg:pt-4 ${
-                darkMode ? 'border-white/10 bg-[#0A0A0E]' : 'border-[#1E1B2E]/10 bg-[#F7F5FB]'
-              }`}
+              className="flex shrink-0 items-center justify-between gap-3 border-b border-cik-line bg-cik-bg px-4 pb-3 pt-[calc(env(safe-area-inset-top,14px)+14px)]"
             >
               <button
                 type="button"
@@ -724,7 +698,7 @@ const TikTokFeed = forwardRef<TikTokFeedHandle, TikTokFeedProps>(function TikTok
                     cat.id === 'all'
                       ? DOCK_ICON_MAP.explore
                       : cat.id === 'vocabulary'
-                        ? UI_ICON_PATHS.langGlobe
+                        ? '/assets/fluent/books.png'
                         : CATEGORY_ILLUSTRATION_MAP[cat.id];
                   return (
                     <button
@@ -736,14 +710,8 @@ const TikTokFeed = forwardRef<TikTokFeedHandle, TikTokFeedProps>(function TikTok
                         setIsCategoryDrawerOpen(false);
                       }}
                       data-testid={`category-option-${cat.id}`}
-                      className={`group relative flex flex-col items-start gap-2.5 rounded-2xl border p-3.5 text-left transition active:scale-[0.98] ${
-                        isActive
-                          ? cat.id === 'vocabulary'
-                            ? 'border-indigo-400 bg-indigo-600 text-white shadow-lg shadow-indigo-500/25'
-                            : 'border-violet-400 bg-violet-600 text-white shadow-lg shadow-violet-500/25'
-                          : darkMode
-                            ? 'border-white/10 bg-white/[0.05] text-white hover:bg-white/[0.1]'
-                            : 'border-[#1E1B2E]/10 bg-white text-[#1E1B2E] shadow-sm hover:bg-slate-50'
+                      className={`group relative flex min-h-11 flex-col items-start gap-2.5 rounded-sticker border-[3px] border-white p-3.5 text-left shadow-sticker ${
+                        isActive ? 'bg-cik-berry text-cik-text' : 'bg-cik-surface text-cik-text'
                       }`}
                     >
                       <div className="flex w-full items-center justify-between gap-2">
@@ -781,7 +749,7 @@ const TikTokFeed = forwardRef<TikTokFeedHandle, TikTokFeedProps>(function TikTok
       >
         {slides.length === 0 ? (
           <div className="flex h-full w-full flex-col items-center justify-center gap-3 px-6 text-center">
-            <p className="text-sm font-bold text-white/80">
+            <p className="text-sm font-bold text-cik-text">
               {lang === 'tr'
                 ? 'Bu kategoride henüz gösterilecek kart bulunamadı.'
                 : 'No cards found in this category yet.'}

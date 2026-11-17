@@ -10,8 +10,7 @@ export function ScrollyAppIconArtwork({ size }: { size: number }) {
         position: 'relative',
         alignItems: 'center',
         justifyContent: 'center',
-        background:
-          'linear-gradient(140deg, #31107A 0%, #5B21B6 52%, #7C3AED 100%)',
+        background: 'linear-gradient(140deg, #FFD6E6 0%, #FFF4F7 52%, #FFE8A3 100%)',
         overflow: 'hidden',
       }}
     >

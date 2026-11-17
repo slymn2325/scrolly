@@ -3,7 +3,9 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { type Language, translations } from '@/i18n/translations';
-import { DOCK_ICON_MAP, type DockTabId } from '@/utils/icons8Assets';
+import type { DockTabId } from '@/utils/icons8Assets';
+import Icon from '@/components/cikartma/Icon';
+import type { IconName } from '@/lib/iconMap';
 
 export type { DockTabId };
 
@@ -13,130 +15,71 @@ interface IosFloatingIslandDockProps {
   darkMode?: boolean;
   showQuizDot: boolean;
   onSelectTab: (tab: DockTabId) => void;
-  /** When true, dock ignores pointer hits so overlays above remain clickable */
   chromeBlocked?: boolean;
 }
+
+const TABS: Array<{ id: DockTabId; icon: IconName; labelKey: 'dockExplore' | 'dockQuiz' | 'dockLeaderboard' | 'dockDiploma' }> = [
+  { id: 'explore', icon: 'explore', labelKey: 'dockExplore' },
+  { id: 'quiz', icon: 'quiz', labelKey: 'dockQuiz' },
+  { id: 'leaderboard', icon: 'leaderboard', labelKey: 'dockLeaderboard' },
+  { id: 'diploma', icon: 'profile', labelKey: 'dockDiploma' },
+];
 
 export default function IosFloatingIslandDock({
   activeTab,
   lang,
-  darkMode = true,
   showQuizDot,
   onSelectTab,
   chromeBlocked = false,
 }: IosFloatingIslandDockProps) {
   const t = translations[lang];
 
-  // When ENABLE_COMPETITIVE_TABS is false, keep only the 3 core tabs: Explore | Quiz | Profile & Streak
-  const tabs: Array<{
-    id: DockTabId;
-    label: string;
-    iconSrc: string;
-    legacyTestId: string;
-  }> = [
-    { id: 'explore', label: t.dockExplore, iconSrc: DOCK_ICON_MAP.explore, legacyTestId: 'explore-feed-btn' },
-    { id: 'quiz', label: t.dockQuiz, iconSrc: DOCK_ICON_MAP.quiz, legacyTestId: 'mini-quiz-btn' },
-    { id: 'language', label: t.dockLanguage, iconSrc: DOCK_ICON_MAP.language, legacyTestId: 'language-tab-btn' },
-    { id: 'diploma', label: t.dockDiploma, iconSrc: DOCK_ICON_MAP.diploma, legacyTestId: 'profile-drawer-btn' },
-  ];
-
   return (
     <div
       data-testid="ios-floating-dock-shell"
-      className={`pointer-events-none fixed inset-x-0 bottom-[max(14px,env(safe-area-inset-bottom))] z-40 mx-auto w-full max-w-[440px] px-4 ${
+      className={`pointer-events-none fixed inset-x-0 bottom-[max(10px,env(safe-area-inset-bottom))] z-40 mx-auto w-full max-w-[440px] px-4 ${
         chromeBlocked ? 'opacity-40' : ''
       }`}
     >
       <nav
-        aria-label="iOS Floating Island Dock"
+        aria-label="Kesfet Quiz Siralama Profil"
         data-testid="ios-floating-dock"
-        data-theme={darkMode ? 'dark' : 'light'}
         className={`${
           chromeBlocked ? 'pointer-events-none' : 'pointer-events-auto'
-        } flex w-full items-center justify-between rounded-full border border-white/10 bg-[rgba(20,17,28,0.94)] px-2 py-1.5 text-white shadow-dock`}
+        } flex w-full items-center justify-between rounded-pill border-[3px] border-white bg-cik-surface px-1.5 py-1 text-cik-text shadow-sticker`}
       >
-      {tabs.map((tab) => {
-        const isActive = activeTab === tab.id;
-        const isCenter = tab.id === 'explore';
-
-        return (
-          <motion.button
-            key={tab.id}
-            type="button"
-            whileTap={{ scale: 0.92 }}
-            onClick={() => onSelectTab(tab.id)}
-            data-testid={`dock-tab-${tab.id}`}
-            aria-label={tab.label}
-            aria-current={isActive ? 'page' : undefined}
-            className={`relative flex min-h-[44px] min-w-0 flex-1 flex-col items-center justify-center gap-0.5 rounded-full px-1 py-1.5 transition-colors ${
-              darkMode
-                ? isActive
-                  ? 'text-white'
-                  : 'text-white/75 hover:text-white'
-                : isActive
-                  ? 'text-white'
-                  : 'text-white/70 hover:text-white'
-            }`}
-          >
-            {isActive && (
-              <motion.span
-                layoutId="ios-island-pill"
-                transition={{ type: 'spring', stiffness: 420, damping: 30 }}
-                className={`absolute inset-0 rounded-full border shadow-sm ${
-                  darkMode
-                    ? 'border-white/25 bg-white/15'
-                    : 'border-[#1E1B2E]/[0.12] bg-[#1E1B2E]/[0.08]'
-                }`}
-              />
-            )}
-
-            <span className="relative z-10 flex items-center justify-center">
-              <img
-                src={tab.iconSrc}
-                alt=""
-                aria-hidden="true"
-                width={24}
-                height={24}
-                loading="eager"
-                decoding="sync"
-                className={`object-contain transition-transform duration-200 drop-shadow-sm ${
-                  isCenter ? 'h-6 w-6' : 'h-[22px] w-[22px]'
-                } ${isActive ? 'scale-110' : 'opacity-100'}`}
-              />
-              {tab.id === 'duel' && (
-                <span
-                  className={`absolute -right-3 -top-1 rounded-md px-1 py-[1px] text-[8px] font-black leading-none ${
-                    isActive
-                      ? 'bg-violet-600 text-white'
-                      : darkMode
-                        ? 'border border-white/20 bg-white/10 text-white/80'
-                        : 'border border-[#1E1B2E]/15 bg-[#1E1B2E]/[0.06] text-[#1E1B2E]/75'
-                  }`}
-                >
-                  1v1
-                </span>
+        {TABS.map((tab) => {
+          const isActive = activeTab === tab.id || (tab.id === 'explore' && activeTab === 'language');
+          const label = t[tab.labelKey];
+          return (
+            <motion.button
+              key={tab.id}
+              type="button"
+              whileTap={{ scale: 0.96 }}
+              onClick={() => onSelectTab(tab.id)}
+              data-testid={`dock-tab-${tab.id}`}
+              aria-label={label}
+              aria-current={isActive ? 'page' : undefined}
+              className={`relative flex h-11 min-w-0 flex-1 flex-col items-center justify-center gap-0.5 rounded-pill px-1 ${
+                isActive ? 'text-cik-cta' : 'text-cik-muted'
+              }`}
+            >
+              {isActive && (
+                <motion.span
+                  layoutId="ios-island-pill"
+                  className="absolute inset-0 rounded-pill bg-cik-pink"
+                />
               )}
-              {tab.id === 'quiz' && showQuizDot && (
-                <span
-                  data-testid="quiz-live-dot"
-                  className="absolute -right-1 -top-1 flex h-2.5 w-2.5"
-                >
-                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-rose-400 opacity-75" />
-                  <span
-                    className={`relative inline-flex h-2.5 w-2.5 rounded-full bg-rose-500 ring-2 ${
-                      darkMode ? 'ring-[#111115]' : 'ring-[#FFFDF9]'
-                    }`}
-                  />
-                </span>
-              )}
-            </span>
-
-            <span className="relative z-10 max-w-full truncate text-[10px] font-extrabold tracking-tight text-inherit">
-              {tab.label}
-            </span>
-          </motion.button>
-        );
-      })}
+              <span className="relative z-10 flex items-center justify-center">
+                <Icon name={tab.icon} size={24} tone={isActive ? 'active' : 'muted'} />
+                {tab.id === 'quiz' && showQuizDot && (
+                  <span data-testid="quiz-live-dot" className="absolute -right-1 -top-1 h-2.5 w-2.5 rounded-full bg-cik-cta ring-2 ring-white" />
+                )}
+              </span>
+              <span className="relative z-10 max-w-full truncate text-[11px] font-bold leading-none">{label}</span>
+            </motion.button>
+          );
+        })}
       </nav>
     </div>
   );

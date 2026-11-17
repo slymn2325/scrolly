@@ -528,7 +528,10 @@ export default function HomeClient({ initialFacts, initialVocabulary, initialLan
       else if (rawTab === 'leaderboard') resolvedTab = 'leaderboard';
       else if (rawTab === 'duel') resolvedTab = 'duel';
       else if (rawTab === 'profile' || rawTab === 'diploma') resolvedTab = 'diploma';
-      else if (rawTab === 'language' || rawTab === 'dil') resolvedTab = 'language';
+      else if (rawTab === 'language' || rawTab === 'dil') {
+        resolvedTab = 'explore';
+        if (!requestedCategory) requestedCategory = 'vocabulary';
+      }
 
       if (roomParam && isShortRoomCode(roomParam)) {
         roomCodeCandidate = normalizeRoomCode(roomParam);
@@ -552,9 +555,7 @@ export default function HomeClient({ initialFacts, initialVocabulary, initialLan
     }
 
     const effectiveInitialCategory: CategoryFilter =
-      resolvedTab === 'language'
-        ? 'vocabulary'
-        : requestedCategory ?? (requestedVocabId ? 'vocabulary' : 'all');
+      requestedCategory ?? (requestedVocabId ? 'vocabulary' : 'all');
 
     const restoredSession =
       !duelParam &&
@@ -1196,8 +1197,7 @@ export default function HomeClient({ initialFacts, initialVocabulary, initialLan
     activeSlideIndexRef.current = 0;
     setExploreSlideIndex(0);
     setActiveCategory(cat);
-    if (cat === 'vocabulary') setActiveTab('language');
-    else setActiveTab((prev) => (prev === 'language' ? 'explore' : prev));
+    setActiveTab((prev) => (prev === 'language' ? 'explore' : prev));
 
     if (typeof window !== 'undefined') {
       try {
@@ -1597,10 +1597,13 @@ export default function HomeClient({ initialFacts, initialVocabulary, initialLan
     if (tab === 'explore' || tab === 'language') {
       const nextCategory = tab === 'language' ? 'vocabulary' : 'all';
       const alreadyExploring =
-        activeTab === tab && activeCategoryRef.current === nextCategory && !activeQuiz && !hadSubPage;
+        (activeTab === tab || (tab === 'language' && activeTab === 'explore')) &&
+        activeCategoryRef.current === nextCategory &&
+        !activeQuiz &&
+        !hadSubPage;
       setActiveQuiz(null);
       setIncomingDuel(null);
-      setActiveTab(tab);
+      setActiveTab('explore');
       if (activeCategoryRef.current !== nextCategory) {
         handleSelectCategory(nextCategory);
       } else if (alreadyExploring && tab === 'explore') {
@@ -1895,7 +1898,7 @@ export default function HomeClient({ initialFacts, initialVocabulary, initialLan
       <div
         data-testid="reels-desktop-shell"
         data-theme={isDark ? 'dark' : 'light'}
-        className="relative flex h-[100dvh] w-screen overflow-hidden select-none bg-night text-[#F6F1EA]"
+        className="relative flex h-[100dvh] w-screen overflow-hidden select-none bg-cik-bg text-cik-text"
       >
         <WelcomeExploreModal
           open={showWelcome}
@@ -1946,18 +1949,16 @@ export default function HomeClient({ initialFacts, initialVocabulary, initialLan
         {/* Blurred ambient card-color fill (letterbox feel, not empty void) */}
         <div
           aria-hidden="true"
-          className="pointer-events-none absolute inset-0 hidden transition-[background] duration-500 lg:block"
+          className="pointer-events-none absolute inset-0 hidden transition-[background] duration-500 md:block"
           style={{
-            background: isDark
-              ? `radial-gradient(ellipse 70% 95% at 48% 50%, ${ambientAccent}66 0%, ${ambientAccent}22 38%, #0A0A0E 72%)`
-              : `radial-gradient(ellipse 70% 95% at 48% 50%, ${ambientAccent}55 0%, ${ambientAccent}28 42%, #E8E6F0 78%)`,
+            background: `radial-gradient(ellipse 70% 95% at 50% 45%, ${ambientAccent}33 0%, #FFD6E6 30%, #FFF4F7 62%, #CFF5E7 100%)`,
           }}
         />
         <div
           aria-hidden="true"
-          className="pointer-events-none absolute inset-0 hidden opacity-50 transition-[background] duration-500 lg:block"
+          className="pointer-events-none absolute inset-0 hidden opacity-40 transition-[background] duration-500 md:block"
           style={{
-            background: `linear-gradient(180deg, ${ambientAccent}40 0%, transparent 45%, ${ambientAccent}28 100%)`,
+            background: 'linear-gradient(180deg, #FFE8A3 0%, transparent 42%, #FFD6E6 100%)',
           }}
         />
 
@@ -1969,7 +1970,7 @@ export default function HomeClient({ initialFacts, initialVocabulary, initialLan
         {/* Immersive vertical stage: full-bleed on mobile/tablet; proportional 88dvh showcase on desktop */}
         <div
           data-testid="reels-phone-frame"
-          className="stage-card relative z-10 mx-auto flex h-full w-full min-w-0 flex-1 flex-col overflow-hidden bg-cream text-ink md:my-auto md:h-auto md:flex-none md:rounded-card"
+          className="stage-card relative z-10 mx-auto flex h-full w-full min-w-0 max-w-[400px] flex-none flex-col overflow-hidden bg-cik-bg text-cik-text"
         >
         <DeferredAdSense />
         <OfflineManager lang={lang} />
