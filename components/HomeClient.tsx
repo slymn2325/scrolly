@@ -1914,7 +1914,7 @@ export default function HomeClient({ initialFacts, initialVocabulary, initialLan
 
       <div
         data-testid="reels-desktop-grid"
-        className="relative mx-auto flex h-full min-h-0 w-full min-w-0 max-w-[1520px] lg:grid lg:grid-cols-[232px_minmax(0,1fr)]"
+        className="relative mx-auto flex h-full min-h-0 w-full min-w-0 max-w-[1520px] lg:grid lg:grid-cols-[232px_minmax(0,1fr)] xl:grid-cols-[232px_minmax(0,1fr)_320px]"
       >
       {/* Left rail: icons-only 768–1279, full labels ≥1280 */}
       <DesktopLeftNav
@@ -1938,36 +1938,50 @@ export default function HomeClient({ initialFacts, initialVocabulary, initialLan
         }
       />
 
-      {/* Main feed region: ambient fills gutters behind the stage */}
-      <div
-        data-testid="reels-main-region"
-        className="relative z-10 flex min-h-0 min-w-0 flex-1 items-stretch justify-center xl:col-start-2"
+      <a
+        href="#feed-stage"
+        className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-toast focus:rounded-pill focus:bg-cik-cta focus:px-4 focus:py-2 focus:text-cik-on-cta"
       >
-        {/* Blurred ambient card-color fill (letterbox feel, not empty void) */}
-        <div
-          aria-hidden="true"
-          className="pointer-events-none absolute inset-0 hidden transition-[background] duration-500 md:block dark:hidden"
-          style={{
-            background: `radial-gradient(ellipse 70% 95% at 50% 45%, ${ambientAccent}33 0%, #FFD6E6 30%, #FFF4F7 62%, #CFF5E7 100%)`,
-          }}
-        />
-        <div
-          aria-hidden="true"
-          className="pointer-events-none absolute inset-0 hidden opacity-40 transition-[background] duration-500 md:block dark:hidden"
-          style={{
-            background: 'linear-gradient(180deg, #FFE8A3 0%, transparent 42%, #FFD6E6 100%)',
-          }}
-        />
-
-        {/* Stage + attached desktop vertical actions + up/down rail + xl info panel */}
+        {lang === 'tr' ? 'İçeriğe geç' : 'Skip to content'}
+      </a>
+      <main
+        id="feed-stage"
+        data-testid="reels-main-region"
+        data-accent-ready={ambientAccent ? 'true' : 'false'}
+        className="relative z-10 flex min-h-0 min-w-0 flex-1 items-stretch justify-center bg-cik-bg xl:col-start-2"
+      >
         <div
           data-testid="reels-stage-row"
-          className="relative z-10 flex h-full w-full max-w-none items-stretch justify-center lg:h-[100dvh] lg:w-full lg:max-w-none lg:items-center lg:gap-2 lg:px-2"
+          className="relative z-10 flex h-full w-full items-stretch justify-center md:items-center"
         >
-        {/* Immersive vertical stage: full-bleed on mobile/tablet; proportional 88dvh showcase on desktop */}
+        <style>{`
+          @media (min-width: 768px) and (max-width: 1023px) {
+            [data-testid="reels-phone-frame"].stage-card {
+              width: min(calc(100% - 48px), 600px) !important;
+              max-width: 600px !important;
+              height: calc(100dvh - 32px) !important;
+              max-height: calc(100dvh - 32px) !important;
+              align-self: start;
+              margin-inline: auto;
+            }
+            [data-testid="reels-phone-frame"] .reels-slide {
+              height: calc(100% - 56px) !important;
+              min-height: calc(100% - 56px) !important;
+            }
+          }
+          @media (min-width: 1024px) {
+            [data-testid="reels-phone-frame"].stage-card {
+              width: clamp(420px, 36vw, 560px) !important;
+              min-width: 0 !important;
+              max-width: 560px !important;
+              height: calc(100dvh - 48px) !important;
+              max-height: calc(100dvh - 48px) !important;
+            }
+          }
+        `}</style>
         <div
           data-testid="reels-phone-frame"
-          className="stage-card relative z-10 mx-auto flex h-full w-full min-w-0 flex-none flex-col overflow-hidden bg-cik-bg text-cik-text lg:h-[min(86dvh,780px)] lg:w-full lg:max-w-[520px] xl:max-w-[560px]"
+          className="stage-card relative z-10 mx-auto flex h-full w-full min-w-0 flex-none flex-col overflow-hidden bg-cik-bg text-cik-text md:rounded-sticker md:shadow-sticker"
         >
         <DeferredAdSense />
         <OfflineManager lang={lang} />
@@ -2431,13 +2445,9 @@ export default function HomeClient({ initialFacts, initialVocabulary, initialLan
               type="button"
               data-testid="insight-drawer-open-btn"
               onClick={() => setInsightDrawerOpen(true)}
-              className={`absolute right-3 top-1/2 z-30 hidden -translate-y-1/2 rounded-2xl border px-2.5 py-3 text-[10px] font-black uppercase tracking-wider backdrop-blur-md ${
-                isDark
-                  ? 'border-white/15 bg-[#13131A]/90 text-white'
-                  : 'border-[#1E1B2E]/15 bg-white/95 text-[#1E1B2E] shadow-sm'
-              }`}
+              className="cik-footnote absolute right-3 top-1/2 z-rail hidden min-h-11 -translate-y-1/2 items-center rounded-pill bg-cik-surface px-3 text-cik-text shadow-e1 lg:inline-flex xl:hidden"
             >
-              {lang === 'tr' ? 'Insight' : 'Insight'}
+              {lang === 'tr' ? 'Bağlam' : 'Context'}
             </button>
             {insightDrawerOpen && (
               <div
@@ -2447,10 +2457,10 @@ export default function HomeClient({ initialFacts, initialVocabulary, initialLan
                 <button
                   type="button"
                   aria-label={lang === 'tr' ? 'Kapat' : 'Close'}
-                  className="absolute inset-0 bg-slate-950/60 backdrop-blur-sm"
+                  className="cik-scrim absolute inset-0"
                   onClick={() => setInsightDrawerOpen(false)}
                 />
-                <div className="absolute inset-y-3 right-3 flex w-[min(340px,92vw)]">
+                <div className="absolute inset-y-4 right-4 flex w-[min(320px,92vw)]">
                   <DesktopFeedSideRail
                     mode="insight"
                     lang={lang}
@@ -2461,6 +2471,22 @@ export default function HomeClient({ initialFacts, initialVocabulary, initialLan
                     isLiked={activeFactLiked}
                     isSaved={isCurrentSlideSaved}
                     likesCount={activeFactLikesCount}
+                    onSave={() => {
+                      if (!activeFact) return;
+                      window.dispatchEvent(
+                        new CustomEvent('scrolly-card-action', {
+                          detail: { factId: activeFact.id, action: 'save' },
+                        })
+                      );
+                    }}
+                    onDetail={() => {
+                      if (!activeFact) return;
+                      window.dispatchEvent(
+                        new CustomEvent('scrolly-card-action', {
+                          detail: { factId: activeFact.id, action: 'detail' },
+                        })
+                      );
+                    }}
                     onPrev={() => feedRef.current?.scrollToPrev()}
                     onNext={() => feedRef.current?.scrollToNext()}
                   />
@@ -2470,13 +2496,13 @@ export default function HomeClient({ initialFacts, initialVocabulary, initialLan
           </>
         )}
         </div>
-      </div>
+      </main>
 
-      {/* ≥1280: real 340px Insight column */}
+      {/* ≥1280: 320px pastel context column */}
       {showExploreFeed && (
         <div
           data-testid="desktop-insight-column"
-          className="relative z-10 hidden min-h-0 items-center justify-center px-3 py-4"
+          className="relative z-10 hidden h-full min-h-0 w-[320px] items-center py-4 xl:flex"
         >
           <DesktopFeedSideRail
             mode="insight"
@@ -2488,6 +2514,22 @@ export default function HomeClient({ initialFacts, initialVocabulary, initialLan
             isLiked={activeFactLiked}
             isSaved={isCurrentSlideSaved}
             likesCount={activeFactLikesCount}
+            onSave={() => {
+              if (!activeFact) return;
+              window.dispatchEvent(
+                new CustomEvent('scrolly-card-action', {
+                  detail: { factId: activeFact.id, action: 'save' },
+                })
+              );
+            }}
+            onDetail={() => {
+              if (!activeFact) return;
+              window.dispatchEvent(
+                new CustomEvent('scrolly-card-action', {
+                  detail: { factId: activeFact.id, action: 'detail' },
+                })
+              );
+            }}
             onPrev={() => {
               vibrateTap(10);
               feedRef.current?.scrollToPrev();

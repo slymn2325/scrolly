@@ -20,7 +20,17 @@ import type { FactCard } from '@/types/fact';
 import type { VocabularyCard } from '@/types/vocabulary';
 import { getVocabularyFacts } from '@/data/vocabularyFacts';
 import { CATEGORY_ILLUSTRATION_MAP, DOCK_ICON_MAP, UI_ICON_PATHS } from '@/utils/icons8Assets';
+import { motionSpring } from '@/lib/motion';
 import { markFactSeenInStorage } from '@/utils/seenFacts';
+
+const GESTURE_LOCK_MS = 450;
+const WHEEL_THRESHOLD_PX = 50;
+
+function normalizeWheelDelta(event: WheelEvent): number {
+  if (event.deltaMode === WheelEvent.DOM_DELTA_LINE) return event.deltaY * WHEEL_THRESHOLD_PX;
+  if (event.deltaMode === WheelEvent.DOM_DELTA_PAGE) return Math.sign(event.deltaY) * WHEEL_THRESHOLD_PX;
+  return event.deltaY;
+}
 
 const useIsomorphicLayoutEffect = typeof window !== 'undefined' ? useLayoutEffect : useEffect;
 
@@ -124,7 +134,10 @@ const TikTokFeed = forwardRef<TikTokFeedHandle, TikTokFeedProps>(function TikTok
   const prevTrackedSlideIdxRef = useRef<number | null>(null);
   const lastProgrammaticStepRef = useRef<{ index: number; at: number } | null>(null);
   const prevCategoryRef = useRef<CategoryFilter>(activeCategory);
-  const wheelCooldownRef = useRef<number>(0);
+  const gestureLockUntilRef = useRef<number>(0);
+  const wheelAccumRef = useRef<number>(0);
+  const wheelAccumAtRef = useRef<number>(0);
+  const scrollAnimRef = useRef<{ raf: number; velocity: number } | null>(null);
   const onSlideIndexChangeRef = useRef(onSlideIndexChange);
   onSlideIndexChangeRef.current = onSlideIndexChange;
   const onActiveFactChangeRef = useRef(onActiveFactChange);
@@ -388,7 +401,7 @@ const TikTokFeed = forwardRef<TikTokFeedHandle, TikTokFeedProps>(function TikTok
 
   const getStepAnchorIndex = useCallback(() => {
     const recent = lastProgrammaticStepRef.current;
-    if (recent && Date.now() - recent.at < 350) {
+    if (recent && Date.now() - recent.at < GESTURE_LOCK_MS + 70) {
       return recent.index;
     }
     return activeIndexRef.current;
@@ -405,7 +418,45 @@ const TikTokFeed = forwardRef<TikTokFeedHandle, TikTokFeedProps>(function TikTok
       activeIndexRef.current = clamped;
       lastProgrammaticStepRef.current = { index: clamped, at: Date.now() };
       setActiveIndex((prev) => (prev === clamped ? prev : clamped));
-      container.scrollTo({ top: targetTop, behavior: 'auto' });
+
+      const previousVelocity = scrollAnimRef.current?.velocity ?? 0;
+      if (scrollAnimRef.current) cancelAnimationFrame(scrollAnimRef.current.raf);
+      const reduced =
+        typeof window !== 'undefined' &&
+        window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      if (reduced || Math.abs(container.scrollTop - targetTop) < 1) {
+        container.style.scrollSnapType = '';
+        container.scrollTop = targetTop;
+        scrollAnimRef.current = null;
+        scheduleSlideSettle(clamped);
+        return;
+      }
+
+      const { stiffness, damping, mass } = motionSpring.cardSnap;
+      container.style.scrollSnapType = 'none';
+      let y = container.scrollTop;
+      let velocity = previousVelocity;
+      let last = performance.now();
+      const tick = (now: number) => {
+        const dt = Math.min(0.032, (now - last) / 1000);
+        last = now;
+        const accel = (stiffness * (targetTop - y) - damping * velocity) / mass;
+        velocity += accel * dt;
+        y += velocity * dt;
+        if (!scrollRef.current) return;
+        if (Math.abs(targetTop - y) < 0.6 && Math.abs(velocity) < 12) {
+          scrollRef.current.style.scrollSnapType = '';
+          scrollRef.current.scrollTop = targetTop;
+          scrollAnimRef.current = null;
+          scheduleSlideSettle(clamped);
+          return;
+        }
+        scrollRef.current.scrollTop = y;
+        const raf = requestAnimationFrame(tick);
+        scrollAnimRef.current = { raf, velocity };
+      };
+      const raf = requestAnimationFrame(tick);
+      scrollAnimRef.current = { raf, velocity };
       scheduleSlideSettle(clamped);
     },
     [slides.length, scheduleSlideSettle]
@@ -415,12 +466,15 @@ const TikTokFeed = forwardRef<TikTokFeedHandle, TikTokFeedProps>(function TikTok
     ref,
     () => ({
       scrollToTop: () => {
+        if (scrollAnimRef.current) cancelAnimationFrame(scrollAnimRef.current.raf);
+        scrollAnimRef.current = null;
         activeIndexRef.current = 0;
         lastProgrammaticStepRef.current = { index: 0, at: Date.now() };
         setActiveIndex(0);
         const container = scrollRef.current;
         if (container) {
-          container.scrollTo({ top: 0, behavior: 'auto' });
+          container.style.scrollSnapType = '';
+          container.scrollTop = 0;
         }
         scheduleSlideSettle(0);
       },
@@ -436,7 +490,17 @@ const TikTokFeed = forwardRef<TikTokFeedHandle, TikTokFeedProps>(function TikTok
     [getStepAnchorIndex, scheduleSlideSettle, scrollToSlide]
   );
 
-  // Desktop keyboard navigation (ArrowUp / ArrowDown to step, Space to flip/close active card detail)
+  const stepOneCard = useCallback(
+    (direction: 1 | -1) => {
+      const now = Date.now();
+      if (now < gestureLockUntilRef.current) return;
+      gestureLockUntilRef.current = now + GESTURE_LOCK_MS;
+      scrollToSlide(getStepAnchorIndex() + direction);
+    },
+    [getStepAnchorIndex, scrollToSlide]
+  );
+
+  // One key gesture = one card. ↓/J/PageDown/Space forward, ↑/K/PageUp/Shift+Space back.
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (!isExploreVisibleRef.current) return;
@@ -444,77 +508,78 @@ const TikTokFeed = forwardRef<TikTokFeedHandle, TikTokFeedProps>(function TikTok
       if (target && (['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName) || target.isContentEditable)) {
         return;
       }
-
-      if (e.code === 'Space' || e.key === ' ') {
-        if (
-          typeof document !== 'undefined' &&
-          document.querySelector('[aria-modal="true"]:not([data-testid="fact-card-back"])')
-        ) {
-          return;
-        }
-        if (target && target.closest('button, a, [role="button"], input[type="range"]')) return;
-        const currentSlide = slides[activeIndexRef.current];
-        if (currentSlide?.type === 'fact') {
-          e.preventDefault();
-          window.dispatchEvent(
-            new CustomEvent('scrolly-card-action', {
-              detail: { factId: currentSlide.fact.id, action: 'flip' },
-            })
-          );
-        }
-        return;
-      }
-
       if (typeof document !== 'undefined' && document.querySelector('[aria-modal="true"]')) return;
-      if (e.key !== 'ArrowDown' && e.key !== 'ArrowUp') return;
+      if (target && target.closest('button, a, [role="button"]')) return;
 
-      const container = scrollRef.current;
-      if (!container) return;
+      const key = e.key.toLowerCase();
+      const forward = key === 'arrowdown' || key === 'pagedown' || key === 'j' || (key === ' ' && !e.shiftKey);
+      const backward =
+        key === 'arrowup' || key === 'pageup' || key === 'k' || (key === ' ' && e.shiftKey);
+      if (!forward && !backward) return;
       e.preventDefault();
-      const current = getStepAnchorIndex();
-      scrollToSlide(e.key === 'ArrowDown' ? current + 1 : current - 1);
+      stepOneCard(forward ? 1 : -1);
+    };
+
+    const handleFeedStep = (event: Event) => {
+      if (!isExploreVisibleRef.current) return;
+      if (typeof document !== 'undefined' && document.querySelector('[aria-modal="true"]')) return;
+      const direction = (event as CustomEvent<{ direction?: number }>).detail?.direction;
+      if (direction !== 1 && direction !== -1) return;
+      stepOneCard(direction);
     };
 
     window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [getStepAnchorIndex, scrollToSlide, slides]);
+    window.addEventListener('scrolly-feed-step', handleFeedStep);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('scrolly-feed-step', handleFeedStep);
+    };
+  }, [stepOneCard]);
 
-  // Single-card wheel stepping on desktop without fighting inner sheet scrolling
+  // Wheel and trackpad: accumulate to 50px, then one card, then a 450ms lock so inertia cannot skip.
   useEffect(() => {
-    const container = scrollRef.current;
-    if (!container) return;
-
     const handleWheel = (e: WheelEvent) => {
+      if (!isExploreVisibleRef.current) return;
       if (typeof document !== 'undefined' && document.querySelector('[aria-modal="true"]')) return;
       const targetEl = e.target as HTMLElement | null;
-      if (targetEl?.closest('[data-testid="language-lab-overlay"], [data-testid="fact-card-back"]')) {
+      if (!targetEl?.closest('[data-testid="reels-desktop-shell"], [data-testid="tiktok-feed-container"]')) {
         return;
       }
+      if (targetEl.closest('input, textarea, select, [contenteditable="true"]')) return;
+      if (targetEl.closest('[data-testid="language-lab-overlay"], [data-testid="fact-card-back"]')) return;
 
-      const storyBox = targetEl?.closest('[data-story-scroll="true"]') as HTMLElement | null;
-      if (storyBox && storyBox.scrollHeight > storyBox.clientHeight + 1) {
-        return;
-      }
-      const choiceList = targetEl?.closest('[data-choice-scroll="true"]') as HTMLElement | null;
-      if (choiceList && choiceList.scrollHeight > choiceList.clientHeight + 1) {
-        return;
-      }
+      const nested = targetEl.closest(
+        '[data-scroll-contain="true"], [data-story-scroll="true"], [data-choice-scroll="true"]'
+      ) as HTMLElement | null;
+      if (nested && nested.scrollHeight > nested.clientHeight + 1) return;
 
-      if (Math.abs(e.deltaY) < 20) return;
-
+      const delta = normalizeWheelDelta(e);
+      if (delta === 0) return;
       e.preventDefault();
+
       const now = Date.now();
-      if (now - wheelCooldownRef.current < 420) {
+      if (now < gestureLockUntilRef.current) {
+        wheelAccumRef.current = 0;
         return;
       }
-      wheelCooldownRef.current = now;
-      const direction = e.deltaY > 0 ? 1 : -1;
-      scrollToSlide(getStepAnchorIndex() + direction);
+      if (now - wheelAccumAtRef.current > 160) wheelAccumRef.current = 0;
+      if (Math.sign(wheelAccumRef.current) !== 0 && Math.sign(wheelAccumRef.current) !== Math.sign(delta)) {
+        wheelAccumRef.current = 0;
+      }
+      wheelAccumRef.current += delta;
+      wheelAccumAtRef.current = now;
+      if (Math.abs(wheelAccumRef.current) < WHEEL_THRESHOLD_PX) return;
+      const direction: 1 | -1 = wheelAccumRef.current > 0 ? 1 : -1;
+      wheelAccumRef.current = 0;
+      stepOneCard(direction);
     };
 
-    container.addEventListener('wheel', handleWheel, { passive: false });
-    return () => container.removeEventListener('wheel', handleWheel);
-  }, [getStepAnchorIndex, scrollToSlide]);
+    window.addEventListener('wheel', handleWheel, { capture: true, passive: false });
+    return () => {
+      window.removeEventListener('wheel', handleWheel, { capture: true });
+      if (scrollAnimRef.current) cancelAnimationFrame(scrollAnimRef.current.raf);
+    };
+  }, [stepOneCard]);
 
   // Close Category Explorer page on Escape key & block dock while full-page picker is active
   useEffect(() => {
@@ -762,7 +827,7 @@ const TikTokFeed = forwardRef<TikTokFeedHandle, TikTokFeedProps>(function TikTok
             <button
               type="button"
               onClick={() => onSelectCategory('all')}
-              className="rounded-full bg-white px-4 py-2 text-xs font-black text-[#09090B]"
+              className="cik-footnote min-h-11 rounded-pill bg-cik-cta px-4 text-cik-on-cta"
             >
               {lang === 'tr' ? 'Tüm Kategorileri Aç' : 'Show All Categories'}
             </button>
@@ -778,8 +843,12 @@ const TikTokFeed = forwardRef<TikTokFeedHandle, TikTokFeedProps>(function TikTok
             <div
               key={slide.key}
               data-slide-index={slideIdx}
+              role="article"
+              aria-roledescription={lang === 'tr' ? 'kart' : 'card'}
+              aria-posinset={slideIdx + 1}
+              aria-setsize={slides.length}
               style={{ height: '100%', minHeight: '100%' }}
-              className={`reels-slide h-[100dvh] min-h-[100dvh] lg:h-full lg:min-h-full w-full shrink-0 snap-start snap-always ${
+              className={`reels-slide h-full min-h-full w-full shrink-0 snap-start snap-always ${
                 shouldHidePendingSync ? 'pointer-events-none opacity-0' : ''
               }`}
               aria-hidden={!isWithinWindow ? true : undefined}

@@ -3,17 +3,18 @@
 import React, { useState } from 'react';
 import {
   Bookmark,
-  BookOpen,
   ChevronDown,
   ChevronUp,
   ExternalLink,
   Heart,
   Keyboard,
   Lock,
-  Share2,
+  RotateCw,
+  Share,
   Sparkles,
   Swords,
 } from 'lucide-react';
+import IconButton from '@/components/cikartma/IconButton';
 import { detectMediaProvider, mediaCreditLine } from '@/lib/mediaProvider';
 import type { FeedSlideItem } from '@/components/TikTokFeed';
 import { getCategoryMeta, type Language } from '@/i18n/translations';
@@ -76,14 +77,6 @@ export default function DesktopFeedSideRail({
   const showActions = mode === 'cluster' || mode === 'actions';
   const showInsight = mode === 'cluster' || mode === 'insight';
 
-  const stepBtn =
-    'border-slate-200 bg-white/95 text-slate-900 shadow-sm hover:bg-white dark:border-slate-600 dark:bg-slate-900/90 dark:text-slate-100 dark:hover:bg-slate-800';
-
-  const actionBtn = darkMode
-    ? 'border-white/15 bg-white/[0.08] text-white/90 hover:bg-white/15 hover:border-white/25'
-    : 'border-[#1E1B2E]/15 bg-white/95 text-[#1E1B2E] hover:bg-white shadow-sm';
-
-  const labelTone = darkMode ? 'text-white/75' : 'text-[#1E1B2E]/75';
   const hasFact = Boolean(activeFact);
   const isVocab = activeSlide?.type === 'vocabulary';
   const canSave = Boolean(hasFact || isVocab);
@@ -124,7 +117,6 @@ export default function DesktopFeedSideRail({
       return {
         kind: 'fact' as const,
         badge: `${catMeta?.label[lang] || activeFact.category}`,
-        badgeColor: activeFact.accentColor || '#7C3AED',
         xpLabel: '+15 XP',
       };
     }
@@ -140,7 +132,6 @@ export default function DesktopFeedSideRail({
       return {
         kind: 'other' as const,
         badge: lang === 'tr' ? 'Kelime Laboratuvarı' : 'Word Lab',
-        badgeColor: '#6366F1',
         subLabel: [cefr, localizedPos, formatPhoneticForDisplay(card.phonetic)]
           .filter(Boolean)
           .join(' · '),
@@ -158,7 +149,6 @@ export default function DesktopFeedSideRail({
       return {
         kind: 'other' as const,
         badge: lang === 'tr' ? 'Hızlı Quiz' : 'Quick Quiz',
-        badgeColor: '#F59E0B',
         subLabel: lang === 'tr' ? '5 Soruluk Hafıza Tekrarı' : '5-Question Memory Recall',
         note:
           lang === 'tr'
@@ -171,7 +161,6 @@ export default function DesktopFeedSideRail({
       return {
         kind: 'other' as const,
         badge: lang === 'tr' ? 'Bilgi Molası' : 'Quick Break',
-        badgeColor: '#0EA5E9',
         subLabel: lang === 'tr' ? 'Akış & Düello' : 'Feed & Scrolla',
         note:
           lang === 'tr'
@@ -183,442 +172,231 @@ export default function DesktopFeedSideRail({
     return null;
   })();
 
+  const hintText = localized?.guessChallenge?.prompt
+    ? localized.guessChallenge.prompt
+    : lang === 'tr'
+      ? 'İpucu cevabı söylemez. Tahminini kilitle, sonra detayı aç.'
+      : 'The hint does not give the answer. Lock a guess, then open detail.';
+
   return (
     <div
       data-testid="desktop-feed-side-cluster"
       data-mode={mode}
       className={
         mode === 'insight'
-          ? 'flex h-full min-h-0 w-full max-w-[340px] shrink-0 flex-col'
+          ? 'flex h-full min-h-0 w-full max-w-[320px] shrink-0 flex-col'
           : mode === 'actions'
-            ? 'hidden shrink-0 items-center md:flex'
-            : 'hidden shrink-0 items-center gap-5 lg:flex'
+            ? 'ml-3 hidden shrink-0 md:flex'
+            : 'ml-3 hidden shrink-0 items-center gap-3 lg:flex'
       }
     >
-      {/* 1. Ordered action bar + Up/Down steppers (Like → Save → Detail → 1v1 → Share) */}
       {showActions && (
       <aside
         data-testid="desktop-feed-side-rail"
         data-theme={darkMode ? 'dark' : 'light'}
-        className={`relative z-20 flex w-[128px] flex-col justify-center gap-2 rounded-2xl border p-2 backdrop-blur-xl ${
-          darkMode ? 'border-white/12 bg-[#13131A]/85' : 'border-[#1E1B2E]/10 bg-white/90 shadow-sm'
-        }`}
+        className="relative z-rail flex w-11 flex-col items-center gap-2"
         aria-label={lang === 'tr' ? 'Kart aksiyonları ve kaydırma' : 'Card actions and navigation'}
       >
         {onLike && (
-          <button
-            type="button"
+          <IconButton
+            label={
+              likesCount > 0
+                ? `${lang === 'tr' ? 'Beğen' : 'Like'} ${likesCount}`
+                : lang === 'tr'
+                  ? 'Beğen'
+                  : 'Like'
+            }
             data-testid="desktop-action-like"
             onClick={onLike}
             disabled={!hasFact}
-            aria-label={lang === 'tr' ? 'Beğen' : 'Like'}
-            className={`flex h-10 w-full items-center gap-2 rounded-xl border px-2.5 text-left text-[11px] font-extrabold transition ${
-              !hasFact
-                ? `${actionBtn} cursor-not-allowed opacity-35`
-                : isLiked
-                  ? 'border-rose-400/60 bg-rose-500 text-white shadow-md shadow-rose-500/25'
-                  : actionBtn
-            }`}
+            aria-pressed={isLiked}
+            className={isLiked && hasFact ? 'bg-cik-cta text-cik-on-cta' : 'disabled:opacity-40'}
           >
-            <Heart className={`h-4 w-4 shrink-0 ${isLiked && hasFact ? 'fill-current' : ''}`} />
-            <span className="min-w-0 truncate">
-              {hasFact && likesCount > 0 ? likesCount : lang === 'tr' ? 'Beğen' : 'Like'}
-            </span>
-          </button>
+            <Heart size={24} strokeWidth={2} className={isLiked && hasFact ? 'fill-current' : ''} />
+          </IconButton>
         )}
-
         {onSave && (
-          <button
-            type="button"
+          <IconButton
+            label={lang === 'tr' ? 'Kaydet' : 'Save'}
             data-testid="desktop-action-save"
             onClick={onSave}
             disabled={!canSave}
-            aria-label={lang === 'tr' ? 'Kaydet' : 'Save'}
-            className={`flex h-10 w-full items-center gap-2 rounded-xl border px-2.5 text-left text-[11px] font-extrabold transition ${
-              !canSave
-                ? `${actionBtn} cursor-not-allowed opacity-35`
-                : isSaved
-                  ? 'border-amber-400/60 bg-amber-400 text-[#09090B] shadow-md shadow-amber-400/25'
-                  : actionBtn
-            }`}
+            aria-pressed={isSaved}
+            className={isSaved && canSave ? 'bg-cik-butter text-cik-butter-text' : 'disabled:opacity-40'}
           >
-            <Bookmark className={`h-4 w-4 shrink-0 ${isSaved && canSave ? 'fill-current' : ''}`} />
-            <span className="min-w-0 truncate">{lang === 'tr' ? 'Kaydet' : 'Save'}</span>
-          </button>
+            <Bookmark size={24} strokeWidth={2} className={isSaved && canSave ? 'fill-current' : ''} />
+          </IconButton>
         )}
-
         {onDetail && (
-          <button
-            type="button"
+          <IconButton
+            label={lang === 'tr' ? 'Detay' : 'Detail'}
             data-testid="desktop-action-detail"
             onClick={onDetail}
             disabled={!canDetail}
-            aria-label={lang === 'tr' ? '3D Flip / Detay' : '3D Flip / Detail'}
-            className={`flex h-10 w-full items-center gap-2 rounded-xl border px-2.5 text-left text-[11px] font-extrabold transition ${actionBtn} ${
-              !canDetail ? 'cursor-not-allowed opacity-35' : ''
-            }`}
+            className="disabled:opacity-40"
           >
-            <BookOpen className="h-4 w-4 shrink-0" />
-            <span className="min-w-0 truncate">{lang === 'tr' ? '3D Detay' : '3D Flip'}</span>
-          </button>
+            <RotateCw size={24} strokeWidth={2} />
+          </IconButton>
         )}
-
         {onDuel && (
-          <button
-            type="button"
-            data-testid="desktop-action-duel"
-            onClick={onDuel}
-            aria-label="Scrolla 1v1"
-            className="flex h-10 w-full items-center gap-2 rounded-xl border border-violet-400/45 bg-gradient-to-r from-violet-600 to-fuchsia-600 px-2.5 text-left text-[11px] font-extrabold text-white shadow-md shadow-violet-500/25 transition hover:brightness-110"
-          >
-            <Swords className="h-4 w-4 shrink-0" />
-            <span className="min-w-0 truncate">1v1</span>
-          </button>
+          <IconButton label="Scrolla 1v1" data-testid="desktop-action-duel" onClick={onDuel}>
+            <Swords size={24} strokeWidth={2} />
+          </IconButton>
         )}
-
         {onShare && (
-          <button
-            type="button"
+          <IconButton
+            label={lang === 'tr' ? 'Paylaş' : 'Share'}
             data-testid="desktop-action-share"
             onClick={onShare}
             disabled={!hasFact}
-            aria-label={lang === 'tr' ? 'Paylaş' : 'Share'}
-            className={`flex h-10 w-full items-center gap-2 rounded-xl border px-2.5 text-left text-[11px] font-extrabold transition ${actionBtn} ${
-              !hasFact ? 'cursor-not-allowed opacity-35' : ''
-            }`}
+            className="disabled:opacity-40"
           >
-            <Share2 className="h-4 w-4 shrink-0" />
-            <span className="min-w-0 truncate">{lang === 'tr' ? 'Paylaş' : 'Share'}</span>
-          </button>
+            <Share size={24} strokeWidth={2} />
+          </IconButton>
         )}
-
-        <div
-          className={`my-0.5 h-px w-full ${darkMode ? 'bg-white/15' : 'bg-[#1E1B2E]/15'}`}
-          aria-hidden="true"
-        />
-
-        <div className="mt-4 flex gap-1.5">
-          <button
-            type="button"
-            data-testid="desktop-feed-prev"
-            onClick={onPrev}
-            aria-label={lang === 'tr' ? 'Önceki kart' : 'Previous card'}
-            title="↑"
-            className={`flex h-10 flex-1 items-center justify-center rounded-xl border transition ${stepBtn}`}
-          >
-            <ChevronUp className="h-5 w-5" />
-          </button>
-          <button
-            type="button"
-            data-testid="desktop-feed-next"
-            onClick={onNext}
-            aria-label={lang === 'tr' ? 'Sonraki kart' : 'Next card'}
-            title="↓"
-            className={`flex h-10 flex-1 items-center justify-center rounded-xl border transition ${stepBtn}`}
-          >
-            <ChevronDown className="h-5 w-5" />
-          </button>
-        </div>
-        <p className={`px-1 text-center text-[9px] font-bold uppercase tracking-wide ${labelTone}`}>
-          ↑ ↓
-        </p>
+        <IconButton
+          label={lang === 'tr' ? 'Önceki kart' : 'Previous card'}
+          data-testid="desktop-feed-prev"
+          onClick={onPrev}
+        >
+          <ChevronUp size={24} strokeWidth={2} />
+        </IconButton>
+        <IconButton
+          label={lang === 'tr' ? 'Sonraki kart' : 'Next card'}
+          data-testid="desktop-feed-next"
+          onClick={onNext}
+        >
+          <ChevronDown size={24} strokeWidth={2} />
+        </IconButton>
       </aside>
       )}
 
-      {/* 2. Insight / Source panel — xl column or drawer host */}
       {showInsight && slideSummary && (
         <aside
           data-testid="desktop-info-shortcut-panel"
-          className={`flex w-full max-w-[340px] shrink-0 flex-col gap-3 overflow-y-auto rounded-3xl border p-4 backdrop-blur-xl ${
+          data-theme={darkMode ? 'dark' : 'light'}
+          data-scroll-contain="true"
+          className={`flex w-full max-w-[320px] shrink-0 flex-col gap-4 overflow-y-auto rounded-sticker bg-cik-surface p-5 text-cik-text shadow-e1 ${
             mode === 'cluster' ? 'hidden xl:flex' : 'flex h-full max-h-[min(92dvh,920px)]'
-          } ${
-            darkMode
-              ? 'border-white/15 bg-[#13131A]/95 text-white shadow-2xl'
-              : 'border-[#1E1B2E]/10 bg-white/95 text-[#1E1B2E] shadow-xl'
           }`}
         >
           <div className="flex items-center justify-between gap-2">
-            <span
-              className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-extrabold text-white shadow-sm"
-              style={{ backgroundColor: slideSummary.badgeColor }}
-            >
-              <span>{slideSummary.badge}</span>
+            <span className="cik-footnote inline-flex items-center rounded-pill bg-cik-berry px-3 py-1 text-cik-text">
+              {slideSummary.badge}
             </span>
-            <span
-              className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[10px] font-black tabular-nums ${
-                darkMode ? 'bg-amber-400/15 text-amber-300' : 'bg-amber-100 text-amber-800'
-              }`}
-            >
-              <Sparkles className={`h-3 w-3 ${darkMode ? 'text-amber-400' : 'text-amber-600'}`} />
+            <span className="cik-caption-2 cik-tabular inline-flex items-center gap-1 rounded-pill bg-cik-butter px-3 py-1 text-cik-butter-text">
+              <Sparkles className="h-4 w-4" aria-hidden="true" />
               <span>{slideSummary.xpLabel}</span>
             </span>
           </div>
 
-          <div>
-            <p
-              data-testid="desktop-insight-heading"
-              className={`text-[10px] font-black uppercase tracking-wider ${
-                darkMode ? 'text-white/65' : 'text-[#1E1B2E]/65'
-              }`}
-            >
-              {lang === 'tr' ? 'KART DETAYI & KAYNAK' : 'INSIGHT & SOURCE'}
-            </p>
+          <div className="flex gap-2">
+            {onSave && (
+              <button
+                type="button"
+                onClick={onSave}
+                disabled={!canSave}
+                className="cik-footnote inline-flex min-h-11 flex-1 items-center justify-center gap-2 rounded-pill bg-cik-bg-elevated px-3 text-cik-text shadow-e1 disabled:opacity-40"
+              >
+                <Bookmark className="h-4 w-4" aria-hidden="true" />
+                {lang === 'tr' ? 'Kaydet' : 'Save'}
+              </button>
+            )}
+            {onDetail && (
+              <button
+                type="button"
+                onClick={onDetail}
+                disabled={!canDetail}
+                className="cik-footnote inline-flex min-h-11 flex-1 items-center justify-center gap-2 rounded-pill bg-cik-cta px-3 text-cik-on-cta disabled:opacity-40"
+              >
+                <RotateCw className="h-4 w-4" aria-hidden="true" />
+                {lang === 'tr' ? 'Detay' : 'Detail'}
+              </button>
+            )}
+          </div>
 
+          <div>
+            <p data-testid="desktop-insight-heading" className="cik-caption-2 text-cik-text-2">
+              {lang === 'tr' ? 'Bağlam' : 'Context'}
+            </p>
             {slideSummary.kind === 'fact' ? (
-              !isAnalysisUnlocked ? (
-                <div
-                  data-testid="desktop-insight-locked"
-                  className={`mt-2 rounded-2xl border p-3.5 backdrop-blur-md ${
-                    darkMode
-                      ? 'border-white/15 bg-white/[0.06] text-white/85'
-                      : 'border-[#1E1B2E]/10 bg-[#1E1B2E]/[0.04] text-[#1E1B2E]/85'
-                  }`}
-                >
-                  <div className="flex items-start gap-2">
-                    <Lock className={`mt-0.5 h-4 w-4 shrink-0 ${darkMode ? 'text-violet-300' : 'text-violet-600'}`} />
-                    <p className="text-xs font-semibold leading-relaxed">
-                      {lang === 'tr'
-                        ? 'Tahminini kilitle: derin analiz ve bilimsel arka plan burada açılacak'
-                        : 'Lock your guess: deep analysis & scientific context will unlock here'}
-                    </p>
-                  </div>
-                  <div className="mt-2.5 flex items-center justify-between gap-2">
-                    <span
-                      className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-bold ${
-                        darkMode ? 'bg-white/10 text-white/70' : 'bg-white text-[#1E1B2E]/70 shadow-sm'
-                      }`}
-                    >
-                      {lang === 'tr' ? `~${estimatedReadSec} sn derin okuma` : `~${estimatedReadSec}s deep read`}
-                    </span>
-                  </div>
+              <div
+                data-testid={isAnalysisUnlocked ? 'desktop-insight-unlocked' : 'desktop-insight-locked'}
+                className="mt-2 rounded-cik-md bg-cik-surface-2 p-3"
+              >
+                <div className="flex items-start gap-2">
+                  <Lock className="mt-0.5 h-4 w-4 shrink-0 text-cik-text-2" aria-hidden="true" />
+                  <p className="cik-subhead text-cik-text">{hintText}</p>
                 </div>
-              ) : (
-                <div
-                  data-testid="desktop-insight-unlocked"
-                  className={`mt-2 rounded-2xl border p-3 ${
-                    darkMode
-                      ? 'border-emerald-400/20 bg-emerald-500/[0.08]'
-                      : 'border-emerald-600/15 bg-emerald-50/70'
-                  }`}
-                >
-                  <p
-                    className={`text-[10px] font-black uppercase tracking-wider ${
-                      darkMode ? 'text-emerald-300' : 'text-emerald-700'
-                    }`}
-                  >
-                    {lang === 'tr' ? 'Bilimsel Arka Plan' : 'Scientific Context'}
-                  </p>
-                  <p
-                    data-scroll-contain="true"
-                    onWheel={(e) => {
-                      const el = e.currentTarget;
-                      if (el.scrollHeight > el.clientHeight + 1) e.stopPropagation();
-                    }}
-                    style={{ overscrollBehavior: 'contain' }}
-                    className={`mt-1.5 max-h-[210px] overflow-y-auto pr-1 text-xs font-medium leading-relaxed ${
-                      darkMode ? 'text-white/85' : 'text-[#1E1B2E]/85'
-                    }`}
-                  >
-                    {deepAnalysisText}
-                  </p>
-                </div>
-              )
+                <p className="cik-caption-2 cik-tabular mt-2 text-cik-text-2">
+                  {lang === 'tr' ? `~${estimatedReadSec} sn` : `~${estimatedReadSec}s`}
+                </p>
+              </div>
             ) : (
               <div className="mt-2 space-y-2">
                 {slideSummary.subLabel && (
-                  <p className={`text-[11px] font-bold ${darkMode ? 'text-indigo-300' : 'text-indigo-700'}`}>
-                    {slideSummary.subLabel}
-                  </p>
+                  <p className="cik-footnote text-cik-text-2">{slideSummary.subLabel}</p>
                 )}
                 {'definitionEn' in slideSummary && slideSummary.definitionEn && (
-                  <div
-                    className={`rounded-xl border px-2.5 py-2 ${
-                      darkMode
-                        ? 'border-white/10 bg-white/[0.04]'
-                        : 'border-[#1E1B2E]/10 bg-[#1E1B2E]/[0.03]'
-                    }`}
-                  >
-                    <p
-                      className={`text-[10px] font-black uppercase tracking-wider ${
-                        darkMode ? 'text-white/50' : 'text-[#1E1B2E]/55'
-                      }`}
-                    >
-                      {lang === 'tr' ? 'İngilizce Tanım' : 'English Definition'}
-                    </p>
-                    <p
-                      className={`mt-0.5 text-xs font-semibold leading-snug ${
-                        darkMode ? 'text-white/90' : 'text-[#1E1B2E]/90'
-                      }`}
-                    >
-                      {slideSummary.definitionEn}
-                    </p>
-                  </div>
+                  <p className="cik-subhead text-cik-text">{slideSummary.definitionEn}</p>
                 )}
                 {'exampleEn' in slideSummary && slideSummary.exampleEn && (
-                  <div
-                    className={`rounded-xl border px-2.5 py-2 ${
-                      darkMode
-                        ? 'border-indigo-400/20 bg-indigo-500/[0.08]'
-                        : 'border-indigo-200 bg-indigo-50/70'
-                    }`}
-                  >
-                    <p
-                      className={`text-[10px] font-black uppercase tracking-wider ${
-                        darkMode ? 'text-indigo-300' : 'text-indigo-700'
-                      }`}
-                    >
-                      {lang === 'tr' ? 'Örnek Kullanım' : 'Usage Context'}
-                    </p>
-                    <p
-                      className={`mt-0.5 text-xs font-medium italic leading-snug ${
-                        darkMode ? 'text-white/85' : 'text-[#1E1B2E]/85'
-                      }`}
-                    >
-                      “{slideSummary.exampleEn}”
-                    </p>
-                  </div>
+                  <p className="cik-subhead text-cik-text-2">“{slideSummary.exampleEn}”</p>
                 )}
-                <p
-                  className={`text-xs font-medium leading-relaxed ${
-                    darkMode ? 'text-white/75' : 'text-[#1E1B2E]/75'
-                  }`}
-                >
-                  {slideSummary.note}
-                </p>
-                {'synonyms' in slideSummary &&
-                  slideSummary.synonyms &&
-                  slideSummary.synonyms.length > 0 && (
-                    <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
-                      <span
-                        className={`text-[10px] font-black uppercase tracking-wider ${
-                          darkMode ? 'text-white/50' : 'text-[#1E1B2E]/55'
-                        }`}
-                      >
-                        {lang === 'tr' ? 'Eş Anlam:' : 'Synonyms:'}
-                      </span>
-                      {slideSummary.synonyms.map((syn) => (
-                        <span
-                          key={syn}
-                          className={`rounded-full border px-2 py-0.5 text-[10px] font-bold ${
-                            darkMode
-                              ? 'border-indigo-400/30 bg-indigo-500/20 text-indigo-200'
-                              : 'border-indigo-300 bg-indigo-50 text-indigo-800'
-                          }`}
-                        >
-                          ≈ {syn}
-                        </span>
-                      ))}
-                    </div>
-                  )}
+                <p className="cik-subhead text-cik-text">{slideSummary.note}</p>
               </div>
             )}
           </div>
 
           {hasFact && (
-            <div
-              className={`rounded-2xl border px-3 py-2.5 ${
-                darkMode
-                  ? 'border-white/10 bg-white/[0.04]'
-                  : 'border-[#1E1B2E]/10 bg-[#1E1B2E]/[0.03]'
-              }`}
-            >
-              <p
-                className={`text-[10px] font-black uppercase tracking-wider ${
-                  darkMode ? 'text-white' : 'text-ink'
-                }`}
-              >
-                {lang === 'tr' ? 'Kaynak' : 'Source'}
-              </p>
+            <div className="rounded-cik-md bg-cik-surface-2 px-3 py-3">
+              <p className="cik-caption-2 text-cik-text-2">{lang === 'tr' ? 'Kaynak' : 'Source'}</p>
               {sourceUrl ? (
                 <a
                   href={sourceUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className={`mt-1 inline-flex items-center gap-1.5 text-xs font-bold underline decoration-dotted underline-offset-4 transition ${
-                    darkMode ? 'text-sky-300 hover:text-sky-200' : 'text-violet-700 hover:text-violet-900'
-                  }`}
+                  className="cik-footnote mt-1 inline-flex min-h-11 items-center gap-2 text-cik-cta underline"
                 >
                   <span className="line-clamp-1">{sourceName}</span>
-                  <ExternalLink className="h-3 w-3 shrink-0" />
+                  <ExternalLink className="h-4 w-4 shrink-0" aria-hidden="true" />
                 </a>
               ) : (
-                <p className="mt-1 text-xs font-bold">{sourceName}</p>
+                <p className="cik-footnote mt-1 text-cik-text">{sourceName}</p>
               )}
-              {mediaCredit ? (
-                <p className="mt-2.5 border-t border-slate-200 pt-2 text-[11px] font-bold text-slate-900 dark:border-slate-700 dark:text-slate-100">
-                  {mediaCredit}
-                </p>
-              ) : null}
+              {mediaCredit ? <p className="cik-caption-2 mt-2 text-cik-text-2">{mediaCredit}</p> : null}
             </div>
           )}
 
-          <div
-            className={`rounded-2xl border px-3 py-2.5 ${
-              darkMode
-                ? 'border-white/10 bg-white/[0.04]'
-                : 'border-[#1E1B2E]/10 bg-[#1E1B2E]/[0.03]'
-            }`}
-          >
+          <div className="rounded-cik-md bg-cik-surface-2 px-3 py-3">
             <button
               type="button"
               data-testid="desktop-shortcuts-toggle"
               onClick={() => setShortcutsOpen((open) => !open)}
               aria-expanded={shortcutsOpen}
-              className={`flex w-full items-center justify-between gap-1.5 text-[10px] font-black uppercase tracking-wider ${
-                darkMode ? 'text-white/55' : 'text-[#1E1B2E]/55'
-              }`}
+              className="cik-footnote flex min-h-11 w-full items-center justify-between gap-2 text-cik-text"
             >
-              <span className="inline-flex items-center gap-1.5">
-                <Keyboard className="h-3.5 w-3.5" />
-                <span>{lang === 'tr' ? 'Klavye Kısayolları' : 'Keyboard Shortcuts'}</span>
+              <span className="inline-flex items-center gap-2">
+                <Keyboard className="h-4 w-4" aria-hidden="true" />
+                <span>{lang === 'tr' ? 'Klavye' : 'Keyboard'}</span>
               </span>
-              {shortcutsOpen ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
+              {shortcutsOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
             </button>
             {shortcutsOpen && (
-            <ul className="mt-2 space-y-1.5 text-[11px] font-semibold">
-              <li className="flex items-center justify-between gap-2">
-                <span className={darkMode ? 'text-white/75' : 'text-[#1E1B2E]/75'}>
-                  {lang === 'tr' ? 'Geç' : 'Next / Prev'}
-                </span>
-                <kbd
-                  className={`rounded-md border px-1.5 py-0.5 font-mono text-[10px] font-bold ${
-                    darkMode
-                      ? 'border-white/20 bg-white/10 text-white'
-                      : 'border-[#1E1B2E]/15 bg-white text-[#1E1B2E]'
-                  }`}
-                >
-                  ↑ / ↓
-                </kbd>
-              </li>
-              <li className="flex items-center justify-between gap-2">
-                <span className={darkMode ? 'text-white/75' : 'text-[#1E1B2E]/75'}>
-                  {lang === 'tr' ? 'Beğen' : 'Like'}
-                </span>
-                <kbd
-                  className={`rounded-md border px-1.5 py-0.5 font-mono text-[10px] font-bold ${
-                    darkMode
-                      ? 'border-white/20 bg-white/10 text-white'
-                      : 'border-[#1E1B2E]/15 bg-white text-[#1E1B2E]'
-                  }`}
-                >
-                  {lang === 'tr' ? 'Çift Tık' : 'Double Tap'}
-                </kbd>
-              </li>
-              <li className="flex items-center justify-between gap-2">
-                <span className={darkMode ? 'text-white/75' : 'text-[#1E1B2E]/75'}>
-                  {lang === 'tr' ? 'Çevir (Detay)' : 'Flip Detail'}
-                </span>
-                <kbd
-                  className={`rounded-md border px-1.5 py-0.5 font-mono text-[10px] font-bold ${
-                    darkMode
-                      ? 'border-white/20 bg-white/10 text-white'
-                      : 'border-[#1E1B2E]/15 bg-white text-[#1E1B2E]'
-                  }`}
-                >
-                  Space
-                </kbd>
-              </li>
-            </ul>
+              <ul className="cik-caption-2 mt-2 space-y-2 text-cik-text-2">
+                <li className="flex items-center justify-between gap-2">
+                  <span>{lang === 'tr' ? 'Sonraki' : 'Next'}</span>
+                  <kbd className="rounded-cik-sm bg-cik-bg-elevated px-2 py-1 font-mono text-cik-text">↓ J</kbd>
+                </li>
+                <li className="flex items-center justify-between gap-2">
+                  <span>{lang === 'tr' ? 'Önceki' : 'Previous'}</span>
+                  <kbd className="rounded-cik-sm bg-cik-bg-elevated px-2 py-1 font-mono text-cik-text">↑ K</kbd>
+                </li>
+                <li className="flex items-center justify-between gap-2">
+                  <span>{lang === 'tr' ? 'İleri / geri' : 'Forward / back'}</span>
+                  <kbd className="rounded-cik-sm bg-cik-bg-elevated px-2 py-1 font-mono text-cik-text">Space</kbd>
+                </li>
+              </ul>
             )}
           </div>
         </aside>
