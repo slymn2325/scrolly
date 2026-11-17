@@ -6,7 +6,7 @@ import type { Language } from '@/i18n/translations';
 export const revalidate = 3600;
 
 interface PageProps {
-  searchParams: Promise<{ lang?: string }>;
+  searchParams: Promise<{ lang?: string; from?: string }>;
 }
 
 function resolveLang(langParam?: string): Language {
@@ -149,6 +149,7 @@ export default async function TermsPage({ searchParams }: PageProps) {
     <TrustPageShell
       routePath="/terms"
       lang={lang}
+      returnToProfile={query.from === 'profile'}
       badge={isEn ? 'Service Guidelines' : 'Hizmet Kuralları'}
       title={
         isEn

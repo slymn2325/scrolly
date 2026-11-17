@@ -2,7 +2,7 @@
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { motion, useReducedMotion } from 'framer-motion';
-import { Button, Toast } from '@/components/cikartma';
+import { Toast } from '@/components/cikartma';
 import {
   Bot,
   Check,
@@ -840,10 +840,10 @@ export default function DuelModal({
                             onButtonPop();
                             setCategory(cat.id);
                           }}
-                          className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1.5 cik-caption-2 font-extrabold transition-[background-color,border-color,color] duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400 ${
+                          className={`inline-flex h-9 items-center justify-center gap-1.5 rounded-xl border px-3.5 text-xs font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C83E6B] ${
                             active
-                              ? 'border-cik-line bg-ink text-white'
-                              : 'border-cik-line bg-cik-bg-elevated text-cik-text'
+                              ? 'border-[#C83E6B] bg-[#C83E6B] text-white'
+                              : 'border-black/10 bg-white text-neutral-700'
                           }`}
                         >
                           <img
@@ -863,7 +863,7 @@ export default function DuelModal({
                   <p className="text-xs font-extrabold text-cik-text-2">
                     {lang === 'tr' ? 'Soru Sayısı' : 'Question Count'}
                   </p>
-                  <div data-testid="duel-count-picker" className="mt-2 grid grid-cols-4 gap-2">
+                  <div data-testid="duel-count-picker" className="mt-2 flex flex-wrap gap-2">
                     {DUEL_QUESTION_COUNTS.map((count) => {
                       const active = questionCount === count;
                       return (
@@ -875,10 +875,10 @@ export default function DuelModal({
                             onButtonPop();
                             setQuestionCount(count);
                           }}
-                          className={`min-h-[44px] rounded-2xl border-2 text-sm font-black transition ${
+                          className={`inline-flex h-9 items-center justify-center rounded-xl border px-3.5 text-xs font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C83E6B] ${
                             active
-                              ? 'border-cik-line bg-ink text-white'
-                              : 'border-cik-line bg-cik-bg-elevated text-cik-text'
+                              ? 'border-[#C83E6B] bg-[#C83E6B] text-white'
+                              : 'border-black/10 bg-white text-neutral-700'
                           }`}
                         >
                           {count}
@@ -894,7 +894,7 @@ export default function DuelModal({
                   disabled={busyAction === 'create'}
                   onClick={() => void handleCreateRoom()}
                   data-testid="duel-create-lobby-btn"
-                  className="cik-headline flex w-full min-h-14 items-center justify-center gap-2 rounded-pill bg-cik-cta px-4 text-cik-on-cta shadow-sticker disabled:opacity-40"
+                  className="flex h-11 w-full items-center justify-center gap-2 rounded-2xl bg-[#C83E6B] px-4 text-sm font-semibold text-white shadow-sm disabled:opacity-60"
                 >
                   <Swords className="h-4 w-4 shrink-0" />
                   <span>
@@ -921,16 +921,24 @@ export default function DuelModal({
                       maxLength={6}
                       data-testid="duel-join-code-input"
                       aria-label={t.duelJoinTitle}
-                      className="cik-title-3 min-h-14 min-w-0 flex-1 rounded-cik-md border border-cik-line bg-cik-bg-elevated px-4 font-mono tracking-widest text-cik-text uppercase focus-visible:outline focus-visible:outline-[3px] focus-visible:outline-offset-2 focus-visible:outline-cik-focus"
+                      className="h-11 min-w-0 flex-1 rounded-2xl border border-black/10 bg-white px-4 font-mono text-sm font-semibold tracking-widest text-neutral-900 uppercase focus-visible:outline focus-visible:outline-[3px] focus-visible:outline-offset-2 focus-visible:outline-cik-focus"
                     />
-                    <Button
+                    <button
+                      type="button"
                       data-testid="duel-join-code-btn"
-                      disabled={busyAction === 'join' || normalizeRoomCode(joinCodeInput).length !== 6}
-                      onClick={() => void joinRoomByCode(joinCodeInput)}
+                      onClick={() => {
+                        if (busyAction === 'join' || normalizeRoomCode(joinCodeInput).length !== 6) return;
+                        void joinRoomByCode(joinCodeInput);
+                      }}
+                      className={`flex h-11 shrink-0 items-center justify-center gap-2 rounded-2xl px-4 text-sm font-semibold ${
+                        normalizeRoomCode(joinCodeInput).length === 6
+                          ? 'bg-[#C83E6B] text-white shadow-sm'
+                          : 'border border-black/10 bg-white text-neutral-800 shadow-sm'
+                      }`}
                     >
                       <LogIn size={20} strokeWidth={2} aria-hidden="true" />
                       <span>{lang === 'tr' ? 'Katıl' : 'Join'}</span>
-                    </Button>
+                    </button>
                   </div>
                 </section>
               </div>

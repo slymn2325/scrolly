@@ -2101,20 +2101,6 @@ export default function HomeClient({ initialFacts, initialVocabulary, initialLan
           className="relative z-10 flex h-full w-full items-stretch justify-center md:items-center lg:flex-row lg:items-center lg:justify-center lg:gap-6 xl:gap-8"
         >
         <style>{`
-          @media (min-width: 768px) and (max-width: 1023px) {
-            [data-testid="reels-phone-frame"].stage-card {
-              width: min(calc(100% - 48px), 600px) !important;
-              max-width: 600px !important;
-              height: calc(100dvh - 32px) !important;
-              max-height: calc(100dvh - 32px) !important;
-              align-self: start;
-              margin-inline: auto;
-            }
-            [data-testid="reels-phone-frame"] .reels-slide {
-              height: calc(100% - 56px) !important;
-              min-height: calc(100% - 56px) !important;
-            }
-          }
           @media (min-width: 1024px) {
             [data-testid="reels-phone-frame"].stage-card {
               width: clamp(420px, 36vw, 560px) !important;
@@ -2127,7 +2113,7 @@ export default function HomeClient({ initialFacts, initialVocabulary, initialLan
         `}</style>
         <div
           data-testid="reels-phone-frame"
-          className="stage-card relative z-10 flex h-full w-full min-w-0 shrink-0 flex-col overflow-hidden bg-cik-bg text-cik-text md:rounded-sticker md:shadow-sticker"
+          className="stage-card relative z-10 m-0 flex h-[100dvh] w-full min-w-0 shrink-0 flex-col overflow-hidden rounded-none border-0 bg-cik-bg p-0 text-cik-text shadow-none lg:rounded-[28px] lg:border lg:border-black/10 lg:p-0 lg:shadow-sticker"
         >
         <DeferredAdSense />
         <OfflineManager lang={lang} />

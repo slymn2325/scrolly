@@ -125,17 +125,19 @@ export default function DesktopLeftNav({
         ) : null}
         <div
           data-testid="desktop-session-box"
-          className="rounded-cik-lg border border-cik-line bg-cik-surface px-3 py-3 shadow-e1"
+          className="rounded-2xl border border-cik-line bg-cik-surface p-3.5 shadow-e1"
         >
-          <p className="cik-caption-2 text-cik-text-2">{lang === 'tr' ? 'Oturum' : 'Session'}</p>
-          <p className="cik-headline mt-1 flex items-center gap-2 text-cik-text">
-            <span className="cik-tabular">{streakDays}</span>
+          <p className="text-[11px] font-medium uppercase tracking-wider text-neutral-500">
+            {lang === 'tr' ? 'Oturum' : 'Session'}
+          </p>
+          <p className="mt-1 flex items-center gap-2 text-sm font-bold text-cik-text">
+            <span className="tabular-nums">{streakDays}</span>
             <Icon name="streak" size={16} tone="default" />
-            <span className="cik-tabular">· {xp.toLocaleString(locale)} XP</span>
+            <span className="tabular-nums">· {xp.toLocaleString(locale)} XP</span>
           </p>
           <p
             data-testid="desktop-account-status"
-            className="cik-caption-1 mt-2 truncate text-cik-text-2"
+            className="mt-2 truncate text-xs font-medium text-neutral-600"
             title={accountEmail || accountLabel || undefined}
           >
             {accountEmail || accountLabel
@@ -149,10 +151,10 @@ export default function DesktopLeftNav({
               type="button"
               data-testid="desktop-bind-email-btn"
               onClick={onBindEmail}
-              className="cik-footnote mt-3 flex h-11 w-full items-center justify-center gap-2 rounded-pill bg-cik-cta px-3 text-cik-on-cta"
+              className="mt-3 flex h-9 w-full items-center justify-center gap-1.5 rounded-xl bg-cik-cta px-3 text-xs font-semibold text-cik-on-cta"
             >
-              <Mail className="h-4 w-4 shrink-0" aria-hidden="true" />
-              <span>{lang === 'tr' ? 'İlerlemeni kaydet' : 'Save progress'}</span>
+              <Mail className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+              <span className="leading-none">{lang === 'tr' ? 'İlerlemeyi kaydet' : 'Save progress'}</span>
             </button>
           ) : null}
         </div>

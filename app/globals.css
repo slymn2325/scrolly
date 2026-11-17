@@ -307,13 +307,13 @@ html.scrolly-doc-scroll body {
 }
 
 /* W1 owns the tablet card height. Leave min(86dvh, 780px) until that slice. */
-@media (min-width: 768px) {
+@media (min-width: 1024px) {
   [data-testid="reels-phone-frame"].stage-card,
   [data-testid="reels-phone-frame"] {
     width: min(100%, 520px);
     height: min(86dvh, 780px);
     max-height: min(86dvh, 780px);
-    border-radius: var(--cik-r-sticker);
+    border-radius: 28px;
     box-shadow: var(--cik-e3);
     flex: none;
   }

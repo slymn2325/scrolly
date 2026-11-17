@@ -206,7 +206,7 @@ export default function GuessWidget({
       onDoubleClick={stop}
       onPointerDown={stop}
       onTouchStart={stop}
-      className="pointer-events-auto mt-2 rounded-cik-md bg-cik-surface-2 p-3 text-cik-text"
+      className="pointer-events-auto rounded-cik-md bg-cik-surface-2 p-3 text-cik-text"
     >
       <style>{`
         .guess-range {

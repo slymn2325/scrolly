@@ -419,10 +419,6 @@ export default function DiplomaProfileModal({
                 onSelectCategoryFromConstellation(category);
               }}
               onButtonPop={onButtonPop}
-              onOpenScrolla={() => {
-                onButtonPop();
-                window.dispatchEvent(new CustomEvent('scrolly-open-duel'));
-              }}
             />
           </div>
 

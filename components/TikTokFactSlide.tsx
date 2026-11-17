@@ -645,7 +645,7 @@ export default function TikTokFactSlide({
       className="reels-slide relative flex h-full w-full shrink-0 flex-col overflow-hidden select-none bg-cik-bg text-cik-text"
     >
       <div className="perspective-1000 relative mx-auto flex h-full w-full flex-col overflow-hidden bg-cik-bg">
-        <div className="pointer-events-none absolute inset-0 overflow-hidden rounded-t-[28px] bg-cik-pink">
+        <div className="pointer-events-none absolute inset-0 overflow-hidden rounded-none bg-cik-pink lg:rounded-t-[28px]">
           <CategoryMotionArt
             variant="hero"
             factId={fact.id}
@@ -684,18 +684,18 @@ export default function TikTokFactSlide({
 
         <div
           data-testid="fact-card-front"
-          className={`pointer-events-none absolute inset-0 z-content flex flex-col justify-end overflow-hidden px-4 text-cik-text md:px-5 ${
+          className={`pointer-events-none absolute inset-0 z-content flex flex-col justify-end overflow-hidden text-cik-text ${
             cookieBannerVisible
-              ? 'pb-[calc(72px+env(safe-area-inset-bottom)+68px)]'
-              : 'pb-[calc(72px+env(safe-area-inset-bottom)+16px)]'
+              ? 'pb-[calc(6rem+env(safe-area-inset-bottom)+68px)]'
+              : 'pb-[calc(6rem+env(safe-area-inset-bottom))]'
           } lg:pb-5 ${isFlipped ? 'hidden' : ''}`}
         >
           <div
-            className={`pointer-events-auto min-h-0 rounded-t-2xl bg-cik-bg px-4 pt-3 transition-all duration-300 ease-out ${
-              isExpanded ? 'max-h-[65%] overflow-y-auto' : 'overflow-hidden'
+            className={`pointer-events-auto flex min-h-0 shrink flex-col gap-2 rounded-t-2xl bg-cik-bg p-4 pr-14 transition-all duration-300 ease-out lg:pr-4 ${
+              isExpanded ? 'max-h-[75%] overflow-y-auto' : 'max-h-[50%] overflow-hidden'
             }`}
           >
-            <div className="mb-2 flex shrink-0 flex-wrap items-center gap-2">
+            <div className="flex shrink-0 flex-wrap items-center gap-2">
               <div className="inline-flex items-center gap-1 rounded-full border border-black/10 bg-black/5 px-2.5 py-0.5 text-[11px] font-medium leading-tight text-neutral-700 hover:bg-black/10 dark:border-white/15 dark:bg-white/10 dark:text-white/80">
                 <img
                   src={catMeta.iconPath}
@@ -763,7 +763,7 @@ export default function TikTokFactSlide({
                 onButtonPop();
                 setIsExpanded((prev) => !prev);
               }}
-              className="pointer-events-auto mt-2 min-h-0 cursor-pointer"
+              className="pointer-events-auto min-h-0 cursor-pointer"
             >
               <p
                 data-testid="fact-body"
@@ -776,7 +776,7 @@ export default function TikTokFactSlide({
               <span className="cik-caption-2 mt-1 inline-flex text-cik-text-2">
                 {isExpanded
                   ? lang === 'tr'
-                    ? 'Daha az göster'
+                    ? 'Daralt'
                     : 'Show less'
                   : lang === 'tr'
                     ? 'Devamını oku'
@@ -785,7 +785,7 @@ export default function TikTokFactSlide({
             </div>
           </div>
             {localized.guessChallenge && (
-              <div className="pointer-events-auto shrink-0 bg-cik-bg px-4 pb-3">
+              <div className="pointer-events-auto shrink-0 bg-cik-bg p-3 pr-14 lg:pr-3">
                 <GuessWidget
                   factId={fact.id}
                   challenge={localized.guessChallenge}
@@ -826,7 +826,11 @@ export default function TikTokFactSlide({
             data-testid="reels-action-column"
             onClick={(e) => e.stopPropagation()}
             onDoubleClick={(e) => e.stopPropagation()}
-            className="absolute bottom-[calc(72px+env(safe-area-inset-bottom)+16px)] right-2 z-rail flex flex-col items-center gap-2 md:hidden"
+            className={`absolute right-2 z-rail flex flex-col items-center gap-2 lg:hidden ${
+              cookieBannerVisible
+                ? 'bottom-[calc(6rem+env(safe-area-inset-bottom)+68px)]'
+                : 'bottom-[calc(6rem+env(safe-area-inset-bottom))]'
+            }`}
           >
             <IconButton
               label={lang === 'tr' ? (isLiked ? 'Beğeniyi kaldır' : 'Beğen') : isLiked ? 'Unlike' : 'Like'}
@@ -864,26 +868,30 @@ export default function TikTokFactSlide({
             <IconButton label={t.shareFact} data-testid="card-share-btn" onClick={handleShareClick}>
               <Share size={24} strokeWidth={2} />
             </IconButton>
-            <IconButton
-              label={lang === 'tr' ? 'Önceki kart' : 'Previous card'}
-              data-testid="card-prev-btn"
-              onClick={(e) => {
-                e.stopPropagation();
-                window.dispatchEvent(new CustomEvent('scrolly-feed-step', { detail: { direction: -1 } }));
-              }}
-            >
-              <ChevronUp size={24} strokeWidth={2} />
-            </IconButton>
-            <IconButton
-              label={lang === 'tr' ? 'Sonraki kart' : 'Next card'}
-              data-testid="card-next-btn"
-              onClick={(e) => {
-                e.stopPropagation();
-                window.dispatchEvent(new CustomEvent('scrolly-feed-step', { detail: { direction: 1 } }));
-              }}
-            >
-              <ChevronDown size={24} strokeWidth={2} />
-            </IconButton>
+            <div className="hidden flex-col items-center gap-2 lg:flex">
+              <IconButton
+                label={lang === 'tr' ? 'Önceki kart' : 'Previous card'}
+                data-testid="card-prev-btn"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  window.dispatchEvent(new CustomEvent('scrolly-feed-step', { detail: { direction: -1 } }));
+                }}
+                className="hidden lg:flex"
+              >
+                <ChevronUp size={24} strokeWidth={2} />
+              </IconButton>
+              <IconButton
+                label={lang === 'tr' ? 'Sonraki kart' : 'Next card'}
+                data-testid="card-next-btn"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  window.dispatchEvent(new CustomEvent('scrolly-feed-step', { detail: { direction: 1 } }));
+                }}
+                className="hidden lg:flex"
+              >
+                <ChevronDown size={24} strokeWidth={2} />
+              </IconButton>
+            </div>
           </div>
         )}
 

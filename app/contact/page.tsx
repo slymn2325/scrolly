@@ -8,7 +8,7 @@ import type { Language } from '@/i18n/translations';
 export const dynamic = 'force-dynamic';
 
 interface PageProps {
-  searchParams: Promise<{ lang?: string }>;
+  searchParams: Promise<{ lang?: string; from?: string }>;
 }
 
 function resolveLang(langParam?: string): Language {
@@ -101,6 +101,7 @@ export default async function ContactPage({ searchParams }: PageProps) {
     <TrustPageShell
       routePath="/contact"
       lang={lang}
+      returnToProfile={query.from === 'profile'}
       badge={isEn ? 'Editorial & Support Desk' : 'Editöryal Destek ve İletişim'}
       title={
         isEn

@@ -172,7 +172,7 @@ export default function DesktopFeedSideRail({
         mode === 'insight'
           ? 'flex h-full min-h-0 w-full shrink-0 flex-col'
           : mode === 'actions'
-            ? 'hidden shrink-0 flex-col items-center justify-center self-center gap-3 md:flex'
+            ? 'hidden shrink-0 flex-col items-center justify-center self-center gap-3 lg:flex'
             : 'hidden shrink-0 flex-col items-center justify-center self-center gap-3 lg:flex'
       }
     >

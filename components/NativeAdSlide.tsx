@@ -144,7 +144,7 @@ export default function NativeAdSlide({
           : 'pb-[calc(94px+env(safe-area-inset-bottom))] lg:pb-8'
       }`}
     >
-      <div className="relative z-10 mx-auto flex h-full w-full max-w-[430px] md:max-w-xl flex-col justify-between rounded-3xl border-2 border-slate-300/90 bg-white/95 p-4 shadow-md dark:border-slate-700/90 dark:bg-[#121826]/95">
+      <div className="relative z-10 m-0 mx-auto flex h-full w-full max-w-none flex-col justify-between rounded-none border-0 bg-white/95 p-4 shadow-none dark:bg-[#121826]/95 lg:max-w-xl lg:rounded-[28px] lg:border-2 lg:border-slate-300/90 lg:shadow-md dark:lg:border-slate-700/90">
         {/* Top Disclosure Badge — Show "Advertisement • Reklam" ONLY when data-ad-status="filled" */}
         <div className="flex items-center justify-between gap-2">
           {isAdFilled ? (
