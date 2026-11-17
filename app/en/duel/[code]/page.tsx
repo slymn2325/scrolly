@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation';
 import DuelInviteLanding from '@/components/DuelInviteLanding';
 import { loadDuelInvite } from '@/lib/duelInvite';
 import { isShortRoomCode } from '@/lib/duelStore';
+import { fitDocumentTitle } from '@/utils/factSeo';
 import { duelInvitePath, duelInviteTitle, PUBLIC_SITE_ORIGIN } from '@/utils/viralShare';
 
 export const dynamic = 'force-dynamic';
@@ -13,14 +14,17 @@ interface PageProps {
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { code } = await params;
-  if (!isShortRoomCode(code)) return { title: 'Scrolly duel' };
+  if (!isShortRoomCode(code)) {
+    return { title: 'Scrolly duel', robots: { index: false, follow: true } };
+  }
   const invite = await loadDuelInvite(code);
-  const title = duelInviteTitle(invite?.hostName || '', 'en');
+  const title = fitDocumentTitle(duelInviteTitle(invite?.hostName || '', 'en'));
   const description = 'Same questions, one winner. Join a Scrolly 1v1 duel.';
   const url = `${PUBLIC_SITE_ORIGIN}${duelInvitePath(invite?.code || code, 'en')}`;
   return {
     title,
     description,
+    robots: { index: false, follow: true },
     openGraph: {
       title,
       description,

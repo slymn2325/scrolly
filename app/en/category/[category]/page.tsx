@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import CategoryArchiveView, { buildCategoryMetadata } from '@/components/CategoryArchiveView';
-import { parseCategoryPage } from '@/lib/categoryPages';
+import { parseCategoryPage, withCategoryPageMetadata } from '@/lib/categoryPages';
 import { CATEGORY_ROUTE_SLUGS } from '@/utils/factsData';
 
 export const revalidate = 3600;
@@ -21,7 +21,7 @@ export async function generateMetadata({ params, searchParams }: CategoryPagePro
   if (page === null) {
     return { title: 'Category Not Found | Scrolly' };
   }
-  return buildCategoryMetadata(category, 'en', page);
+  return withCategoryPageMetadata(await buildCategoryMetadata(category, 'en', page));
 }
 
 export default async function EnglishCategoryPage({ params, searchParams }: CategoryPageProps) {

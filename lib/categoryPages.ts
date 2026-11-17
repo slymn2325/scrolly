@@ -1,4 +1,7 @@
+import type { Metadata } from 'next';
 import type { Language } from '@/i18n/translations';
+import { BRAND_OG_IMAGE } from '@/lib/homeMetadata';
+import { fitDocumentTitle } from '@/utils/factSeo';
 import { buildCategoryHref } from '@/utils/factsData';
 
 export const CATEGORY_PAGE_SIZE = 12;
@@ -26,6 +29,28 @@ export function categoryPagePath(slug: string, lang: Language, page: number): st
 
 export function categoryPageUrl(slug: string, lang: Language, page: number): string {
   return `https://scrolly.live${categoryPagePath(slug, lang, page)}`;
+}
+
+/** Document title stays within 60 characters, and category pages share the brand OG image. */
+export function withCategoryPageMetadata(metadata: Metadata): Metadata {
+  const title =
+    typeof metadata.title === 'string' ? fitDocumentTitle(metadata.title) : metadata.title;
+  if (!metadata.openGraph) return { ...metadata, title };
+  const alt = typeof title === 'string' ? title : BRAND_OG_IMAGE.alt;
+  const image = { ...BRAND_OG_IMAGE, alt };
+  return {
+    ...metadata,
+    title,
+    openGraph: {
+      ...metadata.openGraph,
+      images: [image],
+    },
+    twitter: {
+      ...metadata.twitter,
+      card: 'summary_large_image',
+      images: [image.url],
+    },
+  };
 }
 
 export function latestContentDate(dates: Date[], fallback?: Date): Date | null {

@@ -9,12 +9,42 @@ function languageForRequest(request: NextRequest): 'en' | 'tr' | null {
   return null;
 }
 
+/** `?lang=en` on a path that already has an English URL becomes that URL. */
+function englishPathFor(pathname: string): string | null {
+  if (pathname === '/') return '/en';
+  const fact = /^\/fact\/([^/]+)$/u.exec(pathname);
+  if (fact?.[1]) return `/en/fact/${fact[1]}`;
+  const category = /^\/category\/([^/]+)$/u.exec(pathname);
+  if (category?.[1]) return `/en/category/${category[1]}`;
+  return null;
+}
+
+function redirectEnglishQuery(request: NextRequest): NextResponse | null {
+  const url = request.nextUrl;
+  if (url.searchParams.get('lang') !== 'en') return null;
+  const pathname = englishPathFor(url.pathname);
+  if (!pathname) return null;
+  const dest = url.clone();
+  dest.pathname = pathname;
+  dest.searchParams.delete('lang');
+  return NextResponse.redirect(dest, 308);
+}
+
+function isPrivateDuelPath(pathname: string): boolean {
+  return pathname === '/duello' || pathname.startsWith('/duello/') || pathname.startsWith('/en/duel/');
+}
+
 export function proxy(request: NextRequest) {
+  const redirected = redirectEnglishQuery(request);
+  if (redirected) return redirected;
   const lang = languageForRequest(request);
   const requestHeaders = new Headers(request.headers);
   if (lang) requestHeaders.set('x-scrolly-lang', lang);
   const response = NextResponse.next({ request: { headers: requestHeaders } });
   if (lang) response.headers.set('Content-Language', lang);
+  if (isPrivateDuelPath(request.nextUrl.pathname)) {
+    response.headers.set('X-Robots-Tag', 'noindex, follow');
+  }
   return response;
 }
 
