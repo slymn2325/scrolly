@@ -8,12 +8,25 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const now = new Date();
   const entries = await getAllFactsWithTimestampsServer();
 
+  const homeLanguages = {
+    tr: 'https://scrolly.live',
+    en: 'https://scrolly.live/en',
+    'x-default': 'https://scrolly.live',
+  };
   const staticRoutes: MetadataRoute.Sitemap = [
     {
       url: 'https://scrolly.live',
       lastModified: now,
       changeFrequency: 'daily',
       priority: 1.0,
+      alternates: { languages: homeLanguages },
+    },
+    {
+      url: 'https://scrolly.live/en',
+      lastModified: now,
+      changeFrequency: 'daily',
+      priority: 1.0,
+      alternates: { languages: homeLanguages },
     },
     {
       url: 'https://scrolly.live/about',

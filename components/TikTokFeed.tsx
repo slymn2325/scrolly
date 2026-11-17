@@ -270,17 +270,9 @@ const TikTokFeed = forwardRef<TikTokFeedHandle, TikTokFeedProps>(function TikTok
 
         const settledSlide = slides[settledIdx];
         if (settledSlide?.type === 'fact') {
-          const nextSlug =
-            settledSlide.fact[lang]?.slug ||
-            settledSlide.fact.slug ||
-            settledSlide.fact.en.slug ||
-            settledSlide.fact.id;
+          // The open card stays in component state. The homepage URL is not a fact permalink.
           currentUrl.searchParams.delete('vocab');
-          if (nextSlug) {
-            currentUrl.searchParams.set('fact', nextSlug);
-          } else {
-            currentUrl.searchParams.delete('fact');
-          }
+          currentUrl.searchParams.delete('fact');
         } else if (settledSlide?.type === 'vocabulary') {
           currentUrl.searchParams.delete('fact');
           currentUrl.searchParams.set('vocab', settledSlide.card.id);
@@ -297,7 +289,7 @@ const TikTokFeed = forwardRef<TikTokFeedHandle, TikTokFeedProps>(function TikTok
         // Ignore history API errors in restricted webviews
       }
     },
-    [activeCategory, lang, slides]
+    [activeCategory, slides]
   );
 
   const scheduleSlideSettle = useCallback(

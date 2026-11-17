@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { AnimatePresence, motion } from 'framer-motion';
 import CookieBanner from '@/components/CookieBanner';
 import DiplomaProfileModal from '@/components/DiplomaProfileModal';
@@ -388,6 +389,7 @@ function promoteFactToFront(
 }
 
 export default function HomeClient({ initialFacts, initialVocabulary, initialLang = 'tr' }: HomeClientProps) {
+  const router = useRouter();
   const allFactsRef = useRef<FactCardType[]>(initialFacts);
   const [allFacts, setAllFacts] = useState<FactCardType[]>(initialFacts);
   const [dbVocabulary, setDbVocabulary] = useState<VocabularyCard[]>(() => initialVocabulary ?? []);
@@ -475,6 +477,10 @@ export default function HomeClient({ initialFacts, initialVocabulary, initialLan
         saveUserMemory(loaded);
       } else if (!window.localStorage.getItem('merak_user_state_v1')) {
         loaded.lang = detectBrowserLanguage();
+      }
+      if (initialLang === 'en') {
+        loaded.lang = 'en';
+        saveUserMemory(loaded);
       }
     }
     setMemory(loaded);
@@ -642,7 +648,7 @@ export default function HomeClient({ initialFacts, initialVocabulary, initialLan
     } else {
       setSuppressInitialFactSync(false);
     }
-  }, [initialFacts, initialVocabulary]);
+  }, [initialFacts, initialVocabulary, initialLang]);
 
   useEffect(() => {
     initTelemetrySync();
@@ -1081,6 +1087,17 @@ export default function HomeClient({ initialFacts, initialVocabulary, initialLan
       saveUserMemory(updated);
       return updated;
     });
+    if (typeof window === 'undefined') return;
+    const path = window.location.pathname;
+    const onEnHome = path === '/en' || path === '/en/';
+    const onTrHome = path === '/';
+    if (!onEnHome && !onTrHome) return;
+    if ((nextLang === 'en' && onEnHome) || (nextLang === 'tr' && onTrHome)) return;
+    const url = new URL(window.location.href);
+    url.pathname = nextLang === 'en' ? '/en' : '/';
+    url.searchParams.delete('fact');
+    url.searchParams.delete('lang');
+    router.push(`${url.pathname}${url.search}${url.hash}`);
   };
 
   const handleToggleDarkMode = () => {
