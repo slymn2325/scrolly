@@ -23,7 +23,7 @@ export const CATEGORIES: CategoryMeta[] = [
   {
     id: 'all',
     emoji: '✨',
-    iconPath: '/assets/icons8/icons/dock-explore.png',
+    iconPath: '/assets/fluent/sparkles.png',
     label: { tr: 'Tümü', en: 'All' },
     badge: { tr: 'Merak Ustası', en: 'Curiosity Master' },
     bgClass: 'bg-amber-50',
@@ -37,7 +37,7 @@ export const CATEGORIES: CategoryMeta[] = [
   {
     id: 'space',
     emoji: '🪐',
-    iconPath: '/assets/icons8/illustrations/space.png',
+    iconPath: '/assets/fluent/ringed-planet.png',
     label: { tr: 'Uzay', en: 'Space' },
     badge: { tr: 'Uzay Kaşifi', en: 'Space Explorer' },
     bgClass: 'bg-[#EFEAFF]',
@@ -51,7 +51,7 @@ export const CATEGORIES: CategoryMeta[] = [
   {
     id: 'nature',
     emoji: '🌿',
-    iconPath: '/assets/icons8/illustrations/nature.png',
+    iconPath: '/assets/fluent/herb.png',
     label: { tr: 'Doğa', en: 'Nature' },
     badge: { tr: 'Doğa Dedektifi', en: 'Nature Detective' },
     bgClass: 'bg-[#E6FAF5]',
@@ -65,7 +65,7 @@ export const CATEGORIES: CategoryMeta[] = [
   {
     id: 'human_body',
     emoji: '🧬',
-    iconPath: '/assets/icons8/illustrations/human_body.png',
+    iconPath: '/assets/fluent/dna.png',
     label: { tr: 'İnsan Vücudu', en: 'Human Body' },
     badge: { tr: 'Biyoloji Uzmanı', en: 'Bio Master' },
     bgClass: 'bg-[#FFEAE5]',
@@ -79,7 +79,7 @@ export const CATEGORIES: CategoryMeta[] = [
   {
     id: 'history',
     emoji: '🏛️',
-    iconPath: '/assets/icons8/illustrations/history.png',
+    iconPath: '/assets/fluent/classical-building.png',
     label: { tr: 'Tarih', en: 'History' },
     badge: { tr: 'Zaman Yolcusu', en: 'Time Traveler' },
     bgClass: 'bg-[#FEF6D8]',
@@ -93,7 +93,7 @@ export const CATEGORIES: CategoryMeta[] = [
   {
     id: 'science',
     emoji: '⚛️',
-    iconPath: '/assets/icons8/illustrations/science.png',
+    iconPath: '/assets/fluent/atom-symbol.png',
     label: { tr: 'Bilim', en: 'Science' },
     badge: { tr: 'Bilim Bilgesi', en: 'Science Sage' },
     bgClass: 'bg-[#E5F6FF]',
@@ -107,7 +107,7 @@ export const CATEGORIES: CategoryMeta[] = [
   {
     id: 'records',
     emoji: '🏆',
-    iconPath: '/assets/icons8/illustrations/records.png',
+    iconPath: '/assets/fluent/trophy.png',
     label: { tr: 'Garip Rekorlar', en: 'Weird Records' },
     badge: { tr: 'Tuhaf Bilgiler Avcısı', en: 'Oddity Hunter' },
     bgClass: 'bg-[#FCE8F3]',
@@ -121,7 +121,7 @@ export const CATEGORIES: CategoryMeta[] = [
   {
     id: 'statistics',
     emoji: '📊',
-    iconPath: '/assets/icons8/illustrations/statistics.png',
+    iconPath: '/assets/fluent/bar-chart.png',
     label: { tr: 'İstatistik', en: 'Statistics' },
     badge: { tr: 'Veri Kahini', en: 'Data Oracle' },
     bgClass: 'bg-[#E8EBFF]',
@@ -139,7 +139,7 @@ export const VOCABULARY_META: CategoryMeta = {
   id: 'vocabulary',
   label: { tr: 'Dil Öğrenme', en: 'Language Learning' },
   emoji: '🌐',
-  iconPath: '/assets/icons8/icons/lang-globe.png',
+  iconPath: '/assets/fluent/books.png',
   accentText: 'text-indigo-700 dark:text-indigo-300',
   accentBg: 'bg-indigo-500',
   bgClass: 'bg-indigo-50 dark:bg-indigo-950/60',
@@ -358,7 +358,12 @@ export const translations = {
     seoReadingTime: 'sn okuma',
     seoVerifiedSource: 'Bilimsel Kaynak',
     // iOS Floating Island Dock (5 tabs)
-    dockLeaderboard: 'Liderlik',
+    dockLeaderboard: 'Sıralama',
+    profileTabSummary: 'Özet',
+    profileTabAlbum: 'Çıkartma Albümü',
+    profileTabSaved: 'Kaydedilenler',
+    profileTabDiploma: 'Diploma & Rozetler',
+    profileSettings: 'Ayarlar',
     dockQuiz: 'Quiz',
     dockExplore: 'Keşfet',
     dockLanguage: 'Dil',
@@ -606,6 +611,11 @@ export const translations = {
     seoVerifiedSource: 'Verified Source',
     // iOS Floating Island Dock (5 tabs)
     dockLeaderboard: 'Leaderboard',
+    profileTabSummary: 'Summary',
+    profileTabAlbum: 'Sticker album',
+    profileTabSaved: 'Saved',
+    profileTabDiploma: 'Diploma & badges',
+    profileSettings: 'Settings',
     dockQuiz: 'Quiz',
     dockExplore: 'Explore',
     dockLanguage: 'Language',

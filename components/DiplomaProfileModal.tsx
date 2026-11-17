@@ -18,6 +18,7 @@ import {
   Mail,
   MailCheck,
   RotateCcw,
+  Settings,
   Share2,
   Trash2,
   Volume2,
@@ -214,6 +215,7 @@ export default function DiplomaProfileModal({
   const [likedIds, setLikedIds] = useState<string[]>([]);
   const [authEmail, setAuthEmail] = useState<string | null>(null);
   const [signingOut, setSigningOut] = useState(false);
+  const [pane, setPane] = useState<'ozet' | 'album' | 'saved' | 'diploma' | 'settings'>('ozet');
   const scrollBodyRef = useRef<HTMLDivElement>(null);
   const t = translations[lang];
   const copy = FEED_EXPERIENCE_COPY[lang];
@@ -395,7 +397,7 @@ export default function DiplomaProfileModal({
           data-presentation={presentation}
           className={
             isPage
-              ? 'absolute inset-0 z-20 flex h-full w-full flex-col bg-[#FFFDF9] dark:bg-[#0B0B11]'
+              ? 'absolute inset-0 z-20 flex h-full w-full flex-col bg-cik-bg text-cik-text'
               : 'absolute inset-0 z-20 flex h-full w-full items-center justify-center bg-[#0B0B11]/85 p-3 backdrop-blur-sm'
           }
         >
@@ -428,10 +430,23 @@ export default function DiplomaProfileModal({
                     className="h-7 w-7 object-contain"
                   />
                 </div>
-                <h2 className="font-display text-lg font-bold text-ink dark:text-white">
+                <h2 className="font-display text-lg font-bold text-cik-text">
                   {t.diplomaTitle}
                 </h2>
               </div>
+              <button
+                type="button"
+                data-testid="profile-settings-btn"
+                aria-pressed={pane === 'settings'}
+                onClick={() => {
+                  onButtonPop();
+                  setPane((current) => (current === 'settings' ? 'ozet' : 'settings'));
+                }}
+                className="inline-flex h-11 items-center gap-2 rounded-pill bg-cik-pink px-3 text-sm font-bold text-cik-text"
+              >
+                <Settings className="h-5 w-5" strokeWidth={2} />
+                <span>{t.profileSettings}</span>
+              </button>
 
               {!isPage && (
               <motion.button
@@ -458,6 +473,31 @@ export default function DiplomaProfileModal({
                 isPage ? 'pb-8 lg:pb-6' : 'pb-5'
               }`}
             >
+              <div className="flex gap-2 overflow-x-auto pb-2" role="tablist" aria-label={t.diplomaTitle}>
+                {(
+                  [
+                    ['ozet', t.profileTabSummary],
+                    ['album', t.profileTabAlbum],
+                    ['saved', t.profileTabSaved],
+                    ['diploma', t.profileTabDiploma],
+                  ] as const
+                ).map(([id, label]) => (
+                  <button
+                    key={id}
+                    type="button"
+                    role="tab"
+                    aria-selected={pane === id}
+                    data-testid={`profile-tab-${id}`}
+                    onClick={() => setPane(id)}
+                    className={`inline-flex h-11 shrink-0 items-center rounded-pill px-3 text-[13px] font-bold ${
+                      pane === id ? 'bg-cik-berry text-cik-text' : 'bg-white text-cik-muted'
+                    }`}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+              <div className={pane === 'settings' ? 'space-y-3' : 'hidden'}>
               {/* Account Sync Status / Non-blocking Email OTP CTA */}
               {authEmail ? (
                 <div
@@ -530,6 +570,7 @@ export default function DiplomaProfileModal({
               )}
 
               <ProfileHeaderTools lang={lang} />
+              </div>
               <button
                 type="button"
                 data-testid="profile-scrolla-card"
@@ -537,7 +578,9 @@ export default function DiplomaProfileModal({
                   onButtonPop();
                   window.dispatchEvent(new CustomEvent('scrolly-open-duel'));
                 }}
-                className="rounded-2xl border border-black/10 bg-white px-4 py-3 text-left lg:hidden"
+                className={`rounded-2xl border border-cik-line bg-white px-4 py-3 text-left lg:hidden ${
+                  pane === 'ozet' ? '' : 'hidden'
+                }`}
               >
                 <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-mute">Scrolla</p>
                 <p className="mt-1 text-sm font-semibold text-ink">{lang === 'tr' ? '1v1 bilgi düellosu' : '1v1 fact duel'}</p>
@@ -564,7 +607,9 @@ export default function DiplomaProfileModal({
               {/* Weekly League Diploma Certificate Card */}
               <div
                 data-testid="weekly-diploma-card"
-                className="relative overflow-hidden rounded-3xl border-2 border-amber-300 bg-gradient-to-br from-amber-50 via-white to-violet-50 p-4 text-center shadow-sm dark:border-amber-600/50 dark:from-[#261D3A] dark:via-[#1B162D] dark:to-[#1F2937]"
+                className={`relative overflow-hidden rounded-3xl border-[3px] border-white bg-cik-butter p-4 text-center shadow-sticker ${
+                  pane === 'diploma' ? '' : 'hidden'
+                }`}
               >
                 <img
                   src={UI_ICON_PATHS.verifiedSeal}
@@ -636,6 +681,7 @@ export default function DiplomaProfileModal({
                 )}
               </div>
 
+              <div className={pane === 'ozet' ? 'space-y-4' : 'hidden'}>
               {/* Interactive 7-Axis DataMB Topic Radar */}
               <TopicRadarChart
                 lang={lang}
@@ -690,6 +736,9 @@ export default function DiplomaProfileModal({
                 </div>
               </div>
 
+              </div>
+
+              <div className={pane === 'diploma' ? '' : 'hidden'}>
               {/* Category Badges */}
               <div>
                 <h3 className="mb-2 text-xs font-extrabold uppercase tracking-wider text-ink/65 dark:text-violet-200/70">
@@ -721,7 +770,9 @@ export default function DiplomaProfileModal({
                   </div>
                 )}
               </div>
+              </div>
 
+              <div className={pane === 'ozet' ? '' : 'hidden'}>
               {/* Topic Affinity (all 7 fact categories + Language Learning) */}
               <div>
                 <h3 className="mb-2 text-xs font-extrabold uppercase tracking-wider text-ink/65 dark:text-violet-200/70">
@@ -756,8 +807,37 @@ export default function DiplomaProfileModal({
                   })}
                 </div>
               </div>
+              </div>
 
-              {/* 1. Saved Facts Archive (🔖) */}
+              <div className={pane === 'album' ? 'space-y-3' : 'hidden'} data-testid="profile-album">
+                <h3 className="font-display text-[22px] font-bold leading-7 text-cik-text">{t.profileTabAlbum}</h3>
+                {memory.seenIds.length === 0 ? (
+                  <div className="flex flex-col items-center gap-2 rounded-sticker border-[3px] border-white bg-white p-4 text-center shadow-sticker">
+                    <img src="/assets/fluent/empty-nest.png" alt="" width={72} height={72} className="h-[72px] w-[72px] object-contain" />
+                    <p className="text-sm font-bold text-cik-muted">
+                      {lang === 'tr' ? 'Henüz toplanan çıkartma yok.' : 'No stickers collected yet.'}
+                    </p>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-2 gap-3">
+                    {allFacts
+                      .filter((fact) => memory.seenIds.includes(fact.id))
+                      .slice(0, 8)
+                      .map((fact, index) => (
+                        <div
+                          key={fact.id}
+                          className="rounded-sticker border-[3px] border-white bg-cik-pink p-3 shadow-sticker"
+                          style={{ transform: `rotate(${index % 2 === 0 ? -2 : 1}deg)` }}
+                        >
+                          <p className="line-clamp-3 text-sm font-bold leading-5 text-cik-text">{fact[lang].title}</p>
+                        </div>
+                      ))}
+                  </div>
+                )}
+              </div>
+
+              <div className={pane === 'saved' ? 'space-y-4' : 'hidden'}>
+              {/* 1. Saved Facts Archive */}
               <FactArchiveSection
                 title={t.diplomaSavedArchive}
                 count={savedFacts.length}
@@ -886,7 +966,9 @@ export default function DiplomaProfileModal({
                   )}
                 </div>
               </div>
+              </div>
 
+              <div className={pane === 'settings' ? 'space-y-3' : 'hidden'}>
               {/* Notifications Toggle */}
               <motion.button
                 type="button"
@@ -1012,6 +1094,7 @@ export default function DiplomaProfileModal({
                   {lang === 'tr' ? 'Kullanım Koşulları' : 'Terms'}
                 </Link>
               </div>
+            </div>
             </div>
             </div>
           </motion.div>

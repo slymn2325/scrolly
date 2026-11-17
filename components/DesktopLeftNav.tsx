@@ -3,7 +3,9 @@
 import React, { useEffect, useState } from 'react';
 import { Mail, WifiOff } from 'lucide-react';
 import { type Language } from '@/i18n/translations';
-import { DOCK_ICON_MAP, UI_ICON_PATHS, type DockTabId } from '@/utils/icons8Assets';
+import { UI_ICON_PATHS, type DockTabId } from '@/utils/icons8Assets';
+import Icon from '@/components/cikartma/Icon';
+import type { IconName } from '@/lib/iconMap';
 
 interface DesktopLeftNavProps {
   activeTab: DockTabId;
@@ -21,7 +23,7 @@ interface DesktopLeftNavProps {
 const TAB_STATUS_COPY: Record<DockTabId, { tr: string; en: string }> = {
   explore: { tr: 'Keşfet', en: 'Explore' },
   quiz: { tr: 'Quiz', en: 'Quiz' },
-  leaderboard: { tr: 'Liderlik', en: 'Leaderboard' },
+  leaderboard: { tr: 'Sıralama', en: 'Leaderboard' },
   language: { tr: 'Dil', en: 'Language' },
   duel: { tr: 'Scrolla · 1v1', en: 'Scrolla · 1v1' },
   diploma: { tr: 'Profil', en: 'Profile' },
@@ -31,12 +33,12 @@ const NAV_ITEMS: Array<{
   id: DockTabId;
   tr: string;
   en: string;
-  icon: keyof typeof DOCK_ICON_MAP;
+  icon: IconName;
 }> = [
   { id: 'explore', tr: 'Keşfet', en: 'Explore', icon: 'explore' },
   { id: 'quiz', tr: 'Quiz', en: 'Quiz', icon: 'quiz' },
-  { id: 'language', tr: 'Dil', en: 'Language', icon: 'language' },
-  { id: 'diploma', tr: 'Profil', en: 'Profile', icon: 'diploma' },
+  { id: 'leaderboard', tr: 'Sıralama', en: 'Leaderboard', icon: 'leaderboard' },
+  { id: 'diploma', tr: 'Profil', en: 'Profile', icon: 'profile' },
 ];
 
 export default function DesktopLeftNav({
@@ -73,27 +75,17 @@ export default function DesktopLeftNav({
     <aside
       data-testid="desktop-left-nav"
       data-theme={darkMode ? 'dark' : 'light'}
-      className={`relative z-30 hidden h-full w-[232px] shrink-0 flex-col border-r px-4 py-5 lg:flex ${
-        darkMode
-          ? 'border-white/10 bg-[#0A0A0E] text-white'
-          : 'border-[#1E1B2E]/10 bg-[#FFFDF9] text-[#1E1B2E]'
-      }`}
+      className="relative z-30 hidden h-full w-[232px] shrink-0 flex-col border-r border-cik-line bg-cik-bg px-4 py-5 text-cik-text lg:flex"
     >
-      <div className="mb-4 px-1 mb-6 px-2">
-        <p className="font-display text-lg font-black tracking-tight xl:text-2xl">
-          <span className="font-display text-3xl italic">Scrolly</span>
-          <span className="hidden" aria-label="Scrolly">
-            S
-          </span>
-        </p>
-        <p
-          className={`mt-1 text-[11px] font-semibold tracking-[0.16em] uppercase ${
-            darkMode ? 'text-white/65' : 'text-[#1E1B2E]/65'
-          }`}
-        >
-          {lang === 'tr' ? 'Kaydır · Öğren · Şaşır' : 'Scroll · Learn · Wonder'}
-        </p>
-      </div>
+        <div className="mb-6 flex items-center gap-2 px-2">
+          <img src="/brand/01-peel-s.svg" alt="" width={44} height={44} className="h-11 w-11" />
+          <div>
+            <p className="font-display text-2xl font-extrabold tracking-tight text-cik-text">Scrolly</p>
+            <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-cik-muted">
+              {lang === 'tr' ? 'Kaydır · Öğren · Şaşır' : 'Scroll · Learn · Wonder'}
+            </p>
+          </div>
+        </div>
 
       <nav className="flex flex-1 flex-col gap-1" aria-label="Desktop main">
         {NAV_ITEMS.map((item) => {
@@ -106,27 +98,12 @@ export default function DesktopLeftNav({
               aria-current={active ? 'page' : undefined}
               title={lang === 'tr' ? item.tr : item.en}
               onClick={() => onSelectTab(item.id)}
-              className={`relative flex h-12 items-center justify-center gap-3 rounded-xl border px-2 text-sm font-extrabold transition-[background-color,border-color,color,box-shadow,transform] duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400 justify-start px-3 ${
-                active
-                  ? darkMode
-                    ? 'border-white/15 bg-white/10 text-white before:absolute before:left-0 before:top-2.5 before:bottom-2.5 before:w-1 before:rounded-r-full before:bg-violet-400'
-                    : 'border-[#1E1B2E]/15 bg-[#1E1B2E]/[0.08] text-[#1E1B2E] before:absolute before:left-0 before:top-2.5 before:bottom-2.5 before:w-1 before:rounded-r-full before:bg-violet-600'
-                  : darkMode
-                    ? 'border-transparent text-white/75 hover:bg-white/5 hover:text-white'
-                    : 'border-transparent text-[#1E1B2E]/80 hover:bg-[#1E1B2E]/[0.05] hover:text-[#1E1B2E]'
+              className={`relative flex h-12 items-center justify-start gap-3 rounded-pill px-3 text-sm font-bold ${
+                active ? 'bg-cik-pink text-cik-cta' : 'text-cik-text'
               }`}
             >
               <span className="relative flex h-7 w-7 items-center justify-center">
-                <img
-                  src={DOCK_ICON_MAP[item.icon]}
-                  alt=""
-                  aria-hidden="true"
-                  width={24}
-                  height={24}
-                  loading="eager"
-                  decoding="sync"
-                  className="h-6 w-6 object-contain drop-shadow-sm"
-                />
+                <Icon name={item.icon} size={24} tone={active ? 'active' : 'default'} />
                 {item.id === 'quiz' && showQuizDot && (
                   <span
                     className={`absolute -right-0.5 -top-0.5 h-2 w-2 rounded-full bg-rose-500 ring-2 ${
