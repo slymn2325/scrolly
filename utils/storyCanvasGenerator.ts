@@ -1,5 +1,7 @@
 import { getCategoryMeta, type Language, translations } from '@/i18n/translations';
+import { detectMediaProvider } from '@/lib/mediaProvider';
 import type { CategoryId, FactCard } from '@/types/fact';
+import { staticPosterUrl } from '@/utils/cardMediaUrl';
 import { getFactPrimarySlug } from '@/utils/factsData';
 import {
   CATEGORY_ILLUSTRATION_MAP,
@@ -202,45 +204,6 @@ function loadCanvasImageWithTimeout(
   });
 }
 
-function drawCanvasGiphyAttributionBadge(
-  ctx: CanvasRenderingContext2D,
-  x: number,
-  y: number,
-  width: number,
-  height: number
-): void {
-  ctx.save();
-  drawRoundedRect(ctx, x, y, width, height, 10);
-  ctx.fillStyle = 'rgba(10, 10, 14, 0.84)';
-  ctx.fill();
-  ctx.strokeStyle = 'rgba(255, 255, 255, 0.24)';
-  ctx.lineWidth = 2;
-  ctx.stroke();
-
-  // Official 5-stripe geometric GIPHY mark
-  const iconX = x + 14;
-  const iconY = y + 9;
-  const iconW = 20;
-  const iconH = 26;
-  ctx.fillStyle = '#00FF99';
-  ctx.fillRect(iconX, iconY, 3, iconH);
-  ctx.fillStyle = '#9933FF';
-  ctx.fillRect(iconX, iconY + iconH - 3, iconW, 3);
-  ctx.fillStyle = '#FF6666';
-  ctx.fillRect(iconX + iconW - 3, iconY + 10, 3, iconH - 10);
-  ctx.fillStyle = '#FFF35C';
-  ctx.fillRect(iconX, iconY, 11, 3);
-  ctx.fillStyle = '#00CCFF';
-  ctx.fillRect(iconX + 11, iconY + 6, 9, 4);
-
-  ctx.textAlign = 'left';
-  ctx.textBaseline = 'middle';
-  ctx.font = '800 18px "Plus Jakarta Sans", system-ui, sans-serif';
-  ctx.fillStyle = '#FFFFFF';
-  ctx.fillText('Powered by GIPHY', iconX + iconW + 10, y + height / 2 + 1);
-  ctx.restore();
-}
-
 function resolveExtensionAndMime(
   contentTypeHeader: string | null,
   blobType: string,
@@ -371,6 +334,7 @@ export async function generateStoryCardImage(
   const palette = STORY_PALETTE[fact.category] ?? STORY_PALETTE.space;
   const localized = fact[lang];
   const rawGifUrl = fact.gifUrl?.trim() || '';
+  const posterStill = staticPosterUrl(rawGifUrl, fact.posterUrl);
   const proxiedGifUrl = rawGifUrl
     ? isGiphyHost(rawGifUrl)
       ? buildMediaProxyUrl(rawGifUrl)
@@ -380,11 +344,12 @@ export async function generateStoryCardImage(
     : null;
   const loadableGifUrl =
     proxiedGifUrl && !/\.mp4(?:\?|$)/i.test(rawGifUrl) ? proxiedGifUrl : null;
+  const heroSrc = posterStill || loadableGifUrl;
 
   const [catImg, verifiedSealImg, gifImg] = await Promise.all([
     loadImageElement(CATEGORY_ILLUSTRATION_MAP[fact.category] ?? catMeta.iconPath),
     loadImageElement(UI_ICON_PATHS.verifiedSeal),
-    loadCanvasImageWithTimeout(loadableGifUrl, 6000),
+    loadCanvasImageWithTimeout(heroSrc, 6000),
   ]);
 
   // 1. Aurora Background Gradient (1080 x 1920)
@@ -512,28 +477,6 @@ export async function generateStoryCardImage(
     heroScrim.addColorStop(1, 'rgba(10, 10, 14, 0.86)');
     ctx.fillStyle = heroScrim;
     ctx.fillRect(heroX, heroY, heroW, heroH);
-
-    // Subtle top-left scrolly.live watermark inside hero
-    ctx.font = '800 22px "Plus Jakarta Sans", system-ui, sans-serif';
-    const wmW = ctx.measureText('scrolly.live').width + 32;
-    drawRoundedRect(ctx, heroX + 20, heroY + 20, wmW, 40, 20);
-    ctx.fillStyle = 'rgba(10, 10, 14, 0.68)';
-    ctx.fill();
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.92)';
-    ctx.textAlign = 'left';
-    ctx.textBaseline = 'middle';
-    ctx.fillText('scrolly.live', heroX + 36, heroY + 41);
-
-    // Bottom-right Powered by GIPHY attribution badge inside GIF visual window
-    const badgeW = 248;
-    const badgeH = 44;
-    drawCanvasGiphyAttributionBadge(
-      ctx,
-      heroX + heroW - badgeW - 20,
-      heroY + heroH - badgeH - 18,
-      badgeW,
-      badgeH
-    );
     ctx.restore();
 
     drawRoundedRect(ctx, heroX, heroY, heroW, heroH, 40);
@@ -606,7 +549,16 @@ export async function generateStoryCardImage(
   }
 
   // Source Hint Pill at Card Bottom
-  const sourceLabel = `📚 ${localized.sourceHint}`;
+  const mediaProvider = detectMediaProvider({
+    gifUrl: fact.gifUrl,
+    posterUrl: fact.posterUrl,
+    mediaSource: fact.mediaSource,
+    mediaProvider: fact.mediaSource,
+  });
+  const sourceLabel =
+    mediaProvider?.id === 'giphy'
+      ? `📚 ${localized.sourceHint} · Giphy`
+      : `📚 ${localized.sourceHint}`;
   ctx.font = '700 26px "Plus Jakarta Sans", system-ui, sans-serif';
   const srcW = Math.min(textMaxW, ctx.measureText(sourceLabel).width + 64);
   drawRoundedRect(ctx, width / 2 - srcW / 2, srcY, srcW, 56, 28);

@@ -723,7 +723,7 @@ export default function DuelModal({
     : '';
 
   const shellClass = isPage
-    ? 'absolute inset-0 z-20 flex h-full w-full flex-col bg-[#FFFDF9] dark:bg-[#0B0B11]'
+    ? 'absolute inset-0 z-20 flex h-full w-full flex-col bg-[#FFFDF9] text-slate-900 dark:bg-[#0B0B11] dark:text-slate-100'
     : 'absolute inset-0 z-20 flex h-full w-full items-center justify-center bg-[#0B0B11]/85 p-3 backdrop-blur-sm';
 
   const panelClass = isPage
@@ -742,7 +742,7 @@ export default function DuelModal({
           className={shellClass}
         >
           <motion.div
-            initial={isPage ? { opacity: 0.94, y: 8 } : { opacity: 0.94, scale: 0.97, y: 8 }}
+            initial={isPage ? { opacity: 1, y: 0 } : { opacity: 0.94, scale: 0.97, y: 8 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             transition={{ duration: 0.14, ease: [0.23, 1, 0.32, 1] }}
             className={panelClass}
@@ -817,7 +817,7 @@ export default function DuelModal({
                     value={nickname}
                     onChange={(e) => setNickname(e.target.value)}
                     maxLength={24}
-                    className="mt-1.5 w-full rounded-2xl border border-violet-200 bg-white px-3.5 py-2.5 text-sm font-bold text-ink focus:border-violet-500 focus:outline-none focus:ring-2 focus:ring-violet-400/50 dark:border-white/15 dark:bg-white/10 dark:text-white"
+                    className="mt-1.5 w-full rounded-2xl border border-violet-200 bg-white px-3.5 py-2.5 text-sm font-bold text-slate-900 focus:border-violet-500 focus:outline-none focus:ring-2 focus:ring-violet-400/50 dark:border-white/15 dark:bg-slate-900 dark:text-slate-100"
                   />
                 </div>
 

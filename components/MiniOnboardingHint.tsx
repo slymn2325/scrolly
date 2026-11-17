@@ -61,7 +61,7 @@ export default function MiniOnboardingHint({
           exit={{ opacity: 0, y: -8, scale: 0.97 }}
           transition={{ duration: 0.18 }}
           data-testid="mini-onboarding-hint"
-          className="pointer-events-none absolute inset-x-3 top-[calc(env(safe-area-inset-top,14px)+58px)] z-[45] flex justify-center lg:top-[62px]"
+          className="pointer-events-none absolute inset-x-3 top-[calc(env(safe-area-inset-top,14px)+5.5rem)] z-[45] flex justify-center"
         >
           <div
             className={`pointer-events-auto flex max-w-full items-center gap-1.5 rounded-full border px-2.5 py-1.5 text-[10px] sm:text-[11px] font-extrabold shadow-lg ${

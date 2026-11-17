@@ -2,7 +2,7 @@
 
 import React, { forwardRef, useCallback, useEffect, useImperativeHandle, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { ArrowLeft, ChevronDown } from 'lucide-react';
+import { ArrowLeft, Check, ChevronDown } from 'lucide-react';
 import NotificationsBell from '@/components/NotificationsBell';
 import NativeAdSlide from '@/components/NativeAdSlide';
 import QuizCtaSlide from '@/components/QuizCtaSlide';
@@ -482,17 +482,13 @@ const TikTokFeed = forwardRef<TikTokFeedHandle, TikTokFeedProps>(function TikTok
         return;
       }
 
-      // Inner scrollable Word Lab / long-copy regions: keep wheel local until edges.
-      const scrollContain = targetEl?.closest(
-        '[data-scroll-contain="true"]'
-      ) as HTMLElement | null;
-      if (scrollContain && scrollContain.scrollHeight > scrollContain.clientHeight + 1) {
-        const { scrollTop, clientHeight, scrollHeight } = scrollContain;
-        const atTop = scrollTop <= 0;
-        const atBottom = scrollTop + clientHeight >= scrollHeight - 2;
-        if ((e.deltaY < 0 && !atTop) || (e.deltaY > 0 && !atBottom)) {
-          return;
-        }
+      const storyBox = targetEl?.closest('[data-story-scroll="true"]') as HTMLElement | null;
+      if (storyBox && storyBox.scrollHeight > storyBox.clientHeight + 1) {
+        return;
+      }
+      const choiceList = targetEl?.closest('[data-choice-scroll="true"]') as HTMLElement | null;
+      if (choiceList && choiceList.scrollHeight > choiceList.clientHeight + 1) {
+        return;
       }
 
       if (Math.abs(e.deltaY) < 20) return;
@@ -564,7 +560,7 @@ const TikTokFeed = forwardRef<TikTokFeedHandle, TikTokFeedProps>(function TikTok
       {/* Top HUD: sharp unblurred single horizontal row sitting above cards cleanly (z-[60]) */}
       <header
         data-chrome-blocked={chromeBlocked ? 'true' : 'false'}
-        className={`pointer-events-none absolute inset-x-0 top-0 z-[60] flex items-center justify-between gap-2 px-4 pt-[max(env(safe-area-inset-top,14px),14px)] pb-2 ${
+        className={`pointer-events-none absolute inset-x-0 top-0 z-[60] flex items-center justify-between gap-2 px-4 pt-4 pb-2 ${
           chromeBlocked ? 'opacity-40' : ''
         }`}
       >
@@ -655,7 +651,7 @@ const TikTokFeed = forwardRef<TikTokFeedHandle, TikTokFeedProps>(function TikTok
             transition={{ duration: 0.2, ease: 'easeOut' }}
             data-testid="category-drawer"
             data-presentation="page"
-            className="pointer-events-auto absolute inset-0 z-[70] flex h-full w-full flex-col overflow-hidden bg-cik-bg text-cik-text"
+            className="pointer-events-auto absolute inset-0 z-[70] flex h-full w-full flex-col overflow-hidden bg-white/95 text-slate-900 backdrop-blur-xl dark:bg-slate-900/95 dark:text-slate-100"
           >
             {/* Top Navigation Bar */}
             <div
@@ -689,7 +685,7 @@ const TikTokFeed = forwardRef<TikTokFeedHandle, TikTokFeedProps>(function TikTok
 
             {/* Category Explorer Grid */}
             <div className="no-scrollbar flex-1 overflow-y-auto px-4 py-5 pb-[calc(env(safe-area-inset-bottom,16px)+28px)]">
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-2 gap-3 pb-8">
                 {CATEGORY_SELECTOR_OPTIONS.map((cat) => {
                   const isActive = activeCategory === cat.id;
                   const labelText =
@@ -710,25 +706,26 @@ const TikTokFeed = forwardRef<TikTokFeedHandle, TikTokFeedProps>(function TikTok
                         setIsCategoryDrawerOpen(false);
                       }}
                       data-testid={`category-option-${cat.id}`}
-                      className={`group relative flex min-h-11 flex-col items-start gap-2.5 rounded-sticker border-[3px] border-white p-3.5 text-left shadow-sticker ${
+                      className={`group relative flex min-h-[104px] flex-col justify-between rounded-sticker border-[3px] border-white p-4 text-left shadow-sticker ${
                         isActive ? 'bg-cik-berry text-cik-text' : 'bg-cik-surface text-cik-text'
                       }`}
                     >
-                      <div className="flex w-full items-center justify-between gap-2">
-                        <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-white/95 p-1.5 shadow-sm">
+                      <div className="flex w-full items-start justify-between gap-2">
+                        <span className="flex h-10 w-10 shrink-0 items-center justify-center overflow-visible rounded-xl bg-white/95">
                           <img
                             src={artPath}
                             alt=""
                             aria-hidden="true"
-                            className="h-8 w-8 object-contain transition group-hover:scale-105"
+                            className="h-10 w-10 shrink-0 object-contain"
                           />
                         </span>
-                        <img
-                          src={cat.iconPath}
-                          alt=""
-                          aria-hidden="true"
-                          className="h-5 w-5 object-contain opacity-85"
-                        />
+                        {isActive ? (
+                          <span className="flex h-5 w-5 items-center justify-center rounded-full bg-white/25 text-white">
+                            <Check className="h-3 w-3" aria-hidden="true" />
+                          </span>
+                        ) : (
+                          <span className="h-5 w-5 shrink-0" aria-hidden="true" />
+                        )}
                       </div>
                       <span className="text-xs font-extrabold leading-snug">{labelText}</span>
                     </button>

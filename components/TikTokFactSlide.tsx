@@ -4,7 +4,6 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import {
   Bookmark,
-  ChevronUp,
   Heart,
   Info,
   RotateCw,
@@ -641,11 +640,6 @@ export default function TikTokFactSlide({
       <div className="perspective-1000 relative mx-auto flex h-full w-full flex-col overflow-hidden bg-cream">
         {/* Full-bleed live visual backdrop + framed upper/mid GIF media stage */}
         <div className="pointer-events-none relative h-[38%] min-h-[150px] w-full shrink-0 overflow-hidden bg-night-2">
-          <div className="pointer-events-none absolute inset-x-3 top-2 z-20 flex gap-1" aria-hidden="true">
-            {Array.from({ length: 5 }).map((_, bar) => (
-              <span key={bar} className={`h-[3px] flex-1 rounded-full ${bar === 0 ? 'bg-white' : 'bg-white/35'}`} />
-            ))}
-          </div>
           <CategoryMotionArt
             variant="hero"
             factId={fact.id}
@@ -685,20 +679,9 @@ export default function TikTokFactSlide({
         {/* Bottom collapsed headline + expandable story & guess drawer */}
         <div
           data-testid="fact-card-front"
-          className={`lumen-cream-panel backface-hidden relative z-10 flex min-h-0 w-full flex-1 flex-col overflow-y-auto bg-cream px-5 pt-3 text-ink ${isFlipped ? 'pointer-events-none opacity-0' : 'opacity-100'}`}
+          className={`lumen-cream-panel backface-hidden relative z-10 flex min-h-0 w-full flex-1 flex-col overflow-hidden bg-cream px-5 pt-4 text-ink ${isFlipped ? 'pointer-events-none opacity-0' : 'opacity-100'}`}
         >
-          <div
-            data-scroll-contain={isDetailsOpen ? 'true' : undefined}
-            onWheel={(e) => {
-              if (!isDetailsOpen) return;
-              const el = e.currentTarget;
-              if (el.scrollHeight > el.clientHeight + 1) e.stopPropagation();
-            }}
-            style={isDetailsOpen ? { overscrollBehavior: 'contain' } : undefined}
-            className={`pointer-events-none relative z-10 flex w-full flex-col no-scrollbar ${
-              isDetailsOpen ? 'max-h-[min(100%,calc(100dvh-140px))] overflow-y-auto' : ''
-            }`}
-          >
+          <div className="pointer-events-none relative z-10 flex min-h-0 w-full flex-1 flex-col overflow-hidden">
             <div className="mb-2 flex flex-wrap items-center gap-2">
               <div className="flex flex-wrap items-center gap-2">
                 <div className="inline-flex w-fit items-center gap-1.5 rounded-full border border-white/20 bg-black/50 px-2.5 py-1 text-[10px] font-extrabold uppercase tracking-wide text-white backdrop-blur-sm">
@@ -751,91 +734,78 @@ export default function TikTokFactSlide({
               onDoubleClick={(e) => e.stopPropagation()}
               onPointerDown={(e) => e.stopPropagation()}
               onTouchStart={(e) => e.stopPropagation()}
-              className="pointer-events-auto group w-full rounded-xl text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0A0A0E]"
+              className="pointer-events-auto group w-full rounded-xl text-left transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400"
             >
               <h2
                 data-testid="fact-headline"
-                className="font-display text-[26px] font-semibold leading-[1.18] tracking-[-0.02em] text-ink line-clamp-3"
+                className="line-clamp-2 font-display text-[26px] font-semibold leading-[1.18] tracking-[-0.02em] text-ink"
               >
                 {localized.title}
               </h2>
             </button>
-            <AnimatePresence initial={false}>
-                              <motion.div
-                  key="details-drawer"
-                  data-testid="fact-details-drawer"
-                  initial={{ opacity: 0, height: 0, y: 8 }}
-                  animate={{ opacity: 1, height: 'auto', y: 0 }}
-                  exit={{ opacity: 0, height: 0, y: 8 }}
-                  transition={{ duration: 0.24, ease: [0.32, 0.72, 0, 1] }}
-                  className="pointer-events-auto overflow-hidden"
-                >
-                  <div
-                    onClick={(e) => e.stopPropagation()}
-                    onDoubleClick={(e) => e.stopPropagation()}
-                    onPointerDown={(e) => e.stopPropagation()}
-                    onTouchStart={(e) => e.stopPropagation()}
-                    className="mt-2"
-                  >
-                    <div className="mb-1.5 flex items-center justify-end">
-                      <button
-                        type="button"
-                        data-testid="front-collapse-btn"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onButtonPop();
-                          setIsDetailsOpen(false);
-                        }}
-                        className="hidden"
-                      >
-                        <ChevronUp className="h-3 w-3 shrink-0" aria-hidden="true" />
-                        <span>{lang === 'tr' ? 'Daralt' : 'Collapse'}</span>
-                      </button>
-                    </div>
-
-                    <p
-                      data-testid="fact-body"
-                      className="mb-3 line-clamp-3 text-[15px] font-normal leading-[1.55] text-mute"
-                    >
-                      {maskedFactText}
-                    </p>
-
-                    {localized.guessChallenge && (
-                      <GuessWidget
-                        factId={fact.id}
-                        challenge={localized.guessChallenge}
-                        lang={lang}
-                        initialAnsweredState={savedGuessResult}
-                        onGuessLocked={(id) => {
-                          markFactSeenInStorage(fact);
-                          setLocalGuessLocked(true);
-                          onGuessLocked?.(id);
-                        }}
-                        onGuessAnswered={(xpAwarded, accurate, details) => {
-                          const nextTier: 'spotOn' | 'close' | 'participated' =
-                            xpAwarded >= 20 ? 'spotOn' : xpAwarded >= 15 ? 'close' : 'participated';
-                          setSavedGuessResult({
-                            tier: nextTier,
-                            earnedXp: xpAwarded,
-                            accuracyPct: details.accuracyPct,
-                          });
-                          setLocalGuessLocked(true);
-                          onGuessLocked?.(fact.id);
-                          onGuessReward(xpAwarded, accurate, fact.category, details.accuracyPct);
-                          void trackEvent(factSlug, fact.category, 'quick_guess', {
-                            guess: details.userGuess,
-                            target: details.correctValue,
-                            accuracy: details.accuracyPct,
-                            xp_awarded: xpAwarded,
-                          });
-                        }}
-                        onRequestFlip={() => executeFlip()}
-                        onButtonPop={onButtonPop}
-                      />
-                    )}
-                  </div>
-                </motion.div>
-            </AnimatePresence>
+            <div
+              data-testid="fact-details-drawer"
+              data-story-scroll={isDetailsOpen ? 'true' : undefined}
+              onWheel={(e) => {
+                if (!isDetailsOpen) return;
+                const el = e.currentTarget;
+                if (el.scrollHeight > el.clientHeight + 1) e.stopPropagation();
+              }}
+              onClick={(e) => {
+                e.stopPropagation();
+                onButtonPop();
+                setIsDetailsOpen((prev) => !prev);
+              }}
+              className={`pointer-events-auto mt-2 transition-all duration-300 ${
+                isDetailsOpen
+                  ? 'min-h-0 max-h-[46%] overflow-y-auto overscroll-contain'
+                  : 'overflow-hidden'
+              }`}
+            >
+              <p
+                data-testid="fact-body"
+                className={`text-[15px] font-normal leading-[1.55] text-mute ${
+                  isDetailsOpen ? '' : 'line-clamp-3'
+                }`}
+              >
+                {maskedFactText}
+              </p>
+            </div>
+            {localized.guessChallenge && (
+              <div className="pointer-events-auto mt-2 min-h-0">
+                <GuessWidget
+                  factId={fact.id}
+                  challenge={localized.guessChallenge}
+                  lang={lang}
+                  initialAnsweredState={savedGuessResult}
+                  onGuessLocked={(id) => {
+                    markFactSeenInStorage(fact);
+                    setLocalGuessLocked(true);
+                    onGuessLocked?.(id);
+                  }}
+                  onGuessAnswered={(xpAwarded, accurate, details) => {
+                    const nextTier: 'spotOn' | 'close' | 'participated' =
+                      xpAwarded >= 20 ? 'spotOn' : xpAwarded >= 15 ? 'close' : 'participated';
+                    setSavedGuessResult({
+                      tier: nextTier,
+                      earnedXp: xpAwarded,
+                      accuracyPct: details.accuracyPct,
+                    });
+                    setLocalGuessLocked(true);
+                    onGuessLocked?.(fact.id);
+                    onGuessReward(xpAwarded, accurate, fact.category, details.accuracyPct);
+                    void trackEvent(factSlug, fact.category, 'quick_guess', {
+                      guess: details.userGuess,
+                      target: details.correctValue,
+                      accuracy: details.accuracyPct,
+                      xp_awarded: xpAwarded,
+                    });
+                  }}
+                  onRequestFlip={() => executeFlip()}
+                  onButtonPop={onButtonPop}
+                />
+              </div>
+            )}
           </div>
         </div>
 

@@ -18,10 +18,15 @@ interface IosFloatingIslandDockProps {
   chromeBlocked?: boolean;
 }
 
-const TABS: Array<{ id: DockTabId; icon: IconName; labelKey: 'dockExplore' | 'dockQuiz' | 'dockLeaderboard' | 'dockDiploma' }> = [
+const TABS: Array<{
+  id: DockTabId;
+  icon: IconName;
+  labelKey: 'dockExplore' | 'dockQuiz' | 'dockLanguage' | 'dockDuel' | 'dockDiploma';
+}> = [
   { id: 'explore', icon: 'explore', labelKey: 'dockExplore' },
   { id: 'quiz', icon: 'quiz', labelKey: 'dockQuiz' },
-  { id: 'leaderboard', icon: 'leaderboard', labelKey: 'dockLeaderboard' },
+  { id: 'language', icon: 'languages', labelKey: 'dockLanguage' },
+  { id: 'duel', icon: 'duel', labelKey: 'dockDuel' },
   { id: 'diploma', icon: 'profile', labelKey: 'dockDiploma' },
 ];
 
@@ -42,14 +47,14 @@ export default function IosFloatingIslandDock({
       }`}
     >
       <nav
-        aria-label="Kesfet Quiz Siralama Profil"
+        aria-label="Kesfet Quiz Dil Scrolla Profil"
         data-testid="ios-floating-dock"
         className={`${
           chromeBlocked ? 'pointer-events-none' : 'pointer-events-auto'
         } flex w-full items-center justify-between rounded-pill border-[3px] border-white bg-cik-surface px-1.5 py-1 text-cik-text shadow-sticker`}
       >
         {TABS.map((tab) => {
-          const isActive = activeTab === tab.id || (tab.id === 'explore' && activeTab === 'language');
+          const isActive = activeTab === tab.id;
           const label = t[tab.labelKey];
           return (
             <motion.button
@@ -76,7 +81,13 @@ export default function IosFloatingIslandDock({
                   <span data-testid="quiz-live-dot" className="absolute -right-1 -top-1 h-2.5 w-2.5 rounded-full bg-cik-cta ring-2 ring-white" />
                 )}
               </span>
-              <span className="relative z-10 max-w-full truncate text-[11px] font-bold leading-none">{label}</span>
+              <span
+                className={`relative z-10 max-w-full whitespace-nowrap text-[10px] font-bold leading-none sm:text-[11px] ${
+                  isActive ? 'text-cik-cta' : 'text-slate-900 dark:text-slate-100'
+                }`}
+              >
+                {label}
+              </span>
             </motion.button>
           );
         })}

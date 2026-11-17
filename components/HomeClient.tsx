@@ -29,10 +29,8 @@ import WelcomeExploreModal, {
   clearValuePropDismissed,
   clearWelcomeDismissed,
   consumeNicknamePrompt,
-  persistValuePropDismissed,
   persistWelcomeDismissed,
   readValuePropDismissed,
-  ValuePropBanner,
 } from '@/components/WelcomeExploreModal';
 import MemoryQuizCard, { type ActiveQuizMode } from '@/components/MemoryQuizCard';
 import OfflineManager from '@/components/OfflineManager';
@@ -867,12 +865,7 @@ export default function HomeClient({ initialFacts, initialVocabulary, initialLan
         setIncomingDuel(null);
         setActiveQuiz(null);
         setActiveTab('duel');
-        setShowWelcome(
-          consumeNicknamePrompt(
-            memoryRef.current.nickname,
-            isGenericDefaultNickname(memoryRef.current.nickname)
-          )
-        );
+        setShowWelcome(false);
       } else if (duelParam) {
         const decoded = decodeDuelPayload(duelParam);
         if (decoded && decoded.cardIds.length > 0) {
@@ -886,12 +879,7 @@ export default function HomeClient({ initialFacts, initialVocabulary, initialLan
           });
           setActiveQuiz(null);
           setActiveTab('duel');
-          setShowWelcome(
-            consumeNicknamePrompt(
-              memoryRef.current.nickname,
-              isGenericDefaultNickname(memoryRef.current.nickname)
-            )
-          );
+          setShowWelcome(false);
         }
       } else if (openQuizParam === 'daily') {
         const quizDate = linkedQuizDate || getTodayDateString();
@@ -1391,9 +1379,6 @@ export default function HomeClient({ initialFacts, initialVocabulary, initialLan
       setIncomingDuel(null);
       setIncomingRoomCode(null);
       setActiveTab('duel');
-      if (consumeNicknamePrompt(memoryRef.current.nickname, isGenericDefaultNickname(memoryRef.current.nickname))) {
-        setShowWelcome(true);
-      }
     },
     [soundEnabled]
   );
@@ -1597,13 +1582,13 @@ export default function HomeClient({ initialFacts, initialVocabulary, initialLan
     if (tab === 'explore' || tab === 'language') {
       const nextCategory = tab === 'language' ? 'vocabulary' : 'all';
       const alreadyExploring =
-        (activeTab === tab || (tab === 'language' && activeTab === 'explore')) &&
+        activeTab === tab &&
         activeCategoryRef.current === nextCategory &&
         !activeQuiz &&
         !hadSubPage;
       setActiveQuiz(null);
       setIncomingDuel(null);
-      setActiveTab('explore');
+      setActiveTab(tab);
       if (activeCategoryRef.current !== nextCategory) {
         handleSelectCategory(nextCategory);
       } else if (alreadyExploring && tab === 'explore') {
@@ -1613,9 +1598,7 @@ export default function HomeClient({ initialFacts, initialVocabulary, initialLan
     }
 
     if (tab === 'duel') {
-      if (consumeNicknamePrompt(memoryRef.current.nickname, isGenericDefaultNickname(memoryRef.current.nickname))) {
-        setShowWelcome(true);
-      }
+      setShowWelcome(false);
     }
     if (tab !== 'duel') setIncomingDuel(null);
     if (tab !== 'quiz' && tab !== 'duel') setActiveQuiz(null);
@@ -1949,14 +1932,14 @@ export default function HomeClient({ initialFacts, initialVocabulary, initialLan
         {/* Blurred ambient card-color fill (letterbox feel, not empty void) */}
         <div
           aria-hidden="true"
-          className="pointer-events-none absolute inset-0 hidden transition-[background] duration-500 md:block"
+          className="pointer-events-none absolute inset-0 hidden transition-[background] duration-500 md:block dark:hidden"
           style={{
             background: `radial-gradient(ellipse 70% 95% at 50% 45%, ${ambientAccent}33 0%, #FFD6E6 30%, #FFF4F7 62%, #CFF5E7 100%)`,
           }}
         />
         <div
           aria-hidden="true"
-          className="pointer-events-none absolute inset-0 hidden opacity-40 transition-[background] duration-500 md:block"
+          className="pointer-events-none absolute inset-0 hidden opacity-40 transition-[background] duration-500 md:block dark:hidden"
           style={{
             background: 'linear-gradient(180deg, #FFE8A3 0%, transparent 42%, #FFD6E6 100%)',
           }}
@@ -1965,24 +1948,15 @@ export default function HomeClient({ initialFacts, initialVocabulary, initialLan
         {/* Stage + attached desktop vertical actions + up/down rail + xl info panel */}
         <div
           data-testid="reels-stage-row"
-          className="relative z-10 flex h-full w-full max-w-none items-stretch justify-center lg:h-[100dvh] lg:w-auto lg:max-w-none lg:items-center lg:gap-5"
+          className="relative z-10 flex h-full w-full max-w-none items-stretch justify-center lg:h-[100dvh] lg:w-auto lg:max-w-none lg:items-center lg:gap-2 lg:px-2"
         >
         {/* Immersive vertical stage: full-bleed on mobile/tablet; proportional 88dvh showcase on desktop */}
         <div
           data-testid="reels-phone-frame"
-          className="stage-card relative z-10 mx-auto flex h-full w-full min-w-0 max-w-[400px] flex-none flex-col overflow-hidden bg-cik-bg text-cik-text"
+          className="stage-card relative z-10 mx-auto flex h-full w-full min-w-0 flex-none flex-col overflow-hidden bg-cik-bg text-cik-text lg:h-[min(86dvh,780px)] lg:w-full lg:max-w-[520px] xl:max-w-[560px]"
         >
         <DeferredAdSense />
         <OfflineManager lang={lang} />
-
-        <ValuePropBanner
-          visible={showExploreFeed && !showWelcome && !chromeBlocked && !valuePropDismissed}
-          lang={lang}
-          onDismiss={() => {
-            persistValuePropDismissed();
-            setValuePropDismissed(true);
-          }}
-        />
 
         <MiniOnboardingHint
           visible={

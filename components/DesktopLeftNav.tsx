@@ -37,7 +37,8 @@ const NAV_ITEMS: Array<{
 }> = [
   { id: 'explore', tr: 'Keşfet', en: 'Explore', icon: 'explore' },
   { id: 'quiz', tr: 'Quiz', en: 'Quiz', icon: 'quiz' },
-  { id: 'leaderboard', tr: 'Sıralama', en: 'Leaderboard', icon: 'leaderboard' },
+  { id: 'language', tr: 'Dil', en: 'Language', icon: 'languages' },
+  { id: 'duel', tr: 'Scrolla', en: 'Scrolla', icon: 'duel' },
   { id: 'diploma', tr: 'Profil', en: 'Profile', icon: 'profile' },
 ];
 
@@ -139,15 +140,6 @@ export default function DesktopLeftNav({
             </span>
           </div>
         )}
-        <button
-          type="button"
-          data-testid="desktop-scrolla-card"
-          onClick={() => onSelectTab('duel')}
-          className={`mb-2 w-full rounded-2xl border px-3 py-3 text-left ${darkMode ? 'border-white/10 bg-white/5' : 'border-black/10 bg-white/80'}`}
-        >
-          <p className="text-[10px] font-bold uppercase tracking-[0.14em] opacity-70">Scrolla</p>
-          <p className="mt-1 text-sm font-semibold">{lang === 'tr' ? '1v1 bilgi düellosu' : '1v1 fact duel'}</p>
-        </button>
         <div
           data-testid="desktop-session-box"
           className={`rounded-xl border px-2 py-2 px-3 py-2.5 ${
@@ -155,9 +147,7 @@ export default function DesktopLeftNav({
           }`}
         >
           <p
-            className={`hidden text-[10px] font-black uppercase tracking-wider xl:block ${
-              darkMode ? 'text-white/65' : 'text-[#1E1B2E]/65'
-            }`}
+            className="hidden text-[10px] font-black uppercase tracking-wider text-slate-900 dark:text-slate-100 xl:block"
           >
             {lang === 'tr' ? 'Oturum' : 'Session'}
           </p>
@@ -177,9 +167,7 @@ export default function DesktopLeftNav({
           </p>
           <p
             data-testid="desktop-account-status"
-            className={`mt-2 hidden truncate text-[11px] font-bold xl:block ${
-              darkMode ? 'text-white/80' : 'text-[#1E1B2E]/80'
-            }`}
+            className="mt-2 hidden truncate text-[11px] font-bold text-slate-900 dark:text-slate-100 xl:block"
             title={accountEmail || accountLabel || undefined}
           >
             {accountEmail || accountLabel
@@ -221,9 +209,7 @@ export default function DesktopLeftNav({
         </div>
         <p
           data-testid="desktop-nav-status"
-          className={`hidden px-1 text-[10px] font-semibold leading-snug xl:block ${
-            darkMode ? 'text-white/65' : 'text-[#1E1B2E]/65'
-          }`}
+          className="hidden px-1 text-[10px] font-semibold leading-snug text-slate-900 dark:text-slate-100 xl:block"
         >
           {statusText}
         </p>

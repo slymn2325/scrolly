@@ -20,8 +20,8 @@ export default function QuizSectionSwitch({
       aria-selected={section === id}
       data-testid={`quiz-section-${id}`}
       onClick={() => choose(id)}
-      className={`min-h-[40px] rounded-full text-sm font-semibold ${
-        section === id ? 'bg-white text-ink shadow-pill' : 'text-mute'
+      className={`min-h-[40px] w-full rounded-full text-sm font-semibold transition-colors duration-150 ${
+        section === id ? 'bg-white text-slate-900 shadow-pill' : 'text-slate-700 dark:text-slate-200'
       }`}
     >
       {label}
@@ -31,7 +31,7 @@ export default function QuizSectionSwitch({
     <div
       role="tablist"
       aria-label={lang === 'tr' ? 'Quiz ve liderlik' : 'Quiz and leaderboard'}
-      className="mb-3 grid grid-cols-2 gap-1 rounded-full bg-violet-soft p-1"
+      className="mx-auto mb-3 grid w-full max-w-[280px] grid-cols-2 gap-1 rounded-full bg-violet-soft p-1"
     >
       {item('quiz', 'Quiz')}
       {item('leaderboard', lang === 'tr' ? 'Liderlik' : 'Leaderboard')}

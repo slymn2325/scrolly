@@ -17,7 +17,7 @@ import {
 import CardMediaStage from '@/components/CardMediaStage';
 import CategoryMotionArt from '@/components/CategoryMotionArt';
 import FactIcon from '@/components/FactIcon';
-import PoweredByGiphyBadge from '@/components/PoweredByGiphyBadge';
+import { detectMediaProvider, mediaCreditLine } from '@/lib/mediaProvider';
 import { getCategoryMeta, type Language, translations } from '@/i18n/translations';
 import { ENABLE_COMPETITIVE_TABS } from '@/lib/featureFlags';
 import { trackEvent } from '@/lib/telemetry';
@@ -134,9 +134,7 @@ export default function FactDetailPage({
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, transition: { duration: 0.01 } }}
       transition={{ duration: 0.14, ease: [0.23, 1, 0.32, 1] }}
-      className={`backface-hidden absolute inset-0 z-30 flex h-full w-full flex-col overflow-hidden ${
-        darkMode ? 'bg-[#111115] text-white' : 'bg-[#FFFDF9] text-[#1E1B2E]'
-      }`}
+      className="backface-hidden absolute inset-0 z-30 flex h-full w-full flex-col overflow-hidden bg-[#FFFDF9] text-slate-900 dark:bg-[#111115] dark:text-slate-100"
     >
       {/* Top Page Bar */}
       <div
@@ -233,7 +231,6 @@ export default function FactDetailPage({
                   mediaType={fact.mediaType}
                   mediaSource={fact.mediaSource}
                   isActive
-                  showBadge={false}
                   title={localized.title}
                   failed={gifFailed}
                   onFailed={() => setGifFailed(true)}
@@ -323,7 +320,7 @@ export default function FactDetailPage({
 
           {/* Scientific Deep-Dive Narrative */}
           <div
-            className={`rounded-2xl border p-4 ${
+            className={`rounded-2xl border p-4 pb-24 ${
               darkMode
                 ? 'border-white/10 bg-white/[0.03]'
                 : 'border-[#1E1B2E]/10 bg-white'
@@ -577,22 +574,30 @@ export default function FactDetailPage({
                 <ExternalLink className="h-3 w-3 shrink-0" />
               </Link>
             </div>
-            {effectiveGifUrl && !gifFailed && (
-              <div
-                className={`flex items-center justify-between gap-2 border-t pt-2 ${
-                  darkMode ? 'border-white/10' : 'border-[#1E1B2E]/10'
-                }`}
+            {mediaCreditLine(
+              detectMediaProvider({
+                gifUrl: effectiveGifUrl,
+                posterUrl: fact.posterUrl,
+                mediaSource: fact.mediaSource,
+                mediaProvider: fact.mediaSource,
+              }),
+              lang
+            ) ? (
+              <p
+                data-testid="detail-media-credit"
+                className="border-t pt-2 text-[11px] font-bold text-slate-900 dark:text-slate-100"
               >
-                <span
-                  className={`text-[10px] font-bold uppercase tracking-wider ${
-                    darkMode ? 'text-white/55' : 'text-[#1E1B2E]/55'
-                  }`}
-                >
-                  {lang === 'tr' ? 'Görsel GIF Kaynağı' : 'GIF Media Attribution'}
-                </span>
-                <PoweredByGiphyBadge compact lang={lang} />
-              </div>
-            )}
+                {mediaCreditLine(
+                  detectMediaProvider({
+                    gifUrl: effectiveGifUrl,
+                    posterUrl: fact.posterUrl,
+                    mediaSource: fact.mediaSource,
+                    mediaProvider: fact.mediaSource,
+                  }),
+                  lang
+                )}
+              </p>
+            ) : null}
           </div>
         </div>
       </div>

@@ -12,6 +12,9 @@
   --cik-pink: #ffd6e6;
   --cik-berry: #ff8db8;
   --cik-cta: #c44569;
+  --cik-mint: #cff5e7;
+  --cik-butter: #ffe8a3;
+  --cik-line: #f3c5d6;
   --cik-ease-card: cubic-bezier(0.22, 1, 0.36, 1);
   --cik-ease-slap: cubic-bezier(0.34, 1.56, 0.64, 1);
   --night: #14111C;
@@ -104,6 +107,16 @@ html.dark body {
   background-color: var(--background);
   color: var(--foreground);
   --sketch-pill-bg: rgba(18, 15, 36, 0.9);
+  --cik-bg: #2a1b2f;
+  --cik-surface: #3a2741;
+  --cik-text: #ffeff6;
+  --cik-muted: #c9a3b5;
+  --cik-pink: #5a3048;
+  --cik-berry: #c44569;
+  --cik-cta: #ffe4ef;
+  --cik-mint: #1d3b34;
+  --cik-butter: #4a3b22;
+  --cik-line: #5a3a4c;
 }
 
 /* Dark mode card surface overrides for inline pastel backgrounds */
@@ -170,6 +183,13 @@ html.dark [data-fact-surface='true'] p {
   }
 }
 
+html.scrolly-doc-scroll,
+html.scrolly-doc-scroll body {
+  overflow-y: auto !important;
+  height: auto !important;
+  min-height: 100dvh !important;
+}
+
 /* Hide scrollbars cleanly for horizontal category pills */
 .no-scrollbar::-webkit-scrollbar {
   display: none;
@@ -233,9 +253,9 @@ html.dark [data-fact-surface='true'] p {
 @media (min-width: 768px) {
   [data-testid="reels-phone-frame"].stage-card,
   [data-testid="reels-phone-frame"] {
-    width: min(460px, 70vw, calc(86vh * 9 / 16));
-    height: min(86vh, 860px, calc(min(460px, 70vw) * 16 / 9));
-    max-height: calc(100dvh - 108px);
+    width: min(100%, 520px);
+    height: min(86dvh, 780px);
+    max-height: min(86dvh, 780px);
     border-radius: 28px;
     box-shadow: var(--shadow-card, 0 24px 60px -24px rgba(28, 23, 48, 0.35));
     flex: none;
@@ -248,14 +268,25 @@ html.dark [data-fact-surface='true'] p {
 }
 
 @media (min-width: 1024px) {
+  [data-testid="reels-phone-frame"].stage-card,
   [data-testid="reels-phone-frame"] {
-    max-height: 86vh;
+    width: 100%;
+    max-width: 520px;
+    height: min(86dvh, 780px);
+    max-height: min(86dvh, 780px);
+  }
+}
+
+@media (min-width: 1280px) {
+  [data-testid="reels-phone-frame"].stage-card,
+  [data-testid="reels-phone-frame"] {
+    max-width: 560px;
   }
 }
 
 .lumen-cream-panel {
-  overflow-y: auto;
-  overscroll-behavior: contain;
+  overflow: hidden;
+  overscroll-behavior: none;
   padding-bottom: calc(96px + env(safe-area-inset-bottom));
 }
 
@@ -327,7 +358,24 @@ html.dark [data-fact-surface='true'] p {
 
 [data-testid='reels-desktop-shell'] {
   background: #fff4f7 !important;
-  color: #5b2a43 !important;
+  color: #0f172a !important;
+}
+
+html.dark [data-testid='reels-desktop-shell'] {
+  background: #14111c !important;
+  color: #f1f5f9 !important;
+}
+
+[data-testid='desktop-feed-prev'],
+[data-testid='desktop-feed-next'] {
+  color: #0f172a;
+  background: rgba(255, 255, 255, 0.95);
+}
+
+html.dark [data-testid='desktop-feed-prev'],
+html.dark [data-testid='desktop-feed-next'] {
+  color: #f1f5f9;
+  background: rgba(15, 23, 42, 0.88);
 }
 
 @media (prefers-reduced-motion: reduce) {
