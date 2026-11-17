@@ -1,14 +1,14 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { AnimatePresence, motion } from 'framer-motion';
+import { createPortal } from 'react-dom';
+import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import {
   AlertCircle,
   ArrowLeft,
   CheckCircle2,
   KeyRound,
   Mail,
-  RefreshCw,
   ShieldCheck,
   Sparkles,
   X,
@@ -19,7 +19,7 @@ import type { AuthUserDto } from '@/types/auth';
 import { useEscapeClose } from '@/utils/useEscapeClose';
 
 export const AUTH_NUDGE_DISMISS_KEY = 'scrolly_auth_nudge_dismissed_until';
-export const AUTH_NUDGE_COOLDOWN_MS = 24 * 60 * 60 * 1000;
+export const AUTH_NUDGE_COOLDOWN_MS = 7 * 24 * 60 * 60 * 1000;
 
 export function isAuthNudgeCoolingDown(): boolean {
   if (typeof window === 'undefined') return true;
@@ -100,7 +100,7 @@ function getContextualReason(trigger: string | undefined, lang: Language): strin
 
 function getNudgeHeadline(trigger: string | undefined, lang: Language): string {
   if (trigger === 'quiz') {
-    return lang === 'tr' ? 'Quiz XP puanını kaydet!' : 'Save your quiz XP!';
+    return lang === 'tr' ? 'Quiz XP puanını kaydet' : 'Save your quiz XP';
   }
   if (trigger === 'save') {
     return lang === 'tr' ? 'Kayıtlarını bulutta sakla' : 'Back up your saves';
@@ -158,19 +158,34 @@ function mapOtpError(code: string | undefined, lang: Language, cooldownSec?: num
   }
 }
 
+function findNudgeHeader(): HTMLElement | null {
+  const settings = document.querySelector('[data-testid="profile-settings-btn"]');
+  const leaderboardTitle = document.querySelector('[data-testid="leaderboard-modal"] h2');
+  const start = settings ?? leaderboardTitle;
+  if (!(start instanceof HTMLElement)) return null;
+  let node: HTMLElement | null = start;
+  while (node) {
+    if (node.classList.contains('justify-between')) return node;
+    node = node.parentElement;
+  }
+  return null;
+}
+
 export default function LazyAuthPrompt({
   open,
   nudgeOpen,
   nudgePlacement = 'page-top',
   trigger = 'manual',
   lang,
-  darkMode = true,
+  darkMode: _darkMode = true,
   currentXp,
   onCloseModal,
   onDismissNudge,
   onOpenModalFromNudge,
   onAuthenticated,
 }: LazyAuthPromptProps) {
+  const reduced = useReducedMotion() === true;
+  const [nudgeHost, setNudgeHost] = useState<HTMLElement | null>(null);
   const [step, setStep] = useState<'email' | 'code'>('email');
   const [email, setEmail] = useState('');
   const [code, setCode] = useState('');
@@ -180,6 +195,45 @@ export default function LazyAuthPrompt({
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   useEscapeClose(open, onCloseModal);
+
+  useEffect(() => {
+    if (!open) return;
+    window.dispatchEvent(new CustomEvent('scrolly-chrome-block', { detail: { open: true } }));
+    return () => {
+      window.dispatchEvent(new CustomEvent('scrolly-chrome-block', { detail: { open: false } }));
+    };
+  }, [open]);
+
+  useEffect(() => {
+    if (!nudgeOpen || open || nudgePlacement !== 'page-top') return;
+    let frame = 0;
+    let attempts = 0;
+    let host: HTMLElement | null = null;
+    const tick = () => {
+      const header = findNudgeHeader();
+      if (!header) {
+        attempts += 1;
+        if (attempts < 20) frame = window.requestAnimationFrame(tick);
+        return;
+      }
+      const existing = header.nextElementSibling;
+      if (existing instanceof HTMLElement && existing.dataset.authNudgeHost === 'true') {
+        host = existing;
+      } else {
+        host = document.createElement('div');
+        host.dataset.authNudgeHost = 'true';
+        host.className = 'px-4 pt-3';
+        header.insertAdjacentElement('afterend', host);
+      }
+      setNudgeHost(host);
+    };
+    tick();
+    return () => {
+      if (frame) window.cancelAnimationFrame(frame);
+      host?.remove();
+      setNudgeHost(null);
+    };
+  }, [nudgeOpen, open, nudgePlacement]);
 
   useEffect(() => {
     if (!open) {
@@ -253,72 +307,57 @@ export default function LazyAuthPrompt({
     onAuthenticated(res.user);
   };
 
-  const surfaceClass = darkMode
-    ? 'border-white/15 bg-[#141122] text-white'
-    : 'border-[#1E1B2E]/15 bg-[#FFFDF9] text-[#1E1B2E]';
-  const inputClass = darkMode
-    ? 'border-white/20 bg-black/40 text-white placeholder:text-white/45 focus-visible:border-violet-400'
-    : 'border-[#1E1B2E]/20 bg-white text-[#1E1B2E] placeholder:text-[#1E1B2E]/45 focus-visible:border-violet-600';
+  const surfaceClass = 'border border-cik-line bg-cik-surface text-cik-text';
+  const inputClass =
+    'border border-cik-line bg-cik-surface-2 text-cik-text placeholder:text-cik-text-3';
+
+  const nudge =
+    nudgeOpen && !open && nudgePlacement === 'page-top' && nudgeHost
+      ? createPortal(
+          <motion.div
+            key="lazy-auth-nudge"
+            initial={reduced ? { opacity: 0 } : { opacity: 0, y: -8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={reduced ? { opacity: 0 } : { opacity: 0, y: -8 }}
+            transition={{ duration: reduced ? 0.15 : 0.2 }}
+            data-testid="lazy-auth-nudge"
+            className="flex items-center gap-2 rounded-cik-lg bg-cik-surface px-3 py-2 text-cik-text shadow-e1"
+          >
+            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-cik-md bg-cik-pink text-cik-cta">
+              <ShieldCheck size={20} strokeWidth={2} aria-hidden="true" />
+            </span>
+            <div className="min-w-0 flex-1">
+              <p className="cik-footnote text-cik-text">
+                {getNudgeHeadline(trigger, lang)}
+                {currentXp > 0 ? ` (${currentXp} XP)` : ''}
+              </p>
+              <p className="cik-caption-2 mt-1 text-cik-text-2">{getContextualReason(trigger, lang)}</p>
+            </div>
+            <button
+              type="button"
+              data-testid="lazy-auth-nudge-cta"
+              onClick={onOpenModalFromNudge}
+              className="cik-caption-1 inline-flex h-11 shrink-0 items-center rounded-pill bg-cik-cta px-3 text-cik-on-cta"
+            >
+              {lang === 'tr' ? 'Bağla' : 'Connect'}
+            </button>
+            <button
+              type="button"
+              data-testid="lazy-auth-nudge-dismiss"
+              onClick={onDismissNudge}
+              aria-label={lang === 'tr' ? 'Şimdi değil' : 'Not now'}
+              className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-pill text-cik-text-2"
+            >
+              <X size={16} strokeWidth={2} aria-hidden="true" />
+            </button>
+          </motion.div>,
+          nudgeHost,
+        )
+      : null;
 
   return (
     <>
-      <AnimatePresence>
-        {nudgeOpen && !open && nudgePlacement === 'page-top' && (
-          <motion.div
-            key="lazy-auth-nudge"
-            initial={{ opacity: 0, y: -8, scale: 0.98 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: -6, scale: 0.98 }}
-            transition={{ duration: 0.2 }}
-            data-testid="lazy-auth-nudge"
-            className="pointer-events-none fixed inset-x-3 top-[calc(env(safe-area-inset-top,12px)+12px)] z-50 mx-auto flex max-w-md justify-center md:hidden"
-          >
-            <div
-              className={`pointer-events-auto flex w-full items-center gap-3 rounded-2xl border px-3.5 py-2.5 shadow-2xl ${
-                darkMode
-                  ? 'border-violet-400/35 bg-[#151226]/95 text-white'
-                  : 'border-violet-300 bg-white/95 text-[#1E1B2E]'
-              }`}
-            >
-              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-violet-500/20 text-violet-400">
-                <ShieldCheck className="h-5 w-5" aria-hidden="true" />
-              </span>
-              <div className="min-w-0 flex-1">
-                <p className="text-xs font-extrabold leading-tight">
-                  {getNudgeHeadline(trigger, lang)}
-                  {currentXp > 0 ? ` (${currentXp} XP)` : ''}
-                </p>
-                <p
-                  className={`mt-0.5 text-[11px] font-medium leading-snug ${
-                    darkMode ? 'text-white/75' : 'text-[#1E1B2E]/75'
-                  }`}
-                >
-                  {getContextualReason(trigger, lang)}
-                </p>
-              </div>
-              <button
-                type="button"
-                data-testid="lazy-auth-nudge-cta"
-                onClick={onOpenModalFromNudge}
-                className="shrink-0 rounded-xl bg-violet-600 px-3 py-2 text-[11px] font-black text-white shadow-sm transition-colors hover:bg-violet-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400"
-              >
-                {lang === 'tr' ? 'Bağla' : 'Connect'}
-              </button>
-              <button
-                type="button"
-                data-testid="lazy-auth-nudge-dismiss"
-                onClick={onDismissNudge}
-                aria-label={lang === 'tr' ? 'Şimdi değil' : 'Not now'}
-                className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400 ${
-                  darkMode ? 'text-white/65 hover:bg-white/10' : 'text-[#1E1B2E]/65 hover:bg-slate-100'
-                }`}
-              >
-                <X className="h-4 w-4" aria-hidden="true" />
-              </button>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      <AnimatePresence>{nudge}</AnimatePresence>
 
       <AnimatePresence>
         {open && (
@@ -327,54 +366,47 @@ export default function LazyAuthPrompt({
             aria-modal="true"
             aria-labelledby="lazy-auth-title"
             data-testid="lazy-auth-prompt"
-            className="fixed inset-0 z-[90] flex items-end justify-center bg-night/80 p-0 backdrop-blur-md sm:items-center sm:p-4"
+            className="cik-scrim fixed inset-0 z-modal flex items-end justify-center sm:items-center sm:p-4"
             onClick={onCloseModal}
           >
             <motion.div
-              initial={{ opacity: 0, y: 24, scale: 0.97 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: 20, scale: 0.97 }}
-              transition={{ duration: 0.2, ease: 'easeOut' }}
+              initial={reduced ? { opacity: 0 } : { y: '100%' }}
+              animate={reduced ? { opacity: 1 } : { y: 0 }}
+              exit={reduced ? { opacity: 0 } : { y: '100%' }}
+              transition={reduced ? { duration: 0.15 } : { type: 'spring', stiffness: 380, damping: 38 }}
               onClick={(e) => e.stopPropagation()}
-              className={`relative w-full max-w-md rounded-t-3xl border p-5 pb-[calc(env(safe-area-inset-bottom,16px)+20px)] shadow-2xl sm:rounded-3xl sm:p-6 ${surfaceClass}`}
+              className={`cik-sheet relative w-full max-w-md p-5 shadow-e3 ${surfaceClass}`}
+              style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 16px)' }}
             >
               <button
                 type="button"
                 data-testid="lazy-auth-close-btn"
                 onClick={onCloseModal}
                 aria-label={lang === 'tr' ? 'Kapat' : 'Close'}
-                className={`absolute right-4 top-4 flex h-9 w-9 items-center justify-center rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400 ${
-                  darkMode
-                    ? 'bg-white/10 text-white/80 hover:bg-white/20'
-                    : 'bg-slate-100 text-[#1E1B2E]/75 hover:bg-slate-200'
-                }`}
+                className="absolute right-4 top-4 inline-flex h-11 w-11 items-center justify-center rounded-pill bg-cik-surface-2 text-cik-text"
               >
-                <X className="h-4 w-4" aria-hidden="true" />
+                <X size={20} strokeWidth={2} aria-hidden="true" />
               </button>
 
-              <div className="flex items-center gap-3 pr-10">
-                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-violet-600 to-fuchsia-600 text-white shadow-md">
+              <div className="flex items-center gap-3 pr-12">
+                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-cik-md bg-cik-pink text-cik-cta">
                   {step === 'email' ? (
-                    <Mail className="h-5 w-5" aria-hidden="true" />
+                    <Mail size={20} strokeWidth={2} aria-hidden="true" />
                   ) : (
-                    <KeyRound className="h-5 w-5" aria-hidden="true" />
+                    <KeyRound size={20} strokeWidth={2} aria-hidden="true" />
                   )}
                 </div>
-                <div>
-                  <h2 id="lazy-auth-title" className="font-display text-lg font-extrabold leading-snug">
+                <div className="min-w-0">
+                  <h2 id="lazy-auth-title" className="cik-title-3 text-cik-text">
                     {step === 'email'
                       ? lang === 'tr'
-                        ? 'E-posta ile Hesabını Bağla'
-                        : 'Link Your Account via Email'
+                        ? 'E-posta ile hesabını bağla'
+                        : 'Link your account'
                       : lang === 'tr'
-                        ? '6 Haneli Doğrulama Kodu'
-                        : 'Enter 6-Digit Code'}
+                        ? '6 haneli kod'
+                        : '6-digit code'}
                   </h2>
-                  <p
-                    className={`mt-0.5 text-xs font-medium ${
-                      darkMode ? 'text-white/70' : 'text-[#1E1B2E]/70'
-                    }`}
-                  >
+                  <p className="cik-caption-2 mt-1 text-cik-text-2">
                     {step === 'email'
                       ? getContextualReason(trigger, lang)
                       : lang === 'tr'
@@ -385,14 +417,8 @@ export default function LazyAuthPrompt({
               </div>
 
               {currentXp > 0 && (
-                <div
-                  className={`mt-3 flex items-center gap-2 rounded-2xl border px-3 py-2 text-xs font-bold ${
-                    darkMode
-                      ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-200'
-                      : 'border-emerald-300 bg-emerald-50 text-emerald-800'
-                  }`}
-                >
-                  <Sparkles className="h-4 w-4 shrink-0" aria-hidden="true" />
+                <div className="cik-footnote mt-3 flex items-center gap-2 rounded-cik-md bg-cik-mint px-3 py-2 text-cik-mint-text">
+                  <Sparkles size={16} strokeWidth={2} aria-hidden="true" className="shrink-0" />
                   <span>
                     {lang === 'tr'
                       ? `Mevcut ${currentXp.toLocaleString()} XP ve kayıtların otomatik birleştirilecek.`
@@ -405,26 +431,17 @@ export default function LazyAuthPrompt({
                 <div
                   role="alert"
                   data-testid="lazy-auth-error"
-                  className={`mt-3 flex items-start gap-2 rounded-2xl border px-3 py-2.5 text-xs font-bold ${
-                    darkMode
-                      ? 'border-rose-500/40 bg-rose-950/50 text-rose-200'
-                      : 'border-rose-300 bg-rose-50 text-rose-800'
-                  }`}
+                  className="cik-footnote mt-3 flex items-start gap-2 rounded-cik-md bg-cik-rose px-3 py-3 text-cik-rose-text"
                 >
-                  <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
+                  <AlertCircle size={16} strokeWidth={2} aria-hidden="true" className="mt-1 shrink-0" />
                   <span>{errorMsg}</span>
                 </div>
               )}
 
               {step === 'email' ? (
-                <form onSubmit={handleRequestOtp} className="mt-4 space-y-3">
+                <form onSubmit={handleRequestOtp} className="mt-4 flex flex-col gap-3">
                   <div>
-                    <label
-                      htmlFor="lazy-auth-email"
-                      className={`mb-1.5 block text-[11px] font-extrabold uppercase tracking-wider ${
-                        darkMode ? 'text-violet-200' : 'text-violet-800'
-                      }`}
-                    >
+                    <label htmlFor="lazy-auth-email" className="cik-caption-2 mb-2 block text-cik-text-2">
                       {lang === 'tr' ? 'E-posta Adresi' : 'Email Address'}
                     </label>
                     <input
@@ -437,7 +454,7 @@ export default function LazyAuthPrompt({
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       placeholder={lang === 'tr' ? 'ornek@eposta.com' : 'you@example.com'}
-                      className={`w-full rounded-2xl border px-3.5 py-3 text-sm font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400 ${inputClass}`}
+                      className={`cik-subhead w-full rounded-cik-md px-4 py-3 ${inputClass}`}
                     />
                   </div>
 
@@ -445,59 +462,38 @@ export default function LazyAuthPrompt({
                     type="submit"
                     disabled={busy}
                     data-testid="lazy-auth-send-otp-btn"
-                    className="flex h-11 w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-violet-600 to-fuchsia-600 px-4 text-sm font-black text-white shadow-lg transition-opacity hover:opacity-95 disabled:opacity-60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400"
+                    className="cik-headline flex h-11 w-full items-center justify-center gap-2 rounded-pill bg-cik-cta px-4 text-cik-on-cta disabled:opacity-60"
                   >
-                    {busy ? (
-                      <RefreshCw className="h-4 w-4 animate-spin" aria-hidden="true" />
-                    ) : (
-                      <Mail className="h-4 w-4" aria-hidden="true" />
-                    )}
-                    <span>
-                      {lang === 'tr' ? '6 Haneli Kod Gönder' : 'Send 6-Digit Code'}
-                    </span>
+                    <Mail size={16} strokeWidth={2} aria-hidden="true" />
+                    <span>{busy ? (lang === 'tr' ? 'Gönderiliyor' : 'Sending') : lang === 'tr' ? 'Kodu gönder' : 'Send code'}</span>
                   </button>
 
-                  <p
-                    className={`text-center text-[11px] font-medium ${
-                      darkMode ? 'text-white/55' : 'text-[#1E1B2E]/60'
-                    }`}
-                  >
+                  <p className="cik-caption-2 text-center text-cik-text-3">
                     {lang === 'tr'
-                      ? 'Şifre yok, spam yok. Sadece tek kullanımlık doğrulama kodu.'
-                      : 'No password needed. Single-use verification code only.'}
+                      ? 'Şifre yok. Tek kullanımlık doğrulama kodu.'
+                      : 'No password. A single-use verification code.'}
                   </p>
                 </form>
               ) : (
-                <form onSubmit={handleVerifyOtp} className="mt-4 space-y-3">
+                <form onSubmit={handleVerifyOtp} className="mt-4 flex flex-col gap-3">
                   {devOtpCode && (
                     <button
                       type="button"
                       data-testid="lazy-auth-dev-otp"
                       onClick={() => setCode(devOtpCode)}
-                      className={`flex w-full items-center justify-between gap-2 rounded-2xl border px-3 py-2 text-xs font-extrabold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 ${
-                        darkMode
-                          ? 'border-amber-400/40 bg-amber-500/15 text-amber-200 hover:bg-amber-500/25'
-                          : 'border-amber-300 bg-amber-50 text-amber-900 hover:bg-amber-100'
-                      }`}
+                      className="cik-footnote flex h-11 w-full items-center justify-between gap-2 rounded-cik-md bg-cik-butter px-3 text-cik-butter-text"
                     >
                       <span>
-                        {lang === 'tr' ? 'Geliştirici Önizleme Kodu:' : 'Dev Preview Code:'}{' '}
-                        <strong className="tracking-widest">{devOtpCode}</strong>
+                        {lang === 'tr' ? 'Geliştirici kodu:' : 'Dev code:'}{' '}
+                        <strong className="cik-tabular tracking-widest">{devOtpCode}</strong>
                       </span>
-                      <span className="underline">
-                        {lang === 'tr' ? 'Doldur' : 'Fill'}
-                      </span>
+                      <span className="underline">{lang === 'tr' ? 'Doldur' : 'Fill'}</span>
                     </button>
                   )}
 
                   <div>
-                    <div className="mb-1.5 flex items-center justify-between gap-2">
-                      <label
-                        htmlFor="lazy-auth-code"
-                        className={`text-[11px] font-extrabold uppercase tracking-wider ${
-                          darkMode ? 'text-violet-200' : 'text-violet-800'
-                        }`}
-                      >
+                    <div className="mb-2 flex items-center justify-between gap-2">
+                      <label htmlFor="lazy-auth-code" className="cik-caption-2 text-cik-text-2">
                         {lang === 'tr' ? '6 Haneli Kod' : '6-Digit Code'}
                       </label>
                       <button
@@ -506,9 +502,9 @@ export default function LazyAuthPrompt({
                           setStep('email');
                           setErrorMsg(null);
                         }}
-                        className="inline-flex items-center gap-1 text-[11px] font-bold text-violet-400 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400"
+                        className="cik-caption-2 inline-flex h-11 items-center gap-1 text-cik-cta"
                       >
-                        <ArrowLeft className="h-3 w-3" aria-hidden="true" />
+                        <ArrowLeft size={16} strokeWidth={2} aria-hidden="true" />
                         <span>{lang === 'tr' ? 'E-postayı değiştir' : 'Change email'}</span>
                       </button>
                     </div>
@@ -522,7 +518,7 @@ export default function LazyAuthPrompt({
                       value={code}
                       onChange={(e) => setCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
                       placeholder="123456"
-                      className={`w-full rounded-2xl border px-3.5 py-3 text-center text-lg font-black tracking-[0.35em] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400 ${inputClass}`}
+                      className={`cik-title-3 cik-tabular w-full rounded-cik-md px-4 py-3 text-center tracking-widest ${inputClass}`}
                     />
                   </div>
 
@@ -530,20 +526,14 @@ export default function LazyAuthPrompt({
                     type="submit"
                     disabled={busy || code.replace(/\D/g, '').length !== 6}
                     data-testid="lazy-auth-verify-btn"
-                    className="flex h-11 w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-600 px-4 text-sm font-black text-white shadow-lg transition-opacity hover:opacity-95 disabled:opacity-60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400"
+                    className="cik-headline flex h-11 w-full items-center justify-center gap-2 rounded-pill bg-cik-cta px-4 text-cik-on-cta disabled:opacity-60"
                   >
-                    {busy ? (
-                      <RefreshCw className="h-4 w-4 animate-spin" aria-hidden="true" />
-                    ) : (
-                      <CheckCircle2 className="h-4 w-4" aria-hidden="true" />
-                    )}
-                    <span>
-                      {lang === 'tr' ? 'Doğrula ve Senkronize Et' : 'Verify & Sync'}
-                    </span>
+                    <CheckCircle2 size={16} strokeWidth={2} aria-hidden="true" />
+                    <span>{busy ? (lang === 'tr' ? 'Doğrulanıyor' : 'Checking') : lang === 'tr' ? 'Doğrula' : 'Verify'}</span>
                   </button>
 
-                  <div className="flex items-center justify-between pt-1 text-xs font-semibold">
-                    <span className={darkMode ? 'text-white/60' : 'text-[#1E1B2E]/60'}>
+                  <div className="cik-footnote flex items-center justify-between text-cik-text-2">
+                    <span>
                       {cooldownSec > 0
                         ? lang === 'tr'
                           ? `Tekrar gönder: ${cooldownSec} sn`
@@ -557,9 +547,9 @@ export default function LazyAuthPrompt({
                       disabled={busy || cooldownSec > 0}
                       data-testid="lazy-auth-resend-btn"
                       onClick={() => void handleRequestOtp()}
-                      className="font-extrabold text-violet-400 hover:underline disabled:opacity-45 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400"
+                      className="cik-footnote inline-flex h-11 items-center text-cik-cta disabled:opacity-40"
                     >
-                      {lang === 'tr' ? 'Yeni Kod Gönder' : 'Resend Code'}
+                      {lang === 'tr' ? 'Yeni kod' : 'Resend'}
                     </button>
                   </div>
                 </form>

@@ -42,9 +42,9 @@ export default function PwaManager({ lang }: PwaManagerProps) {
     return (
       <div
         data-testid="pwa-offline-pill"
-        className="inline-flex items-center gap-1 rounded-full border border-amber-200 bg-amber-50 px-2.5 py-0.5 text-[10px] font-bold text-amber-800"
+        className="cik-caption-2 inline-flex h-8 items-center gap-1 rounded-pill bg-cik-butter px-3 text-cik-butter-text"
       >
-        <WifiOff className="h-3 w-3" />
+        <WifiOff size={16} strokeWidth={2} aria-hidden="true" />
         <span>{t.offlineMode}</span>
       </div>
     );
@@ -54,9 +54,9 @@ export default function PwaManager({ lang }: PwaManagerProps) {
     return (
       <div
         data-testid="pwa-ready-pill"
-        className="hidden items-center gap-1 rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-0.5 text-[10px] font-bold text-emerald-700 sm:inline-flex"
+        className="cik-caption-2 hidden h-8 items-center gap-1 rounded-pill bg-cik-mint px-3 text-cik-mint-text sm:inline-flex"
       >
-        <Wifi className="h-3 w-3" />
+        <Wifi size={16} strokeWidth={2} aria-hidden="true" />
         <span>{t.offlineReady}</span>
       </div>
     );

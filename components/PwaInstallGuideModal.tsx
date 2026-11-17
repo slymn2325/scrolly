@@ -1,9 +1,9 @@
 'use client';
 
-import { ArrowLeft, PlusSquare, Share, Sparkles } from 'lucide-react';
-import { AnimatePresence, motion } from 'framer-motion';
+import { ArrowLeft, PlusSquare, Share, Smartphone, Sparkles } from 'lucide-react';
+import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { translations, type Language } from '@/i18n/translations';
-import { DOCK_ICON_MAP, UI_ICON_PATHS } from '@/utils/icons8Assets';
+import { motionTiming } from '@/lib/motion';
 import { useEscapeClose } from '@/utils/useEscapeClose';
 
 interface PwaInstallGuideModalProps {
@@ -21,10 +21,11 @@ interface PwaInstallGuideModalProps {
 export default function PwaInstallGuideModal({
   open,
   lang,
-  darkMode = true,
+  darkMode: _darkMode = true,
   onClose,
   onButtonPop,
 }: PwaInstallGuideModalProps) {
+  const reduced = useReducedMotion() === true;
   const handleClose = () => {
     onButtonPop();
     onClose();
@@ -58,153 +59,84 @@ export default function PwaInstallGuideModal({
           key="pwa-install-guide-page"
           data-testid="pwa-install-guide-modal"
           data-presentation="page"
-          initial={{ opacity: 0, x: 18 }}
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="pwa-guide-title"
+          initial={reduced ? { opacity: 0 } : { opacity: 0, x: 8 }}
           animate={{ opacity: 1, x: 0 }}
-          exit={{ opacity: 0, x: 18 }}
-          transition={{ duration: 0.2 }}
-          className={`absolute inset-0 z-30 flex h-full w-full flex-col overflow-hidden ${
-            darkMode ? 'bg-[#0F0D18] text-white' : 'bg-[#FFFDF9] text-[#1E1B2E]'
-          }`}
+          exit={reduced ? { opacity: 0 } : { opacity: 0, x: 8 }}
+          transition={motionTiming.reducedFade}
+          className="absolute inset-0 z-sheet flex h-full w-full flex-col overflow-hidden bg-cik-bg text-cik-text"
         >
-          {/* Top Navigation Bar */}
           <div
-            className={`flex shrink-0 items-center justify-between gap-3 border-b px-4 pb-3 pt-[calc(env(safe-area-inset-top,14px)+14px)] lg:pt-4 ${
-              darkMode ? 'border-white/10 bg-[#0F0D18]' : 'border-[#1E1B2E]/10 bg-[#FFFDF9]'
-            }`}
+            className="flex shrink-0 items-center justify-between gap-3 border-b border-cik-line bg-cik-bg px-4 pb-3"
+            style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + 16px)' }}
           >
             <button
               type="button"
               onClick={handleClose}
               aria-label={t.pwaDismissLabel}
-              className={`inline-flex h-10 items-center gap-2 rounded-full border px-3.5 text-xs font-extrabold transition active:scale-95 ${
-                darkMode
-                  ? 'border-white/15 bg-white/10 text-white hover:bg-white/15'
-                  : 'border-[#1E1B2E]/15 bg-white text-[#1E1B2E] hover:bg-slate-50'
-              }`}
+              className="cik-footnote inline-flex h-11 items-center gap-2 rounded-pill bg-cik-surface px-4 text-cik-text shadow-e1"
             >
-              <ArrowLeft className="h-4 w-4 shrink-0" />
+              <ArrowLeft size={16} strokeWidth={2} aria-hidden="true" className="shrink-0" />
               <span>{lang === 'tr' ? 'Profile Dön' : 'Back to Profile'}</span>
             </button>
 
-            <div
-              className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[11px] font-extrabold ${
-                darkMode ? 'bg-violet-500/20 text-violet-200' : 'bg-violet-100 text-violet-800'
-              }`}
-            >
-              <img src={UI_ICON_PATHS.verifiedSeal} alt="" aria-hidden="true" className="h-4 w-4 object-contain" />
+            <div className="cik-caption-1 inline-flex h-8 items-center gap-2 rounded-pill bg-cik-pink px-3 text-cik-text">
+              <Smartphone size={16} strokeWidth={2} aria-hidden="true" />
               <span>{lang === 'tr' ? 'Tam Ekran PWA' : 'App Mode'}</span>
             </div>
           </div>
 
-          {/* Scrollable Body */}
-          <div className="no-scrollbar flex-1 overflow-y-auto px-5 py-6">
-            <div
-              className={`rounded-3xl border p-5 ${
-                darkMode
-                  ? 'border-violet-400/25 bg-gradient-to-br from-violet-950/60 via-[#151226] to-[#0F0D18]'
-                  : 'border-violet-200 bg-gradient-to-br from-violet-50 via-white to-amber-50/40'
-              }`}
-            >
-              <div className="flex items-center gap-3.5">
-                <div
-                  className={`flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl border ${
-                    darkMode
-                      ? 'border-violet-400/30 bg-violet-500/20'
-                      : 'border-violet-200 bg-white shadow-sm'
-                  }`}
-                >
-                  <img
-                    src={DOCK_ICON_MAP.explore}
-                    alt=""
-                    aria-hidden="true"
-                    className="h-9 w-9 object-contain"
-                  />
-                </div>
-                <div className="min-w-0">
-                  <h2 className="font-display text-lg font-extrabold leading-snug">
-                    {t.pwaGuideTitle}
-                  </h2>
-                  <p
-                    className={`mt-1 text-xs font-medium leading-relaxed ${
-                      darkMode ? 'text-white/70' : 'text-[#1E1B2E]/70'
-                    }`}
-                  >
-                    {t.pwaPromptSubtitle}
-                  </p>
-                </div>
+          <div className="no-scrollbar flex-1 overflow-y-auto px-4 py-4">
+            <div className="flex items-center gap-4 rounded-cik-lg bg-cik-surface-2 p-5">
+              <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-cik-md bg-cik-pink text-cik-text">
+                <Smartphone size={24} strokeWidth={2} aria-hidden="true" />
+              </div>
+              <div className="min-w-0">
+                <h2 id="pwa-guide-title" className="cik-title-3 text-cik-text">
+                  {t.pwaGuideTitle}
+                </h2>
+                <p className="cik-subhead mt-1 text-cik-text-2">{t.pwaPromptSubtitle}</p>
               </div>
             </div>
 
-            <ol className="mt-5 space-y-3">
+            <ol className="mt-4 flex flex-col gap-3">
               {steps.map(({ num, icon: StepIcon, text }) => (
                 <li
                   key={num}
-                  className={`flex items-center gap-3.5 rounded-2xl border px-4 py-3.5 ${
-                    darkMode
-                      ? 'border-white/10 bg-white/[0.04]'
-                      : 'border-[#1E1B2E]/10 bg-white shadow-sm'
-                  }`}
+                  className="flex min-h-[52px] items-center gap-3 rounded-cik-lg border border-cik-line bg-cik-surface px-4 py-3"
                 >
-                  <span
-                    className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-black ${
-                      darkMode
-                        ? 'bg-violet-500/30 text-violet-100'
-                        : 'bg-violet-100 text-violet-800'
-                    }`}
-                  >
+                  <span className="cik-caption-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-pill bg-cik-pink text-cik-text">
                     {num}
                   </span>
-                  <StepIcon
-                    className={`h-4 w-4 shrink-0 ${
-                      darkMode ? 'text-violet-300' : 'text-violet-600'
-                    }`}
-                  />
-                  <span
-                    className={`text-xs font-semibold leading-relaxed ${
-                      darkMode ? 'text-white/90' : 'text-[#1E1B2E]/90'
-                    }`}
-                  >
-                    {text}
-                  </span>
+                  <StepIcon size={20} strokeWidth={2} aria-hidden="true" className="shrink-0 text-cik-cta" />
+                  <span className="cik-subhead text-cik-text">{text}</span>
                 </li>
               ))}
             </ol>
 
-            <div
-              className={`mt-5 flex items-center gap-3 rounded-2xl border px-4 py-3 ${
-                darkMode
-                  ? 'border-amber-400/20 bg-amber-400/10 text-amber-100'
-                  : 'border-amber-200 bg-amber-50 text-amber-900'
-              }`}
-            >
-              <img
-                src={UI_ICON_PATHS.xpSparkles}
-                alt=""
-                aria-hidden="true"
-                className="h-6 w-6 shrink-0 object-contain"
-              />
-              <p className="text-[11px] font-bold leading-snug">
+            <div className="mt-4 flex items-center gap-3 rounded-cik-lg bg-cik-butter px-4 py-3 text-cik-butter-text">
+              <Sparkles size={20} strokeWidth={2} aria-hidden="true" className="shrink-0" />
+              <p className="cik-footnote">
                 {lang === 'tr'
-                  ? 'Ana Ekrana eklendiğinde Scrolly kesintisiz tam ekran modda ve hızlı önbellekle çalışır.'
-                  : 'Once added to your Home Screen, Scrolly launches cleanly in full-screen app mode.'}
+                  ? 'Ana ekrana eklenince Scrolly tam ekran ve hazır önbellekle açılır.'
+                  : 'Once it is on your Home Screen, Scrolly opens full screen from its cache.'}
               </p>
             </div>
           </div>
 
-          {/* Sticky Footer */}
           <div
-            className={`shrink-0 border-t px-5 pt-3 pb-[calc(env(safe-area-inset-bottom,16px)+18px)] ${
-              darkMode ? 'border-white/10 bg-[#0F0D18]' : 'border-[#1E1B2E]/10 bg-[#FFFDF9]'
-            }`}
+            className="shrink-0 border-t border-cik-line bg-cik-bg px-4 pt-3"
+            style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 16px)' }}
           >
             <button
               type="button"
               onClick={handleClose}
               data-testid="pwa-install-guide-close"
-              className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-violet-600 to-fuchsia-600 py-3.5 text-xs font-extrabold text-white shadow-lg shadow-violet-500/25 transition hover:brightness-110 active:scale-[0.98]"
+              className="cik-headline flex h-11 w-full items-center justify-center rounded-pill bg-cik-cta text-cik-on-cta"
             >
-              <img src={UI_ICON_PATHS.badgeStar} alt="" aria-hidden="true" className="h-4 w-4 object-contain" />
-              <span>{t.pwaGuideCloseBtn}</span>
+              {t.pwaGuideCloseBtn}
             </button>
           </div>
         </motion.div>
