@@ -7,6 +7,7 @@ import PoweredByGiphyBadge from '@/components/PoweredByGiphyBadge';
 import { type Language, translations } from '@/i18n/translations';
 import type { FactCard } from '@/types/fact';
 import { getFactPrimarySlug, getFactUrl } from '@/utils/factsData';
+import { canonicalFactShareUrl } from '@/utils/viralShare';
 import { UI_ICON_PATHS } from '@/utils/icons8Assets';
 import {
   fetchProxiedMediaFile,
@@ -188,12 +189,15 @@ export default function StoryShareModal({
     }
   };
 
+  const canonicalCopyUrl = fact
+    ? canonicalFactShareUrl(getFactPrimarySlug(fact), lang === 'en' ? 'en' : 'tr')
+    : '';
+
   const handleCopyLink = async () => {
-    if (!fact) return;
+    if (!fact || !canonicalCopyUrl) return;
     onButtonPop();
-    const { shareUrl } = buildSharePayload(fact);
     try {
-      await navigator.clipboard.writeText(shareUrl);
+      await navigator.clipboard.writeText(canonicalCopyUrl);
     } catch {
       // Ignore clipboard failures in restricted environments
     }
@@ -352,6 +356,7 @@ export default function StoryShareModal({
                   whileTap={{ scale: 0.95 }}
                   onClick={handleCopyLink}
                   data-testid="story-copy-link-btn"
+                  data-share-url={canonicalCopyUrl}
                   className={`flex items-center justify-center gap-1.5 rounded-2xl py-2.5 text-xs font-extrabold transition-colors ${
                     copiedLink
                       ? 'bg-emerald-600 text-white'

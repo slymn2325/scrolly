@@ -8,6 +8,17 @@ import { STATE_ILLUSTRATION_PATHS, UI_ICON_PATHS } from '@/utils/icons8Assets';
 import { isGenericDefaultNickname } from '@/utils/userMemory';
 
 export const WELCOME_DISMISS_KEY = 'scrolly_welcome_dismissed_v1';
+export const NICKNAME_ASKED_KEY = 'scrolly_nickname_asked_v1';
+export const VALUE_PROP_DISMISSED_KEY = 'scrolly_value_prop_dismissed_v1';
+
+export const VALUE_PROP_TR =
+  'Beyin çürütmeyen kaydırma: her gün 5 kaynaklı bilgi, istersen İngilizcesiyle.';
+export const VALUE_PROP_EN =
+  'Scrolling that doesn’t rot your brain: 5 sourced facts a day, in English when you want.';
+
+export function valuePropLine(lang: Language): string {
+  return lang === 'tr' ? VALUE_PROP_TR : VALUE_PROP_EN;
+}
 
 const SYSTEM_NICKNAMES_TR = [
   'Kozmik Tilki',
@@ -72,12 +83,9 @@ export default function WelcomeExploreModal({
     setSystemSuggested((prev) => prev || generateSystemNickname(lang));
   }, [open, initialNickname, lang]);
 
-  const title = lang === 'tr' ? 'Scrolly’ye hoş geldin' : 'Welcome to Scrolly';
-  const body =
-    lang === 'tr'
-      ? 'Her kaydırmada şaşırtıcı bir keşif. Kendi takma adını seç ya da sistemin senin için seçtiği kimlikle başla!'
-      : 'A wonder in every swipe. Pick your explorer nickname or jump straight in with our suggested identity!';
-  const cta = lang === 'tr' ? 'Keşfetmeye Başla' : 'Start Exploring';
+  const title = lang === 'tr' ? 'Skoruna bir ad koy' : 'Put a name on your score';
+  const body = valuePropLine(lang);
+  const cta = lang === 'tr' ? 'Bu adla devam et' : 'Continue with this name';
 
   const resolvedNickname = nicknameInput.trim() || systemSuggested;
 
@@ -233,4 +241,90 @@ export function clearWelcomeDismissed(): void {
   } catch {
     // ignore quota / private mode
   }
+}
+
+function readFlag(key: string): boolean {
+  if (typeof window === 'undefined') return true;
+  try {
+    return window.localStorage.getItem(key) === '1';
+  } catch {
+    return false;
+  }
+}
+
+function writeFlag(key: string): void {
+  if (typeof window === 'undefined') return;
+  try {
+    window.localStorage.setItem(key, '1');
+  } catch {
+    // ignore quota / private mode
+  }
+}
+
+function removeFlag(key: string): void {
+  if (typeof window === 'undefined') return;
+  try {
+    window.localStorage.removeItem(key);
+  } catch {
+    // ignore quota / private mode
+  }
+}
+
+export function readNicknameAsked(): boolean {
+  return readFlag(NICKNAME_ASKED_KEY);
+}
+
+export function persistNicknameAsked(): void {
+  writeFlag(NICKNAME_ASKED_KEY);
+}
+
+export function clearNicknameAsked(): void {
+  removeFlag(NICKNAME_ASKED_KEY);
+}
+
+export function consumeNicknamePrompt(nickname: string, isGeneric: boolean): boolean {
+  if (readNicknameAsked()) return false;
+  persistNicknameAsked();
+  return isGeneric;
+}
+
+export function readValuePropDismissed(): boolean {
+  return readFlag(VALUE_PROP_DISMISSED_KEY);
+}
+
+export function persistValuePropDismissed(): void {
+  writeFlag(VALUE_PROP_DISMISSED_KEY);
+}
+
+export function clearValuePropDismissed(): void {
+  removeFlag(VALUE_PROP_DISMISSED_KEY);
+}
+
+interface ValuePropBannerProps {
+  visible: boolean;
+  lang: Language;
+  onDismiss: () => void;
+}
+
+export function ValuePropBanner({ visible, lang, onDismiss }: ValuePropBannerProps) {
+  if (!visible) return null;
+  return (
+    <div className="pointer-events-none absolute inset-x-3 top-[calc(env(safe-area-inset-top,12px)+10px)] z-[46] flex justify-center">
+      <div
+        data-testid="value-prop-line"
+        className="pointer-events-auto flex max-w-[440px] items-start gap-2 rounded-2xl border border-white/15 bg-[#12121D]/92 px-3 py-2 text-[12px] font-semibold leading-snug text-white shadow-lg"
+      >
+        <p>{VALUE_PROP_TR}</p>
+        <button
+          type="button"
+          data-testid="value-prop-dismiss"
+          onClick={onDismiss}
+          aria-label={lang === 'tr' ? 'Kapat' : 'Dismiss'}
+          className="mt-0.5 shrink-0 rounded-full px-1 text-sm leading-none text-white/70"
+        >
+          ×
+        </button>
+      </div>
+    </div>
+  );
 }

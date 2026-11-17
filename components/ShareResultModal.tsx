@@ -28,6 +28,7 @@ import {
   translations,
 } from '@/i18n/translations';
 import { isShortRoomCode, type ScrollaRoom } from '@/lib/duelStore';
+import { buildDailyResultShareText, duelInviteUrl } from '@/utils/viralShare';
 import {
   createScrollaRoom,
   fetchScrollaRoom,
@@ -43,6 +44,8 @@ interface ShareResultModalProps {
   badgeCategory: CategoryId;
   earnedXp: number;
   elapsedSec?: number;
+  quizMode?: 'memory' | 'daily' | 'weekly' | 'duel' | 'vocabulary';
+  quizDate?: string;
   challengerNickname?: string;
   playerId?: string;
   questionIds?: string[];
@@ -57,6 +60,8 @@ export default function ShareResultModal({
   badgeCategory,
   earnedXp,
   elapsedSec = 24,
+  quizMode,
+  quizDate,
   challengerNickname = 'Merak Avcısı',
   playerId: propPlayerId,
   questionIds = [],
@@ -65,6 +70,7 @@ export default function ShareResultModal({
   onClose,
 }: ShareResultModalProps) {
   const [copied, setCopied] = useState(false);
+  const [shared, setShared] = useState(false);
   const [duelCopied, setDuelCopied] = useState(false);
   const [createdRoomCode, setCreatedRoomCode] = useState<string | null>(() =>
     duelConfig?.duelId && isShortRoomCode(duelConfig.duelId) ? duelConfig.duelId : null
@@ -180,14 +186,25 @@ export default function ShareResultModal({
   const siteUrl =
     typeof window !== 'undefined' ? window.location.origin : 'https://scrolly.live';
 
+  const shareLang = lang === 'en' ? 'en' : 'tr';
+  const isDailyResult = quizMode === 'daily' && Boolean(quizDate);
+
   const duelShareUrl = useMemo(() => {
     if (createdRoomCode) {
-      return `${siteUrl}/?tab=duel&room=${createdRoomCode}`;
+      return duelInviteUrl(createdRoomCode, shareLang, siteUrl);
     }
     return siteUrl;
-  }, [createdRoomCode, siteUrl]);
+  }, [createdRoomCode, shareLang, siteUrl]);
 
   const fullShareText = useMemo(() => {
+    if (isDailyResult && quizDate) {
+      return buildDailyResultShareText({
+        lang: shareLang,
+        isoDate: quizDate,
+        results,
+        elapsedSec,
+      });
+    }
     if (createdRoomCode) {
       const codeLine =
         lang === 'tr'
@@ -196,7 +213,19 @@ export default function ShareResultModal({
       return `${shareSummaryLine}\n${t.shareChallengeText}\n${codeLine}\n${duelShareUrl}`;
     }
     return `${shareSummaryLine}\n${t.shareChallengeText}\n${siteUrl}`;
-  }, [createdRoomCode, duelShareUrl, lang, shareSummaryLine, siteUrl, t.shareChallengeText]);
+  }, [
+    createdRoomCode,
+    duelShareUrl,
+    elapsedSec,
+    isDailyResult,
+    lang,
+    quizDate,
+    results,
+    shareLang,
+    shareSummaryLine,
+    siteUrl,
+    t.shareChallengeText,
+  ]);
 
   const ensureScrollaRoomCode = useMemo(() => {
     return async (): Promise<string | null> => {
@@ -313,7 +342,7 @@ export default function ShareResultModal({
     if (!createdRoomCode && questionIds.length > 0) {
       const code = await ensureScrollaRoomCode();
       if (code) {
-        shareUrl = `${siteUrl}/?tab=duel&room=${code}`;
+        shareUrl = duelInviteUrl(code, shareLang, siteUrl);
       }
     }
     try {
@@ -323,6 +352,27 @@ export default function ShareResultModal({
     }
     setDuelCopied(true);
     setTimeout(() => setDuelCopied(false), 2500);
+  };
+
+  const handleWebShare = async () => {
+    onButtonPop();
+    if (typeof navigator !== 'undefined' && typeof navigator.share === 'function') {
+      try {
+        await navigator.share({ text: fullShareText });
+        setShared(true);
+        setTimeout(() => setShared(false), 2500);
+        return;
+      } catch (err) {
+        if (err instanceof Error && err.name === 'AbortError') return;
+      }
+    }
+    try {
+      await navigator.clipboard.writeText(fullShareText);
+    } catch {
+      // Ignore clipboard error
+    }
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2500);
   };
 
   const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(fullShareText)}`;
@@ -576,6 +626,27 @@ export default function ShareResultModal({
             {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
             <span>{copied ? t.shareCopiedBtn : t.shareCopyBtn}</span>
           </motion.button>
+
+          {isDailyResult && (
+            <motion.button
+              type="button"
+              whileTap={{ scale: 0.94 }}
+              onClick={() => void handleWebShare()}
+              data-testid="daily-web-share-btn"
+              className="flex w-full items-center justify-center gap-2 rounded-2xl bg-violet-600 px-4 py-2 text-xs font-extrabold text-white shadow-pill sm:text-sm"
+            >
+              <Share2 className="h-4 w-4" />
+              <span>
+                {shared
+                  ? lang === 'tr'
+                    ? 'Paylaşıldı'
+                    : 'Shared'
+                  : lang === 'tr'
+                    ? 'Paylaş'
+                    : 'Share'}
+              </span>
+            </motion.button>
+          )}
 
           {questionIds.length > 0 && (
             <motion.button

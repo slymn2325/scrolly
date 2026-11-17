@@ -24,9 +24,14 @@ import MiniOnboardingHint, {
   readMiniOnboardingDismissed,
 } from '@/components/MiniOnboardingHint';
 import WelcomeExploreModal, {
+  clearNicknameAsked,
+  clearValuePropDismissed,
   clearWelcomeDismissed,
+  consumeNicknamePrompt,
+  persistValuePropDismissed,
   persistWelcomeDismissed,
-  readWelcomeDismissed,
+  readValuePropDismissed,
+  ValuePropBanner,
 } from '@/components/WelcomeExploreModal';
 import MemoryQuizCard, { type ActiveQuizMode } from '@/components/MemoryQuizCard';
 import OfflineManager from '@/components/OfflineManager';
@@ -129,6 +134,7 @@ import {
   playWrong,
 } from '@/utils/soundEngine';
 import { submitQuizScoreToLeaderboard } from '@/utils/supabaseLeaderboard';
+import { parseIsoDate } from '@/utils/viralShare';
 import {
   addUserXp,
   boostCategoryWeight,
@@ -139,6 +145,7 @@ import {
   getTodayDateString,
   getTopCategory,
   getTotalCardsViewed,
+  isGenericDefaultNickname,
   loadUserMemory,
   markFactIdSeen,
   mergeRemoteProfileIntoMemory,
@@ -157,6 +164,7 @@ interface ActiveQuizSession {
   mode: ActiveQuizMode;
   questions: QuizQuestionItem[];
   duelConfig?: DuelChallengeConfig | null;
+  quizDate?: string;
 }
 
 interface HomeClientProps {
@@ -443,8 +451,11 @@ export default function HomeClient({ initialFacts, initialVocabulary, initialLan
     elapsedSec: number;
     questionIds: string[];
     duelConfig?: DuelChallengeConfig | null;
+    quizMode?: ActiveQuizMode;
+    quizDate?: string;
   } | null>(null);
   const [showWelcome, setShowWelcome] = useState(false);
+  const [valuePropDismissed, setValuePropDismissed] = useState(true);
   const [ambientAccent, setAmbientAccent] = useState('#818CF8');
   const [authUser, setAuthUser] = useState<AuthUserDto | null>(null);
   const authUserRef = useRef<AuthUserDto | null>(null);
@@ -482,6 +493,7 @@ export default function HomeClient({ initialFacts, initialVocabulary, initialLan
     setSavedIds(seededSaved.length > 0 ? seededSaved : loadSavedFactIds());
     setSavedVocabWords(loadSavedVocabNotebook().map((entry) => entry.word.toLowerCase()));
     setMiniOnboardingDismissed(readMiniOnboardingDismissed());
+    setValuePropDismissed(readValuePropDismissed());
     hasHydratedRef.current = true;
     syncDocumentTheme(loaded.darkMode, loaded.lang);
 
@@ -525,8 +537,6 @@ export default function HomeClient({ initialFacts, initialVocabulary, initialLan
       if (resolvedTab) {
         setActiveTab(resolvedTab);
         setShowWelcome(false);
-      } else if (!readWelcomeDismissed() && !duelParam && openQuizParam !== 'daily') {
-        setShowWelcome(true);
       }
     }
 
@@ -650,11 +660,13 @@ export default function HomeClient({ initialFacts, initialVocabulary, initialLan
     let duelParam: string | null = null;
     let roomParam: string | null = null;
     let openQuizParam: string | null = null;
+    let linkedQuizDate: string | null = null;
     if (typeof window !== 'undefined') {
       const searchParams = new URLSearchParams(window.location.search);
       duelParam = searchParams.get('duel');
       roomParam = searchParams.get('room');
       openQuizParam = searchParams.get('openQuiz');
+      linkedQuizDate = parseIsoDate(searchParams.get('quizDate'));
     }
 
     let cancelled = false;
@@ -843,7 +855,12 @@ export default function HomeClient({ initialFacts, initialVocabulary, initialLan
         setIncomingDuel(null);
         setActiveQuiz(null);
         setActiveTab('duel');
-        setShowWelcome(false);
+        setShowWelcome(
+          consumeNicknamePrompt(
+            memoryRef.current.nickname,
+            isGenericDefaultNickname(memoryRef.current.nickname)
+          )
+        );
       } else if (duelParam) {
         const decoded = decodeDuelPayload(duelParam);
         if (decoded && decoded.cardIds.length > 0) {
@@ -857,14 +874,21 @@ export default function HomeClient({ initialFacts, initialVocabulary, initialLan
           });
           setActiveQuiz(null);
           setActiveTab('duel');
-          setShowWelcome(false);
+          setShowWelcome(
+            consumeNicknamePrompt(
+              memoryRef.current.nickname,
+              isGenericDefaultNickname(memoryRef.current.nickname)
+            )
+          );
         }
       } else if (openQuizParam === 'daily') {
-        const dailyFacts = pickSeededFacts(activePool, 5, getDailySeedKey());
+        const quizDate = linkedQuizDate || getTodayDateString();
+        const dailyFacts = pickSeededFacts(activePool, 5, `daily-${quizDate}`);
         setActiveQuiz({
-          key: `daily-url-${Date.now()}`,
+          key: `daily-url-${quizDate}-${Date.now()}`,
           mode: 'daily',
           questions: dailyFacts.map((fact) => ({ fact })),
+          quizDate,
         });
         setActiveTab('quiz');
       }
@@ -1345,6 +1369,9 @@ export default function HomeClient({ initialFacts, initialVocabulary, initialLan
       setIncomingDuel(null);
       setIncomingRoomCode(null);
       setActiveTab('duel');
+      if (consumeNicknamePrompt(memoryRef.current.nickname, isGenericDefaultNickname(memoryRef.current.nickname))) {
+        setShowWelcome(true);
+      }
     },
     [soundEnabled]
   );
@@ -1355,11 +1382,13 @@ export default function HomeClient({ initialFacts, initialVocabulary, initialLan
 
     const pool = allFactsRef.current;
     if (choice === 'daily') {
-      const dailyFacts = pickSeededFacts(pool, 5, getDailySeedKey());
+      const quizDate = getTodayDateString();
+      const dailyFacts = pickSeededFacts(pool, 5, `daily-${quizDate}`);
       setActiveQuiz({
-        key: `daily-${Date.now()}`,
+        key: `daily-${quizDate}-${Date.now()}`,
         mode: 'daily',
         questions: dailyFacts.map((fact) => ({ fact })),
+        quizDate,
       });
       return;
     }
@@ -1504,7 +1533,13 @@ export default function HomeClient({ initialFacts, initialVocabulary, initialLan
       elapsedSec,
       questionIds: usedQuestionIds,
       duelConfig,
+      quizMode: finishedSession?.mode,
+      quizDate: finishedSession?.quizDate,
     });
+
+    if (consumeNicknamePrompt(updated.nickname, isGenericDefaultNickname(updated.nickname))) {
+      setShowWelcome(true);
+    }
 
     triggerGuestAuthNudge('quiz');
   };
@@ -1552,6 +1587,11 @@ export default function HomeClient({ initialFacts, initialVocabulary, initialLan
       return;
     }
 
+    if (tab === 'duel') {
+      if (consumeNicknamePrompt(memoryRef.current.nickname, isGenericDefaultNickname(memoryRef.current.nickname))) {
+        setShowWelcome(true);
+      }
+    }
     if (tab !== 'duel') setIncomingDuel(null);
     if (tab !== 'quiz' && tab !== 'duel') setActiveQuiz(null);
     if (tab === 'quiz') setActiveQuiz(null);
@@ -1600,6 +1640,8 @@ export default function HomeClient({ initialFacts, initialVocabulary, initialLan
     clearVocabNotebook();
     clearPwaDismissed();
     clearWelcomeDismissed();
+    clearNicknameAsked();
+    clearValuePropDismissed();
     clearAuthNudgeDismissed();
     clearMiniOnboardingDismissed();
     clearScrollaPlayerId();
@@ -1616,6 +1658,7 @@ export default function HomeClient({ initialFacts, initialVocabulary, initialLan
 
     setMemory(fresh);
     setMiniOnboardingDismissed(false);
+    setValuePropDismissed(false);
     setAuthNudgeOpen(false);
     setSavedIds([]);
     setSavedVocabWords([]);
@@ -1631,7 +1674,7 @@ export default function HomeClient({ initialFacts, initialVocabulary, initialLan
     setDetailState(null);
     setManualPwaOpen(false);
     setShowPwaGuideModal(false);
-    setShowWelcome(true);
+    setShowWelcome(false);
     restoredFeedSessionRef.current = null;
     activeCategoryRef.current = 'all';
     activeSlideIndexRef.current = 0;
@@ -1908,8 +1951,23 @@ export default function HomeClient({ initialFacts, initialVocabulary, initialLan
         >
         <OfflineManager lang={lang} />
 
+        <ValuePropBanner
+          visible={showExploreFeed && !showWelcome && !chromeBlocked && !valuePropDismissed}
+          lang={lang}
+          onDismiss={() => {
+            persistValuePropDismissed();
+            setValuePropDismissed(true);
+          }}
+        />
+
         <MiniOnboardingHint
-          visible={showExploreFeed && !showWelcome && !chromeBlocked && !miniOnboardingDismissed}
+          visible={
+            showExploreFeed &&
+            !showWelcome &&
+            !chromeBlocked &&
+            valuePropDismissed &&
+            !miniOnboardingDismissed
+          }
           xp={memory.xp}
           lang={lang}
           darkMode={isDark}
@@ -2180,6 +2238,8 @@ export default function HomeClient({ initialFacts, initialVocabulary, initialLan
             playerId={shareModalData.duelConfig?.myPlayerId || memory.playerId}
             questionIds={shareModalData.questionIds}
             duelConfig={shareModalData.duelConfig}
+            quizMode={shareModalData.quizMode}
+            quizDate={shareModalData.quizDate}
             onButtonPop={() => playPop(soundEnabled)}
             onClose={() => {
               setShareModalData(null);
