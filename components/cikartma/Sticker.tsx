@@ -25,10 +25,12 @@ export default function Sticker({
   label,
 }: StickerProps) {
   const rotation = clampTilt(tilt);
-  const shared = `cik-sticker inline-flex border-[3px] border-white bg-cik-surface text-cik-text shadow-sticker ${
-    pressed ? 'shadow-sticker-press translate-y-[2px]' : ''
+  const shared = `cik-sticker inline-flex border-4 border-cik-sticker-rim bg-cik-surface text-cik-text shadow-sticker ${
+    pressed ? 'shadow-sticker-press' : ''
   } ${className}`;
-  const style = { transform: `rotate(${rotation}deg)` } as const;
+  const style = {
+    transform: `rotate(${rotation}deg) translateY(${pressed ? '2px' : '0px'})`,
+  } as const;
 
   if (as === 'button') {
     return (

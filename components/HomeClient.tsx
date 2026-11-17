@@ -63,6 +63,7 @@ import {
   hydrateLocalMemoryFromAuthUser,
 } from '@/lib/authClient';
 import { isShortRoomCode, normalizeRoomCode } from '@/lib/duelStore';
+import { resolveDocumentDark } from '@/lib/theme';
 import {
   fetchFactsFromApiWithCache,
   fetchPaginatedFactsFromApi,
@@ -343,17 +344,15 @@ function buildPersonalizedDeck(
 
 const useIsomorphicLayoutEffect = typeof window !== 'undefined' ? useLayoutEffect : useEffect;
 
-function syncDocumentTheme(darkMode: boolean, lang: Language) {
+function syncDocumentTheme(
+  theme: Pick<UserMemoryState, 'darkMode' | 'themeCustomized' | 'appearance'>,
+  lang: Language,
+) {
   if (typeof document === 'undefined') return;
-  document.documentElement.classList.toggle('dark', darkMode);
+  const prefersDark =
+    typeof window.matchMedia === 'function' && window.matchMedia('(prefers-color-scheme: dark)').matches;
+  document.documentElement.classList.toggle('dark', resolveDocumentDark(theme, prefersDark));
   document.documentElement.lang = lang === 'en' ? 'en' : 'tr';
-  let themeMeta = document.querySelector<HTMLMetaElement>('meta[name="theme-color"]');
-  if (!themeMeta) {
-    themeMeta = document.createElement('meta');
-    themeMeta.name = 'theme-color';
-    document.head.appendChild(themeMeta);
-  }
-  themeMeta.content = darkMode || checkIsStandalone() ? '#0A0A0E' : '#FAF9F5';
 }
 
 function normalizeCategoryParam(raw: string | null): CategoryFilter | null {
@@ -505,7 +504,7 @@ export default function HomeClient({ initialFacts, initialVocabulary, initialLan
     setMiniOnboardingDismissed(readMiniOnboardingDismissed());
     setValuePropDismissed(readValuePropDismissed());
     hasHydratedRef.current = true;
-    syncDocumentTheme(loaded.darkMode, loaded.lang);
+    syncDocumentTheme(loaded, loaded.lang);
 
     let requestedCategory: CategoryFilter | null = null;
     let requestedFactSlug: string | null = null;
@@ -1088,8 +1087,24 @@ export default function HomeClient({ initialFacts, initialVocabulary, initialLan
   ]);
 
   useEffect(() => {
-    syncDocumentTheme(memory.darkMode, memory.lang);
-  }, [memory.darkMode, memory.lang]);
+    const theme = {
+      darkMode: memory.darkMode,
+      themeCustomized: memory.themeCustomized,
+      appearance: memory.appearance,
+    };
+    syncDocumentTheme(theme, memory.lang);
+    if (theme.appearance !== 'system' || typeof window.matchMedia !== 'function') return;
+    const media = window.matchMedia('(prefers-color-scheme: dark)');
+    const onChange = () => {
+      syncDocumentTheme({ ...theme, darkMode: media.matches }, memory.lang);
+      setMemory((prev) => {
+        if (prev.appearance !== 'system' || prev.darkMode === media.matches) return prev;
+        return { ...prev, darkMode: media.matches };
+      });
+    };
+    media.addEventListener('change', onChange);
+    return () => media.removeEventListener('change', onChange);
+  }, [memory.appearance, memory.darkMode, memory.lang, memory.themeCustomized]);
 
   const lang: Language = memory.lang;
   const soundEnabled = memory.soundEnabled;

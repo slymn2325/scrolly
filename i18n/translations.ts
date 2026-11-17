@@ -471,6 +471,12 @@ export const translations = {
       'Son okuduğun kartlardan oluşacak hızlı quiz ile +150 Bonus XP kazan ve sıralamada öne geç!',
     quizCtaPrimaryBtn: 'Quize Git →',
     quizCtaContinueHint: 'Veya akışa devam etmek için aşağı kaydır',
+    sheetClose: 'Kapat',
+    leagueBronze: 'Bronz',
+    leagueSilver: 'Gümüş',
+    leagueGold: 'Altın',
+    leaguePlatinum: 'Platin',
+    leagueDiamond: 'Elmas',
   },
   en: {
     brandName: 'Scrolly',
@@ -723,6 +729,12 @@ export const translations = {
       'Play a quick quiz built from your recently read cards to earn up to +150 Bonus XP and climb the league!',
     quizCtaPrimaryBtn: 'Go to Quiz →',
     quizCtaContinueHint: 'Or swipe down to keep exploring uninterrupted',
+    sheetClose: 'Close',
+    leagueBronze: 'Bronze',
+    leagueSilver: 'Silver',
+    leagueGold: 'Gold',
+    leaguePlatinum: 'Platinum',
+    leagueDiamond: 'Diamond',
   },
 } as const;
 

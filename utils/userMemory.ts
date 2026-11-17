@@ -1,6 +1,9 @@
 import type { CategoryId, Language } from '@/i18n/translations';
+import { isAppearanceMode, resolveDocumentDark, type AppearanceMode } from '@/lib/theme';
 import { cryptoRandomUuid } from '@/utils/cryptoRandom';
 import { LEAGUE_SHIELD_MAP, type LeagueTierId } from '@/utils/icons8Assets';
+
+export type { AppearanceMode };
 
 const LOCAL_STORAGE_KEY = 'merak_user_state_v1';
 const COOKIE_NAME = 'merak_user_summary';
@@ -45,6 +48,8 @@ export interface UserMemoryState {
   lang: Language;
   darkMode: boolean;
   themeCustomized?: boolean;
+  /** light, dark, or system. Absent keeps the legacy darkMode boolean. */
+  appearance?: AppearanceMode;
   xp: number;
   weeklyXp: number;
   dailyBestScore: number;
@@ -292,7 +297,7 @@ export function getDefaultUserState(lang: Language = 'tr'): UserMemoryState {
     playerId: ssrPlayerId,
     nickname: getDefaultNickname(safeLang, deriveExplorerTagFromId(ssrPlayerId)),
     lang: safeLang,
-    darkMode: true,
+    darkMode: false,
     themeCustomized: false,
     xp: 0,
     weeklyXp: 0,
@@ -441,9 +446,18 @@ export function loadUserMemory(): UserMemoryState {
       ? parsedNickname
       : getDefaultNickname(resolvedLang, deriveExplorerTagFromId(resolvedPlayerId));
 
-  const hasCustomTheme = parsed?.themeCustomized === true;
-  const resolvedDarkMode =
-    hasCustomTheme && typeof parsed?.darkMode === 'boolean' ? parsed.darkMode : true;
+  const appearance = isAppearanceMode(parsed?.appearance) ? parsed.appearance : undefined;
+  const storedCustom = parsed?.themeCustomized === true;
+  const storedDark = typeof parsed?.darkMode === 'boolean' ? parsed.darkMode : false;
+  const prefersDark =
+    typeof window !== 'undefined' &&
+    typeof window.matchMedia === 'function' &&
+    window.matchMedia('(prefers-color-scheme: dark)').matches;
+  const resolvedDarkMode = resolveDocumentDark(
+    { darkMode: storedDark, themeCustomized: storedCustom, appearance },
+    prefersDark,
+  );
+  const hasCustomTheme = storedCustom || appearance !== undefined;
 
   const state: UserMemoryState = {
     playerId: resolvedPlayerId,
@@ -451,6 +465,7 @@ export function loadUserMemory(): UserMemoryState {
     lang: resolvedLang,
     darkMode: resolvedDarkMode,
     themeCustomized: hasCustomTheme,
+    ...(appearance ? { appearance } : {}),
     xp: resolvedXp,
     weeklyXp: typeof parsed?.weeklyXp === 'number' ? parsed.weeklyXp : resolvedXp,
     dailyBestScore: typeof parsed?.dailyBestScore === 'number' ? parsed.dailyBestScore : 0,
@@ -503,6 +518,8 @@ export function saveUserMemory(state: UserMemoryState): void {
   const cookieSummary = {
     lang: persistedState.lang,
     darkMode: persistedState.darkMode,
+    themeCustomized: persistedState.themeCustomized === true,
+    ...(persistedState.appearance ? { appearance: persistedState.appearance } : {}),
     xp: persistedState.xp,
     seenIds: persistedState.seenIds.slice(-40),
     categoryWeights: persistedState.categoryWeights,

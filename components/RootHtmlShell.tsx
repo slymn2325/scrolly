@@ -1,6 +1,7 @@
 import React from 'react';
 import Script from 'next/script';
 import type { Language } from '@/i18n/translations';
+import { fontVariableClassName } from '@/lib/fonts';
 
 const GTM_ID = process.env.NEXT_PUBLIC_GTM_ID || 'GTM-TQ6VVKM7';
 
@@ -77,13 +78,24 @@ try {
     document.documentElement.lang = 'tr';
   }
   var root = document.documentElement;
-  root.classList.add('dark');
-  var rawMem = window.localStorage ? window.localStorage.getItem('merak_user_state_v1') : null;
-  if (rawMem) {
-    var parsedMem = JSON.parse(rawMem);
-    if (parsedMem && parsedMem.themeCustomized === true && parsedMem.darkMode === false) {
-      root.classList.remove('dark');
-    }
+  function scrollyApplyTheme() {
+    var wantDark = false;
+    try {
+      var rawMem = window.localStorage ? window.localStorage.getItem('merak_user_state_v1') : null;
+      var parsedMem = rawMem ? JSON.parse(rawMem) : null;
+      var appearance = parsedMem && parsedMem.appearance;
+      var osDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+      if (appearance === 'dark') wantDark = true;
+      else if (appearance === 'light') wantDark = false;
+      else if (appearance === 'system') wantDark = !!osDark;
+      else if (parsedMem && parsedMem.themeCustomized === true && parsedMem.darkMode === true) wantDark = true;
+    } catch (err) {}
+    root.classList.toggle('dark', wantDark);
+  }
+  scrollyApplyTheme();
+  if (window.matchMedia) {
+    var themeQuery = window.matchMedia('(prefers-color-scheme: dark)');
+    if (themeQuery.addEventListener) themeQuery.addEventListener('change', scrollyApplyTheme);
   }
 } catch (e) {}
 try {
@@ -106,14 +118,8 @@ interface RootHtmlShellProps {
 
 export default function RootHtmlShell({ lang, children }: RootHtmlShellProps) {
   return (
-    <html lang={lang} className="dark" suppressHydrationWarning>
+    <html lang={lang} className={fontVariableClassName} suppressHydrationWarning>
       <head>
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link
-          href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Nunito:wght@400;600;700&family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500;1,9..144,600&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
-          rel="stylesheet"
-        />
         <script
           dangerouslySetInnerHTML={{
             __html: CONSENT_MODE_BOOTSTRAP_SCRIPT,
@@ -126,7 +132,7 @@ export default function RootHtmlShell({ lang, children }: RootHtmlShellProps) {
           }}
         />
       </head>
-      <body className="h-[100dvh] overflow-hidden bg-[var(--background)] font-sans text-[var(--foreground)] antialiased selection:bg-[#EDE8FF] selection:text-[#1C1730]">
+      <body className="h-[100dvh] overflow-hidden bg-cik-bg font-sans text-cik-text antialiased selection:bg-cik-pink selection:text-cik-text">
         <div aria-hidden="true" className="pwa-statusbar-guard" />
         {children}
         <Script id="google-tag-manager" strategy="afterInteractive">
