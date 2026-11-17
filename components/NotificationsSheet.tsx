@@ -9,7 +9,7 @@ interface NotificationsSheetProps {
   open: boolean;
   lang: Language;
   notes: HomeNote[];
-  read: string[];
+  allRead: boolean;
   onClose: () => void;
   onMarkAll: () => void;
 }
@@ -18,7 +18,7 @@ export default function NotificationsSheet({
   open,
   lang,
   notes,
-  read,
+  allRead,
   onClose,
   onMarkAll,
 }: NotificationsSheetProps) {
@@ -31,7 +31,7 @@ export default function NotificationsSheet({
           onClick={onMarkAll}
           className="inline-flex h-11 items-center text-sm font-bold text-cik-cta"
         >
-          {lang === 'tr' ? 'Tumunu okundu say' : 'Mark all read'}
+          {lang === 'tr' ? 'Tümünü okundu say' : 'Mark all read'}
         </button>
         {notes.length === 0 ? (
           <p className="text-base font-semibold text-cik-muted">
@@ -40,7 +40,7 @@ export default function NotificationsSheet({
         ) : (
           <ul className="space-y-2">
             {notes.map((note) => {
-              const seen = read.includes(note.id);
+              const seen = allRead;
               return (
                 <li
                   key={note.id}

@@ -20,33 +20,35 @@ export function buildHomeNotes(lang: Language): HomeNote[] {
     ];
   }
   return [
-    { id: 'streak', title: 'Seri hatirlatmasi', body: 'Serini korumak icin bugun bir kart ac.' },
-    { id: 'league', title: 'Lig hareketi', body: 'Haftalik ligin sonraki quizden sonra degisebilir.' },
-    { id: 'badge', title: 'Rozet', body: 'Kategori serileri yeni rozet acar.' },
-    { id: 'duel', title: 'Duello sonucu', body: 'Scrolla mac sonucu burada gorunur.' },
-    { id: 'sets', title: 'Yeni kart setleri', body: 'Kesfet akisina yeni setler eklendi.' },
+    { id: 'streak', title: 'Seri hatırlatması', body: 'Serini korumak için bugün bir kart aç.' },
+    { id: 'league', title: 'Lig hareketi', body: 'Haftalık ligin sonraki quizden sonra değişebilir.' },
+    { id: 'badge', title: 'Rozet', body: 'Kategori serileri yeni rozet açar.' },
+    { id: 'duel', title: 'Düello sonucu', body: 'Scrolla maç sonucu burada görünür.' },
+    { id: 'sets', title: 'Yeni kart setleri', body: 'Keşfet akışına yeni setler eklendi.' },
   ];
 }
 
 export default function NotificationsBell({ lang }: { lang: Language }) {
   const [open, setOpen] = useState(false);
-  const [read, setRead] = useState<string[]>([]);
+  const [allRead, setAllRead] = useState(false);
   const notes = buildHomeNotes(lang);
-  const unread = notes.filter((note) => !read.includes(note.id)).length;
+  const unread = allRead ? 0 : notes.length;
 
   useEffect(() => {
     try {
-      const raw = window.localStorage.getItem(READ_KEY);
-      if (raw) setRead(JSON.parse(raw) as string[]);
+      setAllRead(window.localStorage.getItem(READ_KEY) != null);
     } catch {
-      setRead([]);
+      setAllRead(false);
     }
   }, []);
 
   const markAll = () => {
-    const ids = notes.map((note) => note.id);
-    setRead(ids);
-    window.localStorage.setItem(READ_KEY, JSON.stringify(ids));
+    setAllRead(true);
+    try {
+      window.localStorage.setItem(READ_KEY, '1');
+    } catch {
+      // Ignore private-mode storage failures. The badge still clears for this visit.
+    }
   };
 
   return (
@@ -68,7 +70,7 @@ export default function NotificationsBell({ lang }: { lang: Language }) {
         open={open}
         lang={lang}
         notes={notes}
-        read={read}
+        allRead={allRead}
         onClose={() => setOpen(false)}
         onMarkAll={markAll}
       />
