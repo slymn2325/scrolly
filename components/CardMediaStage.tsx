@@ -1,6 +1,8 @@
 'use client';
 
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
+import Image from 'next/image';
+import { motionVideoUrl, staticPosterUrl } from '@/utils/cardMediaUrl';
 
 function badgeLabel(mediaType?: string | null, mediaSource?: string | null): string | null {
   const source = (mediaSource || '').toLowerCase();
@@ -22,6 +24,9 @@ export default function CardMediaStage({
   title,
   failed = false,
   empty = false,
+  priority = false,
+  showBadge = true,
+  testId = 'card-topic-gif',
   onFailed,
 }: {
   url?: string | null;
@@ -32,19 +37,63 @@ export default function CardMediaStage({
   title: string;
   failed?: boolean;
   empty?: boolean;
+  /** First card: preload the still poster. Next.js 16 name for the old priority prop. */
+  priority?: boolean;
+  showBadge?: boolean;
+  testId?: string;
   onFailed?: () => void;
 }) {
   const videoRef = useRef<HTMLVideoElement>(null);
-  const isVideo =
-    Boolean(url) &&
-    (mediaType === 'video' || /\.mp4(\?|$)/i.test(url || '') || (mediaSource === 'pexels' && mediaType !== 'image') || mediaSource === 'pixabay');
-  const showMedia = Boolean(url) && !failed;
-  const showFallback = !showMedia && (failed || empty);
-  const badge = badgeLabel(isVideo ? 'video' : mediaType, mediaSource);
+  const [posterFailed, setPosterFailed] = useState(false);
+  const [videoFailed, setVideoFailed] = useState(false);
+  const [allowMotion, setAllowMotion] = useState(false);
+  const poster = failed ? null : staticPosterUrl(url, posterUrl);
+  const videoUrl = failed || videoFailed ? null : motionVideoUrl(url, mediaType);
+  const showPoster = Boolean(poster) && !posterFailed;
+  const showVideo = Boolean(videoUrl) && allowMotion && isActive;
+  const showFallback = !showPoster && !showVideo && (failed || empty || posterFailed);
+  const badge = showBadge ? badgeLabel(videoUrl ? 'video' : mediaType, mediaSource) : null;
+
+  useEffect(() => {
+    setPosterFailed(false);
+    setVideoFailed(false);
+  }, [url, posterUrl]);
+
+  useEffect(() => {
+    if (!isActive || !videoUrl) {
+      setAllowMotion(false);
+      return;
+    }
+    if (!priority) {
+      setAllowMotion(true);
+      return;
+    }
+    let cancelled = false;
+    let idleId = 0;
+    let timerId = 0;
+    const arm = () => {
+      if (!cancelled) setAllowMotion(true);
+    };
+    const start = () => {
+      if (typeof window.requestIdleCallback === 'function') {
+        idleId = window.requestIdleCallback(arm, { timeout: 2000 });
+      } else {
+        timerId = window.setTimeout(arm, 1200);
+      }
+    };
+    if (document.readyState === 'complete') start();
+    else window.addEventListener('load', start, { once: true });
+    return () => {
+      cancelled = true;
+      window.removeEventListener('load', start);
+      if (idleId && typeof window.cancelIdleCallback === 'function') window.cancelIdleCallback(idleId);
+      if (timerId) window.clearTimeout(timerId);
+    };
+  }, [isActive, priority, videoUrl]);
 
   useEffect(() => {
     const node = videoRef.current;
-    if (!node || !isVideo) return;
+    if (!node || !showVideo) return;
     const playIfReady = (visible: boolean) => {
       if (visible && isActive) {
         void node.play().catch(() => undefined);
@@ -59,32 +108,39 @@ export default function CardMediaStage({
     );
     observer.observe(node);
     return () => observer.disconnect();
-  }, [isActive, isVideo, url]);
+  }, [isActive, showVideo, videoUrl]);
 
   return (
     <>
-      {showMedia && isVideo ? (
+      {showPoster && poster ? (
+        <Image
+          src={poster}
+          alt={title}
+          fill
+          preload={priority}
+          loading={priority ? undefined : 'lazy'}
+          sizes="100vw"
+          data-testid={testId}
+          onError={() => {
+            setPosterFailed(true);
+            if (!videoUrl) onFailed?.();
+          }}
+          className="pointer-events-none absolute inset-0 z-[2] h-full w-full object-cover"
+        />
+      ) : null}
+      {showVideo ? (
         <video
           ref={videoRef}
-          src={url || undefined}
-          poster={posterUrl || undefined}
+          src={videoUrl || undefined}
+          poster={poster || undefined}
           autoPlay={isActive}
           loop
           muted
           playsInline
-          preload="metadata"
+          preload="none"
           data-testid="card-topic-video"
-          onError={() => onFailed?.()}
-          className="pointer-events-none absolute inset-0 z-[2] h-full w-full object-cover"
-        />
-      ) : null}
-      {showMedia && !isVideo ? (
-        <img
-          src={url || undefined}
-          alt={title}
-          data-testid="card-topic-gif"
-          onError={() => onFailed?.()}
-          className="pointer-events-none absolute inset-0 z-[2] h-full w-full object-cover"
+          onError={() => setVideoFailed(true)}
+          className="pointer-events-none absolute inset-0 z-[3] h-full w-full object-cover"
         />
       ) : null}
       {showFallback ? (

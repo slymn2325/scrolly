@@ -14,6 +14,7 @@ import {
   Swords,
   Zap,
 } from 'lucide-react';
+import CardMediaStage from '@/components/CardMediaStage';
 import CategoryMotionArt from '@/components/CategoryMotionArt';
 import FactIcon from '@/components/FactIcon';
 import PoweredByGiphyBadge from '@/components/PoweredByGiphyBadge';
@@ -226,13 +227,18 @@ export default function FactDetailPage({
 
             {effectiveGifUrl && !gifFailed ? (
               <div className="relative mt-3 h-44 w-full overflow-hidden rounded-xl border border-white/15">
-                <img
-                  src={effectiveGifUrl}
-                  alt={localized.title}
-                  onError={() => setGifFailed(true)}
-                  className="h-full w-full object-cover"
+                <CardMediaStage
+                  url={effectiveGifUrl}
+                  posterUrl={fact.posterUrl}
+                  mediaType={fact.mediaType}
+                  mediaSource={fact.mediaSource}
+                  isActive
+                  showBadge={false}
+                  title={localized.title}
+                  failed={gifFailed}
+                  onFailed={() => setGifFailed(true)}
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/55 via-transparent to-transparent" />
+                <div className="absolute inset-0 z-[4] bg-gradient-to-t from-black/55 via-transparent to-transparent" />
               </div>
             ) : (
               <div className="mt-3">

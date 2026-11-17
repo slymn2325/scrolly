@@ -20,7 +20,6 @@ import { getVocabularyFacts } from '@/data/vocabularyFacts';
 import { CATEGORY_ILLUSTRATION_MAP, DOCK_ICON_MAP, UI_ICON_PATHS } from '@/utils/icons8Assets';
 import { markFactSeenInStorage } from '@/utils/seenFacts';
 
-const PRELOADED_GIF_CACHE = new Set<string>();
 const useIsomorphicLayoutEffect = typeof window !== 'undefined' ? useLayoutEffect : useEffect;
 
 export type FeedSlideItem =
@@ -564,33 +563,6 @@ const TikTokFeed = forwardRef<TikTokFeedHandle, TikTokFeedProps>(function TikTok
     );
   }, [activeIndex, slides]);
 
-  // Eagerly preload next 2 card & vocabulary GIF URLs in browser cache + head preload hints
-  useEffect(() => {
-    if (typeof window === 'undefined' || slides.length === 0) return;
-    const candidates = [slides[activeIndex + 1], slides[activeIndex + 2]];
-    for (const slide of candidates) {
-      if (!slide) continue;
-      const rawUrl =
-        slide.type === 'fact'
-          ? slide.fact.gifUrl
-          : slide.type === 'vocabulary'
-            ? slide.card.gifUrl
-            : undefined;
-      const url = rawUrl?.trim();
-      if (!url || !url.startsWith('https://') || PRELOADED_GIF_CACHE.has(url)) continue;
-      PRELOADED_GIF_CACHE.add(url);
-      const img = new window.Image();
-      img.decoding = 'async';
-      img.src = url;
-      const preloadLink = document.createElement('link');
-      preloadLink.rel = 'preload';
-      preloadLink.as = 'image';
-      preloadLink.href = url;
-      preloadLink.setAttribute('data-scrolly-gif', '1');
-      document.head.appendChild(preloadLink);
-    }
-  }, [activeIndex, slides]);
-
   return (
     <div
       data-theme={darkMode ? 'dark' : 'light'}
@@ -878,6 +850,7 @@ const TikTokFeed = forwardRef<TikTokFeedHandle, TikTokFeedProps>(function TikTok
                   lang={lang}
                   darkMode={darkMode}
                   isActive={effectiveSlideActive}
+                  priority={slideIdx === 0}
                   cookieBannerVisible={cookieBannerVisible}
                   onButtonPop={onButtonPop}
                   onEarnXp={onEarnXp}
