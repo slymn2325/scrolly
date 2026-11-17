@@ -1,5 +1,8 @@
 import type { Language } from '@/i18n/translations';
+import duplicateSlugToKeeper from '@/lib/duplicateSlugs.json';
 import type { CategoryId, FactCard, FactQuizContent, GuessChallenge, LocalizedContent } from '@/types/fact';
+
+const RETIRED_DUPLICATE_SLUGS = new Set(Object.keys(duplicateSlugToKeeper));
 
 export type { FactCard, FactQuizContent, GuessChallenge, LocalizedContent };
 export type FactCardData = FactCard;
@@ -153,6 +156,40 @@ export function categoryIdToRouteSlug(category: CategoryId | string): CategoryRo
 
 export function getFactPrimarySlug(fact: FactCard): string {
   return fact.slug || fact.en.slug || fact.tr.slug || fact.id;
+}
+
+export function isRetiredDuplicateSlug(slug: string): boolean {
+  return RETIRED_DUPLICATE_SLUGS.has(slug);
+}
+
+export function isRetiredDuplicateFact(fact: FactCard): boolean {
+  return isRetiredDuplicateSlug(getFactPrimarySlug(fact));
+}
+
+export function factHasLocale(fact: FactCard, lang: 'tr' | 'en'): boolean {
+  const content = fact[lang];
+  return Boolean(
+    content &&
+      content.title.trim() &&
+      content.factText.trim() &&
+      content.slug.trim() &&
+      content.quiz?.question &&
+      content.quiz.options?.length === 3
+  );
+}
+
+export function factHreflangLanguages(
+  fact: FactCard,
+  primarySlug: string
+): Record<string, string> | undefined {
+  if (!factHasLocale(fact, 'tr') || !factHasLocale(fact, 'en')) return undefined;
+  const trUrl = `https://scrolly.live${buildFactHref(primarySlug, 'tr')}`;
+  const enUrl = `https://scrolly.live${buildFactHref(primarySlug, 'en')}`;
+  return {
+    tr: trUrl,
+    en: enUrl,
+    'x-default': trUrl,
+  };
 }
 
 export function buildFactHref(slug: string, lang?: string): string {

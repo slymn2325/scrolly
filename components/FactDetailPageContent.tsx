@@ -8,6 +8,8 @@ import {
   buildCategoryHref,
   buildFactHref,
   categoryIdToRouteSlug,
+  factHasLocale,
+  factHreflangLanguages,
   getFactPrimarySlug,
   getRelatedFactsFromPool,
 } from '@/utils/factsData';
@@ -42,14 +44,19 @@ export async function buildFactMetadata(slug: string, lang: Language): Promise<M
     };
   }
 
+  if (!factHasLocale(fact, lang)) {
+    return {
+      title: lang === 'tr' ? 'Kart Bulunamadı | Scrolly' : 'Fact Not Found | Scrolly',
+    };
+  }
+
   const primarySlug = getFactPrimarySlug(fact);
-  const trUrl = `https://scrolly.live${buildFactHref(primarySlug, 'tr')}`;
-  const enUrl = `https://scrolly.live${buildFactHref(primarySlug, 'en')}`;
-  const canonicalUrl = lang === 'en' ? enUrl : trUrl;
-  const ogImageUrl = `https://scrolly.live/fact/${primarySlug}/opengraph-image`;
+  const canonicalUrl = `https://scrolly.live${buildFactHref(primarySlug, lang)}`;
+  const ogImageUrl = `https://scrolly.live${buildFactHref(primarySlug, lang)}/opengraph-image`;
   const title = fact[lang].title;
   const description = fact[lang].factText;
   const catMeta = getCategoryMeta(fact.category);
+  const languages = factHreflangLanguages(fact, primarySlug);
 
   return {
     title: `${title} | Scrolly`,
@@ -59,11 +66,7 @@ export async function buildFactMetadata(slug: string, lang: Language): Promise<M
     ),
     alternates: {
       canonical: canonicalUrl,
-      languages: {
-        tr: trUrl,
-        en: enUrl,
-        'x-default': trUrl,
-      },
+      ...(languages ? { languages } : {}),
     },
     openGraph: {
       title,
@@ -100,7 +103,7 @@ export default async function FactDetailPageContent({
   lang,
 }: FactDetailPageContentProps) {
   const { fact, allFacts } = await resolveFactFromServer(slug);
-  if (!fact) {
+  if (!fact || !factHasLocale(fact, lang)) {
     notFound();
   }
 
@@ -112,14 +115,11 @@ export default async function FactDetailPageContent({
     content.sourceName || fact.sourceName || content.sourceHint || 'Scrolly Research Archive';
   const resolvedSourceUrl = content.sourceUrl || fact.sourceUrl;
 
-  let relatedFacts = getRelatedFactsFromPool(fact, allFacts, 4, true);
-  if (relatedFacts.length < 4) {
-    relatedFacts = getRelatedFactsFromPool(fact, allFacts, 4, false);
-  }
+  const relatedFacts = getRelatedFactsFromPool(fact, allFacts, 8, true);
 
   const canonicalUrl = `https://scrolly.live${buildFactHref(primarySlug, lang)}`;
   const categoryUrl = `https://scrolly.live${buildCategoryHref(categoryRouteSlug, lang)}`;
-  const ogImageUrl = `https://scrolly.live/fact/${primarySlug}/opengraph-image`;
+  const ogImageUrl = `https://scrolly.live${buildFactHref(primarySlug, lang)}/opengraph-image`;
   const publishedIso = fact.createdAt || '2026-01-01T00:00:00.000Z';
   const enrichedArticle = buildFactDetailArticle(
     {

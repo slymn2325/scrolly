@@ -7,7 +7,7 @@ import { getVocabularyFacts } from '@/data/vocabularyFacts';
 import { formatValueWithUnit } from '@/lib/formatUnit';
 import type { CategoryId, FactCard, FactQuizContent, GuessChallenge } from '@/types/fact';
 import type { VocabPartOfSpeech, VocabularyCard } from '@/types/vocabulary';
-import { enrichFactWithGuessChallenge, getFactPrimarySlug } from '@/utils/factsData';
+import { enrichFactWithGuessChallenge, getFactPrimarySlug, isRetiredDuplicateFact } from '@/utils/factsData';
 import { getAllFacts, LEGACY_SLUG_TO_FACT_ID } from '@/utils/factsServerData';
 
 export interface DbFactRow {
@@ -1445,6 +1445,7 @@ export const fetchFactsWithSourceServer = cache(
 
       for (const row of result.rows) {
         const card = mapDbRowToFactCard(row, seedFacts);
+        if (isRetiredDuplicateFact(card)) continue;
         const updatedAt = parseTimestamp(row.created_at ?? card.createdAt);
         const keys = [
           row.slug,
@@ -1459,6 +1460,7 @@ export const fetchFactsWithSourceServer = cache(
 
       for (const entry of staticEntries) {
         const f = entry.fact;
+        if (isRetiredDuplicateFact(f)) continue;
         const keys = [getFactPrimarySlug(f), f.id, f.en.slug, f.tr.slug].filter(Boolean);
         const alreadyPresent = keys.some((k) => seenKeys.has(k));
         if (!alreadyPresent) {

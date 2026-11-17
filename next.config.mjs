@@ -1,22 +1,12 @@
+import { readFileSync } from 'node:fs';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+const duplicateSlugToKeeper = JSON.parse(
+  readFileSync(join(dirname(fileURLToPath(import.meta.url)), 'lib/duplicateSlugs.json'), 'utf8')
+);
+
 const LEGACY_SLUGS_BY_TARGET = [
-  [
-    'magnetar-magnetic-field-stretches-atoms-into-needles',
-    [
-      'bir-cay-kasigi-notron-yildizi-6-milyar-ton-agirligindadir',
-      'notron-yildizindan-bir-cay-kasigi-madde',
-      'a-teaspoon-of-neutron-star-weighs-6-billion-tons',
-      'teaspoon-of-neutron-star-weight',
-    ],
-  ],
-  [
-    'raindrops-on-saturns-moon-titan-fall-6-times-slower',
-    [
-      'uranus-ve-neptunde-gercekten-elmas-yagmuru-yagar',
-      'neptun-ve-uranuste-elmas-yagmuru',
-      'it-literally-rains-diamonds-on-neptune-and-uranus',
-      'diamond-rain-on-neptune-and-uranus',
-    ],
-  ],
   [
     'antarctic-icefish-has-transparent-blood-zero-hemoglobin',
     [
@@ -71,20 +61,25 @@ const LEGACY_SLUGS_BY_TARGET = [
   ],
 ];
 
-const legacyFactRedirects = LEGACY_SLUGS_BY_TARGET.flatMap(([targetSlug, oldSlugs]) =>
-  oldSlugs.flatMap((oldSlug) => [
+const legacyFactRedirects = [
+  ...LEGACY_SLUGS_BY_TARGET,
+  ...Object.entries(duplicateSlugToKeeper),
+].flatMap(([targetSlug, oldSlugs]) => {
+  const sources = Array.isArray(oldSlugs) ? oldSlugs : [targetSlug];
+  const destination = Array.isArray(oldSlugs) ? targetSlug : oldSlugs;
+  return sources.flatMap((oldSlug) => [
     {
       source: `/fact/${oldSlug}`,
-      destination: `/fact/${targetSlug}`,
+      destination: `/fact/${destination}`,
       statusCode: 301,
     },
     {
       source: `/en/fact/${oldSlug}`,
-      destination: `/en/fact/${targetSlug}`,
+      destination: `/en/fact/${destination}`,
       statusCode: 301,
     },
-  ])
-);
+  ]);
+});
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
