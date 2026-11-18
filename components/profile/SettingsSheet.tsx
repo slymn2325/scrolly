@@ -273,10 +273,10 @@ export default function SettingsSheet({
                 {copy.privacy}
               </Link>
               <div className="flex items-center justify-between gap-3 border-t border-cik-line px-4 py-2.5">
-                <Link data-testid="diploma-contact-link" href={contactHref} onClick={onNavigate} className="text-sm text-cik-text">
+                <Link data-testid="diploma-contact-link" href={contactHref} onClick={onNavigate} className="flex-1 text-sm text-cik-text">
                   {copy.contact}
                 </Link>
-                <a data-testid="diploma-contact-email" href="mailto:contact@scrolly.live" className="text-xs text-pink-600">
+                <a data-testid="diploma-contact-email" href="mailto:contact@scrolly.live" className="shrink-0 text-xs text-pink-600">
                   contact@scrolly.live
                 </a>
               </div>

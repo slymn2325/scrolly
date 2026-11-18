@@ -13,6 +13,19 @@ function resolveLang(langParam?: string): Language {
   return langParam === 'en' ? 'en' : 'tr';
 }
 
+function buildLegalHref(
+  pathname: '/privacy' | '/contact',
+  lang: Language,
+  returnToProfile: boolean,
+  includeLang = true,
+): string {
+  const params = new URLSearchParams();
+  if (includeLang && lang === 'en') params.set('lang', 'en');
+  if (returnToProfile) params.set('from', 'profile');
+  const queryString = params.toString();
+  return queryString ? `${pathname}?${queryString}` : pathname;
+}
+
 export async function generateMetadata({ searchParams }: PageProps): Promise<Metadata> {
   const query = await searchParams;
   const lang = resolveLang(query?.lang);
@@ -52,6 +65,7 @@ export default async function TermsPage({ searchParams }: PageProps) {
   const query = await searchParams;
   const lang = resolveLang(query?.lang);
   const isEn = lang === 'en';
+  const returnToProfile = query.from === 'profile';
 
   const jsonLd = {
     '@context': 'https://schema.org',
@@ -149,7 +163,7 @@ export default async function TermsPage({ searchParams }: PageProps) {
     <TrustPageShell
       routePath="/terms"
       lang={lang}
-      returnToProfile={query.from === 'profile'}
+      returnToProfile={returnToProfile}
       badge={isEn ? 'Service Guidelines' : 'Hizmet Kuralları'}
       title={
         isEn
@@ -179,13 +193,13 @@ export default async function TermsPage({ searchParams }: PageProps) {
 
       <div className="flex flex-wrap items-center gap-3 border-t border-amber-100 pt-5 dark:border-white/10">
         <Link
-          href="/privacy"
+          href={buildLegalHref('/privacy', lang, returnToProfile, false)}
           className="text-xs font-extrabold text-violet-700 underline underline-offset-4 hover:text-violet-900 dark:text-violet-300"
         >
           {isEn ? 'Read Privacy Policy →' : 'Gizlilik Politikasını İncele →'}
         </Link>
         <Link
-          href={isEn ? '/contact?lang=en' : '/contact'}
+          href={buildLegalHref('/contact', lang, returnToProfile)}
           className="text-xs font-extrabold text-violet-700 underline underline-offset-4 hover:text-violet-900 dark:text-violet-300"
         >
           {isEn ? 'Contact Scrolly →' : 'İletişime Geç →'}

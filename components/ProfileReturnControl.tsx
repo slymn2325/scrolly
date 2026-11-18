@@ -2,7 +2,6 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 
 interface ProfileReturnControlProps {
   returnToProfile: boolean;
@@ -19,30 +18,11 @@ export default function ProfileReturnControl({
   testId,
   children,
 }: ProfileReturnControlProps) {
-  const router = useRouter();
-
-  if (!returnToProfile) {
-    return (
-      <Link href={href} className={className} data-testid={testId}>
-        {children}
-      </Link>
-    );
-  }
+  const targetHref = returnToProfile ? '/?tab=profile' : href;
 
   return (
-    <button
-      type="button"
-      data-testid={testId}
-      className={`cursor-pointer font-[inherit] ${className ?? ''}`}
-      onClick={() => {
-        if (typeof window !== 'undefined' && window.history.length > 1) {
-          router.back();
-          return;
-        }
-        router.push('/?tab=profile');
-      }}
-    >
+    <Link href={targetHref} className={className} data-testid={testId}>
       {children}
-    </button>
+    </Link>
   );
 }

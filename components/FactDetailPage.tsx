@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useEffect, useMemo, useState } from 'react';
-import Link from 'next/link';
 import { motion } from 'framer-motion';
 import {
   ArrowDown,
@@ -19,7 +18,6 @@ import FactIcon from '@/components/FactIcon';
 import MediaAttributionBadge from '@/components/MediaAttributionBadge';
 import { getCategoryMeta, type Language, translations } from '@/i18n/translations';
 import type { FactCard } from '@/types/fact';
-import { getFactUrl } from '@/utils/factsData';
 import { UI_ICON_PATHS } from '@/utils/fluentAssets';
 import { safeExternalHref } from '@/utils/phoneticDisplay';
 import {
@@ -82,7 +80,6 @@ export default function FactDetailPage({
   const t = translations[lang];
   const localized = fact[lang];
   const catMeta = getCategoryMeta(fact.category);
-  const factUrl = getFactUrl(fact, lang);
   const effectiveGifUrl = resolvedGifUrl ?? fact.gifUrl ?? null;
 
   const detailArticle = useMemo(
@@ -159,7 +156,7 @@ export default function FactDetailPage({
       </div>
 
       {/* Scrollable Page Content */}
-      <div className="no-scrollbar flex min-h-0 flex-1 flex-col overflow-y-auto px-4 py-4 sm:px-5">
+      <div className="no-scrollbar flex min-h-0 flex-1 flex-col overflow-y-auto px-4 pb-28 pt-4 sm:px-5 lg:pb-6">
         <div className="flex-1 space-y-4">
           {/* Visual Hero Banner */}
           <div className="relative overflow-hidden rounded-sticker border border-cik-line bg-cik-pink p-5">
@@ -313,7 +310,7 @@ export default function FactDetailPage({
 
           {/* Scientific Deep-Dive Narrative */}
           <div
-            className={`rounded-2xl border p-4 pb-24 ${
+            className={`rounded-2xl border p-4 ${
               darkMode
                 ? 'border-cik-line bg-cik-surface'
                 : 'border-cik-line bg-cik-surface'
@@ -532,15 +529,6 @@ export default function FactDetailPage({
                   {localized.sourceHint}
                 </span>
               )}
-              <Link
-                href={factUrl}
-                className={`inline-flex min-h-11 items-center gap-1 font-extrabold hover:underline ${
-                  darkMode ? 'text-cik-text' : 'text-cik-text'
-                }`}
-              >
-                <span>{t.readFullPage}</span>
-                <ExternalLink className="h-3 w-3 shrink-0" />
-              </Link>
             </div>
           </div>
           <MediaAttributionBadge
@@ -559,7 +547,7 @@ export default function FactDetailPage({
 
       {/* Pinned Full-Page Footer Controls */}
       <div
-        className={`flex shrink-0 flex-wrap items-center gap-2 border-t px-4 py-3 pb-[max(14px,env(safe-area-inset-bottom))] sm:px-5 ${
+        className={`flex shrink-0 flex-wrap items-center gap-2 border-t px-4 py-3 pb-[calc(5.5rem+env(safe-area-inset-bottom))] lg:pb-[max(14px,env(safe-area-inset-bottom))] sm:px-5 ${
           darkMode
             ? 'border-cik-line bg-cik-bg'
             : 'border-cik-line bg-cik-bg'

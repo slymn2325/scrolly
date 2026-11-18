@@ -15,6 +15,19 @@ function resolveLang(langParam?: string): Language {
   return langParam === 'en' ? 'en' : 'tr';
 }
 
+function buildLegalHref(
+  pathname: '/about' | '/privacy',
+  lang: Language,
+  returnToProfile: boolean,
+  includeLang = true,
+): string {
+  const params = new URLSearchParams();
+  if (includeLang && lang === 'en') params.set('lang', 'en');
+  if (returnToProfile) params.set('from', 'profile');
+  const queryString = params.toString();
+  return queryString ? `${pathname}?${queryString}` : pathname;
+}
+
 export async function generateMetadata({ searchParams }: PageProps): Promise<Metadata> {
   const query = await searchParams;
   const lang = resolveLang(query?.lang);
@@ -54,6 +67,7 @@ export default async function ContactPage({ searchParams }: PageProps) {
   const query = await searchParams;
   const lang = resolveLang(query?.lang);
   const isEn = lang === 'en';
+  const returnToProfile = query.from === 'profile';
 
   const jsonLd = {
     '@context': 'https://schema.org',
@@ -101,7 +115,7 @@ export default async function ContactPage({ searchParams }: PageProps) {
     <TrustPageShell
       routePath="/contact"
       lang={lang}
-      returnToProfile={query.from === 'profile'}
+      returnToProfile={returnToProfile}
       badge={isEn ? 'Editorial & Support Desk' : 'Editöryal Destek ve İletişim'}
       title={
         isEn
@@ -148,13 +162,13 @@ export default async function ContactPage({ searchParams }: PageProps) {
         </p>
         <div className="flex flex-wrap gap-3 pt-2">
           <Link
-            href={isEn ? '/about?lang=en' : '/about'}
+            href={buildLegalHref('/about', lang, returnToProfile)}
             className="text-xs font-extrabold text-violet-700 underline underline-offset-4 hover:text-violet-900 dark:text-violet-300"
           >
             {isEn ? 'Editorial Standards →' : 'Editöryal Standartlar →'}
           </Link>
           <Link
-            href="/privacy"
+            href={buildLegalHref('/privacy', lang, returnToProfile, false)}
             className="text-xs font-extrabold text-violet-700 underline underline-offset-4 hover:text-violet-900 dark:text-violet-300"
           >
             {isEn ? 'Privacy & Cookie Policy →' : 'Gizlilik ve Çerez Politikası →'}

@@ -544,7 +544,7 @@ export default function DiplomaProfileModal({
         }}
         onNavigate={() => {
           onButtonPop();
-          onClose();
+          setSettingsOpen(false);
         }}
       />
 

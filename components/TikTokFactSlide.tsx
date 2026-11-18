@@ -685,16 +685,41 @@ export default function TikTokFactSlide({
         <div
           data-testid="fact-card-front"
           className={`pointer-events-none absolute inset-0 z-content flex flex-col justify-end overflow-hidden text-cik-text ${
-            cookieBannerVisible
-              ? 'pb-[calc(6rem+env(safe-area-inset-bottom)+68px)]'
-              : 'pb-[calc(6rem+env(safe-area-inset-bottom))]'
-          } lg:pb-5 ${isFlipped ? 'hidden' : ''}`}
+            isFlipped ? 'hidden' : ''
+          }`}
         >
           <div
-            className={`pointer-events-auto flex min-h-0 shrink flex-col gap-2 rounded-t-2xl bg-cik-bg p-4 pr-14 transition-all duration-300 ease-out lg:pr-4 ${
-              isExpanded ? 'max-h-[75%] overflow-y-auto' : 'max-h-[50%] overflow-hidden'
+            data-testid="fact-bottom-sheet"
+            data-expanded={isExpanded ? 'true' : 'false'}
+            data-story-scroll={isExpanded ? 'true' : undefined}
+            onWheel={(e) => {
+              if (!isExpanded) return;
+              const el = e.currentTarget;
+              if (el.scrollHeight > el.clientHeight + 1) e.stopPropagation();
+            }}
+            onDoubleClick={(e) => e.stopPropagation()}
+            onClick={(e) => {
+              if (!isExpanded) {
+                e.stopPropagation();
+                onButtonPop();
+                setIsExpanded(true);
+              }
+            }}
+            className={`pointer-events-auto flex min-h-0 flex-col gap-2 rounded-t-3xl bg-cik-bg pl-4 pr-14 pt-2.5 shadow-[0_-8px_28px_rgba(0,0,0,0.14)] transition-all duration-300 ease-out lg:pr-4 lg:pt-4 ${
+              cookieBannerVisible
+                ? 'pb-[calc(5rem+env(safe-area-inset-bottom)+68px)] lg:pb-5'
+                : 'pb-[calc(5rem+env(safe-area-inset-bottom))] lg:pb-5'
+            } ${
+              isExpanded
+                ? 'max-h-[82dvh] overflow-y-auto lg:max-h-[82%]'
+                : 'cursor-pointer overflow-hidden lg:cursor-default'
             }`}
           >
+            <div
+              aria-hidden="true"
+              className="mx-auto mb-0.5 h-1 w-9 shrink-0 rounded-full bg-cik-line lg:hidden"
+            />
+
             <div className="flex shrink-0 flex-wrap items-center gap-2">
               <div className="inline-flex items-center gap-1 rounded-full border border-black/10 bg-black/5 px-2.5 py-0.5 text-[11px] font-medium leading-tight text-neutral-700 hover:bg-black/10 dark:border-white/15 dark:bg-white/10 dark:text-white/80">
                 <img
@@ -750,75 +775,113 @@ export default function TikTokFactSlide({
                 {localized.title}
               </h2>
             </button>
-            <div
-              data-testid="fact-details-drawer"
-              data-story-scroll={isExpanded ? 'true' : undefined}
-              onWheel={(e) => {
-                if (!isExpanded) return;
-                const el = e.currentTarget;
-                if (el.scrollHeight > el.clientHeight + 1) e.stopPropagation();
-              }}
-              onClick={(e) => {
-                e.stopPropagation();
-                onButtonPop();
-                setIsExpanded((prev) => !prev);
-              }}
-              className="pointer-events-auto min-h-0 cursor-pointer"
-            >
-              <p
-                data-testid="fact-body"
-                className={`cik-body text-cik-text-2 ${
-                  isExpanded ? 'line-clamp-none' : 'line-clamp-2'
-                }`}
+
+            {!isExpanded && (
+              <button
+                type="button"
+                data-testid="fact-expand-hint"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onButtonPop();
+                  setIsExpanded(true);
+                }}
+                onDoubleClick={(e) => e.stopPropagation()}
+                onPointerDown={(e) => e.stopPropagation()}
+                onTouchStart={(e) => e.stopPropagation()}
+                className="inline-flex w-fit items-center gap-1 text-xs font-bold text-cik-cta lg:hidden"
               >
-                {maskedFactText}
-              </p>
-              <span className="cik-caption-2 mt-1 inline-flex text-cik-text-2">
-                {isExpanded
+                {localized.guessChallenge
                   ? lang === 'tr'
-                    ? 'Daralt'
-                    : 'Show less'
+                    ? 'Devamını gör / Tahmin et ▴'
+                    : 'See more / Guess ▴'
                   : lang === 'tr'
-                    ? 'Devamını oku'
-                    : 'Read more'}
-              </span>
+                    ? 'Devamını gör ▴'
+                    : 'See more ▴'}
+              </button>
+            )}
+
+            <div
+              className={`grid transition-all duration-300 ease-out ${
+                isExpanded
+                  ? 'grid-rows-[1fr] opacity-100'
+                  : 'pointer-events-none grid-rows-[0fr] opacity-0 lg:pointer-events-auto lg:grid-rows-[1fr] lg:opacity-100'
+              }`}
+            >
+              <div className="min-h-0 overflow-hidden">
+                <div className="flex flex-col gap-2.5 pt-0.5">
+                  <div
+                    data-testid="fact-details-drawer"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onButtonPop();
+                      setIsExpanded((prev) => !prev);
+                    }}
+                    onDoubleClick={(e) => e.stopPropagation()}
+                    onPointerDown={(e) => e.stopPropagation()}
+                    onTouchStart={(e) => e.stopPropagation()}
+                    className="pointer-events-auto min-h-0 cursor-pointer"
+                  >
+                    <p
+                      data-testid="fact-body"
+                      className={`cik-body text-cik-text-2 ${
+                        isExpanded ? 'line-clamp-none' : 'line-clamp-2'
+                      }`}
+                    >
+                      {maskedFactText}
+                    </p>
+                    <span
+                      data-testid="fact-collapse-hint"
+                      className="cik-caption-2 mt-1.5 inline-flex items-center gap-1 font-bold text-cik-cta"
+                    >
+                      {isExpanded
+                        ? lang === 'tr'
+                          ? 'Daralt ▾'
+                          : 'Collapse ▾'
+                        : lang === 'tr'
+                          ? 'Devamını oku ▴'
+                          : 'Read more ▴'}
+                    </span>
+                  </div>
+
+                  {localized.guessChallenge && (
+                    <div className="pt-0.5">
+                      <GuessWidget
+                        factId={fact.id}
+                        challenge={localized.guessChallenge}
+                        lang={lang}
+                        initialAnsweredState={savedGuessResult}
+                        onGuessLocked={(id) => {
+                          markFactSeenInStorage(fact);
+                          setLocalGuessLocked(true);
+                          onGuessLocked?.(id);
+                        }}
+                        onGuessAnswered={(xpAwarded, accurate, details) => {
+                          const nextTier: 'spotOn' | 'close' | 'participated' =
+                            xpAwarded >= 20 ? 'spotOn' : xpAwarded >= 15 ? 'close' : 'participated';
+                          setSavedGuessResult({
+                            tier: nextTier,
+                            earnedXp: xpAwarded,
+                            accuracyPct: details.accuracyPct,
+                          });
+                          setLocalGuessLocked(true);
+                          onGuessLocked?.(fact.id);
+                          onGuessReward(xpAwarded, accurate, fact.category, details.accuracyPct);
+                          void trackEvent(factSlug, fact.category, 'quick_guess', {
+                            guess: details.userGuess,
+                            target: details.correctValue,
+                            accuracy: details.accuracyPct,
+                            xp_awarded: xpAwarded,
+                          });
+                        }}
+                        onRequestFlip={() => openSharedDetail()}
+                        onButtonPop={onButtonPop}
+                      />
+                    </div>
+                  )}
+                </div>
+              </div>
             </div>
           </div>
-            {localized.guessChallenge && (
-              <div className="pointer-events-auto shrink-0 bg-cik-bg p-3 pr-14 lg:pr-3">
-                <GuessWidget
-                  factId={fact.id}
-                  challenge={localized.guessChallenge}
-                  lang={lang}
-                  initialAnsweredState={savedGuessResult}
-                  onGuessLocked={(id) => {
-                    markFactSeenInStorage(fact);
-                    setLocalGuessLocked(true);
-                    onGuessLocked?.(id);
-                  }}
-                  onGuessAnswered={(xpAwarded, accurate, details) => {
-                    const nextTier: 'spotOn' | 'close' | 'participated' =
-                      xpAwarded >= 20 ? 'spotOn' : xpAwarded >= 15 ? 'close' : 'participated';
-                    setSavedGuessResult({
-                      tier: nextTier,
-                      earnedXp: xpAwarded,
-                      accuracyPct: details.accuracyPct,
-                    });
-                    setLocalGuessLocked(true);
-                    onGuessLocked?.(fact.id);
-                    onGuessReward(xpAwarded, accurate, fact.category, details.accuracyPct);
-                    void trackEvent(factSlug, fact.category, 'quick_guess', {
-                      guess: details.userGuess,
-                      target: details.correctValue,
-                      accuracy: details.accuracyPct,
-                      xp_awarded: xpAwarded,
-                    });
-                  }}
-                  onRequestFlip={() => openSharedDetail()}
-                  onButtonPop={onButtonPop}
-                />
-              </div>
-            )}
         </div>
 
         {!isFlipped && (

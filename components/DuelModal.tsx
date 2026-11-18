@@ -7,6 +7,7 @@ import {
   Bot,
   Check,
   CheckCircle2,
+  ChevronDown,
   Clock,
   Copy,
   Crown,
@@ -154,17 +155,51 @@ export default function DuelModal({
   const [countdownSec, setCountdownSec] = useState<number | null>(null);
   const [showReactionDrawer, setShowReactionDrawer] = useState(false);
   const [sendingReaction, setSendingReaction] = useState(false);
+  const [topicMenuOpen, setTopicMenuOpen] = useState(false);
 
   const serverOffsetMsRef = useRef<number>(0);
   const matchLaunchedRef = useRef<string | null>(null);
   const autoJoinedCodeRef = useRef<string | null>(null);
+  const topicDropdownRef = useRef<HTMLDivElement>(null);
+  const topicBtnRef = useRef<HTMLButtonElement>(null);
+
+  const selectedCategoryMeta =
+    CATEGORY_SELECTOR_OPTIONS.find((cat) => cat.id === category) ?? CATEGORY_SELECTOR_OPTIONS[0];
 
   const cleanName = (nickname || defaultNickname || t.duelDefaultName).trim().slice(0, 24);
   const cleanNameRef = useRef(cleanName);
   cleanNameRef.current = cleanName;
   const wasOpenRef = useRef(false);
 
-  useEscapeClose(open && !isPage, onClose);
+  useEscapeClose(open && !isPage && !topicMenuOpen, onClose);
+
+  useEffect(() => {
+    if (!open || phase !== 'setup') {
+      setTopicMenuOpen(false);
+      return;
+    }
+    if (!topicMenuOpen) return;
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key !== 'Escape') return;
+      event.preventDefault();
+      event.stopPropagation();
+      setTopicMenuOpen(false);
+      topicBtnRef.current?.focus();
+    };
+    const handlePointerDown = (event: PointerEvent) => {
+      const root = topicDropdownRef.current;
+      if (root && event.target instanceof Node && root.contains(event.target)) return;
+      setTopicMenuOpen(false);
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    document.addEventListener('pointerdown', handlePointerDown);
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+      document.removeEventListener('pointerdown', handlePointerDown);
+    };
+  }, [open, phase, topicMenuOpen]);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -803,8 +838,8 @@ export default function DuelModal({
 
             {phase === 'setup' && (
               <div className="mt-4 flex flex-col gap-4">
-                <section className="rounded-cik-lg bg-cik-surface p-5 shadow-e1">
-                <h3 className="cik-title-3 mb-4 text-cik-text">{t.duelCreateTitle}</h3>
+                <section className="space-y-4 rounded-cik-lg bg-cik-surface p-5 shadow-e1">
+                <h3 className="cik-title-3 text-cik-text">{t.duelCreateTitle}</h3>
                 {/* Nickname */}
                 <div>
                   <label
@@ -819,43 +854,92 @@ export default function DuelModal({
                     value={nickname}
                     onChange={(e) => setNickname(e.target.value)}
                     maxLength={24}
-                    className="mt-1.5 w-full rounded-2xl border border-cik-line bg-cik-bg-elevated px-3.5 py-2.5 text-sm font-bold text-cik-text focus:border-violet-500 focus-visible:outline focus-visible:outline-[3px] focus-visible:outline-offset-2 focus-visible:outline-cik-focus"
+                    className="mt-1.5 h-11 w-full rounded-xl border border-cik-line bg-cik-bg-elevated px-3.5 text-sm font-bold text-cik-text focus:border-violet-500 focus-visible:outline focus-visible:outline-[3px] focus-visible:outline-offset-2 focus-visible:outline-cik-focus"
                   />
                 </div>
 
                 {/* Category + Count + Create */}
                 <div>
-                  <p className="text-xs font-extrabold text-cik-text-2">
-                    {lang === 'tr' ? 'Arena Kategorisi' : 'Arena Topic'}
-                  </p>
-                  <div data-testid="duel-category-picker" className="mt-2 flex flex-wrap gap-1.5">
-                    {CATEGORY_SELECTOR_OPTIONS.map((cat) => {
-                      const active = category === cat.id;
-                      return (
-                        <button
-                          key={cat.id}
-                          type="button"
-                          data-testid={`duel-category-${cat.id}`}
-                          onClick={() => {
-                            onButtonPop();
-                            setCategory(cat.id);
-                          }}
-                          className={`inline-flex h-9 items-center justify-center gap-1.5 rounded-xl border px-3.5 text-xs font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C83E6B] ${
-                            active
-                              ? 'border-[#C83E6B] bg-[#C83E6B] text-white'
-                              : 'border-black/10 bg-white text-neutral-700'
-                          }`}
-                        >
-                          <img
-                            src={cat.iconPath}
-                            alt=""
-                            aria-hidden="true"
-                            className="h-3.5 w-3.5 shrink-0 object-contain"
-                          />
-                          <span>{cat.label[lang]}</span>
-                        </button>
-                      );
-                    })}
+                  <label
+                    htmlFor="duel-category-trigger"
+                    className="block text-xs font-extrabold text-cik-text-2"
+                  >
+                    {lang === 'tr' ? 'Konu Seç' : 'Arena Topic'}
+                  </label>
+                  <div ref={topicDropdownRef} data-testid="duel-category-picker" className="relative mt-2">
+                    <button
+                      id="duel-category-trigger"
+                      ref={topicBtnRef}
+                      type="button"
+                      data-testid="duel-category-trigger"
+                      aria-haspopup="menu"
+                      aria-expanded={topicMenuOpen}
+                      onClick={() => {
+                        onButtonPop();
+                        setTopicMenuOpen((prev) => !prev);
+                      }}
+                      className="flex h-11 w-full items-center justify-between rounded-xl border border-black/10 bg-white px-3.5 text-sm font-semibold text-neutral-900 shadow-sm transition-colors hover:bg-neutral-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C83E6B] dark:border-white/15 dark:bg-[#1C1B22] dark:text-white"
+                    >
+                      <span className="flex min-w-0 items-center gap-2">
+                        <img
+                          src={selectedCategoryMeta.iconPath}
+                          alt=""
+                          aria-hidden="true"
+                          className="h-4 w-4 shrink-0 object-contain"
+                        />
+                        <span className="truncate">{selectedCategoryMeta.label[lang]}</span>
+                      </span>
+                      <ChevronDown
+                        aria-hidden="true"
+                        className={`h-4 w-4 shrink-0 opacity-70 transition-transform duration-150 ${
+                          topicMenuOpen ? 'rotate-180' : ''
+                        }`}
+                      />
+                    </button>
+
+                    {topicMenuOpen && (
+                      <div
+                        role="menu"
+                        aria-label={lang === 'tr' ? 'Konu Seç' : 'Arena Topic'}
+                        data-testid="duel-category-menu"
+                        className="absolute left-0 top-full z-40 mt-2 max-h-64 w-full overflow-y-auto rounded-2xl border border-black/10 bg-white/95 p-1.5 shadow-xl backdrop-blur-md dark:border-white/10 dark:bg-[#1C1B22]/95"
+                      >
+                        {CATEGORY_SELECTOR_OPTIONS.map((cat) => {
+                          const active = category === cat.id;
+                          return (
+                            <button
+                              key={cat.id}
+                              type="button"
+                              role="menuitemradio"
+                              aria-checked={active}
+                              data-testid={`duel-category-${cat.id}`}
+                              onClick={() => {
+                                onButtonPop();
+                                setCategory(cat.id);
+                                setTopicMenuOpen(false);
+                                topicBtnRef.current?.focus();
+                              }}
+                              className={`flex w-full items-center justify-between gap-2 rounded-xl px-3 py-2.5 text-left text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C83E6B] ${
+                                active
+                                  ? 'bg-[#C83E6B] text-white'
+                                  : 'text-neutral-800 hover:bg-neutral-100 dark:text-white/90 dark:hover:bg-white/10'
+                              }`}
+                            >
+                              <span className="flex min-w-0 items-center gap-2.5">
+                                <img
+                                  src={cat.iconPath}
+                                  alt=""
+                                  aria-hidden="true"
+                                  className="h-4 w-4 shrink-0 object-contain"
+                                />
+                                <span className="truncate">{cat.label[lang]}</span>
+                              </span>
+                              {active && <Check className="h-4 w-4 shrink-0" aria-hidden="true" />}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    )}
                   </div>
                 </div>
 
@@ -863,7 +947,7 @@ export default function DuelModal({
                   <p className="text-xs font-extrabold text-cik-text-2">
                     {lang === 'tr' ? 'Soru Sayısı' : 'Question Count'}
                   </p>
-                  <div data-testid="duel-count-picker" className="mt-2 flex flex-wrap gap-2">
+                  <div data-testid="duel-count-picker" className="mt-2 grid grid-cols-4 gap-2">
                     {DUEL_QUESTION_COUNTS.map((count) => {
                       const active = questionCount === count;
                       return (
@@ -875,10 +959,10 @@ export default function DuelModal({
                             onButtonPop();
                             setQuestionCount(count);
                           }}
-                          className={`inline-flex h-9 items-center justify-center rounded-xl border px-3.5 text-xs font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C83E6B] ${
+                          className={`inline-flex h-10 w-full items-center justify-center rounded-xl border text-xs font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C83E6B] ${
                             active
                               ? 'border-[#C83E6B] bg-[#C83E6B] text-white'
-                              : 'border-black/10 bg-white text-neutral-700'
+                              : 'border-black/10 bg-white text-neutral-700 dark:border-white/15 dark:bg-[#1C1B22] dark:text-white/90'
                           }`}
                         >
                           {count}
@@ -888,31 +972,33 @@ export default function DuelModal({
                   </div>
                 </div>
 
-                <motion.button
-                  type="button"
-                  whileTap={{ scale: 0.94 }}
-                  disabled={busyAction === 'create'}
-                  onClick={() => void handleCreateRoom()}
-                  data-testid="duel-create-lobby-btn"
-                  className="flex h-11 w-full items-center justify-center gap-2 rounded-2xl bg-[#C83E6B] px-4 text-sm font-semibold text-white shadow-sm disabled:opacity-60"
-                >
-                  <Swords className="h-4 w-4 shrink-0" />
-                  <span>
-                    {busyAction === 'create'
-                      ? lang === 'tr'
-                        ? 'Oda kuruluyor...'
-                        : 'Creating room...'
-                      : lang === 'tr'
-                        ? 'Scrolla Odası Kur'
-                        : 'Create Scrolla Room'}
-                  </span>
-                </motion.button>
+                <div className="pt-2">
+                  <motion.button
+                    type="button"
+                    whileTap={{ scale: 0.94 }}
+                    disabled={busyAction === 'create'}
+                    onClick={() => void handleCreateRoom()}
+                    data-testid="duel-create-lobby-btn"
+                    className="flex h-11 w-full items-center justify-center gap-2 rounded-2xl bg-[#C83E6B] px-4 text-sm font-semibold text-white shadow-sm disabled:opacity-60"
+                  >
+                    <Swords className="h-4 w-4 shrink-0" />
+                    <span>
+                      {busyAction === 'create'
+                        ? lang === 'tr'
+                          ? 'Oda kuruluyor...'
+                          : 'Creating room...'
+                        : lang === 'tr'
+                          ? 'Scrolla Odası Kur'
+                          : 'Create Scrolla Room'}
+                    </span>
+                  </motion.button>
+                </div>
                 </section>
 
                 {/* Join existing room by 6-char code */}
-                <section className="rounded-cik-lg bg-cik-surface p-5 shadow-e1">
+                <section className="space-y-4 rounded-cik-lg bg-cik-surface p-5 shadow-e1">
                   <p className="cik-title-3 text-cik-text">{t.duelJoinTitle}</p>
-                  <div className="mt-4 flex items-center gap-2">
+                  <div className="flex items-center gap-2">
                     <input
                       type="text"
                       value={joinCodeInput}
@@ -921,7 +1007,7 @@ export default function DuelModal({
                       maxLength={6}
                       data-testid="duel-join-code-input"
                       aria-label={t.duelJoinTitle}
-                      className="h-11 min-w-0 flex-1 rounded-2xl border border-black/10 bg-white px-4 font-mono text-sm font-semibold tracking-widest text-neutral-900 uppercase focus-visible:outline focus-visible:outline-[3px] focus-visible:outline-offset-2 focus-visible:outline-cik-focus"
+                      className="h-11 min-w-0 flex-1 rounded-2xl border border-black/10 bg-white px-4 font-mono text-sm font-semibold tracking-widest text-neutral-900 uppercase focus-visible:outline focus-visible:outline-[3px] focus-visible:outline-offset-2 focus-visible:outline-cik-focus dark:border-white/15 dark:bg-[#1C1B22] dark:text-white"
                     />
                     <button
                       type="button"
@@ -933,7 +1019,7 @@ export default function DuelModal({
                       className={`flex h-11 shrink-0 items-center justify-center gap-2 rounded-2xl px-4 text-sm font-semibold ${
                         normalizeRoomCode(joinCodeInput).length === 6
                           ? 'bg-[#C83E6B] text-white shadow-sm'
-                          : 'border border-black/10 bg-white text-neutral-800 shadow-sm'
+                          : 'border border-black/10 bg-white text-neutral-800 shadow-sm dark:border-white/15 dark:bg-[#1C1B22] dark:text-white'
                       }`}
                     >
                       <LogIn size={20} strokeWidth={2} aria-hidden="true" />

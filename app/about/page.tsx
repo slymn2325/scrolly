@@ -16,6 +16,14 @@ function resolveLang(langParam?: string): Language {
   return langParam === 'en' ? 'en' : 'tr';
 }
 
+function buildContactHref(lang: Language, returnToProfile: boolean): string {
+  const params = new URLSearchParams();
+  if (lang === 'en') params.set('lang', 'en');
+  if (returnToProfile) params.set('from', 'profile');
+  const queryString = params.toString();
+  return queryString ? `/contact?${queryString}` : '/contact';
+}
+
 export async function generateMetadata({ searchParams }: PageProps): Promise<Metadata> {
   const query = await searchParams;
   const lang = resolveLang(query?.lang);
@@ -66,6 +74,7 @@ export default async function AboutPage({ searchParams }: PageProps) {
   const query = await searchParams;
   const lang = resolveLang(query?.lang);
   const isEn = lang === 'en';
+  const returnToProfile = query.from === 'profile';
 
   const jsonLd = {
     '@context': 'https://schema.org',
@@ -118,7 +127,7 @@ export default async function AboutPage({ searchParams }: PageProps) {
     <TrustPageShell
       routePath="/about"
       lang={lang}
-      returnToProfile={query.from === 'profile'}
+      returnToProfile={returnToProfile}
       badge={isEn ? 'Editorial Mission & Standards' : 'Editöryal Misyon ve Standartlar'}
       title={
         isEn
@@ -207,7 +216,7 @@ export default async function AboutPage({ searchParams }: PageProps) {
         </p>
         <div className="flex flex-wrap items-center gap-3 pt-2">
           <Link
-            href={isEn ? '/contact?lang=en' : '/contact'}
+            href={buildContactHref(lang, returnToProfile)}
             className="inline-flex items-center gap-1.5 rounded-full bg-ink px-4 py-2 text-xs font-extrabold text-white transition hover:opacity-90 dark:bg-violet-600"
           >
             <span>{isEn ? 'Report a Source Correction →' : 'Kaynak Düzeltmesi Bildir →'}</span>

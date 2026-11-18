@@ -4,7 +4,6 @@ import React, { forwardRef, useCallback, useEffect, useImperativeHandle, useLayo
 import { motion } from 'framer-motion';
 import { Check, ChevronDown, Globe } from 'lucide-react';
 import BrandLogo from '@/components/BrandLogo';
-import Sheet from '@/components/cikartma/Sheet';
 import Skeleton from '@/components/cikartma/Skeleton';
 import NotificationsBell from '@/components/NotificationsBell';
 import NativeAdSlide from '@/components/NativeAdSlide';
@@ -13,12 +12,9 @@ import TikTokFactSlide from '@/components/TikTokFactSlide';
 import VocabularySlide from '@/components/VocabularySlide';
 import {
   CATEGORY_SELECTOR_OPTIONS,
-  FEED_EXPERIENCE_COPY,
   getCategoryMeta,
-  translations,
   type CategoryFilter,
   type CategoryId,
-  type CategoryMeta,
   type Language,
 } from '@/i18n/translations';
 import type { FactCard } from '@/types/fact';
@@ -157,14 +153,8 @@ const TikTokFeed = forwardRef<TikTokFeedHandle, TikTokFeedProps>(function TikTok
   const [activeIndex, setActiveIndex] = useState<number>(safeInitialIndex);
   const [isCategoryDrawerOpen, setIsCategoryDrawerOpen] = useState<boolean>(false);
   const [showCategorySkeleton, setShowCategorySkeleton] = useState(false);
-  const ignoreCategoryToggleRef = useRef(false);
-  const closeCategoryPicker = useCallback(() => {
-    ignoreCategoryToggleRef.current = true;
-    setIsCategoryDrawerOpen(false);
-    window.setTimeout(() => {
-      ignoreCategoryToggleRef.current = false;
-    }, 400);
-  }, []);
+  const categoryMenuRef = useRef<HTMLDivElement>(null);
+  const categoryBtnRef = useRef<HTMLButtonElement>(null);
   const [chromeBlocked, setChromeBlocked] = useState<boolean>(false);
   const [hudTraveling, setHudTraveling] = useState(false);
   const activeCategoryMeta = getCategoryMeta(activeCategory);
@@ -588,13 +578,27 @@ const TikTokFeed = forwardRef<TikTokFeedHandle, TikTokFeedProps>(function TikTok
   }, [stepOneCard]);
 
   useEffect(() => {
-    window.dispatchEvent(
-      new CustomEvent('scrolly-chrome-block', { detail: { open: isCategoryDrawerOpen } })
-    );
+    if (chromeBlocked) setIsCategoryDrawerOpen(false);
+  }, [chromeBlocked]);
+
+  useEffect(() => {
+    if (!isCategoryDrawerOpen) return;
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key !== 'Escape') return;
+      event.preventDefault();
+      setIsCategoryDrawerOpen(false);
+      categoryBtnRef.current?.focus();
+    };
+    const onPointer = (event: PointerEvent) => {
+      const root = categoryMenuRef.current;
+      if (root && event.target instanceof Node && root.contains(event.target)) return;
+      setIsCategoryDrawerOpen(false);
+    };
+    document.addEventListener('keydown', onKey);
+    document.addEventListener('pointerdown', onPointer);
     return () => {
-      window.dispatchEvent(
-        new CustomEvent('scrolly-chrome-block', { detail: { open: false } })
-      );
+      document.removeEventListener('keydown', onKey);
+      document.removeEventListener('pointerdown', onPointer);
     };
   }, [isCategoryDrawerOpen]);
 
@@ -663,7 +667,7 @@ const TikTokFeed = forwardRef<TikTokFeedHandle, TikTokFeedProps>(function TikTok
         data-chrome-blocked={chromeBlocked ? 'true' : 'false'}
         inert={chromeBlocked ? true : undefined}
         aria-hidden={chromeBlocked || undefined}
-        className={`pointer-events-none absolute left-3 right-3 top-3 z-20 flex items-center justify-between gap-2 ${
+        className={`pointer-events-none absolute left-3 right-3 top-3 z-hud flex items-center justify-between gap-2 ${
           chromeBlocked
             ? 'pointer-events-none opacity-0'
             : hudTraveling
@@ -672,38 +676,100 @@ const TikTokFeed = forwardRef<TikTokFeedHandle, TikTokFeedProps>(function TikTok
         }`}
       >
         <BrandLogo size={32} id="feed-header-brand" className="pointer-events-none shrink-0 lg:hidden" />
-        <motion.button
-          type="button"
-          whileTap={chromeBlocked ? undefined : { scale: 0.96 }}
-          onClick={() => {
-            if (ignoreCategoryToggleRef.current) return;
-            onButtonPop();
-            setIsCategoryDrawerOpen((prev) => !prev);
-          }}
-          aria-expanded={isCategoryDrawerOpen}
-          data-testid="choose-category-btn"
-          className={`inline-flex h-11 min-w-0 max-w-[44vw] shrink items-center gap-2 overflow-hidden rounded-pill bg-cik-surface px-3 text-cik-text shadow-e1 ${
+        <div
+          ref={categoryMenuRef}
+          className={`relative min-w-0 shrink ${
             chromeBlocked ? 'pointer-events-none' : 'pointer-events-auto'
           }`}
         >
-          <img
-            src={activeCategoryMeta.iconPath}
-            alt=""
-            aria-hidden="true"
-            width={24}
-            height={24}
-            className="h-6 w-6 shrink-0 object-contain"
-          />
-          <span className="cik-footnote min-w-0 truncate">{categoryTriggerLabel}</span>
-          <ChevronDown
-            size={16}
-            strokeWidth={2}
-            aria-hidden="true"
-            className={`shrink-0 transition-transform duration-150 motion-reduce:transition-none ${
-              isCategoryDrawerOpen ? 'rotate-180' : ''
+          <motion.button
+            ref={categoryBtnRef}
+            type="button"
+            whileTap={chromeBlocked ? undefined : { scale: 0.96 }}
+            onClick={() => {
+              onButtonPop();
+              setIsCategoryDrawerOpen((prev) => !prev);
+            }}
+            aria-haspopup="menu"
+            aria-expanded={isCategoryDrawerOpen}
+            data-testid="choose-category-btn"
+            className={`inline-flex h-11 min-w-0 max-w-[44vw] shrink items-center gap-2 overflow-hidden rounded-pill bg-cik-surface px-3 text-cik-text shadow-e1 ${
+              chromeBlocked ? 'pointer-events-none' : 'pointer-events-auto'
             }`}
-          />
-        </motion.button>
+          >
+            <img
+              src={activeCategoryMeta.iconPath}
+              alt=""
+              aria-hidden="true"
+              width={24}
+              height={24}
+              className="h-6 w-6 shrink-0 object-contain"
+            />
+            <span className="cik-footnote min-w-0 truncate">{categoryTriggerLabel}</span>
+            <ChevronDown
+              size={16}
+              strokeWidth={2}
+              aria-hidden="true"
+              className={`shrink-0 transition-transform duration-150 motion-reduce:transition-none ${
+                isCategoryDrawerOpen ? 'rotate-180' : ''
+              }`}
+            />
+          </motion.button>
+
+          {isCategoryDrawerOpen ? (
+            <div
+              role="menu"
+              aria-label={lang === 'tr' ? 'Konu Seç' : 'Choose Topic'}
+              data-testid="category-drawer"
+              data-presentation="dropdown"
+              data-scroll-contain="true"
+              className="pointer-events-auto absolute left-0 top-full z-40 mt-2 max-h-[65dvh] w-60 overflow-y-auto rounded-2xl border border-black/10 bg-white/95 p-1.5 shadow-xl backdrop-blur-md dark:border-white/10 dark:bg-[#1C1B22]/95"
+            >
+              <div className="flex flex-col gap-0.5">
+                {CATEGORY_SELECTOR_OPTIONS.map((cat) => {
+                  const isActive = activeCategory === cat.id;
+                  return (
+                    <button
+                      key={cat.id}
+                      type="button"
+                      role="menuitemradio"
+                      aria-checked={isActive}
+                      data-testid={`category-option-${cat.id}`}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        onButtonPop();
+                        onSelectCategory(cat.id);
+                        setIsCategoryDrawerOpen(false);
+                        scrollToSlide(0);
+                        setShowCategorySkeleton(true);
+                      }}
+                      className={`flex w-full items-center gap-2.5 rounded-xl px-2.5 py-2 text-left text-sm font-medium transition-colors ${
+                        isActive
+                          ? 'bg-cik-pink text-cik-cta dark:bg-white/10 dark:text-cik-cta'
+                          : 'text-neutral-800 hover:bg-black/5 dark:text-white/90 dark:hover:bg-white/10'
+                      }`}
+                    >
+                      <img
+                        src={cat.iconPath}
+                        alt=""
+                        aria-hidden="true"
+                        width={20}
+                        height={20}
+                        decoding="async"
+                        className="h-5 w-5 shrink-0 object-contain"
+                      />
+                      <span className="min-w-0 flex-1 truncate">{cat.label[lang]}</span>
+                      {isActive ? (
+                        <Check size={16} strokeWidth={2.5} aria-hidden="true" className="shrink-0" />
+                      ) : null}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          ) : null}
+        </div>
 
         <div
           className={`ml-auto flex shrink-0 items-center gap-2 ${
@@ -714,23 +780,6 @@ const TikTokFeed = forwardRef<TikTokFeedHandle, TikTokFeedProps>(function TikTok
           <NotificationsBell lang={lang} />
         </div>
       </header>
-
-      <CategoryPickerSheet
-        open={isCategoryDrawerOpen}
-        lang={lang}
-        activeCategory={activeCategory}
-        onClose={() => {
-          onButtonPop();
-          closeCategoryPicker();
-        }}
-        onPick={(catId) => {
-          onButtonPop();
-          onSelectCategory(catId);
-          closeCategoryPicker();
-          scrollToSlide(0);
-          setShowCategorySkeleton(true);
-        }}
-      />
 
       {showCategorySkeleton ? (
         <div
@@ -925,7 +974,7 @@ function LanguageMenu({
           role="menu"
           aria-label={label}
           data-testid="lang-menu"
-          className="absolute right-0 top-[calc(100%+8px)] z-hud flex w-max min-w-16 flex-col gap-1 rounded-cik-md bg-cik-bg-elevated p-2 shadow-e3"
+          className="absolute right-0 top-[calc(100%+8px)] z-hud flex w-max min-w-16 flex-col gap-0.5 rounded-2xl border border-black/10 bg-white/95 p-1.5 shadow-xl backdrop-blur-md dark:border-white/10 dark:bg-[#1C1B22]/95"
         >
           {(['tr', 'en'] as const).map((code) => {
             const selected = lang === code;
@@ -937,89 +986,19 @@ function LanguageMenu({
                 aria-checked={selected}
                 data-testid={code === 'tr' ? 'lang-btn-tr' : 'lang-btn-en'}
                 onClick={() => pick(code)}
-                className={`cik-footnote flex h-11 items-center justify-between gap-3 rounded-cik-sm px-3 ${
-                  selected ? 'bg-cik-berry text-cik-on-berry' : 'text-cik-text'
+                className={`cik-footnote flex h-11 items-center justify-between gap-3 rounded-xl px-3 transition-colors ${
+                  selected
+                    ? 'bg-cik-pink text-cik-cta dark:bg-white/10 dark:text-cik-cta'
+                    : 'text-neutral-800 hover:bg-black/5 dark:text-white/90 dark:hover:bg-white/10'
                 }`}
               >
                 <span>{code === 'tr' ? 'TR' : 'EN'}</span>
-                {selected ? <Check size={16} strokeWidth={2} aria-hidden="true" /> : <span className="w-4" aria-hidden="true" />}
+                {selected ? <Check size={16} strokeWidth={2.5} aria-hidden="true" /> : <span className="w-4" aria-hidden="true" />}
               </button>
             );
           })}
         </div>
       ) : null}
     </div>
-  );
-}
-
-function pickerLabel(cat: CategoryMeta, lang: Language): string {
-  if (cat.id === 'all') return FEED_EXPERIENCE_COPY[lang].categoryAll;
-  if (cat.id === 'vocabulary') return translations[lang].dockLanguage;
-  return cat.label[lang];
-}
-
-const PICKER_OPTIONS: CategoryMeta[] = [
-  ...CATEGORY_SELECTOR_OPTIONS.filter((cat) => cat.id === 'all'),
-  ...CATEGORY_SELECTOR_OPTIONS.filter((cat) => cat.id !== 'all' && cat.id !== 'vocabulary'),
-  ...CATEGORY_SELECTOR_OPTIONS.filter((cat) => cat.id === 'vocabulary'),
-];
-
-function CategoryPickerSheet({
-  open,
-  lang,
-  activeCategory,
-  onClose,
-  onPick,
-}: {
-  open: boolean;
-  lang: Language;
-  activeCategory: CategoryFilter;
-  onClose: () => void;
-  onPick: (catId: CategoryFilter) => void;
-}) {
-  return (
-    <Sheet open={open} title={lang === 'tr' ? 'Konu Seç' : 'Choose Topic'} onClose={onClose}>
-      <div data-testid="category-drawer" data-presentation="sheet" className="grid grid-cols-2 gap-3">
-        {PICKER_OPTIONS.map((cat) => {
-          const isActive = activeCategory === cat.id;
-          return (
-            <button
-              key={cat.id}
-              type="button"
-              onClick={(event) => {
-                event.preventDefault();
-                event.stopPropagation();
-                onPick(cat.id);
-                onClose();
-              }}
-              data-testid={`category-option-${cat.id}`}
-              aria-pressed={isActive}
-              className={`relative flex min-h-[52px] flex-col items-start gap-3 rounded-sticker border-4 border-cik-sticker-rim p-4 text-left shadow-sticker ${
-                isActive ? 'bg-cik-berry text-cik-on-berry' : 'bg-cik-pink text-cik-text'
-              }`}
-            >
-              {isActive ? (
-                <Check
-                  className="absolute right-3 top-3"
-                  size={20}
-                  strokeWidth={2}
-                  aria-hidden="true"
-                />
-              ) : null}
-              <img
-                src={cat.iconPath}
-                alt=""
-                aria-hidden="true"
-                width={40}
-                height={40}
-                decoding="async"
-                className="h-10 w-10 object-contain"
-              />
-              <span className="cik-headline">{pickerLabel(cat, lang)}</span>
-            </button>
-          );
-        })}
-      </div>
-    </Sheet>
   );
 }

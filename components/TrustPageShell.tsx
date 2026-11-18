@@ -53,7 +53,15 @@ export default function TrustPageShell({
               className="cik-footnote inline-flex h-11 items-center gap-2 rounded-pill border border-cik-line bg-cik-surface px-4 text-cik-text"
             >
               <ChevronLeft className="h-5 w-5" aria-hidden="true" />
-              <span>{isEn ? 'Back to feed' : 'Akışa dön'}</span>
+              <span>
+                {returnToProfile
+                  ? isEn
+                    ? 'Back to Profile'
+                    : 'Profile dön'
+                  : isEn
+                    ? 'Back to feed'
+                    : 'Akışa dön'}
+              </span>
             </ProfileReturnControl>
 
             <div

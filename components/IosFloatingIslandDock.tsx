@@ -46,7 +46,7 @@ export default function IosFloatingIslandDock({
     <div
       data-testid="ios-floating-dock-shell"
       inert={chromeBlocked ? true : undefined}
-      className={`pointer-events-none fixed inset-x-0 bottom-0 z-dock mx-auto w-full max-w-md px-4 pb-[max(8px,env(safe-area-inset-bottom))] ${
+      className={`pointer-events-none fixed inset-x-0 bottom-0 z-dock mx-auto w-full max-w-md px-2.5 pb-[max(8px,env(safe-area-inset-bottom))] ${
         chromeBlocked ? 'pointer-events-none opacity-0' : ''
       }`}
     >
@@ -55,7 +55,7 @@ export default function IosFloatingIslandDock({
         data-testid="ios-floating-dock"
         className={`${
           chromeBlocked ? 'pointer-events-none' : 'pointer-events-auto'
-        } material-thin flex w-full items-end justify-between gap-2 rounded-pill px-2 py-1 text-cik-text shadow-e1`}
+        } material-thin flex w-full items-end justify-between gap-0.5 rounded-pill px-1.5 py-1 text-cik-text shadow-e1`}
       >
         {TABS.map((tab) => {
           const isActive = highlightedTab === tab.id;
@@ -70,7 +70,7 @@ export default function IosFloatingIslandDock({
               data-testid={`dock-tab-${tab.id}`}
               aria-label={label}
               aria-current={isActive ? 'page' : undefined}
-              className={`relative flex min-h-12 min-w-11 flex-1 flex-col items-center justify-center gap-1 rounded-pill px-1 ${
+              className={`relative flex min-h-12 min-w-0 flex-1 flex-col items-center justify-center gap-1 rounded-pill px-1 ${
                 isActive ? 'text-cik-cta' : 'text-cik-text-2'
               }`}
             >
@@ -87,7 +87,7 @@ export default function IosFloatingIslandDock({
                   />
                 ) : null}
               </motion.span>
-              <span className="cik-caption-1 max-w-full truncate whitespace-nowrap">{label}</span>
+              <span className="max-w-full whitespace-nowrap text-[10px] font-bold leading-tight tracking-tight">{label}</span>
               <span
                 aria-hidden="true"
                 className={`h-1 w-1 rounded-pill ${isActive ? 'bg-cik-cta' : 'bg-transparent'}`}

@@ -98,6 +98,11 @@ export default function PrivacyPolicyView({ returnToProfile = false }: { returnT
 
   const copy = POLICY_COPY[lang];
   const isEn = lang === 'en';
+  const contactParams = new URLSearchParams();
+  if (lang === 'en') contactParams.set('lang', 'en');
+  if (returnToProfile) contactParams.set('from', 'profile');
+  const contactQuery = contactParams.toString();
+  const contactHref = contactQuery ? `/contact?${contactQuery}` : '/contact';
 
   return (
     <>
@@ -111,7 +116,13 @@ export default function PrivacyPolicyView({ returnToProfile = false }: { returnT
               className="cik-footnote inline-flex h-11 items-center gap-2 rounded-pill border border-cik-line bg-cik-surface px-4 text-cik-text"
             >
               <ChevronLeft className="h-5 w-5" aria-hidden="true" />
-              <span>{copy.backLabel}</span>
+              <span>
+                {returnToProfile
+                  ? isEn
+                    ? 'Back to Profile'
+                    : 'Profile dön'
+                  : copy.backLabel}
+              </span>
             </ProfileReturnControl>
 
             <div
@@ -220,7 +231,7 @@ export default function PrivacyPolicyView({ returnToProfile = false }: { returnT
                   </a>
                 </div>
                 <Link
-                  href={lang === 'en' ? '/contact?lang=en' : '/contact'}
+                  href={contactHref}
                   className="cik-footnote inline-flex h-11 items-center rounded-pill bg-cik-cta px-4 text-cik-on-cta"
                 >
                   {copy.contactLinkLabel}
