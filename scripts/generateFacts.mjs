@@ -2,6 +2,7 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import pg from 'pg';
+import { buildIndexNowFactUrls, notifyIndexNow } from '../lib/indexNow.mjs';
 import { resolveCardMedia } from '../lib/resolveCardMedia.mjs';
 
 const { Pool } = pg;
@@ -2563,6 +2564,23 @@ async function main() {
     );
     if (insertedFactsSummary.length > 0) {
       console.table(insertedFactsSummary.slice(0, 20));
+      const newFactUrls = buildIndexNowFactUrls(
+        insertedFactsSummary.map((item) => item.slug).filter(Boolean)
+      );
+      const indexNowResult = await notifyIndexNow(newFactUrls);
+      if (indexNowResult.skipped) {
+        console.log(
+          `[generateFacts] IndexNow skipped (${indexNowResult.reason || 'unconfigured'}) for ${newFactUrls.length} URLs`
+        );
+      } else if (indexNowResult.ok) {
+        console.log(
+          `[generateFacts] IndexNow notified HTTP ${indexNowResult.status} for ${indexNowResult.submittedCount} URLs`
+        );
+      } else {
+        console.warn(
+          `[generateFacts] IndexNow notification non-fatal failure: ${indexNowResult.reason || 'unknown'}`
+        );
+      }
     }
     if (insertedVocabSummary.length > 0) {
       console.table(insertedVocabSummary.slice(0, 10));

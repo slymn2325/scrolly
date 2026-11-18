@@ -88,10 +88,21 @@ const POLICY_COPY = {
   },
 } as const;
 
-export default function PrivacyPolicyView({ returnToProfile = false }: { returnToProfile?: boolean }) {
-  const [lang, setLang] = useState<Language>('tr');
+export default function PrivacyPolicyView({
+  returnToProfile = false,
+  initialLang = 'tr',
+}: {
+  returnToProfile?: boolean;
+  initialLang?: Language;
+}) {
+  const [lang, setLang] = useState<Language>(initialLang);
 
   useEffect(() => {
+    const queryLang = new URLSearchParams(window.location.search).get('lang');
+    if (queryLang === 'en' || queryLang === 'tr') {
+      setLang(queryLang);
+      return;
+    }
     const state = loadUserMemory();
     setLang(state.lang);
   }, []);

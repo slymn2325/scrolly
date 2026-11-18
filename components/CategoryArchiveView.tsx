@@ -19,7 +19,9 @@ import SiteTrustFooter from '@/components/SiteTrustFooter';
 import { type CategoryId, getCategoryMeta, type Language } from '@/i18n/translations';
 import { CATEGORY_PAGE_SIZE, categoryPagePath, categoryPageUrl } from '@/lib/categoryPages';
 import { getAllFactsServer } from '@/lib/db';
+import { BRAND_OG_IMAGE } from '@/lib/homeMetadata';
 import { safeJsonLdStringify } from '@/lib/originPolicy';
+import { fitDocumentTitle } from '@/utils/factSeo';
 import {
   buildCategoryHref,
   buildFactHref,
@@ -81,12 +83,15 @@ export async function buildCategoryMetadata(
   const canonicalUrl = lang === 'en' ? enUrl : trUrl;
   const description = CATEGORY_DESCRIPTIONS[categoryId][lang];
   const pageLabel = page > 1 ? ` (${page})` : '';
+  const title = fitDocumentTitle(
+    lang === 'tr'
+      ? `${catMeta.label.tr} Bilgi Kartları, Kaynaklı Arşiv & Quiz${pageLabel} | Scrolly`
+      : `${catMeta.label.en} Verified Fact Cards & Micro-Learning${pageLabel} | Scrolly`
+  );
+  const image = { ...BRAND_OG_IMAGE, alt: title };
 
   return {
-    title:
-      lang === 'tr'
-        ? `${catMeta.label.tr} Bilgi Kartları & Quiz${pageLabel} | Scrolly`
-        : `${catMeta.label.en} Fact Cards & Micro-Learning${pageLabel} | Scrolly`,
+    title,
     description,
     alternates: {
       canonical: canonicalUrl,
@@ -97,17 +102,19 @@ export async function buildCategoryMetadata(
       },
     },
     openGraph: {
-      title: `${catMeta.emoji} ${catMeta.label[lang]} | Scrolly`,
+      title,
       description,
       url: canonicalUrl,
       siteName: 'Scrolly',
       type: 'website',
       locale: lang === 'en' ? 'en_US' : 'tr_TR',
+      images: [image],
     },
     twitter: {
       card: 'summary_large_image',
-      title: `${catMeta.emoji} ${catMeta.label[lang]} | Scrolly`,
+      title,
       description,
+      images: [image.url],
     },
   };
 }

@@ -30,6 +30,13 @@ export const metadata: Metadata = {
     type: 'website',
     images: [BRAND_OG_IMAGE],
   },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Scrolly — Tek Saniyede Mikro Keşif | scrolly.live',
+    description:
+      'Uzay, doğa, insan vücudu, tarih ve bilim hakkında şaşırtıcı bilgiler keşfet, son 5 kartla hafıza quizine gir ve skorunu paylaş!',
+    images: [BRAND_OG_IMAGE.url],
+  },
   other: {
     'google-adsense-account': 'ca-pub-1368005726792126',
   },
@@ -84,7 +91,7 @@ const ROOT_SCHEMA_JSON_LD = {
       name: 'Scrolly',
       url: 'https://scrolly.live',
       applicationCategory: 'EducationalApplication',
-      operatingSystem: 'Web, iOS, Android',
+      operatingSystem: 'Any',
       browserRequirements: 'Requires JavaScript, HTML5',
       inLanguage: ['en', 'tr'],
       isAccessibleForFree: true,

@@ -372,6 +372,26 @@ export default function SingleFactView({
     return null;
   }, [content.guessChallenge, lang]);
 
+  const blufLeadText = useMemo(() => {
+    const base = content.factText.trim();
+    const countWords = (str: string) => str.split(/\s+/).filter(Boolean).length;
+    if (countWords(base) >= 35) return base;
+
+    const deepSentences = (content.deepDiveDetail || '')
+      .split(/(?<=[.!?])\s+/)
+      .map((s) => s.trim())
+      .filter(Boolean);
+    let combined = base;
+    for (const sentence of deepSentences) {
+      if (normalizeDetailCopy(combined).includes(normalizeDetailCopy(sentence))) continue;
+      const next = `${combined} ${sentence}`.trim();
+      if (countWords(next) > 62 && countWords(combined) >= 28) break;
+      combined = next;
+      if (countWords(combined) >= 35) break;
+    }
+    return combined;
+  }, [content.factText, content.deepDiveDetail]);
+
   const handleLangSwitch = (targetLang: Language) => {
     const safeLang: 'tr' | 'en' = targetLang === 'en' ? 'en' : 'tr';
     vibrateTap(12);
@@ -687,7 +707,26 @@ export default function SingleFactView({
                 data-geo-summary="true"
                 className="cik-body mt-3 text-cik-text"
               >
-                {content.factText}
+                <span>{blufLeadText}</span>
+                {resolvedSourceUrl ? (
+                  <>
+                    {' '}
+                    <a
+                      href={resolvedSourceUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      data-testid="bluf-primary-source-link"
+                      className="inline-flex items-center gap-1 font-extrabold text-cik-cta underline underline-offset-2"
+                    >
+                      <span>({resolvedSourceName || (lang === 'tr' ? 'Birincil Kaynak' : 'Primary Source')})</span>
+                      <ExternalLink className="inline h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+                    </a>
+                  </>
+                ) : resolvedSourceName ? (
+                  <span className="ml-1 font-bold text-cik-text-2">
+                    ({resolvedSourceName})
+                  </span>
+                ) : null}
               </p>
             </div>
           </div>

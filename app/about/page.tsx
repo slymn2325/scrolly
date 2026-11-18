@@ -81,54 +81,54 @@ export default async function AboutPage({ searchParams }: PageProps) {
         {
           question: 'What is Scrolly?',
           answer:
-            'Scrolly is a free bilingual (English and Turkish) reels-style micro-learning platform built around verified scientific curiosity. Every vertical card combines a concise summary, a deeper "Why / How?" breakdown, primary source links, interactive Quick Guess sliders, and instant recall quizzes.',
+            'Scrolly (https://scrolly.live) is a free bilingual (English and Turkish) reels-style micro-learning Progressive Web App built around verified scientific curiosity. Every vertical card combines a direct 40–60 word summary, a deeper "Why / How?" breakdown, primary source links, interactive Quick Guess sliders, and instant recall quizzes.',
         },
         {
           question: 'Is Scrolly free to use?',
           answer:
-            'Yes, Scrolly is completely free with no mandatory sign-up or paywall. You can explore every card, join quizzes, play Scrolla 1v1 duels, and save favorites immediately as a guest, or optionally link an email via one-time OTP to sync XP across devices.',
+            'Yes, Scrolly is completely free with no mandatory sign-up or paywall. You can explore every card, join quizzes, play Scrolla 1v1 duels, earn live leaderboard XP, and save favorites immediately as a guest, or optionally link an email via one-time OTP to sync progress across devices.',
+        },
+        {
+          question: 'How are facts verified on Scrolly?',
+          answer:
+            'Every Scrolly card cites a primary institutional or peer-reviewed source such as NASA, ESA, Nature, Science, PubMed/NIH, Smithsonian, or Britannica. Numeric claims, measurement units, and historical dates are verified against primary literature, and Turkish and English scientific terminology are reviewed independently before publication.',
+        },
+        {
+          question: 'How do Word Lab and Scrolla 1v1 work?',
+          answer:
+            'Word Lab teaches B1–C2 English vocabulary in the vertical feed with IPA pronunciation, normal and slow audio playback, bilingual context sentences, synonyms, and a +15 XP meaning quiz. Scrolla 1v1 is a live two-player trivia arena where a 6-character room code launches an identical 3–10 question match.',
         },
         {
           question: 'What topics does Scrolly cover?',
           answer:
-            'Scrolly covers eight interactive categories: Space, Nature, Human Body, History, Science, Weird Records, Statistics, and Word Lab (B1–C2 English vocabulary). Fact cards reference primary institutions such as NASA, ESA, Nature, PubMed/NIH, Smithsonian, and Britannica for direct verification.',
-        },
-        {
-          question: 'How does Scrolla 1v1 work?',
-          answer:
-            'Scrolla 1v1 is Scrolly’s real-time two-player trivia arena. One player creates a room with a chosen topic and 3, 5, 7, or 10 questions to generate a 6-character code. When both players join and mark ready, a synchronized 5-second countdown starts an identical question pack.',
-        },
-        {
-          question: 'How does Word Lab work?',
-          answer:
-            'Word Lab helps Turkish and English learners master B1–C2 vocabulary inside the vertical feed. Each word card includes IPA pronunciation, normal and slow text-to-speech audio, bilingual example sentences, synonyms, an instant meaning quiz for +15 XP, and a personal Word Notebook.',
+            'Scrolly covers eight interactive categories: Space, Nature, Human Body, History, Science, Weird Records, Statistics, and Word Lab (B1–C2 English vocabulary). Each category features a dedicated topic archive page and interactive feed filter with verified citations and Quick Guess challenges.',
         },
       ]
     : [
         {
           question: 'Scrolly nedir?',
           answer:
-            'Scrolly; doğrulanmış bilimsel kaynaklara dayanan ücretsiz, iki dilli (Türkçe ve İngilizce) reels tarzı bir mikro-öğrenme platformudur. Her dikey bilgi kartı; net özet, "Neden / Nasıl?" açıklaması, birincil kaynak bağlantısı, etkileşimli Hızlı Tahmin oyunu ve anlık pekiştirme testi içerir.',
+            'Scrolly (https://scrolly.live); doğrulanmış bilimsel kaynaklara dayanan ücretsiz, iki dilli (Türkçe ve İngilizce) reels tarzı bir mikro-öğrenme PWA platformudur. Her dikey bilgi kartı; 40–60 kelimelik net özet, "Neden / Nasıl?" açıklaması, birincil kaynak bağlantısı, etkileşimli Hızlı Tahmin oyunu ve anlık pekiştirme testi içerir.',
         },
         {
           question: 'Scrolly ücretsiz mi?',
           answer:
-            'Evet, Scrolly tamamen ücretsizdir ve zorunlu üyelik gerektirmez. Misafir olarak tüm kartları kaydırabilir, quizleri çözebilir, Scrolla 1v1 düellolarına katılabilir ve favorilerinizi kaydedebilirsiniz; isterseniz tek kullanımlık e-posta OTP ile ilerlemenizi cihazlar arasında senkronize edebilirsiniz.',
+            'Evet, Scrolly tamamen ücretsizdir ve zorunlu üyelik gerektirmez. Misafir olarak tüm kartları kaydırabilir, quizleri çözebilir, Scrolla 1v1 düellolarına katılabilir, canlı liderlik tablosunda XP kazanabilir ve favorilerinizi kaydedebilirsiniz; isterseniz tek kullanımlık e-posta OTP koduyla ilerlemenizi cihazlar arasında senkronize edebilirsiniz.',
+        },
+        {
+          question: 'Bilgiler nasıl doğrulanıyor?',
+          answer:
+            'Her Scrolly kartı; NASA, ESA, Nature, Science, PubMed/NIH, Smithsonian veya Britannica gibi birincil kurumsal ve hakemli kaynaklara doğrudan bağlantı verir. Sayısal veriler, ölçüm birimleri ve tarihsel kayıtlar birincil literatürle karşılaştırılır; Türkçe ve İngilizce bilimsel terminoloji yayın öncesinde ayrı ayrı doğrulanır.',
+        },
+        {
+          question: 'Word Lab ve Scrolla 1v1 nasıl çalışır?',
+          answer:
+            'Word Lab, B1–C2 seviye İngilizce kelimeleri IPA telaffuz, normal ve yavaş sesli dinleme, iki dilli örnek cümleler, eş anlamlılar ve +15 XP kazandıran anlam testiyle öğretir. Scrolla 1v1 ise 6 haneli oda koduyla iki oyuncuyu aynı 3–10 soruluk pakette gerçek zamanlı yarıştıran canlı düello arenasıdır.',
         },
         {
           question: 'Scrolly hangi konuları kapsar?',
           answer:
-            'Scrolly sekiz temel alanı kapsar: Uzay, Doğa, İnsan Vücudu, Tarih, Bilim, Garip Rekorlar, İstatistik ve Word Lab (B1–C2 İngilizce kelime öğrenme). Bilgi kartları NASA, ESA, Nature, PubMed/NIH, Smithsonian ve Britannica gibi birincil kaynaklara doğrudan atıf yaparak doğrulanabilir bilgi sunar.',
-        },
-        {
-          question: 'Scrolla 1v1 nasıl çalışır?',
-          answer:
-            'Scrolla 1v1, iki oyuncunun aynı kart paketinde yarıştığı gerçek zamanlı bilgi arenasıdır. Oda kuran oyuncu konu seçip 3, 5, 7 veya 10 soru belirleyerek 6 haneli oda kodu oluşturur. İki oyuncu da "Hazır Ol" dediğinde senkronize geri sayımla maç başlar.',
-        },
-        {
-          question: 'Word Lab (Dil Öğrenme) nasıl çalışır?',
-          answer:
-            'Word Lab, B1–C2 seviye İngilizce kelimeleri dikey akış içinde öğretir. Her kartta IPA telaffuz gösterimi, normal ve yavaş sesli dinleme, iki dilli bağlam cümleleri, eş anlamlılar, +15 XP kazandıran anlık anlam testi ve kişisel Kelime Defteri bulunur.',
+            'Scrolly sekiz temel alanı kapsar: Uzay, Doğa, İnsan Vücudu, Tarih, Bilim, Garip Rekorlar, İstatistik ve Word Lab (B1–C2 İngilizce kelime öğrenme). Her kategorinin kendine özel arşiv sayfası, doğrulanmış birincil kaynak atıfları ve etkileşimli tahmin soruları bulunur.',
         },
       ];
 

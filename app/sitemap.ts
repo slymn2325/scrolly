@@ -104,24 +104,52 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       lastModified: STATIC_COPY_UPDATED,
       changeFrequency: 'monthly',
       priority: 0.4,
+      alternates: {
+        languages: {
+          tr: 'https://scrolly.live/about?lang=tr',
+          en: 'https://scrolly.live/about?lang=en',
+          'x-default': 'https://scrolly.live/about',
+        },
+      },
     },
     {
       url: 'https://scrolly.live/privacy',
       lastModified: STATIC_COPY_UPDATED,
       changeFrequency: 'monthly',
       priority: 0.4,
+      alternates: {
+        languages: {
+          tr: 'https://scrolly.live/privacy?lang=tr',
+          en: 'https://scrolly.live/privacy?lang=en',
+          'x-default': 'https://scrolly.live/privacy',
+        },
+      },
     },
     {
       url: 'https://scrolly.live/terms',
       lastModified: STATIC_COPY_UPDATED,
       changeFrequency: 'monthly',
       priority: 0.4,
+      alternates: {
+        languages: {
+          tr: 'https://scrolly.live/terms?lang=tr',
+          en: 'https://scrolly.live/terms?lang=en',
+          'x-default': 'https://scrolly.live/terms',
+        },
+      },
     },
     {
       url: 'https://scrolly.live/contact',
       lastModified: STATIC_COPY_UPDATED,
       changeFrequency: 'monthly',
       priority: 0.4,
+      alternates: {
+        languages: {
+          tr: 'https://scrolly.live/contact?lang=tr',
+          en: 'https://scrolly.live/contact?lang=en',
+          'x-default': 'https://scrolly.live/contact',
+        },
+      },
     },
   ];
 

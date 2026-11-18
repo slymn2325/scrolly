@@ -4,6 +4,8 @@ import { Globe2, MessageSquareWarning } from 'lucide-react';
 import ContactInteractiveSection from '@/components/ContactInteractiveSection';
 import TrustPageShell from '@/components/TrustPageShell';
 import type { Language } from '@/i18n/translations';
+import { BRAND_OG_IMAGE } from '@/lib/homeMetadata';
+import { fitDocumentTitle } from '@/utils/factSeo';
 
 export const dynamic = 'force-dynamic';
 
@@ -32,16 +34,20 @@ export async function generateMetadata({ searchParams }: PageProps): Promise<Met
   const query = await searchParams;
   const lang = resolveLang(query?.lang);
   const canonicalUrl = 'https://scrolly.live/contact';
+  const title = fitDocumentTitle(
+    lang === 'en'
+      ? 'Contact Scrolly & Report Source Corrections | scrolly.live'
+      : 'İletişim ve Bilimsel Kaynak Düzeltme Bildirimi | Scrolly'
+  );
+  const description =
+    lang === 'en'
+      ? 'Contact the Scrolly editorial verification desk at contact@scrolly.live for primary scientific source corrections, copyright notices, or privacy inquiries.'
+      : 'Bilimsel kaynak düzeltmeleri, çeviri geri bildirimleri, telif bildirimleri veya gizlilik talepleri için Scrolly editöryal ekibine ulaşın.';
+  const image = { ...BRAND_OG_IMAGE, alt: title };
 
   return {
-    title:
-      lang === 'en'
-        ? 'Contact & Source Corrections | Scrolly'
-        : 'İletişim ve Kaynak Düzeltme | Scrolly',
-    description:
-      lang === 'en'
-        ? 'Get in touch with the Scrolly team for scientific source corrections, copyright inquiries, privacy requests, or partnerships.'
-        : 'Scrolly ekibine bilimsel kaynak düzeltmeleri, gizlilik talepleri, telif bildirimleri veya iş birlikleri için ulaşın.',
+    title,
+    description,
     alternates: {
       canonical: canonicalUrl,
       languages: {
@@ -51,14 +57,19 @@ export async function generateMetadata({ searchParams }: PageProps): Promise<Met
       },
     },
     openGraph: {
-      title: lang === 'en' ? 'Contact Scrolly | scrolly.live' : 'İletişim | Scrolly',
-      description:
-        lang === 'en'
-          ? 'Editorial contact channels and source correction notice for Scrolly (scrolly.live).'
-          : 'Scrolly editöryal iletişim kanalları ve kaynak düzeltme bildirimi.',
+      title,
+      description,
       url: canonicalUrl,
       siteName: 'Scrolly',
+      locale: lang === 'en' ? 'en_US' : 'tr_TR',
       type: 'website',
+      images: [image],
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title,
+      description,
+      images: [image.url],
     },
   };
 }

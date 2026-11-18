@@ -31,15 +31,37 @@ export async function GET() {
   const generatedAt = new Date().toISOString();
 
   const lines: string[] = [
-    '# Scrolly (https://scrolly.live) — Tam Bilimsel Bilgi Külliyatı / Full Verified Knowledge Corpus',
+    '# Scrolly (https://scrolly.live) — Full Verified Knowledge Corpus & Editorial Reference',
     '',
-    '> Scrolly (https://scrolly.live), uzay, doğa, bilim, tarih, insan vücudu ve dünya rekorları alanlarında doğrulanmış bilimsel kaynaklara dayalı, etkileşimli iki dilli (Türkçe ve İngilizce) mikro öğrenme kartları sunan bir bilgi platformudur.',
+    '> Scrolly (https://scrolly.live) is a free bilingual (English and Turkish) reels-style micro-learning Progressive Web App (PWA) delivering daily curated science, space, history, nature, human body, weird records, and statistics facts backed by primary sources, alongside an interactive Quick Guess game, B1–C2 Word Lab, Quiz Hub, and Scrolla 1v1 live duel.',
     '',
     `- Canonical Domain: https://scrolly.live`,
-    `- Concise Index: https://scrolly.live/llms.txt`,
+    `- Concise LLM Index: https://scrolly.live/llms.txt`,
     `- XML Sitemap: https://scrolly.live/sitemap.xml`,
+    `- Editorial & Source Verification Contact: contact@scrolly.live`,
     `- Total Verified Fact Cards: ${facts.length}`,
     `- Snapshot Generated At: ${generatedAt}`,
+    '',
+    '## Core Features & Learning Modes',
+    '',
+    '- **Verified Bilingual Fact Cards (EN & TR):** Each card presents a 35–60 word BLUF (Bottom Line Up Front) summary, a deeper "Why / How?" mechanism breakdown, and a direct link to the primary scientific source.',
+    '- **Interactive Quick Guess:** Users estimate numeric measurements or binary outcomes before revealing the verified answer (+10 to +20 XP).',
+    '- **Word Lab (B1–C2 English Vocabulary):** Vertical vocabulary cards with IPA pronunciation, normal and slow TTS audio, bilingual context sentences, synonyms, and a meaning quiz (+15 XP).',
+    '- **Quiz Hub:** 5-question Memory Sprints built from recently viewed cards, Daily Sprints, and 10-question Weekly Marathons.',
+    '- **Scrolla 1v1 Live Arena:** Real-time two-player trivia duels using 6-character room codes, topic filtering, and synchronized 5-second countdowns.',
+    '',
+    '## Primary Source Verification Policy',
+    '',
+    '1. Every numeric claim, date, unit, and scientific mechanism on Scrolly is cross-checked against authoritative primary sources including NASA, ESA, Nature, Science, PubMed/NIH, Smithsonian Institution, Encyclopaedia Britannica, and Guinness World Records.',
+    '2. Turkish and English card texts are authored and terminology-checked independently rather than machine-translated word-for-word.',
+    '3. Reader-reported source corrections sent to `contact@scrolly.live` or https://scrolly.live/contact are reviewed against peer-reviewed literature and updated in the live Postgres corpus.',
+    '',
+    '## Frequently Asked Questions (FAQ)',
+    '',
+    '- **What is Scrolly? / Scrolly nedir?** Scrolly is a free bilingual (EN/TR) reels-style micro-learning PWA turning short daily screen sessions into verified scientific knowledge via interactive fact cards, Quick Guess sliders, B1–C2 Word Lab, quizzes, and Scrolla 1v1 duels.',
+    '- **Is Scrolly free? / Scrolly ücretsiz mi?** Yes, Scrolly is 100% free with no mandatory registration. Guests earn live leaderboard XP immediately and can optionally bind an email via one-time 6-digit OTP to sync progress across devices.',
+    '- **How are facts verified? / Bilgiler nasıl doğrulanıyor?** Every card links directly to a primary institutional or peer-reviewed source URL (`citation` / `isBasedOn` in Schema.org JSON-LD) and undergoes numerical, unit, and bilingual terminology verification before publication.',
+    '- **How do Word Lab and Scrolla 1v1 work? / Word Lab ve Scrolla 1v1 nasıl çalışır?** Word Lab teaches B1–C2 English vocabulary with IPA phonetics, audio playback, example sentences, and instant quizzes. Scrolla 1v1 lets two players join a 6-character room code to race on an identical 3–10 question pack in real time.',
     '',
     '---',
     '',
@@ -68,9 +90,8 @@ export async function GET() {
     const guessEn = formatGuessAnswer(fact, 'en');
 
     lines.push(`## ${index + 1}. ${fact.tr.title} / ${fact.en.title}`);
-    lines.push(`- **Canonical URL:** ${canonicalUrl}`);
-    lines.push(`- **TR URL:** ${canonicalUrl}?lang=tr`);
-    lines.push(`- **EN URL:** ${canonicalUrl}?lang=en`);
+    lines.push(`- **TR Canonical URL:** ${canonicalUrl}`);
+    lines.push(`- **EN Canonical URL:** https://scrolly.live/en/fact/${primarySlug}`);
     lines.push(
       `- **Category:** ${catMeta.label.tr} / ${catMeta.label.en} (https://scrolly.live/category/${catRouteSlug})`
     );

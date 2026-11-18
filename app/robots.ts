@@ -15,12 +15,12 @@ export default function robots(): MetadataRoute.Robots {
     rules: [
       ...AI_AND_SEARCH_BOTS.map((userAgent) => ({
         userAgent,
-        allow: '/',
+        allow: ['/', '/api/indexnow-key'],
         disallow: '/api/',
       })),
       {
         userAgent: '*',
-        allow: '/',
+        allow: ['/', '/api/indexnow-key'],
         disallow: '/api/',
       },
     ],

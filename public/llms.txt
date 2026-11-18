@@ -1,34 +1,40 @@
-# Scrolly — Micro-Learning, Quick Guess, Word Lab & Scrolla 1v1 (https://scrolly.live)
+# Scrolly
 
-> Scrolly (https://scrolly.live) is a free, bilingual (English and Turkish) reels-style micro-learning platform offering scientifically verified fact cards, Quick Guess interactive challenges, Word Lab (B1–C2 English vocabulary cards with IPA pronunciation and quizzes), Memory/Daily/Weekly Quizzes, XP leaderboards, and Scrolla 1v1 real-time knowledge duels.
+> Scrolly (https://scrolly.live) is a free bilingual (English and Turkish) reels-style micro-learning Progressive Web App (PWA) delivering daily curated science, space, history, nature, human body, weird records, and statistics facts backed by primary sources. Every vertical card combines a direct BLUF summary, an interactive Quick Guess slider, a deeper "Why / How?" breakdown, B1–C2 Word Lab vocabulary training, Quiz Hub recall tests, and Scrolla 1v1 live multiplayer trivia duels.
 
-> Scrolly (https://scrolly.live); doğrulanmış bilimsel bilgi kartları, Hızlı Tahmin oyunu, Word Lab (B1–C2 İngilizce kelime öğrenme), Hafıza/Günlük/Haftalık Quiz modları, haftalık liderlik tablosu ve Scrolla 1v1 canlı bilgi düelloları sunan ücretsiz, iki dilli (Türkçe ve İngilizce) reels tarzı mikro-öğrenme platformudur.
+> Scrolly (https://scrolly.live); uzay, doğa, insan vücudu, tarih, bilim, garip rekorlar ve istatistik alanlarında birincil bilimsel kaynaklarla doğrulanmış günlük mikro-öğrenme kartları, etkileşimli Hızlı Tahmin oyunu, B1–C2 Word Lab İngilizce kelime laboratuvarı, Quiz Merkezi ve Scrolla 1v1 canlı bilgi düelloları sunan ücretsiz, iki dilli (TR/EN) bir PWA platformudur.
 
-## Core Pages & App Modes / Ana Sayfalar ve Modlar
+## Core Pages
 
-- [Explore Feed (TR) / Keşfet Akışı](https://scrolly.live/): Vertical full-screen reels feed of verified science, space, nature, history, human body, records, and statistics cards with interactive Quick Guess sliders and primary source links.
-- [Explore Feed (EN)](https://scrolly.live/en): Full English-language discovery feed with verified scientific citations and interactive challenges.
-- [Quiz Hub / Quiz Merkezi](https://scrolly.live/?tab=quiz): Memory Quiz (built from recently viewed cards), Daily 5-Card Sprint, Weekly Marathon (10 questions), and Word Lab Vocabulary Quiz.
-- [Leaderboard / Sıralama](https://scrolly.live/?tab=leaderboard): Weekly and all-time XP rankings, Explorer Leagues, and streak standings across players.
-- [Scrolla 1v1 Arena](https://scrolly.live/?tab=duel): Real-time 2-player head-to-head trivia duel rooms with 6-character room codes, topic selection, synchronized countdowns, and shared fact packs.
-- [About & Editorial Methodology / Hakkımızda](https://scrolly.live/about): Fact-checking workflow, primary academic source policy, bilingual editorial standards, and Frequently Asked Questions (FAQ).
-- [Contact & Source Corrections / İletişim](https://scrolly.live/contact): Direct editorial feedback, scientific citation updates, and support channel (`contact@scrolly.live`).
-- [Privacy Policy / Gizlilik Politikası](https://scrolly.live/privacy): Anonymous local storage, optional passwordless email OTP account sync, offline PWA caching, analytics, and Google AdSense cookie notice.
-- [Terms of Use / Kullanım Koşulları](https://scrolly.live/terms): Educational disclaimer, fair-use guidelines, and service terms.
+- [Scrolly Interactive Feed (TR)](https://scrolly.live/): Main Turkish reels-style micro-learning feed with Quick Guess challenges, primary source links, and XP progression.
+- [Scrolly Interactive Feed (EN)](https://scrolly.live/en): Full English-language discovery feed with verified scientific citations, Quick Guess sliders, and memory quizzes.
+- [Quiz Hub (Daily Sprint, Weekly Marathon & Memory Quiz)](https://scrolly.live/?tab=quiz): 5-card Memory Quiz from recently viewed cards, Daily Sprint, 10-question Weekly Marathon, and Word Lab quiz modes.
+- [Scrolla 1v1 Live Trivia Arena](https://scrolly.live/?tab=duel): Real-time two-player head-to-head knowledge duel rooms with 6-character room codes, topic filtering, and synchronized timers.
+- [Explorer Leaderboard](https://scrolly.live/?tab=leaderboard): Live daily, weekly, and all-time XP rankings and Explorer League standings.
+- [Full Verified Knowledge Corpus (llms-full.txt)](https://scrolly.live/llms-full.txt): Complete plain-text Markdown export of Scrolly's editorial methodology, FAQ, and bilingual verified fact cards with primary source URLs.
+- [XML Sitemap](https://scrolly.live/sitemap.xml): Canonical index of all bilingual homepage, topic archive, policy, and individual `/fact/[slug]` and `/en/fact/[slug]` URLs.
 
-## Categories & Topic Feeds / Kategoriler ve Konu Akışları
+## Topics & Categories
 
-- [Space / Uzay](https://scrolly.live/?category=space): Planets, stars, black holes, cosmology, orbital physics, and space exploration missions (NASA/ESA sourced).
-- [Nature / Doğa](https://scrolly.live/?category=nature): Animal biology, ecosystems, deep oceans, botany, climate, and Earth phenomena.
-- [Human Body / İnsan Vücudu](https://scrolly.live/?category=human-body): Human anatomy, neuroscience, genetics, physiology, and medical science discoveries.
-- [History / Tarih](https://scrolly.live/?category=history): Ancient civilizations, archaeological discoveries, historical inventions, and pivotal world events.
-- [Science / Bilim](https://scrolly.live/?category=science): Physics, chemistry, quantum mechanics, mathematics, and landmark laboratory breakthroughs.
-- [Weird Records / Garip Rekorlar](https://scrolly.live/?category=weird-records): Extraordinary world records, extreme natural phenomena, and verified scientific oddities.
-- [Statistics / İstatistik](https://scrolly.live/?category=statistics): Counterintuitive probabilities, global demographic trends, and data-backed numerical insights.
-- [Word Lab / Dil Öğrenme (B1–C2)](https://scrolly.live/?category=vocabulary): Interactive B1–C2 English vocabulary cards featuring IPA pronunciation, Turkish definitions, bilingual context sentences, audio playback, and recall quizzes.
+- [Space Facts Archive (EN)](https://scrolly.live/en/category/space): Verified astronomy, astrophysics, exoplanets, black holes, and NASA/ESA mission discoveries.
+- [Uzay Bilgi Kartları Arşivi (TR)](https://scrolly.live/category/space): Kara delikler, ötegezegenler, kozmoloji ve uzay görevlerine dair doğrulanmış bilgi kartları.
+- [Nature Facts Archive (EN)](https://scrolly.live/en/category/nature): Animal biology, deep-ocean ecosystems, botany, evolutionary adaptations, and Earth phenomena.
+- [Doğa Bilgi Kartları Arşivi (TR)](https://scrolly.live/category/nature): Hayvan biyolojisi, okyanus ekosistemleri, botanik ve doğadaki hayatta kalma stratejileri.
+- [Human Body Facts Archive (EN)](https://scrolly.live/en/category/human-body): Neuroscience, cardiology, genetics, physiology, sensory perception, and medical science facts.
+- [İnsan Vücudu Bilgi Kartları Arşivi (TR)](https://scrolly.live/category/human-body): Nörobilim, fizyoloji, genetik ve insan anatomisine dair bilimsel bilgi kartları.
+- [History Facts Archive (EN)](https://scrolly.live/en/category/history): Ancient civilizations, archaeological discoveries, surprising inventions, and documented world history.
+- [Tarih Bilgi Kartları Arşivi (TR)](https://scrolly.live/category/history): Kadim uygarlıklar, arkeolojik keşifler, tarihsel icatlar ve belgelenmiş dünya tarihi.
+- [Science Facts Archive (EN)](https://scrolly.live/en/category/science): Quantum physics, chemistry, thermodynamics, materials science, and peer-reviewed laboratory breakthroughs.
+- [Bilim Bilgi Kartları Arşivi (TR)](https://scrolly.live/category/science): Kuantum fiziği, kimya, termodinamik ve temel bilim keşifleri.
+- [Weird Records Archive (EN)](https://scrolly.live/en/category/records): Documented Guinness extremes, extraordinary natural anomalies, and verified scientific oddities.
+- [Garip Rekorlar Arşivi (TR)](https://scrolly.live/category/records): Guinness ve akademik kayıtlarla belgelenmiş sıra dışı dünya rekorları.
+- [Statistics & Probability Archive (EN)](https://scrolly.live/en/category/statistics): Counterintuitive probability paradoxes, Bayes theorem, survivorship bias, and data-backed insights.
+- [İstatistik ve Olasılık Arşivi (TR)](https://scrolly.live/category/statistics): Olasılık paradoksları, veri yanılsamaları ve şaşırtıcı istatistiksel gerçekler.
+- [Word Lab B1–C2 Vocabulary Feed](https://scrolly.live/?category=vocabulary): Bilingual B1–C2 English vocabulary cards with IPA pronunciation, normal/slow audio, context sentences, and meaning quizzes.
 
-## Static Topic Archives & Machine-Readable Feeds / Arşivler ve Makine Okunur Akışlar
+## Policies & Contact
 
-- [Full Verified Knowledge Corpus (llms-full.txt)](https://scrolly.live/llms-full.txt): Plain-text / Markdown export of verified fact cards with bilingual summaries, explanations, quiz Q&As, and source URLs.
-- [XML Sitemap (sitemap.xml)](https://scrolly.live/sitemap.xml): Live index of homepage routes, topic archive pages, trust pages, and individual `/fact/[slug]` and `/en/fact/[slug]` pages.
-- [Space Archive](https://scrolly.live/category/space) | [Nature Archive](https://scrolly.live/category/nature) | [Human Body Archive](https://scrolly.live/category/human-body) | [History Archive](https://scrolly.live/category/history) | [Science Archive](https://scrolly.live/category/science) | [Records Archive](https://scrolly.live/category/records) | [Statistics Archive](https://scrolly.live/category/statistics)
+- [About Scrolly & Editorial Methodology](https://scrolly.live/about): Primary source verification workflow, bilingual editorial standards, and Frequently Asked Questions (FAQ).
+- [Contact & Source Corrections](https://scrolly.live/contact): Official editorial desk (`contact@scrolly.live`) for source corrections, feedback, and inquiries.
+- [Privacy & Cookie Policy](https://scrolly.live/privacy): Anonymous guest local storage, optional passwordless email OTP sync, offline PWA caching, analytics, and Google AdSense disclosures.
+- [Terms of Use & Educational Disclaimer](https://scrolly.live/terms): Service terms, educational content disclaimer, intellectual property notice, and fair-use rules.

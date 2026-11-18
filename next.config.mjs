@@ -265,6 +265,18 @@ const nextConfig = {
       },
     ];
   },
+  async rewrites() {
+    return [
+      {
+        source: '/indexnow-key.txt',
+        destination: '/api/indexnow-key',
+      },
+      {
+        source: '/:key([a-zA-Z0-9-]{16,128}).txt',
+        destination: '/api/indexnow-key?requestedKey=:key',
+      },
+    ];
+  },
   async redirects() {
     return [
       {
@@ -276,6 +288,21 @@ const nextConfig = {
           },
         ],
         destination: 'https://scrolly.live/:path*',
+        statusCode: 301,
+      },
+      {
+        source: '/tr',
+        destination: '/',
+        statusCode: 301,
+      },
+      {
+        source: '/tr/fact/:slug',
+        destination: '/fact/:slug',
+        statusCode: 301,
+      },
+      {
+        source: '/tr/category/:category',
+        destination: '/category/:category',
         statusCode: 301,
       },
       {

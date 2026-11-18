@@ -2,6 +2,8 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import TrustPageShell from '@/components/TrustPageShell';
 import type { Language } from '@/i18n/translations';
+import { BRAND_OG_IMAGE } from '@/lib/homeMetadata';
+import { fitDocumentTitle } from '@/utils/factSeo';
 
 export const revalidate = 3600;
 
@@ -30,16 +32,20 @@ export async function generateMetadata({ searchParams }: PageProps): Promise<Met
   const query = await searchParams;
   const lang = resolveLang(query?.lang);
   const canonicalUrl = 'https://scrolly.live/terms';
+  const title = fitDocumentTitle(
+    lang === 'en'
+      ? 'Terms of Use & Educational Disclaimer | Scrolly'
+      : 'Kullanım Koşulları ve Eğitim Sorumluluk Reddi | Scrolly'
+  );
+  const description =
+    lang === 'en'
+      ? 'Read Scrolly’s terms of service, educational content disclaimer, primary scientific citation policy, leaderboard fair-use rules, and copyright guidelines.'
+      : 'Scrolly (scrolly.live) hizmet kullanım koşullarını, eğitim amaçlı içerik sorumluluk reddini, bilimsel kaynak atıf ilkelerini ve adil kullanım kurallarını inceleyin.';
+  const image = { ...BRAND_OG_IMAGE, alt: title };
 
   return {
-    title:
-      lang === 'en'
-        ? 'Terms of Use & Disclaimer | Scrolly'
-        : 'Kullanım Koşulları ve Sorumluluk Reddi | Scrolly',
-    description:
-      lang === 'en'
-        ? 'Terms of service, educational content disclaimer, intellectual property notice, and advertising guidelines for Scrolly (scrolly.live).'
-        : 'Scrolly (scrolly.live) hizmet kullanım koşulları, eğitim amaçlı içerik sorumluluk reddi, fikri mülkiyet ve üçüncü taraf bağlantılar politikası.',
+    title,
+    description,
     alternates: {
       canonical: canonicalUrl,
       languages: {
@@ -49,14 +55,19 @@ export async function generateMetadata({ searchParams }: PageProps): Promise<Met
       },
     },
     openGraph: {
-      title: lang === 'en' ? 'Terms of Use | Scrolly' : 'Kullanım Koşulları | Scrolly',
-      description:
-        lang === 'en'
-          ? 'Usage guidelines, educational disclaimer, and service terms for Scrolly.'
-          : 'Scrolly kullanım koşulları, eğitim içeriği bildirimi ve hizmet kuralları.',
+      title,
+      description,
       url: canonicalUrl,
       siteName: 'Scrolly',
+      locale: lang === 'en' ? 'en_US' : 'tr_TR',
       type: 'website',
+      images: [image],
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title,
+      description,
+      images: [image.url],
     },
   };
 }

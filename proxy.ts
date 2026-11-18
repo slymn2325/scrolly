@@ -1,6 +1,7 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { sanitizeInternalRedirectPath, verifySameOriginRequest } from '@/lib/originPolicy';
+import { looksLikeIpaPhonetic } from '@/utils/phoneticDisplay';
 
 function languageForRequest(request: NextRequest): 'en' | 'tr' | null {
   const { pathname } = request.nextUrl;
@@ -50,6 +51,18 @@ export function proxy(request: NextRequest) {
       );
     }
     return NextResponse.next();
+  }
+
+  try {
+    const decodedPath = decodeURIComponent(request.nextUrl.pathname);
+    if (looksLikeIpaPhonetic(decodedPath)) {
+      const vocabDest = request.nextUrl.clone();
+      vocabDest.pathname = '/';
+      vocabDest.search = '?category=vocabulary';
+      return NextResponse.redirect(vocabDest, 301);
+    }
+  } catch {
+    // Ignore malformed percent-encoding in pathname
   }
 
   const redirected = redirectEnglishQuery(request);
