@@ -311,8 +311,8 @@ html.scrolly-doc-scroll body {
   [data-testid="reels-phone-frame"].stage-card,
   [data-testid="reels-phone-frame"] {
     width: min(100%, 520px);
-    height: min(86dvh, 780px);
-    max-height: min(86dvh, 780px);
+    height: min(86vh, 760px);
+    max-height: min(86vh, 760px);
     border-radius: 28px;
     box-shadow: var(--cik-e3);
     flex: none;
@@ -330,8 +330,8 @@ html.scrolly-doc-scroll body {
     width: min(100%, 520px);
     min-width: min(100%, 320px);
     max-width: 520px;
-    height: min(86dvh, 780px);
-    max-height: min(86dvh, 780px);
+    height: min(86vh, 760px);
+    max-height: min(86vh, 760px);
     flex: none;
   }
 }

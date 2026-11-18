@@ -170,7 +170,7 @@ export default function DesktopFeedSideRail({
       data-mode={mode}
       className={
         mode === 'insight'
-          ? 'flex h-full min-h-0 w-full shrink-0 flex-col'
+          ? 'my-0 mt-0 mb-0 flex h-full min-h-0 w-full shrink-0 flex-col self-stretch lg:h-[min(86vh,760px)] lg:max-h-[min(86vh,760px)]'
           : mode === 'actions'
             ? 'hidden shrink-0 flex-col items-center justify-center self-center gap-3 lg:flex'
             : 'hidden shrink-0 flex-col items-center justify-center self-center gap-3 lg:flex'
@@ -257,8 +257,8 @@ export default function DesktopFeedSideRail({
           data-testid="desktop-info-shortcut-panel"
           data-theme={darkMode ? 'dark' : 'light'}
           data-scroll-contain="true"
-          className={`flex w-full max-w-[320px] shrink-0 flex-col gap-4 overflow-y-auto rounded-sticker bg-cik-surface p-5 text-cik-text shadow-e1 ${
-            mode === 'cluster' ? 'hidden xl:flex' : 'flex h-full max-h-[min(92dvh,920px)]'
+          className={`my-0 mt-0 mb-0 flex h-full w-full max-w-[320px] shrink-0 flex-col gap-4 overflow-y-auto rounded-[28px] bg-cik-surface p-5 text-cik-text shadow-e1 lg:h-[min(86vh,760px)] lg:max-h-[min(86vh,760px)] lg:rounded-[28px] ${
+            mode === 'cluster' ? 'hidden xl:flex' : 'flex'
           }`}
         >
           <div className="flex items-center justify-between gap-2">

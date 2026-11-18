@@ -2115,11 +2115,11 @@ export default function HomeClient({ initialFacts, initialVocabulary, initialLan
         id="feed-stage"
         data-testid="reels-main-region"
         data-accent-ready={ambientAccent ? 'true' : 'false'}
-        className="relative z-10 flex min-h-0 min-w-0 flex-1 items-stretch justify-center bg-cik-bg xl:col-start-2"
+        className="relative z-10 flex min-h-0 min-w-0 flex-1 items-stretch justify-center bg-cik-bg lg:items-center xl:col-start-2"
       >
         <div
           data-testid="reels-stage-row"
-          className="relative z-10 flex h-full w-full items-stretch justify-center md:items-center lg:flex-row lg:items-center lg:justify-center lg:gap-6 xl:gap-8"
+          className="relative z-10 my-0 flex h-full w-full items-stretch justify-center md:items-center lg:h-[min(86vh,760px)] lg:max-h-[min(86vh,760px)] lg:flex-row lg:items-stretch lg:justify-center lg:gap-6 xl:gap-8"
         >
         <style>{`
           @media (min-width: 1024px) {
@@ -2127,14 +2127,25 @@ export default function HomeClient({ initialFacts, initialVocabulary, initialLan
               width: clamp(420px, 36vw, 560px) !important;
               min-width: 0 !important;
               max-width: 560px !important;
-              height: calc(100dvh - 48px) !important;
-              max-height: calc(100dvh - 48px) !important;
+              height: min(86vh, 760px) !important;
+              max-height: min(86vh, 760px) !important;
+              margin-top: 0 !important;
+              margin-bottom: 0 !important;
+              border-radius: 28px !important;
+            }
+            [data-testid="desktop-insight-column"],
+            [data-testid="desktop-info-shortcut-panel"] {
+              height: min(86vh, 760px) !important;
+              max-height: min(86vh, 760px) !important;
+              margin-top: 0 !important;
+              margin-bottom: 0 !important;
+              border-radius: 28px !important;
             }
           }
         `}</style>
         <div
           data-testid="reels-phone-frame"
-          className="stage-card relative z-10 m-0 flex h-[100dvh] w-full min-w-0 shrink-0 flex-col overflow-hidden rounded-none border-0 bg-cik-bg p-0 text-cik-text shadow-none lg:rounded-[28px] lg:border lg:border-black/10 lg:p-0 lg:shadow-sticker"
+          className="stage-card relative z-10 m-0 my-0 mt-0 mb-0 flex h-[100dvh] w-full min-w-0 shrink-0 flex-col overflow-hidden rounded-none border-0 bg-cik-bg p-0 text-cik-text shadow-none lg:h-[min(86vh,760px)] lg:max-h-[min(86vh,760px)] lg:self-stretch lg:rounded-[28px] lg:border lg:border-black/10 lg:p-0 lg:shadow-sticker"
         >
         <DeferredAdSense />
         <OfflineManager lang={lang} />
@@ -2550,7 +2561,7 @@ export default function HomeClient({ initialFacts, initialVocabulary, initialLan
             />
             <div
               data-testid="desktop-insight-column"
-              className="hidden h-full min-h-0 w-[300px] shrink-0 items-center self-center lg:flex xl:w-[320px]"
+              className="my-0 mt-0 mb-0 hidden h-[min(86vh,760px)] max-h-[min(86vh,760px)] min-h-0 w-[300px] shrink-0 items-stretch self-stretch lg:flex lg:h-[min(86vh,760px)] lg:max-h-[min(86vh,760px)] lg:rounded-[28px] xl:w-[320px]"
             >
               <DesktopFeedSideRail
                 mode="insight"
