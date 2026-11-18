@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import {
   Bookmark,
@@ -152,6 +153,7 @@ export default function TikTokFactSlide({
   const longPressTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const longPressTriggeredRef = useRef<boolean>(false);
   const pointerStartRef = useRef<{ x: number; y: number } | null>(null);
+  const pointerMovedRef = useRef<boolean>(false);
   const flipTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const settleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const dwellTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -377,6 +379,8 @@ export default function TikTokFactSlide({
 
     if (!isActive) {
       clearPendingTimers();
+      setIsExpanded(false);
+      setCardOverlay(null);
       setIsFlipped(false);
       setIsFlipping(false);
       setIsDragging(false);
@@ -415,16 +419,25 @@ export default function TikTokFactSlide({
   const _displayLikes = Math.max(0, baseDisplayLikes + (isLiked ? 1 : 0));
 
   useEffect(() => {
-    if (!isFlipped) return;
+    if (!isFlipped && !cardOverlay) return;
     const handleEsc = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
         e.preventDefault();
-        setIsFlipped(false);
+        if (cardOverlay) setCardOverlay(null);
+        if (isFlipped) setIsFlipped(false);
       }
     };
     window.addEventListener('keydown', handleEsc);
     return () => window.removeEventListener('keydown', handleEsc);
-  }, [isFlipped]);
+  }, [isFlipped, cardOverlay]);
+
+  useEffect(() => {
+    if (!isActive) return;
+    const handleCollapseDrawer = () => setIsExpanded(false);
+    window.addEventListener('scrolly-collapse-active-drawer', handleCollapseDrawer);
+    return () =>
+      window.removeEventListener('scrolly-collapse-active-drawer', handleCollapseDrawer);
+  }, [isActive]);
 
   // Detail must sit above feed HUD/dock (separate stacking contexts). Broadcast so chrome disables hits.
   useEffect(() => {
@@ -525,6 +538,7 @@ export default function TikTokFactSlide({
   const handlePointerDownSlide = (e: React.PointerEvent<HTMLDivElement>) => {
     setIsDragging(true);
     longPressTriggeredRef.current = false;
+    pointerMovedRef.current = false;
     clearLongPressTimer();
     if (isFlipped) return;
     pointerStartRef.current = { x: e.clientX, y: e.clientY };
@@ -544,6 +558,7 @@ export default function TikTokFactSlide({
     const dx = Math.abs(e.clientX - pointerStartRef.current.x);
     const dy = Math.abs(e.clientY - pointerStartRef.current.y);
     if (dx > 12 || dy > 12) {
+      pointerMovedRef.current = true;
       clearLongPressTimer();
     }
   };
@@ -569,6 +584,15 @@ export default function TikTokFactSlide({
       return;
     }
 
+    if (pointerMovedRef.current) {
+      pointerMovedRef.current = false;
+      return;
+    }
+
+    if (isExpanded) {
+      onButtonPop();
+      setIsExpanded(false);
+    }
   };
 
   const handleNativeDoubleClick = (e: React.MouseEvent<HTMLDivElement>) => {
@@ -692,32 +716,27 @@ export default function TikTokFactSlide({
             data-testid="fact-bottom-sheet"
             data-expanded={isExpanded ? 'true' : 'false'}
             data-story-scroll={isExpanded ? 'true' : undefined}
-            onWheel={(e) => {
-              if (!isExpanded) return;
-              const el = e.currentTarget;
-              if (el.scrollHeight > el.clientHeight + 1) e.stopPropagation();
-            }}
             onDoubleClick={(e) => e.stopPropagation()}
             onClick={(e) => {
+              e.stopPropagation();
               if (!isExpanded) {
-                e.stopPropagation();
                 onButtonPop();
                 setIsExpanded(true);
               }
             }}
-            className={`pointer-events-auto flex min-h-0 flex-col gap-2 rounded-t-3xl bg-cik-bg pl-4 pr-14 pt-2.5 shadow-[0_-8px_28px_rgba(0,0,0,0.14)] transition-all duration-300 ease-out lg:pr-4 lg:pt-4 ${
+            className={`pointer-events-auto flex min-h-0 flex-col gap-2 rounded-t-3xl bg-cik-bg pl-4 pr-14 pt-2.5 shadow-[0_-8px_28px_rgba(0,0,0,0.14)] transition-all duration-300 ease-out lg:pr-4 lg:pt-3 ${
               cookieBannerVisible
-                ? 'pb-[calc(5rem+env(safe-area-inset-bottom)+68px)] lg:pb-5'
-                : 'pb-[calc(5rem+env(safe-area-inset-bottom))] lg:pb-5'
+                ? 'pb-[calc(5rem+env(safe-area-inset-bottom)+68px)] lg:pb-4'
+                : 'pb-[calc(5rem+env(safe-area-inset-bottom))] lg:pb-4'
             } ${
               isExpanded
-                ? 'max-h-[82dvh] overflow-y-auto lg:max-h-[82%]'
-                : 'cursor-pointer overflow-hidden lg:cursor-default'
+                ? 'max-h-[82dvh] overflow-y-auto overscroll-y-contain lg:max-h-[82%]'
+                : 'cursor-pointer overflow-hidden'
             }`}
           >
             <div
               aria-hidden="true"
-              className="mx-auto mb-0.5 h-1 w-9 shrink-0 rounded-full bg-cik-line lg:hidden"
+              className="mx-auto mb-0.5 h-1 w-9 shrink-0 rounded-full bg-cik-line"
             />
 
             <div className="flex shrink-0 flex-wrap items-center gap-2">
@@ -788,15 +807,15 @@ export default function TikTokFactSlide({
                 onDoubleClick={(e) => e.stopPropagation()}
                 onPointerDown={(e) => e.stopPropagation()}
                 onTouchStart={(e) => e.stopPropagation()}
-                className="inline-flex w-fit items-center gap-1 text-xs font-bold text-cik-cta lg:hidden"
+                className="inline-flex w-fit items-center gap-1 text-xs font-bold text-cik-cta"
               >
                 {localized.guessChallenge
                   ? lang === 'tr'
                     ? 'Devamını gör / Tahmin et ▴'
-                    : 'See more / Guess ▴'
+                    : 'Read more / Guess ▴'
                   : lang === 'tr'
                     ? 'Devamını gör ▴'
-                    : 'See more ▴'}
+                    : 'Read more ▴'}
               </button>
             )}
 
@@ -804,7 +823,7 @@ export default function TikTokFactSlide({
               className={`grid transition-all duration-300 ease-out ${
                 isExpanded
                   ? 'grid-rows-[1fr] opacity-100'
-                  : 'pointer-events-none grid-rows-[0fr] opacity-0 lg:pointer-events-auto lg:grid-rows-[1fr] lg:opacity-100'
+                  : 'pointer-events-none grid-rows-[0fr] opacity-0'
               }`}
             >
               <div className="min-h-0 overflow-hidden">
@@ -960,64 +979,69 @@ export default function TikTokFactSlide({
 
       </div>
 
-      {cardOverlay === 'source' && (
-        <div
-          data-testid="source-modal-backdrop"
-          className="cik-scrim absolute inset-0 z-sheet flex items-end justify-center p-4 sm:items-center"
-          onClick={(e) => {
-            e.stopPropagation();
-            setCardOverlay(null);
-          }}
-        >
+      {cardOverlay === 'source' &&
+        typeof document !== 'undefined' &&
+        createPortal(
           <div
-            role="dialog"
-            aria-modal="true"
-            aria-label={lang === 'tr' ? 'Kaynak' : 'Source'}
-            data-testid="source-modal"
-            className="relative w-full max-w-[420px] rounded-sheet bg-cik-bg-elevated p-4 text-cik-text shadow-e3"
-            onClick={(e) => e.stopPropagation()}
+            data-testid="source-modal-backdrop"
+            className="cik-scrim fixed inset-0 z-[60] flex items-end justify-center px-4 pt-4 pb-24 sm:items-center sm:p-4"
+            onClick={(e) => {
+              e.stopPropagation();
+              setCardOverlay(null);
+            }}
           >
-            <button
-              type="button"
-              aria-label={lang === 'tr' ? 'Kapat' : 'Close'}
-              data-testid="source-modal-close"
-              onClick={() => setCardOverlay(null)}
-              className="absolute right-3 top-3 flex h-11 w-11 items-center justify-center rounded-pill bg-cik-surface text-cik-text shadow-e1"
+            <div
+              role="dialog"
+              aria-modal="true"
+              aria-label={lang === 'tr' ? 'Kaynak' : 'Source'}
+              data-testid="source-modal"
+              className="relative w-full max-w-[420px] rounded-sheet bg-cik-bg-elevated p-4 pb-[max(1rem,env(safe-area-inset-bottom))] text-cik-text shadow-e3"
+              onClick={(e) => e.stopPropagation()}
             >
-              <X className="h-4 w-4" />
-            </button>
-            <p className="cik-footnote pr-12 text-cik-text-2">{t.sourceLabel}</p>
-            <p className="cik-headline mt-2 text-cik-text" data-testid="fact-source-name">{resolvedSourceName}</p>
-            {mediaProviderLabel ? (
-              <p className="cik-subhead mt-1 text-cik-text-2" data-testid="source-provider-label">
-                {mediaProviderLabel}
-              </p>
-            ) : null}
-            {resolvedSourceUrl ? (
-              <a
-                href={resolvedSourceUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="cik-subhead mt-3 inline-flex min-h-11 items-center gap-2 text-cik-cta underline"
+              <button
+                type="button"
+                aria-label={lang === 'tr' ? 'Kapat' : 'Close'}
+                data-testid="source-modal-close"
+                onClick={() => setCardOverlay(null)}
+                className="absolute right-3 top-3 flex h-11 w-11 items-center justify-center rounded-pill bg-cik-surface text-cik-text shadow-e1"
               >
-                <span>{lang === 'tr' ? 'Kaynağı aç' : 'Open source'}</span>
-                <ExternalLink className="h-3.5 w-3.5" />
-              </a>
-            ) : null}
-            <MediaAttributionBadge
-              className="mt-3"
-              lang={lang}
-              card={{
-                gifUrl: resolvedGifUrl || fact.gifUrl,
-                posterUrl: mediaMeta?.posterUrl || fact.posterUrl,
-                mediaSource: mediaMeta?.mediaSource || fact.mediaSource,
-                mediaProvider: fact.mediaSource,
-                mediaCredit: fact.mediaCredit,
-              }}
-            />
-          </div>
-        </div>
-      )}
+                <X className="h-4 w-4" />
+              </button>
+              <p className="cik-footnote pr-12 text-cik-text-2">{t.sourceLabel}</p>
+              <p className="cik-headline mt-2 text-cik-text" data-testid="fact-source-name">
+                {resolvedSourceName}
+              </p>
+              {mediaProviderLabel ? (
+                <p className="cik-subhead mt-1 text-cik-text-2" data-testid="source-provider-label">
+                  {mediaProviderLabel}
+                </p>
+              ) : null}
+              {resolvedSourceUrl ? (
+                <a
+                  href={resolvedSourceUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="cik-subhead mt-3 inline-flex min-h-11 items-center gap-2 text-cik-cta underline"
+                >
+                  <span>{lang === 'tr' ? 'Kaynağı aç' : 'Open source'}</span>
+                  <ExternalLink className="h-3.5 w-3.5" />
+                </a>
+              ) : null}
+              <MediaAttributionBadge
+                className="mt-3"
+                lang={lang}
+                card={{
+                  gifUrl: resolvedGifUrl || fact.gifUrl,
+                  posterUrl: mediaMeta?.posterUrl || fact.posterUrl,
+                  mediaSource: mediaMeta?.mediaSource || fact.mediaSource,
+                  mediaProvider: fact.mediaSource,
+                  mediaCredit: fact.mediaCredit,
+                }}
+              />
+            </div>
+          </div>,
+          document.body
+        )}
 
       <AnimatePresence>
         {heartBursts.map((burst) => (

@@ -186,6 +186,14 @@ const TikTokFeed = forwardRef<TikTokFeedHandle, TikTokFeedProps>(function TikTok
   const wheelAccumRef = useRef<number>(0);
   const wheelAccumAtRef = useRef<number>(0);
   const scrollAnimRef = useRef<{ raf: number; velocity: number } | null>(null);
+  const touchDrawerRef = useRef<{
+    startX: number;
+    startY: number;
+    startScrollTop: number;
+    insideSheet: boolean;
+    closedDuringGesture: boolean;
+    lockedVertical: boolean;
+  } | null>(null);
   const onSlideIndexChangeRef = useRef(onSlideIndexChange);
   onSlideIndexChangeRef.current = onSlideIndexChange;
   const onActiveFactChangeRef = useRef(onActiveFactChange);
@@ -580,7 +588,15 @@ const TikTokFeed = forwardRef<TikTokFeedHandle, TikTokFeedProps>(function TikTok
     };
   }, [stepOneCard]);
 
-  // Wheel and trackpad: accumulate to 50px, then one card, then a 450ms lock so inertia cannot skip.
+  const getActiveExpandedSheet = useCallback((): HTMLElement | null => {
+    const container = scrollRef.current;
+    if (!container) return null;
+    return container.querySelector<HTMLElement>(
+      '[data-testid="fact-card"][data-active="true"] [data-testid="fact-bottom-sheet"][data-expanded="true"]'
+    );
+  }, []);
+
+  // Wheel and trackpad: collapse an open bottom sheet first, or step one card when closed.
   useEffect(() => {
     const handleWheel = (e: WheelEvent) => {
       if (!isExploreVisibleRef.current) return;
@@ -593,12 +609,52 @@ const TikTokFeed = forwardRef<TikTokFeedHandle, TikTokFeedProps>(function TikTok
       if (targetEl.closest('[data-testid="language-lab-overlay"], [data-testid="fact-card-back"]')) return;
 
       const nested = targetEl.closest(
-        '[data-scroll-contain="true"], [data-story-scroll="true"], [data-choice-scroll="true"]'
+        '[data-scroll-contain="true"], [data-choice-scroll="true"]'
       ) as HTMLElement | null;
       if (nested && nested.scrollHeight > nested.clientHeight + 1) return;
 
+      const otherStoryScroll = targetEl.closest('[data-story-scroll="true"]') as HTMLElement | null;
+      if (
+        otherStoryScroll &&
+        !otherStoryScroll.matches('[data-testid="fact-bottom-sheet"]') &&
+        otherStoryScroll.scrollHeight > otherStoryScroll.clientHeight + 1
+      ) {
+        return;
+      }
+
       const delta = normalizeWheelDelta(e);
       if (delta === 0) return;
+
+      const expandedSheet = getActiveExpandedSheet();
+      if (expandedSheet) {
+        const insideSheet = expandedSheet.contains(targetEl);
+        const canScrollInnerDown =
+          delta > 0 &&
+          expandedSheet.scrollTop + expandedSheet.clientHeight < expandedSheet.scrollHeight - 2;
+        const canScrollInnerUp = delta < 0 && expandedSheet.scrollTop > 2;
+        if (insideSheet && (canScrollInnerDown || canScrollInnerUp)) {
+          return;
+        }
+
+        e.preventDefault();
+        const now = Date.now();
+        if (now < gestureLockUntilRef.current) {
+          wheelAccumRef.current = 0;
+          return;
+        }
+        if (now - wheelAccumAtRef.current > 160) wheelAccumRef.current = 0;
+        if (Math.sign(wheelAccumRef.current) !== 0 && Math.sign(wheelAccumRef.current) !== Math.sign(delta)) {
+          wheelAccumRef.current = 0;
+        }
+        wheelAccumRef.current += delta;
+        wheelAccumAtRef.current = now;
+        if (Math.abs(wheelAccumRef.current) < WHEEL_THRESHOLD_PX) return;
+        wheelAccumRef.current = 0;
+        gestureLockUntilRef.current = now + GESTURE_LOCK_MS;
+        window.dispatchEvent(new CustomEvent('scrolly-collapse-active-drawer'));
+        return;
+      }
+
       e.preventDefault();
 
       const now = Date.now();
@@ -623,7 +679,93 @@ const TikTokFeed = forwardRef<TikTokFeedHandle, TikTokFeedProps>(function TikTok
       window.removeEventListener('wheel', handleWheel, { capture: true });
       if (scrollAnimRef.current) cancelAnimationFrame(scrollAnimRef.current.raf);
     };
-  }, [stepOneCard]);
+  }, [getActiveExpandedSheet, stepOneCard]);
+
+  // Touch swipe down when drawer is open: collapse drawer instead of jumping to previous card.
+  useEffect(() => {
+    const container = scrollRef.current;
+    if (!container) return;
+
+    const handleTouchStart = (e: TouchEvent) => {
+      if (e.touches.length !== 1 || !isExploreVisibleRef.current) {
+        touchDrawerRef.current = null;
+        return;
+      }
+      if (typeof document !== 'undefined' && document.querySelector('[aria-modal="true"]')) {
+        touchDrawerRef.current = null;
+        return;
+      }
+      const targetEl = e.target as HTMLElement | null;
+      if (
+        targetEl?.closest(
+          'input, textarea, select, [contenteditable="true"], [data-testid="guess-slider-input"]'
+        )
+      ) {
+        touchDrawerRef.current = null;
+        return;
+      }
+      const expandedSheet = getActiveExpandedSheet();
+      if (!expandedSheet) {
+        touchDrawerRef.current = null;
+        return;
+      }
+      const touch = e.touches[0];
+      touchDrawerRef.current = {
+        startX: touch.clientX,
+        startY: touch.clientY,
+        startScrollTop: expandedSheet.scrollTop,
+        insideSheet: expandedSheet.contains(targetEl),
+        closedDuringGesture: false,
+        lockedVertical: false,
+      };
+    };
+
+    const handleTouchMove = (e: TouchEvent) => {
+      const state = touchDrawerRef.current;
+      if (!state || e.touches.length !== 1) return;
+      if (state.closedDuringGesture) {
+        e.preventDefault();
+        return;
+      }
+      const expandedSheet = getActiveExpandedSheet();
+      if (!expandedSheet) {
+        touchDrawerRef.current = null;
+        return;
+      }
+      const touch = e.touches[0];
+      const dx = touch.clientX - state.startX;
+      const dy = touch.clientY - state.startY;
+      if (!state.lockedVertical && Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 10) {
+        touchDrawerRef.current = null;
+        return;
+      }
+      const atSheetTop = state.startScrollTop <= 2 && expandedSheet.scrollTop <= 0;
+      if (dy > 0 && (!state.insideSheet || atSheetTop)) {
+        state.lockedVertical = true;
+        e.preventDefault();
+        if (dy > 45) {
+          state.closedDuringGesture = true;
+          gestureLockUntilRef.current = Date.now() + GESTURE_LOCK_MS;
+          window.dispatchEvent(new CustomEvent('scrolly-collapse-active-drawer'));
+        }
+      }
+    };
+
+    const clearTouchDrawer = () => {
+      touchDrawerRef.current = null;
+    };
+
+    container.addEventListener('touchstart', handleTouchStart, { capture: true, passive: true });
+    container.addEventListener('touchmove', handleTouchMove, { capture: true, passive: false });
+    container.addEventListener('touchend', clearTouchDrawer, { capture: true, passive: true });
+    container.addEventListener('touchcancel', clearTouchDrawer, { capture: true, passive: true });
+    return () => {
+      container.removeEventListener('touchstart', handleTouchStart, { capture: true });
+      container.removeEventListener('touchmove', handleTouchMove, { capture: true });
+      container.removeEventListener('touchend', clearTouchDrawer, { capture: true });
+      container.removeEventListener('touchcancel', clearTouchDrawer, { capture: true });
+    };
+  }, [getActiveExpandedSheet]);
 
   useEffect(() => {
     if (chromeBlocked) setIsCategoryDrawerOpen(false);
@@ -723,7 +865,7 @@ const TikTokFeed = forwardRef<TikTokFeedHandle, TikTokFeedProps>(function TikTok
               : 'opacity-100'
         }`}
       >
-        <BrandLogo size={32} id="feed-header-brand" className="pointer-events-none shrink-0 lg:hidden" />
+        <BrandLogo size={36} id="feed-header-brand" className="pointer-events-none h-9 w-9 shrink-0 lg:hidden" />
         <div
           ref={categoryMenuRef}
           className={`relative min-w-0 shrink ${
@@ -741,17 +883,17 @@ const TikTokFeed = forwardRef<TikTokFeedHandle, TikTokFeedProps>(function TikTok
             aria-haspopup="menu"
             aria-expanded={isCategoryDrawerOpen}
             data-testid="choose-category-btn"
-            className={`inline-flex h-11 min-w-0 max-w-[44vw] shrink items-center gap-2 overflow-hidden rounded-pill bg-cik-surface px-3 text-cik-text shadow-e1 ${
+            className={`inline-flex h-9 min-w-0 max-w-[48vw] shrink items-center gap-1.5 overflow-hidden rounded-pill bg-cik-surface px-3 py-1.5 text-xs font-semibold leading-none text-cik-text shadow-e1 lg:h-10 lg:max-w-[44vw] lg:gap-2 lg:px-3.5 lg:text-sm ${
               chromeBlocked ? 'pointer-events-none' : 'pointer-events-auto'
             }`}
           >
-            <CategoryIcon id={activeCategory} size={18} />
-            <span className="cik-footnote min-w-0 truncate">{categoryTriggerLabel}</span>
+            <CategoryIcon id={activeCategory} size={14} className="h-3.5 w-3.5 lg:h-4 lg:w-4" />
+            <span className="min-w-0 truncate">{categoryTriggerLabel}</span>
             <ChevronDown
-              size={16}
-              strokeWidth={2}
+              size={14}
+              strokeWidth={2.2}
               aria-hidden="true"
-              className={`shrink-0 transition-transform duration-150 motion-reduce:transition-none ${
+              className={`h-3.5 w-3.5 shrink-0 transition-transform duration-150 motion-reduce:transition-none lg:h-4 lg:w-4 ${
                 isCategoryDrawerOpen ? 'rotate-180' : ''
               }`}
             />
@@ -998,9 +1140,9 @@ function LanguageMenu({
         aria-haspopup="menu"
         aria-expanded={open}
         onClick={() => setOpen((prev) => !prev)}
-        className="relative flex h-10 w-10 items-center justify-center rounded-full border border-black/5 bg-white/95 text-neutral-900 shadow-sm backdrop-blur-md hover:bg-white"
+        className="relative flex h-9 w-9 items-center justify-center rounded-full border border-black/5 bg-white/95 text-neutral-900 shadow-sm backdrop-blur-md hover:bg-white lg:h-10 lg:w-10"
       >
-        <Globe size={20} strokeWidth={2} aria-hidden="true" />
+        <Globe size={18} strokeWidth={2} aria-hidden="true" className="h-[18px] w-[18px] lg:h-5 lg:w-5" />
       </button>
       {open ? (
         <div

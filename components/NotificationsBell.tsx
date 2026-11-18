@@ -109,9 +109,9 @@ export default function NotificationsBell({ lang }: { lang: Language }) {
           aria-haspopup="menu"
           aria-expanded={menuOpen}
           onClick={() => setMenuOpen((prev) => !prev)}
-          className="relative flex h-10 w-10 items-center justify-center rounded-full border border-black/5 bg-white/95 text-neutral-900 shadow-sm backdrop-blur-md hover:bg-white"
+          className="relative flex h-9 w-9 items-center justify-center rounded-full border border-black/5 bg-white/95 text-neutral-900 shadow-sm backdrop-blur-md hover:bg-white lg:h-10 lg:w-10"
         >
-          <Bell size={20} strokeWidth={2} aria-hidden="true" />
+          <Bell size={18} strokeWidth={2} aria-hidden="true" className="h-[18px] w-[18px] lg:h-5 lg:w-5" />
           {unread > 0 && (
             <span className="absolute -right-1 -top-1 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-semibold leading-none text-white">
               {unread > 9 ? '9+' : unread}
