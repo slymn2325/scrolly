@@ -1,7 +1,10 @@
 import { NextResponse } from 'next/server';
+import { canonicalizeEmail } from '@/lib/auth';
 import { ensureSchema, getPool, hasDatabaseUrl } from '@/lib/db';
 import { getContactRecipientEmail, sendContactEmail } from '@/lib/mailer';
+import { sanitizeDisplayText, stripControlCharsKeepNewlines } from '@/lib/originPolicy';
 import { checkRateLimit, extractClientIp } from '@/lib/rateLimit';
+import { enforceSameOrigin, readJsonBodyWithLimit } from '@/lib/requestSecurity';
 
 export const dynamic = 'force-dynamic';
 
@@ -33,6 +36,9 @@ interface ContactPayload {
 }
 
 export async function POST(request: Request) {
+  const originErr = enforceSameOrigin(request);
+  if (originErr) return originErr;
+
   const clientIp = extractClientIp(request);
   const ipLimit = checkRateLimit(`contact_ip:${clientIp}`, 5, 10 * 60_000);
   if (!ipLimit.allowed) {
@@ -45,15 +51,17 @@ export async function POST(request: Request) {
     );
   }
 
-  let body: ContactPayload;
-  try {
-    body = (await request.json()) as ContactPayload;
-  } catch {
+  const parsed = await readJsonBodyWithLimit<ContactPayload>(request, 16 * 1024);
+  if (!parsed.ok) {
     return NextResponse.json(
-      { ok: false, error: 'Invalid JSON request body.' },
-      { status: 400, headers: NO_STORE_HEADERS }
+      {
+        ok: false,
+        error: parsed.status === 413 ? 'Contact payload too large.' : 'Invalid JSON request body.',
+      },
+      { status: parsed.status, headers: NO_STORE_HEADERS }
     );
   }
+  const body = parsed.data;
 
   const honeypotValue =
     typeof body.website === 'string'
@@ -70,10 +78,24 @@ export async function POST(request: Request) {
   }
 
   const lang = body.lang === 'en' ? 'en' : 'tr';
-  const name = typeof body.name === 'string' ? body.name.trim().slice(0, 120) : '';
-  const email = typeof body.email === 'string' ? body.email.trim().toLowerCase().slice(0, 180) : '';
-  const rawSubject = typeof body.subject === 'string' ? body.subject.trim().slice(0, 120) : '';
-  const message = typeof body.message === 'string' ? body.message.trim().slice(0, 4000) : '';
+  const rawEmailInput = typeof body.email === 'string' ? body.email : '';
+  if (/[\r\n\0]/.test(rawEmailInput)) {
+    return NextResponse.json(
+      {
+        ok: false,
+        error:
+          lang === 'en'
+            ? 'Please enter a valid email address.'
+            : 'Lütfen geçerli bir e-posta adresi girin.',
+      },
+      { status: 400, headers: NO_STORE_HEADERS }
+    );
+  }
+
+  const name = sanitizeDisplayText(body.name, 120);
+  const email = rawEmailInput.trim().toLowerCase().slice(0, 180);
+  const rawSubject = sanitizeDisplayText(body.subject, 120);
+  const message = stripControlCharsKeepNewlines(body.message, 4000);
 
   if (name.length < 2) {
     return NextResponse.json(
@@ -98,7 +120,8 @@ export async function POST(request: Request) {
     );
   }
 
-  const emailLimit = checkRateLimit(`contact_email:${email}`, 3, 10 * 60_000);
+  const canonicalEmail = canonicalizeEmail(email);
+  const emailLimit = checkRateLimit(`contact_email:${canonicalEmail}`, 3, 10 * 60_000);
   if (!emailLimit.allowed) {
     return NextResponse.json(
       {
@@ -134,6 +157,23 @@ export async function POST(request: Request) {
     );
   }
 
+  const globalLimit = checkRateLimit('contact_global', 30, 10 * 60_000);
+  if (!globalLimit.allowed) {
+    return NextResponse.json(
+      {
+        ok: false,
+        error:
+          lang === 'en'
+            ? 'Contact service is temporarily busy. Please try again shortly.'
+            : 'İletişim servisi şu anda yoğun. Lütfen birkaç dakika sonra tekrar deneyin.',
+      },
+      {
+        status: 429,
+        headers: { ...NO_STORE_HEADERS, 'Retry-After': String(globalLimit.retryAfterSec) },
+      }
+    );
+  }
+
   const recipient = getContactRecipientEmail();
   let persisted = false;
 
@@ -152,15 +192,38 @@ export async function POST(request: Request) {
     }
   }
 
-  const mailResult = await sendContactEmail({
-    name,
-    email,
-    subject,
-    message,
-    lang,
-  });
+  try {
+    const mailResult = await sendContactEmail({
+      name,
+      email,
+      subject,
+      message,
+      lang,
+    });
 
-  if (!mailResult.ok && !persisted) {
+    if (!mailResult.ok && !persisted) {
+      return NextResponse.json(
+        {
+          ok: false,
+          error:
+            lang === 'en'
+              ? `Message could not be delivered right now. Please write directly to ${recipient}.`
+              : `Mesajınız şu anda iletilemedi. Lütfen doğrudan ${recipient} adresine yazın.`,
+        },
+        { status: 503, headers: NO_STORE_HEADERS }
+      );
+    }
+
+    return NextResponse.json(
+      {
+        ok: true,
+        recipient,
+        subject,
+      },
+      { status: 200, headers: NO_STORE_HEADERS }
+    );
+  } catch (err) {
+    console.error('[POST /api/contact] Unexpected contact delivery error:', err);
     return NextResponse.json(
       {
         ok: false,
@@ -172,24 +235,4 @@ export async function POST(request: Request) {
       { status: 503, headers: NO_STORE_HEADERS }
     );
   }
-
-  const mode = persisted
-    ? mailResult.ok && mailResult.delivery === 'resend'
-      ? 'postgres+resend'
-      : 'postgres'
-    : mailResult.delivery === 'resend'
-      ? 'resend'
-      : 'dev_simulation';
-
-  return NextResponse.json(
-    {
-      ok: true,
-      recipient,
-      mode,
-      persisted,
-      emailDelivered: mailResult.ok && mailResult.delivery === 'resend',
-      subject,
-    },
-    { status: 200, headers: NO_STORE_HEADERS }
-  );
 }

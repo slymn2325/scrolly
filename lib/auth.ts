@@ -21,6 +21,7 @@ import {
 } from '@/lib/dbActions';
 import { isDisposableEmailDomain } from '@/lib/disposableDomains';
 import { sendOtpEmail } from '@/lib/mailer';
+import { sanitizeDisplayText } from '@/lib/originPolicy';
 import type { AuthUserDto, LocalMemorySnapshot } from '@/types/auth';
 import type { SavedVocabularyEntry } from '@/types/vocabulary';
 
@@ -51,6 +52,7 @@ interface MemorySessionRecord {
 interface MemoryOtpRecord {
   id: string;
   email: string;
+  canonicalEmail: string;
   codeHash: string;
   expiresAtMs: number;
   attempts: number;
@@ -64,6 +66,7 @@ declare global {
   var __scrollyMemoryUserIdByEmail: Map<string, string> | undefined;
   var __scrollyMemorySessionsByHash: Map<string, MemorySessionRecord> | undefined;
   var __scrollyMemoryOtps: MemoryOtpRecord[] | undefined;
+  var __scrollyMemoryUserActiveDate: Map<string, string> | undefined;
 }
 
 function getMemoryUsersById(): Map<string, MemoryUserRecord> {
@@ -94,10 +97,27 @@ function getMemoryOtps(): MemoryOtpRecord[] {
   return globalThis.__scrollyMemoryOtps;
 }
 
+function getMemoryUserActiveDateMap(): Map<string, string> {
+  if (!globalThis.__scrollyMemoryUserActiveDate) {
+    globalThis.__scrollyMemoryUserActiveDate = new Map<string, string>();
+  }
+  return globalThis.__scrollyMemoryUserActiveDate;
+}
+
+let weakPepperWarned = false;
+
 function getOtpPepper(): string {
   const secret =
     process.env.AUTH_SECRET?.trim() || process.env.SESSION_SECRET?.trim() || '';
-  if (secret) return secret;
+  if (secret) {
+    if (process.env.NODE_ENV === 'production' && secret.length < 32 && !weakPepperWarned) {
+      weakPepperWarned = true;
+      console.error(
+        '[lib/auth] AUTH_SECRET/SESSION_SECRET is shorter than 32 characters in production.'
+      );
+    }
+    return secret;
+  }
   if (process.env.NODE_ENV === 'production') {
     throw new Error(
       'AUTH_SECRET (or SESSION_SECRET) must be set in production — refusing insecure OTP/session pepper.'
@@ -197,16 +217,20 @@ export function shouldUseSecureCookie(request?: Request): boolean {
     ?.split(',')[0]
     ?.trim()
     .toLowerCase();
-  if (forwardedProto === 'https') return true;
-  if (forwardedProto === 'http') return false;
-  try {
-    const parsed = new URL(request.url);
-    if (parsed.protocol === 'https:') return true;
-    if (parsed.hostname === 'localhost' || parsed.hostname === '127.0.0.1') {
+  if (forwardedProto !== 'https') {
+    const hostHeader = (request.headers.get('host') || '').split(',')[0]?.trim().toLowerCase() || '';
+    const hostWithoutPort = hostHeader.replace(/:\d+$/, '');
+    if (hostWithoutPort === 'localhost' || hostWithoutPort === '127.0.0.1') {
       return false;
     }
-  } catch {
-    // Fallback to secure in production
+    try {
+      const parsed = new URL(request.url);
+      if (parsed.hostname === 'localhost' || parsed.hostname === '127.0.0.1') {
+        return false;
+      }
+    } catch {
+      // Fallback to secure in production
+    }
   }
   return true;
 }
@@ -251,7 +275,7 @@ function isGenericNickname(name: string): boolean {
 
 function pickPreferredNickname(...candidates: Array<string | undefined | null>): string {
   const cleaned = candidates
-    .map((c) => (typeof c === 'string' ? c.trim().slice(0, 28) : ''))
+    .map((c) => (typeof c === 'string' ? sanitizeDisplayText(c, 28) : ''))
     .filter(Boolean);
   const custom = cleaned.find((c) => !isGenericNickname(c));
   if (custom) return custom;
@@ -330,6 +354,33 @@ function resolveLatestDateStr(...dates: Array<string | undefined>): string {
   return latest;
 }
 
+const USER_COLUMNS = [
+  'id',
+  'email',
+  'canonical_email',
+  'nickname',
+  'xp',
+  'weekly_xp',
+  'daily_best_score',
+  'last_daily_quiz_date',
+  'streak',
+  'last_visit_date',
+  'seen_ids',
+  'favorite_ids',
+  'liked_ids',
+  'vocab_notebook',
+  'category_weights',
+  'category_accuracy',
+  'badges',
+  'linked_device_ids',
+  'guest_merged_at',
+  'created_at',
+  'updated_at',
+] as const;
+
+const USER_SELECT_COLUMNS = USER_COLUMNS.join(', ');
+const USER_SELECT_COLUMNS_U = USER_COLUMNS.map((c) => `u.${c}`).join(', ');
+
 interface DbUserRow {
   id: string;
   email: string;
@@ -365,7 +416,7 @@ function mapDbUserRowToDto(row: DbUserRow): AuthUserDto {
   return {
     id: row.id,
     email: normalizeEmail(row.email),
-    nickname: typeof row.nickname === 'string' ? row.nickname.trim().slice(0, 28) : '',
+    nickname: typeof row.nickname === 'string' ? sanitizeDisplayText(row.nickname, 28) : '',
     xp: sanitizeNonNegInt(row.xp, 0),
     weeklyXp: sanitizeNonNegInt(row.weekly_xp, 0),
     dailyBestScore: sanitizeNonNegInt(row.daily_best_score, 0),
@@ -457,19 +508,20 @@ function mergeUserProgress(
   guestProfile: Awaited<ReturnType<typeof getProfileByDeviceId>>['profile'],
   guestExtra: GuestDbExtra,
   guestId?: string,
-  localSnapshot?: LocalMemorySnapshot
+  localSnapshot?: LocalMemorySnapshot,
+  options?: { trustedDailyBestScore?: boolean }
 ): AuthUserDto {
   const snap = localSnapshot ?? {};
   const cleanGuestId = isValidDeviceId(guestId) ? guestId.trim().slice(0, 128) : null;
 
-  // Never trust client snapshot XP/streak for awards — only merge list/notebook state.
-  // Server-persisted guest profile XP (from /api/events) may still merge via Math.max.
+  // Never trust client snapshot XP/streak/dailyBestScore for awards unless explicitly trusted from server-capped leaderboard submission.
   const mergedDaily = resolveMergedDailyBest([
     { date: base.lastDailyQuizDate, score: base.dailyBestScore },
     { date: guestProfile?.lastDailyQuizDate ?? '', score: guestProfile?.dailyBestScore ?? 0 },
     { date: guestExtra.dailyQuizDate, score: guestExtra.dailyBestScore },
-    // dailyBestScore from client is leaderboard display state, not XP — still date-bounded
-    { date: snap.lastDailyQuizDate ?? '', score: snap.dailyBestScore ?? 0 },
+    ...(options?.trustedDailyBestScore
+      ? [{ date: snap.lastDailyQuizDate ?? '', score: snap.dailyBestScore ?? 0 }]
+      : []),
   ]);
 
   const mergedSeen = sanitizeStringArray(
@@ -567,7 +619,7 @@ async function saveMergedUserToDb(user: AuthUserDto, linkedGuestId?: string | nu
     if (linkedGuestId && isValidDeviceId(linkedGuestId)) {
       const profileMap = getMemoryProfileMap();
       const existingProfile = profileMap.get(linkedGuestId);
-      if (existingProfile) {
+      if (existingProfile && (!existingProfile.userId || existingProfile.userId === user.id)) {
         profileMap.set(linkedGuestId, {
           ...existingProfile,
           userId: user.id,
@@ -601,7 +653,7 @@ async function saveMergedUserToDb(user: AuthUserDto, linkedGuestId?: string | nu
          canonical_email = COALESCE(canonical_email, $18),
          updated_at = NOW()
      WHERE id = $1
-     RETURNING *`,
+     RETURNING ${USER_SELECT_COLUMNS}`,
     [
       user.id,
       user.nickname,
@@ -626,7 +678,7 @@ async function saveMergedUserToDb(user: AuthUserDto, linkedGuestId?: string | nu
 
   if (linkedGuestId && isValidDeviceId(linkedGuestId)) {
     await pool.query(
-      `UPDATE profiles SET user_id = $2 WHERE device_id = $1`,
+      `UPDATE profiles SET user_id = $2 WHERE device_id = $1 AND (user_id IS NULL OR user_id = $2)`,
       [linkedGuestId, user.id]
     );
   }
@@ -657,7 +709,7 @@ async function findOrCreateUserByEmail(email: string): Promise<AuthUserDto> {
   const pool = getPool();
 
   const existing = await pool.query<DbUserRow>(
-    `SELECT * FROM users
+    `SELECT ${USER_SELECT_COLUMNS} FROM users
      WHERE canonical_email = $1 OR email = $2 OR email = $3
      ORDER BY created_at ASC
      LIMIT 1`,
@@ -684,7 +736,7 @@ async function findOrCreateUserByEmail(email: string): Promise<AuthUserDto> {
   );
 
   const res = await pool.query<DbUserRow>(
-    `SELECT * FROM users
+    `SELECT ${USER_SELECT_COLUMNS} FROM users
      WHERE canonical_email = $1 OR email = $2
      ORDER BY created_at ASC
      LIMIT 1`,
@@ -706,7 +758,7 @@ export async function getUserById(userId: string): Promise<AuthUserDto | null> {
   await ensureSchema();
   const pool = getPool();
   const res = await pool.query<DbUserRow>(
-    `SELECT * FROM users WHERE id = $1 LIMIT 1`,
+    `SELECT ${USER_SELECT_COLUMNS} FROM users WHERE id = $1 LIMIT 1`,
     [userId]
   );
   return res.rows[0] ? mapDbUserRowToDto(res.rows[0]) : null;
@@ -759,6 +811,7 @@ export async function requestOtpChallenge(params: {
     };
   }
 
+  const canonical = canonicalizeEmail(email);
   const ipHash = hashClientIp(params.clientIp);
   const nowMs = Date.now();
   const oneHourAgoMs = nowMs - 3_600_000;
@@ -774,7 +827,11 @@ export async function requestOtpChallenge(params: {
     }
 
     const emailRecent = otps
-      .filter((o) => o.email === email && o.createdAtMs > oneHourAgoMs)
+      .filter(
+        (o) =>
+          (o.email === email || o.canonicalEmail === canonical) &&
+          o.createdAtMs > oneHourAgoMs
+      )
       .sort((a, b) => b.createdAtMs - a.createdAtMs);
 
     const latestForEmail = emailRecent[0];
@@ -843,8 +900,12 @@ export async function requestOtpChallenge(params: {
     const codeHash = hashOtpCode(email, code);
 
     for (const existing of otps) {
-      if (existing.email === email && existing.consumedAtMs === null) {
+      if (
+        (existing.email === email || existing.canonicalEmail === canonical) &&
+        existing.consumedAtMs === null
+      ) {
         existing.consumedAtMs = nowMs;
+        existing.codeHash = '';
       }
     }
 
@@ -852,6 +913,7 @@ export async function requestOtpChallenge(params: {
     otps.push({
       id: otpId,
       email,
+      canonicalEmail: canonical,
       codeHash,
       expiresAtMs: nowMs + OTP_TTL_SECONDS * 1000,
       attempts: 0,
@@ -915,9 +977,9 @@ export async function requestOtpChallenge(params: {
          MAX(created_at) AS latest_created_at,
          MIN(created_at) AS oldest_created_at
        FROM auth_otps
-       WHERE email = $1
+       WHERE (email = $1 OR canonical_email = $2)
          AND created_at > NOW() - INTERVAL '1 hour'`,
-      [email]
+      [email, canonical]
     ),
     pool.query<{
       hourly_count: number;
@@ -1001,15 +1063,17 @@ export async function requestOtpChallenge(params: {
 
   await pool.query(
     `UPDATE auth_otps
-     SET consumed_at = NOW()
-     WHERE email = $1 AND consumed_at IS NULL`,
-    [email]
+     SET consumed_at = NOW(),
+         code_hash = ''
+     WHERE (email = $1 OR canonical_email = $2)
+       AND consumed_at IS NULL`,
+    [email, canonical]
   );
 
   await pool.query(
-    `INSERT INTO auth_otps (id, email, code_hash, expires_at, attempts, ip_hash)
-     VALUES ($1, $2, $3, NOW() + INTERVAL '10 minutes', 0, $4)`,
-    [otpId, email, codeHash, ipHash]
+    `INSERT INTO auth_otps (id, email, canonical_email, code_hash, expires_at, attempts, ip_hash)
+     VALUES ($1, $2, $3, $4, NOW() + INTERVAL '10 minutes', 0, $5)`,
+    [otpId, email, canonical, codeHash, ipHash]
   );
 
   const mailResult = await sendOtpEmail({
@@ -1064,6 +1128,7 @@ export async function verifyOtpAndCreateSession(params: {
   email: string;
   code: string;
   guestId?: string;
+  boundDeviceId?: string | null;
   localSnapshot?: LocalMemorySnapshot;
   lang?: Language;
 }): Promise<VerifyOtpOutcome> {
@@ -1131,6 +1196,7 @@ export async function verifyOtpAndCreateSession(params: {
 
     if (active.expiresAtMs <= nowMs) {
       active.consumedAtMs = nowMs;
+      active.codeHash = '';
       return {
         ok: false,
         status: 400,
@@ -1144,6 +1210,7 @@ export async function verifyOtpAndCreateSession(params: {
 
     if (active.attempts >= OTP_MAX_ATTEMPTS) {
       active.consumedAtMs = nowMs;
+      active.codeHash = '';
       return {
         ok: false,
         status: 429,
@@ -1159,6 +1226,7 @@ export async function verifyOtpAndCreateSession(params: {
       active.attempts += 1;
       if (active.attempts >= OTP_MAX_ATTEMPTS) {
         active.consumedAtMs = nowMs;
+        active.codeHash = '';
         return {
           ok: false,
           status: 429,
@@ -1182,41 +1250,92 @@ export async function verifyOtpAndCreateSession(params: {
     }
 
     active.consumedAtMs = nowMs;
+    active.codeHash = '';
   } else {
     await ensureSchema();
     const pool = getPool();
+    const client = await pool.connect();
 
-    const activeRes = await pool.query<{
-      id: string;
-      code_hash: string;
-      expires_at: Date | string;
-      attempts: number;
-      consumed_at: Date | string | null;
-    }>(
-      `SELECT id, code_hash, expires_at, attempts, consumed_at
-       FROM auth_otps
-       WHERE email = $1
-       ORDER BY created_at DESC
-       LIMIT 1`,
-      [email]
-    );
+    try {
+      await client.query('BEGIN');
+      const activeRes = await client.query<{
+        id: string;
+        code_hash: string;
+        expires_at: Date | string;
+        attempts: number;
+        consumed_at: Date | string | null;
+      }>(
+        `SELECT id, code_hash, expires_at, attempts, consumed_at
+         FROM auth_otps
+         WHERE email = $1
+         ORDER BY created_at DESC
+         LIMIT 1
+         FOR UPDATE`,
+        [email]
+      );
 
-    const latest = activeRes.rows[0];
-    if (!latest) {
-      return {
-        ok: false,
-        status: 400,
-        user: null,
-        error:
-          lang === 'en'
-            ? 'No active verification code found. Please request a new code.'
-            : 'Aktif bir doğrulama kodu bulunamadı. Lütfen yeni bir kod isteyin.',
-      };
-    }
+      const latest = activeRes.rows[0];
+      if (!latest) {
+        await client.query('ROLLBACK');
+        return {
+          ok: false,
+          status: 400,
+          user: null,
+          error:
+            lang === 'en'
+              ? 'No active verification code found. Please request a new code.'
+              : 'Aktif bir doğrulama kodu bulunamadı. Lütfen yeni bir kod isteyin.',
+        };
+      }
 
-    const expiresMs = new Date(latest.expires_at).getTime();
-    if (latest.consumed_at !== null) {
-      if (Number(latest.attempts) >= OTP_MAX_ATTEMPTS && expiresMs > nowMs) {
+      const expiresMs = new Date(latest.expires_at).getTime();
+      if (latest.consumed_at !== null) {
+        await client.query('ROLLBACK');
+        if (Number(latest.attempts) >= OTP_MAX_ATTEMPTS && expiresMs > nowMs) {
+          return {
+            ok: false,
+            status: 429,
+            user: null,
+            error:
+              lang === 'en'
+                ? 'Too many incorrect attempts. Please request a new verification code.'
+                : 'Çok fazla hatalı deneme yapıldı. Lütfen yeni bir doğrulama kodu isteyin.',
+          };
+        }
+        return {
+          ok: false,
+          status: 400,
+          user: null,
+          error:
+            lang === 'en'
+              ? 'This verification code has already been used. Please request a new code.'
+              : 'Bu doğrulama kodu daha önce kullanıldı. Lütfen yeni bir kod isteyin.',
+        };
+      }
+
+      if (expiresMs <= nowMs) {
+        await client.query(
+          `UPDATE auth_otps SET consumed_at = NOW(), code_hash = '' WHERE id = $1`,
+          [latest.id]
+        );
+        await client.query('COMMIT');
+        return {
+          ok: false,
+          status: 400,
+          user: null,
+          error:
+            lang === 'en'
+              ? 'This verification code has expired. Please request a new one.'
+              : 'Bu doğrulama kodunun süresi doldu. Lütfen yeni bir kod isteyin.',
+        };
+      }
+
+      if (Number(latest.attempts) >= OTP_MAX_ATTEMPTS) {
+        await client.query(
+          `UPDATE auth_otps SET consumed_at = NOW(), code_hash = '' WHERE id = $1`,
+          [latest.id]
+        );
+        await client.query('COMMIT');
         return {
           ok: false,
           status: 429,
@@ -1227,145 +1346,133 @@ export async function verifyOtpAndCreateSession(params: {
               : 'Çok fazla hatalı deneme yapıldı. Lütfen yeni bir doğrulama kodu isteyin.',
         };
       }
-      return {
-        ok: false,
-        status: 400,
-        user: null,
-        error:
-          lang === 'en'
-            ? 'This verification code has already been used. Please request a new code.'
-            : 'Bu doğrulama kodu daha önce kullanıldı. Lütfen yeni bir kod isteyin.',
-      };
-    }
 
-    if (expiresMs <= nowMs) {
-      await pool.query(`UPDATE auth_otps SET consumed_at = NOW() WHERE id = $1`, [latest.id]);
-      return {
-        ok: false,
-        status: 400,
-        user: null,
-        error:
-          lang === 'en'
-            ? 'This verification code has expired. Please request a new one.'
-            : 'Bu doğrulama kodunun süresi doldu. Lütfen yeni bir kod isteyin.',
-      };
-    }
-
-    if (Number(latest.attempts) >= OTP_MAX_ATTEMPTS) {
-      await pool.query(`UPDATE auth_otps SET consumed_at = NOW() WHERE id = $1`, [latest.id]);
-      return {
-        ok: false,
-        status: 429,
-        user: null,
-        error:
-          lang === 'en'
-            ? 'Too many incorrect attempts. Please request a new verification code.'
-            : 'Çok fazla hatalı deneme yapıldı. Lütfen yeni bir doğrulama kodu isteyin.',
-      };
-    }
-
-    if (!timingSafeHexMatch(latest.code_hash, candidateHash)) {
-      const updRes = await pool.query<{ attempts: number }>(
-        `UPDATE auth_otps
-         SET attempts = attempts + 1,
-             consumed_at = CASE WHEN attempts + 1 >= $2 THEN NOW() ELSE consumed_at END
-         WHERE id = $1 AND consumed_at IS NULL
-         RETURNING attempts`,
-        [latest.id, OTP_MAX_ATTEMPTS]
-      );
-      const nextAttempts = Number(updRes.rows[0]?.attempts ?? Number(latest.attempts) + 1);
-      if (nextAttempts >= OTP_MAX_ATTEMPTS) {
+      if (!timingSafeHexMatch(latest.code_hash, candidateHash)) {
+        const updRes = await client.query<{ attempts: number }>(
+          `UPDATE auth_otps
+           SET attempts = attempts + 1,
+               consumed_at = CASE WHEN attempts + 1 >= $2 THEN NOW() ELSE consumed_at END,
+               code_hash = CASE WHEN attempts + 1 >= $2 THEN '' ELSE code_hash END
+           WHERE id = $1 AND consumed_at IS NULL
+           RETURNING attempts`,
+          [latest.id, OTP_MAX_ATTEMPTS]
+        );
+        await client.query('COMMIT');
+        const nextAttempts = Number(updRes.rows[0]?.attempts ?? Number(latest.attempts) + 1);
+        if (nextAttempts >= OTP_MAX_ATTEMPTS) {
+          return {
+            ok: false,
+            status: 429,
+            user: null,
+            error:
+              lang === 'en'
+                ? 'Too many incorrect attempts. This code is locked, please request a new one.'
+                : 'Çok fazla hatalı deneme yapıldı. Bu kod kilitlendi, lütfen yeni bir kod isteyin.',
+          };
+        }
+        const left = Math.max(1, OTP_MAX_ATTEMPTS - nextAttempts);
         return {
           ok: false,
-          status: 429,
+          status: 401,
           user: null,
           error:
             lang === 'en'
-              ? 'Too many incorrect attempts. This code is locked, please request a new one.'
-              : 'Çok fazla hatalı deneme yapıldı. Bu kod kilitlendi, lütfen yeni bir kod isteyin.',
+              ? `Incorrect verification code. ${left} attempt(s) left.`
+              : `Hatalı doğrulama kodu. ${left} deneme hakkınız kaldı.`,
         };
       }
-      const left = Math.max(1, OTP_MAX_ATTEMPTS - nextAttempts);
-      return {
-        ok: false,
-        status: 401,
-        user: null,
-        error:
-          lang === 'en'
-            ? `Incorrect verification code. ${left} attempt(s) left.`
-            : `Hatalı doğrulama kodu. ${left} deneme hakkınız kaldı.`,
-      };
-    }
 
-    const consumeRes = await pool.query<{ id: string }>(
-      `UPDATE auth_otps
-       SET consumed_at = NOW()
-       WHERE id = $1
-         AND consumed_at IS NULL
-         AND expires_at > NOW()
-         AND attempts < $2
-       RETURNING id`,
-      [latest.id, OTP_MAX_ATTEMPTS]
-    );
+      const consumeRes = await client.query<{ id: string }>(
+        `UPDATE auth_otps
+         SET consumed_at = NOW(),
+             code_hash = ''
+         WHERE id = $1
+           AND consumed_at IS NULL
+           AND expires_at > NOW()
+           AND attempts < $2
+         RETURNING id`,
+        [latest.id, OTP_MAX_ATTEMPTS]
+      );
 
-    if ((consumeRes.rowCount ?? 0) === 0) {
-      return {
-        ok: false,
-        status: 400,
-        user: null,
-        error:
-          lang === 'en'
-            ? 'This verification code is no longer valid. Please request a new code.'
-            : 'Bu doğrulama kodu artık geçerli değil. Lütfen yeni bir kod isteyin.',
-      };
+      if ((consumeRes.rowCount ?? 0) === 0) {
+        await client.query('ROLLBACK');
+        return {
+          ok: false,
+          status: 400,
+          user: null,
+          error:
+            lang === 'en'
+              ? 'This verification code is no longer valid. Please request a new code.'
+              : 'Bu doğrulama kodu artık geçerli değil. Lütfen yeni bir kod isteyin.',
+        };
+      }
+
+      await client.query('COMMIT');
+    } catch (err) {
+      await client.query('ROLLBACK').catch(() => {});
+      throw err;
+    } finally {
+      client.release();
     }
   }
 
   const baseUser = await findOrCreateUserByEmail(email);
   const cleanGuestId = isValidDeviceId(params.guestId) ? params.guestId.trim().slice(0, 128) : undefined;
+  const boundMismatch = Boolean(
+    params.boundDeviceId && cleanGuestId && params.boundDeviceId !== cleanGuestId
+  );
   const alreadyMerged = Boolean(baseUser.guestMergedAt);
   const guestProfileRes =
-    cleanGuestId && !alreadyMerged
+    cleanGuestId && !boundMismatch && !alreadyMerged
       ? await getProfileByDeviceId(cleanGuestId)
       : { profile: null };
+  const canMergeGuestProfile = Boolean(
+    cleanGuestId &&
+      !boundMismatch &&
+      (!guestProfileRes.profile?.userId || guestProfileRes.profile.userId === baseUser.id)
+  );
   const guestExtra =
-    cleanGuestId && !alreadyMerged
+    canMergeGuestProfile && cleanGuestId && !alreadyMerged
       ? await fetchGuestDbExtras(cleanGuestId)
       : { likedSlugs: [], dailyBestScore: 0, dailyQuizDate: '' };
 
+  const safeSnapshot = boundMismatch ? undefined : params.localSnapshot;
   const mergedUser = alreadyMerged
     ? {
         ...baseUser,
         // Still allow non-XP list merges from snapshot when already merged once.
         seenIds: sanitizeStringArray(
-          [...baseUser.seenIds, ...(params.localSnapshot?.seenIds ?? [])],
+          [...baseUser.seenIds, ...(safeSnapshot?.seenIds ?? [])],
           2500
         ),
         favoriteIds: sanitizeStringArray(
-          [...baseUser.favoriteIds, ...(params.localSnapshot?.favoriteIds ?? [])],
+          [...baseUser.favoriteIds, ...(safeSnapshot?.favoriteIds ?? [])],
           500
         ),
         likedIds: sanitizeStringArray(
-          [...baseUser.likedIds, ...(params.localSnapshot?.likedIds ?? [])],
+          [...baseUser.likedIds, ...(safeSnapshot?.likedIds ?? [])],
           500
         ),
         vocabNotebook: sanitizeVocabNotebook(
-          [...baseUser.vocabNotebook, ...(params.localSnapshot?.vocabNotebook ?? [])],
+          [...baseUser.vocabNotebook, ...(safeSnapshot?.vocabNotebook ?? [])],
           250
         ),
       }
     : mergeUserProgress(
         baseUser,
-        guestProfileRes.profile,
+        canMergeGuestProfile ? guestProfileRes.profile : null,
         guestExtra,
-        cleanGuestId,
-        params.localSnapshot
+        canMergeGuestProfile ? cleanGuestId : undefined,
+        safeSnapshot
       );
 
-  if (!alreadyMerged && cleanGuestId) {
+  if (!alreadyMerged && canMergeGuestProfile && cleanGuestId) {
     mergedUser.guestMergedAt = new Date().toISOString();
   }
-  const persistedUser = await saveMergedUserToDb(mergedUser, alreadyMerged ? null : cleanGuestId);
+  const persistedUser = await saveMergedUserToDb(
+    mergedUser,
+    !alreadyMerged && canMergeGuestProfile ? cleanGuestId : null
+  );
 
   const sessionToken = randomBytes(32).toString('base64url');
   const tokenHash = hashSessionToken(sessionToken);
@@ -1400,6 +1507,7 @@ export async function verifyOtpAndCreateSession(params: {
 export async function mergeGuestDataIntoUser(params: {
   userId: string;
   guestId?: string;
+  boundDeviceId?: string | null;
   localSnapshot?: LocalMemorySnapshot;
 }): Promise<AuthUserDto | null> {
   const user = await getUserById(params.userId);
@@ -1411,21 +1519,33 @@ export async function mergeGuestDataIntoUser(params: {
   }
 
   const cleanGuestId = isValidDeviceId(params.guestId) ? params.guestId.trim().slice(0, 128) : undefined;
-  const guestProfileRes = cleanGuestId ? await getProfileByDeviceId(cleanGuestId) : { profile: null };
-  const guestExtra = cleanGuestId
-    ? await fetchGuestDbExtras(cleanGuestId)
-    : { likedSlugs: [], dailyBestScore: 0, dailyQuizDate: '' };
+  const boundMismatch = Boolean(
+    params.boundDeviceId && cleanGuestId && params.boundDeviceId !== cleanGuestId
+  );
+  const guestProfileRes =
+    cleanGuestId && !boundMismatch ? await getProfileByDeviceId(cleanGuestId) : { profile: null };
+  const canLinkGuest = Boolean(
+    cleanGuestId &&
+      !boundMismatch &&
+      (!guestProfileRes.profile?.userId || guestProfileRes.profile.userId === user.id)
+  );
+  const guestExtra =
+    canLinkGuest && cleanGuestId
+      ? await fetchGuestDbExtras(cleanGuestId)
+      : { likedSlugs: [], dailyBestScore: 0, dailyQuizDate: '' };
 
   const merged = mergeUserProgress(
     user,
-    guestProfileRes.profile,
+    canLinkGuest ? guestProfileRes.profile : null,
     guestExtra,
-    cleanGuestId,
-    params.localSnapshot
+    canLinkGuest ? cleanGuestId : undefined,
+    boundMismatch ? undefined : params.localSnapshot
   );
-  merged.guestMergedAt = new Date().toISOString();
+  if (canLinkGuest && cleanGuestId) {
+    merged.guestMergedAt = new Date().toISOString();
+  }
 
-  return saveMergedUserToDb(merged, cleanGuestId);
+  return saveMergedUserToDb(merged, canLinkGuest ? cleanGuestId : null);
 }
 
 export async function getSessionUserFromToken(
@@ -1443,14 +1563,15 @@ export async function getSessionUserFromToken(
       sessions.delete(tokenHash);
       return null;
     }
+    if (!timingSafeHexMatch(session.tokenHash, tokenHash)) return null;
     session.lastSeenAtMs = nowMs;
     return getMemoryUsersById().get(session.userId) ?? null;
   }
 
   await ensureSchema();
   const pool = getPool();
-  const res = await pool.query<DbUserRow & { session_id: string }>(
-    `SELECT u.*, s.id AS session_id
+  const res = await pool.query<DbUserRow & { session_id: string; token_hash: string }>(
+    `SELECT ${USER_SELECT_COLUMNS_U}, s.id AS session_id, s.token_hash
      FROM user_sessions s
      INNER JOIN users u ON u.id = s.user_id
      WHERE s.token_hash = $1
@@ -1460,7 +1581,7 @@ export async function getSessionUserFromToken(
   );
 
   const row = res.rows[0];
-  if (!row) return null;
+  if (!row || !timingSafeHexMatch(row.token_hash, tokenHash)) return null;
 
   await pool
     .query(`UPDATE user_sessions SET last_seen_at = NOW() WHERE id = $1`, [row.session_id])
@@ -1493,6 +1614,7 @@ export async function syncAuthenticatedUserFromProfile(params: {
   userId: string;
   deviceId?: string;
   snapshot: LocalMemorySnapshot;
+  trustedDailyBestScore?: boolean;
 }): Promise<AuthUserDto | null> {
   const user = await getUserById(params.userId);
   if (!user) return null;
@@ -1505,13 +1627,14 @@ export async function syncAuthenticatedUserFromProfile(params: {
     null,
     { likedSlugs: [], dailyBestScore: 0, dailyQuizDate: '' },
     cleanDeviceId,
-    params.snapshot
+    params.snapshot,
+    { trustedDailyBestScore: Boolean(params.trustedDailyBestScore) }
   );
 
   // Allow explicit custom nickname updates from an already-authenticated session
   const incomingNick =
     typeof params.snapshot.nickname === 'string'
-      ? params.snapshot.nickname.trim().slice(0, 28)
+      ? sanitizeDisplayText(params.snapshot.nickname, 28)
       : '';
   if (incomingNick && !isGenericNickname(incomingNick)) {
     merged.nickname = incomingNick;
@@ -1536,8 +1659,6 @@ export async function syncAuthenticatedUserFromEvents(params: {
     ? params.deviceId.trim().slice(0, 128)
     : undefined;
   const xpDelta = Math.max(0, Math.floor(params.xpDelta));
-  const incomingStreak =
-    typeof params.streak === 'number' ? sanitizeNonNegInt(params.streak, 0, 36500) : 0;
 
   const removedSet = new Set(params.removedLikes ?? []);
   const likedSet = new Set(user.likedIds.filter((id) => !removedSet.has(id)));
@@ -1546,20 +1667,80 @@ export async function syncAuthenticatedUserFromEvents(params: {
       likedSet.add(slug);
     }
   }
+  const nextNickname = pickPreferredNickname(user.nickname, params.username);
+  const nextLikedIds = Array.from(likedSet).slice(0, 500);
+  const nextDeviceIds = sanitizeStringArray(
+    [...user.linkedDeviceIds, ...(cleanDeviceId ? [cleanDeviceId] : [])],
+    50
+  );
 
-  const nextUser: AuthUserDto = {
-    ...user,
-    nickname: pickPreferredNickname(user.nickname, params.username),
-    xp: user.xp + xpDelta,
-    weeklyXp: user.weeklyXp + xpDelta,
-    streak: Math.max(0, user.streak, incomingStreak, xpDelta > 0 ? 1 : 0),
-    likedIds: Array.from(likedSet).slice(0, 500),
-    linkedDeviceIds: sanitizeStringArray(
-      [...user.linkedDeviceIds, ...(cleanDeviceId ? [cleanDeviceId] : [])],
-      50
-    ),
-    updatedAt: new Date().toISOString(),
-  };
+  if (!hasDatabaseUrl()) {
+    const activeMap = getMemoryUserActiveDateMap();
+    const today = new Date().toISOString().slice(0, 10);
+    const yesterday = new Date(Date.now() - 86_400_000).toISOString().slice(0, 10);
+    let nextStreak = user.streak;
+    if (xpDelta > 0) {
+      const lastActive = activeMap.get(user.id) || user.lastVisitDate;
+      if (lastActive === today) {
+        nextStreak = Math.max(user.streak, 1);
+      } else if (lastActive === yesterday) {
+        nextStreak = user.streak + 1;
+      } else {
+        nextStreak = 1;
+      }
+      activeMap.set(user.id, today);
+    }
 
-  await saveMergedUserToDb(nextUser, cleanDeviceId);
+    const nextUser: AuthUserDto = {
+      ...user,
+      nickname: nextNickname,
+      xp: user.xp + xpDelta,
+      weeklyXp: user.weeklyXp + xpDelta,
+      streak: nextStreak,
+      lastVisitDate: xpDelta > 0 ? today : user.lastVisitDate,
+      likedIds: nextLikedIds,
+      linkedDeviceIds: nextDeviceIds,
+      updatedAt: new Date().toISOString(),
+    };
+    await saveMergedUserToDb(nextUser, cleanDeviceId);
+    return;
+  }
+
+  await ensureSchema();
+  const pool = getPool();
+  await pool.query(
+    `UPDATE users
+     SET nickname = $2,
+         xp = COALESCE(xp, 0) + $3,
+         weekly_xp = COALESCE(weekly_xp, 0) + $3,
+         streak = CASE
+           WHEN $3 > 0 THEN
+             CASE
+               WHEN last_active_date = CURRENT_DATE THEN GREATEST(COALESCE(streak, 0), 1)
+               WHEN last_active_date = (CURRENT_DATE - INTERVAL '1 day')::date THEN COALESCE(streak, 0) + 1
+               ELSE 1
+             END
+           ELSE COALESCE(streak, 0)
+         END,
+         last_active_date = CASE WHEN $3 > 0 THEN CURRENT_DATE ELSE last_active_date END,
+         last_visit_date = CASE WHEN $3 > 0 THEN TO_CHAR(CURRENT_DATE, 'YYYY-MM-DD') ELSE last_visit_date END,
+         liked_ids = $4::jsonb,
+         linked_device_ids = $5::jsonb,
+         updated_at = NOW()
+     WHERE id = $1`,
+    [
+      user.id,
+      nextNickname,
+      xpDelta,
+      JSON.stringify(nextLikedIds),
+      JSON.stringify(nextDeviceIds),
+    ]
+  );
+
+  if (cleanDeviceId && isValidDeviceId(cleanDeviceId)) {
+    await pool.query(
+      `UPDATE profiles SET user_id = $2 WHERE device_id = $1 AND (user_id IS NULL OR user_id = $2)`,
+      [cleanDeviceId, user.id]
+    );
+  }
 }

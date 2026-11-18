@@ -129,6 +129,7 @@ export async function flushOfflineEvents(): Promise<void> {
     const deviceId = getOrCreateDeviceId();
     const res = await fetch('/api/events', {
       method: 'POST',
+      credentials: 'same-origin',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         device_id: deviceId,
@@ -214,6 +215,7 @@ export async function trackEvent(
   try {
     const res = await fetch('/api/events', {
       method: 'POST',
+      credentials: 'same-origin',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(record),
       keepalive: true,
@@ -366,6 +368,7 @@ export async function fetchProfileFromApi(): Promise<RemoteProfileSnapshot | nul
     const deviceId = getOrCreateDeviceId();
     const res = await fetch(`/api/profile?deviceId=${encodeURIComponent(deviceId)}`, {
       cache: 'no-store',
+      credentials: 'same-origin',
     });
     if (!res.ok) return null;
     const json = (await res.json()) as {
@@ -407,6 +410,7 @@ export async function syncProfileToApi(payload: {
     const res = await fetch('/api/profile', {
       method: 'POST',
       cache: 'no-store',
+      credentials: 'same-origin',
       headers: { 'Content-Type': 'application/json' },
       body,
       keepalive: body.length < 48_000,

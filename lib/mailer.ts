@@ -30,20 +30,20 @@ export function sanitizeEmailFrom(raw: string | null | undefined): string {
 }
 
 export function getEmailFromAddress(): string {
-  return sanitizeEmailFrom(process.env.EMAIL_FROM) || DEFAULT_EMAIL_FROM;
+  return stripHeaderBreaks(sanitizeEmailFrom(process.env.EMAIL_FROM) || DEFAULT_EMAIL_FROM);
 }
 
 export function getContactRecipientEmail(): string {
   // Accept both names: checklist CONTACT_RECEIVER_EMAIL + legacy CONTACT_RECIPIENT_EMAIL.
-  return (
+  return stripHeaderBreaks(
     (process.env.CONTACT_RECEIVER_EMAIL || '').trim() ||
-    (process.env.CONTACT_RECIPIENT_EMAIL || '').trim() ||
-    DEFAULT_CONTACT_RECIPIENT
+      (process.env.CONTACT_RECIPIENT_EMAIL || '').trim() ||
+      DEFAULT_CONTACT_RECIPIENT
   );
 }
 
 function stripHeaderBreaks(value: string): string {
-  return value.replace(/[\r\n]+/g, ' ').trim();
+  return String(value || '').replace(/[\r\n\0]+/g, ' ').trim();
 }
 
 function escapeHtml(value: string): string {
@@ -71,6 +71,14 @@ async function postToResend(payload: {
   text: string;
   reply_to?: string;
 }): Promise<MailDeliveryResult> {
+  const sanitizedPayload = {
+    ...payload,
+    from: stripHeaderBreaks(payload.from),
+    to: payload.to.map((addr) => stripHeaderBreaks(addr)).filter(Boolean),
+    subject: stripHeaderBreaks(payload.subject),
+    ...(payload.reply_to ? { reply_to: stripHeaderBreaks(payload.reply_to) } : {}),
+  };
+
   const apiKey = getResendApiKey();
   if (!apiKey) {
     if (process.env.NODE_ENV === 'production') {
@@ -89,7 +97,7 @@ async function postToResend(payload: {
     return {
       ok: true,
       delivery: 'dev_preview',
-      recipient: payload.to[0],
+      recipient: sanitizedPayload.to[0],
     };
   }
 
@@ -100,7 +108,7 @@ async function postToResend(payload: {
         Authorization: `Bearer ${apiKey}`,
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify(payload),
+      body: JSON.stringify(sanitizedPayload),
       signal: AbortSignal.timeout(10_000),
     });
 

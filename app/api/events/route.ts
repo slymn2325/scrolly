@@ -1,8 +1,16 @@
 import { NextResponse } from 'next/server';
+import { getVocabularyFacts } from '@/data/vocabularyFacts';
 import { getSessionUserFromRequest, syncAuthenticatedUserFromEvents } from '@/lib/auth';
-import { ensureSchema, getPool, hasDatabaseUrl } from '@/lib/db';
-import { isValidDeviceId } from '@/lib/dbActions';
-import { checkRateLimit, extractClientIp } from '@/lib/rateLimit';
+import { ensureSchema, getPool, hasDatabaseUrl, loadSeedFactsFromDisk } from '@/lib/db';
+import { getProfileByDeviceId, isValidDeviceId } from '@/lib/dbActions';
+import { sanitizeDisplayText } from '@/lib/originPolicy';
+import { checkRateLimit, consumeXpBudget, extractClientIp } from '@/lib/rateLimit';
+import {
+  enforceSameOrigin,
+  readJsonBodyWithLimit,
+  readSignedDeviceIdFromRequest,
+  setSignedDeviceCookie,
+} from '@/lib/requestSecurity';
 
 export const dynamic = 'force-dynamic';
 
@@ -12,7 +20,27 @@ const NO_STORE_HEADERS = {
 
 const MAX_BATCH_EVENTS = 50;
 const MAX_META_BYTES = 2048;
-const MAX_XP_PER_BATCH = 250;
+const MAX_XP_PER_BATCH = 150;
+
+let cachedStaticSlugs: Set<string> | null = null;
+
+function getStaticKnownSlugs(): Set<string> {
+  if (cachedStaticSlugs) return cachedStaticSlugs;
+  const out = new Set<string>();
+  for (const fact of loadSeedFactsFromDisk()) {
+    if (fact.id) out.add(fact.id);
+    if (fact.slug) out.add(fact.slug);
+    if (fact.sketchType) out.add(fact.sketchType);
+    if (fact.tr?.slug) out.add(fact.tr.slug);
+    if (fact.en?.slug) out.add(fact.en.slug);
+  }
+  for (const vocab of getVocabularyFacts()) {
+    if (vocab.id) out.add(vocab.id);
+    if (vocab.word) out.add(vocab.word);
+  }
+  cachedStaticSlugs = out;
+  return out;
+}
 
 const EVENT_XP_WEIGHTS: Record<string, number> = {
   like: 5,
@@ -71,6 +99,9 @@ function sanitizeEventMeta(raw: unknown): string {
 }
 
 export async function POST(request: Request) {
+  const originErr = enforceSameOrigin(request);
+  if (originErr) return originErr;
+
   const clientIp = extractClientIp(request);
   const limitResult = checkRateLimit(`events:${clientIp}`, 120, 60_000);
   if (!limitResult.allowed) {
@@ -83,15 +114,17 @@ export async function POST(request: Request) {
     );
   }
 
-  let body: IncomingEventsPayload;
-  try {
-    body = (await request.json()) as IncomingEventsPayload;
-  } catch {
+  const parsed = await readJsonBodyWithLimit<IncomingEventsPayload>(request, 64 * 1024);
+  if (!parsed.ok) {
     return NextResponse.json(
-      { ok: false, error: 'Invalid JSON request body.' },
-      { status: 400, headers: NO_STORE_HEADERS }
+      {
+        ok: false,
+        error: parsed.status === 413 ? 'Events payload too large.' : 'Invalid JSON request body.',
+      },
+      { status: parsed.status, headers: NO_STORE_HEADERS }
     );
   }
+  const body = parsed.data;
 
   const rawList: IncomingEventItem[] = (
     Array.isArray(body.events)
@@ -103,98 +136,191 @@ export async function POST(request: Request) {
             category: body.category,
             event_type: body.event_type,
             meta: body.meta,
-            xp: body.xp,
-            streak: body.streak,
             username: body.username,
           },
         ]
   ).slice(0, MAX_BATCH_EVENTS);
 
+  const bodyDeviceId = isValidDeviceId(body.device_id)
+    ? body.device_id.trim().slice(0, 128)
+    : '';
+  const firstItemDeviceId =
+    rawList
+      .map((item) => (typeof item.device_id === 'string' ? item.device_id.trim().slice(0, 128) : ''))
+      .find((id) => isValidDeviceId(id)) || '';
+  const targetDeviceId = bodyDeviceId || firstItemDeviceId;
+
+  if (!isValidDeviceId(targetDeviceId)) {
+    return NextResponse.json(
+      { ok: false, error: 'invalid_device_id' },
+      { status: 400, headers: NO_STORE_HEADERS }
+    );
+  }
+
+  const boundDeviceId = readSignedDeviceIdFromRequest(request);
+  const sessionUser = await getSessionUserFromRequest(request).catch(() => null);
+  const existing = await getProfileByDeviceId(targetDeviceId).catch(() => ({
+    persisted: false,
+    profile: null,
+  }));
+
+  if (
+    (existing.profile?.userId && sessionUser?.id !== existing.profile.userId) ||
+    (boundDeviceId &&
+      boundDeviceId !== targetDeviceId &&
+      !(
+        sessionUser &&
+        (existing.profile?.userId === sessionUser.id ||
+          sessionUser.linkedDeviceIds.includes(targetDeviceId))
+      ))
+  ) {
+    return NextResponse.json(
+      { ok: false, error: 'forbidden' },
+      { status: 403, headers: NO_STORE_HEADERS }
+    );
+  }
+
+  const shouldBindCookie =
+    !boundDeviceId && (!existing.profile?.userId || existing.profile.userId === sessionUser?.id);
+
   const validEvents = rawList
+    .filter((item) => {
+      if (typeof item.device_id === 'string' && item.device_id.trim().length > 0) {
+        return item.device_id.trim().slice(0, 128) === targetDeviceId;
+      }
+      return true;
+    })
     .map((item) => ({
-      device_id: String(item.device_id || body.device_id || '').trim().slice(0, 128),
+      device_id: targetDeviceId,
       fact_slug: String(item.fact_slug || '').trim().slice(0, 200),
       category: String(item.category || 'general').trim().slice(0, 64),
       event_type: String(item.event_type || '').trim(),
       metaJson: sanitizeEventMeta(item.meta),
-      streak:
-        typeof item.streak === 'number' && Number.isFinite(item.streak)
-          ? Math.min(3650, Math.max(0, Math.floor(item.streak)))
+      username:
+        typeof item.username === 'string'
+          ? sanitizeDisplayText(item.username, 28) || undefined
           : undefined,
-      username: typeof item.username === 'string' ? item.username.trim().slice(0, 64) : undefined,
     }))
-    .filter((ev) => isValidDeviceId(ev.device_id) && ALLOWED_EVENT_TYPES.has(ev.event_type));
+    .filter((ev) => ALLOWED_EVENT_TYPES.has(ev.event_type));
 
-  const sessionUser = await getSessionUserFromRequest(request).catch(() => null);
-
-  let latestDeviceId = isValidDeviceId(body.device_id)
-    ? body.device_id.trim().slice(0, 128)
-    : '';
   let latestUsername =
-    typeof body.username === 'string' && body.username.trim()
-      ? body.username.trim().slice(0, 64)
-      : undefined;
-  let latestStreak =
-    typeof body.streak === 'number' && Number.isFinite(body.streak)
-      ? Math.min(3650, Math.max(0, Math.floor(body.streak)))
+    typeof body.username === 'string'
+      ? sanitizeDisplayText(body.username, 28) || undefined
       : undefined;
 
+  const knownSlugs = new Set<string>(getStaticKnownSlugs());
   const addedLikes: string[] = [];
   const removedLikes: string[] = [];
 
   if (!hasDatabaseUrl()) {
     let memXpDelta = 0;
+    const seenInBatch = new Set<string>();
     for (const ev of validEvents) {
-      if (!latestDeviceId) latestDeviceId = ev.device_id;
-      if (typeof ev.streak === 'number') latestStreak = Math.max(latestStreak ?? 0, ev.streak);
       if (ev.username) latestUsername = ev.username;
-      if (ev.event_type === 'like' && ev.fact_slug) {
+      const isKnownSlug = Boolean(ev.fact_slug && knownSlugs.has(ev.fact_slug));
+      if (!isKnownSlug) continue;
+
+      if (ev.event_type === 'like') {
         addedLikes.push(ev.fact_slug);
-      } else if (ev.event_type === 'unlike' && ev.fact_slug) {
+        if (!seenInBatch.has(`like:${ev.fact_slug}`)) {
+          seenInBatch.add(`like:${ev.fact_slug}`);
+          memXpDelta += EVENT_XP_WEIGHTS.like ?? 0;
+        }
+      } else if (ev.event_type === 'unlike') {
         removedLikes.push(ev.fact_slug);
-      }
-      if (ev.event_type !== 'profile_sync' && ev.fact_slug) {
-        memXpDelta += EVENT_XP_WEIGHTS[ev.event_type] ?? 0;
+      } else if (ev.event_type !== 'profile_sync') {
+        const key = `${ev.event_type}:${ev.fact_slug}`;
+        if (!XP_ONCE_EVENT_TYPES.has(ev.event_type) || !seenInBatch.has(key)) {
+          seenInBatch.add(key);
+          memXpDelta += EVENT_XP_WEIGHTS[ev.event_type] ?? 0;
+        }
       }
     }
-    const boundedMemXp = Math.min(MAX_XP_PER_BATCH, Math.max(0, memXpDelta));
+    const boundedMemXp = Math.min(MAX_XP_PER_BATCH, consumeXpBudget(targetDeviceId, memXpDelta));
 
-    if (sessionUser && (boundedMemXp > 0 || addedLikes.length > 0 || removedLikes.length > 0 || typeof latestStreak === 'number')) {
+    if (
+      sessionUser &&
+      (boundedMemXp > 0 ||
+        addedLikes.length > 0 ||
+        removedLikes.length > 0 ||
+        Boolean(latestUsername))
+    ) {
       await syncAuthenticatedUserFromEvents({
         userId: sessionUser.id,
-        deviceId: latestDeviceId || undefined,
+        deviceId: targetDeviceId,
         xpDelta: boundedMemXp,
-        streak: latestStreak,
         username: latestUsername,
         addedLikes,
         removedLikes,
       }).catch(() => {});
     }
 
-    return NextResponse.json(
+    const response = NextResponse.json(
       {
         ok: true,
-        mode: 'local_noop',
         processed: validEvents.length,
         likesMap: {},
+        xpAwarded: boundedMemXp,
       },
       { headers: NO_STORE_HEADERS }
     );
+    if (shouldBindCookie) {
+      setSignedDeviceCookie(response, targetDeviceId, request);
+    }
+    return response;
   }
 
   try {
     await ensureSchema();
     const pool = getPool();
+
+    const unknownSlugs = Array.from(
+      new Set(
+        validEvents
+          .map((ev) => ev.fact_slug)
+          .filter((slug) => Boolean(slug) && !knownSlugs.has(slug))
+      )
+    );
+    if (unknownSlugs.length > 0) {
+      const [dbFacts, dbVocab] = await Promise.all([
+        pool.query<{ matched: string }>(
+          `SELECT slug AS matched FROM facts WHERE slug = ANY($1::text[])
+           UNION
+           SELECT sketch_type AS matched FROM facts WHERE sketch_type = ANY($1::text[])`,
+          [unknownSlugs]
+        ),
+        pool.query<{ matched: string }>(
+          `SELECT id AS matched FROM vocabulary_cards WHERE id = ANY($1::text[])`,
+          [unknownSlugs]
+        ),
+      ]);
+      for (const row of [...dbFacts.rows, ...dbVocab.rows]) {
+        if (row.matched) knownSlugs.add(row.matched);
+      }
+    }
+
     const likesMap: Record<string, number> = {};
     let processed = 0;
     let computedXpDelta = 0;
 
     for (const ev of validEvents) {
-      if (!latestDeviceId) latestDeviceId = ev.device_id;
-      if (typeof ev.streak === 'number') latestStreak = Math.max(latestStreak ?? 0, ev.streak);
       if (ev.username) latestUsername = ev.username;
 
       if (ev.event_type !== 'profile_sync' && ev.fact_slug) {
+        const isKnownSlug = knownSlugs.has(ev.fact_slug);
+        if (!isKnownSlug) continue;
+
+        let alreadyLikedBefore = false;
+        if (ev.event_type === 'like') {
+          const prevLike = await pool.query<{ id: number }>(
+            `SELECT id FROM fact_events
+             WHERE device_id = $1 AND fact_slug = $2 AND event_type = 'like'
+             LIMIT 1`,
+            [ev.device_id, ev.fact_slug]
+          );
+          alreadyLikedBefore = (prevLike.rowCount ?? 0) > 0;
+        }
+
         let eventInserted = true;
         if (XP_ONCE_EVENT_TYPES.has(ev.event_type)) {
           const insertedEv = await pool.query<{ id: number }>(
@@ -228,7 +354,9 @@ export async function POST(request: Request) {
           );
 
           if ((inserted.rowCount ?? 0) > 0) {
-            computedXpDelta += EVENT_XP_WEIGHTS.like;
+            if (!alreadyLikedBefore) {
+              computedXpDelta += EVENT_XP_WEIGHTS.like;
+            }
             const res = await pool.query<{ slug: string; likes_count: number }>(
               `UPDATE facts
                SET likes_count = COALESCE(likes_count, 0) + 1
@@ -272,47 +400,52 @@ export async function POST(request: Request) {
       }
     }
 
-    const boundedXpDelta = Math.min(MAX_XP_PER_BATCH, Math.max(0, computedXpDelta));
-    const effectiveStreak =
-      boundedXpDelta > 0
-        ? Math.max(latestStreak ?? 0, 1)
-        : Math.max(latestStreak ?? 0, 0);
+    const boundedXpDelta = Math.min(MAX_XP_PER_BATCH, consumeXpBudget(targetDeviceId, computedXpDelta));
 
-    if (
-      latestDeviceId &&
-      (boundedXpDelta > 0 || effectiveStreak > 0 || Boolean(latestUsername))
-    ) {
+    if (boundedXpDelta > 0 || Boolean(latestUsername)) {
       await pool.query(
         `INSERT INTO profiles (device_id, user_id, username, xp, weekly_xp, streak, last_active_date, updated_at)
-         VALUES ($1, $2, COALESCE($3, 'Merak Kâşifi'), $4, $4, $5, CASE WHEN $4 > 0 OR $5 > 0 THEN CURRENT_DATE ELSE NULL END, NOW())
+         VALUES (
+           $1,
+           $2,
+           COALESCE($3, 'Merak Kâşifi'),
+           $4,
+           $4,
+           CASE WHEN $4 > 0 THEN 1 ELSE 0 END,
+           CASE WHEN $4 > 0 THEN CURRENT_DATE ELSE NULL END,
+           NOW()
+         )
          ON CONFLICT (device_id) DO UPDATE SET
-           user_id = COALESCE(EXCLUDED.user_id, profiles.user_id),
+           user_id = COALESCE(profiles.user_id, EXCLUDED.user_id),
            username = COALESCE($3, NULLIF(TRIM(profiles.username), ''), 'Merak Kâşifi'),
            xp = COALESCE(profiles.xp, 0) + $4,
            weekly_xp = COALESCE(profiles.weekly_xp, 0) + $4,
-           streak = GREATEST(COALESCE(profiles.streak, 0), $5),
+           streak = CASE
+             WHEN $4 <= 0 THEN COALESCE(profiles.streak, 0)
+             WHEN profiles.last_active_date = CURRENT_DATE THEN GREATEST(COALESCE(profiles.streak, 0), 1)
+             WHEN profiles.last_active_date = (CURRENT_DATE - 1) THEN COALESCE(profiles.streak, 0) + 1
+             ELSE 1
+           END,
            last_active_date = CASE
-             WHEN COALESCE(profiles.xp, 0) + $4 > 0 OR GREATEST(COALESCE(profiles.streak, 0), $5) > 0
-             THEN CURRENT_DATE
+             WHEN $4 > 0 THEN CURRENT_DATE
              ELSE profiles.last_active_date
            END,
            updated_at = NOW()`,
-        [latestDeviceId, sessionUser?.id ?? null, latestUsername || null, boundedXpDelta, effectiveStreak]
+        [targetDeviceId, sessionUser?.id ?? null, latestUsername || null, boundedXpDelta]
       );
     }
 
     if (
       sessionUser &&
       (boundedXpDelta > 0 ||
-        effectiveStreak > 0 ||
         addedLikes.length > 0 ||
-        removedLikes.length > 0)
+        removedLikes.length > 0 ||
+        Boolean(latestUsername))
     ) {
       await syncAuthenticatedUserFromEvents({
         userId: sessionUser.id,
-        deviceId: latestDeviceId || undefined,
+        deviceId: targetDeviceId,
         xpDelta: boundedXpDelta,
-        streak: effectiveStreak,
         username: latestUsername,
         addedLikes,
         removedLikes,
@@ -321,16 +454,19 @@ export async function POST(request: Request) {
       });
     }
 
-    return NextResponse.json(
+    const response = NextResponse.json(
       {
         ok: true,
-        mode: 'postgres',
         processed,
         likesMap,
         xpAwarded: boundedXpDelta,
       },
       { headers: NO_STORE_HEADERS }
     );
+    if (shouldBindCookie) {
+      setSignedDeviceCookie(response, targetDeviceId, request);
+    }
+    return response;
   } catch (err) {
     console.error('[POST /api/events] Error recording events:', err);
     return NextResponse.json(

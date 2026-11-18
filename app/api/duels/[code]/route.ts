@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { getSessionUserFromRequest } from '@/lib/auth';
 import { getDuelRoomDb, mutateDuelRoomDb } from '@/lib/dbActions';
 import {
   isDummyActorId,
@@ -9,8 +10,18 @@ import {
   sanitizePlayerEmoji,
   sanitizePlayerName,
   sanitizeReactionGifUrl,
+  toPublicScrollaRoom,
 } from '@/lib/duelStore';
+import { sanitizeDisplayText } from '@/lib/originPolicy';
 import { checkRateLimit, extractClientIp } from '@/lib/rateLimit';
+import {
+  enforceSameOrigin,
+  mintDuelActorId,
+  readJsonBodyWithLimit,
+  readSignedDuelActorFromRequest,
+  setSignedDuelActorCookie,
+  timingSafeStringEqual,
+} from '@/lib/requestSecurity';
 
 export const dynamic = 'force-dynamic';
 
@@ -22,50 +33,34 @@ interface RouteContext {
   params: Promise<{ code: string }>;
 }
 
-export async function GET(request: Request, context: RouteContext) {
-  const { code: rawCode } = await context.params;
-  if (!isShortRoomCode(rawCode)) {
-    return NextResponse.json(
-      { ok: false, error: 'invalid_code' },
-      { status: 400, headers: NO_STORE_HEADERS }
-    );
-  }
-  const code = normalizeRoomCode(rawCode);
-
-  const url = new URL(request.url);
-  const playerId = (url.searchParams.get('playerId') || '').trim();
-
-  try {
-    const found = await getDuelRoomDb(code);
-    if (!found) {
-      return NextResponse.json(
-        { ok: false, error: 'room_not_found' },
-        { status: 404, headers: NO_STORE_HEADERS }
-      );
-    }
-
-    const kicked = Boolean(playerId && found.room.kickedIds.includes(playerId));
-    return NextResponse.json(
-      {
-        ok: true,
-        kicked,
-        room: found.room,
-        serverNow: found.serverNow,
-      },
-      { headers: NO_STORE_HEADERS }
-    );
-  } catch (err) {
-    console.error('[API /api/duels/[code] GET] Error:', err);
-    return NextResponse.json(
-      { ok: false, error: 'fetch_failed' },
-      { status: 500, headers: NO_STORE_HEADERS }
-    );
-  }
+function matchesStoredActorKey(
+  storedKey: string | undefined,
+  sessionActorKey: string | null,
+  cookieActorKey: string | null
+): boolean {
+  if (!storedKey) return true;
+  if (sessionActorKey && timingSafeStringEqual(storedKey, sessionActorKey)) return true;
+  if (cookieActorKey && timingSafeStringEqual(storedKey, cookieActorKey)) return true;
+  return false;
 }
 
-export async function POST(request: Request, context: RouteContext) {
+function isActorKeyKicked(
+  kickedActorKeys: string[] | undefined,
+  sessionActorKey: string | null,
+  cookieActorKey: string | null
+): boolean {
+  if (!kickedActorKeys || kickedActorKeys.length === 0) return false;
+  return kickedActorKeys.some(
+    (key) =>
+      Boolean(key) &&
+      ((sessionActorKey && timingSafeStringEqual(key, sessionActorKey)) ||
+        (cookieActorKey && timingSafeStringEqual(key, cookieActorKey)))
+  );
+}
+
+export async function GET(request: Request, context: RouteContext) {
   const ip = extractClientIp(request);
-  const rl = checkRateLimit(`duel_action:${ip}`, 180, 60_000);
+  const rl = checkRateLimit(`duel_get:${ip}`, 120, 60_000);
   if (!rl.allowed) {
     return NextResponse.json(
       { ok: false, error: 'rate_limited' },
@@ -82,8 +77,84 @@ export async function POST(request: Request, context: RouteContext) {
   }
   const code = normalizeRoomCode(rawCode);
 
+  const url = new URL(request.url);
+  const playerId = (url.searchParams.get('playerId') || '').trim();
+  const sessionUser = await getSessionUserFromRequest(request).catch(() => null);
+  const sessionActorKey = sessionUser ? `u:${sessionUser.id}` : null;
+  const rawCookieActor = readSignedDuelActorFromRequest(request);
+  const cookieActorKey = rawCookieActor ? `a:${rawCookieActor}` : null;
+
   try {
-    const body = (await request.json()) as Record<string, unknown>;
+    const found = await getDuelRoomDb(code);
+    if (!found) {
+      return NextResponse.json(
+        { ok: false, error: 'room_not_found' },
+        { status: 404, headers: NO_STORE_HEADERS }
+      );
+    }
+
+    const kicked = Boolean(
+      (playerId && found.room.kickedIds.includes(playerId)) ||
+        isActorKeyKicked(found.room.kickedActorKeys, sessionActorKey, cookieActorKey)
+    );
+    return NextResponse.json(
+      {
+        ok: true,
+        kicked,
+        room: toPublicScrollaRoom(found.room),
+        serverNow: found.serverNow,
+      },
+      { headers: NO_STORE_HEADERS }
+    );
+  } catch (err) {
+    console.error('[API /api/duels/[code] GET] Error:', err);
+    return NextResponse.json(
+      { ok: false, error: 'fetch_failed' },
+      { status: 500, headers: NO_STORE_HEADERS }
+    );
+  }
+}
+
+export async function POST(request: Request, context: RouteContext) {
+  const originErr = enforceSameOrigin(request);
+  if (originErr) return originErr;
+
+  const ip = extractClientIp(request);
+  const rl = checkRateLimit(`duel_action:${ip}`, 90, 60_000);
+  if (!rl.allowed) {
+    return NextResponse.json(
+      { ok: false, error: 'rate_limited' },
+      { status: 429, headers: { ...NO_STORE_HEADERS, 'Retry-After': String(rl.retryAfterSec) } }
+    );
+  }
+
+  const { code: rawCode } = await context.params;
+  if (!isShortRoomCode(rawCode)) {
+    return NextResponse.json(
+      { ok: false, error: 'invalid_code' },
+      { status: 400, headers: NO_STORE_HEADERS }
+    );
+  }
+  const code = normalizeRoomCode(rawCode);
+
+  const rlRoom = checkRateLimit(`duel_room_action:${ip}:${code}`, 30, 60_000);
+  if (!rlRoom.allowed) {
+    return NextResponse.json(
+      { ok: false, error: 'rate_limited' },
+      { status: 429, headers: { ...NO_STORE_HEADERS, 'Retry-After': String(rlRoom.retryAfterSec) } }
+    );
+  }
+
+  const parsed = await readJsonBodyWithLimit<Record<string, unknown>>(request, 16 * 1024);
+  if (!parsed.ok) {
+    return NextResponse.json(
+      { ok: false, error: parsed.error },
+      { status: parsed.status, headers: NO_STORE_HEADERS }
+    );
+  }
+  const body = parsed.data;
+
+  try {
     const action = String(body.action || '').trim();
     const playerId = typeof body.playerId === 'string' ? body.playerId.trim().slice(0, 128) : '';
 
@@ -94,9 +165,21 @@ export async function POST(request: Request, context: RouteContext) {
       );
     }
 
+    const sessionUser = await getSessionUserFromRequest(request).catch(() => null);
+    const sessionActorKey = sessionUser ? `u:${sessionUser.id}` : null;
+    const rawCookieActor = readSignedDuelActorFromRequest(request);
+    const cookieActorKey = rawCookieActor ? `a:${rawCookieActor}` : null;
+    const mintedActor =
+      action === 'join' && !sessionActorKey && !cookieActorKey ? mintDuelActorId() : null;
+    const effectiveActorKey =
+      sessionActorKey || cookieActorKey || (mintedActor ? `a:${mintedActor}` : '');
+
     const result = await mutateDuelRoomDb(code, (room, nowIso) => {
       if (action === 'join') {
-        if (room.kickedIds.includes(playerId)) {
+        if (
+          room.kickedIds.includes(playerId) ||
+          isActorKeyKicked(room.kickedActorKeys, sessionActorKey, cookieActorKey)
+        ) {
           return { next: room, errorStatus: 403, errorCode: 'kicked_by_host' };
         }
         const existing = room.players.find((p) => p.id === playerId);
@@ -104,6 +187,12 @@ export async function POST(request: Request, context: RouteContext) {
         const hasExplicitEmoji = typeof body.emoji === 'string' && body.emoji.trim().length > 0;
 
         if (existing) {
+          if (!matchesStoredActorKey(existing.actorKey, sessionActorKey, cookieActorKey)) {
+            return { next: room, errorStatus: 403, errorCode: 'forbidden_player_identity' };
+          }
+          if (!existing.actorKey && effectiveActorKey) {
+            existing.actorKey = effectiveActorKey;
+          }
           if (hasExplicitName) {
             existing.name = sanitizePlayerName(body.name as string);
           }
@@ -131,17 +220,22 @@ export async function POST(request: Request, context: RouteContext) {
           elapsedSec: null,
           answers: null,
           reactionGif: null,
+          actorKey: effectiveActorKey || undefined,
         });
         return { next: room };
+      }
+
+      const self = room.players.find((p) => p.id === playerId);
+      if (!self) {
+        return { next: room, errorStatus: 403, errorCode: 'not_in_room' };
+      }
+      if (!matchesStoredActorKey(self.actorKey, sessionActorKey, cookieActorKey)) {
+        return { next: room, errorStatus: 403, errorCode: 'forbidden_player_identity' };
       }
 
       if (action === 'ready') {
         if (room.kickedIds.includes(playerId)) {
           return { next: room, errorStatus: 403, errorCode: 'kicked_by_host' };
-        }
-        const self = room.players.find((p) => p.id === playerId);
-        if (!self) {
-          return { next: room, errorStatus: 403, errorCode: 'not_in_room' };
         }
         if (room.status === 'started') {
           return { next: room, errorStatus: 409, errorCode: 'match_already_started' };
@@ -166,13 +260,19 @@ export async function POST(request: Request, context: RouteContext) {
         if (!targetId || targetId === room.hostId) {
           return { next: room, errorStatus: 400, errorCode: 'invalid_kick_target' };
         }
-        const hadTarget = room.players.some((p) => p.id === targetId);
-        if (!hadTarget) {
+        const target = room.players.find((p) => p.id === targetId);
+        if (!target) {
           return { next: room, errorStatus: 404, errorCode: 'player_not_found' };
         }
         room.players = room.players.filter((p) => p.id !== targetId);
         if (!room.kickedIds.includes(targetId)) {
           room.kickedIds.push(targetId);
+        }
+        if (target.actorKey) {
+          if (!room.kickedActorKeys) room.kickedActorKeys = [];
+          if (!room.kickedActorKeys.includes(target.actorKey)) {
+            room.kickedActorKeys.push(target.actorKey);
+          }
         }
         if (room.status === 'countdown') {
           room.status = 'lobby';
@@ -203,25 +303,40 @@ export async function POST(request: Request, context: RouteContext) {
         if (room.kickedIds.includes(playerId)) {
           return { next: room, errorStatus: 403, errorCode: 'kicked_by_host' };
         }
-        const self = room.players.find((p) => p.id === playerId);
-        if (!self) {
-          return { next: room, errorStatus: 404, errorCode: 'not_in_room' };
-        }
         if (room.status === 'lobby') {
           return { next: room, errorStatus: 409, errorCode: 'match_not_started' };
         }
+        if (self.finishedAt !== null) {
+          return { next: room, errorStatus: 409, errorCode: 'already_completed' };
+        }
+        if (room.startsAt && Date.parse(nowIso) < Date.parse(room.startsAt) - 1000) {
+          return { next: room, errorStatus: 409, errorCode: 'match_not_started' };
+        }
+
+        const boundedQuestionCount = Math.min(15, Math.max(1, room.questionCount));
+        const cleanAnswers = sanitizeAnswersArray(body.answers);
+        const correctCount = cleanAnswers
+          ? cleanAnswers.filter(Boolean).length
+          : boundedQuestionCount;
+        const maxCombo =
+          correctCount * 100 + 25 * ((correctCount * (correctCount + 1)) / 2);
+        const maxSpeed =
+          correctCount > 0 ? (boundedQuestionCount * 15 + 30) * 5 : 0;
+        const maxAllowedScore =
+          correctCount === 0 ? 0 : Math.min(5000, maxCombo + maxSpeed);
+
         const rawScore = Number(body.score || 0);
         self.score =
-          Number.isFinite(rawScore) && rawScore >= 0
-            ? Math.min(50_000, Math.floor(rawScore))
-            : 0;
+          correctCount === 0 || !Number.isFinite(rawScore) || rawScore < 0
+            ? 0
+            : Math.min(maxAllowedScore, Math.floor(rawScore));
+
         const cleanElapsed = sanitizeElapsedSec(body.elapsedSec);
         if (cleanElapsed !== null) {
           self.elapsedSec = cleanElapsed;
         }
-        const cleanAnswers = sanitizeAnswersArray(body.answers);
         if (cleanAnswers !== null) {
-          self.answers = cleanAnswers;
+          self.answers = cleanAnswers.slice(0, boundedQuestionCount);
         }
         self.finishedAt = nowIso;
         room.status = 'started';
@@ -232,18 +347,11 @@ export async function POST(request: Request, context: RouteContext) {
         if (room.kickedIds.includes(playerId)) {
           return { next: room, errorStatus: 403, errorCode: 'kicked_by_host' };
         }
-        const self = room.players.find((p) => p.id === playerId);
-        if (!self) {
-          return { next: room, errorStatus: 403, errorCode: 'not_in_room' };
-        }
         const cleanUrl = sanitizeReactionGifUrl(body.gifUrl);
         if (!cleanUrl) {
           return { next: room, errorStatus: 400, errorCode: 'invalid_gif_url' };
         }
-        const cleanTitle =
-          typeof body.title === 'string'
-            ? body.title.trim().replace(/\s+/g, ' ').slice(0, 80)
-            : '';
+        const cleanTitle = sanitizeDisplayText(body.title, 80);
         self.reactionGif = {
           url: cleanUrl,
           ...(cleanTitle ? { title: cleanTitle } : {}),
@@ -267,26 +375,30 @@ export async function POST(request: Request, context: RouteContext) {
       return { next: room, errorStatus: 400, errorCode: 'unknown_action' };
     });
 
-    if (!result.ok) {
+    if (!result.ok || !result.room) {
       return NextResponse.json(
         {
           ok: false,
           error: result.error || 'action_failed',
-          room: result.room || null,
+          room: result.room ? toPublicScrollaRoom(result.room) : null,
           serverNow: result.serverNow,
         },
         { status: result.status, headers: NO_STORE_HEADERS }
       );
     }
 
-    return NextResponse.json(
+    const response = NextResponse.json(
       {
         ok: true,
-        room: result.room,
+        room: toPublicScrollaRoom(result.room),
         serverNow: result.serverNow,
       },
       { headers: NO_STORE_HEADERS }
     );
+    if (mintedActor) {
+      setSignedDuelActorCookie(response, mintedActor, request);
+    }
+    return response;
   } catch (err) {
     console.error('[API /api/duels/[code] POST] Error:', err);
     return NextResponse.json(

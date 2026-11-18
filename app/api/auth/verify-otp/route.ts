@@ -1,12 +1,20 @@
 import { NextResponse } from 'next/server';
 import {
+  canonicalizeEmail,
   SESSION_COOKIE_NAME,
   SESSION_MAX_AGE_SECONDS,
   buildSignedSessionCookieValue,
   shouldUseSecureCookie,
   verifyOtpAndCreateSession,
 } from '@/lib/auth';
+import { isValidDeviceId } from '@/lib/dbActions';
 import { checkRateLimit, extractClientIp } from '@/lib/rateLimit';
+import {
+  enforceSameOrigin,
+  readJsonBodyWithLimit,
+  readSignedDeviceIdFromRequest,
+  setSignedDeviceCookie,
+} from '@/lib/requestSecurity';
 import type { LocalMemorySnapshot, VerifyOtpPayload, VerifyOtpResponse } from '@/types/auth';
 
 export const dynamic = 'force-dynamic';
@@ -23,8 +31,11 @@ function inferLangFromRequest(request: Request, bodyLang?: unknown): 'tr' | 'en'
 }
 
 export async function POST(request: Request) {
+  const originErr = enforceSameOrigin(request);
+  if (originErr) return originErr;
+
   const ip = extractClientIp(request);
-  const rl = checkRateLimit(`auth_verify_otp:${ip}`, 30, 10 * 60_000);
+  const rl = checkRateLimit(`auth_verify_otp_ip:${ip}`, 15, 10 * 60_000);
   if (!rl.allowed) {
     const payload: VerifyOtpResponse = {
       ok: false,
@@ -38,23 +49,64 @@ export async function POST(request: Request) {
     });
   }
 
-  let body: Partial<VerifyOtpPayload> & { lang?: unknown };
-  try {
-    body = (await request.json()) as Partial<VerifyOtpPayload> & { lang?: unknown };
-  } catch {
+  const parsed = await readJsonBodyWithLimit<Partial<VerifyOtpPayload> & { lang?: unknown }>(
+    request,
+    128 * 1024
+  );
+  if (!parsed.ok) {
     const payload: VerifyOtpResponse = {
       ok: false,
       authenticated: false,
       user: null,
-      error: 'Invalid JSON request body.',
+      error: parsed.status === 413 ? 'Request body too large.' : 'Invalid JSON request body.',
     };
-    return NextResponse.json(payload, { status: 400, headers: NO_STORE_HEADERS });
+    return NextResponse.json(payload, { status: parsed.status, headers: NO_STORE_HEADERS });
   }
+  const body = parsed.data;
 
   const lang = inferLangFromRequest(request, body.lang);
   const email = typeof body.email === 'string' ? body.email : '';
+  const canonical = canonicalizeEmail(email);
+
+  if (canonical.includes('@')) {
+    const emailLimit = checkRateLimit(`auth_verify_otp_email:${canonical}`, 10, 10 * 60_000);
+    if (!emailLimit.allowed) {
+      const payload: VerifyOtpResponse = {
+        ok: false,
+        authenticated: false,
+        user: null,
+        error:
+          lang === 'en'
+            ? 'Too many verification attempts for this email. Please wait a few minutes.'
+            : 'Bu e-posta için çok fazla doğrulama denemesi yapıldı. Lütfen birkaç dakika bekleyin.',
+      };
+      return NextResponse.json(payload, {
+        status: 429,
+        headers: { ...NO_STORE_HEADERS, 'Retry-After': String(emailLimit.retryAfterSec) },
+      });
+    }
+
+    const pairLimit = checkRateLimit(`auth_verify_otp_pair:${ip}:${canonical}`, 8, 10 * 60_000);
+    if (!pairLimit.allowed) {
+      const payload: VerifyOtpResponse = {
+        ok: false,
+        authenticated: false,
+        user: null,
+        error:
+          lang === 'en'
+            ? 'Too many verification attempts. Please wait a few minutes.'
+            : 'Çok fazla doğrulama denemesi yapıldı. Lütfen birkaç dakika bekleyin.',
+      };
+      return NextResponse.json(payload, {
+        status: 429,
+        headers: { ...NO_STORE_HEADERS, 'Retry-After': String(pairLimit.retryAfterSec) },
+      });
+    }
+  }
+
   const code = typeof body.code === 'string' ? body.code : '';
   const guestId = typeof body.guestId === 'string' ? body.guestId : undefined;
+  const boundDeviceId = readSignedDeviceIdFromRequest(request);
   const localSnapshot =
     body.localSnapshot && typeof body.localSnapshot === 'object' && !Array.isArray(body.localSnapshot)
       ? (body.localSnapshot as LocalMemorySnapshot)
@@ -65,6 +117,7 @@ export async function POST(request: Request) {
       email,
       code,
       guestId,
+      boundDeviceId,
       localSnapshot,
       lang,
     });
@@ -103,6 +156,15 @@ export async function POST(request: Request) {
         maxAge: SESSION_MAX_AGE_SECONDS,
       }
     );
+
+    const cleanGuest = isValidDeviceId(guestId) ? guestId.trim().slice(0, 128) : null;
+    if (
+      !boundDeviceId &&
+      cleanGuest &&
+      (outcome.user.linkedDeviceIds.length === 0 || outcome.user.linkedDeviceIds.includes(cleanGuest))
+    ) {
+      setSignedDeviceCookie(response, cleanGuest, request);
+    }
 
     return response;
   } catch (err) {

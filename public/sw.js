@@ -175,7 +175,14 @@ self.addEventListener('fetch', (event) => {
 
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
-  const targetUrl = (event.notification.data && event.notification.data.url) || '/?openQuiz=daily';
+  const rawUrl = event.notification.data && event.notification.data.url;
+  const isSafeInternal =
+    typeof rawUrl === 'string' &&
+    rawUrl.startsWith('/') &&
+    !rawUrl.startsWith('//') &&
+    !rawUrl.includes('\\') &&
+    !/[\u0000-\u001F\u007F]/.test(rawUrl);
+  const targetUrl = isSafeInternal ? rawUrl : '/?openQuiz=daily';
 
   event.waitUntil(
     self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {

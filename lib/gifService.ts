@@ -14,6 +14,10 @@ const NEGATIVE_CACHE_MS = 1000 * 60 * 15; // 15 minutes when upstream had no cle
 const ERROR_CACHE_MS = 1000 * 60 * 2; // 2 minutes on transient error/rate limit
 const MAX_CACHE_ENTRIES = 500;
 
+function redactSecrets(text: string): string {
+  return text.replace(/([?&](?:api_key|key|token)=)[^&\s]+/gi, '$1[REDACTED]');
+}
+
 const CATEGORY_RELEVANCE_TERMS: Record<string, string[]> = {
   space: [
     'space', 'planet', 'galaxy', 'star', 'stars', 'cosmos', 'astronaut', 'nebula',
@@ -419,7 +423,7 @@ async function fetchFromGiphy(query: string, apiKey: string): Promise<ProviderFe
       })),
     };
   } catch (err) {
-    const msg = err instanceof Error ? err.message : String(err);
+    const msg = redactSecrets(err instanceof Error ? err.message : String(err));
     const isTimeout = /timeout|aborted|AbortError/i.test(msg);
     console.error(
       `[gifService] Giphy ${isTimeout ? 'timeout' : 'network'} error query="${query}": ${msg}`
@@ -514,7 +518,7 @@ async function fetchFromTenor(query: string, apiKey: string): Promise<ProviderFe
       })),
     };
   } catch (err) {
-    const msg = err instanceof Error ? err.message : String(err);
+    const msg = redactSecrets(err instanceof Error ? err.message : String(err));
     const isTimeout = /timeout|aborted|AbortError/i.test(msg);
     console.error(
       `[gifService] Tenor ${isTimeout ? 'timeout' : 'network'} error query="${query}": ${msg}`
@@ -747,7 +751,7 @@ export async function searchTopicGif(
     sawUpstreamError = true;
     console.error(
       '[gifService] searchTopicGif unexpected error:',
-      err instanceof Error ? err.message : err
+      redactSecrets(err instanceof Error ? err.message : String(err))
     );
   }
 

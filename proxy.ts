@@ -1,5 +1,6 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
+import { sanitizeInternalRedirectPath, verifySameOriginRequest } from '@/lib/originPolicy';
 
 function languageForRequest(request: NextRequest): 'en' | 'tr' | null {
   const { pathname } = request.nextUrl;
@@ -22,8 +23,10 @@ function englishPathFor(pathname: string): string | null {
 function redirectEnglishQuery(request: NextRequest): NextResponse | null {
   const url = request.nextUrl;
   if (url.searchParams.get('lang') !== 'en') return null;
-  const pathname = englishPathFor(url.pathname);
-  if (!pathname) return null;
+  const candidate = englishPathFor(url.pathname);
+  if (!candidate) return null;
+  const pathname = sanitizeInternalRedirectPath(candidate, '');
+  if (!pathname || !pathname.startsWith('/') || pathname.startsWith('//')) return null;
   const dest = url.clone();
   dest.pathname = pathname;
   dest.searchParams.delete('lang');
@@ -35,6 +38,20 @@ function isPrivateDuelPath(pathname: string): boolean {
 }
 
 export function proxy(request: NextRequest) {
+  if (request.nextUrl.pathname.startsWith('/api/')) {
+    const verdict = verifySameOriginRequest(request);
+    if (!verdict.ok) {
+      return NextResponse.json(
+        { ok: false, error: 'forbidden_origin' },
+        {
+          status: 403,
+          headers: { 'Cache-Control': 'no-store, max-age=0' },
+        }
+      );
+    }
+    return NextResponse.next();
+  }
+
   const redirected = redirectEnglishQuery(request);
   if (redirected) return redirected;
   const lang = languageForRequest(request);
@@ -49,5 +66,5 @@ export function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/((?!_next/static|_next/image|favicon.ico|icon|api|.*\\..*).*)'],
+  matcher: ['/((?!_next/static|_next/image|favicon.ico|icon|api|.*\\..*).*)', '/api/:path*'],
 };

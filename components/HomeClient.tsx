@@ -1881,6 +1881,7 @@ export default function HomeClient({ initialFacts, initialVocabulary, initialLan
     if (previousDeviceId && previousDeviceId !== 'server') {
       void fetch('/api/profile', {
         method: 'POST',
+        credentials: 'same-origin',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ deviceId: previousDeviceId, ...zeroedProfile }),
         keepalive: true,

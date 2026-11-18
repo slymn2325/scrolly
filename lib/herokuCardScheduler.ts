@@ -721,6 +721,10 @@ function safeParseJsonRecord(rawText: string): Record<string, unknown> | null {
   }
 }
 
+function redactSecrets(text: string): string {
+  return text.replace(/([?&](?:api_key|key|token)=)[^&\s]+/gi, '$1[REDACTED]');
+}
+
 async function requestNativeGemini(params: {
   modelName: string;
   token: string;
@@ -729,7 +733,7 @@ async function requestNativeGemini(params: {
 }) {
   const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(
     params.modelName
-  )}:generateContent?key=${encodeURIComponent(params.token)}`;
+  )}:generateContent`;
 
   const buildBody = (includeThinkingLevel: boolean) => {
     const generationConfig: Record<string, unknown> = {
@@ -749,7 +753,11 @@ async function requestNativeGemini(params: {
 
   let response = await fetch(endpoint, {
     method: 'POST',
-    headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
+    headers: {
+      Accept: 'application/json',
+      'Content-Type': 'application/json',
+      'x-goog-api-key': params.token,
+    },
     signal: AbortSignal.timeout(60000),
     body: JSON.stringify(buildBody(true)),
   });
@@ -758,7 +766,11 @@ async function requestNativeGemini(params: {
   if (response.status === 400 && /thinkingLevel|thinking_config|thinkingConfig/i.test(rawText)) {
     response = await fetch(endpoint, {
       method: 'POST',
-      headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json',
+        'x-goog-api-key': params.token,
+      },
       signal: AbortSignal.timeout(60000),
       body: JSON.stringify(buildBody(false)),
     });
@@ -886,9 +898,11 @@ async function fetchGeneratedBatchFromModel(
             vocabulary: options.vocabCount > 0 ? vocabArr.slice(0, options.vocabCount) : [],
           };
         }
-        lastFailure = `model=${modelName} status=${res.status} snippet=${res.rawText.slice(0, 140)}`;
+        lastFailure = redactSecrets(
+          `model=${modelName} status=${res.status} snippet=${res.rawText.slice(0, 140)}`
+        );
       } catch (err) {
-        lastFailure = err instanceof Error ? err.message : String(err);
+        lastFailure = redactSecrets(err instanceof Error ? err.message : String(err));
       }
       if (attempt < 3) {
         await sleep(1000 * 2 ** (attempt - 1));

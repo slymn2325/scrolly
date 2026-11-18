@@ -271,6 +271,7 @@ export async function createScrollaRoom(params: {
   try {
     const res = await fetch('/api/duels', {
       method: 'POST',
+      credentials: 'same-origin',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(params),
     });
@@ -303,7 +304,7 @@ export async function fetchScrollaRoom(
   try {
     const res = await fetch(
       `/api/duels/${encodeURIComponent(cleanCode)}?playerId=${encodeURIComponent(playerId)}`,
-      { cache: 'no-store' }
+      { cache: 'no-store', credentials: 'same-origin' }
     );
     const json = (await res.json()) as {
       ok?: boolean;
@@ -336,6 +337,7 @@ async function postScrollaAction(
   try {
     const res = await fetch(`/api/duels/${encodeURIComponent(cleanCode)}`, {
       method: 'POST',
+      credentials: 'same-origin',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
     });

@@ -1,9 +1,12 @@
+import { lookup } from 'node:dns/promises';
 import { NextResponse } from 'next/server';
 import {
   ALLOWED_MEDIA_HOSTS,
   buildSafeMediaUrlString,
   isBadMediaUrlRequest,
+  isBlockedMediaHost,
 } from '@/lib/mediaProxyPolicy';
+import { isAllowedOriginUrl } from '@/lib/originPolicy';
 import { checkRateLimit, extractClientIp } from '@/lib/rateLimit';
 
 export const dynamic = 'force-dynamic';
@@ -12,9 +15,12 @@ const NO_STORE_HEADERS = {
   'Cache-Control': 'no-store, max-age=0',
 };
 
-const MAX_PROXY_MEDIA_BYTES = 25 * 1024 * 1024; // 25 MB
+const MAX_PROXY_MEDIA_BYTES = 15 * 1024 * 1024; // 15 MB
+const MAX_CONCURRENT_PROXY_STREAMS = 20;
 const MAX_REDIRECT_HOPS = 3;
 const UPSTREAM_TIMEOUT_MS = 8000;
+
+let activeProxyStreams = 0;
 
 const ALLOWED_MEDIA_MIME_PREFIXES = [
   'image/gif',
@@ -27,6 +33,76 @@ const ALLOWED_MEDIA_MIME_PREFIXES = [
 function safeMediaFetchUrl(parsed: URL): string | null {
   if (!ALLOWED_MEDIA_HOSTS.has(parsed.hostname.toLowerCase())) return null;
   return buildSafeMediaUrlString(parsed);
+}
+
+async function verifyResolvedHostIsPublic(hostname: string): Promise<boolean> {
+  if (isBlockedMediaHost(hostname)) return false;
+  try {
+    const records = await lookup(hostname, { all: true, verbatim: true });
+    if (!Array.isArray(records) || records.length === 0) return false;
+    return records.every((entry) => Boolean(entry.address) && !isBlockedMediaHost(entry.address));
+  } catch {
+    return false;
+  }
+}
+
+function buildCorsHeaders(request: Request): Record<string, string> {
+  const headers: Record<string, string> = {
+    'Cross-Origin-Resource-Policy': 'same-origin',
+    Vary: 'Origin',
+  };
+  const origin = request.headers.get('origin');
+  if (origin && isAllowedOriginUrl(origin, request)) {
+    try {
+      headers['Access-Control-Allow-Origin'] = new URL(origin).origin;
+    } catch {
+      // Omit ACAO if origin parsing unexpectedly fails
+    }
+  }
+  return headers;
+}
+
+function createByteLimitedStream(
+  body: ReadableStream<Uint8Array>,
+  maxBytes: number,
+  onRelease: () => void
+): ReadableStream<Uint8Array> {
+  const reader = body.getReader();
+  let totalBytes = 0;
+
+  return new ReadableStream<Uint8Array>({
+    async pull(controller) {
+      try {
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) {
+            onRelease();
+            controller.close();
+            return;
+          }
+          if (!value || value.byteLength === 0) continue;
+
+          totalBytes += value.byteLength;
+          if (totalBytes > maxBytes) {
+            await reader.cancel().catch(() => {});
+            onRelease();
+            controller.error(new Error('payload_too_large'));
+            return;
+          }
+
+          controller.enqueue(value);
+          return;
+        }
+      } catch (err) {
+        onRelease();
+        controller.error(err);
+      }
+    },
+    async cancel(reason) {
+      await reader.cancel(reason).catch(() => {});
+      onRelease();
+    },
+  });
 }
 
 function resolveExtensionFromMime(mimeType: string): string {
@@ -66,42 +142,6 @@ function buildDownloadFilename(
   return cleanSegment ? `scrolly-${cleanSegment}${ext}` : `scrolly-gif${ext}`;
 }
 
-async function readResponseBufferWithLimit(
-  response: Response,
-  maxBytes: number
-): Promise<ArrayBuffer | null> {
-  if (!response.body) {
-    const ab = await response.arrayBuffer();
-    return ab.byteLength <= maxBytes ? ab : null;
-  }
-
-  const reader = response.body.getReader();
-  const chunks: Uint8Array[] = [];
-  let totalBytes = 0;
-
-  while (true) {
-    const { done, value } = await reader.read();
-    if (done) break;
-    if (!value || value.byteLength === 0) continue;
-
-    totalBytes += value.byteLength;
-    if (totalBytes > maxBytes) {
-      await reader.cancel().catch(() => {});
-      return null;
-    }
-    chunks.push(value);
-  }
-
-  const buffer = new ArrayBuffer(totalBytes);
-  const combined = new Uint8Array(buffer);
-  let offset = 0;
-  for (const chunk of chunks) {
-    combined.set(chunk, offset);
-    offset += chunk.byteLength;
-  }
-  return buffer;
-}
-
 async function fetchWithSafeRedirects(
   initialUrl: URL
 ): Promise<
@@ -113,6 +153,11 @@ async function fetchWithSafeRedirects(
   for (let hop = 0; hop <= MAX_REDIRECT_HOPS; hop += 1) {
     const safeUrl = safeMediaFetchUrl(currentUrl);
     if (!safeUrl) {
+      return { ok: false, status: 403, error: 'forbidden_url' };
+    }
+
+    const hostIsPublic = await verifyResolvedHostIsPublic(currentUrl.hostname);
+    if (!hostIsPublic) {
       return { ok: false, status: 403, error: 'forbidden_url' };
     }
 
@@ -166,13 +211,12 @@ async function fetchWithSafeRedirects(
   return { ok: false, status: 502, error: 'too_many_redirects' };
 }
 
-export async function OPTIONS() {
+export async function OPTIONS(request: Request) {
   return new NextResponse(null, {
     status: 204,
     headers: {
-      'Access-Control-Allow-Origin': '*',
+      ...buildCorsHeaders(request),
       'Access-Control-Allow-Methods': 'GET, OPTIONS',
-      'Cross-Origin-Resource-Policy': 'cross-origin',
       'Cache-Control': 'public, max-age=86400',
     },
   });
@@ -180,7 +224,7 @@ export async function OPTIONS() {
 
 export async function GET(request: Request) {
   const ip = extractClientIp(request);
-  const rl = checkRateLimit(`media_proxy:${ip}`, 120, 60_000);
+  const rl = checkRateLimit(`media_proxy:${ip}`, 60, 60_000);
   if (!rl.allowed) {
     return NextResponse.json(
       { ok: false, error: 'rate_limited' },
@@ -221,9 +265,26 @@ export async function GET(request: Request) {
     );
   }
 
+  if (activeProxyStreams >= MAX_CONCURRENT_PROXY_STREAMS) {
+    return NextResponse.json(
+      { ok: false, error: 'proxy_busy' },
+      { status: 503, headers: { ...NO_STORE_HEADERS, 'Retry-After': '5' } }
+    );
+  }
+
+  activeProxyStreams += 1;
+  let slotReleased = false;
+  const releaseSlot = () => {
+    if (!slotReleased) {
+      slotReleased = true;
+      activeProxyStreams = Math.max(0, activeProxyStreams - 1);
+    }
+  };
+
   try {
     const fetchResult = await fetchWithSafeRedirects(targetUrl);
     if (!fetchResult.ok) {
+      releaseSlot();
       return NextResponse.json(
         { ok: false, error: fetchResult.error },
         { status: fetchResult.status, headers: NO_STORE_HEADERS }
@@ -233,8 +294,9 @@ export async function GET(request: Request) {
     const upstream = fetchResult.response;
     if (!upstream.ok) {
       await upstream.body?.cancel().catch(() => {});
+      releaseSlot();
       return NextResponse.json(
-        { ok: false, error: 'upstream_failed', upstreamStatus: upstream.status },
+        { ok: false, error: 'upstream_failed' },
         { status: upstream.status === 404 ? 404 : 502, headers: NO_STORE_HEADERS }
       );
     }
@@ -242,6 +304,7 @@ export async function GET(request: Request) {
     const declaredLength = Number(upstream.headers.get('content-length') || '');
     if (Number.isFinite(declaredLength) && declaredLength > MAX_PROXY_MEDIA_BYTES) {
       await upstream.body?.cancel().catch(() => {});
+      releaseSlot();
       return NextResponse.json(
         { ok: false, error: 'payload_too_large' },
         { status: 413, headers: NO_STORE_HEADERS }
@@ -249,31 +312,23 @@ export async function GET(request: Request) {
     }
 
     const rawContentType = (upstream.headers.get('content-type') || '').trim().toLowerCase();
-    const cleanContentType = rawContentType.split(';')[0].trim();
-    const resolvedContentType = cleanContentType || 'image/gif';
+    const resolvedContentType = rawContentType.split(';')[0].trim();
 
     if (
+      !resolvedContentType ||
       !ALLOWED_MEDIA_MIME_PREFIXES.some((prefix) => resolvedContentType.startsWith(prefix))
     ) {
       await upstream.body?.cancel().catch(() => {});
+      releaseSlot();
       return NextResponse.json(
         { ok: false, error: 'unsupported_media_type' },
         { status: 415, headers: NO_STORE_HEADERS }
       );
     }
 
-    const mediaBuffer = await readResponseBufferWithLimit(upstream, MAX_PROXY_MEDIA_BYTES);
-    if (!mediaBuffer) {
-      return NextResponse.json(
-        { ok: false, error: 'payload_too_large' },
-        { status: 413, headers: NO_STORE_HEADERS }
-      );
-    }
-
     const headers: Record<string, string> = {
       'Content-Type': resolvedContentType,
-      'Access-Control-Allow-Origin': '*',
-      'Cross-Origin-Resource-Policy': 'cross-origin',
+      ...buildCorsHeaders(request),
       'Cache-Control': 'public, max-age=86400, s-maxage=86400',
       'X-Content-Type-Options': 'nosniff',
     };
@@ -288,8 +343,29 @@ export async function GET(request: Request) {
       headers['Content-Disposition'] = `attachment; filename="${filename}"`;
     }
 
-    return new NextResponse(mediaBuffer, { status: 200, headers });
+    if (upstream.body) {
+      const limitedStream = createByteLimitedStream(
+        upstream.body,
+        MAX_PROXY_MEDIA_BYTES,
+        releaseSlot
+      );
+      return new NextResponse(limitedStream, { status: 200, headers });
+    }
+
+    try {
+      const mediaBuffer = await upstream.arrayBuffer();
+      if (mediaBuffer.byteLength > MAX_PROXY_MEDIA_BYTES) {
+        return NextResponse.json(
+          { ok: false, error: 'payload_too_large' },
+          { status: 413, headers: NO_STORE_HEADERS }
+        );
+      }
+      return new NextResponse(mediaBuffer, { status: 200, headers });
+    } finally {
+      releaseSlot();
+    }
   } catch (err) {
+    releaseSlot();
     console.error('[API /api/media-proxy] Upstream error:', err);
     return NextResponse.json(
       { ok: false, error: 'proxy_fetch_failed' },

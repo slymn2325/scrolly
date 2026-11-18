@@ -2,6 +2,7 @@
 
 import React from 'react';
 import Link from 'next/link';
+import { sanitizeInternalRedirectPath } from '@/lib/originPolicy';
 
 interface ProfileReturnControlProps {
   returnToProfile: boolean;
@@ -18,7 +19,7 @@ export default function ProfileReturnControl({
   testId,
   children,
 }: ProfileReturnControlProps) {
-  const targetHref = returnToProfile ? '/?tab=profile' : href;
+  const targetHref = returnToProfile ? '/?tab=profile' : sanitizeInternalRedirectPath(href, '/');
 
   return (
     <Link href={targetHref} className={className} data-testid={testId}>

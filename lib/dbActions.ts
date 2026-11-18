@@ -16,6 +16,7 @@ import {
 } from '@/lib/duelStore';
 import type { CategoryId } from '@/types/fact';
 import type { SavedVocabularyEntry, VocabPartOfSpeech } from '@/types/vocabulary';
+import { sanitizeDisplayText } from '@/lib/originPolicy';
 
 export interface PersistedProfileDto {
   deviceId: string;
@@ -61,6 +62,7 @@ export interface ProfileUpsertInput {
 
 export interface DbLeaderboardRow {
   deviceId: string;
+  userId?: string | null;
   username: string;
   handle?: string;
   score: number;
@@ -221,8 +223,7 @@ export function sanitizeNonNegInt(value: unknown, fallback = 0, max = 5_000_000)
 }
 
 export function sanitizeUsername(raw: unknown): string {
-  const clean = String(raw || '').trim().slice(0, 28);
-  return clean || 'Merak Kâşifi';
+  return sanitizeDisplayText(raw, 28, 'Merak Kâşifi');
 }
 
 export function sanitizeHandle(raw: unknown): string {
@@ -677,46 +678,12 @@ export async function upsertProfileState(
       ? sanitizeHandle(input.handle)
       : prev?.handle || '';
 
-  // Never trust client XP — only server awards (/api/events, quiz) mutate XP.
-  const prevXp = prev?.xp ?? 0;
-  const boundedXp = prevXp;
-
-  const prevWeekly = prev?.weeklyXp ?? 0;
-  const boundedWeekly = prevWeekly;
-
-  const prevQuizDate = sanitizeDateStr(prev?.lastDailyQuizDate);
-  const rawIncomingDate = sanitizeDateStr(input.lastDailyQuizDate);
-  const incomingQuizDate =
-    rawIncomingDate && isDateNearUtc(rawIncomingDate) ? rawIncomingDate : '';
-
-  const prevDailyBest = prev?.dailyBestScore ?? 0;
-  const reqDaily =
-    typeof input.dailyBestScore === 'number'
-      ? sanitizeNonNegInt(input.dailyBestScore, prevDailyBest, 50000)
-      : prevDailyBest;
-
-  let nextDailyQuizDate = prevQuizDate;
-  let finalDailyBest = prevDailyBest;
-  if (incomingQuizDate) {
-    if (!prevQuizDate || incomingQuizDate > prevQuizDate) {
-      nextDailyQuizDate = incomingQuizDate;
-      finalDailyBest = reqDaily;
-    } else if (incomingQuizDate === prevQuizDate) {
-      nextDailyQuizDate = prevQuizDate;
-      finalDailyBest = Math.max(prevDailyBest, reqDaily);
-    }
-    // If incomingQuizDate < prevQuizDate, ignore stale client date & preserve newer dailyBestScore
-  } else if (!prevQuizDate && reqDaily > 0) {
-    nextDailyQuizDate = today;
-    finalDailyBest = reqDaily;
-  }
-
-  const prevStreak = prev?.streak ?? 0;
-  const reqStreak =
-    typeof input.streak === 'number'
-      ? sanitizeNonNegInt(input.streak, prevStreak, 36500)
-      : prevStreak;
-  const streak = Math.max(0, prevStreak, reqStreak);
+  // Never trust client XP, dailyBestScore, or streak — only server awards (/api/events, /api/leaderboard) mutate them.
+  const boundedXp = prev?.xp ?? 0;
+  const boundedWeekly = prev?.weeklyXp ?? 0;
+  const nextDailyQuizDate = sanitizeDateStr(prev?.lastDailyQuizDate);
+  const finalDailyBest = prev?.dailyBestScore ?? 0;
+  const streak = prev?.streak ?? 0;
 
   const mergedSeen = sanitizeStringArray(
     [...(prev?.seenIds ?? []), ...(input.seenIds ?? [])],
@@ -997,6 +964,7 @@ export async function getLeaderboardRows(
               : p.xp;
         return {
           deviceId: p.deviceId,
+          userId: p.userId ?? null,
           username: p.username,
           handle: p.handle || undefined,
           score,
@@ -1018,6 +986,7 @@ export async function getLeaderboardRows(
   if (tab === 'daily') {
     const res = await pool.query<{
       device_id: string;
+      user_id: string | null;
       username: string | null;
       handle: string | null;
       score: number;
@@ -1028,6 +997,7 @@ export async function getLeaderboardRows(
     }>(
       `SELECT
          p.device_id,
+         p.user_id,
          COALESCE(NULLIF(TRIM(p.username), ''), 'Kâşif') AS username,
          COALESCE(p.handle, '') AS handle,
          GREATEST(
@@ -1055,6 +1025,7 @@ export async function getLeaderboardRows(
 
     const mapped = res.rows.map((r) => ({
       deviceId: r.device_id,
+      userId: r.user_id || null,
       username: sanitizeUsername(r.username),
       handle: sanitizeHandle(r.handle) || undefined,
       score: r.score,
@@ -1071,36 +1042,54 @@ export async function getLeaderboardRows(
     };
   }
 
-  const orderColumn =
+  const staticLeaderboardSql =
     tab === 'weekly'
-      ? 'CASE WHEN COALESCE(weekly_xp, 0) > 0 THEN COALESCE(weekly_xp, 0) ELSE COALESCE(xp, 0) END'
-      : 'COALESCE(xp, 0)';
+      ? `SELECT
+           device_id,
+           user_id,
+           COALESCE(NULLIF(TRIM(username), ''), 'Kâşif') AS username,
+           COALESCE(handle, '') AS handle,
+           COALESCE(xp, 0)::INT AS xp,
+           COALESCE(weekly_xp, 0)::INT AS weekly_xp,
+           COALESCE(streak, 0)::INT AS streak,
+           updated_at
+         FROM profiles
+         WHERE COALESCE(xp, 0) > 0 OR COALESCE(weekly_xp, 0) > 0 OR COALESCE(daily_best_score, 0) > 0
+         ORDER BY CASE WHEN COALESCE(weekly_xp, 0) > 0 THEN COALESCE(weekly_xp, 0) ELSE COALESCE(xp, 0) END DESC,
+                  COALESCE(xp, 0) DESC,
+                  COALESCE(streak, 0) DESC,
+                  updated_at DESC
+         LIMIT $1`
+      : `SELECT
+           device_id,
+           user_id,
+           COALESCE(NULLIF(TRIM(username), ''), 'Kâşif') AS username,
+           COALESCE(handle, '') AS handle,
+           COALESCE(xp, 0)::INT AS xp,
+           COALESCE(weekly_xp, 0)::INT AS weekly_xp,
+           COALESCE(streak, 0)::INT AS streak,
+           updated_at
+         FROM profiles
+         WHERE COALESCE(xp, 0) > 0 OR COALESCE(weekly_xp, 0) > 0 OR COALESCE(daily_best_score, 0) > 0
+         ORDER BY COALESCE(xp, 0) DESC,
+                  COALESCE(streak, 0) DESC,
+                  updated_at DESC
+         LIMIT $1`;
+
   const res = await pool.query<{
     device_id: string;
+    user_id: string | null;
     username: string | null;
     handle: string | null;
     xp: number;
     weekly_xp: number;
     streak: number;
     updated_at: Date | string;
-  }>(
-    `SELECT
-       device_id,
-       COALESCE(NULLIF(TRIM(username), ''), 'Kâşif') AS username,
-       COALESCE(handle, '') AS handle,
-       COALESCE(xp, 0)::INT AS xp,
-       COALESCE(weekly_xp, 0)::INT AS weekly_xp,
-       COALESCE(streak, 0)::INT AS streak,
-       updated_at
-     FROM profiles
-     WHERE COALESCE(xp, 0) > 0 OR COALESCE(weekly_xp, 0) > 0 OR COALESCE(daily_best_score, 0) > 0
-     ORDER BY ${orderColumn} DESC, COALESCE(xp, 0) DESC, COALESCE(streak, 0) DESC, updated_at DESC
-     LIMIT $1`,
-    [safeLimit]
-  );
+  }>(staticLeaderboardSql, [safeLimit]);
 
   const mapped = res.rows.map((r) => ({
     deviceId: r.device_id,
+    userId: r.user_id || null,
     username: sanitizeUsername(r.username),
     handle: sanitizeHandle(r.handle) || undefined,
     score: tab === 'weekly' ? (r.weekly_xp > 0 ? r.weekly_xp : r.xp) : r.xp,
@@ -1126,19 +1115,19 @@ export async function recordQuizSubmission(input: {
   correctCount: number;
   totalQuestions: number;
   clientDate?: string;
-}): Promise<{ persisted: boolean }> {
+}): Promise<{ persisted: boolean; xpAwarded: number; safeScore: number }> {
   if (!isValidDeviceId(input.deviceId)) {
-    return { persisted: false };
+    return { persisted: false, xpAwarded: 0, safeScore: 0 };
   }
   const cleanId = input.deviceId.trim().slice(0, 128);
 
   const username = sanitizeUsername(input.username);
   const handle = sanitizeHandle(input.handle);
-  // Cap client-reported quiz score before any XP award (anti-farm).
-  const safeScore = sanitizeNonNegInt(input.score, 0, 100);
-  const safeCorrect = sanitizeNonNegInt(input.correctCount, 0, 100);
-  const safeTotal = sanitizeNonNegInt(input.totalQuestions, 1, 100);
-  const xpAward = Math.min(50, safeScore);
+  // Cap client-reported quiz score and correct answers before any XP award (anti-farm).
+  const safeTotal = sanitizeNonNegInt(input.totalQuestions, 1, 15);
+  const safeCorrect = Math.min(safeTotal, sanitizeNonNegInt(input.correctCount, 0, 15));
+  const safeScore = safeCorrect === 0 ? 0 : sanitizeNonNegInt(input.score, 0, 100);
+  let xpAward = safeCorrect === 0 ? 0 : Math.min(50, safeCorrect * 10, safeScore);
   const cleanClientDate = sanitizeDateStr(input.clientDate);
   const quizDate =
     cleanClientDate && isDateNearUtc(cleanClientDate)
@@ -1147,26 +1136,52 @@ export async function recordQuizSubmission(input: {
 
   const dedupeKey = `${cleanId}:${input.mode}:${safeScore}:${safeCorrect}`;
   if (isDuplicateRecentSubmission(dedupeKey)) {
-    return { persisted: hasDatabaseUrl() };
+    return { persisted: hasDatabaseUrl(), xpAwarded: 0, safeScore };
   }
 
   if (!hasDatabaseUrl()) {
+    const nowMs = Date.now();
     const subs = getMemoryQuizSubmissions();
+    if (input.mode === 'daily') {
+      const alreadySubmittedDaily = subs.some(
+        (s) => s.deviceId === cleanId && s.mode === 'daily' && s.quizDate === quizDate
+      );
+      if (alreadySubmittedDaily) {
+        xpAward = 0;
+      }
+    } else {
+      const recentSameMode = subs.some(
+        (s) =>
+          s.deviceId === cleanId &&
+          s.mode === input.mode &&
+          nowMs - s.createdAtMs < 15_000
+      );
+      const count1h = subs.filter(
+        (s) => s.deviceId === cleanId && s.score > 0 && nowMs - s.createdAtMs < 3_600_000
+      ).length;
+      const count24h = subs.filter(
+        (s) => s.deviceId === cleanId && s.score > 0 && nowMs - s.createdAtMs < 86_400_000
+      ).length;
+      if (recentSameMode || count1h >= 8 || count24h >= 25) {
+        xpAward = 0;
+      }
+    }
+
     subs.push({
       deviceId: cleanId,
       username,
       mode: input.mode,
-      score: safeScore,
+      score: xpAward > 0 ? safeScore : 0,
       correctCount: safeCorrect,
       totalQuestions: safeTotal,
       quizDate,
-      createdAtMs: Date.now(),
+      createdAtMs: nowMs,
     });
     if (subs.length > 500) subs.splice(0, subs.length - 500);
 
     const map = getMemoryProfileMap();
     const prev = map.get(cleanId);
-    const nowIso = new Date().toISOString();
+    const nowIso = new Date(nowMs).toISOString();
     const nextDailyBest =
       input.mode === 'daily'
         ? prev && prev.lastDailyQuizDate === quizDate
@@ -1175,7 +1190,20 @@ export async function recordQuizSubmission(input: {
         : prev?.dailyBestScore ?? 0;
     const nextDailyDate =
       input.mode === 'daily' ? quizDate : prev?.lastDailyQuizDate ?? '';
-    const earnedActivity = safeScore > 0 || safeCorrect > 0;
+
+    const todayStr = new Date(nowMs).toISOString().slice(0, 10);
+    const yesterdayStr = new Date(nowMs - 86_400_000).toISOString().slice(0, 10);
+    let nextStreak = prev?.streak ?? 0;
+    if (xpAward > 0) {
+      const prevVisit = sanitizeDateStr(prev?.lastVisitDate);
+      if (prevVisit === todayStr) {
+        nextStreak = Math.max(prev?.streak ?? 0, 1);
+      } else if (prevVisit === yesterdayStr) {
+        nextStreak = (prev?.streak ?? 0) + 1;
+      } else {
+        nextStreak = 1;
+      }
+    }
 
     map.set(cleanId, {
       deviceId: cleanId,
@@ -1186,8 +1214,8 @@ export async function recordQuizSubmission(input: {
       weeklyXp: (prev?.weeklyXp ?? 0) + xpAward,
       dailyBestScore: nextDailyBest,
       lastDailyQuizDate: nextDailyDate,
-      streak: Math.max(prev?.streak ?? 0, earnedActivity ? 1 : 0),
-      lastVisitDate: prev?.lastVisitDate || quizDate,
+      streak: nextStreak,
+      lastVisitDate: xpAward > 0 ? todayStr : prev?.lastVisitDate || quizDate,
       seenIds: prev?.seenIds ?? [],
       favoriteIds: prev?.favoriteIds ?? [],
       likedIds: prev?.likedIds ?? [],
@@ -1197,12 +1225,11 @@ export async function recordQuizSubmission(input: {
       badges: prev?.badges ?? [],
       updatedAt: nowIso,
     });
-    return { persisted: false };
+    return { persisted: false, xpAwarded: xpAward, safeScore };
   }
 
   await ensureSchema();
   const pool = getPool();
-  const earnedStreak = safeScore > 0 || safeCorrect > 0 ? 1 : 0;
 
   if (input.mode === 'daily') {
     const quizInsert = await pool.query<{ id: number }>(
@@ -1227,21 +1254,46 @@ export async function recordQuizSubmission(input: {
          WHERE device_id = $1`,
         [cleanId, username, handle, safeScore, quizDate]
       );
-      return { persisted: true };
+      return { persisted: true, xpAwarded: 0, safeScore };
     }
   } else {
-    await pool.query(
-      `INSERT INTO quiz_submissions (device_id, username, mode, score, correct_count, total_questions, quiz_date)
-       VALUES ($1, $2, $3, $4, $5, $6, $7)`,
-      [cleanId, username, input.mode, safeScore, safeCorrect, safeTotal, quizDate]
+    const rateCheck = await pool.query<{
+      recent_same_mode: boolean;
+      count_1h: number;
+      count_24h: number;
+    }>(
+      `SELECT
+         EXISTS (
+           SELECT 1 FROM quiz_submissions
+           WHERE device_id = $1 AND mode = $2 AND created_at > NOW() - INTERVAL '15 seconds'
+         ) AS recent_same_mode,
+         COUNT(*) FILTER (WHERE score > 0 AND created_at > NOW() - INTERVAL '1 hour')::INT AS count_1h,
+         COUNT(*) FILTER (WHERE score > 0 AND created_at > NOW() - INTERVAL '24 hours')::INT AS count_24h
+       FROM quiz_submissions
+       WHERE device_id = $1`,
+      [cleanId, input.mode]
     );
+    const rc = rateCheck.rows[0];
+    if (rc?.recent_same_mode || Number(rc?.count_1h ?? 0) >= 8 || Number(rc?.count_24h ?? 0) >= 25) {
+      xpAward = 0;
+    }
+
+    if (xpAward > 0) {
+      await pool.query(
+        `INSERT INTO quiz_submissions (device_id, username, mode, score, correct_count, total_questions, quiz_date)
+         VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+        [cleanId, username, input.mode, safeScore, safeCorrect, safeTotal, quizDate]
+      );
+    }
   }
+
+  const earnedStreak = xpAward > 0 ? 1 : 0;
 
   await pool.query(
     `INSERT INTO profiles (
       device_id, username, handle, xp, weekly_xp, daily_best_score, last_daily_quiz_date, last_visit_date, last_active_date, streak, updated_at
     ) VALUES (
-      $1, $2, $3, $4, $4, $5, $6, $7, CURRENT_DATE, $9, NOW()
+      $1, $2, $3, $4, $4, $5, $6, $7, CASE WHEN $4 > 0 THEN CURRENT_DATE ELSE NULL END, $9, NOW()
     )
     ON CONFLICT (device_id) DO UPDATE SET
       username = EXCLUDED.username,
@@ -1259,8 +1311,16 @@ export async function recordQuizSubmission(input: {
         WHEN $8 = 'daily' THEN GREATEST(COALESCE(profiles.last_daily_quiz_date, ''), $7)
         ELSE COALESCE(profiles.last_daily_quiz_date, '')
       END,
-      streak = GREATEST(COALESCE(profiles.streak, 0), $9),
-      last_active_date = CURRENT_DATE,
+      streak = CASE
+        WHEN $4 > 0 THEN
+          CASE
+            WHEN profiles.last_active_date = CURRENT_DATE THEN GREATEST(COALESCE(profiles.streak, 0), 1)
+            WHEN profiles.last_active_date = (CURRENT_DATE - INTERVAL '1 day')::date THEN COALESCE(profiles.streak, 0) + 1
+            ELSE 1
+          END
+        ELSE COALESCE(profiles.streak, 0)
+      END,
+      last_active_date = CASE WHEN $4 > 0 THEN CURRENT_DATE ELSE profiles.last_active_date END,
       updated_at = NOW()`,
     [
       cleanId,
@@ -1275,7 +1335,7 @@ export async function recordQuizSubmission(input: {
     ]
   );
 
-  return { persisted: true };
+  return { persisted: true, xpAwarded: xpAward, safeScore };
 }
 
 // =========================================================================
@@ -1291,6 +1351,7 @@ function mapDbRoomRow(row: {
   host_id: string;
   players: unknown;
   kicked_ids: unknown;
+  kicked_actor_keys?: unknown;
   status: string;
   starts_at: Date | string | null;
   created_at: Date | string;
@@ -1305,6 +1366,9 @@ function mapDbRoomRow(row: {
     hostId: String(row.host_id),
     players: Array.isArray(row.players) ? (row.players as ScrollaPlayer[]) : [],
     kickedIds: Array.isArray(row.kicked_ids) ? (row.kicked_ids as string[]) : [],
+    kickedActorKeys: Array.isArray(row.kicked_actor_keys)
+      ? (row.kicked_actor_keys as string[])
+      : [],
     status: (row.status || 'lobby') as ScrollaRoomStatus,
     startsAt:
       row.starts_at instanceof Date
@@ -1321,6 +1385,7 @@ function mapDbRoomRow(row: {
 
 export async function createDuelRoomDb(params: {
   hostId: string;
+  hostActorKey?: string;
   hostName: string;
   hostEmoji?: string;
   category: CategoryFilter;
@@ -1355,6 +1420,7 @@ export async function createDuelRoomDb(params: {
       score: null,
       finishedAt: null,
       joinedAt: nowIso,
+      ...(params.hostActorKey ? { actorKey: params.hostActorKey } : {}),
     };
     const room: ScrollaRoom = {
       code,
@@ -1365,6 +1431,7 @@ export async function createDuelRoomDb(params: {
       hostId: hostPlayer.id,
       players: [hostPlayer],
       kickedIds: [],
+      kickedActorKeys: [],
       status: 'lobby',
       startsAt: null,
       createdAt: nowIso,
@@ -1389,15 +1456,16 @@ export async function createDuelRoomDb(params: {
     score: null,
     finishedAt: null,
     joinedAt: nowPlaceholder,
+    ...(params.hostActorKey ? { actorKey: params.hostActorKey } : {}),
   };
 
   for (let attempt = 0; attempt < 6; attempt += 1) {
     const code = generateRoomCode(6);
     const res = await pool.query(
       `INSERT INTO duel_rooms (
-        code, mode, category, question_count, card_ids, host_id, players, kicked_ids, status, starts_at, created_at, updated_at
+        code, mode, category, question_count, card_ids, host_id, players, kicked_ids, kicked_actor_keys, status, starts_at, created_at, updated_at
       ) VALUES (
-        $1, 'duel', $2, $3, $4::jsonb, $5, $6::jsonb, '[]'::jsonb, 'lobby', NULL, NOW(), NOW()
+        $1, 'duel', $2, $3, $4::jsonb, $5, $6::jsonb, '[]'::jsonb, '[]'::jsonb, 'lobby', NULL, NOW(), NOW()
       )
       ON CONFLICT (code) DO NOTHING
       RETURNING *, NOW() AS db_now`,
@@ -1532,8 +1600,9 @@ export async function mutateDuelRoomDb(
          SET host_id = $2,
              players = $3::jsonb,
              kicked_ids = $4::jsonb,
-             status = $5,
-             starts_at = $6,
+             kicked_actor_keys = $5::jsonb,
+             status = $6,
+             starts_at = $7,
              updated_at = NOW()
          WHERE code = $1`,
         [
@@ -1541,6 +1610,7 @@ export async function mutateDuelRoomDb(
           next.hostId,
           JSON.stringify(next.players),
           JSON.stringify(next.kickedIds),
+          JSON.stringify(next.kickedActorKeys ?? []),
           next.status,
           next.startsAt,
         ]

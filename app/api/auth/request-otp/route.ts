@@ -1,10 +1,15 @@
 import { NextResponse } from 'next/server';
 import {
+  canonicalizeEmail,
+  isValidEmailFormat,
+  normalizeEmail,
   OTP_COOLDOWN_SECONDS,
   OTP_TTL_SECONDS,
   requestOtpChallenge,
 } from '@/lib/auth';
+import { isDisposableEmailDomain } from '@/lib/disposableDomains';
 import { checkRateLimit, extractClientIp } from '@/lib/rateLimit';
+import { enforceSameOrigin, readJsonBodyWithLimit } from '@/lib/requestSecurity';
 import type { RequestOtpPayload, RequestOtpResponse } from '@/types/auth';
 
 export const dynamic = 'force-dynamic';
@@ -14,8 +19,11 @@ const NO_STORE_HEADERS = {
 };
 
 export async function POST(request: Request) {
+  const originErr = enforceSameOrigin(request);
+  if (originErr) return originErr;
+
   const clientIp = extractClientIp(request);
-  const rl = checkRateLimit(`auth_request_otp:${clientIp}`, 20, 10 * 60_000);
+  const rl = checkRateLimit(`auth_request_otp_ip:${clientIp}`, 10, 10 * 60_000);
   if (!rl.allowed) {
     const errPayload: RequestOtpResponse = {
       ok: false,
@@ -30,26 +38,84 @@ export async function POST(request: Request) {
     });
   }
 
-  let body: Partial<RequestOtpPayload>;
-  try {
-    body = (await request.json()) as Partial<RequestOtpPayload>;
-  } catch {
+  const parsed = await readJsonBodyWithLimit<Partial<RequestOtpPayload>>(request, 4 * 1024);
+  if (!parsed.ok) {
     const errPayload: RequestOtpResponse = {
       ok: false,
       cooldownSec: 0,
       expiresInSec: OTP_TTL_SECONDS,
       delivery: 'resend',
-      error: 'Invalid JSON request body.',
+      error: parsed.status === 413 ? 'Request body too large.' : 'Invalid JSON request body.',
     };
-    return NextResponse.json(errPayload, { status: 400, headers: NO_STORE_HEADERS });
+    return NextResponse.json(errPayload, { status: parsed.status, headers: NO_STORE_HEADERS });
   }
+  const body = parsed.data;
 
   const lang = body.lang === 'en' ? 'en' : 'tr';
-  const email = typeof body.email === 'string' ? body.email : '';
+  const rawEmail = typeof body.email === 'string' ? body.email : '';
+  const cleanEmail = normalizeEmail(rawEmail);
+  const canonical = canonicalizeEmail(cleanEmail);
+
+  if (isValidEmailFormat(cleanEmail) && !isDisposableEmailDomain(cleanEmail)) {
+    const burstLimit = checkRateLimit(`auth_request_otp_burst:${canonical}`, 1, 55_000);
+    if (!burstLimit.allowed) {
+      const waitSec = Math.max(1, burstLimit.retryAfterSec);
+      const errPayload: RequestOtpResponse = {
+        ok: false,
+        cooldownSec: waitSec,
+        expiresInSec: OTP_TTL_SECONDS,
+        delivery: 'resend',
+        error:
+          lang === 'en'
+            ? `Please wait ${waitSec} seconds before requesting a new code.`
+            : `Yeni bir kod istemeden önce lütfen ${waitSec} saniye bekleyin.`,
+      };
+      return NextResponse.json(errPayload, {
+        status: 429,
+        headers: { ...NO_STORE_HEADERS, 'Retry-After': String(waitSec) },
+      });
+    }
+
+    const emailLimit = checkRateLimit(`auth_request_otp_email:${canonical}`, 3, 10 * 60_000);
+    if (!emailLimit.allowed) {
+      const errPayload: RequestOtpResponse = {
+        ok: false,
+        cooldownSec: emailLimit.retryAfterSec,
+        expiresInSec: OTP_TTL_SECONDS,
+        delivery: 'resend',
+        error:
+          lang === 'en'
+            ? 'Too many verification code requests for this email. Please wait a few minutes.'
+            : 'Bu e-posta için çok fazla doğrulama kodu istendi. Lütfen birkaç dakika bekleyin.',
+      };
+      return NextResponse.json(errPayload, {
+        status: 429,
+        headers: { ...NO_STORE_HEADERS, 'Retry-After': String(emailLimit.retryAfterSec) },
+      });
+    }
+
+    const globalLimit = checkRateLimit('auth_request_otp_global', 100, 60 * 60_000);
+    if (!globalLimit.allowed) {
+      const errPayload: RequestOtpResponse = {
+        ok: false,
+        cooldownSec: globalLimit.retryAfterSec,
+        expiresInSec: OTP_TTL_SECONDS,
+        delivery: 'resend',
+        error:
+          lang === 'en'
+            ? 'Verification service is temporarily busy. Please try again shortly.'
+            : 'Doğrulama servisi şu anda yoğun. Lütfen kısa süre sonra tekrar deneyin.',
+      };
+      return NextResponse.json(errPayload, {
+        status: 429,
+        headers: { ...NO_STORE_HEADERS, 'Retry-After': String(globalLimit.retryAfterSec) },
+      });
+    }
+  }
 
   try {
     const outcome = await requestOtpChallenge({
-      email,
+      email: rawEmail,
       lang,
       clientIp,
     });

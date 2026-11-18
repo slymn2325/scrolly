@@ -1,4 +1,15 @@
 import type { CategoryFilter } from '@/i18n/translations';
+import { sanitizeDisplayText } from '@/lib/originPolicy';
+
+const ALLOWED_REACTION_GIF_HOSTS = new Set([
+  'media.giphy.com',
+  'media0.giphy.com',
+  'media1.giphy.com',
+  'media2.giphy.com',
+  'media3.giphy.com',
+  'media4.giphy.com',
+  'i.giphy.com',
+]);
 
 export const DUEL_VALID_CATEGORIES: ReadonlySet<CategoryFilter> = new Set<CategoryFilter>([
   'all',
@@ -42,6 +53,7 @@ export interface ScrollaPlayer {
   elapsedSec?: number | null;
   answers?: boolean[] | null;
   reactionGif?: ScrollaReactionGif | null;
+  actorKey?: string;
 }
 
 export type ScrollaRoomStatus = 'lobby' | 'countdown' | 'started';
@@ -55,6 +67,7 @@ export interface ScrollaRoom {
   hostId: string;
   players: ScrollaPlayer[];
   kickedIds: string[];
+  kickedActorKeys?: string[];
   status: ScrollaRoomStatus;
   startsAt: string | null;
   createdAt: string;
@@ -129,13 +142,12 @@ export function getMemoryDuelMap(): Map<string, ScrollaRoom> {
 }
 
 export function sanitizePlayerName(name?: string | null): string {
-  const clean = String(name || '').trim().slice(0, 24);
-  return clean || 'Kâşif';
+  return sanitizeDisplayText(name, 24, 'Kâşif');
 }
 
 export function sanitizePlayerEmoji(emoji?: string | null): string {
-  const clean = String(emoji || '').trim();
-  return clean && clean.length <= 12 ? clean : '⚡';
+  const clean = sanitizeDisplayText(emoji, 12);
+  return clean || '⚡';
 }
 
 export function sanitizeElapsedSec(raw: unknown): number | null {
@@ -159,11 +171,20 @@ export function sanitizeReactionGifUrl(raw: unknown): string | null {
   try {
     const parsed = new URL(trimmed);
     if (parsed.protocol !== 'https:') return null;
-    if (parsed.username || parsed.password) return null;
+    if (parsed.username || parsed.password || parsed.port !== '') return null;
+    if (!ALLOWED_REACTION_GIF_HOSTS.has(parsed.hostname.toLowerCase())) return null;
     return parsed.toString();
   } catch {
     return null;
   }
+}
+
+export function toPublicScrollaRoom(room: ScrollaRoom): ScrollaRoom {
+  const { kickedActorKeys: _ignoredKeys, players, ...rest } = room;
+  return {
+    ...rest,
+    players: players.map(({ actorKey: _ignoredActor, ...playerRest }) => playerRest),
+  };
 }
 
 /**

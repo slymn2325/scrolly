@@ -276,7 +276,7 @@ export async function fetchLeaderboardEntries(
   try {
     const res = await fetch(
       `/api/leaderboard?tab=${encodeURIComponent(tab)}&deviceId=${encodeURIComponent(myDeviceId)}`,
-      { cache: 'no-store' }
+      { cache: 'no-store', credentials: 'same-origin' }
     );
 
     if (!res.ok) {
@@ -294,6 +294,7 @@ export async function fetchLeaderboardEntries(
       source?: 'postgres' | 'local';
       entries?: Array<{
         deviceId: string;
+        isCurrentUser?: boolean;
         username: string;
         score: number;
         xp: number;
@@ -316,7 +317,8 @@ export async function fetchLeaderboardEntries(
     }
 
     const mapped: Omit<LeaderboardEntry, 'rank' | 'zone'>[] = serverRows.map((row) => {
-      const isMe = row.deviceId === myDeviceId;
+      const isMe =
+        typeof row.isCurrentUser === 'boolean' ? row.isCurrentUser : row.deviceId === myDeviceId;
       const rowXp = Number(row.xp || row.score || 0);
       const parsedStreak = Number(row.streak ?? 0);
       const rowStreak = Number.isFinite(parsedStreak) ? Math.max(0, Math.floor(parsedStreak)) : 0;
@@ -373,6 +375,7 @@ export async function submitQuizScoreToLeaderboard(params: {
     );
     await fetch('/api/leaderboard', {
       method: 'POST',
+      credentials: 'same-origin',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         deviceId,

@@ -4,6 +4,7 @@ import SingleFactView from '@/components/SingleFactView';
 import { getSampleArticleBody } from '@/data/sampleArticleBodies';
 import { getCategoryMeta, type Language } from '@/i18n/translations';
 import { getAllFactsServer, getFactBySlugServer } from '@/lib/db';
+import { safeJsonLdStringify } from '@/lib/originPolicy';
 import type { FactCard } from '@/types/fact';
 import { buildFactDocumentTitle, buildFactMetaDescription } from '@/utils/factSeo';
 import {
@@ -272,7 +273,7 @@ export default async function FactDetailPageContent({
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{
-          __html: JSON.stringify(jsonLd).replace(/</g, '\\u003c'),
+          __html: safeJsonLdStringify(jsonLd),
         }}
       />
       <SingleFactView

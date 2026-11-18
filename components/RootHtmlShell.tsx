@@ -2,8 +2,12 @@ import React from 'react';
 import Script from 'next/script';
 import type { Language } from '@/i18n/translations';
 import { fontVariableClassName } from '@/lib/fonts';
+import { safeJsonLdStringify } from '@/lib/originPolicy';
 
-const GTM_ID = process.env.NEXT_PUBLIC_GTM_ID || 'GTM-TQ6VVKM7';
+const RAW_GTM_ID = process.env.NEXT_PUBLIC_GTM_ID || 'GTM-TQ6VVKM7';
+const GTM_ID = /^GTM-[A-Z0-9]{4,16}$/i.test(RAW_GTM_ID.trim())
+  ? RAW_GTM_ID.trim()
+  : 'GTM-TQ6VVKM7';
 
 const CONSENT_MODE_BOOTSTRAP_SCRIPT = `
 window.dataLayer = window.dataLayer || [];
@@ -78,7 +82,7 @@ export default function RootHtmlShell({ lang, jsonLd, children }: RootHtmlShellP
           <script
             type="application/ld+json"
             dangerouslySetInnerHTML={{
-              __html: JSON.stringify(jsonLd).replace(/</g, '\\u003c'),
+              __html: safeJsonLdStringify(jsonLd),
             }}
           />
         ) : null}

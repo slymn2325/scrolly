@@ -3,17 +3,53 @@ import { getSessionUserFromRequest, syncAuthenticatedUserFromProfile } from '@/l
 import {
   getProfileByDeviceId,
   isValidDeviceId,
+  type PersistedProfileDto,
   sanitizeVocabNotebook,
   upsertProfileState,
 } from '@/lib/dbActions';
 import { checkRateLimit, extractClientIp } from '@/lib/rateLimit';
-import type { LocalMemorySnapshot } from '@/types/auth';
+import {
+  enforceSameOrigin,
+  readJsonBodyWithLimit,
+  readSignedDeviceIdFromRequest,
+  setSignedDeviceCookie,
+} from '@/lib/requestSecurity';
+import type { AuthUserDto, LocalMemorySnapshot } from '@/types/auth';
 
 export const dynamic = 'force-dynamic';
 
 const NO_STORE_HEADERS = {
   'Cache-Control': 'no-store, max-age=0',
 };
+
+function isProfileOwnerOrAllowed(params: {
+  requestedDeviceId: string;
+  existingUserId: string | null | undefined;
+  boundDeviceId: string | null;
+  sessionUser: AuthUserDto | null;
+  allowNewReset: boolean;
+}): boolean {
+  const { requestedDeviceId, existingUserId, boundDeviceId, sessionUser, allowNewReset } = params;
+  if (existingUserId) {
+    return Boolean(sessionUser && sessionUser.id === existingUserId);
+  }
+  if (boundDeviceId && boundDeviceId !== requestedDeviceId) {
+    return Boolean(allowNewReset || (sessionUser && sessionUser.linkedDeviceIds.includes(requestedDeviceId)));
+  }
+  return true;
+}
+
+function sanitizeProfileResponse(
+  profile: PersistedProfileDto | null,
+  sessionUser: AuthUserDto | null
+): PersistedProfileDto | Omit<PersistedProfileDto, 'userId'> | null {
+  if (!profile) return null;
+  if (!sessionUser || sessionUser.id !== profile.userId) {
+    const { userId: _ignoredUserId, ...rest } = profile;
+    return rest;
+  }
+  return profile;
+}
 
 export async function GET(request: Request) {
   const ip = extractClientIp(request);
@@ -34,16 +70,40 @@ export async function GET(request: Request) {
     );
   }
 
+  const boundDeviceId = readSignedDeviceIdFromRequest(request);
+  const sessionUser = await getSessionUserFromRequest(request).catch(() => null);
+
   try {
     const result = await getProfileByDeviceId(deviceId);
-    return NextResponse.json(
+    if (
+      !isProfileOwnerOrAllowed({
+        requestedDeviceId: deviceId,
+        existingUserId: result.profile?.userId ?? null,
+        boundDeviceId,
+        sessionUser,
+        allowNewReset: false,
+      })
+    ) {
+      return NextResponse.json(
+        { ok: false, error: 'forbidden' },
+        { status: 403, headers: NO_STORE_HEADERS }
+      );
+    }
+
+    const response = NextResponse.json(
       {
         ok: true,
         persisted: result.persisted,
-        profile: result.profile,
+        profile: sanitizeProfileResponse(result.profile, sessionUser),
       },
       { headers: NO_STORE_HEADERS }
     );
+
+    if (!boundDeviceId && (!result.profile?.userId || result.profile.userId === sessionUser?.id)) {
+      setSignedDeviceCookie(response, deviceId, request);
+    }
+
+    return response;
   } catch (err) {
     console.warn('[API /api/profile GET] DB degraded cleanly:', err);
     return NextResponse.json(
@@ -54,6 +114,9 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
+  const originErr = enforceSameOrigin(request);
+  if (originErr) return originErr;
+
   const ip = extractClientIp(request);
   const rl = checkRateLimit(`profile_post:${ip}`, 120, 60_000);
   if (!rl.allowed) {
@@ -63,8 +126,16 @@ export async function POST(request: Request) {
     );
   }
 
+  const parsed = await readJsonBodyWithLimit<Record<string, unknown>>(request, 256 * 1024);
+  if (!parsed.ok) {
+    return NextResponse.json(
+      { ok: false, error: parsed.error },
+      { status: parsed.status, headers: NO_STORE_HEADERS }
+    );
+  }
+  const body = parsed.data;
+
   try {
-    const body = (await request.json()) as Record<string, unknown>;
     const rawDeviceId = typeof body.deviceId === 'string' ? body.deviceId.trim() : '';
     if (!isValidDeviceId(rawDeviceId)) {
       return NextResponse.json(
@@ -74,7 +145,28 @@ export async function POST(request: Request) {
     }
 
     const isReset = Boolean(body.reset);
+    const boundDeviceId = readSignedDeviceIdFromRequest(request);
     const sessionUser = await getSessionUserFromRequest(request).catch(() => null);
+    const existing = await getProfileByDeviceId(rawDeviceId).catch(() => ({
+      persisted: false,
+      profile: null,
+    }));
+
+    if (
+      !isProfileOwnerOrAllowed({
+        requestedDeviceId: rawDeviceId,
+        existingUserId: existing.profile?.userId ?? null,
+        boundDeviceId,
+        sessionUser,
+        allowNewReset: isReset && !existing.profile,
+      })
+    ) {
+      return NextResponse.json(
+        { ok: false, error: 'forbidden' },
+        { status: 403, headers: NO_STORE_HEADERS }
+      );
+    }
+
     const vocabNotebook = Array.isArray(body.vocabNotebook)
       ? sanitizeVocabNotebook(body.vocabNotebook, 250)
       : undefined;
@@ -85,11 +177,7 @@ export async function POST(request: Request) {
       userId: isReset ? null : sessionUser?.id,
       username: typeof body.username === 'string' ? body.username : undefined,
       handle: typeof body.handle === 'string' ? body.handle : undefined,
-      // XP is server-awarded only — ignore client xp/weeklyXp.
-      dailyBestScore: typeof body.dailyBestScore === 'number' ? body.dailyBestScore : undefined,
-      lastDailyQuizDate:
-        typeof body.lastDailyQuizDate === 'string' ? body.lastDailyQuizDate : undefined,
-      streak: typeof body.streak === 'number' ? body.streak : undefined,
+      // Server-authoritative fields only: ignore client xp/weeklyXp/dailyBestScore/lastDailyQuizDate/streak.
       lastVisitDate: typeof body.lastVisitDate === 'string' ? body.lastVisitDate : undefined,
       seenIds: Array.isArray(body.seenIds) ? (body.seenIds as string[]) : undefined,
       favoriteIds: Array.isArray(body.favoriteIds) ? (body.favoriteIds as string[]) : undefined,
@@ -110,10 +198,7 @@ export async function POST(request: Request) {
     if (sessionUser && !isReset) {
       const snapshot: LocalMemorySnapshot = {
         nickname: typeof body.username === 'string' ? body.username : undefined,
-        // Do not pass client XP into auth sync.
-        dailyBestScore: typeof body.dailyBestScore === 'number' ? body.dailyBestScore : undefined,
-        lastDailyQuizDate:
-          typeof body.lastDailyQuizDate === 'string' ? body.lastDailyQuizDate : undefined,
+        // Ignore client xp/weeklyXp/dailyBestScore/lastDailyQuizDate/streak during profile sync.
         lastVisitDate: typeof body.lastVisitDate === 'string' ? body.lastVisitDate : undefined,
         seenIds: Array.isArray(body.seenIds) ? (body.seenIds as string[]) : undefined,
         favoriteIds: Array.isArray(body.favoriteIds) ? (body.favoriteIds as string[]) : undefined,
@@ -138,14 +223,20 @@ export async function POST(request: Request) {
       });
     }
 
-    return NextResponse.json(
+    const response = NextResponse.json(
       {
         ok: true,
         persisted: result.persisted,
-        profile: result.profile,
+        profile: sanitizeProfileResponse(result.profile, sessionUser),
       },
       { headers: NO_STORE_HEADERS }
     );
+
+    if (!boundDeviceId || (isReset && !existing.profile)) {
+      setSignedDeviceCookie(response, rawDeviceId, request);
+    }
+
+    return response;
   } catch (err) {
     console.warn('[API /api/profile POST] Degraded gracefully:', err);
     return NextResponse.json(

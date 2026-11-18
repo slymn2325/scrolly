@@ -19,6 +19,7 @@ import SiteTrustFooter from '@/components/SiteTrustFooter';
 import { type CategoryId, getCategoryMeta, type Language } from '@/i18n/translations';
 import { CATEGORY_PAGE_SIZE, categoryPagePath, categoryPageUrl } from '@/lib/categoryPages';
 import { getAllFactsServer } from '@/lib/db';
+import { safeJsonLdStringify } from '@/lib/originPolicy';
 import {
   buildCategoryHref,
   buildFactHref,
@@ -209,7 +210,7 @@ export default async function CategoryArchiveView({
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{
-          __html: JSON.stringify(jsonLd).replace(/</g, '\\u003c'),
+          __html: safeJsonLdStringify(jsonLd),
         }}
       />
 

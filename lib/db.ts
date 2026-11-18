@@ -550,6 +550,7 @@ export async function ensureSchema(): Promise<void> {
         CREATE TABLE IF NOT EXISTS auth_otps (
           id TEXT PRIMARY KEY,
           email TEXT NOT NULL,
+          canonical_email TEXT,
           code_hash TEXT NOT NULL,
           expires_at TIMESTAMPTZ NOT NULL,
           attempts INT NOT NULL DEFAULT 0,
@@ -559,9 +560,16 @@ export async function ensureSchema(): Promise<void> {
         );
       `);
 
+      await pool.query(`ALTER TABLE auth_otps ADD COLUMN IF NOT EXISTS canonical_email TEXT;`);
+
       await pool.query(`
         CREATE INDEX IF NOT EXISTS idx_auth_otps_email_created
           ON auth_otps (email, created_at DESC);
+      `);
+
+      await pool.query(`
+        CREATE INDEX IF NOT EXISTS idx_auth_otps_canonical_created
+          ON auth_otps (canonical_email, created_at DESC);
       `);
 
       await pool.query(`
@@ -704,6 +712,7 @@ export async function ensureSchema(): Promise<void> {
           host_id TEXT NOT NULL,
           players JSONB NOT NULL DEFAULT '[]'::jsonb,
           kicked_ids JSONB NOT NULL DEFAULT '[]'::jsonb,
+          kicked_actor_keys JSONB NOT NULL DEFAULT '[]'::jsonb,
           status TEXT NOT NULL DEFAULT 'lobby',
           starts_at TIMESTAMPTZ,
           created_at TIMESTAMPTZ DEFAULT NOW(),
@@ -712,6 +721,7 @@ export async function ensureSchema(): Promise<void> {
       `);
 
       await pool.query(`ALTER TABLE duel_rooms ADD COLUMN IF NOT EXISTS kicked_ids JSONB DEFAULT '[]'::jsonb;`);
+      await pool.query(`ALTER TABLE duel_rooms ADD COLUMN IF NOT EXISTS kicked_actor_keys JSONB DEFAULT '[]'::jsonb;`);
       await pool.query(`ALTER TABLE duel_rooms ADD COLUMN IF NOT EXISTS starts_at TIMESTAMPTZ;`);
       await pool.query(`ALTER TABLE duel_rooms ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT NOW();`);
 
@@ -1212,6 +1222,13 @@ function buildSynthesizedQuiz(input: SynthesizedQuizInput): FactQuizContent {
   };
 }
 
+function sanitizeHttpsMediaUrl(url?: string | null): string | undefined {
+  if (!url) return undefined;
+  const clean = url.trim();
+  if (!clean.startsWith('https://') || /[\s"'<>]/.test(clean)) return undefined;
+  return clean;
+}
+
 export function mapDbRowToFactCard(row: DbFactRow, preloadedSeedFacts?: FactCard[]): FactCard {
   const staticFacts = preloadedSeedFacts ?? loadSeedFactsFromDisk();
   const staticMatch = staticFacts.find(
@@ -1231,6 +1248,8 @@ export function mapDbRowToFactCard(row: DbFactRow, preloadedSeedFacts?: FactCard
         : undefined;
   const safeSourceUrl = sanitizeSourceUrl(row.source_url);
   const safeSourceName = row.source_name?.trim() || undefined;
+  const safeGifUrl = sanitizeHttpsMediaUrl(row.gif_url);
+  const safePosterUrl = sanitizeHttpsMediaUrl(row.poster_url);
 
   if (staticMatch) {
     return {
@@ -1238,12 +1257,12 @@ export function mapDbRowToFactCard(row: DbFactRow, preloadedSeedFacts?: FactCard
       slug: row.slug,
       sketchType: row.sketch_type || staticMatch.id,
       visualQuery: row.visual_query?.trim() || staticMatch.visualQuery,
-      gifUrl: row.gif_url?.trim() || staticMatch.gifUrl,
+      gifUrl: safeGifUrl || staticMatch.gifUrl,
       gifQuery: row.gif_query?.trim() || staticMatch.gifQuery,
       mediaType: row.media_type?.trim() || staticMatch.mediaType,
       mediaSource: row.media_source?.trim() || staticMatch.mediaSource,
       mediaCredit: row.media_credit?.trim() || staticMatch.mediaCredit,
-      posterUrl: row.poster_url?.trim() || staticMatch.posterUrl,
+      posterUrl: safePosterUrl || staticMatch.posterUrl,
       likesCount,
       createdAt,
       sourceName: safeSourceName || staticMatch.sourceName,
@@ -1317,12 +1336,12 @@ export function mapDbRowToFactCard(row: DbFactRow, preloadedSeedFacts?: FactCard
     emoji: visual.emoji,
     sketchType: row.sketch_type || undefined,
     visualQuery: deriveFallbackVisualQuery(row),
-    gifUrl: row.gif_url?.trim() || undefined,
+    gifUrl: safeGifUrl,
     gifQuery: row.gif_query?.trim() || undefined,
     mediaType: row.media_type?.trim() || undefined,
     mediaSource: row.media_source?.trim() || undefined,
     mediaCredit: row.media_credit?.trim() || undefined,
-    posterUrl: row.poster_url?.trim() || undefined,
+    posterUrl: safePosterUrl,
     likesCount,
     createdAt,
     readingTimeSec: 20,
@@ -1587,13 +1606,6 @@ function normalizeCefrLevel(raw: unknown): string | undefined {
   return undefined;
 }
 
-function sanitizeVocabGifUrl(url?: string | null): string | undefined {
-  if (!url) return undefined;
-  const clean = url.trim();
-  if (!clean.startsWith('https://')) return undefined;
-  return clean;
-}
-
 async function seedInitialVocabularyIfMissing(pool: Pool): Promise<void> {
   const staticCards = getVocabularyFacts();
   if (staticCards.length === 0) return;
@@ -1676,7 +1688,8 @@ export function mapDbVocabularyRow(row: DbVocabularyRow): VocabularyCard | null 
     rawIndex >= 0 && rawIndex <= maxIdx ? (rawIndex as 0 | 1 | 2 | 3) : 0;
   const cefrLevel = normalizeCefrLevel(row.cefr_level) ?? 'B2';
   const synonyms = parseVocabSynonyms(row.synonyms);
-  const gifUrl = sanitizeVocabGifUrl(row.gif_url);
+  const gifUrl = sanitizeHttpsMediaUrl(row.gif_url);
+  const posterUrl = sanitizeHttpsMediaUrl(row.poster_url);
   const gifQuery = typeof row.gif_query === 'string' && row.gif_query.trim() ? row.gif_query.trim() : undefined;
 
   return {
@@ -1698,7 +1711,7 @@ export function mapDbVocabularyRow(row: DbVocabularyRow): VocabularyCard | null 
     ...(row.media_type?.trim() ? { mediaType: row.media_type.trim() } : {}),
     ...(row.media_source?.trim() ? { mediaSource: row.media_source.trim() } : {}),
     ...(row.media_credit?.trim() ? { mediaCredit: row.media_credit.trim() } : {}),
-    ...(row.poster_url?.trim() ? { posterUrl: row.poster_url.trim() } : {}),
+    ...(posterUrl ? { posterUrl } : {}),
   };
 }
 

@@ -125,6 +125,7 @@ export default function ContactInteractiveSection({ lang }: ContactInteractiveSe
     try {
       const response = await fetch('/api/contact', {
         method: 'POST',
+        credentials: 'same-origin',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           name: trimmedName,

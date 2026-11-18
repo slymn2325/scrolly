@@ -5,6 +5,7 @@ import HtmlLangSync from '@/components/HtmlLangSync';
 import ProfileReturnControl from '@/components/ProfileReturnControl';
 import SiteTrustFooter from '@/components/SiteTrustFooter';
 import type { Language } from '@/i18n/translations';
+import { safeJsonLdStringify } from '@/lib/originPolicy';
 
 interface TrustPageShellProps {
   routePath: '/about' | '/terms' | '/contact';
@@ -42,7 +43,7 @@ export default function TrustPageShell({
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{
-          __html: JSON.stringify(jsonLd).replace(/</g, '\\u003c'),
+          __html: safeJsonLdStringify(jsonLd),
         }}
       />
       <div lang={isEn ? 'en-US' : 'tr-TR'} className="min-h-dvh w-full overflow-x-clip bg-cik-bg text-cik-text">

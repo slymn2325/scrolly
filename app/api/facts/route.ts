@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { fetchFactsWithSourceServer, fetchVocabularyWithSourceServer, hasDatabaseUrl } from '@/lib/db';
 import { triggerSchedulerTickNonBlocking } from '@/lib/herokuCardScheduler';
+import { checkRateLimit, extractClientIp } from '@/lib/rateLimit';
 import type { CategoryId } from '@/types/fact';
 import { interleaveFactsByCategory } from '@/utils/factsData';
 
@@ -34,46 +35,63 @@ function normalizeCategoryParam(raw: string | null): CategoryId | null {
 }
 
 export async function GET(request: Request) {
-  const { searchParams } = new URL(request.url);
-  const categoryParam = normalizeCategoryParam(searchParams.get('category'));
-  const rawOffset = Number(searchParams.get('offset') ?? '0');
-  const rawLimitParam = searchParams.get('limit');
-  const offset = Number.isFinite(rawOffset) && rawOffset >= 0 ? Math.floor(rawOffset) : 0;
-  const parsedLimit = rawLimitParam !== null ? Number(rawLimitParam) : NaN;
-  const limit =
-    Number.isFinite(parsedLimit) && parsedLimit > 0
-      ? Math.min(500, Math.floor(parsedLimit))
-      : 500;
-
-  const [{ source, entries }, { vocabulary }] = await Promise.all([
-    fetchFactsWithSourceServer(),
-    fetchVocabularyWithSourceServer(),
-  ]);
-  if (hasDatabaseUrl()) {
-    // Non-blocking throttled check for overdue 12h card runs & pending 90/hr GIF queue
-    triggerSchedulerTickNonBlocking();
+  const ip = extractClientIp(request);
+  const rl = checkRateLimit(`facts_get:${ip}`, 120, 60_000);
+  if (!rl.allowed) {
+    return NextResponse.json(
+      { ok: false, error: 'rate_limited' },
+      { status: 429, headers: { ...NO_STORE_HEADERS, 'Retry-After': String(rl.retryAfterSec) } }
+    );
   }
-  const allFacts = entries.map((entry) => entry.fact);
 
-  const ordered =
-    categoryParam !== null
-      ? allFacts.filter((fact) => fact.category === categoryParam)
-      : interleaveFactsByCategory(allFacts);
+  try {
+    const { searchParams } = new URL(request.url);
+    const categoryParam = normalizeCategoryParam(searchParams.get('category'));
+    const rawOffset = Number(searchParams.get('offset') ?? '0');
+    const rawLimitParam = searchParams.get('limit');
+    const offset = Number.isFinite(rawOffset) && rawOffset >= 0 ? Math.floor(rawOffset) : 0;
+    const parsedLimit = rawLimitParam !== null ? Number(rawLimitParam) : NaN;
+    const limit =
+      Number.isFinite(parsedLimit) && parsedLimit > 0
+        ? Math.min(500, Math.floor(parsedLimit))
+        : 500;
 
-  const total = ordered.length;
-  const sliced = ordered.slice(offset, offset + limit);
-  const hasMore = offset + sliced.length < total;
+    const [{ source, entries }, { vocabulary }] = await Promise.all([
+      fetchFactsWithSourceServer(),
+      fetchVocabularyWithSourceServer(),
+    ]);
+    if (hasDatabaseUrl()) {
+      // Non-blocking throttled check for overdue 12h card runs & pending 90/hr GIF queue
+      triggerSchedulerTickNonBlocking();
+    }
+    const allFacts = entries.map((entry) => entry.fact);
 
-  return NextResponse.json(
-    {
-      source,
-      facts: sliced,
-      vocabulary,
-      total,
-      offset,
-      limit,
-      hasMore,
-    },
-    { status: 200, headers: NO_STORE_HEADERS }
-  );
+    const ordered =
+      categoryParam !== null
+        ? allFacts.filter((fact) => fact.category === categoryParam)
+        : interleaveFactsByCategory(allFacts);
+
+    const total = ordered.length;
+    const sliced = ordered.slice(offset, offset + limit);
+    const hasMore = offset + sliced.length < total;
+
+    return NextResponse.json(
+      {
+        source,
+        facts: sliced,
+        vocabulary,
+        total,
+        offset,
+        limit,
+        hasMore,
+      },
+      { status: 200, headers: NO_STORE_HEADERS }
+    );
+  } catch (err) {
+    console.error('[GET /api/facts] Error:', err);
+    return NextResponse.json(
+      { ok: false, error: 'facts_unavailable' },
+      { status: 500, headers: NO_STORE_HEADERS }
+    );
+  }
 }

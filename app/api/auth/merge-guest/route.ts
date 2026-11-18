@@ -1,6 +1,11 @@
 import { NextResponse } from 'next/server';
 import { getSessionUserFromRequest, mergeGuestDataIntoUser } from '@/lib/auth';
 import { checkRateLimit, extractClientIp } from '@/lib/rateLimit';
+import {
+  enforceSameOrigin,
+  readJsonBodyWithLimit,
+  readSignedDeviceIdFromRequest,
+} from '@/lib/requestSecurity';
 import type { LocalMemorySnapshot, MergeGuestPayload, MergeGuestResponse } from '@/types/auth';
 
 export const dynamic = 'force-dynamic';
@@ -10,6 +15,9 @@ const NO_STORE_HEADERS = {
 };
 
 export async function POST(request: Request) {
+  const originErr = enforceSameOrigin(request);
+  if (originErr) return originErr;
+
   const ip = extractClientIp(request);
   const rl = checkRateLimit(`auth_merge_guest:${ip}`, 60, 60_000);
   if (!rl.allowed) {
@@ -36,14 +44,22 @@ export async function POST(request: Request) {
     return NextResponse.json(payload, { status: 401, headers: NO_STORE_HEADERS });
   }
 
-  let body: Partial<MergeGuestPayload> = {};
-  try {
-    body = (await request.json()) as Partial<MergeGuestPayload>;
-  } catch {
-    // Allow empty body if client relies solely on session cookie or defaults
+  const parsed = await readJsonBodyWithLimit<Partial<MergeGuestPayload>>(request, 128 * 1024, {
+    allowEmpty: true,
+  });
+  if (!parsed.ok) {
+    const payload: MergeGuestResponse = {
+      ok: false,
+      authenticated: true,
+      user: sessionUser,
+      error: parsed.error,
+    };
+    return NextResponse.json(payload, { status: parsed.status, headers: NO_STORE_HEADERS });
   }
+  const body = parsed.data;
 
   const guestId = typeof body.guestId === 'string' ? body.guestId : undefined;
+  const boundDeviceId = readSignedDeviceIdFromRequest(request);
   const localSnapshot =
     body.localSnapshot && typeof body.localSnapshot === 'object' && !Array.isArray(body.localSnapshot)
       ? (body.localSnapshot as LocalMemorySnapshot)
@@ -53,6 +69,7 @@ export async function POST(request: Request) {
     const mergedUser = await mergeGuestDataIntoUser({
       userId: sessionUser.id,
       guestId,
+      boundDeviceId,
       localSnapshot,
     });
 
