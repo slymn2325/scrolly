@@ -127,13 +127,14 @@ const contentSecurityPolicy = [
   "frame-ancestors 'none'",
   "form-action 'self'",
   "manifest-src 'self'",
-  "worker-src 'self' blob:",
+  "worker-src 'self' blob: https://scrolly.live",
+  "child-src 'self' blob: https://scrolly.live",
   "font-src 'self' data:",
   "style-src 'self' 'unsafe-inline'",
-  `script-src 'self' 'unsafe-inline'${process.env.NODE_ENV !== 'production' ? " 'unsafe-eval'" : ''} https://www.googletagmanager.com https://www.google-analytics.com https://pagead2.googlesyndication.com https://googleads.g.doubleclick.net https://tpc.googlesyndication.com https://ep1.adtrafficquality.google https://ep2.adtrafficquality.google https://fundingchoicesmessages.google.com`,
+  `script-src 'self' 'unsafe-inline'${process.env.NODE_ENV !== 'production' ? " 'unsafe-eval'" : ''} https://static.cloudflareinsights.com https://www.googletagmanager.com https://www.google-analytics.com https://pagead2.googlesyndication.com https://googleads.g.doubleclick.net https://tpc.googlesyndication.com https://ep1.adtrafficquality.google https://ep2.adtrafficquality.google https://fundingchoicesmessages.google.com`,
   `img-src 'self' data: blob: https://*.pexels.com https://*.pixabay.com https://pixabay.com https://*.giphy.com https://upload.wikimedia.org https://thumb.wikimedia.org https://commons.wikimedia.org https://images.unsplash.com https://apod.nasa.gov https://images-assets.nasa.gov ${googleRegionalOrigins} https://*.google-analytics.com https://analytics.google.com https://*.analytics.google.com https://*.googletagmanager.com https://*.g.doubleclick.net https://*.googlesyndication.com https://*.adtrafficquality.google`,
   "media-src 'self' blob: data: https://*.pexels.com https://*.pixabay.com https://pixabay.com https://*.giphy.com https://upload.wikimedia.org https://commons.wikimedia.org https://images-assets.nasa.gov",
-  `connect-src 'self' https://*.google-analytics.com https://analytics.google.com https://*.analytics.google.com https://*.googletagmanager.com ${googleRegionalOrigins} https://*.g.doubleclick.net https://*.googlesyndication.com https://*.adtrafficquality.google https://fundingchoicesmessages.google.com`,
+  `connect-src 'self' https://cloudflareinsights.com https://static.cloudflareinsights.com https://*.google-analytics.com https://analytics.google.com https://*.analytics.google.com https://*.googletagmanager.com ${googleRegionalOrigins} https://*.g.doubleclick.net https://*.googlesyndication.com https://*.adtrafficquality.google https://fundingchoicesmessages.google.com`,
   "frame-src 'self' https://googleads.g.doubleclick.net https://tpc.googlesyndication.com https://www.google.com https://ep2.adtrafficquality.google https://fundingchoicesmessages.google.com",
   ...(process.env.NODE_ENV === 'production' ? ['upgrade-insecure-requests'] : []),
 ].join('; ');
@@ -177,7 +178,7 @@ const nextConfig = {
           },
           {
             key: 'Permissions-Policy',
-            value: 'camera=(), microphone=(), geolocation=(), payment=(), usb=(), browsing-topics=()',
+            value: 'camera=(), microphone=(), geolocation=(), payment=(), usb=()',
           },
           {
             key: 'Cross-Origin-Opener-Policy',
