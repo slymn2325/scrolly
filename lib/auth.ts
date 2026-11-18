@@ -676,10 +676,35 @@ async function saveMergedUserToDb(user: AuthUserDto, linkedGuestId?: string | nu
     ]
   );
 
-  if (linkedGuestId && isValidDeviceId(linkedGuestId)) {
+  const allDeviceIds = Array.from(
+    new Set(
+      [...(user.linkedDeviceIds || []), ...(linkedGuestId ? [linkedGuestId] : [])].filter((id) =>
+        isValidDeviceId(id)
+      )
+    )
+  );
+  if (allDeviceIds.length > 0) {
     await pool.query(
-      `UPDATE profiles SET user_id = $2 WHERE device_id = $1 AND (user_id IS NULL OR user_id = $2)`,
-      [linkedGuestId, user.id]
+      `UPDATE profiles
+       SET user_id = $2,
+           username = CASE
+             WHEN NULLIF(TRIM($3), '') IS NOT NULL THEN $3
+             ELSE username
+           END,
+           xp = GREATEST(COALESCE(xp, 0), $4),
+           weekly_xp = GREATEST(COALESCE(weekly_xp, 0), $5),
+           streak = GREATEST(COALESCE(streak, 0), $6),
+           updated_at = NOW()
+       WHERE device_id = ANY($1::text[])
+         AND (user_id IS NULL OR user_id = $2)`,
+      [allDeviceIds, user.id, user.nickname, user.xp, user.weeklyXp, user.streak]
+    );
+    await pool.query(
+      `UPDATE fact_events
+       SET user_id = $2
+       WHERE device_id = ANY($1::text[])
+         AND (user_id IS NULL OR user_id = $2)`,
+      [allDeviceIds, user.id]
     );
   }
 
@@ -1651,6 +1676,9 @@ export async function syncAuthenticatedUserFromEvents(params: {
   username?: string;
   addedLikes?: string[];
   removedLikes?: string[];
+  addedFavorites?: string[];
+  removedFavorites?: string[];
+  addedSeenIds?: string[];
 }): Promise<void> {
   const user = await getUserById(params.userId);
   if (!user) return;
@@ -1667,8 +1695,24 @@ export async function syncAuthenticatedUserFromEvents(params: {
       likedSet.add(slug);
     }
   }
+
+  const removedFavSet = new Set(params.removedFavorites ?? []);
+  const favSet = new Set(user.favoriteIds.filter((id) => !removedFavSet.has(id)));
+  for (const slug of params.addedFavorites ?? []) {
+    if (slug && !removedFavSet.has(slug)) {
+      favSet.add(slug);
+    }
+  }
+
+  const seenSet = new Set(user.seenIds);
+  for (const slug of params.addedSeenIds ?? []) {
+    if (slug) seenSet.add(slug);
+  }
+
   const nextNickname = pickPreferredNickname(user.nickname, params.username);
   const nextLikedIds = Array.from(likedSet).slice(0, 500);
+  const nextFavoriteIds = Array.from(favSet).slice(0, 500);
+  const nextSeenIds = Array.from(seenSet).slice(-2500);
   const nextDeviceIds = sanitizeStringArray(
     [...user.linkedDeviceIds, ...(cleanDeviceId ? [cleanDeviceId] : [])],
     50
@@ -1698,6 +1742,8 @@ export async function syncAuthenticatedUserFromEvents(params: {
       weeklyXp: user.weeklyXp + xpDelta,
       streak: nextStreak,
       lastVisitDate: xpDelta > 0 ? today : user.lastVisitDate,
+      seenIds: nextSeenIds,
+      favoriteIds: nextFavoriteIds,
       likedIds: nextLikedIds,
       linkedDeviceIds: nextDeviceIds,
       updatedAt: new Date().toISOString(),
@@ -1726,6 +1772,8 @@ export async function syncAuthenticatedUserFromEvents(params: {
          last_visit_date = CASE WHEN $3 > 0 THEN TO_CHAR(CURRENT_DATE, 'YYYY-MM-DD') ELSE last_visit_date END,
          liked_ids = $4::jsonb,
          linked_device_ids = $5::jsonb,
+         favorite_ids = $6::jsonb,
+         seen_ids = $7::jsonb,
          updated_at = NOW()
      WHERE id = $1`,
     [
@@ -1734,6 +1782,8 @@ export async function syncAuthenticatedUserFromEvents(params: {
       xpDelta,
       JSON.stringify(nextLikedIds),
       JSON.stringify(nextDeviceIds),
+      JSON.stringify(nextFavoriteIds),
+      JSON.stringify(nextSeenIds),
     ]
   );
 

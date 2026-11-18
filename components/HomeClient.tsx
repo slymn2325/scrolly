@@ -1002,26 +1002,22 @@ export default function HomeClient({ initialFacts, initialVocabulary, initialLan
           }
         } else {
           const cur = loadUserMemory();
-          const hasAnyActivity =
-            cur.xp > 0 || cur.seenIds.length > 0 || cur.favoriteIds.length > 0 || cur.streakDays > 0;
-          if (hasAnyActivity) {
-            void syncProfileToApi({
-              username: cur.nickname,
-              xp: cur.xp,
-              weeklyXp: cur.weeklyXp,
-              dailyBestScore: cur.dailyBestScore,
-              lastDailyQuizDate: cur.lastDailyQuizDate,
-              streak: cur.streakDays,
-              lastVisitDate: cur.lastVisitDate,
-              seenIds: cur.seenIds,
-              favoriteIds: cur.favoriteIds,
-              likedIds: loadLikedFactIds(),
-              vocabNotebook: loadSavedVocabNotebook(),
-              categoryWeights: cur.categoryWeights,
-              categoryAccuracy: cur.categoryAccuracy,
-              badges: cur.badges,
-            });
-          }
+          void syncProfileToApi({
+            username: cur.nickname,
+            xp: cur.xp,
+            weeklyXp: cur.weeklyXp,
+            dailyBestScore: cur.dailyBestScore,
+            lastDailyQuizDate: cur.lastDailyQuizDate,
+            streak: cur.streakDays,
+            lastVisitDate: cur.lastVisitDate,
+            seenIds: cur.seenIds,
+            favoriteIds: cur.favoriteIds,
+            likedIds: loadLikedFactIds(),
+            vocabNotebook: loadSavedVocabNotebook(),
+            categoryWeights: cur.categoryWeights,
+            categoryAccuracy: cur.categoryAccuracy,
+            badges: cur.badges,
+          });
         }
       } finally {
         if (!cancelled) {
@@ -1458,6 +1454,11 @@ export default function HomeClient({ initialFacts, initialVocabulary, initialLan
         nextSaved = toggleSavedFact(fact.id);
       }
       setSavedIds(loadSavedFactIds());
+
+      const factSlug = fact.slug || fact.en.slug || fact.tr.slug || fact.id;
+      void trackEvent(factSlug, fact.category, nextSaved ? 'save' : 'unsave', {
+        item_type: 'fact',
+      });
 
       setMemory((prev) => {
         const inMemoryFavs = prev.favoriteIds.includes(fact.id);
@@ -2051,7 +2052,25 @@ export default function HomeClient({ initialFacts, initialVocabulary, initialLan
           onStart={(chosenNickname) => {
             persistWelcomeDismissed();
             if (chosenNickname && chosenNickname.trim()) {
-              setMemory((prev) => updateUserNickname(prev, chosenNickname));
+              const cleanNick = chosenNickname.trim().slice(0, 24);
+              setMemory((prev) => updateUserNickname(prev, cleanNick));
+              const cur = memoryRef.current;
+              void syncProfileToApi({
+                username: cleanNick,
+                xp: cur.xp,
+                weeklyXp: cur.weeklyXp,
+                dailyBestScore: cur.dailyBestScore,
+                lastDailyQuizDate: cur.lastDailyQuizDate,
+                streak: cur.streakDays,
+                lastVisitDate: cur.lastVisitDate,
+                seenIds: cur.seenIds,
+                favoriteIds: cur.favoriteIds,
+                likedIds: loadLikedFactIds(),
+                vocabNotebook: loadSavedVocabNotebook(),
+                categoryWeights: cur.categoryWeights,
+                categoryAccuracy: cur.categoryAccuracy,
+                badges: cur.badges,
+              });
             }
             setShowWelcome(false);
             vibrateTap(12);
@@ -2476,6 +2495,15 @@ export default function HomeClient({ initialFacts, initialVocabulary, initialLan
                   vibrateDoubleTap(12);
                   playPopDing(soundEnabled);
                   const { saved } = toggleSaveVocabularyCard(activeSlide.card);
+                  void trackEvent(
+                    activeSlide.card.id,
+                    'vocabulary',
+                    saved ? 'save' : 'unsave',
+                    {
+                      item_type: 'vocabulary',
+                      word: activeSlide.card.word,
+                    }
+                  );
                   setSavedVocabWords(
                     loadSavedVocabNotebook().map((entry) => entry.word.toLowerCase())
                   );

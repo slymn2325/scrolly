@@ -5,9 +5,15 @@ import type { SavedVocabularyEntry, VocabularyCard } from '@/types/vocabulary';
 import { cryptoRandomUuid } from '@/utils/cryptoRandom';
 
 export type TelemetryEventType =
+  | 'view'
   | 'like'
   | 'unlike'
+  | 'save'
+  | 'unsave'
+  | 'expand'
+  | 'guess'
   | 'quick_guess'
+  | 'quiz_answer'
   | 'detail_open'
   | 'card_dwell'
   | 'share'
@@ -49,6 +55,21 @@ let isFlushingQueue = false;
 
 function generateUuid(): string {
   return cryptoRandomUuid();
+}
+
+function getStoredViewerNickname(): string | undefined {
+  if (typeof window === 'undefined') return undefined;
+  try {
+    const raw = window.localStorage.getItem('merak_user_state_v1');
+    if (!raw) return undefined;
+    const parsed = JSON.parse(raw) as { nickname?: unknown };
+    if (typeof parsed?.nickname === 'string' && parsed.nickname.trim().length > 0) {
+      return parsed.nickname.trim().slice(0, 28);
+    }
+  } catch {
+    // Ignore storage parse failures
+  }
+  return undefined;
 }
 
 export function getOrCreateDeviceId(): string {
@@ -127,12 +148,14 @@ export async function flushOfflineEvents(): Promise<void> {
   isFlushingQueue = true;
   try {
     const deviceId = getOrCreateDeviceId();
+    const fallbackUsername = getStoredViewerNickname();
     const res = await fetch('/api/events', {
       method: 'POST',
       credentials: 'same-origin',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         device_id: deviceId,
+        ...(fallbackUsername ? { username: fallbackUsername } : {}),
         events: queue,
       }),
       keepalive: true,
@@ -195,6 +218,7 @@ export async function trackEvent(
   }
 
   const deviceId = getOrCreateDeviceId();
+  const effectiveUsername = profileSync?.username || getStoredViewerNickname();
   const record: TelemetryEventRecord = {
     device_id: deviceId,
     fact_slug: factSlug,
@@ -203,7 +227,7 @@ export async function trackEvent(
     meta,
     ...(typeof profileSync?.xp === 'number' ? { xp: profileSync.xp } : {}),
     ...(typeof profileSync?.streak === 'number' ? { streak: profileSync.streak } : {}),
-    ...(profileSync?.username ? { username: profileSync.username } : {}),
+    ...(effectiveUsername ? { username: effectiveUsername } : {}),
     queued_at: new Date().toISOString(),
   };
 

@@ -17,6 +17,7 @@ import CategoryMotionArt from '@/components/CategoryMotionArt';
 import FactIcon from '@/components/FactIcon';
 import MediaAttributionBadge from '@/components/MediaAttributionBadge';
 import { getCategoryMeta, type Language, translations } from '@/i18n/translations';
+import { trackEvent } from '@/lib/telemetry';
 import type { FactCard } from '@/types/fact';
 import { UI_ICON_PATHS } from '@/utils/fluentAssets';
 import { safeExternalHref } from '@/utils/phoneticDisplay';
@@ -510,6 +511,13 @@ export default function FactDetailPage({
                         onButtonPop();
                         setMiniQuizChoice(idx);
                         const right = idx === localized.quiz.correctIndex;
+                        const factSlug = fact.slug || fact.en.slug || fact.tr.slug || fact.id;
+                        void trackEvent(factSlug, fact.category, 'quiz_answer', {
+                          correct: right,
+                          category: fact.category,
+                          surface: 'detail_mini_quiz',
+                          award_xp: right && !miniQuizAwarded,
+                        });
                         if (right) {
                           onSuccessSound?.();
                           if (!miniQuizAwarded) {

@@ -26,6 +26,7 @@ import {
 import type { VocabPartOfSpeech, VocabularyCard } from '@/types/vocabulary';
 import { Button } from '@/components/cikartma';
 import { motionSpring } from '@/lib/motion';
+import { trackEvent } from '@/lib/telemetry';
 import { vibrateSuccess, vibrateTap } from '@/utils/haptics';
 import { formatPhoneticForDisplay } from '@/utils/phoneticDisplay';
 import { prepareQuizOptions, type QuizQuestionItem } from '@/utils/recommendation';
@@ -431,6 +432,18 @@ export default function MemoryQuizCard({
       vibrateTap(8);
       setSelectedOption(optionIdx);
       const correct = optionIdx === prepared.correctIndex;
+      void trackEvent(
+        currentEntry.id,
+        currentEntry.sourceCategory,
+        'quiz_answer',
+        {
+          correct,
+          category: currentEntry.sourceCategory,
+          mode: quizMode,
+          surface: 'quiz_modal',
+          award_xp: false,
+        }
+      );
       if (correct) {
         const nextStreak = comboStreak + 1;
         const gained = 100 + 25 * nextStreak;
@@ -443,7 +456,7 @@ export default function MemoryQuizCard({
       }
       onAnswerSound(correct);
     },
-    [hasAnswered, rewardWatching, currentEntry, prepared.correctIndex, comboStreak, onAnswerSound]
+    [hasAnswered, rewardWatching, currentEntry, prepared.correctIndex, comboStreak, onAnswerSound, quizMode]
   );
 
   const handleWatchRewardTime = () => {

@@ -177,7 +177,8 @@ export async function POST(request: Request) {
       userId: isReset ? null : sessionUser?.id,
       username: typeof body.username === 'string' ? body.username : undefined,
       handle: typeof body.handle === 'string' ? body.handle : undefined,
-      // Server-authoritative fields only: ignore client xp/weeklyXp/dailyBestScore/lastDailyQuizDate/streak.
+      xp: typeof body.xp === 'number' ? body.xp : undefined,
+      weeklyXp: typeof body.weeklyXp === 'number' ? body.weeklyXp : undefined,
       lastVisitDate: typeof body.lastVisitDate === 'string' ? body.lastVisitDate : undefined,
       seenIds: Array.isArray(body.seenIds) ? (body.seenIds as string[]) : undefined,
       favoriteIds: Array.isArray(body.favoriteIds) ? (body.favoriteIds as string[]) : undefined,

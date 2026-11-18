@@ -17,6 +17,7 @@ import {
 import type { CategoryId } from '@/types/fact';
 import type { SavedVocabularyEntry, VocabPartOfSpeech } from '@/types/vocabulary';
 import { sanitizeDisplayText } from '@/lib/originPolicy';
+import { consumeXpBudget } from '@/lib/rateLimit';
 
 export interface PersistedProfileDto {
   deviceId: string;
@@ -678,12 +679,21 @@ export async function upsertProfileState(
       ? sanitizeHandle(input.handle)
       : prev?.handle || '';
 
-  // Never trust client XP, dailyBestScore, or streak — only server awards (/api/events, /api/leaderboard) mutate them.
-  const boundedXp = prev?.xp ?? 0;
-  const boundedWeekly = prev?.weeklyXp ?? 0;
+  // Bound client-reported XP deltas through the server-side rolling XP budget (max +150 per sync).
+  const prevXp = prev?.xp ?? 0;
+  const prevWeekly = prev?.weeklyXp ?? 0;
+  const clientXp =
+    typeof input.xp === 'number' && Number.isFinite(input.xp)
+      ? sanitizeNonNegInt(input.xp, prevXp)
+      : prevXp;
+  const rawXpDelta = Math.max(0, Math.min(150, clientXp - prevXp));
+  const grantedXpDelta = rawXpDelta > 0 ? consumeXpBudget(cleanId, rawXpDelta) : 0;
+  const boundedXp = prevXp + grantedXpDelta;
+  const boundedWeekly = Math.max(prevWeekly + grantedXpDelta, boundedXp);
   const nextDailyQuizDate = sanitizeDateStr(prev?.lastDailyQuizDate);
   const finalDailyBest = prev?.dailyBestScore ?? 0;
-  const streak = prev?.streak ?? 0;
+  const streak =
+    boundedXp > 0 ? Math.max(1, prev?.streak ?? 0) : (prev?.streak ?? 0);
 
   const mergedSeen = sanitizeStringArray(
     [...(prev?.seenIds ?? []), ...(input.seenIds ?? [])],
@@ -866,16 +876,20 @@ function deriveDeterministicExplorerTag(deviceId: string): number {
  * nicknames across distinct devices while preserving custom higher-ranked names.
  */
 export function deduplicateLeaderboardRows(rows: DbLeaderboardRow[]): DbLeaderboardRow[] {
-  const seenDeviceIds = new Set<string>();
+  const seenIdentityKeys = new Set<string>();
   const usedNameKeys = new Set<string>();
   const out: DbLeaderboardRow[] = [];
 
   for (const row of rows) {
     const cleanDeviceId = String(row.deviceId || '').trim();
-    if (!cleanDeviceId || seenDeviceIds.has(cleanDeviceId)) {
+    if (!cleanDeviceId) {
       continue;
     }
-    seenDeviceIds.add(cleanDeviceId);
+    const identityKey = row.userId ? `u:${row.userId}` : `d:${cleanDeviceId}`;
+    if (seenIdentityKeys.has(identityKey)) {
+      continue;
+    }
+    seenIdentityKeys.add(identityKey);
 
     const rawName = String(row.username || '').trim().slice(0, 28);
     const rawKey = normalizeLeaderboardNameKey(rawName);
@@ -998,17 +1012,27 @@ export async function getLeaderboardRows(
       `SELECT
          p.device_id,
          p.user_id,
-         COALESCE(NULLIF(TRIM(p.username), ''), 'Kâşif') AS username,
+         COALESCE(NULLIF(TRIM(u.nickname), ''), NULLIF(TRIM(p.username), ''), 'Kâşif') AS username,
          COALESCE(p.handle, '') AS handle,
          GREATEST(
            CASE WHEN p.last_daily_quiz_date = ANY($1::text[]) THEN COALESCE(p.daily_best_score, 0) ELSE 0 END,
-           COALESCE(qs.max_score, 0)
+           CASE WHEN u.last_daily_quiz_date = ANY($1::text[]) THEN COALESCE(u.daily_best_score, 0) ELSE 0 END,
+           COALESCE(qs.max_score, 0),
+           CASE
+             WHEN p.last_active_date = CURRENT_DATE
+               OR u.last_active_date = CURRENT_DATE
+               OR p.last_visit_date = ANY($1::text[])
+               OR u.last_visit_date = ANY($1::text[])
+             THEN GREATEST(COALESCE(p.weekly_xp, 0), COALESCE(p.xp, 0), COALESCE(u.weekly_xp, 0), COALESCE(u.xp, 0))
+             ELSE 0
+           END
          )::INT AS score,
-         COALESCE(p.xp, 0)::INT AS xp,
-         COALESCE(p.weekly_xp, 0)::INT AS weekly_xp,
-         COALESCE(p.streak, 0)::INT AS streak,
-         p.updated_at
+         GREATEST(COALESCE(p.xp, 0), COALESCE(u.xp, 0))::INT AS xp,
+         GREATEST(COALESCE(p.weekly_xp, 0), COALESCE(u.weekly_xp, 0))::INT AS weekly_xp,
+         GREATEST(COALESCE(p.streak, 0), COALESCE(u.streak, 0))::INT AS streak,
+         GREATEST(p.updated_at, COALESCE(u.updated_at, p.updated_at)) AS updated_at
        FROM profiles p
+       LEFT JOIN users u ON u.id = p.user_id
        LEFT JOIN (
          SELECT device_id, MAX(score)::INT AS max_score
          FROM quiz_submissions
@@ -1016,9 +1040,11 @@ export async function getLeaderboardRows(
          GROUP BY device_id
        ) qs ON qs.device_id = p.device_id
        WHERE (p.last_daily_quiz_date = ANY($1::text[]) AND COALESCE(p.daily_best_score, 0) > 0)
+          OR (u.last_daily_quiz_date = ANY($1::text[]) AND COALESCE(u.daily_best_score, 0) > 0)
           OR COALESCE(qs.max_score, 0) > 0
           OR COALESCE(p.xp, 0) > 0
-       ORDER BY score DESC, p.xp DESC, p.updated_at DESC
+          OR COALESCE(u.xp, 0) > 0
+       ORDER BY score DESC, xp DESC, updated_at DESC
        LIMIT $2`,
       [dailyDates, safeLimit]
     );
@@ -1045,34 +1071,47 @@ export async function getLeaderboardRows(
   const staticLeaderboardSql =
     tab === 'weekly'
       ? `SELECT
-           device_id,
-           user_id,
-           COALESCE(NULLIF(TRIM(username), ''), 'Kâşif') AS username,
-           COALESCE(handle, '') AS handle,
-           COALESCE(xp, 0)::INT AS xp,
-           COALESCE(weekly_xp, 0)::INT AS weekly_xp,
-           COALESCE(streak, 0)::INT AS streak,
-           updated_at
-         FROM profiles
-         WHERE COALESCE(xp, 0) > 0 OR COALESCE(weekly_xp, 0) > 0 OR COALESCE(daily_best_score, 0) > 0
-         ORDER BY CASE WHEN COALESCE(weekly_xp, 0) > 0 THEN COALESCE(weekly_xp, 0) ELSE COALESCE(xp, 0) END DESC,
-                  COALESCE(xp, 0) DESC,
-                  COALESCE(streak, 0) DESC,
+           p.device_id,
+           p.user_id,
+           COALESCE(NULLIF(TRIM(u.nickname), ''), NULLIF(TRIM(p.username), ''), 'Kâşif') AS username,
+           COALESCE(p.handle, '') AS handle,
+           GREATEST(COALESCE(p.xp, 0), COALESCE(u.xp, 0))::INT AS xp,
+           GREATEST(COALESCE(p.weekly_xp, 0), COALESCE(u.weekly_xp, 0))::INT AS weekly_xp,
+           GREATEST(COALESCE(p.streak, 0), COALESCE(u.streak, 0))::INT AS streak,
+           GREATEST(p.updated_at, COALESCE(u.updated_at, p.updated_at)) AS updated_at
+         FROM profiles p
+         LEFT JOIN users u ON u.id = p.user_id
+         WHERE COALESCE(p.xp, 0) > 0
+            OR COALESCE(p.weekly_xp, 0) > 0
+            OR COALESCE(p.daily_best_score, 0) > 0
+            OR COALESCE(u.xp, 0) > 0
+            OR COALESCE(u.weekly_xp, 0) > 0
+         ORDER BY GREATEST(
+                    CASE WHEN COALESCE(p.weekly_xp, 0) > 0 THEN COALESCE(p.weekly_xp, 0) ELSE COALESCE(p.xp, 0) END,
+                    CASE WHEN COALESCE(u.weekly_xp, 0) > 0 THEN COALESCE(u.weekly_xp, 0) ELSE COALESCE(u.xp, 0) END
+                  ) DESC,
+                  GREATEST(COALESCE(p.xp, 0), COALESCE(u.xp, 0)) DESC,
+                  GREATEST(COALESCE(p.streak, 0), COALESCE(u.streak, 0)) DESC,
                   updated_at DESC
          LIMIT $1`
       : `SELECT
-           device_id,
-           user_id,
-           COALESCE(NULLIF(TRIM(username), ''), 'Kâşif') AS username,
-           COALESCE(handle, '') AS handle,
-           COALESCE(xp, 0)::INT AS xp,
-           COALESCE(weekly_xp, 0)::INT AS weekly_xp,
-           COALESCE(streak, 0)::INT AS streak,
-           updated_at
-         FROM profiles
-         WHERE COALESCE(xp, 0) > 0 OR COALESCE(weekly_xp, 0) > 0 OR COALESCE(daily_best_score, 0) > 0
-         ORDER BY COALESCE(xp, 0) DESC,
-                  COALESCE(streak, 0) DESC,
+           p.device_id,
+           p.user_id,
+           COALESCE(NULLIF(TRIM(u.nickname), ''), NULLIF(TRIM(p.username), ''), 'Kâşif') AS username,
+           COALESCE(p.handle, '') AS handle,
+           GREATEST(COALESCE(p.xp, 0), COALESCE(u.xp, 0))::INT AS xp,
+           GREATEST(COALESCE(p.weekly_xp, 0), COALESCE(u.weekly_xp, 0))::INT AS weekly_xp,
+           GREATEST(COALESCE(p.streak, 0), COALESCE(u.streak, 0))::INT AS streak,
+           GREATEST(p.updated_at, COALESCE(u.updated_at, p.updated_at)) AS updated_at
+         FROM profiles p
+         LEFT JOIN users u ON u.id = p.user_id
+         WHERE COALESCE(p.xp, 0) > 0
+            OR COALESCE(p.weekly_xp, 0) > 0
+            OR COALESCE(p.daily_best_score, 0) > 0
+            OR COALESCE(u.xp, 0) > 0
+            OR COALESCE(u.weekly_xp, 0) > 0
+         ORDER BY GREATEST(COALESCE(p.xp, 0), COALESCE(u.xp, 0)) DESC,
+                  GREATEST(COALESCE(p.streak, 0), COALESCE(u.streak, 0)) DESC,
                   updated_at DESC
          LIMIT $1`;
 
@@ -1123,11 +1162,17 @@ export async function recordQuizSubmission(input: {
 
   const username = sanitizeUsername(input.username);
   const handle = sanitizeHandle(input.handle);
-  // Cap client-reported quiz score and correct answers before any XP award (anti-farm).
+  // Cap client-reported quiz score and correct answers against realistic combo+speed formula before XP award.
   const safeTotal = sanitizeNonNegInt(input.totalQuestions, 1, 15);
   const safeCorrect = Math.min(safeTotal, sanitizeNonNegInt(input.correctCount, 0, 15));
-  const safeScore = safeCorrect === 0 ? 0 : sanitizeNonNegInt(input.score, 0, 100);
-  let xpAward = safeCorrect === 0 ? 0 : Math.min(50, safeCorrect * 10, safeScore);
+  const maxCombo = safeCorrect * 100 + 25 * ((safeCorrect * (safeCorrect + 1)) / 2);
+  const maxSpeed = safeCorrect > 0 ? (safeTotal * 15 + 30) * 5 : 0;
+  const maxAllowedScore = safeCorrect === 0 ? 0 : Math.min(3500, maxCombo + maxSpeed);
+  const safeScore = safeCorrect === 0 ? 0 : sanitizeNonNegInt(input.score, 0, maxAllowedScore);
+  let xpAward =
+    safeCorrect === 0
+      ? 0
+      : consumeXpBudget(cleanId, Math.min(safeScore, safeCorrect * 250));
   const cleanClientDate = sanitizeDateStr(input.clientDate);
   const quizDate =
     cleanClientDate && isDateNearUtc(cleanClientDate)

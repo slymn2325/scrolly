@@ -433,12 +433,26 @@ export function loadUserMemory(): UserMemoryState {
       ? savedHighest
       : computedLeague;
 
-  const resolvedPlayerId =
+  let sharedDeviceId = '';
+  try {
+    sharedDeviceId = (window.localStorage.getItem('scrolly_device_id') || '').trim();
+  } catch {
+    // Ignore storage read errors
+  }
+  const parsedPlayerId =
     typeof parsed?.playerId === 'string' &&
     parsed.playerId.trim() &&
     parsed.playerId !== 'local-default-player'
-      ? parsed.playerId
-      : createClientPlayerId();
+      ? parsed.playerId.trim()
+      : '';
+  const resolvedPlayerId = sharedDeviceId || parsedPlayerId || createClientPlayerId();
+  if (resolvedPlayerId && sharedDeviceId !== resolvedPlayerId) {
+    try {
+      window.localStorage.setItem('scrolly_device_id', resolvedPlayerId);
+    } catch {
+      // Ignore storage write errors
+    }
+  }
   const parsedNickname =
     typeof parsed?.nickname === 'string' ? parsed.nickname.trim().slice(0, 24) : '';
   const resolvedNickname =

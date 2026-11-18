@@ -337,11 +337,13 @@ export default function TikTokFactSlide({
   useEffect(() => {
     const flushDwellDuration = () => {
       if (visibleEnterTimeRef.current !== null && !hasSentDwellEventRef.current) {
-        const dwellSec = (Date.now() - visibleEnterTimeRef.current) / 1000;
+        const dwellMs = Math.max(0, Date.now() - visibleEnterTimeRef.current);
+        const dwellSec = dwellMs / 1000;
         visibleEnterTimeRef.current = null;
-        if (dwellSec > 3) {
+        if (dwellSec >= 1.2) {
           hasSentDwellEventRef.current = true;
           void trackEvent(factSlug, fact.category, 'card_dwell', {
+            dwell_ms: Math.round(dwellMs),
             dwell_sec: Number(dwellSec.toFixed(1)),
           });
         }
@@ -402,6 +404,12 @@ export default function TikTokFactSlide({
             hasCountedDwellRef.current = true;
             markFactSeenInStorage(fact);
             onDwellRead(fact);
+            const enterMs = visibleEnterTimeRef.current
+              ? Math.max(1050, Date.now() - visibleEnterTimeRef.current)
+              : 1200;
+            void trackEvent(factSlug, fact.category, 'view', {
+              dwell_ms: Math.round(enterMs),
+            });
           }
         }, 1050);
       }
@@ -722,6 +730,7 @@ export default function TikTokFactSlide({
               if (!isExpanded) {
                 onButtonPop();
                 setIsExpanded(true);
+                void trackEvent(factSlug, fact.category, 'expand', { surface: 'bottom_sheet' });
               }
             }}
             className={`pointer-events-auto flex min-h-0 flex-col gap-2 rounded-t-3xl bg-cik-bg pl-4 pr-14 pt-2.5 shadow-[0_-8px_28px_rgba(0,0,0,0.14)] transition-all duration-300 ease-out lg:pr-4 lg:pt-3 ${
@@ -780,7 +789,13 @@ export default function TikTokFactSlide({
               onClick={(e) => {
                 e.stopPropagation();
                 onButtonPop();
-                setIsExpanded((prev) => !prev);
+                setIsExpanded((prev) => {
+                  const next = !prev;
+                  if (next) {
+                    void trackEvent(factSlug, fact.category, 'expand', { surface: 'headline' });
+                  }
+                  return next;
+                });
               }}
               onDoubleClick={(e) => e.stopPropagation()}
               onPointerDown={(e) => e.stopPropagation()}
@@ -803,6 +818,7 @@ export default function TikTokFactSlide({
                   e.stopPropagation();
                   onButtonPop();
                   setIsExpanded(true);
+                  void trackEvent(factSlug, fact.category, 'expand', { surface: 'expand_hint' });
                 }}
                 onDoubleClick={(e) => e.stopPropagation()}
                 onPointerDown={(e) => e.stopPropagation()}
@@ -889,6 +905,8 @@ export default function TikTokFactSlide({
                             guess: details.userGuess,
                             target: details.correctValue,
                             accuracy: details.accuracyPct,
+                            accurate,
+                            category: fact.category,
                             xp_awarded: xpAwarded,
                           });
                         }}

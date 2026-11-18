@@ -6,6 +6,7 @@ import { Bookmark, BookMarked, ChevronDown, ChevronUp, Share, Volume2 } from 'lu
 import IconButton from '@/components/cikartma/IconButton';
 import { FEED_EXPERIENCE_COPY, translations, type Language } from '@/i18n/translations';
 import { motionTiming } from '@/lib/motion';
+import { trackEvent } from '@/lib/telemetry';
 import type { VocabPartOfSpeech, VocabularyCard } from '@/types/vocabulary';
 import { vibrateTap } from '@/utils/haptics';
 import { formatPhoneticForDisplay } from '@/utils/phoneticDisplay';
@@ -188,6 +189,10 @@ export default function VocabularySlide({
     onButtonPop();
     const res = toggleSaveVocabularyCard(card);
     setSaved(res.saved);
+    void trackEvent(card.id, 'vocabulary', res.saved ? 'save' : 'unsave', {
+      item_type: 'vocabulary',
+      word: card.word,
+    });
     void loadSavedVocabNotebook();
     toast(
       res.saved
@@ -223,6 +228,10 @@ export default function VocabularySlide({
     if (!isVocabWordSaved(card.word)) {
       const res = toggleSaveVocabularyCard(card);
       setSaved(res.saved);
+      void trackEvent(card.id, 'vocabulary', res.saved ? 'save' : 'unsave', {
+        item_type: 'vocabulary',
+        word: card.word,
+      });
     }
     window.dispatchEvent(
       new CustomEvent('scrolly-open-tab', { detail: { tab: 'diploma', section: 'vocab' } })
@@ -233,6 +242,14 @@ export default function VocabularySlide({
   const handleQuizPick = (idx: number) => {
     if (solved) return;
     const isCorrect = idx === quiz.correctIdx;
+    const willAwardXp = isCorrect && !xpAwarded;
+    void trackEvent(card.id, 'vocabulary', 'quiz_answer', {
+      correct: isCorrect,
+      category: 'vocabulary',
+      surface: 'vocabulary_slide',
+      award_xp: willAwardXp,
+      word: card.word,
+    });
     if (isCorrect) {
       setSolved(true);
       vibrateTap(30);

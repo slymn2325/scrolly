@@ -451,12 +451,21 @@ export async function ensureSchema(): Promise<void> {
         CREATE TABLE IF NOT EXISTS fact_events (
           id BIGSERIAL PRIMARY KEY,
           device_id TEXT NOT NULL,
+          user_id TEXT,
           fact_slug TEXT NOT NULL,
           category TEXT NOT NULL,
           event_type TEXT NOT NULL,
           meta JSONB DEFAULT '{}'::jsonb,
           created_at TIMESTAMPTZ DEFAULT NOW()
         );
+      `);
+
+      await pool.query(`ALTER TABLE fact_events ADD COLUMN IF NOT EXISTS user_id TEXT;`);
+
+      await pool.query(`
+        CREATE INDEX IF NOT EXISTS idx_fact_events_user_id
+          ON fact_events (user_id, created_at DESC)
+          WHERE user_id IS NOT NULL;
       `);
 
       await pool.query(`

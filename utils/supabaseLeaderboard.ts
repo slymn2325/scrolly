@@ -198,10 +198,7 @@ export function deduplicateLeaderboardRows(
 
   nonUsers.forEach((row, idx) => {
     const rawName = (row.name || '').trim();
-    const isGeneric =
-      !rawName ||
-      isGenericDefaultNickname(rawName) ||
-      isLegacyUntaggedOrTag42Nickname(rawName);
+    const isGeneric = !rawName || isLegacyUntaggedOrTag42Nickname(rawName);
 
     let finalName: string;
     if (isGeneric) {
