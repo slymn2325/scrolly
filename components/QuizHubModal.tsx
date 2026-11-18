@@ -135,11 +135,11 @@ export default function QuizHubModal({
         </div>
       </div>
 
-      <div className="mt-4 flex gap-2 overflow-x-auto pb-1">
+      <div className="mt-4 flex flex-wrap gap-2">
         {topicDomains.map((cat) => (
           <span
             key={cat.id}
-            className="cik-footnote inline-flex h-11 shrink-0 items-center gap-2 rounded-pill bg-cik-surface px-4 text-cik-text-2 shadow-e1"
+            className="cik-footnote inline-flex h-9 shrink-0 items-center gap-1.5 rounded-pill bg-cik-surface px-3 text-cik-text-2 shadow-e1"
           >
             <img
               src={cat.iconPath}
@@ -237,8 +237,8 @@ export default function QuizHubModal({
         transition={sheetTransition(reduced, 'open')}
         className={
           isPage
-            ? `relative h-full w-full overflow-y-auto ${pagePad}`
-            : 'relative max-h-[84dvh] w-full max-w-xl overflow-y-auto rounded-sheet bg-cik-bg-elevated p-5 pb-[calc(env(safe-area-inset-bottom)+6rem)] text-cik-text shadow-e3'
+            ? `relative h-full w-full overflow-y-auto outline-none ring-0 focus:outline-none focus:ring-0 ${pagePad}`
+            : 'relative max-h-[84dvh] w-full max-w-xl overflow-y-auto rounded-sheet bg-cik-bg-elevated p-5 pb-[calc(env(safe-area-inset-bottom)+6rem)] text-cik-text shadow-e3 outline-none ring-0 focus:outline-none focus:ring-0'
         }
       >
         {body}

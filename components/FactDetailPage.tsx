@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
 import {
   ArrowDown,
@@ -59,11 +59,20 @@ export default function FactDetailPage({
   const [miniQuizChoice, setMiniQuizChoice] = useState<number | null>(null);
   const [miniQuizAwarded, setMiniQuizAwarded] = useState(false);
   const [gifFailed, setGifFailed] = useState(false);
+  const [dragY, setDragY] = useState(0);
+  const [isTouchDragging, setIsTouchDragging] = useState(false);
+  const scrollBodyRef = useRef<HTMLDivElement>(null);
+  const touchStartYRef = useRef<number | null>(null);
+  const startedOnHeaderRef = useRef(false);
 
   useEffect(() => {
     setMiniQuizChoice(null);
     setMiniQuizAwarded(false);
     setGifFailed(false);
+    setDragY(0);
+    setIsTouchDragging(false);
+    touchStartYRef.current = null;
+    startedOnHeaderRef.current = false;
   }, [fact.id]);
 
   useEffect(() => {
@@ -116,6 +125,51 @@ export default function FactDetailPage({
     localized.sourceName || fact.sourceName || localized.sourceHint;
   const resolvedSourceUrl = safeExternalHref(localized.sourceUrl || fact.sourceUrl);
 
+  const handleTouchStart = (event: React.TouchEvent<HTMLDivElement>) => {
+    if (event.touches.length !== 1) return;
+    const target = event.target as HTMLElement | null;
+    const fromHeader = Boolean(target?.closest('[data-detail-drag-handle="true"]'));
+    const scrollTop = scrollBodyRef.current?.scrollTop ?? 0;
+    if (!fromHeader && scrollTop > 0) return;
+    touchStartYRef.current = event.touches[0].clientY;
+    startedOnHeaderRef.current = fromHeader;
+    setIsTouchDragging(true);
+  };
+
+  const handleTouchMove = (event: React.TouchEvent<HTMLDivElement>) => {
+    if (touchStartYRef.current === null || event.touches.length !== 1) return;
+    const deltaY = event.touches[0].clientY - touchStartYRef.current;
+    const scrollTop = scrollBodyRef.current?.scrollTop ?? 0;
+    if (deltaY <= 0) {
+      setDragY(0);
+      if (!startedOnHeaderRef.current && deltaY < -8) {
+        touchStartYRef.current = null;
+        setIsTouchDragging(false);
+      }
+      return;
+    }
+    if (!startedOnHeaderRef.current && scrollTop > 0) {
+      touchStartYRef.current = null;
+      setDragY(0);
+      setIsTouchDragging(false);
+      return;
+    }
+    setDragY(Math.min(deltaY, 280));
+  };
+
+  const handleTouchEnd = () => {
+    if (touchStartYRef.current === null) return;
+    const shouldClose = dragY > 70;
+    touchStartYRef.current = null;
+    startedOnHeaderRef.current = false;
+    setIsTouchDragging(false);
+    setDragY(0);
+    if (shouldClose) {
+      onButtonPop();
+      onClose();
+    }
+  };
+
   return (
     <motion.div
       key={`detail-page-${fact.id}`}
@@ -123,40 +177,55 @@ export default function FactDetailPage({
       data-card-view="detail"
       data-presentation="page"
       data-theme={darkMode ? 'dark' : 'light'}
+      tabIndex={-1}
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
+      onTouchCancel={handleTouchEnd}
       initial={{ opacity: 0.96, y: 8 }}
-      animate={{ opacity: 1, y: 0 }}
+      animate={{ opacity: 1, y: dragY }}
       exit={{ opacity: 0, transition: { duration: 0.01 } }}
-      transition={{ duration: 0.14, ease: [0.23, 1, 0.32, 1] }}
-      className="relative z-hud flex h-full w-full flex-col overflow-hidden bg-cik-bg text-cik-text"
+      transition={isTouchDragging ? { duration: 0 } : { duration: 0.14, ease: [0.23, 1, 0.32, 1] }}
+      className="relative z-hud flex h-full w-full flex-col overflow-hidden bg-cik-bg text-cik-text outline-none ring-0 focus:outline-none focus:ring-0 focus-visible:outline-none"
     >
       {/* Top Page Bar */}
       <div
-        className={`flex shrink-0 items-center justify-between gap-3 border-b px-4 pb-3 pt-[calc(env(safe-area-inset-top,14px)+14px)] lg:pt-4 ${
+        data-detail-drag-handle="true"
+        className={`flex shrink-0 flex-col border-b px-4 pb-3 pt-[calc(env(safe-area-inset-top,14px)+8px)] lg:pt-4 ${
           darkMode ? 'border-cik-line bg-cik-pink' : 'border-cik-line bg-cik-pink'
         }`}
       >
-        <button
-          type="button"
-          onClick={() => {
-            onButtonPop();
-            onClose();
-          }}
-          aria-label={t.tiktokBackFrontBtn}
-          data-testid="detail-close-btn"
-          className="inline-flex h-10 shrink-0 items-center gap-2 rounded-pill border border-cik-line bg-cik-surface px-3.5 text-xs font-extrabold text-cik-text"
-        >
-          <ArrowLeft className="h-4 w-4 shrink-0" />
-          <span>{lang === 'tr' ? 'Karta Dön' : 'Back to Card'}</span>
-        </button>
+        <div
+          aria-hidden="true"
+          className="mx-auto mb-2 h-1 w-9 rounded-pill bg-cik-line lg:hidden"
+        />
+        <div className="flex items-center justify-between gap-3">
+          <button
+            type="button"
+            onClick={() => {
+              onButtonPop();
+              onClose();
+            }}
+            aria-label={t.tiktokBackFrontBtn}
+            data-testid="detail-close-btn"
+            className="inline-flex h-10 shrink-0 items-center gap-2 rounded-pill border border-cik-line bg-cik-surface px-3.5 text-xs font-extrabold text-cik-text"
+          >
+            <ArrowLeft className="h-4 w-4 shrink-0" />
+            <span>{lang === 'tr' ? 'Karta Dön' : 'Back to Card'}</span>
+          </button>
 
-        <div className="inline-flex min-w-0 max-w-full items-center gap-1.5 rounded-pill bg-cik-bg px-3 py-1.5 text-xs font-extrabold text-cik-text">
-          <img src={catMeta.iconPath} alt="" aria-hidden="true" className="h-4 w-4 shrink-0 object-contain" />
-          <span className="min-w-0">{t.whyHowHeader}</span>
+          <div className="inline-flex min-w-0 max-w-full items-center gap-1.5 rounded-pill bg-cik-bg px-3 py-1.5 text-xs font-extrabold text-cik-text">
+            <img src={catMeta.iconPath} alt="" aria-hidden="true" className="h-4 w-4 shrink-0 object-contain" />
+            <span className="min-w-0">{t.whyHowHeader}</span>
+          </div>
         </div>
       </div>
 
       {/* Scrollable Page Content */}
-      <div className="no-scrollbar flex min-h-0 flex-1 flex-col overflow-y-auto px-4 pb-28 pt-4 sm:px-5 lg:pb-6">
+      <div
+        ref={scrollBodyRef}
+        className="no-scrollbar flex min-h-0 flex-1 flex-col overflow-y-auto px-4 pb-28 pt-4 sm:px-5 lg:pb-6"
+      >
         <div className="flex-1 space-y-4">
           {/* Visual Hero Banner */}
           <div className="relative overflow-hidden rounded-sticker border border-cik-line bg-cik-pink p-5">

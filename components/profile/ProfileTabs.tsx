@@ -38,7 +38,7 @@ export default function ProfileTabs({ lang, pane, onSelect }: ProfileTabsProps) 
       ref={listRef}
       role="tablist"
       aria-label={t.dockDiploma}
-      className="no-scrollbar -mx-2 flex min-w-0 gap-2 overflow-x-auto px-2 py-2"
+      className="no-scrollbar flex min-w-0 flex-wrap gap-1.5 py-2"
     >
       {PANES.map((id) => {
         const selected = pane === id;
@@ -68,7 +68,7 @@ export default function ProfileTabs({ lang, pane, onSelect }: ProfileTabsProps) 
                 focusPane(PANES[(index - 1 + PANES.length) % PANES.length]);
               }
             }}
-            className={`cik-footnote inline-flex h-11 shrink-0 items-center justify-center whitespace-nowrap rounded-pill px-4 ${look}`}
+            className={`inline-flex h-10 shrink-0 items-center justify-center whitespace-nowrap rounded-pill px-3 text-xs font-bold ${look}`}
           >
             {labels[id]}
           </motion.button>

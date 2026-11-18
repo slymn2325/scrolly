@@ -213,11 +213,11 @@ export default function LeaderboardModal({
   if (!open) return null;
 
   const shell = isPage
-    ? 'relative z-20 flex h-full min-h-0 w-full flex-1 flex-col bg-cik-bg text-cik-text'
-    : 'absolute inset-0 z-modal flex h-full w-full items-center justify-center bg-cik-text/30 p-4';
+    ? 'relative z-20 flex h-full min-h-0 w-full flex-1 flex-col bg-cik-bg text-cik-text outline-none ring-0 focus:outline-none focus:ring-0'
+    : 'absolute inset-0 z-modal flex h-full w-full items-center justify-center bg-cik-text/30 p-4 outline-none ring-0 focus:outline-none focus:ring-0';
   const panel = isPage
-    ? 'relative flex h-full w-full flex-col overflow-hidden px-4 pt-[calc(env(safe-area-inset-top)+1rem)] pb-[calc(env(safe-area-inset-bottom)+6rem)] md:px-6 lg:px-8 lg:pb-8 lg:pt-8'
-    : 'relative flex max-h-[84dvh] w-full max-w-xl flex-col overflow-hidden rounded-sheet bg-cik-bg-elevated p-5 pb-[calc(env(safe-area-inset-bottom)+6rem)] text-cik-text shadow-e3';
+    ? 'relative flex h-full w-full flex-col overflow-hidden px-4 pt-[calc(env(safe-area-inset-top)+1rem)] pb-[calc(env(safe-area-inset-bottom)+6rem)] outline-none ring-0 focus:outline-none focus:ring-0 md:px-6 lg:px-8 lg:pb-8 lg:pt-8'
+    : 'relative flex max-h-[84dvh] w-full max-w-xl flex-col overflow-hidden rounded-sheet bg-cik-bg-elevated p-5 pb-[calc(env(safe-area-inset-bottom)+6rem)] text-cik-text shadow-e3 outline-none ring-0 focus:outline-none focus:ring-0';
 
   return (
     <div
@@ -365,7 +365,7 @@ export default function LeaderboardModal({
           </div>
         )}
 
-        <div data-testid="leaderboard-list" className="mt-3 flex-1 space-y-2 overflow-y-auto pb-4">
+        <div data-testid="leaderboard-list" className="mt-3 flex-1 space-y-2 overflow-y-auto overflow-x-hidden pb-24">
           {isLoading && entries.length === 0 ? (
             <div data-testid="leaderboard-loading" className="flex flex-col gap-2">
               {[0, 1, 2, 3, 4].map((skeletonIdx) => (
@@ -391,12 +391,12 @@ export default function LeaderboardModal({
                 const showPromotionCutoff = prevRow?.zone === 'promotion' && row.zone !== 'promotion';
                 const showRelegationCutoff = row.zone === 'relegation' && prevRow?.zone !== 'relegation';
                 const zoneClass = row.isUser
-                  ? 'sticky bottom-0 z-content border-cik-cta bg-cik-pink text-cik-text shadow-e1'
+                  ? 'sticky bottom-0 z-20 mx-0 w-full border-cik-cta bg-cik-pink text-cik-text shadow-e1'
                   : row.zone === 'promotion'
-                    ? 'border-cik-mint bg-cik-surface text-cik-text'
+                    ? 'mx-0 w-full border-cik-mint bg-cik-surface text-cik-text'
                     : row.zone === 'relegation'
-                      ? 'border-cik-rose bg-cik-surface text-cik-text'
-                      : 'border-cik-line bg-cik-surface text-cik-text';
+                      ? 'mx-0 w-full border-cik-rose bg-cik-surface text-cik-text'
+                      : 'mx-0 w-full border-cik-line bg-cik-surface text-cik-text';
                 return (
                   <React.Fragment key={row.id}>
                     {showPromotionCutoff && (

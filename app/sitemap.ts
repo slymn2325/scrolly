@@ -14,6 +14,7 @@ import {
   factHreflangLanguages,
   getFactPrimarySlug,
 } from '@/utils/factsData';
+import { looksLikeIpaPhonetic } from '@/utils/phoneticDisplay';
 import type { FactCard } from '@/types/fact';
 
 export const revalidate = 3600;
@@ -57,7 +58,14 @@ function indexableFactSlug(fact: FactCard): string | null {
     seen.add(slug);
     slug = keeperByRetiredSlug[slug] ?? slug;
   }
-  if (!slug || REDIRECT_SOURCE_SLUGS.has(slug)) return null;
+  if (
+    !slug ||
+    slug.includes('/') ||
+    looksLikeIpaPhonetic(slug) ||
+    REDIRECT_SOURCE_SLUGS.has(slug)
+  ) {
+    return null;
+  }
   return slug;
 }
 

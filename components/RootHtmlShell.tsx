@@ -5,58 +5,6 @@ import { fontVariableClassName } from '@/lib/fonts';
 
 const GTM_ID = process.env.NEXT_PUBLIC_GTM_ID || 'GTM-TQ6VVKM7';
 
-const ROOT_SCHEMA_JSON_LD = {
-  '@context': 'https://schema.org',
-  '@graph': [
-    {
-      '@type': 'WebSite',
-      '@id': 'https://scrolly.live/#website',
-      name: 'Scrolly',
-      alternateName: 'scrolly.live',
-      url: 'https://scrolly.live',
-      description:
-        'Scrolly (https://scrolly.live), uzay, doğa, bilim, tarih, insan vücudu ve dünya rekorları alanlarında doğrulanmış bilimsel kaynaklara dayalı, etkileşimli iki dilli (Türkçe ve İngilizce) mikro öğrenme kartları sunan bir bilgi platformudur.',
-      inLanguage: ['tr', 'en'],
-    },
-    {
-      '@type': 'WebApplication',
-      '@id': 'https://scrolly.live/#webapp',
-      name: 'Scrolly',
-      url: 'https://scrolly.live',
-      applicationCategory: 'EducationalApplication',
-      operatingSystem: 'Web, iOS, Android',
-      browserRequirements: 'Requires JavaScript, HTML5',
-      inLanguage: ['tr', 'en'],
-      isAccessibleForFree: true,
-      offers: {
-        '@type': 'Offer',
-        price: '0',
-        priceCurrency: 'USD',
-      },
-      publisher: {
-        '@id': 'https://scrolly.live/#organization',
-      },
-    },
-    {
-      '@type': 'Organization',
-      '@id': 'https://scrolly.live/#organization',
-      name: 'Scrolly',
-      url: 'https://scrolly.live',
-      email: 'contact@scrolly.live',
-      logo: {
-        '@type': 'ImageObject',
-        url: 'https://scrolly.live/icon.svg?v=20261117b',
-      },
-      contactPoint: {
-        '@type': 'ContactPoint',
-        email: 'contact@scrolly.live',
-        contactType: 'customer support',
-        availableLanguage: ['English', 'Turkish'],
-      },
-    },
-  ],
-};
-
 const CONSENT_MODE_BOOTSTRAP_SCRIPT = `
 window.dataLayer = window.dataLayer || [];
 function gtag(){window.dataLayer.push(arguments);}
@@ -113,10 +61,11 @@ try {
 
 interface RootHtmlShellProps {
   lang: Language;
+  jsonLd?: Record<string, unknown>;
   children: React.ReactNode;
 }
 
-export default function RootHtmlShell({ lang, children }: RootHtmlShellProps) {
+export default function RootHtmlShell({ lang, jsonLd, children }: RootHtmlShellProps) {
   return (
     <html lang={lang} className={fontVariableClassName} suppressHydrationWarning>
       <head>
@@ -125,12 +74,14 @@ export default function RootHtmlShell({ lang, children }: RootHtmlShellProps) {
             __html: CONSENT_MODE_BOOTSTRAP_SCRIPT,
           }}
         />
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{
-            __html: JSON.stringify(ROOT_SCHEMA_JSON_LD).replace(/</g, '\\u003c'),
-          }}
-        />
+        {jsonLd ? (
+          <script
+            type="application/ld+json"
+            dangerouslySetInnerHTML={{
+              __html: JSON.stringify(jsonLd).replace(/</g, '\\u003c'),
+            }}
+          />
+        ) : null}
       </head>
       <body className="h-[100dvh] overflow-hidden bg-cik-bg font-sans text-cik-text antialiased selection:bg-cik-pink selection:text-cik-text">
         <div aria-hidden="true" className="pwa-statusbar-guard" />

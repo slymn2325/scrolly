@@ -375,9 +375,9 @@ export const translations = {
     // iOS Floating Island Dock (5 tabs)
     dockLeaderboard: 'Sıralama',
     profileTabSummary: 'Özet',
-    profileTabAlbum: 'Çıkartma Albümü',
+    profileTabAlbum: 'Albüm',
     profileTabSaved: 'Kaydedilenler',
-    profileTabDiploma: 'Diploma & Rozetler',
+    profileTabDiploma: 'Diploma',
     profileSettings: 'Ayarlar',
     dockQuiz: 'Quiz',
     dockExplore: 'Keşfet',
@@ -670,9 +670,9 @@ export const translations = {
     // iOS Floating Island Dock (5 tabs)
     dockLeaderboard: 'Leaderboard',
     profileTabSummary: 'Summary',
-    profileTabAlbum: 'Sticker album',
+    profileTabAlbum: 'Stickers',
     profileTabSaved: 'Saved',
-    profileTabDiploma: 'Diploma & badges',
+    profileTabDiploma: 'Diploma',
     profileSettings: 'Settings',
     dockQuiz: 'Quiz',
     dockExplore: 'Explore',

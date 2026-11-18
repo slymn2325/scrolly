@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { BookOpen, Compass, Cpu, ShieldCheck, Sparkles } from 'lucide-react';
+import { BookOpen, Compass, Cpu, HelpCircle, ShieldCheck, Sparkles } from 'lucide-react';
 import TrustPageShell from '@/components/TrustPageShell';
 import type { Language } from '@/i18n/translations';
 import { BRAND_OG_IMAGE } from '@/lib/homeMetadata';
@@ -76,6 +76,62 @@ export default async function AboutPage({ searchParams }: PageProps) {
   const isEn = lang === 'en';
   const returnToProfile = query.from === 'profile';
 
+  const faqItems = isEn
+    ? [
+        {
+          question: 'What is Scrolly?',
+          answer:
+            'Scrolly is a free bilingual (English and Turkish) reels-style micro-learning platform built around verified scientific curiosity. Every vertical card combines a concise summary, a deeper "Why / How?" breakdown, primary source links, interactive Quick Guess sliders, and instant recall quizzes.',
+        },
+        {
+          question: 'Is Scrolly free to use?',
+          answer:
+            'Yes, Scrolly is completely free with no mandatory sign-up or paywall. You can explore every card, join quizzes, play Scrolla 1v1 duels, and save favorites immediately as a guest, or optionally link an email via one-time OTP to sync XP across devices.',
+        },
+        {
+          question: 'What topics does Scrolly cover?',
+          answer:
+            'Scrolly covers eight interactive categories: Space, Nature, Human Body, History, Science, Weird Records, Statistics, and Word Lab (B1–C2 English vocabulary). Fact cards reference primary institutions such as NASA, ESA, Nature, PubMed/NIH, Smithsonian, and Britannica for direct verification.',
+        },
+        {
+          question: 'How does Scrolla 1v1 work?',
+          answer:
+            'Scrolla 1v1 is Scrolly’s real-time two-player trivia arena. One player creates a room with a chosen topic and 3, 5, 7, or 10 questions to generate a 6-character code. When both players join and mark ready, a synchronized 5-second countdown starts an identical question pack.',
+        },
+        {
+          question: 'How does Word Lab work?',
+          answer:
+            'Word Lab helps Turkish and English learners master B1–C2 vocabulary inside the vertical feed. Each word card includes IPA pronunciation, normal and slow text-to-speech audio, bilingual example sentences, synonyms, an instant meaning quiz for +15 XP, and a personal Word Notebook.',
+        },
+      ]
+    : [
+        {
+          question: 'Scrolly nedir?',
+          answer:
+            'Scrolly; doğrulanmış bilimsel kaynaklara dayanan ücretsiz, iki dilli (Türkçe ve İngilizce) reels tarzı bir mikro-öğrenme platformudur. Her dikey bilgi kartı; net özet, "Neden / Nasıl?" açıklaması, birincil kaynak bağlantısı, etkileşimli Hızlı Tahmin oyunu ve anlık pekiştirme testi içerir.',
+        },
+        {
+          question: 'Scrolly ücretsiz mi?',
+          answer:
+            'Evet, Scrolly tamamen ücretsizdir ve zorunlu üyelik gerektirmez. Misafir olarak tüm kartları kaydırabilir, quizleri çözebilir, Scrolla 1v1 düellolarına katılabilir ve favorilerinizi kaydedebilirsiniz; isterseniz tek kullanımlık e-posta OTP ile ilerlemenizi cihazlar arasında senkronize edebilirsiniz.',
+        },
+        {
+          question: 'Scrolly hangi konuları kapsar?',
+          answer:
+            'Scrolly sekiz temel alanı kapsar: Uzay, Doğa, İnsan Vücudu, Tarih, Bilim, Garip Rekorlar, İstatistik ve Word Lab (B1–C2 İngilizce kelime öğrenme). Bilgi kartları NASA, ESA, Nature, PubMed/NIH, Smithsonian ve Britannica gibi birincil kaynaklara doğrudan atıf yaparak doğrulanabilir bilgi sunar.',
+        },
+        {
+          question: 'Scrolla 1v1 nasıl çalışır?',
+          answer:
+            'Scrolla 1v1, iki oyuncunun aynı kart paketinde yarıştığı gerçek zamanlı bilgi arenasıdır. Oda kuran oyuncu konu seçip 3, 5, 7 veya 10 soru belirleyerek 6 haneli oda kodu oluşturur. İki oyuncu da "Hazır Ol" dediğinde senkronize geri sayımla maç başlar.',
+        },
+        {
+          question: 'Word Lab (Dil Öğrenme) nasıl çalışır?',
+          answer:
+            'Word Lab, B1–C2 seviye İngilizce kelimeleri dikey akış içinde öğretir. Her kartta IPA telaffuz gösterimi, normal ve yavaş sesli dinleme, iki dilli bağlam cümleleri, eş anlamlılar, +15 XP kazandıran anlık anlam testi ve kişisel Kelime Defteri bulunur.',
+        },
+      ];
+
   const jsonLd = {
     '@context': 'https://schema.org',
     '@graph': [
@@ -119,6 +175,18 @@ export default async function AboutPage({ searchParams }: PageProps) {
             item: 'https://scrolly.live/about',
           },
         ],
+      },
+      {
+        '@type': 'FAQPage',
+        '@id': 'https://scrolly.live/about#faq',
+        mainEntity: faqItems.map((item) => ({
+          '@type': 'Question',
+          name: item.question,
+          acceptedAnswer: {
+            '@type': 'Answer',
+            text: item.answer,
+          },
+        })),
       },
     ],
   };
@@ -227,6 +295,29 @@ export default async function AboutPage({ searchParams }: PageProps) {
           >
             contact@scrolly.live
           </a>
+        </div>
+      </section>
+      <section className="space-y-3 border-t border-cik-line pt-5">
+        <h2 className="flex items-center gap-2 font-display text-lg font-bold text-ink dark:text-white">
+          <HelpCircle className="h-5 w-5 text-violet-600" />
+          <span>
+            {isEn ? '4. Frequently Asked Questions (FAQ)' : '4. Sıkça Sorulan Sorular (FAQ)'}
+          </span>
+        </h2>
+        <div className="space-y-2.5">
+          {faqItems.map((item) => (
+            <div
+              key={item.question}
+              className="rounded-2xl border border-cik-line bg-cik-surface-2 p-4"
+            >
+              <h3 className="font-display text-sm font-extrabold text-ink dark:text-white sm:text-base">
+                {item.question}
+              </h3>
+              <p className="mt-1.5 text-sm leading-relaxed text-ink/80 dark:text-violet-100/85">
+                {item.answer}
+              </p>
+            </div>
+          ))}
         </div>
       </section>
     </TrustPageShell>

@@ -412,9 +412,15 @@ html.scrolly-doc-scroll body {
   box-shadow: var(--cik-e3);
 }
 
-.cik-sheet:focus {
-  outline: 3px solid var(--cik-focus);
-  outline-offset: 2px;
+.cik-sheet:focus,
+.cik-sheet:focus-visible {
+  outline: none;
+}
+
+@media (min-width: 1024px) {
+  .cik-sheet {
+    border-radius: 1.5rem;
+  }
 }
 
 .cik-scrim {

@@ -290,13 +290,14 @@ export default function VocabularySlide({
           <h2 data-testid="vocab-word" className="cik-large-title mt-1 text-center text-cik-text">
             {card.word}
           </h2>
-          <p
-            data-testid="vocab-phonetic"
-            data-phonetic="true"
-            aria-label={phonetic}
-            className="mt-1 text-center font-mono text-cik-text-2"
-          >
-            {phonetic}
+          <p className="mt-1 text-center font-mono text-cik-text-2">
+            <span
+              data-testid="vocab-phonetic"
+              data-phonetic="true"
+              aria-label={phonetic}
+            >
+              {phonetic}
+            </span>
           </p>
 
           <div className="mt-4 flex flex-wrap items-center justify-center gap-2">

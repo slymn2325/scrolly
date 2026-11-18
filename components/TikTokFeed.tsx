@@ -2,7 +2,20 @@
 
 import React, { forwardRef, useCallback, useEffect, useImperativeHandle, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
-import { Check, ChevronDown, Globe } from 'lucide-react';
+import {
+  Atom,
+  BarChart3,
+  BookOpen,
+  Check,
+  ChevronDown,
+  Dna,
+  Globe,
+  Landmark,
+  Leaf,
+  Orbit,
+  Sparkles,
+  Trophy,
+} from 'lucide-react';
 import BrandLogo from '@/components/BrandLogo';
 import Skeleton from '@/components/cikartma/Skeleton';
 import NotificationsBell from '@/components/NotificationsBell';
@@ -22,6 +35,41 @@ import type { VocabularyCard } from '@/types/vocabulary';
 import { getVocabularyFacts } from '@/data/vocabularyFacts';
 import { motionSpring } from '@/lib/motion';
 import { markFactSeenInStorage } from '@/utils/seenFacts';
+
+const CATEGORY_ICON_CONFIG: Record<
+  CategoryFilter,
+  { Icon: React.ComponentType<{ size?: number; strokeWidth?: number; className?: string; 'aria-hidden'?: boolean }>; colorClass: string }
+> = {
+  all: { Icon: Sparkles, colorClass: 'text-amber-500' },
+  vocabulary: { Icon: BookOpen, colorClass: 'text-indigo-500' },
+  space: { Icon: Orbit, colorClass: 'text-violet-500' },
+  nature: { Icon: Leaf, colorClass: 'text-emerald-500' },
+  human_body: { Icon: Dna, colorClass: 'text-rose-500' },
+  history: { Icon: Landmark, colorClass: 'text-amber-600' },
+  science: { Icon: Atom, colorClass: 'text-sky-500' },
+  records: { Icon: Trophy, colorClass: 'text-pink-500' },
+  statistics: { Icon: BarChart3, colorClass: 'text-indigo-600' },
+};
+
+function CategoryIcon({
+  id,
+  size = 18,
+  className = '',
+}: {
+  id: CategoryFilter;
+  size?: number;
+  className?: string;
+}) {
+  const { Icon, colorClass } = CATEGORY_ICON_CONFIG[id] ?? CATEGORY_ICON_CONFIG.all;
+  return (
+    <Icon
+      size={size}
+      strokeWidth={2.2}
+      aria-hidden={true}
+      className={`shrink-0 ${colorClass} ${className}`.trim()}
+    />
+  );
+}
 
 const GESTURE_LOCK_MS = 450;
 const WHEEL_THRESHOLD_PX = 50;
@@ -697,14 +745,7 @@ const TikTokFeed = forwardRef<TikTokFeedHandle, TikTokFeedProps>(function TikTok
               chromeBlocked ? 'pointer-events-none' : 'pointer-events-auto'
             }`}
           >
-            <img
-              src={activeCategoryMeta.iconPath}
-              alt=""
-              aria-hidden="true"
-              width={24}
-              height={24}
-              className="h-6 w-6 shrink-0 object-contain"
-            />
+            <CategoryIcon id={activeCategory} size={18} />
             <span className="cik-footnote min-w-0 truncate">{categoryTriggerLabel}</span>
             <ChevronDown
               size={16}
@@ -723,7 +764,7 @@ const TikTokFeed = forwardRef<TikTokFeedHandle, TikTokFeedProps>(function TikTok
               data-testid="category-drawer"
               data-presentation="dropdown"
               data-scroll-contain="true"
-              className="pointer-events-auto absolute left-0 top-full z-40 mt-2 max-h-[65dvh] w-60 overflow-y-auto rounded-2xl border border-black/10 bg-white/95 p-1.5 shadow-xl backdrop-blur-md dark:border-white/10 dark:bg-[#1C1B22]/95"
+              className="pointer-events-auto absolute left-0 top-full z-40 mt-2 max-h-[65dvh] w-60 overflow-y-auto rounded-2xl border border-black/10 bg-white/95 p-1.5 shadow-xl backdrop-blur-md outline-none ring-0 focus:outline-none focus:ring-0 dark:border-white/10 dark:bg-[#1C1B22]/95"
             >
               <div className="flex flex-col gap-0.5">
                 {CATEGORY_SELECTOR_OPTIONS.map((cat) => {
@@ -750,15 +791,7 @@ const TikTokFeed = forwardRef<TikTokFeedHandle, TikTokFeedProps>(function TikTok
                           : 'text-neutral-800 hover:bg-black/5 dark:text-white/90 dark:hover:bg-white/10'
                       }`}
                     >
-                      <img
-                        src={cat.iconPath}
-                        alt=""
-                        aria-hidden="true"
-                        width={20}
-                        height={20}
-                        decoding="async"
-                        className="h-5 w-5 shrink-0 object-contain"
-                      />
+                      <CategoryIcon id={cat.id} size={18} />
                       <span className="min-w-0 flex-1 truncate">{cat.label[lang]}</span>
                       {isActive ? (
                         <Check size={16} strokeWidth={2.5} aria-hidden="true" className="shrink-0" />

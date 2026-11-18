@@ -424,7 +424,8 @@ function syncDocumentTheme(
 function normalizeCategoryParam(raw: string | null): CategoryFilter | null {
   if (!raw) return null;
   const clean = raw.trim().toLowerCase();
-  if (clean === 'weird_records') return 'records';
+  if (clean === 'human-body') return 'human_body';
+  if (clean === 'weird_records' || clean === 'weird-records') return 'records';
   if (clean === 'istatistik') return 'statistics';
   if (
     clean === 'all' ||
@@ -2215,9 +2216,9 @@ export default function HomeClient({ initialFacts, initialVocabulary, initialLan
         {activeDetailCard && (
           <div
             data-testid="detail-modal-backdrop"
-            className="absolute inset-0 z-50 flex h-full w-full flex-col bg-cik-bg"
+            className="absolute inset-0 z-50 flex h-full w-full flex-col bg-cik-bg outline-none ring-0 focus:outline-none focus:ring-0 focus-visible:outline-none"
           >
-            <div className="relative flex h-full min-h-0 w-full flex-col overflow-hidden bg-cik-bg text-cik-text">
+            <div className="relative flex h-full min-h-0 w-full flex-col overflow-hidden bg-cik-bg text-cik-text outline-none ring-0 focus:outline-none focus:ring-0 focus-visible:outline-none">
               <FactDetailPage
                 key={`fact-detail-${activeDetailCard.fact.id}`}
                 fact={activeDetailCard.fact}

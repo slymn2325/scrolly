@@ -74,27 +74,27 @@ const AXIS_LABEL_PLACEMENTS: Record<CategoryId, LabelPlacement> = {
   },
   nature: {
     className: '-translate-y-1/2 justify-start',
-    style: { left: '68%', top: '27.5%' },
+    style: { left: '64%', top: '27.5%' },
   },
   science: {
     className: '-translate-y-1/2 justify-start',
-    style: { left: '70%', top: '55.5%' },
+    style: { left: '66%', top: '55.5%' },
   },
   statistics: {
     className: '-translate-y-1/2 justify-start',
-    style: { left: '57%', top: '83.5%' },
+    style: { left: '56%', top: '83.5%' },
   },
   history: {
     className: '-translate-y-1/2 justify-end',
-    style: { right: '57%', top: '83.5%' },
+    style: { right: '56%', top: '83.5%' },
   },
   records: {
     className: '-translate-y-1/2 justify-end',
-    style: { right: '70%', top: '55.5%' },
+    style: { right: '66%', top: '55.5%' },
   },
   human_body: {
     className: '-translate-y-1/2 justify-end',
-    style: { right: '68%', top: '27.5%' },
+    style: { right: '64%', top: '27.5%' },
   },
 };
 
@@ -234,7 +234,7 @@ export default function TopicRadarChart({
       : `${selectedStats.hasPersonalAccuracy ? t.radarPersonalAccuracyBadge : t.radarTargetBadge}: ${selectedStats.accuracyDisplayPct}%`;
 
   return (
-    <div data-testid="topic-constellation" className="space-y-3">
+    <div data-testid="topic-constellation" className="space-y-3 overflow-x-hidden">
       <div>
         <h3 className="cik-headline flex items-center gap-2 text-cik-text">
           <Target className="h-5 w-5 text-cik-cta" />
@@ -246,13 +246,13 @@ export default function TopicRadarChart({
       </div>
 
       {/* DataMB Style Card: Percentile Comparison Header + 7-Axis Radar SVG */}
-      <div className="overflow-visible rounded-sticker border border-cik-line bg-cik-surface p-4 shadow-e1">
+      <div className="overflow-x-hidden rounded-sticker border border-cik-line bg-cik-surface p-4 shadow-e1">
         {/* 1. Compact DataMB Comparison Row */}
         <div
           data-testid="radar-percentile-table"
-          className="overflow-x-auto rounded-cik-lg border border-cik-line bg-cik-surface-2 px-2 py-2"
+          className="no-scrollbar overflow-x-auto rounded-cik-lg border border-cik-line bg-cik-surface-2 px-2 py-2"
         >
-          <div className="grid min-w-max grid-cols-[minmax(72px,1fr)_repeat(7,minmax(44px,1fr))_minmax(44px,0.7fr)] items-center gap-1 text-center">
+          <div className="grid min-w-max grid-cols-[minmax(60px,1fr)_repeat(7,minmax(36px,1fr))_minmax(36px,0.7fr)] items-center gap-1 text-center">
             {/* Header Row */}
             <div className="cik-caption-2 pl-1 text-left text-cik-text-3">
               {hasAnyPersonalAccuracy ? 'LIVE' : 'DATA'}
@@ -352,11 +352,11 @@ export default function TopicRadarChart({
         {/* 2. Interactive 7-Axis Heptagon SVG Radar */}
         <div
           data-testid="topic-radar-svg-wrap"
-          className="relative mx-auto mt-2 mb-6 aspect-[380/312] w-full max-w-[440px] pb-3"
+          className="relative mx-auto mt-2 mb-6 aspect-[380/312] w-full max-w-[min(100%,440px)] overflow-hidden pb-3"
         >
           <svg
             viewBox={`0 0 ${SVG_WIDTH} ${SVG_HEIGHT}`}
-            className="h-full w-full overflow-visible"
+            className="block h-auto w-full max-w-full"
             role="img"
             aria-label={t.constellationTitle}
           >
@@ -513,7 +513,7 @@ export default function TopicRadarChart({
                 data-testid={`constellation-node-${catId}`}
                 aria-label={meta.label[lang]}
                 style={placement.style}
-                className={`cik-caption-2 absolute flex max-w-[8rem] items-center gap-1 rounded-pill border px-2 py-1 leading-tight ${placement.className} ${
+                className={`cik-caption-2 absolute flex max-w-[6.75rem] items-center gap-1 rounded-pill border px-1.5 py-1 text-[10px] leading-tight ${placement.className} ${
                   isSelected
                     ? 'border-cik-berry bg-cik-pink text-cik-text'
                     : 'border-cik-line bg-cik-surface text-cik-text-2'

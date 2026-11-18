@@ -17,6 +17,7 @@ export function sanitizePhoneticText(raw: string | null | undefined): string {
 export function formatPhoneticForDisplay(raw: string | null | undefined): string {
   const phonetic = sanitizePhoneticText(raw);
   if (!phonetic) return '';
+  if (phonetic.includes(ZWSP)) return phonetic;
   if (phonetic.startsWith('/') && phonetic.endsWith('/') && phonetic.length > 2) {
     return `/${ZWSP}${phonetic.slice(1, -1)}${ZWSP}/`;
   }

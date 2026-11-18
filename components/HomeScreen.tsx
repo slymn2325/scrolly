@@ -11,6 +11,7 @@ import {
   getFactPrimarySlug,
   interleaveFactsByCategory,
 } from '@/utils/factsData';
+import { formatPhoneticForDisplay } from '@/utils/phoneticDisplay';
 
 const TRUST_LINKS = [
   { href: '/about', tr: 'Hakkımızda', en: 'About Us' },
@@ -20,11 +21,15 @@ const TRUST_LINKS = [
 ] as const;
 
 export default async function HomeScreen({ lang }: { lang: 'tr' | 'en' }) {
-  const [allFacts, { vocabulary: initialVocabulary }] = await Promise.all([
+  const [allFacts, { vocabulary: rawVocabulary }] = await Promise.all([
     getAllFactsServer(),
     fetchVocabularyWithSourceServer(),
   ]);
   const initialFacts = interleaveFactsByCategory(allFacts).slice(0, 36);
+  const initialVocabulary = rawVocabulary.map((card) => ({
+    ...card,
+    phonetic: formatPhoneticForDisplay(card.phonetic),
+  }));
   const isEn = lang === 'en';
 
   return (

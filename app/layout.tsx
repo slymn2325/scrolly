@@ -45,6 +45,71 @@ export const viewport: Viewport = {
   ],
 };
 
+const ROOT_SCHEMA_JSON_LD = {
+  '@context': 'https://schema.org',
+  '@graph': [
+    {
+      '@type': 'WebSite',
+      '@id': 'https://scrolly.live/#website',
+      name: 'Scrolly',
+      alternateName: 'scrolly.live',
+      url: 'https://scrolly.live',
+      description:
+        'Scrolly (https://scrolly.live) is a free bilingual (English & Turkish) reels-style micro-learning platform featuring verified science fact cards, Quick Guess challenges, Word Lab (B1–C2 vocabulary), quizzes, and Scrolla 1v1 duels.',
+      inLanguage: ['en', 'tr'],
+      publisher: {
+        '@id': 'https://scrolly.live/#organization',
+      },
+    },
+    {
+      '@type': 'Organization',
+      '@id': 'https://scrolly.live/#organization',
+      name: 'Scrolly',
+      url: 'https://scrolly.live',
+      email: 'contact@scrolly.live',
+      logo: {
+        '@type': 'ImageObject',
+        url: 'https://scrolly.live/icon.svg?v=20261117b',
+      },
+      contactPoint: {
+        '@type': 'ContactPoint',
+        email: 'contact@scrolly.live',
+        contactType: 'customer support',
+        availableLanguage: ['English', 'Turkish'],
+      },
+    },
+    {
+      '@type': 'WebApplication',
+      '@id': 'https://scrolly.live/#webapp',
+      name: 'Scrolly',
+      url: 'https://scrolly.live',
+      applicationCategory: 'EducationalApplication',
+      operatingSystem: 'Web, iOS, Android',
+      browserRequirements: 'Requires JavaScript, HTML5',
+      inLanguage: ['en', 'tr'],
+      isAccessibleForFree: true,
+      offers: {
+        '@type': 'Offer',
+        price: '0',
+        priceCurrency: 'USD',
+      },
+      description:
+        'Bilingual reels-style micro-learning platform with verified scientific facts, Quick Guess estimation challenges, B1–C2 Word Lab, Daily/Memory Quizzes, and Scrolla 1v1 knowledge duels.',
+      featureList: [
+        'Verified Bilingual Fact Cards (TR & EN)',
+        'Quick Guess Interactive Sliders & Challenges',
+        'Word Lab B1–C2 English Vocabulary Cards',
+        'Daily Sprint, Weekly Marathon & Memory Quizzes',
+        'Scrolla 1v1 Live Multiplayer Knowledge Arena',
+        'Offline-Ready Progressive Web App (PWA)',
+      ],
+      publisher: {
+        '@id': 'https://scrolly.live/#organization',
+      },
+    },
+  ],
+};
+
 async function documentLang(): Promise<'en' | 'tr'> {
   const headerList = await headers();
   const requested =
@@ -59,7 +124,7 @@ export default async function RootLayout({
 }>) {
   const lang = await documentLang();
   return (
-    <RootHtmlShell lang={lang}>
+    <RootHtmlShell lang={lang} jsonLd={ROOT_SCHEMA_JSON_LD}>
       <DocScrollFrame>{children}</DocScrollFrame>
     </RootHtmlShell>
   );

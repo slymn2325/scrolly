@@ -334,8 +334,8 @@ export default function DiplomaProfileModal({
   if (!open) return null;
 
   const shell = isPage
-    ? 'relative z-20 flex h-full min-h-0 w-full flex-1 flex-col bg-cik-bg text-cik-text'
-    : 'cik-scrim absolute inset-0 z-20 flex h-full w-full items-end justify-center p-4 sm:items-center';
+    ? 'relative z-20 flex h-full min-h-0 w-full flex-1 flex-col bg-cik-bg text-cik-text outline-none ring-0 focus:outline-none focus:ring-0'
+    : 'cik-scrim absolute inset-0 z-20 flex h-full w-full items-end justify-center p-4 outline-none ring-0 focus:outline-none focus:ring-0 sm:items-center';
 
   return (
     <div
@@ -352,8 +352,8 @@ export default function DiplomaProfileModal({
         transition={reduced ? motionTiming.reducedFade : motionSpring.dockTab}
         className={
           isPage
-            ? 'relative flex h-full w-full flex-col overflow-hidden pb-[calc(env(safe-area-inset-bottom)+64px)] lg:pb-0'
-            : 'cik-sheet relative flex max-h-[calc(100dvh-64px)] w-full max-w-lg flex-col overflow-hidden bg-cik-surface text-cik-text'
+            ? 'relative flex h-full w-full flex-col overflow-hidden pb-[calc(env(safe-area-inset-bottom)+64px)] outline-none ring-0 focus:outline-none focus:ring-0 lg:pb-0'
+            : 'cik-sheet relative flex max-h-[calc(100dvh-64px)] w-full max-w-lg flex-col overflow-hidden bg-cik-surface text-cik-text outline-none ring-0 focus:outline-none focus:ring-0'
         }
       >
         <div
@@ -389,7 +389,7 @@ export default function DiplomaProfileModal({
         <div
           ref={scrollBodyRef}
           data-testid="diploma-scroll-body"
-          className={`no-scrollbar min-h-0 flex-1 overflow-y-auto px-4 pb-8 ${isPage ? 'lg:px-8' : ''}`}
+          className={`no-scrollbar min-h-0 flex-1 overflow-y-auto overflow-x-hidden px-4 pb-8 ${isPage ? 'lg:px-8' : ''}`}
         >
           <ProfileHeader
             lang={uiLang}

@@ -47,7 +47,10 @@ export default function DesktopLeftNav({
   onBindEmail,
 }: DesktopLeftNavProps) {
   const [isOffline, setIsOffline] = useState(
-    () => (typeof navigator !== 'undefined' ? !navigator.onLine : false)
+    () =>
+      typeof window !== 'undefined' &&
+      typeof navigator !== 'undefined' &&
+      navigator.onLine === false
   );
   const isGuest = !accountEmail;
   const highlightedTab = activeTab === 'language' ? 'explore' : activeTab;
@@ -55,14 +58,17 @@ export default function DesktopLeftNav({
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
-    setIsOffline(navigator.onLine === false);
-    const onOnline = () => setIsOffline(false);
-    const onOffline = () => setIsOffline(true);
-    window.addEventListener('online', onOnline);
-    window.addEventListener('offline', onOffline);
+    const syncNetwork = () => {
+      setIsOffline(typeof navigator !== 'undefined' && navigator.onLine === false);
+    };
+    syncNetwork();
+    window.addEventListener('online', syncNetwork);
+    window.addEventListener('offline', syncNetwork);
+    window.addEventListener('focus', syncNetwork);
     return () => {
-      window.removeEventListener('online', onOnline);
-      window.removeEventListener('offline', onOffline);
+      window.removeEventListener('online', syncNetwork);
+      window.removeEventListener('offline', syncNetwork);
+      window.removeEventListener('focus', syncNetwork);
     };
   }, []);
 

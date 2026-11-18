@@ -130,6 +130,7 @@ export function categoryRouteSlugToId(routeSlug: string): CategoryId | null {
       return 'human_body';
     case 'records':
     case 'weird_records':
+    case 'weird-records':
       return 'records';
     case 'statistics':
     case 'istatistik':
