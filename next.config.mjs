@@ -154,6 +154,9 @@ const nextConfig = {
   },
   experimental: {
     optimizePackageImports: ['lucide-react'],
+    cpus: 3,
+    staticGenerationMaxConcurrency: 4,
+    staticGenerationMinPagesPerWorker: 60,
   },
   async headers() {
     return [

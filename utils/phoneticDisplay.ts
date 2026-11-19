@@ -6,7 +6,7 @@
  */
 
 const ZWSP = '\u200B';
-const IPA_SYMBOL_PATTERN = /[ˈˌːɑɒæəɜɪʊʌθðʃʒŋɡ]/;
+const IPA_SYMBOL_PATTERN = /[ˈˌːəɪʊæɒʌɜʃʒθðŋɡɾɑɔɛ]/u;
 const IPA_ESCAPE_PATTERN = /\\[uʊiɪeɛæɑɒɔoʊəɜ]/;
 
 export function sanitizePhoneticText(raw: string | null | undefined): string {
@@ -30,11 +30,21 @@ export function looksLikeIpaPhonetic(value: string | null | undefined): boolean 
   if (!trimmed.startsWith('/') || trimmed.length < 3) {
     return false;
   }
-  // Accept `/ipa/` and crawler-truncated `/ipa` forms (e.g. /æmˈbɪv.ə.lənt).
-  const body =
-    trimmed.endsWith('/') && trimmed.length > 2 ? trimmed.slice(1, -1) : trimmed.slice(1);
-  if (!body) return false;
-  return IPA_SYMBOL_PATTERN.test(body) || IPA_ESCAPE_PATTERN.test(body);
+  // Strip outer slashes and zero-width spaces cleanly for single-segment IPA paths
+  // (e.g. /\u200bfəˈleɪ.ʃəs\u200b, /ˌæs.əˈteɪn, /prəˈfaʊnd).
+  const withoutOuterSlashes = trimmed.replace(/^\/+|\/+$/g, '');
+  if (!withoutOuterSlashes || withoutOuterSlashes.includes('/')) {
+    return false;
+  }
+  const normalizedBody = withoutOuterSlashes.replace(/\u200B/g, '');
+  if (!normalizedBody && withoutOuterSlashes.includes(ZWSP)) {
+    return true;
+  }
+  return (
+    withoutOuterSlashes.includes(ZWSP) ||
+    IPA_SYMBOL_PATTERN.test(normalizedBody) ||
+    IPA_ESCAPE_PATTERN.test(normalizedBody)
+  );
 }
 
 /**

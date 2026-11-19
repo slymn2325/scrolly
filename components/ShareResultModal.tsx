@@ -230,8 +230,12 @@ export default function ShareResultModal({
           : `🎮 Scrolla 1v1 Room Code: ${createdRoomCode}`;
       return `${shareSummaryLine}\n${t.shareChallengeText}\n${codeLine}\n${duelShareUrl}`;
     }
+    if (challengeUrl) {
+      return `${shareSummaryLine}\n${t.shareChallengeText}\n${challengeUrl}`;
+    }
     return `${shareSummaryLine}\n${t.shareChallengeText}\n${siteUrl}`;
   }, [
+    challengeUrl,
     createdRoomCode,
     duelShareUrl,
     elapsedSec,
@@ -248,7 +252,7 @@ export default function ShareResultModal({
   const ensureScrollaRoomCode = useMemo(() => {
     return async (): Promise<string | null> => {
       if (createdRoomCode) return createdRoomCode;
-      if (questionIds.length === 0) return null;
+      if (effectiveQuestionIds.length === 0) return null;
       if (pendingRoomRef.current) return pendingRoomRef.current;
 
       const hostId = getOrCreateScrollaPlayerId();
@@ -256,8 +260,10 @@ export default function ShareResultModal({
         hostId,
         hostName: challengerNickname,
         category: badgeCategory,
-        questionCount: [3, 5, 7, 10].includes(questionIds.length) ? questionIds.length : 5,
-        cardIds: questionIds.slice(0, 10),
+        questionCount: [3, 5, 7, 10].includes(effectiveQuestionIds.length)
+          ? effectiveQuestionIds.length
+          : 5,
+        cardIds: effectiveQuestionIds.slice(0, 10),
       })
         .then((res) => {
           if (res.ok && res.room?.code) {
@@ -274,13 +280,7 @@ export default function ShareResultModal({
       pendingRoomRef.current = promise;
       return promise;
     };
-  }, [badgeCategory, challengerNickname, createdRoomCode, questionIds]);
-
-  // Pre-provision 6-char Scrolla room code on open so Copy & WhatsApp share include ?duel=XXXXXX immediately
-  useEffect(() => {
-    if (createdRoomCode || questionIds.length === 0) return;
-    void ensureScrollaRoomCode();
-  }, [createdRoomCode, ensureScrollaRoomCode, questionIds.length]);
+  }, [badgeCategory, challengerNickname, createdRoomCode, effectiveQuestionIds]);
 
   // Poll live 1v1 Scrolla room for opponent completion and reaction GIFs
   useEffect(() => {
@@ -741,8 +741,8 @@ export default function ShareResultModal({
                         ? 'Link kopyalandı!'
                         : 'Link copied!'
                       : lang === 'tr'
-                        ? 'Meydan Oku / Link Paylaş'
-                        : 'Challenge a Friend / Share Link'}
+                        ? 'Beni Geçebilir Misin? · Link Paylaş'
+                        : 'Can You Beat Me? · Share Link'}
                 </span>
               </Button>
 
@@ -802,7 +802,13 @@ export default function ShareResultModal({
 
               <Button tone="ghost" data-testid="copy-duel-from-result-btn" className="w-full" onClick={handleCopyDuelFromResult}>
                 <Swords size={20} strokeWidth={2} aria-hidden="true" />
-                <span>{duelCopied ? t.duelLinkCopied : t.duelCopyLinkBtn}</span>
+                <span>
+                  {duelCopied
+                    ? t.duelLinkCopied
+                    : lang === 'tr'
+                      ? '1v1 Canlı Düello Linki Kopyala'
+                      : 'Copy 1v1 Live Duel Link'}
+                </span>
               </Button>
             </>
           )}

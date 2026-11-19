@@ -2260,6 +2260,10 @@ async function main() {
     ssl: process.env.DATABASE_CA_CERT
       ? { rejectUnauthorized: true, ca: process.env.DATABASE_CA_CERT }
       : { rejectUnauthorized: false },
+    max: 2,
+    idleTimeoutMillis: 15_000,
+    connectionTimeoutMillis: 10_000,
+    allowExitOnIdle: true,
   });
 
   let lockHeld = false;

@@ -196,22 +196,24 @@ export function getPool(): Pool {
     throw new Error('DATABASE_URL environment variable is not configured.');
   }
 
-  if (!global.__scrollyPgPool) {
+  if (!globalThis.__scrollyPgPool) {
     const connectionString = process.env.DATABASE_URL!.trim();
+    const isBuildPhase = process.env.NEXT_PHASE === 'phase-production-build';
     const pool = new Pool({
       connectionString,
       ssl: resolveSslConfig(connectionString),
-      max: 10,
-      idleTimeoutMillis: 30000,
-      connectionTimeoutMillis: 5000,
+      max: isBuildPhase ? 2 : 6,
+      idleTimeoutMillis: 15_000,
+      connectionTimeoutMillis: 10_000,
+      allowExitOnIdle: true,
     });
     pool.on('error', (err) => {
       console.error('[lib/db] Unexpected pg pool error:', err);
     });
-    global.__scrollyPgPool = pool;
+    globalThis.__scrollyPgPool = pool;
   }
 
-  return global.__scrollyPgPool;
+  return globalThis.__scrollyPgPool;
 }
 
 const FACT_SHARD_FILES = [
@@ -396,8 +398,8 @@ async function seedInitialFactsIfEmpty(pool: Pool): Promise<void> {
 export async function ensureSchema(): Promise<void> {
   if (!hasDatabaseUrl()) return;
 
-  if (!global.__scrollySchemaReadyPromise) {
-    global.__scrollySchemaReadyPromise = (async () => {
+  if (!globalThis.__scrollySchemaReadyPromise) {
+    globalThis.__scrollySchemaReadyPromise = (async () => {
       const pool = getPool();
 
       // One migration lock across dynos — never re-run heavy unique-index builds on
@@ -988,12 +990,12 @@ export async function ensureSchema(): Promise<void> {
         lockClient.release();
       }
     })().catch((err) => {
-      global.__scrollySchemaReadyPromise = undefined;
+      globalThis.__scrollySchemaReadyPromise = undefined;
       throw err;
     });
   }
 
-  return global.__scrollySchemaReadyPromise;
+  return globalThis.__scrollySchemaReadyPromise;
 }
 
 export const initDb = ensureSchema;
@@ -1536,7 +1538,9 @@ export const fetchFactsWithSourceServer = cache(
     }
 
     try {
-      await ensureSchema();
+      if (process.env.NEXT_PHASE !== 'phase-production-build') {
+        await ensureSchema();
+      }
       const pool = getPool();
       const result = await pool.query<DbFactRow>(
         'SELECT * FROM facts ORDER BY created_at DESC, id DESC'
@@ -1855,7 +1859,9 @@ export async function fetchVocabularyWithSourceServer(): Promise<ServerVocabular
   }
 
   try {
-    await ensureSchema();
+    if (process.env.NEXT_PHASE !== 'phase-production-build') {
+      await ensureSchema();
+    }
     const pool = getPool();
     const res = await pool.query<DbVocabularyRow>(
       `SELECT id, word, phonetic, part_of_speech, cefr_level, synonyms,
@@ -1992,7 +1998,9 @@ export async function getDatabaseStatusReport(): Promise<DatabaseStatusReport> {
   }
 
   try {
-    await ensureSchema();
+    if (process.env.NEXT_PHASE !== 'phase-production-build') {
+      await ensureSchema();
+    }
     const pool = getPool();
     const [factsRes, vocabRes, categoryRes, latestRes, schedulerRes] = await Promise.all([
       pool.query<{ total: number; with_gif: number }>(

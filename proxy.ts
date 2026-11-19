@@ -45,6 +45,22 @@ function isPrivateDuelPath(pathname: string): boolean {
   return pathname === '/duello' || pathname.startsWith('/duello/') || pathname.startsWith('/en/duel/');
 }
 
+const SINGLE_SEGMENT_IPA_RE = /[ˈˌːəɪʊæɒʌɜʃʒθðŋɡɾɑɔɛ]/u;
+
+export function isSingleSegmentIpaPath(pathname: string): boolean {
+  let decoded = pathname;
+  try {
+    decoded = decodeURIComponent(pathname);
+  } catch {
+    // Keep raw pathname if percent-decoding fails
+  }
+  const trimmed = decoded.replace(/^\/+|\/+$/g, '');
+  if (!trimmed || trimmed.includes('/')) return false;
+  if (trimmed.includes('\u200b')) return true;
+  if (SINGLE_SEGMENT_IPA_RE.test(trimmed)) return true;
+  return looksLikeIpaPhonetic(`/${trimmed}`);
+}
+
 export function proxy(request: NextRequest) {
   if (request.nextUrl.pathname.startsWith('/api/')) {
     const verdict = verifySameOriginRequest(request);
@@ -60,16 +76,11 @@ export function proxy(request: NextRequest) {
     return NextResponse.next();
   }
 
-  try {
-    const decodedPath = decodeURIComponent(request.nextUrl.pathname);
-    if (looksLikeIpaPhonetic(decodedPath)) {
-      const vocabDest = request.nextUrl.clone();
-      vocabDest.pathname = '/';
-      vocabDest.search = '?category=vocabulary';
-      return NextResponse.redirect(vocabDest, 301);
-    }
-  } catch {
-    // Ignore malformed percent-encoding in pathname
+  if (isSingleSegmentIpaPath(request.nextUrl.pathname)) {
+    const vocabDest = request.nextUrl.clone();
+    vocabDest.pathname = '/';
+    vocabDest.search = '?category=vocabulary';
+    return NextResponse.redirect(vocabDest, 301);
   }
 
   const redirected = redirectEnglishQuery(request);
@@ -119,5 +130,8 @@ export function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/((?!_next/static|_next/image|favicon.ico|icon|api|.*\\..*).*)', '/api/:path*'],
+  matcher: [
+    '/((?!_next/static|_next/image|favicon.ico|api(?:/|$)|.*\\.(?:png|jpg|jpeg|gif|webp|avif|svg|ico|css|js|mjs|map|txt|xml|json|woff|woff2|ttf|eot|otf|webmanifest|mp4|webm|mp3|wav|pdf)$).*)',
+    '/api/:path*',
+  ],
 };
