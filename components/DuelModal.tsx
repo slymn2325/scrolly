@@ -62,6 +62,7 @@ import {
   joinScrollaRoom,
 } from '@/utils/duelLobby';
 import { STATE_ILLUSTRATION_PATHS } from '@/utils/icons8Assets';
+import { extractInviteCode } from '@/utils/inviteCode';
 import { useEscapeClose } from '@/utils/useEscapeClose';
 
 export interface DuelChallengeConfig {
@@ -1002,9 +1003,17 @@ export default function DuelModal({
                     <input
                       type="text"
                       value={joinCodeInput}
-                      onChange={(e) => setJoinCodeInput(normalizeRoomCode(e.target.value))}
-                      placeholder="K8M2P9"
-                      maxLength={6}
+                      onChange={(e) => setJoinCodeInput(extractInviteCode(e.target.value, 'duel'))}
+                      onPaste={(e) => {
+                        const pasted = e.clipboardData?.getData('text');
+                        if (!pasted) return;
+                        e.preventDefault();
+                        setJoinCodeInput(extractInviteCode(pasted, 'duel'));
+                      }}
+                      placeholder={
+                        lang === 'tr' ? 'Kod veya davet linki (ör. K8M2P9)' : 'Code or invite link (e.g. K8M2P9)'
+                      }
+                      maxLength={200}
                       data-testid="duel-join-code-input"
                       aria-label={t.duelJoinTitle}
                       className="h-11 min-w-0 flex-1 rounded-2xl border border-black/10 bg-white px-4 font-mono text-sm font-semibold tracking-widest text-neutral-900 uppercase focus-visible:outline focus-visible:outline-[3px] focus-visible:outline-offset-2 focus-visible:outline-cik-focus dark:border-white/15 dark:bg-[#1C1B22] dark:text-white"

@@ -11,6 +11,7 @@ import type {
 } from '@/lib/friendLeagues';
 import { getOrCreateDeviceId } from '@/lib/telemetry';
 import { UI_ICON_PATHS } from '@/utils/icons8Assets';
+import { extractInviteCode } from '@/utils/inviteCode';
 
 interface FriendLeaguePanelProps {
   lang: Language;
@@ -120,7 +121,7 @@ export default function FriendLeaguePanel({
 
   const joinLeagueByCode = useCallback(
     async (rawCode: string, showJoinBanner = true) => {
-      const cleanCode = rawCode.trim().toUpperCase();
+      const cleanCode = extractInviteCode(rawCode, 'league');
       if (!/^[A-Z0-9]{6,8}$/.test(cleanCode)) {
         setErrorMessage(
           isEn
@@ -334,11 +335,19 @@ export default function FriendLeaguePanel({
       <div className="flex items-center gap-2 rounded-cik-lg border border-cik-line bg-cik-surface p-3 shadow-e1">
         <input
           type="text"
-          maxLength={8}
+          maxLength={200}
           data-testid="friend-league-join-input"
           value={joinCodeInput}
-          onChange={(e) => setJoinCodeInput(e.target.value.toUpperCase())}
-          placeholder={isEn ? 'Invite code (e.g. K7M2P9)' : 'Davet kodu (ör. K7M2P9)'}
+          onChange={(e) => setJoinCodeInput(extractInviteCode(e.target.value, 'league'))}
+          onPaste={(e) => {
+            const pasted = e.clipboardData?.getData('text');
+            if (!pasted) return;
+            e.preventDefault();
+            setJoinCodeInput(extractInviteCode(pasted, 'league'));
+          }}
+          placeholder={
+            isEn ? 'Invite code or link (e.g. K7M2P9)' : 'Davet kodu veya linki (ör. K7M2P9)'
+          }
           className="min-w-0 flex-1 rounded-cik-md border border-cik-line bg-cik-surface-2 px-3 py-2 text-[16px] font-semibold uppercase tracking-wider text-cik-text placeholder:text-cik-text-3"
         />
         <Button
