@@ -392,38 +392,46 @@ export default function LazyAuthPrompt({
         )
       : null;
 
+  const portalRoot = typeof document !== 'undefined' ? document.body : null;
+
   return (
     <>
       <AnimatePresence>{nudge}</AnimatePresence>
 
-      <AnimatePresence>
-        {open && (
-          <div
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="lazy-auth-title"
-            data-testid="lazy-auth-prompt"
-            className="cik-scrim fixed inset-0 z-modal flex items-end justify-center sm:items-center sm:p-4"
-            onClick={onCloseModal}
-          >
-            <motion.div
-              initial={reduced ? { opacity: 0 } : { y: '100%' }}
-              animate={reduced ? { opacity: 1 } : { y: 0 }}
-              exit={reduced ? { opacity: 0 } : { y: '100%' }}
-              transition={reduced ? { duration: 0.15 } : { type: 'spring', stiffness: 380, damping: 38 }}
-              onClick={(e) => e.stopPropagation()}
-              className={`cik-sheet relative w-full max-w-md p-5 shadow-e3 ${surfaceClass}`}
-              style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 16px)' }}
-            >
-              <button
-                type="button"
-                data-testid="lazy-auth-close-btn"
-                onClick={onCloseModal}
-                aria-label={lang === 'tr' ? 'Kapat' : 'Close'}
-                className="absolute right-4 top-4 inline-flex h-11 w-11 items-center justify-center rounded-pill bg-cik-surface-2 text-cik-text"
-              >
-                <X size={20} strokeWidth={2} aria-hidden="true" />
-              </button>
+      {portalRoot
+        ? createPortal(
+            <AnimatePresence>
+              {open && (
+                <div
+                  role="dialog"
+                  aria-modal="true"
+                  aria-labelledby="lazy-auth-title"
+                  data-testid="lazy-auth-prompt"
+                  data-cik-layer="auth-modal"
+                  className="pointer-events-auto fixed inset-0 z-[90] flex items-end justify-center sm:items-center sm:p-4"
+                >
+                  <div
+                    aria-hidden="true"
+                    className="cik-scrim fixed inset-0 z-0"
+                    onClick={onCloseModal}
+                  />
+                  <motion.div
+                    initial={reduced ? { opacity: 0 } : { y: '100%' }}
+                    animate={reduced ? { opacity: 1 } : { y: 0 }}
+                    exit={reduced ? { opacity: 0 } : { y: '100%' }}
+                    transition={reduced ? { duration: 0.15 } : { type: 'spring', stiffness: 380, damping: 38 }}
+                    className={`cik-sheet pointer-events-auto relative z-10 max-h-[90dvh] w-full max-w-md overflow-y-auto p-5 shadow-e3 ${surfaceClass}`}
+                    style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 16px)' }}
+                  >
+                    <button
+                      type="button"
+                      data-testid="lazy-auth-close-btn"
+                      onClick={onCloseModal}
+                      aria-label={lang === 'tr' ? 'Kapat' : 'Close'}
+                      className="absolute right-4 top-4 z-20 inline-flex h-11 w-11 touch-manipulation items-center justify-center rounded-pill bg-cik-surface-2 text-cik-text"
+                    >
+                      <X size={20} strokeWidth={2} aria-hidden="true" />
+                    </button>
 
               <div className="flex items-center gap-3 pr-12">
                 <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-cik-md bg-cik-pink text-cik-cta">
@@ -468,8 +476,8 @@ export default function LazyAuthPrompt({
                   <Sparkles size={16} strokeWidth={2} aria-hidden="true" className="shrink-0" />
                   <span>
                     {lang === 'tr'
-                      ? `Mevcut ${currentXp.toLocaleString()} XP ve kayıtların otomatik birleştirilecek.`
-                      : `Your current ${currentXp.toLocaleString()} XP and saves will merge automatically.`}
+                      ? 'Doğrulama sonrası mevcut hesabınla devam edebilir veya bu cihazdaki ilerlemeni birleştirebilirsin.'
+                      : "You can keep your existing account or merge this device's progress after verifying."}
                   </span>
                 </div>
               )}
@@ -573,11 +581,14 @@ export default function LazyAuthPrompt({
                       type="email"
                       inputMode="email"
                       autoComplete="email"
+                      autoCapitalize="none"
+                      autoCorrect="off"
+                      spellCheck={false}
                       required
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       placeholder={lang === 'tr' ? 'ornek@eposta.com' : 'you@example.com'}
-                      className={`cik-subhead w-full rounded-cik-md px-4 py-3 ${inputClass}`}
+                      className={`pointer-events-auto relative z-10 w-full touch-manipulation rounded-cik-md px-4 py-3 text-[16px] font-semibold leading-6 ${inputClass}`}
                     />
                   </div>
 
@@ -642,7 +653,7 @@ export default function LazyAuthPrompt({
                       value={code}
                       onChange={(e) => setCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
                       placeholder="123456"
-                      className={`cik-title-3 cik-tabular w-full rounded-cik-md px-4 py-3 text-center tracking-widest ${inputClass}`}
+                      className={`cik-tabular pointer-events-auto relative z-10 w-full touch-manipulation rounded-cik-md px-4 py-3 text-center text-[16px] font-bold tracking-widest ${inputClass}`}
                     />
                   </div>
 
@@ -678,10 +689,13 @@ export default function LazyAuthPrompt({
                   </div>
                 </form>
               )}
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
+                  </motion.div>
+                </div>
+              )}
+            </AnimatePresence>,
+            portalRoot,
+          )
+        : null}
     </>
   );
 }

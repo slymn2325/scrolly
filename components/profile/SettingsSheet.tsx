@@ -234,7 +234,14 @@ export default function SettingsSheet({
               ) : (
                 <div data-testid="diploma-auth-cta" className="mt-3 flex flex-col gap-3">
                   <p className="cik-footnote text-cik-text-2">{copy.connectBody}</p>
-                  <Button data-testid="diploma-connect-email-btn" onClick={onConnect} className="w-full">
+                  <Button
+                    data-testid="diploma-connect-email-btn"
+                    onClick={() => {
+                      closeAll();
+                      onConnect();
+                    }}
+                    className="w-full"
+                  >
                     <Mail size={20} strokeWidth={2} aria-hidden="true" />
                     <span>{copy.connect}</span>
                   </Button>

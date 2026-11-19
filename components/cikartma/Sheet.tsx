@@ -81,16 +81,26 @@ export default function Sheet({ open, title, onClose, children, closeLabel }: Sh
     const onFocusIn = (event: FocusEvent) => {
       const panel = panelRef.current;
       if (!panel) return;
+      if (event.target instanceof Element && event.target.closest('[data-cik-layer="auth-modal"]')) return;
       if (event.target instanceof Node && panel.contains(event.target)) return;
       panel.focus();
     };
 
+    const panel = panelRef.current;
     document.addEventListener('keydown', onKey);
     document.addEventListener('focusin', onFocusIn);
     return () => {
       document.removeEventListener('keydown', onKey);
       document.removeEventListener('focusin', onFocusIn);
-      previouslyFocused?.focus();
+      const authModalActive = Boolean(document.querySelector('[data-cik-layer="auth-modal"]'));
+      const activeEl = document.activeElement;
+      const focusStillInsideOrBody =
+        activeEl === document.body ||
+        activeEl === null ||
+        (panel !== null && activeEl instanceof Node && panel.contains(activeEl));
+      if (!authModalActive && focusStillInsideOrBody) {
+        previouslyFocused?.focus();
+      }
     };
   }, [open, onClose, mounted]);
 
@@ -101,6 +111,7 @@ export default function Sheet({ open, title, onClose, children, closeLabel }: Sh
     Array.from(document.body.children).forEach((node) => {
       if (!(node instanceof HTMLElement)) return;
       if (layer && node === layer) return;
+      if (node.dataset.cikLayer === 'auth-modal') return;
       if (node.hasAttribute('inert')) return;
       node.setAttribute('inert', '');
       changed.push(node);
@@ -194,6 +205,7 @@ export default function Sheet({ open, title, onClose, children, closeLabel }: Sh
             onTouchStart={(event) => {
               if (event.touches.length !== 1) return;
               const target = event.target as HTMLElement | null;
+              if (target?.closest('input, textarea, select, button, a, label')) return;
               const fromHandle = Boolean(target?.closest('[data-sheet-drag-handle="true"]'));
               beginSwipe(event.touches[0].clientY, fromHandle);
             }}
@@ -219,6 +231,8 @@ export default function Sheet({ open, title, onClose, children, closeLabel }: Sh
               style={{ touchAction: 'none' }}
               onPointerDown={(event) => {
                 if (reduced) return;
+                const target = event.target as HTMLElement | null;
+                if (target?.closest('input, textarea, select, button, a, label')) return;
                 dragControls.start(event);
               }}
             >

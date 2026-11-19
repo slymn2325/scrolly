@@ -522,6 +522,7 @@ export default function DiplomaProfileModal({
         onCookie={chooseCookie}
         onConnect={() => {
           onButtonPop();
+          setSettingsOpen(false);
           window.dispatchEvent(new CustomEvent('scrolly-open-auth', { detail: { trigger: 'profile' } }));
         }}
         onLogout={() => void handleLogout()}
