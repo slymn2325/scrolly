@@ -39,6 +39,7 @@ import {
   hydrateLocalMemoryFromAuthUser,
   type AuthChangedEventDetail,
 } from '@/lib/authClient';
+import { getDailyGuessDateIso, pickDailyGuessFact } from '@/lib/dailyGuess';
 import { isShortRoomCode, normalizeRoomCode } from '@/lib/duelStore';
 import { readLanguageCookie, writeLanguageCookie } from '@/lib/locale';
 import { applyAppearance, resolveDocumentDark, type AppearanceMode } from '@/lib/theme';
@@ -508,6 +509,7 @@ export default function HomeClient({ initialFacts, initialVocabulary, initialLan
   const [activeQuiz, setActiveQuiz] = useState<ActiveQuizSession | null>(null);
   const [incomingDuel, setIncomingDuel] = useState<DuelPayload | null>(null);
   const [incomingRoomCode, setIncomingRoomCode] = useState<string | null>(null);
+  const [incomingLeagueCode, setIncomingLeagueCode] = useState<string | null>(null);
   const [storyShareFact, setStoryShareFact] = useState<FactCardType | null>(null);
   const [activeDetailCard, setActiveDetailCard] = useState<{
     fact: FactCardType;
@@ -591,6 +593,7 @@ export default function HomeClient({ initialFacts, initialVocabulary, initialLan
       requestedVocabId = searchParams.get('vocab');
       duelParam = searchParams.get('duel');
       const roomParam = searchParams.get('room');
+      const leagueParam = searchParams.get('league')?.trim().toUpperCase() ?? null;
       openQuizParam = searchParams.get('openQuiz');
       const rawTab = searchParams.get('tab')?.toLowerCase() ?? null;
       if (rawTab === 'quiz') resolvedTab = 'quiz';
@@ -600,6 +603,11 @@ export default function HomeClient({ initialFacts, initialVocabulary, initialLan
       else if (rawTab === 'language' || rawTab === 'dil') {
         resolvedTab = 'explore';
         if (!requestedCategory) requestedCategory = 'vocabulary';
+      }
+
+      if (leagueParam && /^[A-Z0-9]{6,8}$/.test(leagueParam)) {
+        resolvedTab = 'leaderboard';
+        setIncomingLeagueCode(leagueParam);
       }
 
       if (roomParam && isShortRoomCode(roomParam)) {
@@ -1197,6 +1205,10 @@ export default function HomeClient({ initialFacts, initialVocabulary, initialLan
   const lang: Language = memory.lang;
   const soundEnabled = memory.soundEnabled;
   const topCategory = getTopCategory(memory.categoryWeights);
+  const dailyGuessFact = useMemo(
+    () => pickDailyGuessFact(allFacts, getDailyGuessDateIso()),
+    [allFacts]
+  );
   const dailyCompleted =
     Boolean(memory.lastDailyQuizDate) && memory.lastDailyQuizDate === getTodayDateString();
   const showQuizDot = memory.cardsSinceLastQuiz >= 5 || !dailyCompleted;
@@ -2339,6 +2351,8 @@ export default function HomeClient({ initialFacts, initialVocabulary, initialLan
             weeklyXp={memory.weeklyXp}
             dailyBestScore={memory.dailyBestScore}
             streakDays={memory.streakDays}
+            initialLeagueCode={incomingLeagueCode}
+            onClearInitialLeagueCode={() => setIncomingLeagueCode(null)}
             onInviteDuel={() => {
               vibrateTap(12);
               playPop(soundEnabled);
@@ -2357,6 +2371,8 @@ export default function HomeClient({ initialFacts, initialVocabulary, initialLan
             dailyCompleted={dailyCompleted}
             dailyBestScore={memory.dailyBestScore}
             recentCount={memory.recentFiveIds.length}
+            dailyGuessFact={dailyGuessFact}
+            onDailyGuessReward={handleGuessReward}
             onSelectMode={handleStartQuizMode}
             onClose={closeOverlayToExplore}
             onButtonPop={() => playPop(soundEnabled)}

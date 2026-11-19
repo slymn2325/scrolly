@@ -821,6 +821,72 @@ export async function ensureSchema(): Promise<void> {
         ON CONFLICT (id) DO NOTHING;
       `);
 
+      await pool.query(`
+        CREATE TABLE IF NOT EXISTS challenges (
+          code TEXT PRIMARY KEY,
+          creator_nickname TEXT NOT NULL,
+          creator_score INT NOT NULL DEFAULT 0,
+          creator_correct INT NOT NULL DEFAULT 0,
+          total_questions INT NOT NULL DEFAULT 5,
+          question_ids JSONB NOT NULL DEFAULT '[]'::jsonb,
+          category TEXT NOT NULL DEFAULT 'all',
+          lang TEXT NOT NULL DEFAULT 'tr',
+          created_at TIMESTAMPTZ DEFAULT NOW()
+        );
+      `);
+      await pool.query(`
+        CREATE INDEX IF NOT EXISTS idx_challenges_created_at
+          ON challenges (created_at DESC);
+      `);
+
+      await pool.query(`
+        CREATE TABLE IF NOT EXISTS daily_guess_attempts (
+          id BIGSERIAL PRIMARY KEY,
+          guess_date TEXT NOT NULL,
+          fact_id TEXT NOT NULL,
+          device_id TEXT NOT NULL,
+          accuracy_pct INT NOT NULL DEFAULT 0,
+          created_at TIMESTAMPTZ DEFAULT NOW(),
+          UNIQUE (guess_date, device_id)
+        );
+      `);
+      await pool.query(`
+        CREATE INDEX IF NOT EXISTS idx_daily_guess_date_acc
+          ON daily_guess_attempts (guess_date, accuracy_pct DESC);
+      `);
+
+      await pool.query(`
+        CREATE TABLE IF NOT EXISTS friend_leagues (
+          code TEXT PRIMARY KEY,
+          name TEXT NOT NULL,
+          creator_device_id TEXT NOT NULL,
+          created_at TIMESTAMPTZ DEFAULT NOW()
+        );
+      `);
+      await pool.query(`
+        CREATE INDEX IF NOT EXISTS idx_friend_leagues_created_at
+          ON friend_leagues (created_at DESC);
+      `);
+
+      await pool.query(`
+        CREATE TABLE IF NOT EXISTS friend_league_members (
+          league_code TEXT NOT NULL REFERENCES friend_leagues(code) ON DELETE CASCADE,
+          device_id TEXT NOT NULL,
+          user_id TEXT,
+          joined_at TIMESTAMPTZ DEFAULT NOW(),
+          PRIMARY KEY (league_code, device_id)
+        );
+      `);
+      await pool.query(`
+        CREATE INDEX IF NOT EXISTS idx_friend_league_members_user_id
+          ON friend_league_members (user_id)
+          WHERE user_id IS NOT NULL;
+      `);
+      await pool.query(`
+        CREATE INDEX IF NOT EXISTS idx_friend_league_members_device_id
+          ON friend_league_members (device_id);
+      `);
+
       // Auto-recover crashed dyno locks left behind after unexpected restarts
       await pool.query(`
         UPDATE scheduler_state

@@ -3,6 +3,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { motion, useReducedMotion } from 'framer-motion';
 import { Button, EmptyState, IconButton, LeagueBadge, Skeleton } from '@/components/cikartma';
+import FriendLeaguePanel from '@/components/FriendLeaguePanel';
 import { motionSpring } from '@/lib/motion';
 import {
   AlertCircle,
@@ -37,10 +38,14 @@ interface LeaderboardModalProps {
   weeklyXp: number;
   dailyBestScore: number;
   streakDays: number;
+  initialLeagueCode?: string | null;
   presentation?: 'modal' | 'page';
+  onClearInitialLeagueCode?: () => void;
   onInviteDuel?: () => void;
   onClose: () => void;
 }
+
+type ActiveLeaderboardSubTab = LeaderboardTab | 'friends';
 
 export default function LeaderboardModal({
   open,
@@ -50,13 +55,17 @@ export default function LeaderboardModal({
   weeklyXp,
   dailyBestScore,
   streakDays,
+  initialLeagueCode = null,
   presentation = 'modal',
+  onClearInitialLeagueCode,
   onInviteDuel,
   onClose,
 }: LeaderboardModalProps) {
   const isPage = presentation === 'page';
   const t = translations[lang];
-  const [activeTab, setActiveTab] = useState<LeaderboardTab>('weekly');
+  const [activeTab, setActiveTab] = useState<ActiveLeaderboardSubTab>(
+    initialLeagueCode ? 'friends' : 'weekly'
+  );
   const [entries, setEntries] = useState<LeaderboardEntry[]>([]);
   const [isLiveBackend, setIsLiveBackend] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -116,8 +125,15 @@ export default function LeaderboardModal({
 
   const league = getLeagueInfo(userXp, lang);
 
+  useEffect(() => {
+    if (open && initialLeagueCode) {
+      setActiveTab('friends');
+    }
+  }, [open, initialLeagueCode]);
+
   const loadLeaderboard = useCallback(
     async (background = false) => {
+      if (activeTab === 'friends') return;
       if (background) {
         setIsRefreshing(true);
       } else {
@@ -147,13 +163,13 @@ export default function LeaderboardModal({
   );
 
   useEffect(() => {
-    if (!open) return;
+    if (!open || activeTab === 'friends') return;
     void loadLeaderboard(false);
     const unsub = subscribeLeaderboardRealtime(() => {
       void loadLeaderboard(true);
     });
     return () => unsub();
-  }, [open, loadLeaderboard]);
+  }, [open, activeTab, loadLeaderboard]);
 
   useEscapeClose(open && !isPage, onClose);
 
@@ -274,12 +290,13 @@ export default function LeaderboardModal({
           </IconButton>
         </div>
 
-        <div className="mt-4 grid grid-cols-3 gap-1 rounded-pill bg-cik-pink p-1">
+        <div className="mt-4 grid grid-cols-2 gap-1 rounded-2xl bg-cik-pink p-1 sm:grid-cols-4 sm:rounded-pill">
           {(
             [
               { id: 'daily', label: t.lbTabDaily },
               { id: 'weekly', label: t.lbTabWeekly },
               { id: 'alltime', label: t.lbTabAllTime },
+              { id: 'friends', label: lang === 'tr' ? 'Arkadaş Ligim' : 'Friend League' },
             ] as const
           ).map((tab) => {
             const isActive = activeTab === tab.id;
@@ -289,8 +306,10 @@ export default function LeaderboardModal({
                 type="button"
                 onClick={() => {
                   if (tab.id === activeTab) return;
-                  setEntries([]);
-                  setIsLoading(true);
+                  if (tab.id !== 'friends') {
+                    setEntries([]);
+                    setIsLoading(true);
+                  }
                   setHasError(false);
                   setActiveTab(tab.id);
                 }}
@@ -304,6 +323,16 @@ export default function LeaderboardModal({
             );
           })}
         </div>
+
+        {activeTab === 'friends' ? (
+          <FriendLeaguePanel
+            lang={lang}
+            nickname={nickname}
+            initialLeagueCode={initialLeagueCode}
+            onClearInitialLeagueCode={onClearInitialLeagueCode}
+          />
+        ) : (
+          <>
 
         <div className="mt-4 rounded-cik-lg bg-cik-surface p-5 shadow-e1">
           <div className="flex items-center justify-between gap-3">
@@ -548,6 +577,8 @@ export default function LeaderboardModal({
             </span>
           </div>
         </div>
+          </>
+        )}
       </motion.div>
     </div>
   );

@@ -4,8 +4,10 @@ import React, { useEffect } from 'react';
 import { motion, useReducedMotion } from 'framer-motion';
 import { BookOpen, Brain, Calendar, CheckCircle2, Timer, Trophy, X } from 'lucide-react';
 import { IconButton } from '@/components/cikartma';
-import { CATEGORIES, type Language, translations, VOCABULARY_META } from '@/i18n/translations';
+import DailyGuessCard from '@/components/DailyGuessCard';
+import { CATEGORIES, type CategoryId, type Language, translations, VOCABULARY_META } from '@/i18n/translations';
 import { sheetTransition } from '@/lib/motion';
+import type { FactCard } from '@/types/fact';
 import { STATE_ILLUSTRATION_PATHS } from '@/utils/icons8Assets';
 import { useEscapeClose } from '@/utils/useEscapeClose';
 
@@ -17,8 +19,15 @@ interface QuizHubModalProps {
   dailyCompleted: boolean;
   dailyBestScore: number;
   recentCount: number;
+  dailyGuessFact?: FactCard | null;
   presentation?: 'modal' | 'page';
   onSelectMode: (mode: QuizModeChoice) => void;
+  onDailyGuessReward?: (
+    xpAwarded: number,
+    isAccurate: boolean,
+    category?: CategoryId,
+    accuracyPct?: number
+  ) => void;
   onClose: () => void;
   onButtonPop: () => void;
 }
@@ -35,8 +44,10 @@ export default function QuizHubModal({
   dailyCompleted,
   dailyBestScore,
   recentCount,
+  dailyGuessFact = null,
   presentation = 'modal',
   onSelectMode,
+  onDailyGuessReward,
   onClose,
   onButtonPop,
 }: QuizHubModalProps) {
@@ -164,6 +175,15 @@ export default function QuizHubModal({
           ? `${t.dailySprintDoneBadge}${dailyBestScore > 0 ? ` · ${dailyBestScore} XP` : ''}`
           : t.dailySprintTitle}
       </p>
+
+      {dailyGuessFact && onDailyGuessReward ? (
+        <DailyGuessCard
+          fact={dailyGuessFact}
+          lang={lang}
+          onGuessReward={onDailyGuessReward}
+          onButtonPop={onButtonPop}
+        />
+      ) : null}
 
       <div className="mt-4 flex flex-col gap-3">
         {modes.map((mode) => (

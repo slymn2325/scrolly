@@ -82,3 +82,28 @@ export function duelOgImage(title: string, lang: 'tr' | 'en') {
       : 'Aynı sorular, tek kazanan. Scrolly düellosuna katıl.'
   );
 }
+
+export function challengeOgImage(
+  creator: string,
+  score: number,
+  correct: number,
+  total: number,
+  lang: 'tr' | 'en'
+) {
+  const safeCreator = String(creator || '').trim() || (lang === 'en' ? 'Explorer' : 'Kâşif');
+  const safeScore = Math.max(0, Math.round(score));
+  const safeCorrect = Math.max(0, Math.round(correct));
+  const safeTotal = Math.max(1, Math.round(total));
+  if (lang === 'en') {
+    return card(
+      'ASYNC CHALLENGE',
+      `${safeCreator} scored ${safeScore} XP — Can you beat it?`,
+      `${safeCorrect}/${safeTotal} correct · Same questions, instant side-by-side comparison.`
+    );
+  }
+  return card(
+    'MEYDAN OKUMA',
+    `${safeCreator} ${safeScore} XP yaptı — Geçebilir misin?`,
+    `${safeCorrect}/${safeTotal} doğru · Aynı sorularla hemen çöz ve skorunu kıyasla.`
+  );
+}

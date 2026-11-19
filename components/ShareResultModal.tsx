@@ -74,6 +74,9 @@ export default function ShareResultModal({
   const [copied, setCopied] = useState(false);
   const [shared, setShared] = useState(false);
   const [duelCopied, setDuelCopied] = useState(false);
+  const [challengeUrl, setChallengeUrl] = useState<string | null>(null);
+  const [challengeLoading, setChallengeLoading] = useState(false);
+  const [challengeCopied, setChallengeCopied] = useState(false);
   const [createdRoomCode, setCreatedRoomCode] = useState<string | null>(() =>
     duelConfig?.duelId && isShortRoomCode(duelConfig.duelId) ? duelConfig.duelId : null
   );
@@ -358,6 +361,69 @@ export default function ShareResultModal({
     setTimeout(() => setDuelCopied(false), 2500);
   };
 
+  const handleCreateAsyncChallenge = async () => {
+    onButtonPop();
+    if (challengeLoading || questionIds.length === 0) return;
+
+    let url = challengeUrl;
+    if (!url) {
+      setChallengeLoading(true);
+      try {
+        const res = await fetch('/api/challenges', {
+          method: 'POST',
+          credentials: 'same-origin',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            creatorNickname: challengerNickname,
+            creatorScore: earnedXp,
+            creatorCorrect: correctCount,
+            totalQuestions: totalCount,
+            questionIds,
+            category: badgeCategory,
+            lang: shareLang,
+          }),
+        });
+        const data = (await res.json()) as { ok?: boolean; url?: string };
+        if (res.ok && data?.ok && data.url) {
+          url = data.url;
+          setChallengeUrl(url);
+        }
+      } catch {
+        // Ignore network errors cleanly
+      } finally {
+        setChallengeLoading(false);
+      }
+    }
+
+    if (!url) return;
+    if (typeof navigator !== 'undefined' && typeof navigator.share === 'function') {
+      try {
+        await navigator.share({
+          title:
+            shareLang === 'en'
+              ? `${challengerNickname} scored ${earnedXp} XP — Can you beat it?`
+              : `${challengerNickname} ${earnedXp} XP yaptı — Geçebilir misin?`,
+          text:
+            shareLang === 'en'
+              ? `I scored ${earnedXp} XP (${correctCount}/${totalCount}) on Scrolly. Can you beat my score?`
+              : `Scrolly'de ${earnedXp} XP (${correctCount}/${totalCount}) yaptım. Beni geçebilir misin?`,
+          url,
+        });
+        return;
+      } catch (err) {
+        if (err instanceof Error && err.name === 'AbortError') return;
+      }
+    }
+
+    try {
+      await navigator.clipboard.writeText(url);
+    } catch {
+      // Ignore clipboard failure
+    }
+    setChallengeCopied(true);
+    setTimeout(() => setChallengeCopied(false), 2500);
+  };
+
   const handleWebShare = async () => {
     onButtonPop();
     if (typeof navigator !== 'undefined' && typeof navigator.share === 'function') {
@@ -607,10 +673,66 @@ export default function ShareResultModal({
           )}
 
           {questionIds.length > 0 && (
-            <Button tone="ghost" data-testid="copy-duel-from-result-btn" className="w-full" onClick={handleCopyDuelFromResult}>
-              <Swords size={20} strokeWidth={2} aria-hidden="true" />
-              <span>{duelCopied ? t.duelLinkCopied : t.duelCopyLinkBtn}</span>
-            </Button>
+            <>
+              <Button
+                data-testid="create-async-challenge-btn"
+                disabled={challengeLoading}
+                className="w-full"
+                onClick={() => void handleCreateAsyncChallenge()}
+              >
+                {challengeCopied ? (
+                  <Check size={20} strokeWidth={2} aria-hidden="true" />
+                ) : (
+                  <Share2 size={20} strokeWidth={2} aria-hidden="true" />
+                )}
+                <span>
+                  {challengeLoading
+                    ? lang === 'tr'
+                      ? 'Meydan okuma hazırlanıyor...'
+                      : 'Creating challenge...'
+                    : challengeCopied
+                      ? lang === 'tr'
+                        ? 'Meydan okuma linki kopyalandı!'
+                        : 'Challenge link copied!'
+                      : lang === 'tr'
+                        ? 'Meydan Oku / Link Paylaş'
+                        : 'Challenge a Friend / Share Link'}
+                </span>
+              </Button>
+
+              {challengeUrl && (
+                <div
+                  data-testid="async-challenge-url-box"
+                  className="flex items-center justify-between gap-2 rounded-cik-md bg-cik-surface-2 px-3 py-2"
+                >
+                  <span className="cik-caption-2 truncate font-mono text-cik-text-2">
+                    {challengeUrl}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      onButtonPop();
+                      try {
+                        await navigator.clipboard.writeText(challengeUrl);
+                        setChallengeCopied(true);
+                        setTimeout(() => setChallengeCopied(false), 2500);
+                      } catch {
+                        // Ignore clipboard failures
+                      }
+                    }}
+                    className="cik-caption-1 inline-flex h-11 shrink-0 items-center gap-1 rounded-pill bg-cik-pink px-3 text-cik-cta"
+                  >
+                    <Copy size={14} strokeWidth={2} aria-hidden="true" />
+                    <span>{lang === 'tr' ? 'Kopyala' : 'Copy'}</span>
+                  </button>
+                </div>
+              )}
+
+              <Button tone="ghost" data-testid="copy-duel-from-result-btn" className="w-full" onClick={handleCopyDuelFromResult}>
+                <Swords size={20} strokeWidth={2} aria-hidden="true" />
+                <span>{duelCopied ? t.duelLinkCopied : t.duelCopyLinkBtn}</span>
+              </Button>
+            </>
           )}
 
           <div className="grid grid-cols-2 gap-2">
