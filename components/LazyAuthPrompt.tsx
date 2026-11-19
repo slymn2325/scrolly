@@ -636,6 +636,7 @@ export default function LazyAuthPrompt({
                       data-testid="lazy-auth-code-input"
                       type="text"
                       inputMode="numeric"
+                      pattern="[0-9]*"
                       autoComplete="one-time-code"
                       maxLength={6}
                       value={code}

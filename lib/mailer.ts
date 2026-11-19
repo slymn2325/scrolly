@@ -173,7 +173,7 @@ export async function sendOtpEmail(params: {
   expiresInMin?: number;
 }): Promise<MailDeliveryResult> {
   const safeTo = stripHeaderBreaks(params.to).toLowerCase();
-  const safeCode = stripHeaderBreaks(params.code);
+  const safeCode = stripHeaderBreaks(params.code).replace(/[\s-]+/g, '');
   const lang: Language = (params.locale ?? params.lang) === 'en' ? 'en' : 'tr';
   const expiresInMin = Math.max(1, Math.floor(params.expiresInMin ?? 10));
   const from = getEmailFromAddress();
@@ -192,7 +192,7 @@ export async function sendOtpEmail(params: {
 
   const preheader =
     lang === 'en'
-      ? `Your Scrolly verification code: ${safeCode} — valid for ${expiresInMin} minutes`
+      ? `Your Scrolly verification code is: ${safeCode} — valid for ${expiresInMin} minutes`
       : `Scrolly doğrulama kodun: ${safeCode} — ${expiresInMin} dakika geçerli`;
 
   const tagline =
@@ -207,7 +207,12 @@ export async function sendOtpEmail(params: {
       : `XP, seri, kaydedilen kartlar ve kelime defterini cihazların arasında eşitlemek için aşağıdaki 6 haneli doğrulama kodunu ${expiresInMin} dakika içinde gir.`;
 
   const codeLabel =
-    lang === 'en' ? 'Verification Code' : 'Doğrulama Kodu';
+    lang === 'en' ? 'Your Scrolly verification code is:' : 'Scrolly doğrulama kodun:';
+
+  const plainCodeLine =
+    lang === 'en'
+      ? `Your Scrolly verification code is: ${safeCode}`
+      : `Scrolly doğrulama kodun: ${safeCode}`;
 
   const validityNote =
     lang === 'en'
@@ -268,7 +273,7 @@ export async function sendOtpEmail(params: {
               <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background-color:#FFF3F7;border:1.5px solid #F2C6D4;border-radius:16px;">
                 <tr>
                   <td align="center" style="padding:20px 24px;">
-                    <div style="margin:0 0 8px 0;font-size:11px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:#9E2450;">${escapeHtml(codeLabel)}</div>
+                    <div style="margin:0 0 10px 0;font-size:13px;font-weight:700;color:#9E2450;">${escapeHtml(codeLabel)}</div>
                     <span style="display:inline-block;font-family:'SFMono-Regular',Consolas,'Liberation Mono',Menlo,Courier,monospace;font-size:34px;font-weight:800;line-height:1.2;letter-spacing:10px;padding-left:10px;color:#9E2450;-webkit-user-select:all;user-select:all;">${escapeHtml(safeCode)}</span>
                   </td>
                 </tr>
@@ -302,7 +307,7 @@ export async function sendOtpEmail(params: {
     '',
     intro,
     '',
-    `${codeLabel}: ${safeCode}`,
+    plainCodeLine,
     validityNote,
     '',
     ignoreNote,
