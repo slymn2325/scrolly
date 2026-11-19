@@ -869,9 +869,13 @@ export async function ensureSchema(): Promise<void> {
           code TEXT PRIMARY KEY,
           name TEXT NOT NULL,
           creator_device_id TEXT NOT NULL,
+          creator_user_id TEXT,
           created_at TIMESTAMPTZ DEFAULT NOW()
         );
       `);
+      await pool.query(
+        `ALTER TABLE friend_leagues ADD COLUMN IF NOT EXISTS creator_user_id TEXT;`
+      );
       await pool.query(`
         CREATE INDEX IF NOT EXISTS idx_friend_leagues_created_at
           ON friend_leagues (created_at DESC);

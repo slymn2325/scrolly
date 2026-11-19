@@ -1,15 +1,24 @@
 import { randomInt } from 'node:crypto';
 import type { Language } from '@/i18n/translations';
 import { ensureSchema, getPool, hasDatabaseUrl } from '@/lib/db';
-import { getMemoryProfileMap, getProfileByDeviceId, isValidDeviceId, upsertProfileState } from '@/lib/dbActions';
+import {
+  getMemoryProfileMap,
+  getProfileByDeviceId,
+  isValidDeviceId,
+  upsertProfileState,
+} from '@/lib/dbActions';
 import { sanitizeDisplayText } from '@/lib/originPolicy';
 import { computeOpaquePublicLeaderboardId } from '@/lib/requestSecurity';
 import { PUBLIC_SITE_ORIGIN } from '@/utils/viralShare';
+
+export const MAX_ACTIVE_FRIEND_LEAGUES = 10;
 
 export interface FriendLeagueRecord {
   code: string;
   name: string;
   creatorDeviceId: string;
+  creatorUserId?: string | null;
+  isCreator?: boolean;
   createdAt: string;
 }
 
@@ -29,7 +38,16 @@ export interface FriendLeagueSummary {
   code: string;
   name: string;
   memberCount: number;
+  isCreator?: boolean;
   joinedAt: string;
+}
+
+export class FriendLeagueLimitError extends Error {
+  readonly code = 'max_leagues_reached';
+  constructor() {
+    super(`Maximum of ${MAX_ACTIVE_FRIEND_LEAGUES} active friend leagues reached.`);
+    this.name = 'FriendLeagueLimitError';
+  }
 }
 
 const LEAGUE_CODE_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
@@ -102,6 +120,34 @@ function sanitizeLeagueName(raw: unknown, lang: Language = 'tr'): string {
   return lang === 'en' ? 'Study Squad' : 'Arkadaş Ligi';
 }
 
+export function isLeagueCreator(params: {
+  creatorDeviceId?: string | null;
+  creatorUserId?: string | null;
+  viewerDeviceId?: string | null;
+  viewerUserId?: string | null;
+  viewerLinkedDeviceIds?: string[];
+}): boolean {
+  const creatorDevice = (params.creatorDeviceId || '').trim();
+  const creatorUser = (params.creatorUserId || '').trim();
+  const viewerDevice = (params.viewerDeviceId || '').trim();
+  const viewerUser = (params.viewerUserId || '').trim();
+
+  if (viewerDevice && creatorDevice && viewerDevice === creatorDevice) {
+    return true;
+  }
+  if (viewerUser && creatorUser && viewerUser === creatorUser) {
+    return true;
+  }
+  if (
+    creatorDevice &&
+    Array.isArray(params.viewerLinkedDeviceIds) &&
+    params.viewerLinkedDeviceIds.includes(creatorDevice)
+  ) {
+    return true;
+  }
+  return false;
+}
+
 async function ensureMemberProfileExists(params: {
   deviceId: string;
   userId?: string | null;
@@ -124,16 +170,27 @@ export async function createFriendLeague(input: {
   name: string;
   deviceId: string;
   userId?: string | null;
+  linkedDeviceIds?: string[];
   username?: string;
   lang?: Language;
 }): Promise<FriendLeagueRecord> {
   const cleanDevice = input.deviceId.trim().slice(0, 128);
+  const cleanUser = input.userId?.trim() || null;
   const leagueName = sanitizeLeagueName(input.name, input.lang);
   const createdAt = new Date().toISOString();
 
+  const currentLeagues = await listUserFriendLeagues({
+    deviceId: cleanDevice,
+    userId: cleanUser,
+    linkedDeviceIds: input.linkedDeviceIds,
+  });
+  if (currentLeagues.length >= MAX_ACTIVE_FRIEND_LEAGUES) {
+    throw new FriendLeagueLimitError();
+  }
+
   await ensureMemberProfileExists({
     deviceId: cleanDevice,
-    userId: input.userId ?? null,
+    userId: cleanUser,
     username: input.username,
   });
 
@@ -148,6 +205,8 @@ export async function createFriendLeague(input: {
       code,
       name: leagueName,
       creatorDeviceId: cleanDevice,
+      creatorUserId: cleanUser,
+      isCreator: true,
       createdAt,
     };
     leagues.set(code, league);
@@ -155,7 +214,7 @@ export async function createFriendLeague(input: {
       {
         leagueCode: code,
         deviceId: cleanDevice,
-        userId: input.userId ?? null,
+        userId: cleanUser,
         joinedAt: createdAt,
       },
     ]);
@@ -171,13 +230,14 @@ export async function createFriendLeague(input: {
       code: string;
       name: string;
       creator_device_id: string;
+      creator_user_id: string | null;
       created_at: Date | string;
     }>(
-      `INSERT INTO friend_leagues (code, name, creator_device_id)
-       VALUES ($1, $2, $3)
+      `INSERT INTO friend_leagues (code, name, creator_device_id, creator_user_id)
+       VALUES ($1, $2, $3, $4)
        ON CONFLICT (code) DO NOTHING
-       RETURNING code, name, creator_device_id, created_at`,
-      [code, leagueName, cleanDevice]
+       RETURNING code, name, creator_device_id, creator_user_id, created_at`,
+      [code, leagueName, cleanDevice, cleanUser]
     );
     const row = insRes.rows[0];
     if (!row) continue;
@@ -187,13 +247,15 @@ export async function createFriendLeague(input: {
        VALUES ($1, $2, $3)
        ON CONFLICT (league_code, device_id) DO UPDATE SET
          user_id = COALESCE(friend_league_members.user_id, EXCLUDED.user_id)`,
-      [row.code, cleanDevice, input.userId ?? null]
+      [row.code, cleanDevice, cleanUser]
     );
 
     return {
       code: row.code,
       name: row.name,
       creatorDeviceId: row.creator_device_id,
+      creatorUserId: row.creator_user_id ?? null,
+      isCreator: true,
       createdAt:
         row.created_at instanceof Date ? row.created_at.toISOString() : String(row.created_at),
     };
@@ -206,37 +268,58 @@ export async function joinFriendLeague(input: {
   code: string;
   deviceId: string;
   userId?: string | null;
+  linkedDeviceIds?: string[];
   username?: string;
 }): Promise<FriendLeagueRecord | null> {
   const code = normalizeLeagueCode(input.code);
   if (!isValidLeagueCode(code) || !isValidDeviceId(input.deviceId)) return null;
   const cleanDevice = input.deviceId.trim().slice(0, 128);
+  const cleanUser = input.userId?.trim() || null;
+
+  const currentLeagues = await listUserFriendLeagues({
+    deviceId: cleanDevice,
+    userId: cleanUser,
+    linkedDeviceIds: input.linkedDeviceIds,
+  });
+  const alreadyMember = currentLeagues.some((item) => item.code === code);
+  if (!alreadyMember && currentLeagues.length >= MAX_ACTIVE_FRIEND_LEAGUES) {
+    throw new FriendLeagueLimitError();
+  }
 
   if (!hasDatabaseUrl()) {
     const league = getMemoryLeaguesMap().get(code);
     if (!league) return null;
     await ensureMemberProfileExists({
       deviceId: cleanDevice,
-      userId: input.userId ?? null,
+      userId: cleanUser,
       username: input.username,
     });
     const membersMap = getMemoryLeagueMembersMap();
     const list = membersMap.get(code) ?? [];
     const idx = list.findIndex((m) => m.deviceId === cleanDevice);
     if (idx >= 0) {
-      if (!list[idx].userId && input.userId) {
-        list[idx] = { ...list[idx], userId: input.userId };
+      if (!list[idx].userId && cleanUser) {
+        list[idx] = { ...list[idx], userId: cleanUser };
       }
     } else {
       list.push({
         leagueCode: code,
         deviceId: cleanDevice,
-        userId: input.userId ?? null,
+        userId: cleanUser,
         joinedAt: new Date().toISOString(),
       });
     }
     membersMap.set(code, list);
-    return league;
+    return {
+      ...league,
+      isCreator: isLeagueCreator({
+        creatorDeviceId: league.creatorDeviceId,
+        creatorUserId: league.creatorUserId,
+        viewerDeviceId: cleanDevice,
+        viewerUserId: cleanUser,
+        viewerLinkedDeviceIds: input.linkedDeviceIds,
+      }),
+    };
   }
 
   await ensureSchema();
@@ -245,9 +328,10 @@ export async function joinFriendLeague(input: {
     code: string;
     name: string;
     creator_device_id: string;
+    creator_user_id: string | null;
     created_at: Date | string;
   }>(
-    `SELECT code, name, creator_device_id, created_at
+    `SELECT code, name, creator_device_id, creator_user_id, created_at
      FROM friend_leagues
      WHERE code = $1
      LIMIT 1`,
@@ -258,7 +342,7 @@ export async function joinFriendLeague(input: {
 
   await ensureMemberProfileExists({
     deviceId: cleanDevice,
-    userId: input.userId ?? null,
+    userId: cleanUser,
     username: input.username,
   });
 
@@ -267,18 +351,187 @@ export async function joinFriendLeague(input: {
      VALUES ($1, $2, $3)
      ON CONFLICT (league_code, device_id) DO UPDATE SET
        user_id = COALESCE(friend_league_members.user_id, EXCLUDED.user_id)`,
-    [code, cleanDevice, input.userId ?? null]
+    [code, cleanDevice, cleanUser]
   );
 
   return {
     code: leagueRow.code,
     name: leagueRow.name,
     creatorDeviceId: leagueRow.creator_device_id,
+    creatorUserId: leagueRow.creator_user_id ?? null,
+    isCreator: isLeagueCreator({
+      creatorDeviceId: leagueRow.creator_device_id,
+      creatorUserId: leagueRow.creator_user_id,
+      viewerDeviceId: cleanDevice,
+      viewerUserId: cleanUser,
+      viewerLinkedDeviceIds: input.linkedDeviceIds,
+    }),
     createdAt:
       leagueRow.created_at instanceof Date
         ? leagueRow.created_at.toISOString()
         : String(leagueRow.created_at),
   };
+}
+
+export async function leaveFriendLeague(input: {
+  code: string;
+  deviceId: string;
+  userId?: string | null;
+  linkedDeviceIds?: string[];
+}): Promise<
+  | { ok: true; code: string; left: boolean; deletedEmptyLeague: boolean }
+  | { ok: false; error: 'invalid_code' | 'invalid_device_id' }
+> {
+  const code = normalizeLeagueCode(input.code);
+  if (!isValidLeagueCode(code)) {
+    return { ok: false, error: 'invalid_code' };
+  }
+  if (!isValidDeviceId(input.deviceId)) {
+    return { ok: false, error: 'invalid_device_id' };
+  }
+
+  const cleanDevice = input.deviceId.trim().slice(0, 128);
+  const cleanUser = input.userId?.trim() || null;
+  const deviceSet = new Set<string>([cleanDevice, ...(input.linkedDeviceIds ?? [])]);
+
+  if (!hasDatabaseUrl()) {
+    const leagues = getMemoryLeaguesMap();
+    const membersMap = getMemoryLeagueMembersMap();
+    const list = membersMap.get(code) ?? [];
+    const remaining = list.filter(
+      (m) => !deviceSet.has(m.deviceId) && !(cleanUser && m.userId === cleanUser)
+    );
+    const left = remaining.length !== list.length;
+    let deletedEmptyLeague = false;
+    if (remaining.length === 0) {
+      membersMap.delete(code);
+      if (leagues.has(code)) {
+        leagues.delete(code);
+        deletedEmptyLeague = true;
+      }
+    } else {
+      membersMap.set(code, remaining);
+    }
+    return { ok: true, code, left, deletedEmptyLeague };
+  }
+
+  await ensureSchema();
+  const pool = getPool();
+  const deviceList = Array.from(deviceSet);
+
+  const delRes = await pool.query(
+    `DELETE FROM friend_league_members
+     WHERE league_code = $1
+       AND (
+         device_id = ANY($2::text[])
+         OR ($3::text IS NOT NULL AND user_id = $3)
+       )`,
+    [code, deviceList, cleanUser]
+  );
+  const left = (delRes.rowCount ?? 0) > 0;
+
+  const countRes = await pool.query<{ remaining: number }>(
+    `SELECT COUNT(*)::INT AS remaining
+     FROM friend_league_members
+     WHERE league_code = $1`,
+    [code]
+  );
+  const remaining = Number(countRes.rows[0]?.remaining ?? 0);
+  let deletedEmptyLeague = false;
+
+  if (remaining === 0) {
+    const delLeague = await pool.query(
+      `DELETE FROM friend_leagues
+       WHERE code = $1
+         AND NOT EXISTS (
+           SELECT 1 FROM friend_league_members WHERE league_code = $1
+         )`,
+      [code]
+    );
+    deletedEmptyLeague = (delLeague.rowCount ?? 0) > 0;
+  }
+
+  return { ok: true, code, left, deletedEmptyLeague };
+}
+
+export async function deleteFriendLeagueByCreator(input: {
+  code: string;
+  deviceId: string;
+  userId?: string | null;
+  linkedDeviceIds?: string[];
+}): Promise<
+  | { ok: true; code: string; deleted: true }
+  | {
+      ok: false;
+      error: 'invalid_code' | 'invalid_device_id' | 'not_found' | 'forbidden_not_creator';
+    }
+> {
+  const code = normalizeLeagueCode(input.code);
+  if (!isValidLeagueCode(code)) {
+    return { ok: false, error: 'invalid_code' };
+  }
+  if (!isValidDeviceId(input.deviceId)) {
+    return { ok: false, error: 'invalid_device_id' };
+  }
+
+  const cleanDevice = input.deviceId.trim().slice(0, 128);
+  const cleanUser = input.userId?.trim() || null;
+
+  if (!hasDatabaseUrl()) {
+    const leagues = getMemoryLeaguesMap();
+    const membersMap = getMemoryLeagueMembersMap();
+    const league = leagues.get(code);
+    if (!league) {
+      return { ok: false, error: 'not_found' };
+    }
+    const allowed = isLeagueCreator({
+      creatorDeviceId: league.creatorDeviceId,
+      creatorUserId: league.creatorUserId,
+      viewerDeviceId: cleanDevice,
+      viewerUserId: cleanUser,
+      viewerLinkedDeviceIds: input.linkedDeviceIds,
+    });
+    if (!allowed) {
+      return { ok: false, error: 'forbidden_not_creator' };
+    }
+    membersMap.delete(code);
+    leagues.delete(code);
+    return { ok: true, code, deleted: true };
+  }
+
+  await ensureSchema();
+  const pool = getPool();
+  const leagueRes = await pool.query<{
+    code: string;
+    creator_device_id: string;
+    creator_user_id: string | null;
+  }>(
+    `SELECT code, creator_device_id, creator_user_id
+     FROM friend_leagues
+     WHERE code = $1
+     LIMIT 1`,
+    [code]
+  );
+  const leagueRow = leagueRes.rows[0];
+  if (!leagueRow) {
+    return { ok: false, error: 'not_found' };
+  }
+
+  const allowed = isLeagueCreator({
+    creatorDeviceId: leagueRow.creator_device_id,
+    creatorUserId: leagueRow.creator_user_id,
+    viewerDeviceId: cleanDevice,
+    viewerUserId: cleanUser,
+    viewerLinkedDeviceIds: input.linkedDeviceIds,
+  });
+  if (!allowed) {
+    return { ok: false, error: 'forbidden_not_creator' };
+  }
+
+  await pool.query(`DELETE FROM friend_league_members WHERE league_code = $1`, [code]);
+  await pool.query(`DELETE FROM friend_leagues WHERE code = $1`, [code]);
+
+  return { ok: true, code, deleted: true };
 }
 
 export async function getFriendLeagueBoard(input: {
@@ -314,7 +567,16 @@ export async function getFriendLeagueBoard(input: {
   if (!hasDatabaseUrl()) {
     const foundLeague = getMemoryLeaguesMap().get(code) ?? null;
     if (!foundLeague) return null;
-    league = foundLeague;
+    league = {
+      ...foundLeague,
+      isCreator: isLeagueCreator({
+        creatorDeviceId: foundLeague.creatorDeviceId,
+        creatorUserId: foundLeague.creatorUserId,
+        viewerDeviceId: cleanViewerDevice,
+        viewerUserId: input.viewerUserId,
+        viewerLinkedDeviceIds: input.viewerLinkedDeviceIds,
+      }),
+    };
     const members = getMemoryLeagueMembersMap().get(code) ?? [];
     const profiles = getMemoryProfileMap();
     rawMembers = members.map((m) => {
@@ -338,9 +600,10 @@ export async function getFriendLeagueBoard(input: {
       code: string;
       name: string;
       creator_device_id: string;
+      creator_user_id: string | null;
       created_at: Date | string;
     }>(
-      `SELECT code, name, creator_device_id, created_at
+      `SELECT code, name, creator_device_id, creator_user_id, created_at
        FROM friend_leagues
        WHERE code = $1
        LIMIT 1`,
@@ -353,6 +616,14 @@ export async function getFriendLeagueBoard(input: {
       code: leagueRow.code,
       name: leagueRow.name,
       creatorDeviceId: leagueRow.creator_device_id,
+      creatorUserId: leagueRow.creator_user_id ?? null,
+      isCreator: isLeagueCreator({
+        creatorDeviceId: leagueRow.creator_device_id,
+        creatorUserId: leagueRow.creator_user_id,
+        viewerDeviceId: cleanViewerDevice,
+        viewerUserId: input.viewerUserId,
+        viewerLinkedDeviceIds: input.viewerLinkedDeviceIds,
+      }),
       createdAt:
         leagueRow.created_at instanceof Date
           ? leagueRow.created_at.toISOString()
@@ -449,28 +720,46 @@ export async function getFriendLeagueBoard(input: {
 export async function listUserFriendLeagues(input: {
   deviceId?: string | null;
   userId?: string | null;
+  linkedDeviceIds?: string[];
 }): Promise<FriendLeagueSummary[]> {
   const cleanDevice = isValidDeviceId(input.deviceId)
     ? input.deviceId!.trim().slice(0, 128)
     : '';
   const userId = input.userId || null;
-  if (!cleanDevice && !userId) return [];
+  const linkedDevices = Array.isArray(input.linkedDeviceIds) ? input.linkedDeviceIds : [];
+  const deviceSet = new Set<string>(
+    [cleanDevice, ...linkedDevices].map((d) => d.trim()).filter(Boolean)
+  );
+  if (deviceSet.size === 0 && !userId) return [];
 
   if (!hasDatabaseUrl()) {
     const leagues = getMemoryLeaguesMap();
     const membersMap = getMemoryLeagueMembersMap();
+    const profiles = getMemoryProfileMap();
     const result: FriendLeagueSummary[] = [];
     for (const [code, members] of membersMap.entries()) {
       const mine = members.find(
-        (m) => (cleanDevice && m.deviceId === cleanDevice) || (userId && m.userId === userId)
+        (m) => deviceSet.has(m.deviceId) || (userId && m.userId === userId)
       );
       if (!mine) continue;
       const league = leagues.get(code);
       if (!league) continue;
+      const distinctIdentities = new Set<string>();
+      for (const m of members) {
+        const resolvedUser = profiles.get(m.deviceId)?.userId || m.userId;
+        distinctIdentities.add(resolvedUser ? `u:${resolvedUser}` : `d:${m.deviceId}`);
+      }
       result.push({
         code,
         name: league.name,
-        memberCount: members.length,
+        memberCount: Math.max(1, distinctIdentities.size),
+        isCreator: isLeagueCreator({
+          creatorDeviceId: league.creatorDeviceId,
+          creatorUserId: league.creatorUserId,
+          viewerDeviceId: cleanDevice,
+          viewerUserId: userId,
+          viewerLinkedDeviceIds: linkedDevices,
+        }),
         joinedAt: mine.joinedAt,
       });
     }
@@ -479,31 +768,43 @@ export async function listUserFriendLeagues(input: {
 
   await ensureSchema();
   const pool = getPool();
+  const deviceArray = Array.from(deviceSet);
   const res = await pool.query<{
     code: string;
     name: string;
+    creator_device_id: string;
+    creator_user_id: string | null;
     member_count: number;
     joined_at: Date | string;
   }>(
     `SELECT
        fl.code,
        fl.name,
-       COUNT(all_m.device_id)::INT AS member_count,
+       fl.creator_device_id,
+       fl.creator_user_id,
+       COUNT(DISTINCT COALESCE(all_m.user_id, 'd:' || all_m.device_id))::INT AS member_count,
        MAX(mine.joined_at) AS joined_at
      FROM friend_league_members mine
      INNER JOIN friend_leagues fl ON fl.code = mine.league_code
      INNER JOIN friend_league_members all_m ON all_m.league_code = fl.code
-     WHERE ($1 <> '' AND mine.device_id = $1)
+     WHERE (CARDINALITY($1::text[]) > 0 AND mine.device_id = ANY($1::text[]))
         OR ($2::text IS NOT NULL AND mine.user_id = $2)
-     GROUP BY fl.code, fl.name
+     GROUP BY fl.code, fl.name, fl.creator_device_id, fl.creator_user_id
      ORDER BY MAX(mine.joined_at) DESC`,
-    [cleanDevice, userId]
+    [deviceArray, userId]
   );
 
   return res.rows.map((r) => ({
     code: r.code,
     name: r.name,
     memberCount: Math.max(1, Number(r.member_count) || 1),
+    isCreator: isLeagueCreator({
+      creatorDeviceId: r.creator_device_id,
+      creatorUserId: r.creator_user_id,
+      viewerDeviceId: cleanDevice,
+      viewerUserId: userId,
+      viewerLinkedDeviceIds: linkedDevices,
+    }),
     joinedAt: r.joined_at instanceof Date ? r.joined_at.toISOString() : String(r.joined_at),
   }));
 }

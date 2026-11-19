@@ -4,6 +4,7 @@ import { isValidDeviceId } from '@/lib/dbActions';
 import {
   createFriendLeague,
   friendLeagueInviteUrl,
+  FriendLeagueLimitError,
   listUserFriendLeagues,
 } from '@/lib/friendLeagues';
 import { checkRateLimit, extractClientIp } from '@/lib/rateLimit';
@@ -41,6 +42,7 @@ export async function GET(request: Request) {
     const leagues = await listUserFriendLeagues({
       deviceId,
       userId: sessionUser?.id ?? null,
+      linkedDeviceIds: sessionUser?.linkedDeviceIds ?? [],
     });
     return NextResponse.json({ ok: true, leagues }, { headers: NO_STORE_HEADERS });
   } catch (err) {
@@ -88,14 +90,22 @@ export async function POST(request: Request) {
       name: typeof body.name === 'string' ? body.name : '',
       deviceId,
       userId: sessionUser?.id ?? null,
+      linkedDeviceIds: sessionUser?.linkedDeviceIds ?? [],
       username: typeof body.username === 'string' ? body.username : sessionUser?.nickname,
       lang: body.lang === 'en' ? 'en' : 'tr',
     });
+
+    const leagues = await listUserFriendLeagues({
+      deviceId,
+      userId: sessionUser?.id ?? null,
+      linkedDeviceIds: sessionUser?.linkedDeviceIds ?? [],
+    }).catch(() => []);
 
     const response = NextResponse.json(
       {
         ok: true,
         league,
+        leagues,
         inviteUrl: friendLeagueInviteUrl(league.code),
       },
       { status: 201, headers: NO_STORE_HEADERS }
@@ -105,6 +115,12 @@ export async function POST(request: Request) {
     }
     return response;
   } catch (err) {
+    if (err instanceof FriendLeagueLimitError) {
+      return NextResponse.json(
+        { ok: false, error: 'max_leagues_reached' },
+        { status: 400, headers: NO_STORE_HEADERS }
+      );
+    }
     console.error('[POST /api/friend-leagues] Failed:', err);
     return NextResponse.json(
       { ok: false, error: 'league_create_failed' },
