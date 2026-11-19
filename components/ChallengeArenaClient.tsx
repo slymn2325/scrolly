@@ -12,15 +12,15 @@ import {
   Swords,
   Trophy,
 } from 'lucide-react';
-import { Button } from '@/components/cikartma';
+import { Button, Toast } from '@/components/cikartma';
 import MemoryQuizCard from '@/components/MemoryQuizCard';
-import type { ChallengeRecord } from '@/lib/challenges';
+import type { ChallengeQuestionSnapshot, ChallengeRecord } from '@/types/challenge';
 import { syncProfileToApi, trackEvent } from '@/lib/telemetry';
 import type { VocabularyCard } from '@/types/vocabulary';
+import { copyTextToClipboard } from '@/utils/clipboard';
 import type { QuizQuestionItem } from '@/utils/recommendation';
 import {
   addUserXp,
-  isGenericDefaultNickname,
   loadUserMemory,
   saveUserMemory,
 } from '@/utils/userMemory';
@@ -39,6 +39,7 @@ interface ChallengerOutcome {
   correct: number;
   total: number;
   elapsedSec: number;
+  snapshots?: ChallengeQuestionSnapshot[];
 }
 
 export default function ChallengeArenaClient({
@@ -56,13 +57,13 @@ export default function ChallengeArenaClient({
   const [creatingRematch, setCreatingRematch] = useState(false);
   const [rematchCopied, setRematchCopied] = useState(false);
   const [rematchError, setRematchError] = useState<string | null>(null);
+  const homeHref = isEn ? '/en' : '/';
+  const displayQuestionCount = questions.length > 0 ? questions.length : challenge.totalQuestions;
 
   useEffect(() => {
     const mem = loadUserMemory();
     setSoundEnabled(mem.soundEnabled);
-    if (mem.nickname && !isGenericDefaultNickname(mem.nickname)) {
-      setNickname(mem.nickname);
-    } else if (mem.nickname) {
+    if (mem.nickname) {
       setNickname(mem.nickname);
     }
   }, []);
@@ -82,7 +83,9 @@ export default function ChallengeArenaClient({
     results: boolean[],
     _sourceCategories: string[],
     earnedXp: number,
-    elapsedSec: number
+    elapsedSec: number,
+    _usedQuestionIds: string[],
+    usedSnapshots?: ChallengeQuestionSnapshot[]
   ) => {
     const mem = loadUserMemory();
     const finalName =
@@ -120,6 +123,7 @@ export default function ChallengeArenaClient({
       correct: results.filter(Boolean).length,
       total: results.length,
       elapsedSec,
+      snapshots: usedSnapshots,
     });
     setStage('result');
   };
@@ -130,18 +134,20 @@ export default function ChallengeArenaClient({
     setRematchError(null);
 
     if (rematchUrl) {
-      try {
-        await navigator.clipboard.writeText(rematchUrl);
+      const ok = await copyTextToClipboard(rematchUrl);
+      if (ok) {
         setRematchCopied(true);
         setTimeout(() => setRematchCopied(false), 2400);
-      } catch {
-        // Ignore clipboard denial
       }
       return;
     }
 
     setCreatingRematch(true);
     try {
+      const snapshotsToSend =
+        myOutcome.snapshots && myOutcome.snapshots.length > 0
+          ? myOutcome.snapshots
+          : challenge.questionsSnapshot;
       const res = await fetch('/api/challenges', {
         method: 'POST',
         credentials: 'same-origin',
@@ -152,26 +158,29 @@ export default function ChallengeArenaClient({
           creatorCorrect: myOutcome.correct,
           totalQuestions: myOutcome.total,
           questionIds: challenge.questionIds,
+          questionsSnapshot: snapshotsToSend,
           category: challenge.category,
           lang,
         }),
       });
-      const data = (await res.json()) as { ok?: boolean; url?: string };
+      const data = (await res.json().catch(() => null)) as {
+        ok?: boolean;
+        url?: string;
+        error?: string;
+      } | null;
       if (!res.ok || !data?.ok || !data.url) {
         setRematchError(
           isEn
-            ? 'Could not create rematch link right now.'
-            : 'Rövanş linki şu anda oluşturulamadı.'
+            ? `Could not create rematch link right now (${data?.error || res.status}).`
+            : `Rövanş linki şu anda oluşturulamadı (${data?.error || res.status}).`
         );
         return;
       }
       setRematchUrl(data.url);
-      try {
-        await navigator.clipboard.writeText(data.url);
+      const ok = await copyTextToClipboard(data.url);
+      if (ok) {
         setRematchCopied(true);
         setTimeout(() => setRematchCopied(false), 2400);
-      } catch {
-        // Ignore clipboard errors if blocked
       }
     } catch {
       setRematchError(
@@ -198,22 +207,52 @@ export default function ChallengeArenaClient({
           url: rematchUrl,
         });
         return;
-      } catch {
-        // Fallback to copy
+      } catch (err) {
+        if (err instanceof Error && err.name === 'AbortError') return;
       }
     }
-    try {
-      await navigator.clipboard.writeText(rematchUrl);
+    const ok = await copyTextToClipboard(rematchUrl);
+    if (ok) {
       setRematchCopied(true);
       setTimeout(() => setRematchCopied(false), 2400);
-    } catch {
-      // Ignore clipboard failures
     }
   };
 
-  const homeHref = isEn ? '/en' : '/';
+  const quizModeForChallenge =
+    challenge.category === 'vocabulary'
+      ? 'vocabulary'
+      : questions.length >= 8
+        ? 'weekly'
+        : 'daily';
 
   if (stage === 'playing') {
+    if (questions.length === 0) {
+      return (
+        <main
+          data-testid="challenge-empty-stage"
+          className="h-[100dvh] w-full overflow-y-auto bg-cik-bg px-4 py-8 text-cik-text"
+        >
+          <div className="mx-auto flex w-full max-w-md flex-col gap-4 rounded-cik-lg border border-cik-line bg-cik-surface p-6 text-center shadow-e3">
+            <h1 className="cik-title-2 text-cik-text">
+              {isEn ? 'Questions unavailable' : 'Sorular yüklenemedi'}
+            </h1>
+            <p className="cik-subhead text-cik-text-2">
+              {isEn
+                ? 'This challenge question pack is temporarily unavailable.'
+                : 'Bu meydan okumanın soru paketi şu anda yüklenemedi.'}
+            </p>
+            <Link
+              href={homeHref}
+              className="cik-headline inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-pill bg-cik-cta px-4 text-cik-on-cta"
+            >
+              <Compass size={18} strokeWidth={2} aria-hidden="true" />
+              <span>{isEn ? 'Explore Scrolly' : "Scrolly'yi Keşfet"}</span>
+            </Link>
+          </div>
+        </main>
+      );
+    }
+
     return (
       <main
         data-testid="challenge-playing-stage"
@@ -237,7 +276,7 @@ export default function ChallengeArenaClient({
           <MemoryQuizCard
             questions={questions}
             lang={lang}
-            quizMode={challenge.category === 'vocabulary' ? 'vocabulary' : 'memory'}
+            quizMode={quizModeForChallenge}
             vocabularyPool={vocabularyPool}
             onAnswerSound={(isCorrect) =>
               isCorrect ? playDing(soundEnabled) : playWrong(soundEnabled)
@@ -384,6 +423,7 @@ export default function ChallengeArenaClient({
             </Link>
           </div>
         </div>
+        <Toast message={rematchCopied ? (isEn ? 'Link copied!' : 'Link kopyalandı!') : null} />
       </main>
     );
   }
@@ -456,8 +496,8 @@ export default function ChallengeArenaClient({
               <Sparkles size={20} strokeWidth={2} aria-hidden="true" />
               <span>
                 {isEn
-                  ? `Start ${challenge.totalQuestions}-Question Challenge`
-                  : `${challenge.totalQuestions} Soruluk Meydan Okumayı Başlat`}
+                  ? `Start ${displayQuestionCount}-Question Challenge`
+                  : `${displayQuestionCount} Soruluk Meydan Okumayı Başlat`}
               </span>
             </Button>
           </form>

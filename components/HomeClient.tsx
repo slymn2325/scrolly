@@ -30,6 +30,7 @@ import {
   type Language,
 } from '@/i18n/translations';
 import type { AuthUserDto } from '@/types/auth';
+import type { ChallengeQuestionSnapshot } from '@/types/challenge';
 import type { VocabularyCard } from '@/types/vocabulary';
 import {
   AUTH_CHANGED_EVENT,
@@ -526,6 +527,7 @@ export default function HomeClient({ initialFacts, initialVocabulary, initialLan
     earnedXp: number;
     elapsedSec: number;
     questionIds: string[];
+    questionSnapshots?: ChallengeQuestionSnapshot[];
     duelConfig?: DuelChallengeConfig | null;
     quizMode?: ActiveQuizMode;
     quizDate?: string;
@@ -1681,7 +1683,8 @@ export default function HomeClient({ initialFacts, initialVocabulary, initialLan
     sourceCategories: string[],
     earnedXp: number,
     elapsedSec: number,
-    usedQuestionIds: string[]
+    usedQuestionIds: string[],
+    usedSnapshots?: ChallengeQuestionSnapshot[]
   ) => {
     vibrateSuccess();
 
@@ -1752,6 +1755,34 @@ export default function HomeClient({ initialFacts, initialVocabulary, initialLan
       });
     }
 
+    const fallbackSnapshots: ChallengeQuestionSnapshot[] =
+      usedSnapshots && usedSnapshots.length > 0
+        ? usedSnapshots
+        : (finishedSession?.questions ?? []).map((item) => ({
+            id: item.fact.id,
+            category: item.fact.category,
+            emoji: item.fact.emoji,
+            ...(item.fact.sourceName ? { sourceName: item.fact.sourceName } : {}),
+            tr: {
+              title: item.fact.tr.title,
+              ...(item.fact.tr.tag ? { tag: item.fact.tr.tag } : {}),
+              factText: item.fact.tr.factText,
+              ...(item.fact.tr.deepDiveDetail ? { deepDiveDetail: item.fact.tr.deepDiveDetail } : {}),
+              ...(item.fact.tr.sourceHint ? { sourceHint: item.fact.tr.sourceHint } : {}),
+              ...(item.fact.tr.sourceName ? { sourceName: item.fact.tr.sourceName } : {}),
+              quiz: item.fact.tr.quiz,
+            },
+            en: {
+              title: item.fact.en.title,
+              ...(item.fact.en.tag ? { tag: item.fact.en.tag } : {}),
+              factText: item.fact.en.factText,
+              ...(item.fact.en.deepDiveDetail ? { deepDiveDetail: item.fact.en.deepDiveDetail } : {}),
+              ...(item.fact.en.sourceHint ? { sourceHint: item.fact.en.sourceHint } : {}),
+              ...(item.fact.en.sourceName ? { sourceName: item.fact.en.sourceName } : {}),
+              quiz: item.fact.en.quiz,
+            },
+          }));
+
     setActiveQuiz(null);
     setShareModalData({
       results,
@@ -1759,6 +1790,7 @@ export default function HomeClient({ initialFacts, initialVocabulary, initialLan
       earnedXp: totalBonusXp,
       elapsedSec,
       questionIds: usedQuestionIds,
+      questionSnapshots: fallbackSnapshots,
       duelConfig,
       quizMode: finishedSession?.mode,
       quizDate: finishedSession?.quizDate,
@@ -2498,6 +2530,7 @@ export default function HomeClient({ initialFacts, initialVocabulary, initialLan
             challengerNickname={memory.nickname}
             playerId={shareModalData.duelConfig?.myPlayerId || memory.playerId}
             questionIds={shareModalData.questionIds}
+            questionSnapshots={shareModalData.questionSnapshots}
             duelConfig={shareModalData.duelConfig}
             quizMode={shareModalData.quizMode}
             quizDate={shareModalData.quizDate}

@@ -24,6 +24,8 @@ import {
   VOCABULARY_META,
 } from '@/i18n/translations';
 import type { VocabPartOfSpeech, VocabularyCard } from '@/types/vocabulary';
+import type { ChallengeQuestionSnapshot } from '@/types/challenge';
+import type { FactCard } from '@/types/fact';
 import { Button } from '@/components/cikartma';
 import { motionSpring } from '@/lib/motion';
 import { trackEvent } from '@/lib/telemetry';
@@ -51,7 +53,8 @@ interface MemoryQuizCardProps {
     sourceCategories: string[],
     earnedXp: number,
     elapsedSec: number,
-    usedQuestionIds: string[]
+    usedQuestionIds: string[],
+    usedSnapshots?: ChallengeQuestionSnapshot[]
   ) => void;
   onSkip: () => void;
 }
@@ -120,6 +123,39 @@ const VOCAB_POS_LABELS: Record<VocabPartOfSpeech, { tr: string; en: string }> = 
 
 function resolveVocabPosLabel(partOfSpeech: VocabPartOfSpeech, lang: Language): string {
   return VOCAB_POS_LABELS[partOfSpeech]?.[lang] ?? partOfSpeech;
+}
+
+function factToEffectiveQuizEntry(
+  fact: FactCard,
+  forceVocabularyCategory = false
+): EffectiveQuizEntry {
+  const rawCategory = fact.category as string;
+  const isVocabCat = forceVocabularyCategory || rawCategory === 'vocabulary';
+  return {
+    id: fact.id,
+    displayCategory: isVocabCat ? 'vocabulary' : fact.category,
+    sourceCategory: isVocabCat ? 'vocabulary' : rawCategory,
+    emoji: fact.emoji ?? getCategoryMeta(isVocabCat ? 'vocabulary' : rawCategory).emoji,
+    sourceName: fact.sourceName,
+    tr: {
+      title: fact.tr.title,
+      tag: fact.tr.tag,
+      factText: fact.tr.factText,
+      deepDiveDetail: fact.tr.deepDiveDetail,
+      sourceHint: fact.tr.sourceHint,
+      sourceName: fact.tr.sourceName,
+      quiz: fact.tr.quiz,
+    },
+    en: {
+      title: fact.en.title,
+      tag: fact.en.tag,
+      factText: fact.en.factText,
+      deepDiveDetail: fact.en.deepDiveDetail,
+      sourceHint: fact.en.sourceHint,
+      sourceName: fact.en.sourceName,
+      quiz: fact.en.quiz,
+    },
+  };
 }
 
 function buildVocabQuizEntry(
@@ -282,19 +318,19 @@ export default function MemoryQuizCard({
 
     const seedKey = duelConfig?.duelId || `${quizMode}-vocab`;
 
-    if (isVocabMode && poolVocab.length > 0) {
+    if (isVocabMode) {
       const targetCount = Math.max(
         1,
         duelConfig?.questionCount || duelConfig?.factIds?.length || questions.length || 5
       );
-      const chosenCards: VocabularyCard[] = [];
+      const entries: EffectiveQuizEntry[] = [];
       const seenIds = new Set<string>();
 
       for (const id of duelConfig?.factIds ?? []) {
         const match = vocabMap.get(id);
         if (match && !seenIds.has(match.id)) {
           seenIds.add(match.id);
-          chosenCards.push(match);
+          entries.push(buildVocabQuizEntry(match, poolVocab, entries.length, seedKey));
         }
       }
 
@@ -302,26 +338,27 @@ export default function MemoryQuizCard({
         const match = vocabMap.get(q.fact.id);
         if (match && !seenIds.has(match.id)) {
           seenIds.add(match.id);
-          chosenCards.push(match);
+          entries.push(buildVocabQuizEntry(match, poolVocab, entries.length, seedKey));
+        } else if (!seenIds.has(q.fact.id)) {
+          seenIds.add(q.fact.id);
+          entries.push(factToEffectiveQuizEntry(q.fact, true));
         }
       }
 
-      if (chosenCards.length < targetCount) {
+      if (entries.length < targetCount && poolVocab.length > 0) {
         const remaining = poolVocab.filter((v) => !seenIds.has(v.id));
         const extra = pickSeededFacts(
           remaining,
-          targetCount - chosenCards.length,
+          targetCount - entries.length,
           `scrolla-vocab-${seedKey}`
         );
         for (const item of extra) {
           seenIds.add(item.id);
-          chosenCards.push(item);
+          entries.push(buildVocabQuizEntry(item, poolVocab, entries.length, seedKey));
         }
       }
 
-      return chosenCards
-        .slice(0, targetCount)
-        .map((card, idx) => buildVocabQuizEntry(card, poolVocab, idx, seedKey));
+      return entries.slice(0, targetCount);
     }
 
     return questions.map((item, idx) => {
@@ -329,34 +366,7 @@ export default function MemoryQuizCard({
       if (matchedVocab) {
         return buildVocabQuizEntry(matchedVocab, poolVocab, idx, seedKey);
       }
-
-      const rawCategory = item.fact.category as string;
-      const isVocabCat = rawCategory === 'vocabulary';
-      return {
-        id: item.fact.id,
-        displayCategory: isVocabCat ? 'vocabulary' : item.fact.category,
-        sourceCategory: rawCategory,
-        emoji: item.fact.emoji ?? getCategoryMeta(rawCategory).emoji,
-        sourceName: item.fact.sourceName,
-        tr: {
-          title: item.fact.tr.title,
-          tag: item.fact.tr.tag,
-          factText: item.fact.tr.factText,
-          deepDiveDetail: item.fact.tr.deepDiveDetail,
-          sourceHint: item.fact.tr.sourceHint,
-          sourceName: item.fact.tr.sourceName,
-          quiz: item.fact.tr.quiz,
-        },
-        en: {
-          title: item.fact.en.title,
-          tag: item.fact.en.tag,
-          factText: item.fact.en.factText,
-          deepDiveDetail: item.fact.en.deepDiveDetail,
-          sourceHint: item.fact.en.sourceHint,
-          sourceName: item.fact.en.sourceName,
-          quiz: item.fact.en.quiz,
-        },
-      };
+      return factToEffectiveQuizEntry(item.fact);
     });
   }, [questions, duelConfig, quizMode, vocabularyPool]);
 
@@ -484,7 +494,31 @@ export default function MemoryQuizCard({
       const elapsedSec = Math.max(2, totalBudgetUsed - timeLeft);
       const categories = effectiveQuestions.map((q) => q.sourceCategory);
       const usedIds = effectiveQuestions.map((q) => q.id);
-      onComplete(finalResults, categories, finalScore, elapsedSec, usedIds);
+      const usedSnapshots: ChallengeQuestionSnapshot[] = effectiveQuestions.map((q) => ({
+        id: q.id,
+        category: q.sourceCategory,
+        emoji: q.emoji,
+        ...(q.sourceName ? { sourceName: q.sourceName } : {}),
+        tr: {
+          title: q.tr.title,
+          ...(q.tr.tag ? { tag: q.tr.tag } : {}),
+          factText: q.tr.factText,
+          ...(q.tr.deepDiveDetail ? { deepDiveDetail: q.tr.deepDiveDetail } : {}),
+          ...(q.tr.sourceHint ? { sourceHint: q.tr.sourceHint } : {}),
+          ...(q.tr.sourceName ? { sourceName: q.tr.sourceName } : {}),
+          quiz: q.tr.quiz,
+        },
+        en: {
+          title: q.en.title,
+          ...(q.en.tag ? { tag: q.en.tag } : {}),
+          factText: q.en.factText,
+          ...(q.en.deepDiveDetail ? { deepDiveDetail: q.en.deepDiveDetail } : {}),
+          ...(q.en.sourceHint ? { sourceHint: q.en.sourceHint } : {}),
+          ...(q.en.sourceName ? { sourceName: q.en.sourceName } : {}),
+          quiz: q.en.quiz,
+        },
+      }));
+      onComplete(finalResults, categories, finalScore, elapsedSec, usedIds, usedSnapshots);
     },
     [timeLeft, totalScore, totalBudgetUsed, effectiveQuestions, onComplete]
   );

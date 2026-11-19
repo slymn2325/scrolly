@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { challengePublicUrl, createChallenge } from '@/lib/challenges';
+import { isLocalHostname } from '@/lib/originPolicy';
 import { checkRateLimit, extractClientIp } from '@/lib/rateLimit';
 import { enforceSameOrigin, readJsonBodyWithLimit } from '@/lib/requestSecurity';
 
@@ -8,6 +9,19 @@ export const dynamic = 'force-dynamic';
 const NO_STORE_HEADERS = {
   'Cache-Control': 'no-store, max-age=0',
 };
+
+function resolveChallengeOrigin(request: Request): string | undefined {
+  if (process.env.NODE_ENV === 'production') return undefined;
+  try {
+    const parsed = new URL(request.url);
+    if (isLocalHostname(parsed.hostname)) {
+      return parsed.origin;
+    }
+  } catch {
+    // Fall back to PUBLIC_SITE_ORIGIN
+  }
+  return undefined;
+}
 
 export async function POST(request: Request) {
   const originErr = enforceSameOrigin(request);
@@ -22,7 +36,7 @@ export async function POST(request: Request) {
     );
   }
 
-  const parsed = await readJsonBodyWithLimit<Record<string, unknown>>(request, 8 * 1024);
+  const parsed = await readJsonBodyWithLimit<Record<string, unknown>>(request, 128 * 1024);
   if (!parsed.ok) {
     return NextResponse.json(
       { ok: false, error: parsed.error },
@@ -38,6 +52,7 @@ export async function POST(request: Request) {
       creatorCorrect: typeof body.creatorCorrect === 'number' ? body.creatorCorrect : undefined,
       totalQuestions: typeof body.totalQuestions === 'number' ? body.totalQuestions : undefined,
       questionIds: Array.isArray(body.questionIds) ? (body.questionIds as string[]) : undefined,
+      questionsSnapshot: Array.isArray(body.questionsSnapshot) ? body.questionsSnapshot : undefined,
       category: typeof body.category === 'string' ? body.category : undefined,
       lang: body.lang === 'en' ? 'en' : 'tr',
     });
@@ -49,7 +64,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const url = challengePublicUrl(result.challenge.code);
+    const url = challengePublicUrl(result.challenge.code, resolveChallengeOrigin(request));
     return NextResponse.json(
       {
         ok: true,

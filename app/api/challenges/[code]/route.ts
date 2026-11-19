@@ -1,5 +1,9 @@
 import { NextResponse } from 'next/server';
-import { getChallengeByCode, isValidChallengeCode } from '@/lib/challenges';
+import {
+  challengePublicUrl,
+  getChallengeByCode,
+  isValidChallengeCode,
+} from '@/lib/challenges';
 import { checkRateLimit, extractClientIp } from '@/lib/rateLimit';
 
 export const dynamic = 'force-dynamic';
@@ -38,7 +42,7 @@ export async function GET(
       );
     }
     return NextResponse.json(
-      { ok: true, challenge },
+      { ok: true, url: challengePublicUrl(challenge.code), challenge },
       { headers: NO_STORE_HEADERS }
     );
   } catch (err) {

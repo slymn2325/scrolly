@@ -402,8 +402,11 @@ export async function ensureSchema(): Promise<void> {
 
       // One migration lock across dynos — never re-run heavy unique-index builds on
       // fetchFacts / profile / events / scheduler once indexes exist.
-      await pool.query('SELECT pg_advisory_lock($1)', [SCHEMA_MIGRATION_LOCK_KEY]);
+      const lockClient = await pool.connect();
+      let lockAcquired = false;
       try {
+        await lockClient.query('SELECT pg_advisory_lock($1)', [SCHEMA_MIGRATION_LOCK_KEY]);
+        lockAcquired = true;
 
       await pool.query(`
         CREATE TABLE IF NOT EXISTS facts (
@@ -829,11 +832,15 @@ export async function ensureSchema(): Promise<void> {
           creator_correct INT NOT NULL DEFAULT 0,
           total_questions INT NOT NULL DEFAULT 5,
           question_ids JSONB NOT NULL DEFAULT '[]'::jsonb,
+          questions_snapshot JSONB NOT NULL DEFAULT '[]'::jsonb,
           category TEXT NOT NULL DEFAULT 'all',
           lang TEXT NOT NULL DEFAULT 'tr',
           created_at TIMESTAMPTZ DEFAULT NOW()
         );
       `);
+      await pool.query(
+        `ALTER TABLE challenges ADD COLUMN IF NOT EXISTS questions_snapshot JSONB NOT NULL DEFAULT '[]'::jsonb;`
+      );
       await pool.query(`
         CREATE INDEX IF NOT EXISTS idx_challenges_created_at
           ON challenges (created_at DESC);
@@ -973,7 +980,12 @@ export async function ensureSchema(): Promise<void> {
       await seedInitialFactsIfEmpty(pool);
       await seedInitialVocabularyIfMissing(pool);
       } finally {
-        await pool.query('SELECT pg_advisory_unlock($1)', [SCHEMA_MIGRATION_LOCK_KEY]).catch(() => {});
+        if (lockAcquired) {
+          await lockClient
+            .query('SELECT pg_advisory_unlock($1)', [SCHEMA_MIGRATION_LOCK_KEY])
+            .catch(() => {});
+        }
+        lockClient.release();
       }
     })().catch((err) => {
       global.__scrollySchemaReadyPromise = undefined;

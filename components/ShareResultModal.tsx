@@ -30,6 +30,8 @@ import {
   translations,
 } from '@/i18n/translations';
 import { isShortRoomCode, type ScrollaRoom } from '@/lib/duelStore';
+import type { ChallengeQuestionSnapshot } from '@/types/challenge';
+import { copyTextToClipboard } from '@/utils/clipboard';
 import { buildDailyResultShareText, duelInviteUrl } from '@/utils/viralShare';
 import {
   createScrollaRoom,
@@ -51,6 +53,7 @@ interface ShareResultModalProps {
   challengerNickname?: string;
   playerId?: string;
   questionIds?: string[];
+  questionSnapshots?: ChallengeQuestionSnapshot[];
   duelConfig?: DuelChallengeConfig | null;
   onButtonPop: () => void;
   onClose: () => void;
@@ -67,6 +70,7 @@ export default function ShareResultModal({
   challengerNickname = 'Merak Avcısı',
   playerId: propPlayerId,
   questionIds = [],
+  questionSnapshots = [],
   duelConfig,
   onButtonPop,
   onClose,
@@ -77,6 +81,8 @@ export default function ShareResultModal({
   const [challengeUrl, setChallengeUrl] = useState<string | null>(null);
   const [challengeLoading, setChallengeLoading] = useState(false);
   const [challengeCopied, setChallengeCopied] = useState(false);
+  const [challengeError, setChallengeError] = useState<string | null>(null);
+  const [challengeInfo, setChallengeInfo] = useState<string | null>(null);
   const [createdRoomCode, setCreatedRoomCode] = useState<string | null>(() =>
     duelConfig?.duelId && isShortRoomCode(duelConfig.duelId) ? duelConfig.duelId : null
   );
@@ -128,6 +134,13 @@ export default function ShareResultModal({
 
   const correctCount = results.filter(Boolean).length;
   const totalCount = results.length;
+  const effectiveQuestionIds = useMemo(
+    () =>
+      questionIds.length > 0
+        ? questionIds
+        : questionSnapshots.map((snapshot) => snapshot.id).filter(Boolean),
+    [questionIds, questionSnapshots]
+  );
   const wordleGrid = results.map((ok) => (ok ? '🟩' : '🟥')).join('');
   const catMeta = getCategoryMeta(badgeCategory);
   const badgeLabel =
@@ -334,11 +347,7 @@ export default function ShareResultModal({
 
   const handleCopy = async () => {
     onButtonPop();
-    try {
-      await navigator.clipboard.writeText(fullShareText);
-    } catch {
-      // Ignore clipboard error
-    }
+    await copyTextToClipboard(fullShareText);
     setCopied(true);
     setTimeout(() => setCopied(false), 2500);
   };
@@ -346,24 +355,49 @@ export default function ShareResultModal({
   const handleCopyDuelFromResult = async () => {
     onButtonPop();
     let shareUrl = duelShareUrl;
-    if (!createdRoomCode && questionIds.length > 0) {
+    if (!createdRoomCode && effectiveQuestionIds.length > 0) {
       const code = await ensureScrollaRoomCode();
       if (code) {
         shareUrl = duelInviteUrl(code, shareLang, siteUrl);
       }
     }
-    try {
-      await navigator.clipboard.writeText(shareUrl);
-    } catch {
-      // Ignore clipboard error
-    }
+    await copyTextToClipboard(shareUrl);
     setDuelCopied(true);
     setTimeout(() => setDuelCopied(false), 2500);
   };
 
+  const resolveChallengeErrorMessage = (status: number, errorCode?: string): string => {
+    if (status === 429 || errorCode === 'rate_limited') {
+      return lang === 'tr'
+        ? 'Çok hızlı deneme yaptın. Biraz bekleyip tekrar dene.'
+        : 'Too many requests. Please wait a moment and try again.';
+    }
+    if (status === 403 || errorCode === 'forbidden_origin') {
+      return lang === 'tr'
+        ? 'Güvenlik doğrulaması başarısız oldu. Sayfayı yenileyip tekrar dene.'
+        : 'Origin verification failed. Please refresh and try again.';
+    }
+    if (errorCode === 'missing_questions') {
+      return lang === 'tr'
+        ? 'Bu oturumun soru listesi bulunamadı.'
+        : 'Questions for this session could not be found.';
+    }
+    if (status === 413 || errorCode === 'payload_too_large') {
+      return lang === 'tr'
+        ? 'Soru paketi boyutu sınırı aştı.'
+        : 'Question pack exceeded the allowed payload limit.';
+    }
+    return lang === 'tr'
+      ? `Meydan okuma linki oluşturulamadı (${errorCode || status || 'hata'}).`
+      : `Could not create challenge link (${errorCode || status || 'error'}).`;
+  };
+
   const handleCreateAsyncChallenge = async () => {
     onButtonPop();
-    if (challengeLoading || questionIds.length === 0) return;
+    if (challengeLoading || effectiveQuestionIds.length === 0) return;
+
+    setChallengeError(null);
+    setChallengeInfo(null);
 
     let url = challengeUrl;
     if (!url) {
@@ -378,18 +412,30 @@ export default function ShareResultModal({
             creatorScore: earnedXp,
             creatorCorrect: correctCount,
             totalQuestions: totalCount,
-            questionIds,
-            category: badgeCategory,
+            questionIds: effectiveQuestionIds,
+            questionsSnapshot: questionSnapshots,
+            category: quizMode === 'vocabulary' ? 'vocabulary' : badgeCategory,
             lang: shareLang,
           }),
         });
-        const data = (await res.json()) as { ok?: boolean; url?: string };
-        if (res.ok && data?.ok && data.url) {
-          url = data.url;
-          setChallengeUrl(url);
+        const data = (await res.json().catch(() => null)) as {
+          ok?: boolean;
+          url?: string;
+          error?: string;
+        } | null;
+        if (!res.ok || !data?.ok || !data.url) {
+          setChallengeError(resolveChallengeErrorMessage(res.status, data?.error));
+          return;
         }
+        url = data.url;
+        setChallengeUrl(url);
       } catch {
-        // Ignore network errors cleanly
+        setChallengeError(
+          lang === 'tr'
+            ? 'Bağlantı hatası. Lütfen tekrar dene.'
+            : 'Connection error. Please try again.'
+        );
+        return;
       } finally {
         setChallengeLoading(false);
       }
@@ -415,13 +461,17 @@ export default function ShareResultModal({
       }
     }
 
-    try {
-      await navigator.clipboard.writeText(url);
-    } catch {
-      // Ignore clipboard failure
+    const didCopy = await copyTextToClipboard(url);
+    if (didCopy) {
+      setChallengeCopied(true);
+      setTimeout(() => setChallengeCopied(false), 2500);
+    } else {
+      setChallengeInfo(
+        lang === 'tr'
+          ? 'Link oluşturuldu! Panoya kopyalamak için aşağıdaki Kopyala butonuna bas.'
+          : 'Link created! Tap the Copy button below to copy it.'
+      );
     }
-    setChallengeCopied(true);
-    setTimeout(() => setChallengeCopied(false), 2500);
   };
 
   const handleWebShare = async () => {
@@ -436,11 +486,7 @@ export default function ShareResultModal({
         if (err instanceof Error && err.name === 'AbortError') return;
       }
     }
-    try {
-      await navigator.clipboard.writeText(fullShareText);
-    } catch {
-      // Ignore clipboard error
-    }
+    await copyTextToClipboard(fullShareText);
     setCopied(true);
     setTimeout(() => setCopied(false), 2500);
   };
@@ -672,7 +718,7 @@ export default function ShareResultModal({
             </Button>
           )}
 
-          {questionIds.length > 0 && (
+          {effectiveQuestionIds.length > 0 && (
             <>
               <Button
                 data-testid="create-async-challenge-btn"
@@ -692,13 +738,27 @@ export default function ShareResultModal({
                       : 'Creating challenge...'
                     : challengeCopied
                       ? lang === 'tr'
-                        ? 'Meydan okuma linki kopyalandı!'
-                        : 'Challenge link copied!'
+                        ? 'Link kopyalandı!'
+                        : 'Link copied!'
                       : lang === 'tr'
                         ? 'Meydan Oku / Link Paylaş'
                         : 'Challenge a Friend / Share Link'}
                 </span>
               </Button>
+
+              {challengeError && (
+                <p
+                  role="alert"
+                  data-testid="async-challenge-error"
+                  className="cik-footnote rounded-cik-md bg-cik-rose px-3 py-2 text-center text-cik-rose-text"
+                >
+                  {challengeError}
+                </p>
+              )}
+
+              {challengeInfo && !challengeError && (
+                <p className="cik-caption-1 text-center text-cik-text-2">{challengeInfo}</p>
+              )}
 
               {challengeUrl && (
                 <div
@@ -710,20 +770,32 @@ export default function ShareResultModal({
                   </span>
                   <button
                     type="button"
+                    data-testid="async-challenge-copy-btn"
                     onClick={async () => {
                       onButtonPop();
-                      try {
-                        await navigator.clipboard.writeText(challengeUrl);
+                      const didCopy = await copyTextToClipboard(challengeUrl);
+                      if (didCopy) {
+                        setChallengeInfo(null);
                         setChallengeCopied(true);
                         setTimeout(() => setChallengeCopied(false), 2500);
-                      } catch {
-                        // Ignore clipboard failures
                       }
                     }}
                     className="cik-caption-1 inline-flex h-11 shrink-0 items-center gap-1 rounded-pill bg-cik-pink px-3 text-cik-cta"
                   >
-                    <Copy size={14} strokeWidth={2} aria-hidden="true" />
-                    <span>{lang === 'tr' ? 'Kopyala' : 'Copy'}</span>
+                    {challengeCopied ? (
+                      <Check size={14} strokeWidth={2} aria-hidden="true" />
+                    ) : (
+                      <Copy size={14} strokeWidth={2} aria-hidden="true" />
+                    )}
+                    <span>
+                      {challengeCopied
+                        ? lang === 'tr'
+                          ? 'Kopyalandı'
+                          : 'Copied'
+                        : lang === 'tr'
+                          ? 'Kopyala'
+                          : 'Copy'}
+                    </span>
                   </button>
                 </div>
               )}
@@ -808,7 +880,19 @@ export default function ShareResultModal({
           </Button>
         </div>
       </motion.div>
-      <Toast message={copied ? t.shareCopiedBtn : null} />
+      <Toast
+        message={
+          challengeCopied
+            ? lang === 'tr'
+              ? 'Link kopyalandı!'
+              : 'Link copied!'
+            : duelCopied
+              ? t.duelLinkCopied
+              : copied
+                ? t.shareCopiedBtn
+                : null
+        }
+      />
     </div>
   );
 }
