@@ -3,6 +3,7 @@ import Link from 'next/link';
 import HomeClient from '@/components/HomeClient';
 import { getCategoryMeta } from '@/i18n/translations';
 import { fetchVocabularyWithSourceServer, getAllFactsServer } from '@/lib/db';
+import { safeJsonLdStringify } from '@/lib/originPolicy';
 import {
   buildCategoryHref,
   buildFactHref,
@@ -31,14 +32,42 @@ export default async function HomeScreen({ lang }: { lang: 'tr' | 'en' }) {
     phonetic: formatPhoneticForDisplay(card.phonetic),
   }));
   const isEn = lang === 'en';
+  const homeWebSiteJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'WebSite',
+    '@id': isEn ? 'https://scrolly.live/en#website' : 'https://scrolly.live/#website',
+    name: 'Scrolly',
+    alternateName: 'scrolly.live',
+    url: isEn ? 'https://scrolly.live/en' : 'https://scrolly.live/',
+    inLanguage: isEn ? 'en' : 'tr',
+    headline: isEn
+      ? 'Scrolly — Scroll, Learn, Wonder | Micro-Learning & Quiz'
+      : 'Scrolly — Kaydır, Öğren, Şaşır | Mikro Öğrenme & Quiz',
+    description: isEn
+      ? 'Explore verified space, nature, human body, history, science, and B1–C2 Word Lab cards. Play Quick Guess sliders, 5-card memory quizzes, and Scrolla 1v1 duels.'
+      : 'Uzay, doğa, insan vücudu, tarih, bilim ve B1–C2 İngilizce kelime kartlarını kaydırarak keşfet; Hızlı Tahmin, 5 soruluk Quiz ve Scrolla 1v1 düellosunda yarış!',
+  };
 
   return (
     <>
-      <h1 className="sr-only">
-        {isEn
-          ? 'Scrolly — Verified bilingual micro cards for science, space, history, and culture'
-          : 'Scrolly — Doğrulanmış İki Dilli Mikro Bilim, Uzay, Tarih ve Kültür Kartları'}
-      </h1>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: safeJsonLdStringify(homeWebSiteJsonLd),
+        }}
+      />
+      <section aria-label="Scrolly Overview" className="sr-only">
+        <h1>
+          {isEn
+            ? 'Scrolly — Scroll, Learn, Wonder | Micro-Learning & Quiz'
+            : 'Scrolly — Kaydır, Öğren, Şaşır | Mikro Öğrenme & Quiz'}
+        </h1>
+        <p>
+          {isEn
+            ? 'Scrolly (https://scrolly.live) is a free bilingual (English and Turkish) reels-style micro-learning platform where you scroll through primary-source verified science, space, nature, human body, history, weird records, statistics, and B1–C2 Word Lab vocabulary cards, test your intuition with Quick Guess sliders, play 5-card memory quizzes, climb the live XP leaderboard, and challenge friends in Scrolla 1v1 live trivia duels.'
+            : 'Scrolly (https://scrolly.live); uzay, doğa, insan vücudu, tarih, bilim, garip rekorlar, istatistik ve B1–C2 İngilizce kelime (Word Lab) alanlarında birincil bilimsel kaynaklarla doğrulanmış dikey bilgi kartlarını kaydırarak keşfettiğiniz, Hızlı Tahmin kaydırıcıları ve 5 soruluk Hafıza Quizleri çözdüğünüz, canlı XP sıralamasında yarıştığınız ve Scrolla 1v1 düello odaları kurduğunuz ücretsiz iki dilli mikro-öğrenme platformudur.'}
+        </p>
+      </section>
       <HomeClient initialFacts={initialFacts} initialVocabulary={initialVocabulary} initialLang={lang} />
       <nav aria-label="Site Directory" className="sr-only">
         <h2>Scrolly Platform &amp; Editorial Index</h2>

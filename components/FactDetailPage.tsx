@@ -125,6 +125,14 @@ export default function FactDetailPage({
   const resolvedSourceName =
     localized.sourceName || fact.sourceName || localized.sourceHint;
   const resolvedSourceUrl = safeExternalHref(localized.sourceUrl || fact.sourceUrl);
+  const normText = (val?: string) => (val || '').replace(/\s+/g, ' ').trim().toLowerCase();
+  const causeEffectText = localized.quiz?.explanation?.trim() || '';
+  const keyInsightText = detailHighlights.keyInsight?.trim() || '';
+  const isCauseEffectSameAsInsight =
+    Boolean(causeEffectText && keyInsightText) &&
+    (normText(causeEffectText) === normText(keyInsightText) ||
+      normText(causeEffectText).includes(normText(keyInsightText)) ||
+      normText(keyInsightText).includes(normText(causeEffectText)));
 
   const handleTouchStart = (event: React.TouchEvent<HTMLDivElement>) => {
     if (event.touches.length !== 1) return;
@@ -363,16 +371,16 @@ export default function FactDetailPage({
               {detailHighlights.curiosityHook}
             </p>
           </div>
-            {localized.quiz?.explanation ? (
+            {causeEffectText ? (
               <div
                 data-testid="detail-cause-effect"
-                className="rounded-2xl border border-cik-line bg-cik-pink px-3.5 py-2.5"
+                className="col-span-full rounded-2xl border border-cik-line bg-cik-pink px-3.5 py-2.5 sm:col-span-2"
               >
                 <p className="cik-caption-2 font-black uppercase tracking-wider text-cik-cta">
                   {lang === 'tr' ? 'Neden / Sonuç' : 'Cause / Effect'}
                 </p>
                 <p className="mt-1 text-xs font-semibold leading-relaxed text-cik-text">
-                  {localized.quiz.explanation}
+                  {causeEffectText}
                 </p>
               </div>
             ) : null}
@@ -413,37 +421,39 @@ export default function FactDetailPage({
             </p>
           </div>
 
-          {/* Engaging Key Insight & Curiosity Hook */}
-          <div
-            className={`rounded-2xl border p-3.5 ${
-              darkMode
-                ? 'border-cik-line bg-cik-butter'
-                : 'border-cik-line bg-cik-butter'
-            }`}
-          >
-            <div className="flex items-center gap-1.5">
-              <img
-                src={UI_ICON_PATHS.xpSparkles}
-                alt=""
-                aria-hidden="true"
-                className="h-4 w-4 object-contain"
-              />
-              <p
-                className={`cik-caption-2 font-black uppercase tracking-wider ${
-                  darkMode ? 'text-cik-butter-text' : 'text-cik-butter-text'
-                }`}
-              >
-                {lang === 'tr' ? 'Kilit Bilimsel İçgörü' : 'Key Scientific Insight'}
-              </p>
-            </div>
-            <p
-              className={`mt-1 text-xs font-bold leading-relaxed ${
-                darkMode ? 'text-cik-text' : 'text-cik-text'
+          {/* Engaging Key Insight & Curiosity Hook (hidden when identical to Cause / Effect) */}
+          {!isCauseEffectSameAsInsight && keyInsightText ? (
+            <div
+              className={`col-span-full rounded-2xl border p-3.5 ${
+                darkMode
+                  ? 'border-cik-line bg-cik-butter'
+                  : 'border-cik-line bg-cik-butter'
               }`}
             >
-              {detailHighlights.keyInsight}
-            </p>
-          </div>
+              <div className="flex items-center gap-1.5">
+                <img
+                  src={UI_ICON_PATHS.xpSparkles}
+                  alt=""
+                  aria-hidden="true"
+                  className="h-4 w-4 object-contain"
+                />
+                <p
+                  className={`cik-caption-2 font-black uppercase tracking-wider ${
+                    darkMode ? 'text-cik-butter-text' : 'text-cik-butter-text'
+                  }`}
+                >
+                  {lang === 'tr' ? 'Kilit Bilimsel İçgörü' : 'Key Scientific Insight'}
+                </p>
+              </div>
+              <p
+                className={`mt-1 text-xs font-bold leading-relaxed ${
+                  darkMode ? 'text-cik-text' : 'text-cik-text'
+                }`}
+              >
+                {keyInsightText}
+              </p>
+            </div>
+          ) : null}
 
           {/* Interactive 1-Tap Comprehension Mini-Quiz (+15 XP) */}
           {localized.quiz && localized.quiz.options && localized.quiz.options.length >= 2 && (

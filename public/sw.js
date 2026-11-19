@@ -1,13 +1,13 @@
-const CACHE_VERSION = 'v14';
-const CACHE_NAME = `scrolly-offline-${CACHE_VERSION}`;
+const CACHE_VERSION = '20261119';
+const CACHE_NAME = `scrolly-v${CACHE_VERSION}`;
 const MAX_RUNTIME_ENTRIES = 60;
 
 // Keep initial install precache minimal (essential PWA shell only)
 const PRECACHE_URLS = [
   '/',
   '/manifest.webmanifest',
-  '/icons/icon-192.png?v=20261117b',
-  '/icon.svg?v=20261117b',
+  '/icons/icon-192.png?v=20261119',
+  '/icon.svg?v=20261119',
 ];
 
 const AD_AND_TRACKING_PATTERNS = [

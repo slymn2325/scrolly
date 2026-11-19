@@ -826,10 +826,16 @@ export default function SingleFactView({
           {/* Crisp Quick Highlights & Key Numbers Grid */}
           <section
             aria-label={lang === 'tr' ? 'Öne Çıkanlar ve Kilit Veriler' : 'Quick Highlights & Key Numbers'}
-            className="relative z-10 mt-6 grid gap-3 sm:grid-cols-3"
+            className={`relative z-10 mt-6 grid gap-3 ${
+              insightAlreadyVisible ? 'grid-cols-1' : 'sm:grid-cols-2'
+            }`}
           >
             {/* Card 1: Interactive Key Number / Guess Challenge */}
-            <div className="rounded-2xl border border-cik-line bg-cik-surface p-4 shadow-sm sm:col-span-1">
+            <div
+              className={`rounded-2xl border border-cik-line bg-cik-surface p-4 shadow-sm ${
+                insightAlreadyVisible ? 'col-span-full' : 'sm:col-span-1'
+              }`}
+            >
               <div className="flex items-center justify-between gap-1.5">
                 <span className="inline-flex items-center gap-1 cik-caption-2 font-black uppercase tracking-wider text-cik-butter-text">
                   <Target className="h-3.5 w-3.5" />

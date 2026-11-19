@@ -1,6 +1,6 @@
 import type { MetadataRoute } from 'next';
 
-const ICON_VERSION = '20261117b';
+const ICON_VERSION = '20261119';
 
 export default function manifest(): MetadataRoute.Manifest {
   return {

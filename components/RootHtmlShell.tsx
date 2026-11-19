@@ -88,7 +88,6 @@ export default function RootHtmlShell({ lang, jsonLd, children }: RootHtmlShellP
         ) : null}
       </head>
       <body className="h-[100dvh] overflow-hidden bg-cik-bg font-sans text-cik-text antialiased selection:bg-cik-pink selection:text-cik-text">
-        <div aria-hidden="true" className="pwa-statusbar-guard" />
         {children}
         <Script id="google-tag-manager" strategy="afterInteractive">
           {`

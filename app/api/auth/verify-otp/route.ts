@@ -139,6 +139,13 @@ export async function POST(request: Request) {
       ok: true,
       authenticated: true,
       user: outcome.user,
+      ...(outcome.needsMergeChoice
+        ? {
+            needsMergeChoice: true,
+            existingAccountSummary: outcome.existingAccountSummary,
+            guestSummary: outcome.guestSummary,
+          }
+        : {}),
     };
 
     const response = NextResponse.json(okPayload, {

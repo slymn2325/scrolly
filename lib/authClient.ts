@@ -3,6 +3,7 @@
 import type {
   AuthSessionResponse,
   AuthUserDto,
+  GuestMergeMode,
   LocalMemorySnapshot,
   LogoutResponse,
   MergeGuestPayload,
@@ -13,15 +14,20 @@ import type {
   VerifyOtpResponse,
 } from '@/types/auth';
 import { getOrCreateDeviceId } from '@/lib/telemetry';
-import { loadLikedFactIds, mergeLikedFactIds } from '@/utils/likedFacts';
-import { loadSavedFactIds, mergeSavedFactIds } from '@/utils/savedFacts';
-import { mergeSeenIdsInStorage } from '@/utils/seenFacts';
+import { clearLikedFacts, loadLikedFactIds, mergeLikedFactIds } from '@/utils/likedFacts';
+import { clearSavedFacts, loadSavedFactIds, mergeSavedFactIds } from '@/utils/savedFacts';
+import { clearSeenSlugsStorage, mergeSeenIdsInStorage } from '@/utils/seenFacts';
 import {
   loadUserMemory,
   mergeRemoteProfileIntoMemory,
+  saveUserMemory,
   type UserMemoryState,
 } from '@/utils/userMemory';
-import { loadSavedVocabNotebook, mergeSavedVocabNotebook } from '@/utils/vocabNotebook';
+import {
+  clearVocabNotebook,
+  loadSavedVocabNotebook,
+  mergeSavedVocabNotebook,
+} from '@/utils/vocabNotebook';
 
 export const AUTH_USER_EMAIL_KEY = 'scrolly_auth_user_email';
 export const AUTH_USER_NICKNAME_KEY = 'scrolly_auth_user_nickname';
@@ -107,8 +113,38 @@ export function buildLocalSnapshot(overrideMemory?: UserMemoryState): LocalMemor
 
 export function hydrateLocalMemoryFromAuthUser(
   local: UserMemoryState,
-  user: AuthUserDto
+  user: AuthUserDto,
+  mode: GuestMergeMode = 'merge'
 ): UserMemoryState {
+  if (mode === 'keep_existing') {
+    clearSavedFacts();
+    clearLikedFacts();
+    clearSeenSlugsStorage();
+    clearVocabNotebook();
+
+    const replaced: UserMemoryState = {
+      ...local,
+      nickname: user.nickname || local.nickname,
+      xp: user.xp,
+      weeklyXp: user.weeklyXp,
+      dailyBestScore: user.dailyBestScore,
+      lastDailyQuizDate: user.lastDailyQuizDate,
+      streakDays: user.streak,
+      lastVisitDate: user.lastVisitDate || local.lastVisitDate,
+      lastActiveDate: user.streak > 0 ? user.lastVisitDate || local.lastVisitDate : '',
+      seenIds: [...(user.seenIds ?? [])],
+      favoriteIds: [...(user.favoriteIds ?? [])],
+      badges: [...(user.badges ?? [])],
+    };
+    saveUserMemory(replaced);
+    mergeSavedFactIds(user.favoriteIds ?? []);
+    mergeLikedFactIds(user.likedIds ?? []);
+    mergeSeenIdsInStorage(user.seenIds ?? []);
+    mergeSavedVocabNotebook(user.vocabNotebook ?? []);
+    persistAuthCacheAndEmit(user);
+    return replaced;
+  }
+
   const merged = mergeRemoteProfileIntoMemory(local, {
     username: user.nickname,
     xp: user.xp,
@@ -220,11 +256,20 @@ export async function verifyEmailOtp(
     });
     const data = (await res.json()) as Partial<VerifyOtpResponse>;
     if (res.ok && data?.ok && data?.authenticated && data.user) {
-      persistAuthCacheAndEmit(data.user);
+      if (!data.needsMergeChoice) {
+        persistAuthCacheAndEmit(data.user);
+      }
       return {
         ok: true,
         authenticated: true,
         user: data.user,
+        ...(data.needsMergeChoice
+          ? {
+              needsMergeChoice: true,
+              existingAccountSummary: data.existingAccountSummary,
+              guestSummary: data.guestSummary,
+            }
+          : {}),
       };
     }
     return {
@@ -249,6 +294,7 @@ export async function mergeGuestToUser(
   const fullPayload: MergeGuestPayload = {
     guestId: payload?.guestId ?? getOrCreateDeviceId(),
     localSnapshot: payload?.localSnapshot ?? buildLocalSnapshot(),
+    ...(payload?.mode ? { mode: payload.mode } : {}),
   };
 
   try {

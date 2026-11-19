@@ -287,7 +287,13 @@ export default function LeaderboardModal({
               <button
                 key={tab.id}
                 type="button"
-                onClick={() => setActiveTab(tab.id)}
+                onClick={() => {
+                  if (tab.id === activeTab) return;
+                  setEntries([]);
+                  setIsLoading(true);
+                  setHasError(false);
+                  setActiveTab(tab.id);
+                }}
                 data-testid={`lb-tab-${tab.id}`}
                 className={`cik-footnote min-h-11 rounded-pill px-2 focus-visible:outline focus-visible:outline-[3px] focus-visible:outline-offset-2 focus-visible:outline-cik-focus ${
                   isActive ? 'bg-cik-berry text-cik-on-berry shadow-e1' : 'text-cik-text'
@@ -365,8 +371,8 @@ export default function LeaderboardModal({
           </div>
         )}
 
-        <div data-testid="leaderboard-list" className="mt-3 flex-1 space-y-2 overflow-y-auto overflow-x-hidden pb-24">
-          {isLoading && entries.length === 0 ? (
+        <div data-testid="leaderboard-list" className="mt-3 min-h-0 flex-1 space-y-2 overflow-y-auto overflow-x-hidden pb-4">
+          {isLoading ? (
             <div data-testid="leaderboard-loading" className="flex flex-col gap-2">
               {[0, 1, 2, 3, 4].map((skeletonIdx) => (
                 <Skeleton key={skeletonIdx} className="h-14 w-full rounded-cik-lg" />
@@ -391,7 +397,7 @@ export default function LeaderboardModal({
                 const showPromotionCutoff = prevRow?.zone === 'promotion' && row.zone !== 'promotion';
                 const showRelegationCutoff = row.zone === 'relegation' && prevRow?.zone !== 'relegation';
                 const zoneClass = row.isUser
-                  ? 'sticky bottom-0 z-20 mx-0 w-full border-cik-cta bg-cik-pink text-cik-text shadow-e1'
+                  ? 'mx-0 w-full border-cik-cta bg-cik-pink text-cik-text shadow-e1'
                   : row.zone === 'promotion'
                     ? 'mx-0 w-full border-cik-mint bg-cik-surface text-cik-text'
                     : row.zone === 'relegation'
@@ -416,9 +422,9 @@ export default function LeaderboardModal({
                     <div
                       ref={row.isUser ? userRowRef : undefined}
                       data-zone={row.zone}
-                      className={`flex min-h-[52px] items-center justify-between gap-3 rounded-cik-lg border px-4 py-2 ${zoneClass}`}
+                      className={`flex min-h-[52px] items-center justify-between gap-2.5 rounded-cik-lg border px-3.5 py-2 ${zoneClass}`}
                     >
-                      <div className="flex min-w-0 items-center gap-3">
+                      <div className="flex min-w-0 flex-1 items-center gap-2.5">
                         <span
                           className={`h-8 w-1 shrink-0 rounded-pill ${
                             row.zone === 'promotion'
@@ -429,7 +435,7 @@ export default function LeaderboardModal({
                           }`}
                           aria-hidden="true"
                         />
-                        <span className="cik-footnote cik-tabular w-8 text-center text-cik-text-2">
+                        <span className="cik-footnote cik-tabular w-7 shrink-0 text-center text-cik-text-2">
                           {row.rank === 1 ? (
                             <>
                               <Crown size={16} strokeWidth={2} className="mx-auto text-cik-butter-text" aria-hidden="true" />
@@ -444,12 +450,14 @@ export default function LeaderboardModal({
                             `#${row.rank}`
                           )}
                         </span>
-                        <span className="text-base" aria-hidden="true">
+                        <span className="shrink-0 text-base" aria-hidden="true">
                           {row.avatar}
                         </span>
-                        <span className="cik-headline min-w-0 truncate">{row.name}</span>
+                        <span className="cik-headline min-w-0 flex-1 truncate" title={row.name}>
+                          {row.name}
+                        </span>
                         {row.isUser ? (
-                          <span className="cik-caption-2 shrink-0 rounded-pill bg-cik-cta px-2 py-1 text-cik-on-cta">
+                          <span className="cik-caption-2 shrink-0 rounded-pill bg-cik-cta px-2 py-0.5 text-cik-on-cta">
                             {t.youTag}
                           </span>
                         ) : null}
@@ -501,6 +509,44 @@ export default function LeaderboardModal({
               </Button>
             </div>
           )}
+        </div>
+
+        {/* Dedicated pinned user footer outside the scrolling list so it never overlaps rows */}
+        <div
+          data-testid="leaderboard-pinned-user-footer"
+          onClick={scrollToMyRank}
+          className="mt-2 flex min-h-[54px] shrink-0 cursor-pointer items-center justify-between gap-2.5 rounded-cik-lg border-2 border-cik-cta bg-cik-pink px-3.5 py-2 text-cik-text shadow-e1"
+        >
+          <div className="flex min-w-0 flex-1 items-center gap-2.5">
+            <span className="cik-footnote cik-tabular w-7 shrink-0 text-center font-extrabold text-cik-cta">
+              #{myRank}
+            </span>
+            <span className="shrink-0 text-base" aria-hidden="true">
+              {myEntry?.avatar || '🧭'}
+            </span>
+            <span className="cik-headline min-w-0 flex-1 truncate" title={myEntry?.name || nickname}>
+              {myEntry?.name || nickname}
+            </span>
+            <span className="cik-caption-2 shrink-0 rounded-pill bg-cik-cta px-2 py-0.5 text-cik-on-cta">
+              {t.youTag}
+            </span>
+          </div>
+          <div className="cik-footnote cik-tabular flex shrink-0 items-center gap-2">
+            <span className="inline-flex items-center gap-1 text-cik-butter-text">
+              <img
+                src={UI_ICON_PATHS.streakFire}
+                alt=""
+                aria-hidden="true"
+                width={16}
+                height={16}
+                className="h-4 w-4 object-contain"
+              />
+              {myEntry?.streak ?? streakDays}
+            </span>
+            <span className="rounded-pill bg-cik-surface px-2.5 py-1 font-extrabold text-cik-text">
+              {activeTabScore.toLocaleString()} XP
+            </span>
+          </div>
         </div>
       </motion.div>
     </div>

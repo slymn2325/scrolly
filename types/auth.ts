@@ -62,6 +62,13 @@ export interface RequestOtpResponse {
   error?: string;
 }
 
+export interface AccountProgressSummary {
+  nickname: string;
+  xp: number;
+  streak: number;
+  savedCount: number;
+}
+
 export interface VerifyOtpPayload {
   email: string;
   code: string;
@@ -73,12 +80,18 @@ export interface VerifyOtpResponse {
   ok: boolean;
   authenticated: boolean;
   user: AuthUserDto | null;
+  needsMergeChoice?: boolean;
+  existingAccountSummary?: AccountProgressSummary;
+  guestSummary?: AccountProgressSummary;
   error?: string;
 }
+
+export type GuestMergeMode = 'merge' | 'keep_existing';
 
 export interface MergeGuestPayload {
   guestId?: string;
   localSnapshot?: LocalMemorySnapshot;
+  mode?: GuestMergeMode;
 }
 
 export interface MergeGuestResponse {

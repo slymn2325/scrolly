@@ -464,51 +464,24 @@ const TikTokFeed = forwardRef<TikTokFeedHandle, TikTokFeedProps>(function TikTok
       const container = scrollRef.current;
       if (!container || slides.length === 0) return;
       const clamped = Math.max(0, Math.min(targetIndex, slides.length - 1));
-      const targetNode = container.querySelector<HTMLElement>(`[data-slide-index="${clamped}"]`);
       const slideHeight = container.clientHeight || window.innerHeight;
-      const targetTop = targetNode ? targetNode.offsetTop : clamped * slideHeight;
+      const targetTop = clamped * slideHeight;
       activeIndexRef.current = clamped;
       lastProgrammaticStepRef.current = { index: clamped, at: Date.now() };
       setActiveIndex((prev) => (prev === clamped ? prev : clamped));
 
-      const previousVelocity = scrollAnimRef.current?.velocity ?? 0;
-      if (scrollAnimRef.current) cancelAnimationFrame(scrollAnimRef.current.raf);
+      if (scrollAnimRef.current) {
+        cancelAnimationFrame(scrollAnimRef.current.raf);
+        scrollAnimRef.current = null;
+      }
+      container.style.scrollSnapType = '';
       const reduced =
         typeof window !== 'undefined' &&
         window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-      if (reduced || Math.abs(container.scrollTop - targetTop) < 1) {
-        container.style.scrollSnapType = '';
-        container.scrollTop = targetTop;
-        scrollAnimRef.current = null;
-        scheduleSlideSettle(clamped);
-        return;
-      }
-
-      const { stiffness, damping, mass } = motionSpring.cardSnap;
-      container.style.scrollSnapType = 'none';
-      let y = container.scrollTop;
-      let velocity = previousVelocity;
-      let last = performance.now();
-      const tick = (now: number) => {
-        const dt = Math.min(0.032, (now - last) / 1000);
-        last = now;
-        const accel = (stiffness * (targetTop - y) - damping * velocity) / mass;
-        velocity += accel * dt;
-        y += velocity * dt;
-        if (!scrollRef.current) return;
-        if (Math.abs(targetTop - y) < 0.6 && Math.abs(velocity) < 12) {
-          scrollRef.current.style.scrollSnapType = '';
-          scrollRef.current.scrollTop = targetTop;
-          scrollAnimRef.current = null;
-          scheduleSlideSettle(clamped);
-          return;
-        }
-        scrollRef.current.scrollTop = y;
-        const raf = requestAnimationFrame(tick);
-        scrollAnimRef.current = { raf, velocity };
-      };
-      const raf = requestAnimationFrame(tick);
-      scrollAnimRef.current = { raf, velocity };
+      container.scrollTo({
+        top: targetTop,
+        behavior: reduced ? 'auto' : 'smooth',
+      });
       scheduleSlideSettle(clamped);
     },
     [slides.length, scheduleSlideSettle]
@@ -857,7 +830,7 @@ const TikTokFeed = forwardRef<TikTokFeedHandle, TikTokFeedProps>(function TikTok
         data-chrome-blocked={chromeBlocked ? 'true' : 'false'}
         inert={chromeBlocked ? true : undefined}
         aria-hidden={chromeBlocked || undefined}
-        className={`pointer-events-none absolute left-3 right-3 top-3 z-hud flex items-center justify-between gap-2 ${
+        className={`pointer-events-none absolute left-3 right-3 top-0 z-hud flex items-center justify-between gap-2 pt-[max(env(safe-area-inset-top),12px)] lg:top-3 lg:pt-0 ${
           chromeBlocked
             ? 'pointer-events-none opacity-0'
             : hudTraveling

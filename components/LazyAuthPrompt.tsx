@@ -14,8 +14,8 @@ import {
   X,
 } from 'lucide-react';
 import type { Language } from '@/i18n/translations';
-import { requestEmailOtp, verifyEmailOtp } from '@/lib/authClient';
-import type { AuthUserDto } from '@/types/auth';
+import { mergeGuestToUser, requestEmailOtp, verifyEmailOtp } from '@/lib/authClient';
+import type { AccountProgressSummary, AuthUserDto, GuestMergeMode } from '@/types/auth';
 import { useEscapeClose } from '@/utils/useEscapeClose';
 
 export const AUTH_NUDGE_DISMISS_KEY = 'scrolly_auth_nudge_dismissed_until';
@@ -74,7 +74,7 @@ interface LazyAuthPromptProps {
   onCloseModal: () => void;
   onDismissNudge: () => void;
   onOpenModalFromNudge: () => void;
-  onAuthenticated: (user: AuthUserDto) => void;
+  onAuthenticated: (user: AuthUserDto, mode?: GuestMergeMode) => void;
 }
 
 function getContextualReason(trigger: string | undefined, lang: Language): string {
@@ -186,13 +186,16 @@ export default function LazyAuthPrompt({
 }: LazyAuthPromptProps) {
   const reduced = useReducedMotion() === true;
   const [nudgeHost, setNudgeHost] = useState<HTMLElement | null>(null);
-  const [step, setStep] = useState<'email' | 'code'>('email');
+  const [step, setStep] = useState<'email' | 'code' | 'merge-choice'>('email');
   const [email, setEmail] = useState('');
   const [code, setCode] = useState('');
   const [devOtpCode, setDevOtpCode] = useState<string | null>(null);
   const [cooldownSec, setCooldownSec] = useState(0);
   const [busy, setBusy] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [pendingUser, setPendingUser] = useState<AuthUserDto | null>(null);
+  const [existingSummary, setExistingSummary] = useState<AccountProgressSummary | null>(null);
+  const [guestSummary, setGuestSummary] = useState<AccountProgressSummary | null>(null);
 
   useEscapeClose(open, onCloseModal);
 
@@ -301,10 +304,39 @@ export default function LazyAuthPrompt({
       return;
     }
 
+    if (res.needsMergeChoice && res.existingAccountSummary && res.guestSummary) {
+      setPendingUser(res.user);
+      setExistingSummary(res.existingAccountSummary);
+      setGuestSummary(res.guestSummary);
+      setStep('merge-choice');
+      return;
+    }
+
     setStep('email');
     setCode('');
     setDevOtpCode(null);
-    onAuthenticated(res.user);
+    onAuthenticated(res.user, 'merge');
+  };
+
+  const handleResolveMergeChoice = async (mode: GuestMergeMode) => {
+    setBusy(true);
+    setErrorMsg(null);
+    const res = await mergeGuestToUser({ mode });
+    setBusy(false);
+
+    const finalUser = res.ok && res.user ? res.user : pendingUser;
+    if (!finalUser) {
+      setErrorMsg(mapOtpError(res.error, lang));
+      return;
+    }
+
+    setStep('email');
+    setCode('');
+    setDevOtpCode(null);
+    setPendingUser(null);
+    setExistingSummary(null);
+    setGuestSummary(null);
+    onAuthenticated(finalUser, mode);
   };
 
   const surfaceClass = 'border border-cik-line bg-cik-surface text-cik-text';
@@ -392,8 +424,10 @@ export default function LazyAuthPrompt({
                 <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-cik-md bg-cik-pink text-cik-cta">
                   {step === 'email' ? (
                     <Mail size={20} strokeWidth={2} aria-hidden="true" />
-                  ) : (
+                  ) : step === 'code' ? (
                     <KeyRound size={20} strokeWidth={2} aria-hidden="true" />
+                  ) : (
+                    <ShieldCheck size={20} strokeWidth={2} aria-hidden="true" />
                   )}
                 </div>
                 <div className="min-w-0">
@@ -402,21 +436,29 @@ export default function LazyAuthPrompt({
                       ? lang === 'tr'
                         ? 'E-posta ile hesabını bağla'
                         : 'Link your account'
-                      : lang === 'tr'
-                        ? '6 haneli kod'
-                        : '6-digit code'}
+                      : step === 'code'
+                        ? lang === 'tr'
+                          ? '6 haneli kod'
+                          : '6-digit code'
+                        : lang === 'tr'
+                          ? 'Bu e-postada zaten bir hesap var'
+                          : 'An account already exists for this email'}
                   </h2>
                   <p className="cik-caption-2 mt-1 text-cik-text-2">
                     {step === 'email'
                       ? getContextualReason(trigger, lang)
-                      : lang === 'tr'
-                        ? `${email} adresine gönderilen kodu gir.`
-                        : `Enter the code sent to ${email}.`}
+                      : step === 'code'
+                        ? lang === 'tr'
+                          ? `${email} adresine gönderilen kodu gir.`
+                          : `Enter the code sent to ${email}.`
+                        : lang === 'tr'
+                          ? 'Mevcut bulut hesabınla mı devam etmek istersin, yoksa bu cihazdaki misafir ilerlemeni hesaba eklemek mi?'
+                          : 'Would you like to continue with your existing cloud account or merge the guest progress on this device?'}
                   </p>
                 </div>
               </div>
 
-              {currentXp > 0 && (
+              {step !== 'merge-choice' && currentXp > 0 && (
                 <div className="cik-footnote mt-3 flex items-center gap-2 rounded-cik-md bg-cik-mint px-3 py-2 text-cik-mint-text">
                   <Sparkles size={16} strokeWidth={2} aria-hidden="true" className="shrink-0" />
                   <span>
@@ -438,7 +480,83 @@ export default function LazyAuthPrompt({
                 </div>
               )}
 
-              {step === 'email' ? (
+              {step === 'merge-choice' && existingSummary && guestSummary ? (
+                <div data-testid="lazy-auth-merge-choice" className="mt-4 flex flex-col gap-3">
+                  <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
+                    <div
+                      data-testid="auth-existing-account-summary"
+                      className="rounded-cik-md border border-cik-line bg-cik-surface-2 p-3"
+                    >
+                      <p className="cik-caption-2 font-extrabold uppercase tracking-wider text-cik-cta">
+                        {lang === 'tr' ? 'Kayıtlı Hesabın' : 'Your Existing Account'}
+                      </p>
+                      <p className="cik-headline mt-1 truncate text-cik-text">
+                        {existingSummary.nickname}
+                      </p>
+                      <p className="cik-caption-1 cik-tabular mt-1 text-cik-text-2">
+                        {existingSummary.xp.toLocaleString()} XP · {existingSummary.streak}{' '}
+                        {lang === 'tr' ? 'gün seri' : 'day streak'}
+                      </p>
+                      <p className="cik-caption-2 cik-tabular mt-0.5 text-cik-text-3">
+                        {existingSummary.savedCount}{' '}
+                        {lang === 'tr' ? 'kaydedilen / beğenilen' : 'saved / liked'}
+                      </p>
+                    </div>
+
+                    <div
+                      data-testid="auth-guest-device-summary"
+                      className="rounded-cik-md border border-cik-line bg-cik-pink p-3"
+                    >
+                      <p className="cik-caption-2 font-extrabold uppercase tracking-wider text-cik-text-2">
+                        {lang === 'tr'
+                          ? 'Bu Cihazdaki Misafir İlerlemen'
+                          : 'Guest Progress on This Device'}
+                      </p>
+                      <p className="cik-headline mt-1 truncate text-cik-text">
+                        {guestSummary.nickname}
+                      </p>
+                      <p className="cik-caption-1 cik-tabular mt-1 text-cik-text-2">
+                        {guestSummary.xp.toLocaleString()} XP · {guestSummary.streak}{' '}
+                        {lang === 'tr' ? 'gün seri' : 'day streak'}
+                      </p>
+                      <p className="cik-caption-2 cik-tabular mt-0.5 text-cik-text-3">
+                        {guestSummary.savedCount}{' '}
+                        {lang === 'tr' ? 'kaydedilen / beğenilen' : 'saved / liked'}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="mt-1 flex flex-col gap-2">
+                    <button
+                      type="button"
+                      disabled={busy}
+                      data-testid="auth-choice-merge-both"
+                      onClick={() => void handleResolveMergeChoice('merge')}
+                      className="cik-headline flex min-h-11 w-full items-center justify-center gap-2 rounded-pill bg-cik-cta px-4 text-cik-on-cta disabled:opacity-60"
+                    >
+                      <Sparkles size={16} strokeWidth={2} aria-hidden="true" />
+                      <span>
+                        {lang === 'tr' ? 'İkisini birleştir' : 'Merge both'}
+                      </span>
+                    </button>
+
+                    <button
+                      type="button"
+                      disabled={busy}
+                      data-testid="auth-choice-keep-existing"
+                      onClick={() => void handleResolveMergeChoice('keep_existing')}
+                      className="cik-headline flex min-h-11 w-full items-center justify-center gap-2 rounded-pill border border-cik-line bg-cik-surface-2 px-4 text-cik-text disabled:opacity-60"
+                    >
+                      <CheckCircle2 size={16} strokeWidth={2} aria-hidden="true" />
+                      <span>
+                        {lang === 'tr'
+                          ? 'Mevcut hesabımla devam et'
+                          : 'Continue with my existing account'}
+                      </span>
+                    </button>
+                  </div>
+                </div>
+              ) : step === 'email' ? (
                 <form onSubmit={handleRequestOtp} className="mt-4 flex flex-col gap-3">
                   <div>
                     <label htmlFor="lazy-auth-email" className="cik-caption-2 mb-2 block text-cik-text-2">

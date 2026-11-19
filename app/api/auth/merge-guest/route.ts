@@ -60,6 +60,7 @@ export async function POST(request: Request) {
 
   const guestId = typeof body.guestId === 'string' ? body.guestId : undefined;
   const boundDeviceId = readSignedDeviceIdFromRequest(request);
+  const mode = body.mode === 'keep_existing' ? 'keep_existing' : 'merge';
   const localSnapshot =
     body.localSnapshot && typeof body.localSnapshot === 'object' && !Array.isArray(body.localSnapshot)
       ? (body.localSnapshot as LocalMemorySnapshot)
@@ -71,6 +72,7 @@ export async function POST(request: Request) {
       guestId,
       boundDeviceId,
       localSnapshot,
+      mode,
     });
 
     if (!mergedUser) {

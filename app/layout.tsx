@@ -7,34 +7,40 @@ import './globals.css';
 
 export const metadata: Metadata = {
   metadataBase: new URL('https://scrolly.live'),
-  title: 'Scrolly — Tek Saniyede Mikro Keşif | scrolly.live',
+  title: 'Scrolly — Kaydır, Öğren, Şaşır | Mikro Öğrenme & Quiz',
   description:
-    'Uzay, doğa, insan vücudu, tarih ve bilim hakkında şaşırtıcı bilgiler keşfet, son 5 kartla hafıza quizine gir ve skorunu paylaş!',
+    'Uzay, doğa, insan vücudu, tarih ve bilim hakkında doğrulanmış bilgiler keşfet, Hızlı Tahmin ve 5 kartlık hafıza quizine gir, Scrolla 1v1 düellosunda yarış!',
+  applicationName: 'Scrolly',
   appleWebApp: {
     capable: true,
-    statusBarStyle: 'black',
+    statusBarStyle: 'black-translucent',
     title: 'Scrolly',
   },
   icons: {
-    icon: [{ url: '/icon.svg?v=20261117b', type: 'image/svg+xml' }],
-    shortcut: ['/icon.svg?v=20261117b'],
-    apple: [{ url: '/apple-touch-icon.png?v=20261117b' }],
-    other: [{ rel: 'mask-icon', url: '/icons/mask-icon.svg?v=20261117b', color: '#5B2A43' }],
+    icon: [
+      { url: '/favicon.ico?v=20261119', sizes: '48x48', type: 'image/x-icon' },
+      { url: '/icon.svg?v=20261119', type: 'image/svg+xml' },
+      { url: '/icon-192.png?v=20261119', sizes: '192x192', type: 'image/png' },
+      { url: '/icon-512.png?v=20261119', sizes: '512x512', type: 'image/png' },
+    ],
+    shortcut: ['/favicon.ico?v=20261119'],
+    apple: [{ url: '/apple-touch-icon.png?v=20261119', sizes: '180x180', type: 'image/png' }],
+    other: [{ rel: 'mask-icon', url: '/icons/mask-icon.svg?v=20261119', color: '#5B2A43' }],
   },
   openGraph: {
-    title: 'Scrolly — Reels Tarzı 3B Mikro Keşif Platformu',
+    title: 'Scrolly — Kaydır, Öğren, Şaşır | Mikro Öğrenme & Quiz',
     siteName: 'Scrolly',
     url: 'https://scrolly.live',
     description:
-      'Discover mind-blowing facts in Turkish & English, play instant 5-card memory quizzes, and share your Wordle-style score card.',
+      'Discover verified science, space, nature, history, and human body facts in Turkish & English, play instant quizzes, and compete in Scrolla 1v1 duels.',
     type: 'website',
     images: [BRAND_OG_IMAGE],
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Scrolly — Tek Saniyede Mikro Keşif | scrolly.live',
+    title: 'Scrolly — Kaydır, Öğren, Şaşır | Mikro Öğrenme & Quiz',
     description:
-      'Uzay, doğa, insan vücudu, tarih ve bilim hakkında şaşırtıcı bilgiler keşfet, son 5 kartla hafıza quizine gir ve skorunu paylaş!',
+      'Uzay, doğa, insan vücudu, tarih ve bilim hakkında doğrulanmış bilgiler keşfet, Hızlı Tahmin ve 5 kartlık hafıza quizine gir, Scrolla 1v1 düellosunda yarış!',
     images: [BRAND_OG_IMAGE.url],
   },
   other: {
@@ -76,7 +82,9 @@ const ROOT_SCHEMA_JSON_LD = {
       email: 'contact@scrolly.live',
       logo: {
         '@type': 'ImageObject',
-        url: 'https://scrolly.live/icon.svg?v=20261117b',
+        url: 'https://scrolly.live/icon-512.png?v=20261119',
+        width: 512,
+        height: 512,
       },
       contactPoint: {
         '@type': 'ContactPoint',

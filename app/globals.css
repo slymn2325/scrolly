@@ -282,21 +282,7 @@ html.scrolly-doc-scroll body {
 }
 
 .pwa-statusbar-guard {
-  display: none;
-}
-
-@media all and (display-mode: standalone) {
-  .pwa-statusbar-guard {
-    display: block;
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: env(safe-area-inset-top, 0px);
-    background-color: var(--cik-bg);
-    pointer-events: none;
-    z-index: var(--z-statusbar);
-  }
+  display: none !important;
 }
 
 [data-testid="reels-desktop-shell"] {

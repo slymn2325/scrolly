@@ -471,7 +471,7 @@ export default function VocabularySlide({
           </AnimatePresence>
         </article>
 
-        <div className="flex shrink-0 flex-col gap-2">
+        <div className="flex shrink-0 flex-col gap-2 lg:hidden">
           <IconButton
             label={saved ? copy.savedWordBtn : copy.saveWordBtn}
             data-testid="vocab-mobile-save-btn"

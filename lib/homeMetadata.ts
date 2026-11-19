@@ -13,14 +13,14 @@ export const BRAND_OG_IMAGE = {
 
 const HOME_COPY = {
   tr: {
-    title: 'Scrolly — Tek Saniyede Mikro Keşif | scrolly.live',
+    title: 'Scrolly — Kaydır, Öğren, Şaşır | Mikro Öğrenme & Quiz',
     description:
-      'Uzay, doğa, insan vücudu, tarih ve bilim hakkında şaşırtıcı bilgiler keşfet, son 5 kartla hafıza quizine gir ve skorunu paylaş!',
+      'Uzay, doğa, insan vücudu, tarih, bilim ve B1–C2 İngilizce kelime kartlarını kaydırarak keşfet; Hızlı Tahmin, 5 soruluk Quiz ve Scrolla 1v1 düellosunda yarış!',
   },
   en: {
-    title: 'Scrolly — A Micro Discovery in One Second | scrolly.live',
+    title: 'Scrolly — Scroll, Learn, Wonder | Micro-Learning & Quiz',
     description:
-      'Discover surprising facts about space, nature, the human body, history, and science. Quiz the last five cards and share your score.',
+      'Explore verified space, nature, human body, history, science, and B1–C2 Word Lab cards. Play Quick Guess sliders, 5-card memory quizzes, and Scrolla 1v1 duels.',
   },
 } as const;
 

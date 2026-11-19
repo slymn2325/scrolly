@@ -2647,9 +2647,9 @@ export default function HomeClient({ initialFacts, initialVocabulary, initialLan
           setAuthNudgeOpen(false);
           setAuthPromptOpen(true);
         }}
-        onAuthenticated={(user) => {
+        onAuthenticated={(user, mode) => {
           setAuthUser(user);
-          setMemory((prev) => hydrateLocalMemoryFromAuthUser(prev, user));
+          setMemory((prev) => hydrateLocalMemoryFromAuthUser(prev, user, mode));
           setSavedIds(loadSavedFactIds());
           setSavedVocabWords(loadSavedVocabNotebook().map((entry) => entry.word.toLowerCase()));
           setLikedRevision((prev) => prev + 1);

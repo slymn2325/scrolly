@@ -389,7 +389,7 @@ export default function DiplomaProfileModal({
         <div
           ref={scrollBodyRef}
           data-testid="diploma-scroll-body"
-          className={`no-scrollbar min-h-0 flex-1 overflow-y-auto overflow-x-hidden px-4 pb-8 ${isPage ? 'lg:px-8' : ''}`}
+          className={`no-scrollbar min-h-0 flex-1 overflow-y-auto overflow-x-hidden px-4 pt-3 pb-8 ${isPage ? 'lg:px-8' : ''}`}
         >
           <ProfileHeader
             lang={uiLang}
@@ -408,7 +408,7 @@ export default function DiplomaProfileModal({
             id="profile-panel-ozet"
             role="tabpanel"
             aria-labelledby="profile-tab-ozet"
-            className={pane === 'ozet' ? 'mt-4' : 'hidden'}
+            className={pane === 'ozet' ? 'mt-4 pt-3' : 'hidden'}
           >
             <StatsSummary
               lang={uiLang}

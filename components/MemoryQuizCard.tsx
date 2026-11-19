@@ -602,7 +602,7 @@ export default function MemoryQuizCard({
       animate={{ opacity: 1, y: 0 }}
       transition={reduced ? { duration: 0.15 } : motionSpring.sheetOpen}
       data-testid="memory-quiz-card"
-      className="mx-auto flex max-h-full w-full max-w-xl flex-col overflow-y-auto rounded-sticker bg-cik-surface p-5 text-cik-text shadow-sticker"
+      className="mx-auto flex max-h-full w-full max-w-xl flex-col overflow-y-auto rounded-sticker bg-cik-surface p-5 pb-6 text-cik-text shadow-sticker"
     >
       {isDuelMode && (
         <div
@@ -841,17 +841,19 @@ export default function MemoryQuizCard({
         )}
       </AnimatePresence>
 
-      {hasAnswered && (
-        <Button data-testid="quiz-next-btn" className="mt-3 w-full" onClick={handleContinue}>
-          {isLastQuestion || timedOut ? t.quizFinish : t.quizNextQ}
-          <ArrowRight size={20} strokeWidth={2} aria-hidden="true" />
-        </Button>
-      )}
+      <div className="sticky bottom-0 z-10 -mx-5 -mb-6 mt-3 flex shrink-0 flex-col gap-2 border-t border-cik-line bg-cik-surface px-5 pt-3 pb-4">
+        {hasAnswered && (
+          <Button data-testid="quiz-next-btn" className="w-full" onClick={handleContinue}>
+            {isLastQuestion || timedOut ? t.quizFinish : t.quizNextQ}
+            <ArrowRight size={20} strokeWidth={2} aria-hidden="true" />
+          </Button>
+        )}
 
-      <div className="mt-3 flex shrink-0 justify-center border-t border-cik-line pt-3">
-        <Button tone="ghost" onClick={onSkip}>
-          {t.quizSkip}
-        </Button>
+        <div className="flex justify-center">
+          <Button tone="ghost" onClick={onSkip}>
+            {t.quizSkip}
+          </Button>
+        </div>
       </div>
     </motion.div>
   );

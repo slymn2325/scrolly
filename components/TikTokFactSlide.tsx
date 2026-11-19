@@ -674,10 +674,10 @@ export default function TikTokFactSlide({
         contain: 'layout style paint',
         willChange: isFlipping || isDragging ? 'transform' : 'auto',
       }}
-      className="reels-slide relative flex h-full w-full shrink-0 flex-col overflow-hidden select-none bg-cik-bg text-cik-text"
+      className="relative flex h-full min-h-full w-full shrink-0 flex-col overflow-hidden select-none bg-cik-bg text-cik-text"
     >
       <div className="perspective-1000 relative mx-auto flex h-full w-full flex-col overflow-hidden bg-cik-bg">
-        <div className="pointer-events-none absolute inset-0 overflow-hidden rounded-none bg-cik-pink lg:rounded-t-[28px]">
+        <div className="pointer-events-none absolute inset-0 top-0 overflow-hidden rounded-none bg-cik-pink lg:rounded-t-[28px]">
           <CategoryMotionArt
             variant="hero"
             factId={fact.id}
@@ -705,12 +705,6 @@ export default function TikTokFactSlide({
             failed={gifFailed}
             empty={mediaSettled && !resolvedGifUrl}
             onFailed={() => setGifFailed(true)}
-          />
-
-          {/* Bottom legibility gradient */}
-          <div
-            aria-hidden="true"
-            className="pointer-events-none absolute inset-x-0 top-0 z-10 h-24 bg-gradient-to-b from-black/25 to-transparent"
           />
         </div>
 

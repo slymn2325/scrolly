@@ -51,14 +51,35 @@ export default function OfflineManager({ lang }: OfflineManagerProps) {
         .then((keys) =>
           Promise.all(
             keys
-              .filter((k) => k !== 'scrolly-offline-v3')
+              .filter((k) => k !== 'scrolly-v20261119')
               .map((oldKey) => caches.delete(oldKey))
           )
         )
         .catch(() => {});
     }
 
+    let handleControllerChange: (() => void) | null = null;
     if ('serviceWorker' in navigator) {
+      const hadController = Boolean(navigator.serviceWorker.controller);
+      let isRefreshing = false;
+      const reloadGuardKey = 'scrolly_sw_reloaded_v20261119';
+
+      handleControllerChange = () => {
+        if (!hadController || isRefreshing) return;
+        isRefreshing = true;
+        try {
+          if (window.sessionStorage.getItem(reloadGuardKey) === '1') {
+            return;
+          }
+          window.sessionStorage.setItem(reloadGuardKey, '1');
+        } catch {
+          // Ignore sessionStorage restrictions
+        }
+        window.location.reload();
+      };
+
+      navigator.serviceWorker.addEventListener('controllerchange', handleControllerChange);
+
       navigator.serviceWorker
         .register('/sw.js')
         .then((reg) => {
@@ -100,6 +121,9 @@ export default function OfflineManager({ lang }: OfflineManagerProps) {
     return () => {
       window.removeEventListener('online', handleOnline);
       window.removeEventListener('offline', handleOffline);
+      if (handleControllerChange && 'serviceWorker' in navigator) {
+        navigator.serviceWorker.removeEventListener('controllerchange', handleControllerChange);
+      }
       if (idleId !== undefined && typeof winWithIdle.cancelIdleCallback === 'function') {
         winWithIdle.cancelIdleCallback(idleId);
       }

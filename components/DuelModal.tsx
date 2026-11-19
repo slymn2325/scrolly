@@ -1031,11 +1031,11 @@ export default function DuelModal({
             )}
 
             {phase === 'lobby' && activeRoom && (
-              <div className="mt-4 space-y-3.5">
+              <div className="mt-3 space-y-3 pb-6">
                 {/* Room code badge */}
                 <div
                   data-testid="duel-lobby-meta"
-                  className="flex items-center justify-between gap-4 rounded-cik-lg bg-cik-surface p-5 shadow-e1"
+                  className="flex items-center justify-between gap-4 rounded-cik-lg bg-cik-surface p-3.5 shadow-e1"
                 >
                   <div>
                     <p className="cik-footnote text-cik-text-2">

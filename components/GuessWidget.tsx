@@ -367,7 +367,7 @@ export default function GuessWidget({
               <span className="min-w-0 leading-snug">{tierMessage}</span>
               <span className="cik-caption-2 cik-tabular inline-flex shrink-0 items-center gap-1 rounded-pill bg-cik-butter px-2 py-1 text-cik-butter-text">
                 <Sparkles className="h-3 w-3" aria-hidden="true" />+{earnedXp} XP
-                {isSlider ? ` · %${accuracyPct}` : ''}
+                {isSlider ? ` · ${lang === 'en' ? `${accuracyPct}%` : `%${accuracyPct}`}` : ''}
               </span>
             </div>
             <p className="cik-footnote mt-1">
