@@ -264,7 +264,7 @@ export default function LazyAuthPrompt({
 
     setBusy(true);
     setErrorMsg(null);
-    const res = await requestEmailOtp({ email: cleanEmail, lang });
+    const res = await requestEmailOtp({ email: cleanEmail, locale: lang, lang });
     setBusy(false);
 
     if (!res.ok) {
@@ -296,7 +296,12 @@ export default function LazyAuthPrompt({
 
     setBusy(true);
     setErrorMsg(null);
-    const res = await verifyEmailOtp({ email: email.trim().toLowerCase(), code: cleanCode, lang });
+    const res = await verifyEmailOtp({
+      email: email.trim().toLowerCase(),
+      code: cleanCode,
+      locale: lang,
+      lang,
+    });
     setBusy(false);
 
     if (!res.ok || !res.authenticated || !res.user) {

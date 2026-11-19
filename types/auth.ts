@@ -50,6 +50,7 @@ export interface AuthSessionResponse {
 
 export interface RequestOtpPayload {
   email: string;
+  locale?: 'tr' | 'en';
   lang?: 'tr' | 'en';
 }
 
@@ -72,6 +73,8 @@ export interface AccountProgressSummary {
 export interface VerifyOtpPayload {
   email: string;
   code: string;
+  locale?: 'tr' | 'en';
+  lang?: 'tr' | 'en';
   guestId?: string;
   localSnapshot?: LocalMemorySnapshot;
 }

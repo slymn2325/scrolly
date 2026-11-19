@@ -47,6 +47,7 @@ import { discoveryCtaLabel, getCategoryMeta, type Language, translations } from 
 import { detectMediaProvider, mediaCreditLine } from '@/lib/mediaProvider';
 import { formatValueWithUnit } from '@/lib/formatUnit';
 import { fetchTopicGifFromApi, syncProfileToApi, trackEvent } from '@/lib/telemetry';
+import { writeLanguageCookie } from '@/lib/locale';
 import { createScrollaRoom, getOrCreateScrollaPlayerId } from '@/utils/duelLobby';
 import {
   buildCategoryHref,
@@ -396,6 +397,10 @@ export default function SingleFactView({
     const safeLang: 'tr' | 'en' = targetLang === 'en' ? 'en' : 'tr';
     vibrateTap(12);
     playPop(soundEnabled);
+    writeLanguageCookie(safeLang);
+    if (typeof document !== 'undefined') {
+      document.documentElement.lang = safeLang;
+    }
     setLang(safeLang);
     setSelectedOption(null);
     const state = loadUserMemory();

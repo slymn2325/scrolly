@@ -8,6 +8,7 @@ import {
   requestOtpChallenge,
 } from '@/lib/auth';
 import { isDisposableEmailDomain } from '@/lib/disposableDomains';
+import { resolveApiLocale } from '@/lib/locale';
 import { checkRateLimit, extractClientIp } from '@/lib/rateLimit';
 import { enforceSameOrigin, readJsonBodyWithLimit } from '@/lib/requestSecurity';
 import type { RequestOtpPayload, RequestOtpResponse } from '@/types/auth';
@@ -51,7 +52,7 @@ export async function POST(request: Request) {
   }
   const body = parsed.data;
 
-  const lang = body.lang === 'en' ? 'en' : 'tr';
+  const lang = resolveApiLocale(request, body.locale, body.lang);
   const rawEmail = typeof body.email === 'string' ? body.email : '';
   const cleanEmail = normalizeEmail(rawEmail);
   const canonical = canonicalizeEmail(cleanEmail);

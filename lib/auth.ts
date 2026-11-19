@@ -972,6 +972,7 @@ export async function requestOtpChallenge(params: {
     const mailResult = await sendOtpEmail({
       to: email,
       code,
+      locale: lang,
       lang,
       expiresInMin: OTP_TTL_SECONDS / 60,
     });
@@ -1126,6 +1127,7 @@ export async function requestOtpChallenge(params: {
   const mailResult = await sendOtpEmail({
     to: email,
     code,
+    locale: lang,
     lang,
     expiresInMin: OTP_TTL_SECONDS / 60,
   });

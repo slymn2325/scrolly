@@ -207,13 +207,19 @@ export async function fetchSession(): Promise<AuthSessionResponse> {
 export async function requestEmailOtp(
   payload: RequestOtpPayload
 ): Promise<RequestOtpResponse> {
+  const resolvedLocale = payload.locale ?? payload.lang;
+  const bodyPayload: RequestOtpPayload = {
+    email: payload.email,
+    ...(resolvedLocale ? { locale: resolvedLocale, lang: resolvedLocale } : {}),
+  };
+
   try {
     const res = await fetch('/api/auth/request-otp', {
       method: 'POST',
       cache: 'no-store',
       credentials: 'same-origin',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload),
+      body: JSON.stringify(bodyPayload),
     });
     const data = (await res.json()) as Partial<RequestOtpResponse>;
     return {
@@ -236,14 +242,15 @@ export async function requestEmailOtp(
 }
 
 export async function verifyEmailOtp(
-  payload: VerifyOtpPayload & { lang?: 'tr' | 'en' }
+  payload: VerifyOtpPayload
 ): Promise<VerifyOtpResponse> {
-  const fullPayload: VerifyOtpPayload & { lang?: 'tr' | 'en' } = {
+  const resolvedLocale = payload.locale ?? payload.lang;
+  const fullPayload: VerifyOtpPayload = {
     email: payload.email,
     code: payload.code,
     guestId: payload.guestId ?? getOrCreateDeviceId(),
     localSnapshot: payload.localSnapshot ?? buildLocalSnapshot(),
-    ...(payload.lang ? { lang: payload.lang } : {}),
+    ...(resolvedLocale ? { locale: resolvedLocale, lang: resolvedLocale } : {}),
   };
 
   try {

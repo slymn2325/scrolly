@@ -39,6 +39,7 @@ import {
   hydrateLocalMemoryFromAuthUser,
 } from '@/lib/authClient';
 import { isShortRoomCode, normalizeRoomCode } from '@/lib/duelStore';
+import { readLanguageCookie, writeLanguageCookie } from '@/lib/locale';
 import { applyAppearance, resolveDocumentDark, type AppearanceMode } from '@/lib/theme';
 import {
   fetchFactsFromApiWithCache,
@@ -99,7 +100,6 @@ import {
   addUserXp,
   boostCategoryWeight,
   completeMemoryQuiz,
-  detectBrowserLanguage,
   getDefaultUserState,
   getLeagueInfo,
   getTodayDateString,
@@ -553,15 +553,18 @@ export default function HomeClient({ initialFacts, initialVocabulary, initialLan
     const loaded = loadUserMemory();
     if (typeof window !== 'undefined') {
       const queryLang = new URLSearchParams(window.location.search).get('lang');
+      const cookieLang = readLanguageCookie();
       if (queryLang === 'en' || queryLang === 'tr') {
         loaded.lang = queryLang;
         saveUserMemory(loaded);
-      } else if (!window.localStorage.getItem('merak_user_state_v1')) {
-        loaded.lang = detectBrowserLanguage();
-      }
-      if (initialLang === 'en') {
+      } else if (initialLang === 'en') {
         loaded.lang = 'en';
         saveUserMemory(loaded);
+      } else if (cookieLang) {
+        loaded.lang = cookieLang;
+        saveUserMemory(loaded);
+      } else if (!window.localStorage.getItem('merak_user_state_v1')) {
+        loaded.lang = initialLang;
       }
     }
     setMemory(loaded);
@@ -1190,6 +1193,10 @@ export default function HomeClient({ initialFacts, initialVocabulary, initialLan
   const handleChangeLang = (nextLang: Language) => {
     vibrateTap(12);
     playPop(soundEnabled);
+    writeLanguageCookie(nextLang);
+    if (typeof document !== 'undefined') {
+      document.documentElement.lang = nextLang === 'en' ? 'en' : 'tr';
+    }
     setMemory((prev) => {
       const updated = { ...prev, lang: nextLang };
       saveUserMemory(updated);

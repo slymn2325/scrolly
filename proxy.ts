@@ -1,9 +1,16 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
+import {
+  LANG_COOKIE_NAME,
+  detectInitialLocaleFromHeaders,
+  isSearchOrAiBot,
+  normalizeLocale,
+  type SupportedLocale,
+} from '@/lib/locale';
 import { sanitizeInternalRedirectPath, verifySameOriginRequest } from '@/lib/originPolicy';
 import { looksLikeIpaPhonetic } from '@/utils/phoneticDisplay';
 
-function languageForRequest(request: NextRequest): 'en' | 'tr' | null {
+function languageForRequest(request: NextRequest): SupportedLocale | null {
   const { pathname } = request.nextUrl;
   if (pathname === '/en' || pathname.startsWith('/en/')) return 'en';
   const raw = request.nextUrl.searchParams.get('lang');
@@ -67,12 +74,45 @@ export function proxy(request: NextRequest) {
 
   const redirected = redirectEnglishQuery(request);
   if (redirected) return redirected;
-  const lang = languageForRequest(request);
+
+  const { pathname } = request.nextUrl;
+  const urlLang = languageForRequest(request);
+  const cookieLang = normalizeLocale(request.cookies.get(LANG_COOKIE_NAME)?.value);
+  const isBot = isSearchOrAiBot(request.headers.get('user-agent'));
+
+  if (
+    pathname === '/' &&
+    urlLang === null &&
+    !isBot &&
+    (request.method === 'GET' || request.method === 'HEAD')
+  ) {
+    const targetLang = cookieLang ?? detectInitialLocaleFromHeaders(request.headers);
+    if (targetLang === 'en') {
+      const dest = request.nextUrl.clone();
+      dest.pathname = '/en';
+      return NextResponse.redirect(dest, {
+        status: 307,
+        headers: {
+          'Cache-Control': 'private, no-store, max-age=0',
+          Vary: 'Cookie, CF-IPCountry, Accept-Language',
+        },
+      });
+    }
+  }
+
+  const isTurkishCanonicalPath =
+    pathname === '/' || pathname.startsWith('/fact/') || pathname.startsWith('/category/');
+  const lang: SupportedLocale =
+    urlLang ??
+    (isTurkishCanonicalPath
+      ? 'tr'
+      : cookieLang ?? (!isBot ? detectInitialLocaleFromHeaders(request.headers) : 'tr'));
+
   const requestHeaders = new Headers(request.headers);
-  if (lang) requestHeaders.set('x-scrolly-lang', lang);
+  requestHeaders.set('x-scrolly-lang', lang);
   const response = NextResponse.next({ request: { headers: requestHeaders } });
-  if (lang) response.headers.set('Content-Language', lang);
-  if (isPrivateDuelPath(request.nextUrl.pathname)) {
+  response.headers.set('Content-Language', lang);
+  if (isPrivateDuelPath(pathname)) {
     response.headers.set('X-Robots-Tag', 'noindex, follow');
   }
   return response;

@@ -1,4 +1,5 @@
 import type { Language } from '@/i18n/translations';
+import { writeLanguageCookie } from '@/lib/locale';
 import { applyAppearance, type AppearanceMode } from '@/lib/theme';
 import type { UserMemoryState } from '@/utils/userMemory';
 
@@ -44,8 +45,10 @@ export function paintAppearance(memory: UserMemoryState, appearance: AppearanceM
 }
 
 export function paintLanguage(lang: Language): void {
+  const safeLang: Language = lang === 'en' ? 'en' : 'tr';
+  writeLanguageCookie(safeLang);
   if (typeof document === 'undefined') return;
-  document.documentElement.lang = lang === 'en' ? 'en' : 'tr';
+  document.documentElement.lang = safeLang;
 }
 
 export function readCookieChoice(): 'granted' | 'denied' | 'unknown' {

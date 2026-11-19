@@ -8,6 +8,7 @@ import {
   verifyOtpAndCreateSession,
 } from '@/lib/auth';
 import { isValidDeviceId } from '@/lib/dbActions';
+import { resolveApiLocale } from '@/lib/locale';
 import { checkRateLimit, extractClientIp } from '@/lib/rateLimit';
 import {
   enforceSameOrigin,
@@ -22,13 +23,6 @@ export const dynamic = 'force-dynamic';
 const NO_STORE_HEADERS = {
   'Cache-Control': 'no-store, max-age=0',
 };
-
-function inferLangFromRequest(request: Request, bodyLang?: unknown): 'tr' | 'en' {
-  if (bodyLang === 'en') return 'en';
-  if (bodyLang === 'tr') return 'tr';
-  const accept = (request.headers.get('accept-language') || '').toLowerCase();
-  return accept.startsWith('en') ? 'en' : 'tr';
-}
 
 export async function POST(request: Request) {
   const originErr = enforceSameOrigin(request);
@@ -49,10 +43,9 @@ export async function POST(request: Request) {
     });
   }
 
-  const parsed = await readJsonBodyWithLimit<Partial<VerifyOtpPayload> & { lang?: unknown }>(
-    request,
-    128 * 1024
-  );
+  const parsed = await readJsonBodyWithLimit<
+    Partial<VerifyOtpPayload> & { locale?: unknown; lang?: unknown }
+  >(request, 128 * 1024);
   if (!parsed.ok) {
     const payload: VerifyOtpResponse = {
       ok: false,
@@ -64,7 +57,7 @@ export async function POST(request: Request) {
   }
   const body = parsed.data;
 
-  const lang = inferLangFromRequest(request, body.lang);
+  const lang = resolveApiLocale(request, body.locale, body.lang);
   const email = typeof body.email === 'string' ? body.email : '';
   const canonical = canonicalizeEmail(email);
 

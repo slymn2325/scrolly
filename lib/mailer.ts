@@ -168,18 +168,20 @@ async function postToResend(payload: {
 export async function sendOtpEmail(params: {
   to: string;
   code: string;
+  locale?: Language;
   lang?: Language;
   expiresInMin?: number;
 }): Promise<MailDeliveryResult> {
   const safeTo = stripHeaderBreaks(params.to).toLowerCase();
   const safeCode = stripHeaderBreaks(params.code);
-  const lang: Language = params.lang === 'en' ? 'en' : 'tr';
+  const lang: Language = (params.locale ?? params.lang) === 'en' ? 'en' : 'tr';
   const expiresInMin = Math.max(1, Math.floor(params.expiresInMin ?? 10));
   const from = getEmailFromAddress();
 
   console.info('[lib/mailer] sendOtpEmail attempt', {
     hasResendApiKey: hasResendApiKey(),
     emailFrom: from,
+    locale: lang,
     toDomain: safeTo.includes('@') ? safeTo.split('@')[1] : null,
   });
 
@@ -197,11 +199,11 @@ export async function sendOtpEmail(params: {
     lang === 'en' ? 'Scroll · Learn · Wonder' : 'Kaydır · Öğren · Şaşır';
 
   const headline =
-    lang === 'en' ? 'Your Scrolly sign-in code' : 'Giriş kodun hazır';
+    lang === 'en' ? 'Your sign-in code is ready' : 'Giriş kodun hazır';
 
   const intro =
     lang === 'en'
-      ? `Enter the 6-digit verification code below within ${expiresInMin} minutes to sync your XP, streak, saved cards, and word notebook across your devices.`
+      ? `Enter the 6-digit code below within ${expiresInMin} minutes to sync your XP, streak, saved facts, and Word Lab across devices.`
       : `XP, seri, kaydedilen kartlar ve kelime defterini cihazların arasında eşitlemek için aşağıdaki 6 haneli doğrulama kodunu ${expiresInMin} dakika içinde gir.`;
 
   const codeLabel =
@@ -263,7 +265,7 @@ export async function sendOtpEmail(params: {
             <td style="padding:28px 28px 24px 28px;">
               <h1 style="margin:0 0 10px 0;font-size:22px;font-weight:800;line-height:1.3;color:#1F1720;">${escapeHtml(headline)}</h1>
               <p style="margin:0 0 24px 0;font-size:15px;font-weight:400;line-height:1.6;color:#5C4B55;">${escapeHtml(intro)}</p>
-              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background-color:#FFF3F7;border:1.5px dashed #E4A3B8;border-radius:16px;">
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background-color:#FFF3F7;border:1.5px solid #F2C6D4;border-radius:16px;">
                 <tr>
                   <td align="center" style="padding:20px 24px;">
                     <div style="margin:0 0 8px 0;font-size:11px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:#9E2450;">${escapeHtml(codeLabel)}</div>
