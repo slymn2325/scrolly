@@ -144,6 +144,12 @@ export default function VocabularySlide({
   }, [isActive]);
 
   useEffect(() => {
+    const onCloseOverlays = () => setIsDetailsOpen(false);
+    window.addEventListener('scrolly-close-card-overlays', onCloseOverlays);
+    return () => window.removeEventListener('scrolly-close-card-overlays', onCloseOverlays);
+  }, []);
+
+  useEffect(() => {
     const onCardAction = (event: Event) => {
       const detail = (event as CustomEvent<{ vocabId?: string; action?: string }>).detail;
       if (!detail || detail.vocabId !== card.id) return;

@@ -542,6 +542,37 @@ export default function HomeClient({ initialFacts, initialVocabulary, initialLan
   const [miniOnboardingDismissed, setMiniOnboardingDismissed] = useState(true);
   const guestSaveNudgeShownRef = useRef(false);
 
+  const dismissCardOverlays = useCallback(() => {
+    setActiveDetailCard(null);
+    setStoryShareFact(null);
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('scrolly-close-card-overlays'));
+    }
+  }, []);
+
+  const activeCardKey =
+    activeSlide?.type === 'fact'
+      ? `fact:${activeSlide.fact.id}`
+      : activeSlide?.type === 'vocabulary'
+        ? `vocab:${activeSlide.card.id}`
+        : activeSlide
+          ? activeSlide.key
+          : activeFact
+            ? `fact:${activeFact.id}`
+            : null;
+  const prevActiveCardRef = useRef<{ cardKey: string | null; category: CategoryFilter }>({
+    cardKey: activeCardKey,
+    category: activeCategory,
+  });
+
+  useEffect(() => {
+    const prev = prevActiveCardRef.current;
+    if (prev.cardKey !== activeCardKey || prev.category !== activeCategory) {
+      prevActiveCardRef.current = { cardKey: activeCardKey, category: activeCategory };
+      dismissCardOverlays();
+    }
+  }, [activeCardKey, activeCategory, dismissCardOverlays]);
+
   useEffect(() => {
     const onChromeBlock = (event: Event) => {
       const detail = (event as CustomEvent<{ open?: boolean }>).detail;
@@ -1763,9 +1794,8 @@ export default function HomeClient({ initialFacts, initialVocabulary, initialLan
     const hadSubPage = Boolean(
       activeDetailCard || storyShareFact || shareModalData || showPwaGuideModal
     );
-    setActiveDetailCard(null);
+    dismissCardOverlays();
     setShowPwaGuideModal(false);
-    setStoryShareFact(null);
     setShareModalData(null);
 
     if (tab === 'explore' || tab === 'language') {
@@ -1806,9 +1836,8 @@ export default function HomeClient({ initialFacts, initialVocabulary, initialLan
   const closeOverlayToExplore = () => {
     vibrateTap(12);
     playPop(soundEnabled);
-    setActiveDetailCard(null);
+    dismissCardOverlays();
     setShowPwaGuideModal(false);
-    setStoryShareFact(null);
     setShareModalData(null);
     setIncomingDuel(null);
     setIncomingRoomCode(null);
@@ -2243,6 +2272,7 @@ export default function HomeClient({ initialFacts, initialVocabulary, initialLan
             onToggleDarkMode={handleToggleDarkMode}
             onToggleSound={handleToggleSound}
             onFlipCard={handleFlipCard}
+            onBeforeSlideNavigate={dismissCardOverlays}
             onOpenDetail={(fact, resolvedGifUrl) => setActiveDetailCard({ fact, resolvedGifUrl })}
             onDoubleTapLike={handleDoubleTapLike}
             onDwellRead={handleDwellRead}
@@ -2586,10 +2616,12 @@ export default function HomeClient({ initialFacts, initialVocabulary, initialLan
               }}
               onPrev={() => {
                 vibrateTap(10);
+                dismissCardOverlays();
                 feedRef.current?.scrollToPrev();
               }}
               onNext={() => {
                 vibrateTap(10);
+                dismissCardOverlays();
                 feedRef.current?.scrollToNext();
               }}
             />
@@ -2609,10 +2641,12 @@ export default function HomeClient({ initialFacts, initialVocabulary, initialLan
                 likesCount={activeFactLikesCount}
                 onPrev={() => {
                   vibrateTap(10);
+                  dismissCardOverlays();
                   feedRef.current?.scrollToPrev();
                 }}
                 onNext={() => {
                   vibrateTap(10);
+                  dismissCardOverlays();
                   feedRef.current?.scrollToNext();
                 }}
               />

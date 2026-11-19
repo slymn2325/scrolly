@@ -447,6 +447,17 @@ export default function TikTokFactSlide({
       window.removeEventListener('scrolly-collapse-active-drawer', handleCollapseDrawer);
   }, [isActive]);
 
+  useEffect(() => {
+    const handleCloseOverlays = () => {
+      setIsExpanded(false);
+      setCardOverlay(null);
+      setIsFlipped(false);
+    };
+    window.addEventListener('scrolly-close-card-overlays', handleCloseOverlays);
+    return () =>
+      window.removeEventListener('scrolly-close-card-overlays', handleCloseOverlays);
+  }, []);
+
   // Detail must sit above feed HUD/dock (separate stacking contexts). Broadcast so chrome disables hits.
   useEffect(() => {
     const open = Boolean(isFlipped && isActive);

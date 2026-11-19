@@ -113,6 +113,7 @@ interface TikTokFeedProps {
   onToggleDarkMode: () => void;
   onToggleSound: () => void;
   onFlipCard: (fact: FactCard) => void;
+  onBeforeSlideNavigate?: () => void;
   onOpenDetail?: (fact: FactCard, resolvedGifUrl?: string | null) => void;
   onDoubleTapLike: (fact: FactCard) => void;
   onDwellRead: (fact: FactCard) => void;
@@ -151,6 +152,7 @@ const TikTokFeed = forwardRef<TikTokFeedHandle, TikTokFeedProps>(function TikTok
     onSelectCategory,
     onChangeLang,
     onFlipCard,
+    onBeforeSlideNavigate,
     onOpenDetail,
     onDoubleTapLike,
     onDwellRead,
@@ -205,6 +207,8 @@ const TikTokFeed = forwardRef<TikTokFeedHandle, TikTokFeedProps>(function TikTok
   isExploreVisibleRef.current = isExploreVisible;
   const suppressUrlSyncRef = useRef(suppressUrlSync);
   suppressUrlSyncRef.current = suppressUrlSync;
+  const onBeforeSlideNavigateRef = useRef(onBeforeSlideNavigate);
+  onBeforeSlideNavigateRef.current = onBeforeSlideNavigate;
   const [activeIndex, setActiveIndex] = useState<number>(safeInitialIndex);
   const [isCategoryDrawerOpen, setIsCategoryDrawerOpen] = useState<boolean>(false);
   const [showCategorySkeleton, setShowCategorySkeleton] = useState(false);
@@ -460,6 +464,7 @@ const TikTokFeed = forwardRef<TikTokFeedHandle, TikTokFeedProps>(function TikTok
 
   const scrollToSlide = useCallback(
     (targetIndex: number) => {
+      onBeforeSlideNavigateRef.current?.();
       const container = scrollRef.current;
       if (!container || slides.length === 0) return;
       const clamped = Math.max(0, Math.min(targetIndex, slides.length - 1));
@@ -490,6 +495,7 @@ const TikTokFeed = forwardRef<TikTokFeedHandle, TikTokFeedProps>(function TikTok
     ref,
     () => ({
       scrollToTop: () => {
+        onBeforeSlideNavigateRef.current?.();
         if (scrollAnimRef.current) cancelAnimationFrame(scrollAnimRef.current.raf);
         scrollAnimRef.current = null;
         activeIndexRef.current = 0;
@@ -533,9 +539,22 @@ const TikTokFeed = forwardRef<TikTokFeedHandle, TikTokFeedProps>(function TikTok
         return;
       }
       if (typeof document !== 'undefined' && document.querySelector('[aria-modal="true"]')) return;
-      if (target && target.closest('button, a, [role="button"]')) return;
 
       const key = e.key.toLowerCase();
+      const isVerticalArrow = key === 'arrowdown' || key === 'arrowup';
+      if (
+        target &&
+        target.closest('button, a, [role="button"]') &&
+        (!isVerticalArrow ||
+          Boolean(
+            target.closest(
+              '[role="menu"], [role="tablist"], [role="radiogroup"], [role="listbox"], [role="slider"]'
+            )
+          ))
+      ) {
+        return;
+      }
+
       const forward = key === 'arrowdown' || key === 'pagedown' || key === 'j' || (key === ' ' && !e.shiftKey);
       const backward =
         key === 'arrowup' || key === 'pageup' || key === 'k' || (key === ' ' && e.shiftKey);
