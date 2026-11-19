@@ -188,39 +188,105 @@ export async function sendOtpEmail(params: {
       ? `Your Scrolly Sign-In Code: ${safeCode}`
       : `Scrolly Giriş Kodun: ${safeCode}`;
 
-  const headline =
+  const preheader =
     lang === 'en'
-      ? 'Verify your email to sync your Scrolly progress'
-      : 'Scrolly ilerlemeni eşitlemek için e-postanı doğrula';
+      ? `Your Scrolly verification code: ${safeCode} — valid for ${expiresInMin} minutes`
+      : `Scrolly doğrulama kodun: ${safeCode} — ${expiresInMin} dakika geçerli`;
+
+  const tagline =
+    lang === 'en' ? 'Scroll · Learn · Wonder' : 'Kaydır · Öğren · Şaşır';
+
+  const headline =
+    lang === 'en' ? 'Your Scrolly sign-in code' : 'Giriş kodun hazır';
 
   const intro =
     lang === 'en'
-      ? `Enter the 6-digit verification code below within ${expiresInMin} minutes to link your XP, streak, saved cards, and word notebook across devices.`
-      : `XP, seri, kaydedilen kartlar ve kelime defterini cihazlar arasında eşitlemek için aşağıdaki 6 haneli doğrulama kodunu ${expiresInMin} dakika içinde gir.`;
+      ? `Enter the 6-digit verification code below within ${expiresInMin} minutes to sync your XP, streak, saved cards, and word notebook across your devices.`
+      : `XP, seri, kaydedilen kartlar ve kelime defterini cihazların arasında eşitlemek için aşağıdaki 6 haneli doğrulama kodunu ${expiresInMin} dakika içinde gir.`;
 
-  const securityNote =
+  const codeLabel =
+    lang === 'en' ? 'Verification Code' : 'Doğrulama Kodu';
+
+  const validityNote =
     lang === 'en'
-      ? 'This code can only be used once. If you did not request it, you can safely ignore this email.'
-      : 'Bu kod yalnızca bir kez kullanılabilir. Bu isteği sen yapmadıysan bu e-postayı güvenle yok sayabilirsin.';
+      ? `This code is valid for ${expiresInMin} minutes and can only be used once.`
+      : `Bu kod ${expiresInMin} dakika geçerlidir ve yalnızca tek kullanımlıktır.`;
+
+  const ignoreNote =
+    lang === 'en'
+      ? "If you didn't request this code, you can safely ignore this email."
+      : 'Bu isteği sen yapmadıysan güvenle yok sayabilirsin.';
+
+  const homeUrl = lang === 'en' ? 'https://scrolly.live/en' : 'https://scrolly.live';
+  const privacyUrl =
+    lang === 'en' ? 'https://scrolly.live/privacy?lang=en' : 'https://scrolly.live/privacy';
+  const contactUrl =
+    lang === 'en' ? 'https://scrolly.live/contact?lang=en' : 'https://scrolly.live/contact';
+  const privacyLabel = lang === 'en' ? 'Privacy' : 'Gizlilik';
+  const contactLabel = lang === 'en' ? 'Contact' : 'İletişim';
+
+  const preheaderPadding = '&zwnj;&nbsp;'.repeat(28);
 
   const html = `<!DOCTYPE html>
 <html lang="${lang}">
-<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
-<body style="margin:0;padding:24px;background-color:#0b0b12;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#f5f3ff;">
-  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:480px;margin:0 auto;background-color:#151326;border:1px solid #2e2652;border-radius:16px;overflow:hidden;">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <meta name="supported-color-schemes" content="light">
+  <title>${escapeHtml(subject)}</title>
+</head>
+<body style="margin:0;padding:0;background-color:#FDF5F7;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#1F1720;-webkit-font-smoothing:antialiased;">
+  <div style="display:none;max-height:0;max-width:0;opacity:0;overflow:hidden;mso-hide:all;font-size:1px;line-height:1px;color:#FDF5F7;">
+    ${escapeHtml(preheader)}${preheaderPadding}
+  </div>
+  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="width:100%;background-color:#FDF5F7;">
     <tr>
-      <td style="padding:28px 28px 16px 28px;">
-        <div style="font-size:13px;font-weight:800;letter-spacing:0.08em;text-transform:uppercase;color:#a78bfa;">SCROLLY.LIVE</div>
-        <h1 style="margin:10px 0 0 0;font-size:20px;line-height:1.35;color:#ffffff;">${escapeHtml(headline)}</h1>
-      </td>
-    </tr>
-    <tr>
-      <td style="padding:0 28px 20px 28px;">
-        <p style="margin:0 0 20px 0;font-size:14px;line-height:1.6;color:#d8d2f0;">${escapeHtml(intro)}</p>
-        <div style="background-color:#0d0b18;border:1px solid #4c3b8d;border-radius:12px;padding:18px;text-align:center;">
-          <span style="font-family:'SFMono-Regular',Consolas,'Liberation Mono',Menlo,monospace;font-size:32px;font-weight:800;letter-spacing:0.28em;color:#ffffff;">${escapeHtml(safeCode)}</span>
-        </div>
-        <p style="margin:18px 0 0 0;font-size:12px;line-height:1.5;color:#9f96c4;">${escapeHtml(securityNote)}</p>
+      <td align="center" style="padding:32px 16px;">
+        <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="max-width:520px;margin:0 auto;background-color:#FFFFFF;border:1px solid #F1DCE3;border-radius:24px;overflow:hidden;">
+          <tr>
+            <td style="padding:28px 28px 20px 28px;border-bottom:1px solid #F7E8ED;">
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+                <tr>
+                  <td width="46" valign="middle" style="padding-right:12px;">
+                    <img src="https://scrolly.live/icon-192.png" alt="Scrolly" width="36" height="36" style="display:block;width:36px;height:36px;border-radius:10px;border:0;" />
+                  </td>
+                  <td valign="middle">
+                    <div style="font-size:18px;font-weight:800;line-height:1.2;color:#1F1720;">Scrolly</div>
+                    <div style="margin-top:2px;font-size:12px;font-weight:600;line-height:1.3;color:#7A5C6A;">${escapeHtml(tagline)}</div>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:28px 28px 24px 28px;">
+              <h1 style="margin:0 0 10px 0;font-size:22px;font-weight:800;line-height:1.3;color:#1F1720;">${escapeHtml(headline)}</h1>
+              <p style="margin:0 0 24px 0;font-size:15px;font-weight:400;line-height:1.6;color:#5C4B55;">${escapeHtml(intro)}</p>
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background-color:#FFF3F7;border:1.5px dashed #E4A3B8;border-radius:16px;">
+                <tr>
+                  <td align="center" style="padding:20px 24px;">
+                    <div style="margin:0 0 8px 0;font-size:11px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:#9E2450;">${escapeHtml(codeLabel)}</div>
+                    <span style="display:inline-block;font-family:'SFMono-Regular',Consolas,'Liberation Mono',Menlo,Courier,monospace;font-size:34px;font-weight:800;line-height:1.2;letter-spacing:10px;padding-left:10px;color:#9E2450;-webkit-user-select:all;user-select:all;">${escapeHtml(safeCode)}</span>
+                  </td>
+                </tr>
+              </table>
+              <p style="margin:16px 0 0 0;font-size:13px;font-weight:600;line-height:1.55;text-align:center;color:#6E5763;">${escapeHtml(validityNote)}</p>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:18px 28px 24px 28px;border-top:1px solid #F1DCE3;background-color:#FFFDFE;">
+              <p style="margin:0 0 10px 0;font-size:12px;line-height:1.55;text-align:center;color:#7A6470;">${escapeHtml(ignoreNote)}</p>
+              <p style="margin:0;font-size:12px;line-height:1.55;text-align:center;color:#7A6470;">
+                <a href="${escapeHtml(homeUrl)}" style="color:#9E2450;font-weight:700;text-decoration:none;">scrolly.live</a>
+                &nbsp;·&nbsp;
+                <a href="${escapeHtml(privacyUrl)}" style="color:#5C4B55;text-decoration:underline;">${escapeHtml(privacyLabel)}</a>
+                &nbsp;·&nbsp;
+                <a href="${escapeHtml(contactUrl)}" style="color:#5C4B55;text-decoration:underline;">${escapeHtml(contactLabel)}</a>
+              </p>
+            </td>
+          </tr>
+        </table>
       </td>
     </tr>
   </table>
@@ -228,16 +294,20 @@ export async function sendOtpEmail(params: {
 </html>`;
 
   const text = [
-    'SCROLLY.LIVE',
+    `Scrolly — ${tagline}`,
     '',
     headline,
     '',
     intro,
     '',
-    `${lang === 'en' ? 'Verification code' : 'Doğrulama kodu'}: ${safeCode}`,
-    `${lang === 'en' ? 'Expires in' : 'Geçerlilik süresi'}: ${expiresInMin} min`,
+    `${codeLabel}: ${safeCode}`,
+    validityNote,
     '',
-    securityNote,
+    ignoreNote,
+    '',
+    `scrolly.live: ${homeUrl}`,
+    `${privacyLabel}: ${privacyUrl}`,
+    `${contactLabel}: ${contactUrl}`,
   ].join('\n');
 
   return postToResend({
