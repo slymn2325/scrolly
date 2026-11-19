@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "start": "next start -p $PORT",
+    "start": "NODE_OPTIONS='--max-old-space-size=384' next start -p $PORT",
     "lint": "eslint .",
     "test:contrast": "node --experimental-strip-types --test tests/contrast.test.ts",
     "generate-facts": "node scripts/generate-facts.mjs"

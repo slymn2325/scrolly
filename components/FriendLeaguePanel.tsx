@@ -3,6 +3,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import {
   Check,
+  ChevronDown,
   Copy,
   Crown,
   LogOut,
@@ -28,6 +29,7 @@ import { extractInviteCode } from '@/utils/inviteCode';
 interface FriendLeaguePanelProps {
   lang: Language;
   nickname: string;
+  userWeeklyXp?: number;
   initialLeagueCode?: string | null;
   onClearInitialLeagueCode?: () => void;
 }
@@ -71,6 +73,7 @@ function removeStoredLeagueCode(code: string): void {
 export default function FriendLeaguePanel({
   lang,
   nickname,
+  userWeeklyXp = 0,
   initialLeagueCode,
   onClearInitialLeagueCode,
 }: FriendLeaguePanelProps) {
@@ -78,10 +81,12 @@ export default function FriendLeaguePanel({
   const [leagueName, setLeagueName] = useState('');
   const [joinCodeInput, setJoinCodeInput] = useState('');
   const [myLeagues, setMyLeagues] = useState<FriendLeagueSummary[]>([]);
+  const [expandedCode, setExpandedCode] = useState<string | null>(null);
   const [activeLeague, setActiveLeague] = useState<FriendLeagueRecord | null>(null);
   const [entries, setEntries] = useState<FriendLeagueMemberEntry[]>([]);
   const [inviteUrl, setInviteUrl] = useState<string>('');
-  const [loading, setLoading] = useState(false);
+  const [initialLoading, setInitialLoading] = useState(true);
+  const [boardLoadingCode, setBoardLoadingCode] = useState<string | null>(null);
   const [busyAction, setBusyAction] = useState(false);
   const [copiedInvite, setCopiedInvite] = useState(false);
   const [pendingConfirm, setPendingConfirm] = useState<'leave' | 'delete' | null>(null);
@@ -107,7 +112,7 @@ export default function FriendLeaguePanel({
 
   const loadBoard = useCallback(
     async (code: string) => {
-      setLoading(true);
+      setBoardLoadingCode(code);
       setErrorMessage(null);
       setPendingConfirm(null);
       try {
@@ -130,6 +135,7 @@ export default function FriendLeaguePanel({
         }
         const loadedLeague = data.league;
         const loadedEntries = Array.isArray(data.entries) ? data.entries : [];
+        const myRow = loadedEntries.find((e) => e.isUser);
         setActiveLeague(loadedLeague);
         setInviteUrl(
           data.inviteUrl ||
@@ -144,6 +150,8 @@ export default function FriendLeaguePanel({
                   ...item,
                   name: loadedLeague.name,
                   memberCount: Math.max(1, loadedEntries.length),
+                  myRank: myRow?.rank ?? item.myRank ?? 1,
+                  myWeeklyXp: myRow?.weeklyXp ?? item.myWeeklyXp ?? userWeeklyXp,
                   isCreator: Boolean(loadedLeague.isCreator ?? item.isCreator),
                 }
               : item
@@ -154,10 +162,23 @@ export default function FriendLeaguePanel({
           isEn ? 'Failed to load league.' : 'Lig sıralaması yüklenemedi.'
         );
       } finally {
-        setLoading(false);
+        setBoardLoadingCode((prev) => (prev === code ? null : prev));
       }
     },
-    [isEn]
+    [isEn, userWeeklyXp]
+  );
+
+  const handleToggleLeagueCard = useCallback(
+    (code: string) => {
+      setPendingConfirm(null);
+      if (expandedCode === code) {
+        setExpandedCode(null);
+        return;
+      }
+      setExpandedCode(code);
+      void loadBoard(code);
+    },
+    [expandedCode, loadBoard]
   );
 
   const joinLeagueByCode = useCallback(
@@ -208,6 +229,7 @@ export default function FriendLeaguePanel({
           return;
         }
         setActiveLeague(data.league);
+        setExpandedCode(data.league.code);
         setInviteUrl(
           data.inviteUrl ||
             `https://scrolly.live/?tab=leaderboard&league=${data.league.code}`
@@ -241,24 +263,23 @@ export default function FriendLeaguePanel({
   useEffect(() => {
     let active = true;
     const init = async () => {
-      if (initialLeagueCode && /^[A-Z0-9]{6,8}$/i.test(initialLeagueCode.trim())) {
-        await joinLeagueByCode(initialLeagueCode, true);
-        onClearInitialLeagueCode?.();
-        return;
-      }
-      const list = await loadJoinedLeagues();
-      if (!active) return;
-      const storedCodes = readStoredLeagueCodes();
-      const firstCode = list[0]?.code || storedCodes[0];
-      if (firstCode) {
-        await loadBoard(firstCode);
+      setInitialLoading(true);
+      try {
+        if (initialLeagueCode && /^[A-Z0-9]{6,8}$/i.test(initialLeagueCode.trim())) {
+          await joinLeagueByCode(initialLeagueCode, true);
+          onClearInitialLeagueCode?.();
+          return;
+        }
+        await loadJoinedLeagues();
+      } finally {
+        if (active) setInitialLoading(false);
       }
     };
     void init();
     return () => {
       active = false;
     };
-  }, [initialLeagueCode, joinLeagueByCode, loadBoard, loadJoinedLeagues, onClearInitialLeagueCode]);
+  }, [initialLeagueCode, joinLeagueByCode, loadJoinedLeagues, onClearInitialLeagueCode]);
 
   const handleCreateLeague = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -306,6 +327,7 @@ export default function FriendLeaguePanel({
         `https://scrolly.live/?tab=leaderboard&league=${data.league.code}`;
       setLeagueName('');
       setInviteUrl(createdUrl);
+      setExpandedCode(data.league.code);
       saveStoredLeagueCode(data.league.code);
       if (Array.isArray(data.leagues) && data.leagues.length > 0) {
         setMyLeagues(data.leagues);
@@ -350,22 +372,23 @@ export default function FriendLeaguePanel({
         : await loadJoinedLeagues();
       const filtered = updatedList.filter((item) => item.code !== removedCode);
       setMyLeagues(filtered);
-
-      if (filtered.length > 0) {
-        await loadBoard(filtered[0].code);
-      } else {
+      setExpandedCode(null);
+      if (activeLeague?.code === removedCode) {
         setActiveLeague(null);
         setEntries([]);
         setInviteUrl('');
       }
     },
-    [loadBoard, loadJoinedLeagues]
+    [activeLeague?.code, loadJoinedLeagues]
   );
 
   const handleConfirmLeave = async () => {
-    if (!activeLeague || busyAction) return;
-    const targetCode = activeLeague.code;
-    const targetName = activeLeague.name;
+    const targetCode = expandedCode || activeLeague?.code;
+    if (!targetCode || busyAction) return;
+    const targetName =
+      myLeagues.find((l) => l.code === targetCode)?.name ||
+      activeLeague?.name ||
+      targetCode;
     setBusyAction(true);
     setErrorMessage(null);
     try {
@@ -401,9 +424,12 @@ export default function FriendLeaguePanel({
   };
 
   const handleConfirmDelete = async () => {
-    if (!activeLeague || busyAction) return;
-    const targetCode = activeLeague.code;
-    const targetName = activeLeague.name;
+    const targetCode = expandedCode || activeLeague?.code;
+    if (!targetCode || busyAction) return;
+    const targetName =
+      myLeagues.find((l) => l.code === targetCode)?.name ||
+      activeLeague?.name ||
+      targetCode;
     setBusyAction(true);
     setErrorMessage(null);
     try {
@@ -448,67 +474,58 @@ export default function FriendLeaguePanel({
     }
   };
 
-  const handleCopyInvite = async () => {
-    if (!inviteUrl) return;
-    const ok = await copyTextToClipboard(inviteUrl);
+  const handleCopyInvite = async (codeForFallback?: string) => {
+    const targetUrl =
+      inviteUrl ||
+      (codeForFallback
+        ? `https://scrolly.live/?tab=leaderboard&league=${codeForFallback}`
+        : '');
+    if (!targetUrl) return;
+    const ok = await copyTextToClipboard(targetUrl);
     if (ok) {
       setCopiedInvite(true);
       setTimeout(() => setCopiedInvite(false), 2400);
     }
   };
 
-  const handleWebShareInvite = async () => {
-    if (!inviteUrl || !activeLeague) return;
+  const handleWebShareInvite = async (leagueItem: { code: string; name: string }) => {
+    const targetUrl =
+      (activeLeague?.code === leagueItem.code ? inviteUrl : '') ||
+      `https://scrolly.live/?tab=leaderboard&league=${leagueItem.code}`;
     if (typeof navigator !== 'undefined' && typeof navigator.share === 'function') {
       try {
         await navigator.share({
-          title: activeLeague.name,
+          title: leagueItem.name,
           text: isEn
-            ? `Join my "${activeLeague.name}" mini league on Scrolly!`
-            : `Scrolly'deki "${activeLeague.name}" arkadaş ligime katıl!`,
-          url: inviteUrl,
+            ? `Join my "${leagueItem.name}" mini league on Scrolly!`
+            : `Scrolly'deki "${leagueItem.name}" arkadaş ligime katıl!`,
+          url: targetUrl,
         });
         return;
       } catch (err) {
         if (err instanceof Error && err.name === 'AbortError') return;
       }
     }
-    await handleCopyInvite();
+    await handleCopyInvite(leagueItem.code);
   };
-
-  const isActiveLeagueCreator = Boolean(
-    activeLeague &&
-      (activeLeague.isCreator ||
-        myLeagues.find((l) => l.code === activeLeague.code)?.isCreator ||
-        (typeof window !== 'undefined' &&
-          activeLeague.creatorDeviceId &&
-          activeLeague.creatorDeviceId === getOrCreateDeviceId()))
-  );
 
   return (
     <div data-testid="friend-league-panel" className="mt-3 flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto pb-4">
-      <form
-        onSubmit={handleCreateLeague}
-        data-testid="friend-league-create-form"
-        className="rounded-cik-lg border border-cik-line bg-cik-surface p-4 shadow-e1"
-      >
-        <p className="cik-headline text-cik-text">
-          {isEn ? 'Create Private Friend / Class League' : 'Özel Arkadaş / Sınıf Ligi Kur'}
-        </p>
-        <p className="cik-caption-1 mt-1 text-cik-text-2">
-          {isEn
-            ? 'Compete in live Weekly XP rankings with just your invited friends.'
-            : 'Sadece davet ettiğin arkadaşlarınla canlı haftalık XP yarışına gir.'}
-        </p>
-        <div className="mt-3 flex flex-col gap-2 sm:flex-row">
+      {/* Compact single-row / 2-column Create & Join bar */}
+      <div className="grid grid-cols-1 gap-2 rounded-cik-lg border border-cik-line bg-cik-surface p-3 shadow-e1 sm:grid-cols-2">
+        <form
+          onSubmit={handleCreateLeague}
+          data-testid="friend-league-create-form"
+          className="flex items-center gap-1.5"
+        >
           <input
             type="text"
             maxLength={40}
             data-testid="friend-league-name-input"
             value={leagueName}
             onChange={(e) => setLeagueName(e.target.value)}
-            placeholder={isEn ? 'e.g. Bio Study Group' : 'ör. 11-A / Ekip Ligi'}
-            className="min-w-0 flex-1 rounded-cik-md border border-cik-line bg-cik-surface-2 px-3.5 py-2.5 text-[16px] font-semibold text-cik-text placeholder:text-cik-text-3"
+            placeholder={isEn ? 'New league name (e.g. 11-A)' : 'Yeni lig adı (ör. Sınıf 11-A)'}
+            className="min-w-0 flex-1 rounded-cik-md border border-cik-line bg-cik-surface-2 px-3 py-2 text-[16px] font-semibold text-cik-text placeholder:text-cik-text-3"
           />
           <Button
             type="submit"
@@ -516,45 +533,45 @@ export default function FriendLeaguePanel({
             data-testid="friend-league-create-btn"
             className="shrink-0"
           >
-            <Plus size={18} strokeWidth={2} aria-hidden="true" />
-            <span>{isEn ? 'Create & Get Link' : 'Lig Kur & Davet Linki Al'}</span>
+            <Plus size={16} strokeWidth={2} aria-hidden="true" />
+            <span>{isEn ? 'Create' : 'Lig Kur'}</span>
+          </Button>
+        </form>
+
+        <div className="flex items-center gap-1.5">
+          <input
+            type="text"
+            maxLength={200}
+            data-testid="friend-league-join-input"
+            value={joinCodeInput}
+            onChange={(e) => setJoinCodeInput(extractInviteCode(e.target.value, 'league'))}
+            onPaste={(e) => {
+              const pasted = e.clipboardData?.getData('text');
+              if (!pasted) return;
+              e.preventDefault();
+              setJoinCodeInput(extractInviteCode(pasted, 'league'));
+            }}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                e.preventDefault();
+                void joinLeagueByCode(joinCodeInput, true);
+              }
+            }}
+            placeholder={
+              isEn ? 'Code or invite link (K7M2P9)' : 'Kod veya davet linki (K7M2P9)'
+            }
+            className="min-w-0 flex-1 rounded-cik-md border border-cik-line bg-cik-surface-2 px-3 py-2 text-[16px] font-semibold uppercase tracking-wider text-cik-text placeholder:text-cik-text-3"
+          />
+          <Button
+            tone="ghost"
+            disabled={busyAction}
+            data-testid="friend-league-join-btn"
+            onClick={() => void joinLeagueByCode(joinCodeInput, true)}
+            className="shrink-0"
+          >
+            {isEn ? 'Join' : 'Katıl'}
           </Button>
         </div>
-      </form>
-
-      <div className="flex items-center gap-2 rounded-cik-lg border border-cik-line bg-cik-surface p-3 shadow-e1">
-        <input
-          type="text"
-          maxLength={200}
-          data-testid="friend-league-join-input"
-          value={joinCodeInput}
-          onChange={(e) => setJoinCodeInput(extractInviteCode(e.target.value, 'league'))}
-          onPaste={(e) => {
-            const pasted = e.clipboardData?.getData('text');
-            if (!pasted) return;
-            e.preventDefault();
-            setJoinCodeInput(extractInviteCode(pasted, 'league'));
-          }}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter') {
-              e.preventDefault();
-              void joinLeagueByCode(joinCodeInput, true);
-            }
-          }}
-          placeholder={
-            isEn ? 'Invite code or link (e.g. K7M2P9)' : 'Davet kodu veya linki (ör. K7M2P9)'
-          }
-          className="min-w-0 flex-1 rounded-cik-md border border-cik-line bg-cik-surface-2 px-3 py-2 text-[16px] font-semibold uppercase tracking-wider text-cik-text placeholder:text-cik-text-3"
-        />
-        <Button
-          tone="ghost"
-          disabled={busyAction}
-          data-testid="friend-league-join-btn"
-          onClick={() => void joinLeagueByCode(joinCodeInput, true)}
-          className="shrink-0"
-        >
-          {isEn ? 'Join' : 'Katıl'}
-        </Button>
       </div>
 
       {statusMessage && (
@@ -576,247 +593,308 @@ export default function FriendLeaguePanel({
         </div>
       )}
 
-      {myLeagues.length > 0 && (
-        <div className="flex flex-wrap gap-2" data-testid="friend-league-pills">
-          {myLeagues.map((item) => {
-            const isSelected = activeLeague?.code === item.code;
-            return (
-              <button
-                key={item.code}
-                type="button"
-                data-testid={`friend-league-pill-${item.code}`}
-                aria-pressed={isSelected}
-                onClick={() => void loadBoard(item.code)}
-                className={`cik-footnote inline-flex min-h-11 items-center gap-1.5 rounded-pill border px-3 py-1.5 ${
-                  isSelected
-                    ? 'border-cik-cta bg-cik-berry text-cik-on-berry shadow-e1'
-                    : 'border-cik-line bg-cik-surface text-cik-text'
-                }`}
-              >
-                {item.isCreator ? (
-                  <Crown size={14} strokeWidth={2} aria-hidden="true" />
-                ) : (
-                  <Users size={14} strokeWidth={2} aria-hidden="true" />
-                )}
-                <span>{item.name}</span>
-                <span className="cik-tabular opacity-80">({item.memberCount})</span>
-              </button>
-            );
-          })}
-        </div>
-      )}
-
-      {loading ? (
+      {/* Joined Leagues Catalog + Accordion Cards */}
+      {initialLoading && myLeagues.length === 0 ? (
         <div className="flex flex-col gap-2">
           {[0, 1, 2].map((idx) => (
-            <Skeleton key={idx} className="h-14 w-full rounded-cik-lg" />
+            <Skeleton key={idx} className="h-16 w-full rounded-cik-lg" />
           ))}
         </div>
-      ) : activeLeague ? (
-        <div
-          data-testid="friend-league-board"
-          className="flex flex-col gap-2.5 rounded-cik-lg border border-cik-line bg-cik-surface p-4 shadow-e1"
-        >
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <div className="min-w-0">
-              <div className="flex items-center gap-2">
-                <h3 className="cik-title-3 truncate text-cik-text">{activeLeague.name}</h3>
-                {isActiveLeagueCreator && (
-                  <span className="cik-caption-2 inline-flex shrink-0 items-center gap-1 rounded-pill bg-cik-butter px-2 py-0.5 text-cik-butter-text">
-                    <Crown size={12} strokeWidth={2} aria-hidden="true" />
-                    <span>{isEn ? 'Creator' : 'Kurucu'}</span>
-                  </span>
-                )}
-              </div>
-              <p className="cik-caption-1 text-cik-text-2">
-                {isEn
-                  ? `Weekly XP · Code ${activeLeague.code} · ${entries.length} member(s)`
-                  : `Haftalık XP · Kod: ${activeLeague.code} · ${entries.length} üye`}
-              </p>
-            </div>
-            <div className="flex flex-wrap items-center gap-1.5">
-              <button
-                type="button"
-                onClick={() => void loadBoard(activeLeague.code)}
-                aria-label={isEn ? 'Refresh league' : 'Ligi yenile'}
-                className="inline-flex h-11 w-11 items-center justify-center rounded-pill border border-cik-line bg-cik-surface-2 text-cik-text"
-              >
-                <RefreshCw size={17} strokeWidth={2} aria-hidden="true" />
-              </button>
-              <button
-                type="button"
-                data-testid="friend-league-copy-invite-btn"
-                onClick={() => void handleCopyInvite()}
-                className="cik-footnote inline-flex min-h-11 items-center gap-1.5 rounded-pill bg-cik-cta px-3.5 text-cik-on-cta"
-              >
-                {copiedInvite ? (
-                  <Check size={16} strokeWidth={2} aria-hidden="true" />
-                ) : (
-                  <Copy size={16} strokeWidth={2} aria-hidden="true" />
-                )}
-                <span>
-                  {copiedInvite
-                    ? isEn
-                      ? 'Copied'
-                      : 'Kopyalandı'
-                    : isEn
-                      ? 'Copy Invite'
-                      : 'Davet Kopyala'}
-                </span>
-              </button>
-              <button
-                type="button"
-                onClick={() => void handleWebShareInvite()}
-                aria-label={isEn ? 'Share invite link' : 'Daveti paylaş'}
-                className="inline-flex h-11 w-11 items-center justify-center rounded-pill border border-cik-line bg-cik-surface-2 text-cik-text"
-              >
-                <Share2 size={17} strokeWidth={2} aria-hidden="true" />
-              </button>
-              <button
-                type="button"
-                disabled={busyAction}
-                data-testid="friend-league-leave-btn"
-                onClick={() =>
-                  setPendingConfirm((prev) => (prev === 'leave' ? null : 'leave'))
-                }
-                aria-label={isEn ? 'Leave league' : 'Ligden ayrıl'}
-                className="cik-footnote inline-flex min-h-11 items-center gap-1.5 rounded-pill border border-cik-line bg-cik-surface-2 px-3 text-cik-text"
-              >
-                <LogOut size={15} strokeWidth={2} aria-hidden="true" />
-                <span>{isEn ? 'Leave' : 'Ligden Ayrıl'}</span>
-              </button>
-              {isActiveLeagueCreator && (
-                <button
-                  type="button"
-                  disabled={busyAction}
-                  data-testid="friend-league-delete-btn"
-                  onClick={() =>
-                    setPendingConfirm((prev) => (prev === 'delete' ? null : 'delete'))
-                  }
-                  aria-label={isEn ? 'Delete league' : 'Ligi sil'}
-                  className="cik-footnote inline-flex min-h-11 items-center gap-1.5 rounded-pill bg-cik-rose px-3 text-cik-rose-text"
-                >
-                  <Trash2 size={15} strokeWidth={2} aria-hidden="true" />
-                  <span>{isEn ? 'Delete League' : 'Ligi Sil'}</span>
-                </button>
-              )}
-            </div>
-          </div>
+      ) : myLeagues.length > 0 ? (
+        <div className="flex flex-col gap-2.5" data-testid="friend-league-pills">
+          {myLeagues.map((item) => {
+            const isExpanded = expandedCode === item.code;
+            const isLoadedBoard = activeLeague?.code === item.code;
+            const isThisLoading = boardLoadingCode === item.code;
+            const myLoadedRow = isLoadedBoard ? entries.find((e) => e.isUser) : undefined;
+            const displayMemberCount =
+              isLoadedBoard && entries.length > 0 ? entries.length : item.memberCount;
+            const displayRank = myLoadedRow?.rank ?? item.myRank ?? 1;
+            const displayXp =
+              myLoadedRow?.weeklyXp ?? item.myWeeklyXp ?? userWeeklyXp ?? 0;
+            const isCreator = Boolean(
+              item.isCreator ||
+                (isLoadedBoard &&
+                  (activeLeague?.isCreator ||
+                    (typeof window !== 'undefined' &&
+                      activeLeague?.creatorDeviceId &&
+                      activeLeague.creatorDeviceId === getOrCreateDeviceId())))
+            );
 
-          {pendingConfirm && (
-            <div
-              data-testid="friend-league-confirm-bar"
-              className="flex flex-wrap items-center justify-between gap-2 rounded-cik-md bg-cik-rose px-3.5 py-2.5 text-cik-rose-text"
-            >
-              <p className="cik-footnote">
-                {pendingConfirm === 'delete'
-                  ? isEn
-                    ? `Delete "${activeLeague.name}" permanently for all members?`
-                    : `"${activeLeague.name}" ligini tüm üyeler için kalıcı olarak silmek istediğine emin misin?`
-                  : isEn
-                    ? `Leave "${activeLeague.name}"? Your XP and other leagues stay intact.`
-                    : `"${activeLeague.name}" liginden ayrılmak istediğine emin misin? (XP puanın ve diğer liglerin korunur.)`}
-              </p>
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  disabled={busyAction}
-                  data-testid={
-                    pendingConfirm === 'delete'
-                      ? 'friend-league-confirm-delete-btn'
-                      : 'friend-league-confirm-leave-btn'
-                  }
-                  onClick={() =>
-                    void (pendingConfirm === 'delete'
-                      ? handleConfirmDelete()
-                      : handleConfirmLeave())
-                  }
-                  className="cik-caption-1 inline-flex min-h-9 items-center gap-1 rounded-pill bg-cik-cta px-3.5 py-1.5 text-cik-on-cta"
-                >
-                  <span>
-                    {pendingConfirm === 'delete'
-                      ? isEn
-                        ? 'Yes, Delete'
-                        : 'Evet, Ligi Sil'
-                      : isEn
-                        ? 'Yes, Leave'
-                        : 'Evet, Ayrıl'}
-                  </span>
-                </button>
-                <button
-                  type="button"
-                  disabled={busyAction}
-                  data-testid="friend-league-cancel-confirm-btn"
-                  onClick={() => setPendingConfirm(null)}
-                  className="cik-caption-1 inline-flex min-h-9 items-center rounded-pill bg-cik-surface px-3 py-1.5 text-cik-text"
-                >
-                  <span>{isEn ? 'Cancel' : 'Vazgeç'}</span>
-                </button>
-              </div>
-            </div>
-          )}
-
-          <div className="flex flex-col gap-2">
-            {entries.map((row) => (
+            return (
               <div
-                key={row.id}
-                className={`flex min-h-[52px] items-center justify-between gap-2.5 rounded-cik-md border px-3.5 py-2 ${
-                  row.isUser
-                    ? 'border-cik-cta bg-cik-pink text-cik-text'
-                    : 'border-cik-line bg-cik-surface-2 text-cik-text'
+                key={item.code}
+                data-testid={`friend-league-card-${item.code}`}
+                className={`overflow-hidden rounded-cik-lg border transition-all duration-200 ${
+                  isExpanded
+                    ? 'border-cik-cta bg-cik-surface shadow-e2'
+                    : 'border-cik-line bg-cik-surface shadow-e1'
                 }`}
               >
-                <div className="flex min-w-0 flex-1 items-center gap-2.5">
-                  <span className="cik-footnote cik-tabular w-7 shrink-0 text-center text-cik-text-2">
-                    {row.rank === 1 ? (
-                      <Crown
-                        size={16}
-                        strokeWidth={2}
-                        className="mx-auto text-cik-butter-text"
-                        aria-hidden="true"
-                      />
-                    ) : row.rank === 2 || row.rank === 3 ? (
-                      <Medal
-                        size={16}
-                        strokeWidth={2}
-                        className="mx-auto text-cik-text-2"
-                        aria-hidden="true"
-                      />
-                    ) : (
-                      `#${row.rank}`
-                    )}
-                  </span>
-                  <span className="shrink-0 text-base" aria-hidden="true">
-                    {row.avatar}
-                  </span>
-                  <span className="cik-headline min-w-0 flex-1 truncate" title={row.name}>
-                    {row.name}
-                  </span>
-                  {row.isUser ? (
-                    <span className="cik-caption-2 shrink-0 rounded-pill bg-cik-cta px-2 py-0.5 text-cik-on-cta">
-                      {isEn ? 'YOU' : 'SEN'}
+                <button
+                  type="button"
+                  data-testid={`friend-league-pill-${item.code}`}
+                  aria-expanded={isExpanded}
+                  onClick={() => handleToggleLeagueCard(item.code)}
+                  className="flex w-full items-center justify-between gap-3 px-4 py-3.5 text-left transition-all"
+                >
+                  <div className="flex min-w-0 flex-1 items-center gap-3">
+                    <span
+                      className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-pill ${
+                        isExpanded
+                          ? 'bg-cik-berry text-cik-on-berry'
+                          : 'bg-cik-pink text-cik-cta'
+                      }`}
+                    >
+                      {isCreator ? (
+                        <Crown size={18} strokeWidth={2} aria-hidden="true" />
+                      ) : (
+                        <Users size={18} strokeWidth={2} aria-hidden="true" />
+                      )}
                     </span>
-                  ) : null}
-                </div>
-                <div className="cik-footnote cik-tabular flex shrink-0 items-center gap-2">
-                  <span className="inline-flex items-center gap-1 text-cik-butter-text">
-                    <img
-                      src={UI_ICON_PATHS.streakFire}
-                      alt=""
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2">
+                        <span className="cik-headline truncate text-cik-text">
+                          {item.name}
+                        </span>
+                        {isCreator && (
+                          <span className="cik-caption-2 shrink-0 rounded-pill bg-cik-butter px-2 py-0.5 text-cik-butter-text">
+                            {isEn ? 'Creator' : 'Kurucu'}
+                          </span>
+                        )}
+                      </div>
+                      <p className="cik-caption-1 mt-0.5 truncate text-cik-text-2">
+                        {isEn
+                          ? `${displayMemberCount} member(s) · Weekly XP`
+                          : `${displayMemberCount} üye · Haftalık XP`}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex shrink-0 items-center gap-2">
+                    <span className="cik-footnote cik-tabular rounded-pill bg-cik-pink px-2.5 py-1 text-cik-cta">
+                      #{displayRank}
+                    </span>
+                    <span className="cik-footnote cik-tabular rounded-pill bg-cik-surface-2 px-3 py-1 text-cik-text">
+                      {displayXp.toLocaleString()} XP
+                    </span>
+                    <ChevronDown
+                      size={18}
+                      strokeWidth={2}
                       aria-hidden="true"
-                      width={16}
-                      height={16}
-                      className="h-4 w-4 object-contain"
+                      className={`shrink-0 text-cik-text-2 transition-transform duration-200 ${
+                        isExpanded ? 'rotate-180 text-cik-cta' : ''
+                      }`}
                     />
-                    {row.streak}
-                  </span>
-                  <span className="rounded-pill bg-cik-surface px-2.5 py-1 text-cik-text">
-                    {row.weeklyXp.toLocaleString()} XP
-                  </span>
-                </div>
+                  </div>
+                </button>
+
+                {isExpanded && (
+                  <div
+                    data-testid="friend-league-board"
+                    className="flex flex-col gap-2.5 border-t border-cik-line bg-cik-surface px-4 pb-4 pt-3 transition-all"
+                  >
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <span className="cik-caption-1 rounded-pill bg-cik-surface-2 px-3 py-1.5 font-mono text-cik-text-2">
+                        {isEn ? `Code: ${item.code}` : `Kod: ${item.code}`}
+                      </span>
+
+                      <div className="flex flex-wrap items-center gap-1.5">
+                        <button
+                          type="button"
+                          onClick={() => void loadBoard(item.code)}
+                          aria-label={isEn ? 'Refresh league' : 'Ligi yenile'}
+                          className="inline-flex h-10 w-10 items-center justify-center rounded-pill border border-cik-line bg-cik-surface-2 text-cik-text"
+                        >
+                          <RefreshCw size={16} strokeWidth={2} aria-hidden="true" />
+                        </button>
+                        <button
+                          type="button"
+                          data-testid="friend-league-copy-invite-btn"
+                          onClick={() => void handleCopyInvite(item.code)}
+                          className="cik-footnote inline-flex min-h-10 items-center gap-1.5 rounded-pill bg-cik-cta px-3.5 text-cik-on-cta"
+                        >
+                          {copiedInvite ? (
+                            <Check size={15} strokeWidth={2} aria-hidden="true" />
+                          ) : (
+                            <Copy size={15} strokeWidth={2} aria-hidden="true" />
+                          )}
+                          <span>
+                            {copiedInvite
+                              ? isEn
+                                ? 'Copied'
+                                : 'Kopyalandı'
+                              : isEn
+                                ? 'Copy Invite'
+                                : 'Davet Kopyala'}
+                          </span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => void handleWebShareInvite(item)}
+                          aria-label={isEn ? 'Share invite link' : 'Daveti paylaş'}
+                          className="inline-flex h-10 w-10 items-center justify-center rounded-pill border border-cik-line bg-cik-surface-2 text-cik-text"
+                        >
+                          <Share2 size={16} strokeWidth={2} aria-hidden="true" />
+                        </button>
+                        <button
+                          type="button"
+                          disabled={busyAction}
+                          data-testid="friend-league-leave-btn"
+                          onClick={() =>
+                            setPendingConfirm((prev) => (prev === 'leave' ? null : 'leave'))
+                          }
+                          aria-label={isEn ? 'Leave league' : 'Ligden ayrıl'}
+                          className="cik-footnote inline-flex min-h-10 items-center gap-1.5 rounded-pill border border-cik-line bg-cik-surface-2 px-3 text-cik-text"
+                        >
+                          <LogOut size={15} strokeWidth={2} aria-hidden="true" />
+                          <span>{isEn ? 'Leave' : 'Ligden Ayrıl'}</span>
+                        </button>
+                        {isCreator && (
+                          <button
+                            type="button"
+                            disabled={busyAction}
+                            data-testid="friend-league-delete-btn"
+                            onClick={() =>
+                              setPendingConfirm((prev) => (prev === 'delete' ? null : 'delete'))
+                            }
+                            aria-label={isEn ? 'Delete league' : 'Ligi sil'}
+                            className="cik-footnote inline-flex min-h-10 items-center gap-1.5 rounded-pill bg-cik-rose px-3 text-cik-rose-text"
+                          >
+                            <Trash2 size={15} strokeWidth={2} aria-hidden="true" />
+                            <span>{isEn ? 'Delete League' : 'Ligi Sil'}</span>
+                          </button>
+                        )}
+                      </div>
+                    </div>
+
+                    {pendingConfirm && (
+                      <div
+                        data-testid="friend-league-confirm-bar"
+                        className="flex flex-wrap items-center justify-between gap-2 rounded-cik-md bg-cik-rose px-3.5 py-2.5 text-cik-rose-text"
+                      >
+                        <p className="cik-footnote">
+                          {pendingConfirm === 'delete'
+                            ? isEn
+                              ? `Delete "${item.name}" permanently for all members?`
+                              : `"${item.name}" ligini tüm üyeler için kalıcı olarak silmek istediğine emin misin?`
+                            : isEn
+                              ? `Leave "${item.name}"? Your XP and other leagues stay intact.`
+                              : `"${item.name}" liginden ayrılmak istediğine emin misin? (XP puanın ve diğer liglerin korunur.)`}
+                        </p>
+                        <div className="flex items-center gap-2">
+                          <button
+                            type="button"
+                            disabled={busyAction}
+                            data-testid={
+                              pendingConfirm === 'delete'
+                                ? 'friend-league-confirm-delete-btn'
+                                : 'friend-league-confirm-leave-btn'
+                            }
+                            onClick={() =>
+                              void (pendingConfirm === 'delete'
+                                ? handleConfirmDelete()
+                                : handleConfirmLeave())
+                            }
+                            className="cik-caption-1 inline-flex min-h-9 items-center gap-1 rounded-pill bg-cik-cta px-3.5 py-1.5 text-cik-on-cta"
+                          >
+                            <span>
+                              {pendingConfirm === 'delete'
+                                ? isEn
+                                  ? 'Yes, Delete'
+                                  : 'Evet, Ligi Sil'
+                                : isEn
+                                  ? 'Yes, Leave'
+                                  : 'Evet, Ayrıl'}
+                            </span>
+                          </button>
+                          <button
+                            type="button"
+                            disabled={busyAction}
+                            data-testid="friend-league-cancel-confirm-btn"
+                            onClick={() => setPendingConfirm(null)}
+                            className="cik-caption-1 inline-flex min-h-9 items-center rounded-pill bg-cik-surface px-3 py-1.5 text-cik-text"
+                          >
+                            <span>{isEn ? 'Cancel' : 'Vazgeç'}</span>
+                          </button>
+                        </div>
+                      </div>
+                    )}
+
+                    {isThisLoading && !isLoadedBoard ? (
+                      <div className="flex flex-col gap-2">
+                        {[0, 1, 2].map((idx) => (
+                          <Skeleton key={idx} className="h-12 w-full rounded-cik-md" />
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="flex flex-col gap-2">
+                        {entries.map((row) => (
+                          <div
+                            key={row.id}
+                            className={`flex min-h-[50px] items-center justify-between gap-2.5 rounded-cik-md border px-3.5 py-2 ${
+                              row.isUser
+                                ? 'border-cik-cta bg-cik-pink text-cik-text'
+                                : 'border-cik-line bg-cik-surface-2 text-cik-text'
+                            }`}
+                          >
+                            <div className="flex min-w-0 flex-1 items-center gap-2.5">
+                              <span className="cik-footnote cik-tabular w-7 shrink-0 text-center text-cik-text-2">
+                                {row.rank === 1 ? (
+                                  <Crown
+                                    size={16}
+                                    strokeWidth={2}
+                                    className="mx-auto text-cik-butter-text"
+                                    aria-hidden="true"
+                                  />
+                                ) : row.rank === 2 || row.rank === 3 ? (
+                                  <Medal
+                                    size={16}
+                                    strokeWidth={2}
+                                    className="mx-auto text-cik-text-2"
+                                    aria-hidden="true"
+                                  />
+                                ) : (
+                                  `#${row.rank}`
+                                )}
+                              </span>
+                              <span className="shrink-0 text-base" aria-hidden="true">
+                                {row.avatar}
+                              </span>
+                              <span className="cik-headline min-w-0 flex-1 truncate" title={row.name}>
+                                {row.name}
+                              </span>
+                              {row.isUser ? (
+                                <span className="cik-caption-2 shrink-0 rounded-pill bg-cik-cta px-2 py-0.5 text-cik-on-cta">
+                                  {isEn ? 'YOU' : 'SEN'}
+                                </span>
+                              ) : null}
+                            </div>
+                            <div className="cik-footnote cik-tabular flex shrink-0 items-center gap-2">
+                              <span className="inline-flex items-center gap-1 text-cik-butter-text">
+                                <img
+                                  src={UI_ICON_PATHS.streakFire}
+                                  alt=""
+                                  aria-hidden="true"
+                                  width={16}
+                                  height={16}
+                                  className="h-4 w-4 object-contain"
+                                />
+                                {row.streak}
+                              </span>
+                              <span className="rounded-pill bg-cik-surface px-2.5 py-1 text-cik-text">
+                                {row.weeklyXp.toLocaleString()} XP
+                              </span>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
-            ))}
-          </div>
+            );
+          })}
         </div>
       ) : (
         <EmptyState

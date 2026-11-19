@@ -38,6 +38,8 @@ export interface FriendLeagueSummary {
   code: string;
   name: string;
   memberCount: number;
+  myRank?: number;
+  myWeeklyXp?: number;
   isCreator?: boolean;
   joinedAt: string;
 }
@@ -735,7 +737,6 @@ export async function listUserFriendLeagues(input: {
   if (!hasDatabaseUrl()) {
     const leagues = getMemoryLeaguesMap();
     const membersMap = getMemoryLeagueMembersMap();
-    const profiles = getMemoryProfileMap();
     const result: FriendLeagueSummary[] = [];
     for (const [code, members] of membersMap.entries()) {
       const mine = members.find(
@@ -744,15 +745,19 @@ export async function listUserFriendLeagues(input: {
       if (!mine) continue;
       const league = leagues.get(code);
       if (!league) continue;
-      const distinctIdentities = new Set<string>();
-      for (const m of members) {
-        const resolvedUser = profiles.get(m.deviceId)?.userId || m.userId;
-        distinctIdentities.add(resolvedUser ? `u:${resolvedUser}` : `d:${m.deviceId}`);
-      }
+      const board = await getFriendLeagueBoard({
+        code,
+        viewerDeviceId: cleanDevice,
+        viewerUserId: userId,
+        viewerLinkedDeviceIds: linkedDevices,
+      });
+      const myEntry = board?.entries.find((e) => e.isUser);
       result.push({
         code,
         name: league.name,
-        memberCount: Math.max(1, distinctIdentities.size),
+        memberCount: Math.max(1, board?.entries.length ?? members.length),
+        myRank: myEntry?.rank ?? 1,
+        myWeeklyXp: myEntry?.weeklyXp ?? 0,
         isCreator: isLeagueCreator({
           creatorDeviceId: league.creatorDeviceId,
           creatorUserId: league.creatorUserId,
@@ -775,22 +780,68 @@ export async function listUserFriendLeagues(input: {
     creator_device_id: string;
     creator_user_id: string | null;
     member_count: number;
+    my_rank: number;
+    my_weekly_xp: number;
     joined_at: Date | string;
   }>(
-    `SELECT
+    `WITH my_codes AS (
+       SELECT
+         m.league_code,
+         MAX(m.joined_at) AS joined_at
+       FROM friend_league_members m
+       WHERE (CARDINALITY($1::text[]) > 0 AND m.device_id = ANY($1::text[]))
+          OR ($2::text IS NOT NULL AND m.user_id = $2)
+       GROUP BY m.league_code
+     ),
+     member_scores AS (
+       SELECT
+         m.league_code,
+         COALESCE(m.user_id, p.user_id, 'd:' || m.device_id) AS identity_key,
+         BOOL_OR(
+           (CARDINALITY($1::text[]) > 0 AND m.device_id = ANY($1::text[]))
+           OR ($2::text IS NOT NULL AND COALESCE(m.user_id, p.user_id) = $2)
+         ) AS is_me,
+         MAX(
+           GREATEST(
+             CASE WHEN COALESCE(p.weekly_xp, 0) > 0 THEN COALESCE(p.weekly_xp, 0) ELSE COALESCE(p.xp, 0) END,
+             CASE WHEN COALESCE(u.weekly_xp, 0) > 0 THEN COALESCE(u.weekly_xp, 0) ELSE COALESCE(u.xp, 0) END
+           )
+         )::INT AS weekly_xp,
+         MAX(GREATEST(COALESCE(p.xp, 0), COALESCE(u.xp, 0)))::INT AS total_xp,
+         MAX(GREATEST(COALESCE(p.streak, 0), COALESCE(u.streak, 0)))::INT AS streak,
+         MIN(m.joined_at) AS first_joined_at
+       FROM friend_league_members m
+       INNER JOIN my_codes mc ON mc.league_code = m.league_code
+       LEFT JOIN profiles p ON p.device_id = m.device_id
+       LEFT JOIN users u ON u.id = COALESCE(m.user_id, p.user_id)
+       GROUP BY m.league_code, COALESCE(m.user_id, p.user_id, 'd:' || m.device_id)
+     ),
+     ranked AS (
+       SELECT
+         ms.league_code,
+         ms.is_me,
+         ms.weekly_xp,
+         ROW_NUMBER() OVER (
+           PARTITION BY ms.league_code
+           ORDER BY ms.weekly_xp DESC, ms.total_xp DESC, ms.streak DESC, ms.first_joined_at ASC
+         )::INT AS rk,
+         COUNT(*) OVER (PARTITION BY ms.league_code)::INT AS member_count
+       FROM member_scores ms
+     )
+     SELECT
        fl.code,
        fl.name,
        fl.creator_device_id,
        fl.creator_user_id,
-       COUNT(DISTINCT COALESCE(all_m.user_id, 'd:' || all_m.device_id))::INT AS member_count,
-       MAX(mine.joined_at) AS joined_at
-     FROM friend_league_members mine
-     INNER JOIN friend_leagues fl ON fl.code = mine.league_code
-     INNER JOIN friend_league_members all_m ON all_m.league_code = fl.code
-     WHERE (CARDINALITY($1::text[]) > 0 AND mine.device_id = ANY($1::text[]))
-        OR ($2::text IS NOT NULL AND mine.user_id = $2)
-     GROUP BY fl.code, fl.name, fl.creator_device_id, fl.creator_user_id
-     ORDER BY MAX(mine.joined_at) DESC`,
+       COALESCE(MAX(r.member_count), 1)::INT AS member_count,
+       COALESCE(MAX(r.rk) FILTER (WHERE r.is_me), 1)::INT AS my_rank,
+       COALESCE(MAX(r.weekly_xp) FILTER (WHERE r.is_me), 0)::INT AS my_weekly_xp,
+       mc.joined_at
+     FROM my_codes mc
+     INNER JOIN friend_leagues fl ON fl.code = mc.league_code
+     LEFT JOIN ranked r ON r.league_code = fl.code
+     GROUP BY fl.code, fl.name, fl.creator_device_id, fl.creator_user_id, mc.joined_at
+     ORDER BY mc.joined_at DESC`,
     [deviceArray, userId]
   );
 
@@ -798,6 +849,8 @@ export async function listUserFriendLeagues(input: {
     code: r.code,
     name: r.name,
     memberCount: Math.max(1, Number(r.member_count) || 1),
+    myRank: Math.max(1, Number(r.my_rank) || 1),
+    myWeeklyXp: Math.max(0, Number(r.my_weekly_xp) || 0),
     isCreator: isLeagueCreator({
       creatorDeviceId: r.creator_device_id,
       creatorUserId: r.creator_user_id,

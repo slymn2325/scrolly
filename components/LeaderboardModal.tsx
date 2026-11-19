@@ -328,6 +328,7 @@ export default function LeaderboardModal({
           <FriendLeaguePanel
             lang={lang}
             nickname={nickname}
+            userWeeklyXp={weeklyXp > 0 ? weeklyXp : userXp}
             initialLeagueCode={initialLeagueCode}
             onClearInitialLeagueCode={onClearInitialLeagueCode}
           />
