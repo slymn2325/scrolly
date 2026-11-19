@@ -33,7 +33,6 @@ import {
 import type { FactCard } from '@/types/fact';
 import type { VocabularyCard } from '@/types/vocabulary';
 import { getVocabularyFacts } from '@/data/vocabularyFacts';
-import { motionSpring } from '@/lib/motion';
 import { markFactSeenInStorage } from '@/utils/seenFacts';
 
 const CATEGORY_ICON_CONFIG: Record<

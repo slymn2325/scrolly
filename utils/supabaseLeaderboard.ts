@@ -2,7 +2,6 @@ import { LEAGUE_SHIELD_MAP, type LeagueTierId } from '@/utils/icons8Assets';
 import { getOrCreateDeviceId } from '@/lib/telemetry';
 import {
   deriveExplorerTagFromId,
-  isGenericDefaultNickname,
   isLegacyUntaggedOrTag42Nickname,
 } from '@/utils/userMemory';
 

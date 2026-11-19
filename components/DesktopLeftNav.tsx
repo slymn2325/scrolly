@@ -133,7 +133,7 @@ export default function DesktopLeftNav({
           data-testid="desktop-session-box"
           className="rounded-2xl border border-cik-line bg-cik-surface p-3.5 shadow-e1"
         >
-          <p className="text-[11px] font-medium uppercase tracking-wider text-neutral-500 dark:text-white/70">
+          <p className="text-[11px] font-medium uppercase tracking-wider text-cik-text-2">
             {lang === 'tr' ? 'Oturum' : 'Session'}
           </p>
           <p className="mt-1 flex items-center gap-2 text-sm font-bold text-cik-text">
@@ -143,7 +143,7 @@ export default function DesktopLeftNav({
           </p>
           <p
             data-testid="desktop-account-status"
-            className="mt-2 truncate text-xs font-medium text-neutral-600 dark:text-white/90"
+            className="mt-2 truncate text-xs font-medium text-cik-text"
             title={accountEmail || accountLabel || undefined}
           >
             {accountEmail || accountLabel
