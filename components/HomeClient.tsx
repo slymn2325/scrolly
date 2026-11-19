@@ -37,6 +37,7 @@ import {
   fetchSession,
   getCachedAuthUserEmail,
   hydrateLocalMemoryFromAuthUser,
+  type AuthChangedEventDetail,
 } from '@/lib/authClient';
 import { isShortRoomCode, normalizeRoomCode } from '@/lib/duelStore';
 import { readLanguageCookie, writeLanguageCookie } from '@/lib/locale';
@@ -982,7 +983,8 @@ export default function HomeClient({ initialFacts, initialVocabulary, initialLan
         if (sessionRes.authenticated && sessionRes.user) {
           const user = sessionRes.user;
           setAuthUser(user);
-          setMemory((prev) => hydrateLocalMemoryFromAuthUser(prev, user));
+          skipNextProfileSyncRef.current = true;
+          setMemory((prev) => hydrateLocalMemoryFromAuthUser(prev, user, 'keep_existing'));
           setSavedIds(loadSavedFactIds());
           setSavedVocabWords(loadSavedVocabNotebook().map((entry) => entry.word.toLowerCase()));
           setLikedRevision((prev) => prev + 1);
@@ -1076,10 +1078,19 @@ export default function HomeClient({ initialFacts, initialVocabulary, initialLan
       setAuthPromptOpen(true);
     };
     const onAuthChanged = (event: Event) => {
-      const nextUser = (event as CustomEvent<{ user?: AuthUserDto | null }>).detail?.user ?? null;
+      const detail = (event as CustomEvent<AuthChangedEventDetail>).detail;
+      const nextUser = detail?.user ?? null;
       setAuthUser(nextUser);
       if (!nextUser) {
         setAuthNudgeOpen(false);
+        if (detail?.loggedOut) {
+          skipNextProfileSyncRef.current = true;
+          setMemory(detail.freshMemory ?? loadUserMemory());
+          setSavedIds([]);
+          setSavedVocabWords([]);
+          setLockedFactIds({});
+          setLikedRevision((prev) => prev + 1);
+        }
       }
     };
 
@@ -2654,11 +2665,26 @@ export default function HomeClient({ initialFacts, initialVocabulary, initialLan
           setAuthNudgeOpen(false);
           setAuthPromptOpen(true);
         }}
-        onAuthenticated={(user, mode) => {
+        onAuthenticated={(user, mode, options) => {
+          let freshDeviceId: string | undefined;
+          if (options?.resetDeviceId) {
+            const reset = resetTelemetryClientState();
+            freshDeviceId = reset.deviceId;
+            void import('@/utils/duelLobby').then(({ clearScrollaPlayerId, getOrCreateScrollaPlayerId }) => {
+              clearScrollaPlayerId();
+              getOrCreateScrollaPlayerId(reset.deviceId);
+            });
+          }
+          skipNextProfileSyncRef.current = true;
           setAuthUser(user);
-          setMemory((prev) => hydrateLocalMemoryFromAuthUser(prev, user, mode));
+          setMemory((prev) =>
+            hydrateLocalMemoryFromAuthUser(prev, user, mode ?? 'keep_existing', {
+              ...(freshDeviceId ? { freshDeviceId } : {}),
+            })
+          );
           setSavedIds(loadSavedFactIds());
           setSavedVocabWords(loadSavedVocabNotebook().map((entry) => entry.word.toLowerCase()));
+          setLockedFactIds({});
           setLikedRevision((prev) => prev + 1);
           setAuthPromptOpen(false);
           setAuthNudgeOpen(false);

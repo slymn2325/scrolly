@@ -625,18 +625,155 @@ function mergeUserProgress(
   };
 }
 
-async function saveMergedUserToDb(user: AuthUserDto, linkedGuestId?: string | null): Promise<AuthUserDto> {
+async function isDeviceLinkedToAnotherUser(
+  deviceId: string,
+  excludeUserId: string
+): Promise<boolean> {
+  if (!isValidDeviceId(deviceId)) return false;
+  const cleanDeviceId = deviceId.trim().slice(0, 128);
+
+  if (!hasDatabaseUrl()) {
+    const profileOwner = getMemoryProfileMap().get(cleanDeviceId)?.userId;
+    if (profileOwner && profileOwner !== excludeUserId) return true;
+    for (const user of getMemoryUsersById().values()) {
+      if (user.id !== excludeUserId && user.linkedDeviceIds.includes(cleanDeviceId)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  await ensureSchema();
+  const pool = getPool();
+  const [profileRes, userRes] = await Promise.all([
+    pool.query<{ owner: string | null }>(
+      `SELECT user_id AS owner FROM profiles
+       WHERE device_id = $1 AND user_id IS NOT NULL AND user_id <> $2
+       LIMIT 1`,
+      [cleanDeviceId, excludeUserId]
+    ),
+    pool.query<{ id: string }>(
+      `SELECT id FROM users
+       WHERE id <> $1 AND linked_device_ids ? $2
+       LIMIT 1`,
+      [excludeUserId, cleanDeviceId]
+    ),
+  ]);
+  return Boolean(profileRes.rows[0] || userRes.rows[0]);
+}
+
+async function claimUnownedGuestDevice(
+  deviceId: string,
+  userId: string,
+  fallbackUsername: string
+): Promise<boolean> {
+  if (!isValidDeviceId(deviceId) || !userId) return false;
+  const cleanDeviceId = deviceId.trim().slice(0, 128);
+  if (await isDeviceLinkedToAnotherUser(cleanDeviceId, userId)) return false;
+
+  if (!hasDatabaseUrl()) {
+    const profileMap = getMemoryProfileMap();
+    const existing = profileMap.get(cleanDeviceId);
+    if (existing) {
+      if (existing.userId) return false;
+      profileMap.set(cleanDeviceId, { ...existing, userId });
+      return true;
+    }
+    profileMap.set(cleanDeviceId, {
+      deviceId: cleanDeviceId,
+      userId,
+      username: sanitizeDisplayText(fallbackUsername, 28) || 'Curiosity Explorer',
+      handle: '',
+      xp: 0,
+      weeklyXp: 0,
+      dailyBestScore: 0,
+      lastDailyQuizDate: '',
+      streak: 0,
+      lastVisitDate: '',
+      seenIds: [],
+      favoriteIds: [],
+      likedIds: [],
+      vocabNotebook: [],
+      categoryWeights: {},
+      categoryAccuracy: {},
+      badges: [],
+      updatedAt: new Date().toISOString(),
+    });
+    return true;
+  }
+
+  await ensureSchema();
+  const pool = getPool();
+  const updRes = await pool.query<{ device_id: string }>(
+    `UPDATE profiles
+     SET user_id = $2, updated_at = NOW()
+     WHERE device_id = $1 AND user_id IS NULL
+     RETURNING device_id`,
+    [cleanDeviceId, userId]
+  );
+  if ((updRes.rowCount ?? 0) > 0) return true;
+
+  const insRes = await pool.query<{ device_id: string }>(
+    `INSERT INTO profiles (device_id, user_id, username, xp, weekly_xp, streak, updated_at)
+     VALUES ($1, $2, $3, 0, 0, 0, NOW())
+     ON CONFLICT (device_id) DO NOTHING
+     RETURNING device_id`,
+    [cleanDeviceId, userId, sanitizeDisplayText(fallbackUsername, 28) || 'Curiosity Explorer']
+  );
+  if ((insRes.rowCount ?? 0) > 0) return true;
+
+  const retryRes = await pool.query<{ device_id: string }>(
+    `UPDATE profiles
+     SET user_id = $2, updated_at = NOW()
+     WHERE device_id = $1 AND user_id IS NULL
+     RETURNING device_id`,
+    [cleanDeviceId, userId]
+  );
+  return (retryRes.rowCount ?? 0) > 0;
+}
+
+async function saveMergedUserToDb(
+  user: AuthUserDto,
+  linkedGuestId?: string | null,
+  options?: { overwriteGuestProfile?: boolean }
+): Promise<AuthUserDto> {
+  const validLinkedGuestId =
+    linkedGuestId && isValidDeviceId(linkedGuestId) ? linkedGuestId.trim().slice(0, 128) : null;
+
   if (!hasDatabaseUrl()) {
     const usersById = getMemoryUsersById();
     const userIdByEmail = getMemoryUserIdByEmail();
     usersById.set(user.id, user);
     userIdByEmail.set(user.email, user.id);
 
-    if (linkedGuestId && isValidDeviceId(linkedGuestId)) {
+    if (validLinkedGuestId) {
       const profileMap = getMemoryProfileMap();
-      const existingProfile = profileMap.get(linkedGuestId);
-      if (existingProfile && (!existingProfile.userId || existingProfile.userId === user.id)) {
-        profileMap.set(linkedGuestId, {
+      const existingProfile = profileMap.get(validLinkedGuestId);
+      if (options?.overwriteGuestProfile) {
+        if (!existingProfile?.userId || existingProfile.userId === user.id) {
+          profileMap.set(validLinkedGuestId, {
+            deviceId: validLinkedGuestId,
+            userId: user.id,
+            username: user.nickname || existingProfile?.username || 'Curiosity Explorer',
+            handle: existingProfile?.handle || '',
+            xp: user.xp,
+            weeklyXp: user.weeklyXp,
+            dailyBestScore: user.dailyBestScore,
+            lastDailyQuizDate: user.lastDailyQuizDate,
+            streak: user.streak,
+            lastVisitDate: user.lastVisitDate,
+            seenIds: [...user.seenIds],
+            favoriteIds: [...user.favoriteIds],
+            likedIds: [...user.likedIds],
+            vocabNotebook: [...user.vocabNotebook],
+            categoryWeights: { ...user.categoryWeights },
+            categoryAccuracy: { ...user.categoryAccuracy },
+            badges: [...user.badges],
+            updatedAt: new Date().toISOString(),
+          });
+        }
+      } else if (existingProfile && (!existingProfile.userId || existingProfile.userId === user.id)) {
+        profileMap.set(validLinkedGuestId, {
           ...existingProfile,
           userId: user.id,
         });
@@ -694,12 +831,17 @@ async function saveMergedUserToDb(user: AuthUserDto, linkedGuestId?: string | nu
 
   const allDeviceIds = Array.from(
     new Set(
-      [...(user.linkedDeviceIds || []), ...(linkedGuestId ? [linkedGuestId] : [])].filter((id) =>
-        isValidDeviceId(id)
+      [...(user.linkedDeviceIds || []), ...(validLinkedGuestId ? [validLinkedGuestId] : [])].filter(
+        (id) => isValidDeviceId(id)
       )
     )
   );
-  if (allDeviceIds.length > 0) {
+  const otherDeviceIds =
+    options?.overwriteGuestProfile && validLinkedGuestId
+      ? allDeviceIds.filter((id) => id !== validLinkedGuestId)
+      : allDeviceIds;
+
+  if (otherDeviceIds.length > 0) {
     await pool.query(
       `UPDATE profiles
        SET user_id = $2,
@@ -713,8 +855,53 @@ async function saveMergedUserToDb(user: AuthUserDto, linkedGuestId?: string | nu
            updated_at = NOW()
        WHERE device_id = ANY($1::text[])
          AND (user_id IS NULL OR user_id = $2)`,
-      [allDeviceIds, user.id, user.nickname, user.xp, user.weeklyXp, user.streak]
+      [otherDeviceIds, user.id, user.nickname, user.xp, user.weeklyXp, user.streak]
     );
+  }
+
+  if (options?.overwriteGuestProfile && validLinkedGuestId) {
+    await pool.query(
+      `UPDATE profiles
+       SET user_id = $2,
+           username = CASE
+             WHEN NULLIF(TRIM($3), '') IS NOT NULL THEN $3
+             ELSE username
+           END,
+           xp = $4,
+           weekly_xp = $5,
+           daily_best_score = $6,
+           last_daily_quiz_date = $7,
+           streak = $8,
+           last_visit_date = $9,
+           last_active_date = CASE WHEN $4 > 0 OR $8 > 0 THEN CURRENT_DATE ELSE NULL END,
+           seen_ids = $10::jsonb,
+           favorite_ids = $11::jsonb,
+           liked_ids = $12::jsonb,
+           vocab_notebook = $13::jsonb,
+           badges = $14::jsonb,
+           updated_at = NOW()
+       WHERE device_id = $1
+         AND (user_id IS NULL OR user_id = $2)`,
+      [
+        validLinkedGuestId,
+        user.id,
+        user.nickname,
+        user.xp,
+        user.weeklyXp,
+        user.dailyBestScore,
+        user.lastDailyQuizDate,
+        user.streak,
+        user.lastVisitDate,
+        JSON.stringify(user.seenIds),
+        JSON.stringify(user.favoriteIds),
+        JSON.stringify(user.likedIds),
+        JSON.stringify(user.vocabNotebook),
+        JSON.stringify(user.badges),
+      ]
+    );
+  }
+
+  if (allDeviceIds.length > 0) {
     await pool.query(
       `UPDATE fact_events
        SET user_id = $2
@@ -1170,6 +1357,8 @@ export interface VerifyOtpOutcome {
   status: number;
   user: AuthUserDto | null;
   sessionToken?: string;
+  replaceLocal?: boolean;
+  resetDeviceId?: boolean;
   needsMergeChoice?: boolean;
   existingAccountSummary?: AccountProgressSummary;
   guestSummary?: AccountProgressSummary;
@@ -1477,50 +1666,66 @@ export async function verifyOtpAndCreateSession(params: {
     cleanGuestId && !boundMismatch
       ? await getProfileByDeviceId(cleanGuestId)
       : { profile: null };
-  const canMergeGuestProfile = Boolean(
+  const deviceOwnedByOtherUser = Boolean(
     cleanGuestId &&
-      !boundMismatch &&
-      (!guestProfileRes.profile?.userId || guestProfileRes.profile.userId === baseUser.id)
+      ((guestProfileRes.profile?.userId && guestProfileRes.profile.userId !== baseUser.id) ||
+        (await isDeviceLinkedToAnotherUser(cleanGuestId, baseUser.id)))
   );
-  const guestExtra =
-    canMergeGuestProfile && cleanGuestId
-      ? await fetchGuestDbExtras(cleanGuestId)
-      : { likedSlugs: [], dailyBestScore: 0, dailyQuizDate: '' };
-
-  const safeSnapshot = boundMismatch ? undefined : params.localSnapshot;
   const deviceAlreadyLinkedToUser = Boolean(
     cleanGuestId &&
+      !deviceOwnedByOtherUser &&
       (baseUser.linkedDeviceIds.includes(cleanGuestId) ||
         guestProfileRes.profile?.userId === baseUser.id)
   );
-
-  const guestXp = Math.max(0, guestProfileRes.profile?.xp ?? 0);
-  const guestStreak = Math.max(0, guestProfileRes.profile?.streak ?? 0);
-  const guestSavedItemsSet = new Set<string>([
-    ...(guestProfileRes.profile?.favoriteIds ?? []),
-    ...(Array.isArray(safeSnapshot?.favoriteIds) ? safeSnapshot.favoriteIds : []),
-    ...(guestProfileRes.profile?.likedIds ?? []),
-    ...guestExtra.likedSlugs,
-    ...(Array.isArray(safeSnapshot?.likedIds) ? safeSnapshot.likedIds : []),
-  ]);
-  const guestVocabCount = Math.max(
-    guestProfileRes.profile?.vocabNotebook?.length ?? 0,
-    Array.isArray(safeSnapshot?.vocabNotebook) ? safeSnapshot.vocabNotebook.length : 0
+  const isUnownedGuestDevice = Boolean(
+    cleanGuestId &&
+      !boundMismatch &&
+      !deviceOwnedByOtherUser &&
+      !deviceAlreadyLinkedToUser &&
+      (!guestProfileRes.profile || !guestProfileRes.profile.userId)
   );
+  const safeSnapshot = isUnownedGuestDevice ? params.localSnapshot : undefined;
+  const guestExtra =
+    isUnownedGuestDevice && cleanGuestId
+      ? await fetchGuestDbExtras(cleanGuestId)
+      : { likedSlugs: [], dailyBestScore: 0, dailyQuizDate: '' };
+
+  const guestXp = isUnownedGuestDevice ? Math.max(0, guestProfileRes.profile?.xp ?? 0) : 0;
+  const guestStreak = isUnownedGuestDevice ? Math.max(0, guestProfileRes.profile?.streak ?? 0) : 0;
+  const guestSavedItemsSet = isUnownedGuestDevice
+    ? new Set<string>([
+        ...(guestProfileRes.profile?.favoriteIds ?? []),
+        ...(Array.isArray(safeSnapshot?.favoriteIds) ? safeSnapshot.favoriteIds : []),
+        ...(guestProfileRes.profile?.likedIds ?? []),
+        ...guestExtra.likedSlugs,
+        ...(Array.isArray(safeSnapshot?.likedIds) ? safeSnapshot.likedIds : []),
+      ])
+    : new Set<string>();
+  const guestVocabCount = isUnownedGuestDevice
+    ? Math.max(
+        guestProfileRes.profile?.vocabNotebook?.length ?? 0,
+        Array.isArray(safeSnapshot?.vocabNotebook) ? safeSnapshot.vocabNotebook.length : 0
+      )
+    : 0;
   const guestSavedCount = guestSavedItemsSet.size + guestVocabCount;
   const hasUnlinkedGuestProgress = Boolean(
-    canMergeGuestProfile &&
-      !deviceAlreadyLinkedToUser &&
-      (guestXp > 0 || guestSavedCount > 0)
+    isUnownedGuestDevice && (guestXp > 0 || guestSavedCount > 0)
   );
 
   let persistedUser: AuthUserDto;
+  let replaceLocal = false;
+  let resetDeviceId = false;
   let needsMergeChoice = false;
   let existingAccountSummary: AccountProgressSummary | undefined;
   let guestSummary: AccountProgressSummary | undefined;
 
-  if (isExistingAccount && hasUnlinkedGuestProgress) {
-    // Existing account + unlinked guest progress on this device: do NOT auto-merge or overwrite; ask user!
+  if (deviceOwnedByOtherUser || boundMismatch) {
+    // Device already belongs to another user or failed device-cookie binding: NEVER copy/merge its data or link it!
+    persistedUser = baseUser;
+    replaceLocal = true;
+    resetDeviceId = true;
+  } else if (isExistingAccount && hasUnlinkedGuestProgress) {
+    // Existing account + genuinely unowned guest progress on this device: NEVER auto-merge or overwrite; ask user!
     needsMergeChoice = true;
     const existingSavedSet = new Set<string>([
       ...baseUser.favoriteIds,
@@ -1546,9 +1751,13 @@ export async function verifyOtpAndCreateSession(params: {
     };
     persistedUser = baseUser;
   } else if (isExistingAccount && !hasUnlinkedGuestProgress) {
-    // Existing account + zero guest progress on this device (or device already linked): link device directly to existing account
+    // Existing account + zero unowned guest progress (or device already belongs to this user)
+    let canAttachDevice = deviceAlreadyLinkedToUser;
+    if (isUnownedGuestDevice && cleanGuestId) {
+      canAttachDevice = await claimUnownedGuestDevice(cleanGuestId, baseUser.id, baseUser.nickname);
+    }
     const linkedDeviceIds = sanitizeStringArray(
-      [...baseUser.linkedDeviceIds, ...(canMergeGuestProfile && cleanGuestId ? [cleanGuestId] : [])],
+      [...baseUser.linkedDeviceIds, ...(canAttachDevice && cleanGuestId ? [cleanGuestId] : [])],
       50
     );
     persistedUser = await saveMergedUserToDb(
@@ -1557,24 +1766,33 @@ export async function verifyOtpAndCreateSession(params: {
         linkedDeviceIds,
         updatedAt: new Date().toISOString(),
       },
-      canMergeGuestProfile ? cleanGuestId : null
+      canAttachDevice ? cleanGuestId : null
     );
+    replaceLocal = true;
   } else {
-    // Brand new email account: automatically carry over guest progress into the new account
-    const mergedUser = mergeUserProgress(
-      baseUser,
-      canMergeGuestProfile ? guestProfileRes.profile : null,
-      guestExtra,
-      canMergeGuestProfile ? cleanGuestId : undefined,
-      safeSnapshot
-    );
-    if (canMergeGuestProfile && cleanGuestId) {
-      mergedUser.guestMergedAt = new Date().toISOString();
+    // Brand new email account: only carry over guest progress if device is genuinely unowned and atomically claimed
+    let claimedNewGuest = false;
+    if (isUnownedGuestDevice && cleanGuestId) {
+      claimedNewGuest = await claimUnownedGuestDevice(cleanGuestId, baseUser.id, baseUser.nickname);
     }
-    persistedUser = await saveMergedUserToDb(
-      mergedUser,
-      canMergeGuestProfile ? cleanGuestId : null
-    );
+    if (claimedNewGuest && cleanGuestId) {
+      const mergedUser = mergeUserProgress(
+        baseUser,
+        guestProfileRes.profile,
+        guestExtra,
+        cleanGuestId,
+        safeSnapshot
+      );
+      mergedUser.guestMergedAt = new Date().toISOString();
+      persistedUser = await saveMergedUserToDb(mergedUser, cleanGuestId);
+      replaceLocal = true;
+    } else {
+      persistedUser = baseUser;
+      replaceLocal = true;
+      if (cleanGuestId && !deviceAlreadyLinkedToUser) {
+        resetDeviceId = true;
+      }
+    }
   }
 
   const sessionToken = randomBytes(32).toString('base64url');
@@ -1604,6 +1822,8 @@ export async function verifyOtpAndCreateSession(params: {
     status: 200,
     user: persistedUser,
     sessionToken,
+    ...(replaceLocal ? { replaceLocal: true } : {}),
+    ...(resetDeviceId ? { resetDeviceId: true } : {}),
     ...(needsMergeChoice
       ? {
           needsMergeChoice: true,
@@ -1631,15 +1851,28 @@ export async function mergeGuestDataIntoUser(params: {
   );
   const guestProfileRes =
     cleanGuestId && !boundMismatch ? await getProfileByDeviceId(cleanGuestId) : { profile: null };
-  const canLinkGuest = Boolean(
+  const deviceOwnedByOtherUser = Boolean(
     cleanGuestId &&
-      !boundMismatch &&
+      ((guestProfileRes.profile?.userId && guestProfileRes.profile.userId !== user.id) ||
+        (await isDeviceLinkedToAnotherUser(cleanGuestId, user.id)))
+  );
+
+  if (deviceOwnedByOtherUser || boundMismatch) {
+    return user;
+  }
+
+  const canAttachGuest = Boolean(
+    cleanGuestId &&
       (!guestProfileRes.profile?.userId || guestProfileRes.profile.userId === user.id)
   );
 
   if (mode === 'keep_existing') {
+    let canOverwriteAndLink = canAttachGuest && Boolean(cleanGuestId);
+    if (cleanGuestId && !guestProfileRes.profile?.userId) {
+      canOverwriteAndLink = await claimUnownedGuestDevice(cleanGuestId, user.id, user.nickname);
+    }
     const linkedDeviceIds = sanitizeStringArray(
-      [...user.linkedDeviceIds, ...(canLinkGuest && cleanGuestId ? [cleanGuestId] : [])],
+      [...user.linkedDeviceIds, ...(canOverwriteAndLink && cleanGuestId ? [cleanGuestId] : [])],
       50
     );
     const updatedUser: AuthUserDto = {
@@ -1647,35 +1880,33 @@ export async function mergeGuestDataIntoUser(params: {
       linkedDeviceIds,
       updatedAt: new Date().toISOString(),
     };
-    return saveMergedUserToDb(updatedUser, canLinkGuest ? cleanGuestId : null);
+    return saveMergedUserToDb(updatedUser, canOverwriteAndLink ? cleanGuestId : null, {
+      overwriteGuestProfile: true,
+    });
   }
 
-  // Idempotency guard: if this specific device was already merged into the account, return user without re-adding XP.
-  if (cleanGuestId && user.linkedDeviceIds.includes(cleanGuestId)) {
+  // Idempotency and single-owner guard: only merge when device is genuinely unowned and atomically claimed now.
+  if (!cleanGuestId || user.linkedDeviceIds.includes(cleanGuestId) || guestProfileRes.profile?.userId) {
     return user;
   }
-  if (!cleanGuestId && user.guestMergedAt) {
+
+  const claimed = await claimUnownedGuestDevice(cleanGuestId, user.id, user.nickname);
+  if (!claimed) {
     return user;
   }
 
-  const guestExtra =
-    canLinkGuest && cleanGuestId
-      ? await fetchGuestDbExtras(cleanGuestId)
-      : { likedSlugs: [], dailyBestScore: 0, dailyQuizDate: '' };
-
+  const guestExtra = await fetchGuestDbExtras(cleanGuestId);
   const merged = mergeUserProgress(
     user,
-    canLinkGuest ? guestProfileRes.profile : null,
+    guestProfileRes.profile,
     guestExtra,
-    canLinkGuest ? cleanGuestId : undefined,
-    boundMismatch ? undefined : params.localSnapshot,
+    cleanGuestId,
+    params.localSnapshot,
     { addUnlinkedDeviceXp: true }
   );
-  if (canLinkGuest && cleanGuestId) {
-    merged.guestMergedAt = new Date().toISOString();
-  }
+  merged.guestMergedAt = new Date().toISOString();
 
-  return saveMergedUserToDb(merged, canLinkGuest ? cleanGuestId : null);
+  return saveMergedUserToDb(merged, cleanGuestId);
 }
 
 export async function getSessionUserFromToken(

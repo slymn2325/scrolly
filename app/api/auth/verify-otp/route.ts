@@ -11,6 +11,7 @@ import { isValidDeviceId } from '@/lib/dbActions';
 import { resolveApiLocale } from '@/lib/locale';
 import { checkRateLimit, extractClientIp } from '@/lib/rateLimit';
 import {
+  DEVICE_COOKIE_NAME,
   enforceSameOrigin,
   readJsonBodyWithLimit,
   readSignedDeviceIdFromRequest,
@@ -132,6 +133,8 @@ export async function POST(request: Request) {
       ok: true,
       authenticated: true,
       user: outcome.user,
+      ...(outcome.replaceLocal ? { replaceLocal: true } : {}),
+      ...(outcome.resetDeviceId ? { resetDeviceId: true } : {}),
       ...(outcome.needsMergeChoice
         ? {
             needsMergeChoice: true,
@@ -158,7 +161,15 @@ export async function POST(request: Request) {
     );
 
     const cleanGuest = isValidDeviceId(guestId) ? guestId.trim().slice(0, 128) : null;
-    if (
+    if (outcome.resetDeviceId) {
+      response.cookies.set(DEVICE_COOKIE_NAME, '', {
+        httpOnly: true,
+        sameSite: 'lax',
+        secure: shouldUseSecureCookie(request),
+        path: '/',
+        maxAge: 0,
+      });
+    } else if (
       !boundDeviceId &&
       cleanGuest &&
       (outcome.user.linkedDeviceIds.length === 0 || outcome.user.linkedDeviceIds.includes(cleanGuest))

@@ -737,7 +737,7 @@ export async function upsertProfileState(
       ? rawVisit
       : prevVisit || (hasEarnedProgress ? today : '');
 
-  const nextUserId = input.userId !== undefined ? input.userId : (prev?.userId ?? null);
+  const nextUserId = prev?.userId ?? (input.userId ?? null);
 
   const nextProfile: PersistedProfileDto = {
     deviceId: cleanId,
@@ -780,7 +780,7 @@ export async function upsertProfileState(
       $15::jsonb, $16::jsonb, $17::jsonb, NOW()
     )
     ON CONFLICT (device_id) DO UPDATE SET
-      user_id = COALESCE(EXCLUDED.user_id, profiles.user_id),
+      user_id = COALESCE(profiles.user_id, EXCLUDED.user_id),
       username = EXCLUDED.username,
       handle = CASE WHEN TRIM(EXCLUDED.handle) <> '' THEN EXCLUDED.handle ELSE COALESCE(profiles.handle, '') END,
       xp = GREATEST(COALESCE(profiles.xp, 0), EXCLUDED.xp),

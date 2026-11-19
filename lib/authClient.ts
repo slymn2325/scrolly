@@ -13,14 +13,22 @@ import type {
   VerifyOtpPayload,
   VerifyOtpResponse,
 } from '@/types/auth';
-import { getOrCreateDeviceId } from '@/lib/telemetry';
+import { getOrCreateDeviceId, resetTelemetryClientState } from '@/lib/telemetry';
+import { clearScrollaPlayerId, getOrCreateScrollaPlayerId } from '@/utils/duelLobby';
 import { clearLikedFacts, loadLikedFactIds, mergeLikedFactIds } from '@/utils/likedFacts';
 import { clearSavedFacts, loadSavedFactIds, mergeSavedFactIds } from '@/utils/savedFacts';
 import { clearSeenSlugsStorage, mergeSeenIdsInStorage } from '@/utils/seenFacts';
 import {
+  createEmptyWeights,
+  deriveExplorerTagFromId,
+  getDefaultNickname,
+  getLeagueInfo,
   loadUserMemory,
   mergeRemoteProfileIntoMemory,
+  normalizeCategoryAccuracy,
+  resetUserMemory,
   saveUserMemory,
+  TOTAL_CARDS_VIEWED_STORAGE_KEY,
   type UserMemoryState,
 } from '@/utils/userMemory';
 import {
@@ -35,6 +43,12 @@ export const AUTH_USER_ID_KEY = 'scrolly_auth_user_id';
 export const AUTH_CHANGED_EVENT = 'scrolly-auth-changed';
 export const OPEN_AUTH_EVENT = 'scrolly-open-auth';
 
+export interface AuthChangedEventDetail {
+  user: AuthUserDto | null;
+  loggedOut?: boolean;
+  freshMemory?: UserMemoryState;
+}
+
 export function getCachedAuthUserEmail(): string | null {
   if (typeof window === 'undefined') return null;
   try {
@@ -45,7 +59,10 @@ export function getCachedAuthUserEmail(): string | null {
   }
 }
 
-export function persistAuthCacheAndEmit(user: AuthUserDto | null): void {
+export function persistAuthCacheAndEmit(
+  user: AuthUserDto | null,
+  extra?: { loggedOut?: boolean; freshMemory?: UserMemoryState }
+): void {
   if (typeof window === 'undefined') return;
   try {
     if (user) {
@@ -62,8 +79,12 @@ export function persistAuthCacheAndEmit(user: AuthUserDto | null): void {
   }
   try {
     window.dispatchEvent(
-      new CustomEvent<{ user: AuthUserDto | null }>(AUTH_CHANGED_EVENT, {
-        detail: { user },
+      new CustomEvent<AuthChangedEventDetail>(AUTH_CHANGED_EVENT, {
+        detail: {
+          user,
+          ...(extra?.loggedOut ? { loggedOut: true } : {}),
+          ...(extra?.freshMemory ? { freshMemory: extra.freshMemory } : {}),
+        },
       })
     );
   } catch {
@@ -114,27 +135,55 @@ export function buildLocalSnapshot(overrideMemory?: UserMemoryState): LocalMemor
 export function hydrateLocalMemoryFromAuthUser(
   local: UserMemoryState,
   user: AuthUserDto,
-  mode: GuestMergeMode = 'merge'
+  mode: GuestMergeMode = 'merge',
+  options?: { freshDeviceId?: string }
 ): UserMemoryState {
   if (mode === 'keep_existing') {
     clearSavedFacts();
     clearLikedFacts();
     clearSeenSlugsStorage();
     clearVocabNotebook();
+    if (typeof window !== 'undefined') {
+      try {
+        window.localStorage.removeItem(TOTAL_CARDS_VIEWED_STORAGE_KEY);
+      } catch {
+        // Ignore storage failures in private browsing
+      }
+    }
+
+    const nextPlayerId = options?.freshDeviceId || local.playerId;
+    const baseWeights = createEmptyWeights();
+    if (user.categoryWeights && typeof user.categoryWeights === 'object') {
+      for (const key of Object.keys(baseWeights) as (keyof typeof baseWeights)[]) {
+        const val = user.categoryWeights[key];
+        if (typeof val === 'number' && Number.isFinite(val) && val > 0) {
+          baseWeights[key] = val;
+        }
+      }
+    }
 
     const replaced: UserMemoryState = {
       ...local,
-      nickname: user.nickname || local.nickname,
+      playerId: nextPlayerId,
+      nickname:
+        user.nickname ||
+        getDefaultNickname(local.lang, deriveExplorerTagFromId(nextPlayerId)),
       xp: user.xp,
       weeklyXp: user.weeklyXp,
       dailyBestScore: user.dailyBestScore,
       lastDailyQuizDate: user.lastDailyQuizDate,
+      highestLeagueId: getLeagueInfo(user.xp, local.lang).id,
       streakDays: user.streak,
       lastVisitDate: user.lastVisitDate || local.lastVisitDate,
       lastActiveDate: user.streak > 0 ? user.lastVisitDate || local.lastVisitDate : '',
       seenIds: [...(user.seenIds ?? [])],
+      recentFiveIds: [],
+      cardsSinceLastQuiz: 0,
       favoriteIds: [...(user.favoriteIds ?? [])],
+      categoryWeights: baseWeights,
+      categoryAccuracy: normalizeCategoryAccuracy(user.categoryAccuracy),
       badges: [...(user.badges ?? [])],
+      isReturningUser: (user.seenIds?.length ?? 0) > 0 || user.xp > 0,
     };
     saveUserMemory(replaced);
     mergeSavedFactIds(user.favoriteIds ?? []);
@@ -270,6 +319,8 @@ export async function verifyEmailOtp(
         ok: true,
         authenticated: true,
         user: data.user,
+        ...(data.replaceLocal ? { replaceLocal: true } : {}),
+        ...(data.resetDeviceId ? { resetDeviceId: true } : {}),
         ...(data.needsMergeChoice
           ? {
               needsMergeChoice: true,
@@ -337,6 +388,48 @@ export async function mergeGuestToUser(
   }
 }
 
+export function resetLocalStateForNewGuestSession(): {
+  memory: UserMemoryState;
+  deviceId: string;
+} {
+  if (typeof window === 'undefined') {
+    return { memory: loadUserMemory(), deviceId: 'server' };
+  }
+
+  const prev = loadUserMemory();
+  const preservedPrefs = {
+    lang: prev.lang,
+    appearance: prev.appearance,
+    darkMode: prev.darkMode,
+    themeCustomized: prev.themeCustomized,
+    soundEnabled: prev.soundEnabled,
+    notificationsEnabled: prev.notificationsEnabled,
+    cookieAccepted: prev.cookieAccepted,
+  };
+
+  clearSavedFacts();
+  clearLikedFacts();
+  clearSeenSlugsStorage();
+  clearVocabNotebook();
+  clearScrollaPlayerId();
+
+  const { deviceId: newDeviceId } = resetTelemetryClientState();
+  const baseFresh = resetUserMemory();
+  const fresh: UserMemoryState = {
+    ...baseFresh,
+    ...preservedPrefs,
+    playerId: newDeviceId,
+    nickname: getDefaultNickname(
+      preservedPrefs.lang,
+      deriveExplorerTagFromId(newDeviceId)
+    ),
+  };
+  saveUserMemory(fresh);
+  getOrCreateScrollaPlayerId(newDeviceId);
+  persistAuthCacheAndEmit(null, { loggedOut: true, freshMemory: fresh });
+  return { memory: fresh, deviceId: newDeviceId };
+}
+
 export async function logoutSession(): Promise<LogoutResponse> {
   try {
     const res = await fetch('/api/auth/logout', {
@@ -349,6 +442,6 @@ export async function logoutSession(): Promise<LogoutResponse> {
   } catch {
     return { ok: false, authenticated: false, user: null };
   } finally {
-    persistAuthCacheAndEmit(null);
+    resetLocalStateForNewGuestSession();
   }
 }

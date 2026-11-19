@@ -83,6 +83,8 @@ export interface VerifyOtpResponse {
   ok: boolean;
   authenticated: boolean;
   user: AuthUserDto | null;
+  replaceLocal?: boolean;
+  resetDeviceId?: boolean;
   needsMergeChoice?: boolean;
   existingAccountSummary?: AccountProgressSummary;
   guestSummary?: AccountProgressSummary;

@@ -32,6 +32,7 @@ import {
   translations,
 } from '@/i18n/translations';
 import { applyAppearance, type AppearanceMode } from '@/lib/theme';
+import { logoutSession } from '@/lib/authClient';
 import { motionSpring, motionTiming } from '@/lib/motion';
 import { applyGoogleConsentChoice } from '@/utils/consent';
 import { generateDiplomaCertificateImage } from '@/utils/diplomaCanvasGenerator';
@@ -252,17 +253,13 @@ export default function DiplomaProfileModal({
     onButtonPop();
     setSigningOut(true);
     try {
-      await fetch('/api/auth/logout', { method: 'POST', credentials: 'same-origin' });
-    } catch {
-      // Clear the local session even when the network is down.
+      await logoutSession();
     } finally {
-      try {
-        window.localStorage.removeItem('scrolly_auth_user_email');
-      } catch {
-        // Ignore storage restrictions.
-      }
       setAuthEmail(null);
-      window.dispatchEvent(new CustomEvent('scrolly-auth-changed', { detail: { user: null } }));
+      setSavedIds([]);
+      setLikedIds([]);
+      setSavedVocab([]);
+      setSettingsOpen(false);
       setSigningOut(false);
     }
   };

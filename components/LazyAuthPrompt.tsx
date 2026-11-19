@@ -74,7 +74,11 @@ interface LazyAuthPromptProps {
   onCloseModal: () => void;
   onDismissNudge: () => void;
   onOpenModalFromNudge: () => void;
-  onAuthenticated: (user: AuthUserDto, mode?: GuestMergeMode) => void;
+  onAuthenticated: (
+    user: AuthUserDto,
+    mode?: GuestMergeMode,
+    options?: { resetDeviceId?: boolean }
+  ) => void;
 }
 
 function getContextualReason(trigger: string | undefined, lang: Language): string {
@@ -320,7 +324,9 @@ export default function LazyAuthPrompt({
     setStep('email');
     setCode('');
     setDevOtpCode(null);
-    onAuthenticated(res.user, 'merge');
+    onAuthenticated(res.user, res.replaceLocal ? 'keep_existing' : 'merge', {
+      resetDeviceId: Boolean(res.resetDeviceId),
+    });
   };
 
   const handleResolveMergeChoice = async (mode: GuestMergeMode) => {
@@ -341,7 +347,7 @@ export default function LazyAuthPrompt({
     setPendingUser(null);
     setExistingSummary(null);
     setGuestSummary(null);
-    onAuthenticated(finalUser, mode);
+    onAuthenticated(finalUser, 'keep_existing');
   };
 
   const surfaceClass = 'border border-cik-line bg-cik-surface text-cik-text';
@@ -465,8 +471,8 @@ export default function LazyAuthPrompt({
                           ? `${email} adresine gönderilen kodu gir.`
                           : `Enter the code sent to ${email}.`
                         : lang === 'tr'
-                          ? 'Mevcut bulut hesabınla mı devam etmek istersin, yoksa bu cihazdaki misafir ilerlemeni hesaba eklemek mi?'
-                          : 'Would you like to continue with your existing cloud account or merge the guest progress on this device?'}
+                          ? 'Bu e-postaya bağlı bir hesabın zaten var. Hangi ilerleme ile devam etmek istersin?'
+                          : 'You already have an account linked to this email. Which progress would you like to continue with?'}
                   </p>
                 </div>
               </div>
@@ -543,28 +549,38 @@ export default function LazyAuthPrompt({
                     <button
                       type="button"
                       disabled={busy}
-                      data-testid="auth-choice-merge-both"
-                      onClick={() => void handleResolveMergeChoice('merge')}
+                      data-testid="auth-choice-keep-existing"
+                      onClick={() => void handleResolveMergeChoice('keep_existing')}
                       className="cik-headline flex min-h-11 w-full items-center justify-center gap-2 rounded-pill bg-cik-cta px-4 text-cik-on-cta disabled:opacity-60"
                     >
-                      <Sparkles size={16} strokeWidth={2} aria-hidden="true" />
+                      <CheckCircle2 size={16} strokeWidth={2} aria-hidden="true" />
                       <span>
-                        {lang === 'tr' ? 'İkisini birleştir' : 'Merge both'}
+                        {lang === 'tr'
+                          ? `Hesabımdaki ilerleme ile devam et (${existingSummary.xp.toLocaleString()} XP)`
+                          : `Continue with my account progress (${existingSummary.xp.toLocaleString()} XP)`}
                       </span>
                     </button>
 
                     <button
                       type="button"
                       disabled={busy}
-                      data-testid="auth-choice-keep-existing"
-                      onClick={() => void handleResolveMergeChoice('keep_existing')}
+                      data-testid="auth-choice-merge-both"
+                      onClick={() => void handleResolveMergeChoice('merge')}
                       className="cik-headline flex min-h-11 w-full items-center justify-center gap-2 rounded-pill border border-cik-line bg-cik-surface-2 px-4 text-cik-text disabled:opacity-60"
                     >
-                      <CheckCircle2 size={16} strokeWidth={2} aria-hidden="true" />
+                      <Sparkles size={16} strokeWidth={2} aria-hidden="true" />
                       <span>
                         {lang === 'tr'
-                          ? 'Mevcut hesabımla devam et'
-                          : 'Continue with my existing account'}
+                          ? `Bu cihazdaki misafir ilerlemeyi hesabımla birleştir (${
+                              guestSummary.xp > 0
+                                ? `+${guestSummary.xp.toLocaleString()} XP`
+                                : `${guestSummary.savedCount} kayıt`
+                            })`
+                          : `Merge this device's guest progress into my account (${
+                              guestSummary.xp > 0
+                                ? `+${guestSummary.xp.toLocaleString()} XP`
+                                : `${guestSummary.savedCount} saved`
+                            })`}
                       </span>
                     </button>
                   </div>

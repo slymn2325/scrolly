@@ -243,7 +243,7 @@ export function deriveExplorerTagFromId(playerId: string): number {
   return 100 + ((hash >>> 0) % 900);
 }
 
-function getDefaultNickname(lang: Language, tagNumber: number): string {
+export function getDefaultNickname(lang: Language, tagNumber: number): string {
   return lang === 'tr'
     ? `Merak Kaşifi #${tagNumber}`
     : `Curiosity Explorer #${tagNumber}`;

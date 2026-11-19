@@ -5,7 +5,7 @@ import {
   shouldUseSecureCookie,
 } from '@/lib/auth';
 import { checkRateLimit, extractClientIp } from '@/lib/rateLimit';
-import { enforceSameOrigin } from '@/lib/requestSecurity';
+import { DEVICE_COOKIE_NAME, enforceSameOrigin } from '@/lib/requestSecurity';
 import type { LogoutResponse } from '@/types/auth';
 
 export const dynamic = 'force-dynamic';
@@ -44,6 +44,13 @@ export async function POST(request: Request) {
     headers: NO_STORE_HEADERS,
   });
   response.cookies.set(SESSION_COOKIE_NAME, '', {
+    httpOnly: true,
+    sameSite: 'lax',
+    secure: shouldUseSecureCookie(request),
+    path: '/',
+    maxAge: 0,
+  });
+  response.cookies.set(DEVICE_COOKIE_NAME, '', {
     httpOnly: true,
     sameSite: 'lax',
     secure: shouldUseSecureCookie(request),
