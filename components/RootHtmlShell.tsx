@@ -9,6 +9,11 @@ const GTM_ID = /^GTM-[A-Z0-9]{4,16}$/i.test(RAW_GTM_ID.trim())
   ? RAW_GTM_ID.trim()
   : 'GTM-TQ6VVKM7';
 
+const RAW_CLARITY_ID = process.env.NEXT_PUBLIC_CLARITY_ID || 'zh55547w0a';
+const CLARITY_ID = /^[a-z0-9]{6,20}$/i.test(RAW_CLARITY_ID.trim())
+  ? RAW_CLARITY_ID.trim()
+  : 'zh55547w0a';
+
 const CONSENT_MODE_BOOTSTRAP_SCRIPT = `
 window.dataLayer = window.dataLayer || [];
 function gtag(){window.dataLayer.push(arguments);}
@@ -98,6 +103,11 @@ export default function RootHtmlShell({ lang, jsonLd, children }: RootHtmlShellP
             })(window,document,'script','dataLayer','${GTM_ID}');
           `}
         </Script>
+        {process.env.NODE_ENV === 'production' ? (
+          <Script id="ms-clarity" strategy="afterInteractive">
+            {`(function(c,l,a,r,i,t,y){c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);})(window, document, "clarity", "script", "${CLARITY_ID}");`}
+          </Script>
+        ) : null}
       </body>
     </html>
   );
