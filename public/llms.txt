@@ -1,16 +1,21 @@
 # Scrolly
 
-> Scrolly (https://scrolly.live) is a free bilingual (English and Turkish) reels-style micro-learning Progressive Web App (PWA) delivering daily curated science, space, history, nature, human body, weird records, and statistics facts backed by primary sources. Every vertical card combines a direct BLUF summary, an interactive Quick Guess slider, a deeper "Why / How?" breakdown, B1–C2 Word Lab vocabulary training, Quiz Hub recall tests, and Scrolla 1v1 live multiplayer trivia duels.
+> Scrolly (https://scrolly.live) is a free bilingual (English and Turkish) reels-style micro-learning Progressive Web App (PWA) delivering daily curated science, space, history, nature, human body, weird records, and statistics facts backed by primary sources. Every vertical card combines a direct BLUF summary, an interactive Quick Guess slider, Daily Shared Guess, a deeper "Why / How?" breakdown, B1–C2 Word Lab vocabulary training, Quiz Hub recall tests, shareable `/challenge/[code]` quiz challenges, Scrolla 1v1 live multiplayer duels, and private Friend Leagues.
 
-> Scrolly (https://scrolly.live); uzay, doğa, insan vücudu, tarih, bilim, garip rekorlar ve istatistik alanlarında birincil bilimsel kaynaklarla doğrulanmış günlük mikro-öğrenme kartları, etkileşimli Hızlı Tahmin oyunu, B1–C2 Word Lab İngilizce kelime laboratuvarı, Quiz Merkezi ve Scrolla 1v1 canlı bilgi düelloları sunan ücretsiz, iki dilli (TR/EN) bir PWA platformudur.
+> Scrolly (https://scrolly.live); uzay, doğa, insan vücudu, tarih, bilim, garip rekorlar ve istatistik alanlarında birincil bilimsel kaynaklarla doğrulanmış günlük mikro-öğrenme kartları, etkileşimli Hızlı Tahmin & Günün Tahmini oyunu, B1–C2 Word Lab İngilizce kelime laboratuvarı, Quiz Merkezi, paylaşılabilir `/challenge/[code]` meydan okuma quizleri, Scrolla 1v1 canlı bilgi düelloları ve Arkadaş Ligim odaları sunan ücretsiz, iki dilli (TR/EN) bir PWA platformudur.
 
-## Core Pages
+- Last-Updated: 2026-11-21
+- Canonical Domain: https://scrolly.live
+- Editorial Contact: contact@scrolly.live
 
-- [Scrolly Interactive Feed (TR)](https://scrolly.live/): Main Turkish reels-style micro-learning feed with Quick Guess challenges, primary source links, and XP progression.
-- [Scrolly Interactive Feed (EN)](https://scrolly.live/en): Full English-language discovery feed with verified scientific citations, Quick Guess sliders, and memory quizzes.
+## Core Pages & Interactive Modes
+
+- [Scrolly Interactive Feed (TR)](https://scrolly.live/): Main Turkish reels-style micro-learning feed with Quick Guess challenges, Daily Shared Guess (Günün Tahmini), primary source links, and XP progression.
+- [Scrolly Interactive Feed (EN)](https://scrolly.live/en): Full English-language discovery feed with verified scientific citations, Quick Guess sliders, Daily Guess, and memory quizzes.
 - [Quiz Hub (Daily Sprint, Weekly Marathon & Memory Quiz)](https://scrolly.live/?tab=quiz): 5-card Memory Quiz from recently viewed cards, Daily Sprint, 10-question Weekly Marathon, and Word Lab quiz modes.
+- [Async Quiz Challenges (`/challenge/[code]`)](https://scrolly.live/challenge/[code]): Shareable "Can You Beat Me? / Beni Geçebilir Misin?" challenge links preserving exact quiz question snapshots for asynchronous head-to-head score comparison.
 - [Scrolla 1v1 Live Trivia Arena](https://scrolly.live/?tab=duel): Real-time two-player head-to-head knowledge duel rooms with 6-character room codes, topic filtering, and synchronized timers.
-- [Explorer Leaderboard](https://scrolly.live/?tab=leaderboard): Live daily, weekly, and all-time XP rankings and Explorer League standings.
+- [Explorer Leaderboard & Private Friend Leagues (Arkadaş Ligim)](https://scrolly.live/?tab=leaderboard): Live daily, weekly, and all-time XP rankings alongside private multi-league Friend & Class Mini Leagues with 6-character invite codes.
 - [Full Verified Knowledge Corpus (llms-full.txt)](https://scrolly.live/llms-full.txt): Complete plain-text Markdown export of Scrolly's editorial methodology, FAQ, and bilingual verified fact cards with primary source URLs.
 - [XML Sitemap](https://scrolly.live/sitemap.xml): Canonical index of all bilingual homepage, topic archive, policy, and individual `/fact/[slug]` and `/en/fact/[slug]` URLs.
 

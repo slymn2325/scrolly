@@ -30,13 +30,13 @@ export async function generateMetadata({ searchParams }: PageProps): Promise<Met
   const canonicalUrl = 'https://scrolly.live/about';
   const title = fitDocumentTitle(
     lang === 'en'
-      ? 'About Scrolly & Editorial Methodology | scrolly.live'
-      : 'Hakkımızda ve Editöryal Metodoloji | Scrolly'
+      ? 'About Scrolly & Editorial Verification Process | Scrolly'
+      : 'Scrolly Hakkında ve Editöryal Doğrulama Süreci | Scrolly'
   );
   const description =
     lang === 'en'
-      ? 'Learn how Scrolly curates, verifies, and translates interactive bilingual micro-learning cards using primary scientific sources.'
-      : 'Scrolly’nin doğrulanmış bilimsel kaynaklara dayalı iki dilli mikro öğrenme kartlarını nasıl hazırladığını ve yayın politikasını inceleyin.';
+      ? 'Learn how Scrolly curates, fact-checks, and translates bilingual micro-learning cards using primary scientific sources, plus read our editorial FAQ.'
+      : 'Scrolly’nin doğrulanmış bilimsel kaynaklara dayalı iki dilli mikro öğrenme kartlarını nasıl hazırladığını, doğrulama adımlarını ve SSS’yi inceleyin.';
   const image = { ...BRAND_OG_IMAGE, alt: title };
 
   return {
@@ -81,12 +81,12 @@ export default async function AboutPage({ searchParams }: PageProps) {
         {
           question: 'What is Scrolly?',
           answer:
-            'Scrolly (https://scrolly.live) is a free bilingual (English and Turkish) reels-style micro-learning Progressive Web App built around verified scientific curiosity. Every vertical card combines a direct 40–60 word summary, a deeper "Why / How?" breakdown, primary source links, interactive Quick Guess sliders, and instant recall quizzes.',
+            'Scrolly (https://scrolly.live) is a free bilingual (English and Turkish) reels-style micro-learning Progressive Web App built around verified scientific curiosity. Every vertical card combines a direct 40–60 word summary, a deeper "Why / How?" breakdown, primary source links, interactive Quick Guess sliders, instant recall quizzes, and shareable challenges.',
         },
         {
           question: 'Is Scrolly free to use?',
           answer:
-            'Yes, Scrolly is completely free with no mandatory sign-up or paywall. You can explore every card, join quizzes, play Scrolla 1v1 duels, earn live leaderboard XP, and save favorites immediately as a guest, or optionally link an email via one-time OTP to sync progress across devices.',
+            'Yes, Scrolly is completely free with no mandatory sign-up or paywall. You can explore every card, join quizzes, play Scrolla 1v1 duels, create private Friend Leagues, earn live leaderboard XP, and save favorites immediately as a guest, or optionally link an email via one-time OTP to sync across devices.',
         },
         {
           question: 'How are facts verified on Scrolly?',
@@ -96,39 +96,39 @@ export default async function AboutPage({ searchParams }: PageProps) {
         {
           question: 'How do Word Lab and Scrolla 1v1 work?',
           answer:
-            'Word Lab teaches B1–C2 English vocabulary in the vertical feed with IPA pronunciation, normal and slow audio playback, bilingual context sentences, synonyms, and a +15 XP meaning quiz. Scrolla 1v1 is a live two-player trivia arena where a 6-character room code launches an identical 3–10 question match.',
+            'Word Lab teaches B1–C2 English vocabulary in the vertical feed with IPA pronunciation, normal and slow audio playback, bilingual context sentences, synonyms, and a +15 XP meaning quiz. Scrolla 1v1 hosts live 6-character duel rooms, while async challenge links let friends beat your exact quiz score anytime.',
         },
         {
           question: 'What topics does Scrolly cover?',
           answer:
-            'Scrolly covers eight interactive categories: Space, Nature, Human Body, History, Science, Weird Records, Statistics, and Word Lab (B1–C2 English vocabulary). Each category features a dedicated topic archive page and interactive feed filter with verified citations and Quick Guess challenges.',
+            'Scrolly covers eight interactive learning categories: Space, Nature, Human Body, History, Science, Weird Records, Statistics, and Word Lab (B1–C2 English vocabulary). Each category features a dedicated topic archive page, interactive feed filter, primary scientific citations, Quick Guess sliders, Daily Guess challenges, recall quizzes, and live XP leaderboards.',
         },
       ]
     : [
         {
           question: 'Scrolly nedir?',
           answer:
-            'Scrolly (https://scrolly.live); doğrulanmış bilimsel kaynaklara dayanan ücretsiz, iki dilli (Türkçe ve İngilizce) reels tarzı bir mikro-öğrenme PWA platformudur. Her dikey bilgi kartı; 40–60 kelimelik net özet, "Neden / Nasıl?" açıklaması, birincil kaynak bağlantısı, etkileşimli Hızlı Tahmin oyunu ve anlık pekiştirme testi içerir.',
+            'Scrolly (https://scrolly.live); doğrulanmış bilimsel kaynaklara dayanan ücretsiz, iki dilli (Türkçe ve İngilizce) reels tarzı bir mikro-öğrenme PWA platformudur. Her dikey bilgi kartı; 40–60 kelimelik net özet, "Neden / Nasıl?" açıklaması, birincil kaynak bağlantısı, etkileşimli Hızlı Tahmin oyunu, anlık pekiştirme testi ve paylaşılabilir meydan okuma modu içerir.',
         },
         {
           question: 'Scrolly ücretsiz mi?',
           answer:
-            'Evet, Scrolly tamamen ücretsizdir ve zorunlu üyelik gerektirmez. Misafir olarak tüm kartları kaydırabilir, quizleri çözebilir, Scrolla 1v1 düellolarına katılabilir, canlı liderlik tablosunda XP kazanabilir ve favorilerinizi kaydedebilirsiniz; isterseniz tek kullanımlık e-posta OTP koduyla ilerlemenizi cihazlar arasında senkronize edebilirsiniz.',
+            'Evet, Scrolly tamamen ücretsizdir ve zorunlu üyelik ya da ödeme duvarı gerektirmez. Misafir olarak tüm kartları kaydırabilir, günlük ve haftalık quizleri çözebilir, Scrolla 1v1 düellolarına ve Arkadaş Ligim odalarına katılabilir, canlı liderlik tablosunda XP kazanabilirsiniz; isterseniz e-posta OTP koduyla ilerlemenizi cihazlar arasında güvenle senkronize edebilirsiniz.',
         },
         {
           question: 'Bilgiler nasıl doğrulanıyor?',
           answer:
-            'Her Scrolly kartı; NASA, ESA, Nature, Science, PubMed/NIH, Smithsonian veya Britannica gibi birincil kurumsal ve hakemli kaynaklara doğrudan bağlantı verir. Sayısal veriler, ölçüm birimleri ve tarihsel kayıtlar birincil literatürle karşılaştırılır; Türkçe ve İngilizce bilimsel terminoloji yayın öncesinde ayrı ayrı doğrulanır.',
+            'Her Scrolly kartı; NASA, ESA, Nature, Science, PubMed/NIH, Smithsonian veya Britannica gibi birincil kurumsal ve hakemli kaynaklara doğrudan bağlantı verir. Sayısal veriler, ölçüm birimleri ve tarihsel kayıtlar birincil literatürle karşılaştırılır; Türkçe ve İngilizce bilimsel terminoloji yayın öncesinde editöryal doğrulama ekibimizce ayrı ayrı kontrol edilir.',
         },
         {
           question: 'Word Lab ve Scrolla 1v1 nasıl çalışır?',
           answer:
-            'Word Lab, B1–C2 seviye İngilizce kelimeleri IPA telaffuz, normal ve yavaş sesli dinleme, iki dilli örnek cümleler, eş anlamlılar ve +15 XP kazandıran anlam testiyle öğretir. Scrolla 1v1 ise 6 haneli oda koduyla iki oyuncuyu aynı 3–10 soruluk pakette gerçek zamanlı yarıştıran canlı düello arenasıdır.',
+            'Word Lab, B1–C2 seviye İngilizce kelimeleri IPA telaffuz, normal ve yavaş sesli dinleme, iki dilli örnek cümleler, eş anlamlılar ve +15 XP kazandıran anlam testiyle öğretir. Scrolla 1v1 ise 6 haneli oda koduyla iki oyuncuyu canlı yarıştırır; asenkron meydan okuma linkleriyle arkadaşlarınızı aynı sorularda test edebilirsiniz.',
         },
         {
           question: 'Scrolly hangi konuları kapsar?',
           answer:
-            'Scrolly sekiz temel alanı kapsar: Uzay, Doğa, İnsan Vücudu, Tarih, Bilim, Garip Rekorlar, İstatistik ve Word Lab (B1–C2 İngilizce kelime öğrenme). Her kategorinin kendine özel arşiv sayfası, doğrulanmış birincil kaynak atıfları ve etkileşimli tahmin soruları bulunur.',
+            'Scrolly sekiz etkileşimli öğrenme alanını kapsar: Uzay, Doğa, İnsan Vücudu, Tarih, Bilim, Garip Rekorlar, İstatistik ve Word Lab (B1–C2 İngilizce kelime öğrenme). Her kategorinin kendine özel kaynaklı arşiv sayfası, doğrulanmış birincil atıfları, Günün Tahmini dahil etkileşimli tahmin kaydırıcıları, pekiştirme quizleri ve canlı XP sıralaması bulunur.',
         },
       ];
 
@@ -212,8 +212,8 @@ export default async function AboutPage({ searchParams }: PageProps) {
     >
       <p className="text-sm leading-relaxed text-ink/85 dark:text-violet-100/90 sm:text-base">
         {isEn
-          ? 'Scrolly (https://scrolly.live) is an independent bilingual (Turkish and English) educational knowledge platform designed to turn short daily screen moments into verifiable scientific curiosity. Across six core disciplines — Space, Nature, Science, History, Human Body, and Weird Records — every card distills complex research into concise summaries, interactive diagrams, and instant memory checkpoints.'
-          : 'Scrolly (https://scrolly.live), günlük kısa dijital anları doğrulanabilir bilimsel meraka dönüştürmek amacıyla geliştirilmiş bağımsız, iki dilli (Türkçe ve İngilizce) bir eğitim ve bilgi platformudur. Uzay, Doğa, Bilim, Tarih, İnsan Vücudu ve Garip Rekorlar alanlarındaki her kart; kapsamlı araştırmaları net özetlere, etkileşimli eskiz diyagramlarına ve anlık hafıza sorularına dönüştürür.'}
+          ? 'Scrolly (https://scrolly.live) is an independent bilingual (Turkish and English) educational knowledge platform designed to turn short daily screen moments into verifiable scientific curiosity. Across seven core disciplines — Space, Nature, Science, History, Human Body, Weird Records, and Statistics — plus B1–C2 Word Lab, every card distills complex research into concise summaries, interactive diagrams, and instant memory checkpoints.'
+          : 'Scrolly (https://scrolly.live), günlük kısa dijital anları doğrulanabilir bilimsel meraka dönüştürmek amacıyla geliştirilmiş bağımsız, iki dilli (Türkçe ve İngilizce) bir eğitim ve bilgi platformudur. Uzay, Doğa, Bilim, Tarih, İnsan Vücudu, Garip Rekorlar ve İstatistik alanlarının yanı sıra Word Lab ile her kart; kapsamlı araştırmaları net özetlere, etkileşimli diyagramlara ve anlık hafıza sorularına dönüştürür.'}
       </p>
 
       <div className="grid gap-3 sm:grid-cols-2">

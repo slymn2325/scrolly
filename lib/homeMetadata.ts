@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import { fitDocumentTitle } from '@/utils/factSeo';
 
-const HOME_TR = 'https://scrolly.live/';
+const HOME_TR = 'https://scrolly.live';
 const HOME_EN = 'https://scrolly.live/en';
 
 export const BRAND_OG_IMAGE = {
@@ -15,12 +15,12 @@ const HOME_COPY = {
   tr: {
     title: 'Scrolly — Kaydır, Öğren, Şaşır | Mikro Öğrenme & Quiz',
     description:
-      'Uzay, doğa, insan vücudu, tarih, bilim ve B1–C2 İngilizce kelime kartlarını kaydırarak keşfet; Hızlı Tahmin, 5 soruluk Quiz ve Scrolla 1v1 düellosunda yarış!',
+      'Uzay, doğa, insan vücudu, tarih, bilim ve B1–C2 İngilizce kelime kartlarını kaydır; Hızlı Tahmin, 5 soruluk Quiz ve Scrolla 1v1 düellosunda yarış!',
   },
   en: {
     title: 'Scrolly — Scroll, Learn, Wonder | Micro-Learning & Quiz',
     description:
-      'Explore verified space, nature, human body, history, science, and B1–C2 Word Lab cards. Play Quick Guess sliders, 5-card memory quizzes, and Scrolla 1v1 duels.',
+      'Explore verified space, nature, body, history, science, and B1–C2 Word Lab cards. Play Quick Guess sliders, 5-card quizzes, and Scrolla 1v1 duels.',
   },
 } as const;
 

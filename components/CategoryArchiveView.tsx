@@ -35,34 +35,51 @@ import { CATEGORY_ILLUSTRATION_MAP, CATEGORY_SUB_ICON_MAP } from '@/utils/fluent
 
 const CATEGORY_DESCRIPTIONS: Record<CategoryId, { tr: string; en: string }> = {
   space: {
-    tr: 'Kara deliklerden ötegezegenlere, kozmik toz bulutlarından zaman genişlemesine kadar doğrulanmış uzay keşifleri.',
-    en: 'Verified astronomical discoveries from black holes and exoplanets to cosmic dust and time dilation.',
+    tr: 'Kara deliklerden ötegezegenlere ve zaman genişlemesine kadar birincil kaynaklı uzay bilgi kartlarını keşfet, Hızlı Tahmin ve quizlerle bilgini sına.',
+    en: 'Explore primary-source verified astronomy discoveries from black holes and exoplanets to time dilation with Quick Guess sliders and instant quizzes.',
   },
   nature: {
-    tr: 'Biyolüminesans canlılardan kadim orman ekosistemlerine kadar doğanın şaşırtıcı hayatta kalma stratejileri.',
-    en: 'Remarkable survival strategies of the natural world, from bioluminescent ocean life to ancient forest networks.',
+    tr: 'Biyolüminesans canlılardan kadim orman ekosistemlerine kadar doğanın hayatta kalma stratejilerini doğrulanmış bilgi kartları ve quizlerle keşfet.',
+    en: 'Discover remarkable survival strategies across bioluminescent oceans, wildlife, and ancient forests with primary-source fact cards and quick quizzes.',
   },
   human_body: {
-    tr: 'Nörobilimden kalp fizyolojisine, duyusal algıdan uyku mekanizmalarına kadar insan vücudunun gizli sırları.',
-    en: 'The hidden architecture of the human body across neuroscience, cardiology, sensory perception, and sleep biology.',
+    tr: 'Nörobilimden kalp fizyolojisine, duyusal algıdan uyku biyolojisine kadar insan vücudunun sırlarını bilimsel kaynaklı kartlar ve quizlerle keşfet.',
+    en: 'Uncover the hidden architecture of the human body across neuroscience, cardiology, senses, and sleep biology through verified fact cards and quizzes.',
   },
   history: {
-    tr: 'Unutulmuş uygarlıklardan beklenmedik icatlara ve antik mühendislik harikalarına uzanan tarihsel gerçekler.',
-    en: 'Verified historical milestones spanning forgotten civilizations, surprising inventions, and ancient engineering.',
+    tr: 'Unutulmuş uygarlıklardan beklenmedik icatlara ve antik mühendislik harikalarına uzanan belgelenmiş tarihsel gerçekleri kartlar ve quizlerle incele.',
+    en: 'Explore verified historical milestones spanning forgotten civilizations, surprising inventions, and ancient engineering with fact cards and quizzes.',
   },
   science: {
-    tr: 'Kuantum tünellemeden termodinamiğe, kimyasal reaksiyonlardan fizik kanunlarına kadar bilimsel bilgi kartları.',
-    en: 'Peer-reviewed micro-lessons across quantum tunneling, thermodynamics, materials science, and fundamental physics.',
+    tr: 'Kuantum tünellemeden termodinamiğe, kimyasal reaksiyonlardan fizik kanunlarına kadar hakemli kaynaklara dayalı bilim kartlarını ve quizleri keşfet.',
+    en: 'Browse peer-reviewed micro-lessons across quantum tunneling, thermodynamics, chemistry, and materials science with Quick Guess sliders and quizzes.',
   },
   records: {
-    tr: 'Doğanın ve bilimin sınırlarını zorlayan, Guinness ve akademik kayıtlarla belgelenmiş en sıra dışı rekorlar.',
-    en: 'Verified Guinness and scientific extremes that push the boundaries of physics, biology, and human ingenuity.',
+    tr: 'Doğanın ve bilimin sınırlarını zorlayan, Guinness ve akademik kayıtlarla belgelenmiş en sıra dışı dünya rekorlarını bilgi kartları ve quizlerle keşfet.',
+    en: 'Explore verified Guinness and scientific extremes that push the boundaries of physics, biology, and human ingenuity with fact cards and quick quizzes.',
   },
   statistics: {
-    tr: 'Olasılık paradokslarından veri yanılsamalarına, Bayes teoreminden hayatta kalma önyargısına kadar zihin açan istatistik gerçekleri.',
-    en: 'Mind-bending probability paradoxes, survivorship bias, Bayes theorem, and surprising statistical truths backed by data.',
+    tr: 'Olasılık paradokslarından veri yanılsamalarına, Bayes teoreminden hayatta kalma önyargısına kadar zihin açan istatistik kartlarını ve quizleri çöz.',
+    en: 'Explore mind-bending probability paradoxes, survivorship bias, Bayes theorem, and data-backed statistical truths with interactive cards and quizzes.',
   },
 };
+
+function selectCategoryTitle(label: string, lang: Language, pageLabel: string): string {
+  const candidates =
+    lang === 'tr'
+      ? [
+          `${label} Bilgi Kartları, Kaynaklı Arşiv & Quiz${pageLabel} | Scrolly`,
+          `${label} Bilgi Kartları, Kaynaklı Arşiv${pageLabel} | Scrolly`,
+          `${label} Bilgi Kartları & Quiz${pageLabel} | Scrolly`,
+        ]
+      : [
+          `${label} Verified Fact Cards & Micro-Learning${pageLabel} | Scrolly`,
+          `${label} Verified Fact Cards & Quiz${pageLabel} | Scrolly`,
+          `${label} Verified Fact Cards${pageLabel} | Scrolly`,
+        ];
+  const fitting = candidates.find((c) => c.length <= 60);
+  return fitting ?? fitDocumentTitle(candidates[0]);
+}
 
 export async function buildCategoryMetadata(
   categorySlug: string,
@@ -83,11 +100,7 @@ export async function buildCategoryMetadata(
   const canonicalUrl = lang === 'en' ? enUrl : trUrl;
   const description = CATEGORY_DESCRIPTIONS[categoryId][lang];
   const pageLabel = page > 1 ? ` (${page})` : '';
-  const title = fitDocumentTitle(
-    lang === 'tr'
-      ? `${catMeta.label.tr} Bilgi Kartları, Kaynaklı Arşiv & Quiz${pageLabel} | Scrolly`
-      : `${catMeta.label.en} Verified Fact Cards & Micro-Learning${pageLabel} | Scrolly`
-  );
+  const title = selectCategoryTitle(catMeta.label[lang], lang, pageLabel);
   const image = { ...BRAND_OG_IMAGE, alt: title };
 
   return {

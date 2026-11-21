@@ -9,7 +9,7 @@ export const metadata: Metadata = {
   metadataBase: new URL('https://scrolly.live'),
   title: 'Scrolly — Kaydır, Öğren, Şaşır | Mikro Öğrenme & Quiz',
   description:
-    'Uzay, doğa, insan vücudu, tarih ve bilim hakkında doğrulanmış bilgiler keşfet, Hızlı Tahmin ve 5 kartlık hafıza quizine gir, Scrolla 1v1 düellosunda yarış!',
+    'Uzay, doğa, insan vücudu, tarih, bilim ve B1–C2 İngilizce kelime kartlarını kaydır; Hızlı Tahmin, 5 soruluk Quiz ve Scrolla 1v1 düellosunda yarış!',
   applicationName: 'Scrolly',
   appleWebApp: {
     capable: true,
@@ -40,7 +40,7 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: 'Scrolly — Kaydır, Öğren, Şaşır | Mikro Öğrenme & Quiz',
     description:
-      'Uzay, doğa, insan vücudu, tarih ve bilim hakkında doğrulanmış bilgiler keşfet, Hızlı Tahmin ve 5 kartlık hafıza quizine gir, Scrolla 1v1 düellosunda yarış!',
+      'Uzay, doğa, insan vücudu, tarih, bilim ve B1–C2 İngilizce kelime kartlarını kaydır; Hızlı Tahmin, 5 soruluk Quiz ve Scrolla 1v1 düellosunda yarış!',
     images: [BRAND_OG_IMAGE.url],
   },
   other: {
@@ -112,10 +112,12 @@ const ROOT_SCHEMA_JSON_LD = {
         'Bilingual reels-style micro-learning platform with verified scientific facts, Quick Guess estimation challenges, B1–C2 Word Lab, Daily/Memory Quizzes, and Scrolla 1v1 knowledge duels.',
       featureList: [
         'Verified Bilingual Fact Cards (TR & EN)',
-        'Quick Guess Interactive Sliders & Challenges',
+        'Quick Guess Interactive Sliders & Daily Shared Guess',
         'Word Lab B1–C2 English Vocabulary Cards',
         'Daily Sprint, Weekly Marathon & Memory Quizzes',
+        'Async Quiz Challenges (/challenge/[code])',
         'Scrolla 1v1 Live Multiplayer Knowledge Arena',
+        'Private Friend & Class Mini Leagues',
         'Offline-Ready Progressive Web App (PWA)',
       ],
       publisher: {

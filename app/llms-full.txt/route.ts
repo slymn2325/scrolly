@@ -1,8 +1,9 @@
 import { NextResponse } from 'next/server';
 import { getCategoryMeta } from '@/i18n/translations';
 import { getAllFactsServer } from '@/lib/db';
+import { indexableFactSlug } from '@/lib/indexableFacts';
 import type { FactCard } from '@/types/fact';
-import { categoryIdToRouteSlug, getFactPrimarySlug } from '@/utils/factsData';
+import { categoryIdToRouteSlug, factHasLocale } from '@/utils/factsData';
 
 export const revalidate = 3600;
 
@@ -27,28 +28,38 @@ function formatGuessAnswer(fact: FactCard, lang: 'tr' | 'en'): string | null {
 }
 
 export async function GET() {
-  const facts = await getAllFactsServer();
+  const rawFacts = await getAllFactsServer();
+  const seenSlugs = new Set<string>();
+  const canonicalFacts: Array<{ fact: FactCard; primarySlug: string }> = [];
+  for (const fact of rawFacts) {
+    const primarySlug = indexableFactSlug(fact);
+    if (!primarySlug || !factHasLocale(fact, 'tr') || seenSlugs.has(primarySlug)) {
+      continue;
+    }
+    seenSlugs.add(primarySlug);
+    canonicalFacts.push({ fact, primarySlug });
+  }
   const generatedAt = new Date().toISOString();
 
   const lines: string[] = [
     '# Scrolly (https://scrolly.live) — Full Verified Knowledge Corpus & Editorial Reference',
     '',
-    '> Scrolly (https://scrolly.live) is a free bilingual (English and Turkish) reels-style micro-learning Progressive Web App (PWA) delivering daily curated science, space, history, nature, human body, weird records, and statistics facts backed by primary sources, alongside an interactive Quick Guess game, B1–C2 Word Lab, Quiz Hub, and Scrolla 1v1 live duel.',
+    '> Scrolly (https://scrolly.live) is a free bilingual (English and Turkish) reels-style micro-learning Progressive Web App (PWA) delivering daily curated science, space, history, nature, human body, weird records, and statistics facts backed by primary sources, alongside an interactive Quick Guess game, Daily Shared Guess, B1–C2 Word Lab, Quiz Hub, shareable `/challenge/[code]` async quiz challenges, Scrolla 1v1 live duels, and private Friend Leagues.',
     '',
     `- Canonical Domain: https://scrolly.live`,
     `- Concise LLM Index: https://scrolly.live/llms.txt`,
     `- XML Sitemap: https://scrolly.live/sitemap.xml`,
     `- Editorial & Source Verification Contact: contact@scrolly.live`,
-    `- Total Verified Fact Cards: ${facts.length}`,
+    `- Total Verified Fact Cards: ${canonicalFacts.length}`,
     `- Snapshot Generated At: ${generatedAt}`,
     '',
     '## Core Features & Learning Modes',
     '',
     '- **Verified Bilingual Fact Cards (EN & TR):** Each card presents a 35–60 word BLUF (Bottom Line Up Front) summary, a deeper "Why / How?" mechanism breakdown, and a direct link to the primary scientific source.',
-    '- **Interactive Quick Guess:** Users estimate numeric measurements or binary outcomes before revealing the verified answer (+10 to +20 XP).',
+    '- **Interactive Quick Guess & Daily Shared Guess (Günün Tahmini):** Users estimate numeric measurements or binary outcomes on each card or join the shared global daily estimation puzzle (+10 to +20 XP).',
     '- **Word Lab (B1–C2 English Vocabulary):** Vertical vocabulary cards with IPA pronunciation, normal and slow TTS audio, bilingual context sentences, synonyms, and a meaning quiz (+15 XP).',
-    '- **Quiz Hub:** 5-question Memory Sprints built from recently viewed cards, Daily Sprints, and 10-question Weekly Marathons.',
-    '- **Scrolla 1v1 Live Arena:** Real-time two-player trivia duels using 6-character room codes, topic filtering, and synchronized 5-second countdowns.',
+    '- **Quiz Hub & Async Quiz Challenges (`/challenge/[code]`):** 5-question Memory Sprints built from recently viewed cards, Daily Sprints, 10-question Weekly Marathons, and shareable "Can You Beat Me? / Beni Geçebilir Misin?" challenge links preserving exact question snapshots.',
+    '- **Scrolla 1v1 Live Arena & Private Friend Leagues (Arkadaş Ligim):** Real-time two-player trivia duels using 6-character room codes plus multi-league private Friend & Class weekly XP leaderboards.',
     '',
     '## Primary Source Verification Policy',
     '',
@@ -58,17 +69,16 @@ export async function GET() {
     '',
     '## Frequently Asked Questions (FAQ)',
     '',
-    '- **What is Scrolly? / Scrolly nedir?** Scrolly is a free bilingual (EN/TR) reels-style micro-learning PWA turning short daily screen sessions into verified scientific knowledge via interactive fact cards, Quick Guess sliders, B1–C2 Word Lab, quizzes, and Scrolla 1v1 duels.',
-    '- **Is Scrolly free? / Scrolly ücretsiz mi?** Yes, Scrolly is 100% free with no mandatory registration. Guests earn live leaderboard XP immediately and can optionally bind an email via one-time 6-digit OTP to sync progress across devices.',
+    '- **What is Scrolly? / Scrolly nedir?** Scrolly is a free bilingual (EN/TR) reels-style micro-learning PWA turning short daily screen sessions into verified scientific knowledge via interactive fact cards, Quick Guess sliders, Daily Shared Guess, B1–C2 Word Lab, quizzes, `/challenge/[code]` async challenges, Scrolla 1v1 duels, and Friend Leagues.',
+    '- **Is Scrolly free? / Scrolly ücretsiz mi?** Yes, Scrolly is 100% free with no mandatory registration. Guests earn live leaderboard XP, join Friend Leagues, and challenge friends via `/challenge/[code]` immediately, or optionally bind an email via one-time 6-digit OTP to sync across devices.',
     '- **How are facts verified? / Bilgiler nasıl doğrulanıyor?** Every card links directly to a primary institutional or peer-reviewed source URL (`citation` / `isBasedOn` in Schema.org JSON-LD) and undergoes numerical, unit, and bilingual terminology verification before publication.',
-    '- **How do Word Lab and Scrolla 1v1 work? / Word Lab ve Scrolla 1v1 nasıl çalışır?** Word Lab teaches B1–C2 English vocabulary with IPA phonetics, audio playback, example sentences, and instant quizzes. Scrolla 1v1 lets two players join a 6-character room code to race on an identical 3–10 question pack in real time.',
+    '- **How do Word Lab and Scrolla 1v1 work? / Word Lab ve Scrolla 1v1 nasıl çalışır?** Word Lab teaches B1–C2 English vocabulary with IPA phonetics, audio playback, example sentences, and instant quizzes. Scrolla 1v1 hosts live 6-character duel rooms, while `/challenge/[code]` shares your completed quiz snapshot so friends can challenge your score asynchronously.',
     '',
     '---',
     '',
   ];
 
-  facts.forEach((fact, index) => {
-    const primarySlug = getFactPrimarySlug(fact);
+  canonicalFacts.forEach(({ fact, primarySlug }, index) => {
     const catMeta = getCategoryMeta(fact.category);
     const catRouteSlug = categoryIdToRouteSlug(fact.category);
     const canonicalUrl = `https://scrolly.live/fact/${primarySlug}`;

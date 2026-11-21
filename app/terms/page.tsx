@@ -34,13 +34,13 @@ export async function generateMetadata({ searchParams }: PageProps): Promise<Met
   const canonicalUrl = 'https://scrolly.live/terms';
   const title = fitDocumentTitle(
     lang === 'en'
-      ? 'Terms of Use & Educational Disclaimer | Scrolly'
+      ? 'Terms of Use & Educational Disclaimer Policy | Scrolly'
       : 'Kullanım Koşulları ve Eğitim Sorumluluk Reddi | Scrolly'
   );
   const description =
     lang === 'en'
-      ? 'Read Scrolly’s terms of service, educational content disclaimer, primary scientific citation policy, leaderboard fair-use rules, and copyright guidelines.'
-      : 'Scrolly (scrolly.live) hizmet kullanım koşullarını, eğitim amaçlı içerik sorumluluk reddini, bilimsel kaynak atıf ilkelerini ve adil kullanım kurallarını inceleyin.';
+      ? 'Read Scrolly’s terms of service, educational content disclaimer, primary scientific citation policy, leaderboard fair-use rules, and copyright terms.'
+      : 'Scrolly (scrolly.live) hizmet kullanım koşullarını, eğitim amaçlı içerik sorumluluk reddini, kaynak atıf ilkelerini ve adil kullanım kurallarını okuyun.';
   const image = { ...BRAND_OG_IMAGE, alt: title };
 
   return {

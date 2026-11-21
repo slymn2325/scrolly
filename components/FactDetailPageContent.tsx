@@ -54,12 +54,22 @@ export async function buildFactMetadata(slug: string, lang: Language): Promise<M
   }
 
   const primarySlug = getFactPrimarySlug(fact);
+  const catMeta = getCategoryMeta(fact.category);
+  const content = fact[lang];
+  const resolvedSourceName =
+    content.sourceName || fact.sourceName || content.sourceHint || 'Scrolly Research Archive';
   const canonicalUrl = `https://scrolly.live${buildFactHref(primarySlug, lang)}`;
   const ogImageUrl = `https://scrolly.live${buildFactHref(primarySlug, lang)}/opengraph-image`;
-  const title = fact[lang].title;
-  const documentTitle = buildFactDocumentTitle(title);
-  const description = buildFactMetaDescription(fact[lang].factText);
-  const catMeta = getCategoryMeta(fact.category);
+  const title = content.title;
+  const documentTitle = buildFactDocumentTitle(title, {
+    categoryLabel: catMeta.label[lang],
+    lang,
+  });
+  const description = buildFactMetaDescription(content.factText, {
+    deepDiveDetail: content.deepDiveDetail,
+    sourceName: resolvedSourceName,
+    lang,
+  });
   const languages = factHreflangLanguages(fact, primarySlug);
 
   return {
@@ -226,15 +236,11 @@ export default async function FactDetailPageContent({
           },
         },
         citation: resolvedSourceUrl || resolvedSourceName,
-        ...(resolvedSourceUrl
-          ? {
-              isBasedOn: {
-                '@type': 'CreativeWork',
-                name: resolvedSourceName,
-                url: resolvedSourceUrl,
-              },
-            }
-          : {}),
+        isBasedOn: {
+          '@type': 'CreativeWork',
+          name: resolvedSourceName,
+          ...(resolvedSourceUrl ? { url: resolvedSourceUrl } : {}),
+        },
       },
       {
         '@type': 'FAQPage',

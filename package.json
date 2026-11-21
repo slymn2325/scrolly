@@ -7,6 +7,7 @@
     "build": "next build",
     "start": "NODE_OPTIONS='--max-old-space-size=384' next start -p $PORT",
     "lint": "eslint .",
+    "seo:audit": "node scripts/seoAudit.mjs",
     "test:contrast": "node --experimental-strip-types --test tests/contrast.test.ts",
     "generate-facts": "node scripts/generate-facts.mjs"
   },

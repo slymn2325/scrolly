@@ -41,8 +41,8 @@ export async function generateMetadata({ searchParams }: PageProps): Promise<Met
   );
   const description =
     lang === 'en'
-      ? 'Contact the Scrolly editorial verification desk at contact@scrolly.live for primary scientific source corrections, copyright notices, or privacy inquiries.'
-      : 'Bilimsel kaynak düzeltmeleri, çeviri geri bildirimleri, telif bildirimleri veya gizlilik talepleri için Scrolly editöryal ekibine ulaşın.';
+      ? 'Contact the Scrolly editorial verification desk at contact@scrolly.live for primary scientific source corrections, copyright notices, or privacy help.'
+      : 'Bilimsel kaynak düzeltmeleri, çeviri geri bildirimleri, telif bildirimleri veya gizlilik talepleri için Scrolly editöryal doğrulama masasına ulaşın.';
   const image = { ...BRAND_OG_IMAGE, alt: title };
 
   return {

@@ -24,8 +24,8 @@ export async function generateMetadata({ searchParams }: PageProps): Promise<Met
   );
   const description =
     lang === 'en'
-      ? 'Review Scrolly’s privacy policy covering anonymous guest localStorage, optional passwordless email OTP sync, offline PWA caching, and Google AdSense cookies.'
-      : 'Scrolly anonim misafir depolaması, isteğe bağlı şifresiz e-posta OTP senkronu, çevrimdışı PWA önbelleği, analitik ve Google AdSense çerez politikasını inceleyin.';
+      ? 'Review Scrolly’s privacy policy covering guest localStorage, optional passwordless email OTP sync, offline PWA caching, analytics, and AdSense.'
+      : 'Scrolly anonim misafir depolaması, şifresiz e-posta OTP senkronu, çevrimdışı PWA önbelleği, analitik ve Google AdSense çerez politikasını inceleyin.';
   const image = { ...BRAND_OG_IMAGE, alt: title };
 
   return {

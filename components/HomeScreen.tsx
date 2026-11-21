@@ -32,20 +32,21 @@ export default async function HomeScreen({ lang }: { lang: 'tr' | 'en' }) {
     phonetic: formatPhoneticForDisplay(card.phonetic),
   }));
   const isEn = lang === 'en';
-  const homeWebSiteJsonLd = {
+  const homeWebPageJsonLd = {
     '@context': 'https://schema.org',
-    '@type': 'WebSite',
-    '@id': isEn ? 'https://scrolly.live/en#website' : 'https://scrolly.live/#website',
-    name: 'Scrolly',
-    alternateName: 'scrolly.live',
-    url: isEn ? 'https://scrolly.live/en' : 'https://scrolly.live/',
-    inLanguage: isEn ? 'en' : 'tr',
-    headline: isEn
+    '@type': 'WebPage',
+    '@id': isEn ? 'https://scrolly.live/en#webpage' : 'https://scrolly.live/#webpage',
+    name: isEn
       ? 'Scrolly — Scroll, Learn, Wonder | Micro-Learning & Quiz'
       : 'Scrolly — Kaydır, Öğren, Şaşır | Mikro Öğrenme & Quiz',
+    url: isEn ? 'https://scrolly.live/en' : 'https://scrolly.live',
+    inLanguage: isEn ? 'en' : 'tr',
+    isPartOf: {
+      '@id': 'https://scrolly.live/#website',
+    },
     description: isEn
-      ? 'Explore verified space, nature, human body, history, science, and B1–C2 Word Lab cards. Play Quick Guess sliders, 5-card memory quizzes, and Scrolla 1v1 duels.'
-      : 'Uzay, doğa, insan vücudu, tarih, bilim ve B1–C2 İngilizce kelime kartlarını kaydırarak keşfet; Hızlı Tahmin, 5 soruluk Quiz ve Scrolla 1v1 düellosunda yarış!',
+      ? 'Explore verified space, nature, body, history, science, and B1–C2 Word Lab cards. Play Quick Guess sliders, 5-card quizzes, and Scrolla 1v1 duels.'
+      : 'Uzay, doğa, insan vücudu, tarih, bilim ve B1–C2 İngilizce kelime kartlarını kaydır; Hızlı Tahmin, 5 soruluk Quiz ve Scrolla 1v1 düellosunda yarış!',
   };
 
   return (
@@ -53,7 +54,7 @@ export default async function HomeScreen({ lang }: { lang: 'tr' | 'en' }) {
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{
-          __html: safeJsonLdStringify(homeWebSiteJsonLd),
+          __html: safeJsonLdStringify(homeWebPageJsonLd),
         }}
       />
       <section aria-label="Scrolly Overview" className="sr-only">
