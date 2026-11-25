@@ -2373,7 +2373,7 @@ export default function HomeClient({ initialFacts, initialVocabulary, initialLan
         {activeQuiz && (
           <div
             data-testid="active-quiz-page"
-            className="absolute inset-0 z-30 flex h-full w-full flex-col overflow-y-auto bg-[#FFFDF9] px-3 pt-[calc(env(safe-area-inset-top,20px)+16px)] pb-[calc(env(safe-area-inset-bottom,16px)+100px)] dark:bg-[#171228] lg:pt-6 lg:pb-6"
+            className="absolute inset-0 z-30 flex h-full w-full flex-col overflow-y-auto bg-cik-bg text-cik-text px-3 pt-[calc(env(safe-area-inset-top,20px)+16px)] pb-[calc(env(safe-area-inset-bottom,16px)+100px)] lg:pt-6 lg:pb-6"
           >
             <MemoryQuizCard
               key={activeQuiz.key}
@@ -2790,7 +2790,7 @@ export default function HomeClient({ initialFacts, initialVocabulary, initialLan
             role="status"
             aria-live="polite"
             data-testid="feed-action-toast"
-            className="pointer-events-none fixed bottom-[calc(env(safe-area-inset-bottom,16px)+92px)] lg:bottom-8 lg:top-auto left-1/2 z-50 -translate-x-1/2 whitespace-nowrap rounded-full border border-white/15 bg-[#0A0A0E]/95 px-4 py-2 text-xs font-extrabold text-white shadow-xl backdrop-blur-md dark:border-amber-300/30 dark:bg-[#171326]/95"
+            className="pointer-events-none fixed bottom-[calc(env(safe-area-inset-bottom,16px)+92px)] lg:bottom-8 lg:top-auto left-1/2 z-50 -translate-x-1/2 whitespace-nowrap rounded-full border border-cik-line bg-cik-bg-elevated/95 px-4 py-2 text-xs font-extrabold text-cik-text shadow-e3 backdrop-blur-md"
           >
             {toastMessage}
           </motion.div>

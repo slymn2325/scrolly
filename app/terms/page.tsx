@@ -192,32 +192,32 @@ export default async function TermsPage({ searchParams }: PageProps) {
       <div className="space-y-5">
         {sections.map((section) => (
           <section key={section.heading} className="space-y-1.5">
-            <h2 className="font-display text-base font-bold text-ink dark:text-white sm:text-lg">
+            <h2 className="font-display text-base font-bold text-cik-text sm:text-lg">
               {section.heading}
             </h2>
-            <p className="text-sm leading-relaxed text-ink/80 dark:text-violet-100/80">
+            <p className="text-sm leading-relaxed text-cik-text-2">
               {section.body}
             </p>
           </section>
         ))}
       </div>
 
-      <div className="flex flex-wrap items-center gap-3 border-t border-amber-100 pt-5 dark:border-white/10">
+      <div className="flex flex-wrap items-center gap-3 border-t border-cik-line pt-5">
         <Link
           href={buildLegalHref('/privacy', lang, returnToProfile, false)}
-          className="text-xs font-extrabold text-violet-700 underline underline-offset-4 hover:text-violet-900 dark:text-violet-300"
+          className="text-xs font-extrabold text-cik-cta underline underline-offset-4 hover:opacity-80"
         >
           {isEn ? 'Read Privacy Policy →' : 'Gizlilik Politikasını İncele →'}
         </Link>
         <Link
           href={buildLegalHref('/contact', lang, returnToProfile)}
-          className="text-xs font-extrabold text-violet-700 underline underline-offset-4 hover:text-violet-900 dark:text-violet-300"
+          className="text-xs font-extrabold text-cik-cta underline underline-offset-4 hover:opacity-80"
         >
           {isEn ? 'Contact Scrolly →' : 'İletişime Geç →'}
         </Link>
         <a
           href="mailto:contact@scrolly.live"
-          className="text-xs font-extrabold text-emerald-700 underline underline-offset-4 hover:text-emerald-900 dark:text-emerald-300"
+          className="text-xs font-extrabold text-cik-mint-text underline underline-offset-4 hover:opacity-80"
         >
           contact@scrolly.live
         </a>

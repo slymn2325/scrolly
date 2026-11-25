@@ -156,7 +156,7 @@ export default function FloatingBackground() {
   return (
     <div
       aria-hidden="true"
-      className="pointer-events-none fixed inset-0 -z-10 overflow-hidden bg-[#FFFDF9] transition-colors duration-300 dark:bg-[#0F0D1A]"
+      className="pointer-events-none fixed inset-0 -z-10 overflow-hidden bg-cik-bg transition-colors duration-300"
     >
       {BUBBLES.map((bubble) => (
         <FloatingBubble key={bubble.id} spec={bubble} smoothX={smoothX} smoothY={smoothY} />

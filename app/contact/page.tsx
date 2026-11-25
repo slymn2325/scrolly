@@ -137,7 +137,7 @@ export default async function ContactPage({ searchParams }: PageProps) {
       breadcrumbLabel={isEn ? 'Contact' : 'İletişim'}
       jsonLd={jsonLd}
     >
-      <p className="text-sm leading-relaxed text-ink/85 dark:text-violet-100/90 sm:text-base">
+      <p className="text-sm leading-relaxed text-cik-text sm:text-base">
         {isEn
           ? 'We welcome reader feedback, scientific citation updates, translation suggestions, copyright notices, and privacy inquiries. Every source correction message is reviewed against primary literature.'
           : 'Okuyucu geri bildirimlerini, bilimsel kaynak güncellemelerini, çeviri önerilerini, telif bildirimlerini ve gizlilik sorularınızı memnuniyetle karşılıyoruz. Gönderilen her kaynak düzeltmesi birincil literatürle karşılaştırılarak incelenir.'}
@@ -146,13 +146,13 @@ export default async function ContactPage({ searchParams }: PageProps) {
       <ContactInteractiveSection lang={lang} />
 
       <section className="space-y-2">
-        <h2 className="flex items-center gap-2 font-display text-base font-bold text-ink dark:text-white sm:text-lg">
-          <MessageSquareWarning className="h-5 w-5 text-rose-500" />
+        <h2 className="flex items-center gap-2 font-display text-base font-bold text-cik-text sm:text-lg">
+          <MessageSquareWarning className="h-5 w-5 text-cik-cta" />
           <span>
             {isEn ? 'Privacy & Data Inquiries' : 'Gizlilik ve Yerel Veri Talepleri'}
           </span>
         </h2>
-        <p className="text-sm leading-relaxed text-ink/80 dark:text-violet-100/80">
+        <p className="text-sm leading-relaxed text-cik-text-2">
           {isEn
             ? 'Scrolly does not maintain personal user accounts or store email/password profiles. Anonymous device reading progress stored locally in your browser can be cleared immediately via "Reset Memory" inside your Explorer Diploma screen. Full details are available on our Privacy Policy page.'
             : 'Scrolly kişisel hesap veya e-posta/şifre profili tutmaz. Tarayıcınızda anonim olarak saklanan okuma geçmişinizi dilediğiniz zaman Kaşif Diploması ekranındaki "Hafızayı Sıfırla" seçeneğiyle silebilirsiniz. Detaylar için Gizlilik Politikamızı inceleyebilirsiniz.'}
@@ -160,13 +160,13 @@ export default async function ContactPage({ searchParams }: PageProps) {
       </section>
 
       <section className="space-y-2">
-        <h2 className="flex items-center gap-2 font-display text-base font-bold text-ink dark:text-white sm:text-lg">
-          <Globe2 className="h-5 w-5 text-sky-600" />
+        <h2 className="flex items-center gap-2 font-display text-base font-bold text-cik-text sm:text-lg">
+          <Globe2 className="h-5 w-5 text-cik-cta" />
           <span>
             {isEn ? 'Open Source & Technical Information' : 'Açık Kaynak ve Teknik Bilgiler'}
           </span>
         </h2>
-        <p className="text-sm leading-relaxed text-ink/80 dark:text-violet-100/80">
+        <p className="text-sm leading-relaxed text-cik-text-2">
           {isEn
             ? 'For technical bug reports, Progressive Web App (PWA) compatibility issues, or broken diagram rendering on specific mobile devices, write to contact@scrolly.live with your browser version and device model.'
             : 'Teknik hata bildirimleri, PWA çevrimdışı mod sorunları veya mobil tarayıcı uyumsuzlukları için cihaz modeli ve tarayıcı bilgisiyle birlikte contact@scrolly.live adresine yazabilirsiniz.'}
@@ -174,13 +174,13 @@ export default async function ContactPage({ searchParams }: PageProps) {
         <div className="flex flex-wrap gap-3 pt-2">
           <Link
             href={buildLegalHref('/about', lang, returnToProfile)}
-            className="text-xs font-extrabold text-violet-700 underline underline-offset-4 hover:text-violet-900 dark:text-violet-300"
+            className="text-xs font-extrabold text-cik-cta underline underline-offset-4 hover:opacity-80"
           >
             {isEn ? 'Editorial Standards →' : 'Editöryal Standartlar →'}
           </Link>
           <Link
             href={buildLegalHref('/privacy', lang, returnToProfile, false)}
-            className="text-xs font-extrabold text-violet-700 underline underline-offset-4 hover:text-violet-900 dark:text-violet-300"
+            className="text-xs font-extrabold text-cik-cta underline underline-offset-4 hover:opacity-80"
           >
             {isEn ? 'Privacy & Cookie Policy →' : 'Gizlilik ve Çerez Politikası →'}
           </Link>

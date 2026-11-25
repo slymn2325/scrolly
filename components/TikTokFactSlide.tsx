@@ -738,7 +738,7 @@ export default function TikTokFactSlide({
                 void trackEvent(factSlug, fact.category, 'expand', { surface: 'bottom_sheet' });
               }
             }}
-            className={`pointer-events-auto flex min-h-0 flex-col gap-2 rounded-t-3xl border-t border-black/10 bg-cik-bg/95 pl-4 pr-14 pt-2.5 shadow-[0_-12px_36px_rgba(0,0,0,0.16)] backdrop-blur-xl transition-all duration-300 ease-out dark:border-white/10 lg:pr-4 lg:pt-3 ${
+            className={`pointer-events-auto flex min-h-0 flex-col gap-2 rounded-t-3xl border-t border-cik-line bg-cik-bg/95 pl-4 pr-14 pt-2.5 shadow-[0_-12px_36px_rgba(0,0,0,0.16)] backdrop-blur-xl transition-all duration-300 ease-out lg:pr-4 lg:pt-3 ${
               cookieBannerVisible
                 ? 'pb-[calc(5rem+env(safe-area-inset-bottom)+68px)] lg:pb-4'
                 : 'pb-[calc(5rem+env(safe-area-inset-bottom))] lg:pb-4'
@@ -754,7 +754,7 @@ export default function TikTokFactSlide({
             />
 
             <div className="flex shrink-0 flex-wrap items-center gap-2">
-              <div className="inline-flex items-center gap-1 rounded-full border border-black/10 bg-black/5 px-2.5 py-0.5 text-[11px] font-medium leading-tight text-neutral-700 hover:bg-black/10 dark:border-white/15 dark:bg-white/10 dark:text-white/80">
+              <div className="inline-flex items-center gap-1 rounded-full border border-cik-line bg-cik-surface px-2.5 py-0.5 text-[11px] font-medium leading-tight text-cik-text-2">
                 <img
                   src={catMeta.iconPath}
                   alt=""
@@ -780,7 +780,7 @@ export default function TikTokFactSlide({
                 onPointerDown={(e) => e.stopPropagation()}
                 onTouchStart={(e) => e.stopPropagation()}
                 aria-label={lang === 'tr' ? 'Kaynak' : 'Source'}
-                className="pointer-events-auto inline-flex items-center gap-1 rounded-full border border-black/10 bg-black/5 px-2.5 py-0.5 text-[11px] font-medium leading-tight text-neutral-700 hover:bg-black/10 dark:border-white/15 dark:bg-white/10 dark:text-white/80"
+                className="pointer-events-auto inline-flex items-center gap-1 rounded-full border border-cik-line bg-cik-surface px-2.5 py-0.5 text-[11px] font-medium leading-tight text-cik-text-2 hover:bg-cik-pink hover:text-cik-cta"
               >
                 <Info className="h-3 w-3 shrink-0" aria-hidden="true" />
                 <span>{lang === 'tr' ? 'Kaynak' : 'Source'}</span>
@@ -1018,7 +1018,7 @@ export default function TikTokFactSlide({
               aria-modal="true"
               aria-label={lang === 'tr' ? 'Kaynak' : 'Source'}
               data-testid="source-modal"
-              className="relative w-full max-w-[420px] rounded-sheet border border-black/10 bg-cik-bg-elevated/95 p-4 pb-[max(1rem,env(safe-area-inset-bottom))] text-cik-text shadow-e3 backdrop-blur-xl dark:border-white/10"
+              className="relative w-full max-w-[420px] rounded-sheet border border-cik-line bg-cik-bg-elevated/95 p-4 pb-[max(1rem,env(safe-area-inset-bottom))] text-cik-text shadow-e3 backdrop-blur-xl"
               onClick={(e) => e.stopPropagation()}
             >
               <button

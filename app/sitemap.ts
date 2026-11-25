@@ -47,6 +47,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       alternates: { languages: homeLanguages },
     },
     {
+      url: 'https://scrolly.live/studio',
+      lastModified: STATIC_COPY_UPDATED,
+      changeFrequency: 'weekly',
+      priority: 0.7,
+    },
+    {
       url: 'https://scrolly.live/about',
       lastModified: STATIC_COPY_UPDATED,
       changeFrequency: 'monthly',

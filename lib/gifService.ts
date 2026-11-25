@@ -1099,3 +1099,241 @@ export async function searchReactionGifs(
     };
   }
 }
+
+export interface StudioGifItem {
+  id: string;
+  url: string;
+  previewUrl: string;
+  title: string;
+}
+
+export interface StudioGifSearchResult {
+  gifs: StudioGifItem[];
+  provider: 'giphy' | 'wikimedia' | 'curated';
+  cached: boolean;
+  quotaExhausted?: boolean;
+}
+
+const STUDIO_CURATED_GIFS: CuratedReactionGifEntry[] = [
+  {
+    id: 'studio-cosmos',
+    title: 'Cosmic Idea',
+    keywords: ['space', 'cosmos', 'universe', 'star', 'planet', 'science', 'venus', 'uzay', 'evren'],
+    url: 'https://media.giphy.com/media/26ufdipQqU2lhNA4g/giphy.gif',
+    previewUrl: 'https://media.giphy.com/media/26ufdipQqU2lhNA4g/200.gif',
+  },
+  {
+    id: 'studio-brain',
+    title: 'Smart Discovery',
+    keywords: ['brain', 'genius', 'think', 'education', 'learn', 'mind', 'tech', 'ai', 'bilim', 'zeka'],
+    url: 'https://media.giphy.com/media/d3mlE7uhX8KFgEmY/giphy.gif',
+    previewUrl: 'https://media.giphy.com/media/d3mlE7uhX8KFgEmY/200.gif',
+  },
+  {
+    id: 'studio-energy',
+    title: 'Energy & Speed',
+    keywords: ['fire', 'energy', 'speed', 'physics', 'fast', 'growth', 'news', 'hiz', 'enerji'],
+    url: 'https://media.giphy.com/media/3o7btNa0RUYa5E7iiQ/giphy.gif',
+    previewUrl: 'https://media.giphy.com/media/3o7btNa0RUYa5E7iiQ/200.gif',
+  },
+  {
+    id: 'studio-victory',
+    title: 'Milestone Celebration',
+    keywords: ['win', 'victory', 'record', 'trophy', 'success', 'business', 'growth', 'basari'],
+    url: 'https://media.giphy.com/media/artj92V8o75VPL7AeQ/giphy.gif',
+    previewUrl: 'https://media.giphy.com/media/artj92V8o75VPL7AeQ/200.gif',
+  },
+  {
+    id: 'studio-applause',
+    title: 'Community Applause',
+    keywords: ['clap', 'applause', 'team', 'culture', 'history', 'media', 'topluluk'],
+    url: 'https://media.giphy.com/media/g9582DNuQppxC/giphy.gif',
+    previewUrl: 'https://media.giphy.com/media/g9582DNuQppxC/200.gif',
+  },
+  {
+    id: 'studio-respect',
+    title: 'Smooth Finish',
+    keywords: ['cool', 'nice', 'finish', 'ocean', 'nature', 'earth', 'doga'],
+    url: 'https://media.giphy.com/media/blSTtZehjAZ8I/giphy.gif',
+    previewUrl: 'https://media.giphy.com/media/blSTtZehjAZ8I/200.gif',
+  },
+];
+
+const studioQueryCache = new Map<string, { gifs: StudioGifItem[]; expiresAt: number }>();
+
+function pickCuratedStudioGifs(cleanQuery: string, limit: number): StudioGifItem[] {
+  const safeLimit = Math.max(1, Math.min(8, limit));
+  if (!cleanQuery) {
+    return STUDIO_CURATED_GIFS.slice(0, safeLimit).map(({ id, url, previewUrl, title }) => ({
+      id,
+      url,
+      previewUrl,
+      title,
+    }));
+  }
+  const terms = cleanQuery.split(/\s+/).filter(Boolean);
+  const scored = STUDIO_CURATED_GIFS.map((entry, idx) => {
+    const titleLower = entry.title.toLowerCase();
+    let score = 0;
+    for (const term of terms) {
+      if (titleLower.includes(term)) score += 3;
+      if (entry.keywords.some((kw) => kw.includes(term) || term.includes(kw))) score += 2;
+    }
+    return { entry, score, idx };
+  }).sort((a, b) => (b.score !== a.score ? b.score - a.score : a.idx - b.idx));
+
+  return scored.slice(0, safeLimit).map(({ entry }) => ({
+    id: entry.id,
+    url: entry.url,
+    previewUrl: entry.previewUrl,
+    title: entry.title,
+  }));
+}
+
+async function searchWikimediaStudioFallback(query: string, limit: number): Promise<StudioGifItem[]> {
+  if (!query) return [];
+  try {
+    const params = new URLSearchParams({
+      action: 'query',
+      generator: 'search',
+      gsrsearch: query,
+      gsrnamespace: '6',
+      gsrlimit: String(Math.max(4, limit)),
+      prop: 'imageinfo',
+      iiprop: 'url|mime|size',
+      iiurlwidth: '900',
+      format: 'json',
+      origin: '*',
+    });
+    const res = await fetch(`https://commons.wikimedia.org/w/api.php?${params.toString()}`, {
+      headers: { 'User-Agent': 'ScrollyBot/1.0 (https://scrolly.live; contact@scrolly.live)', Accept: 'application/json' },
+      signal: AbortSignal.timeout(4000),
+    });
+    if (!res.ok) return [];
+    const json = (await res.json()) as {
+      query?: {
+        pages?: Record<
+          string,
+          {
+            pageid?: number;
+            title?: string;
+            imageinfo?: Array<{ url?: string; thumburl?: string; mime?: string; width?: number }>;
+          }
+        >;
+      };
+    };
+    const pages = Object.values(json.query?.pages || {});
+    const out: StudioGifItem[] = [];
+    for (const page of pages) {
+      const info = page.imageinfo?.[0];
+      const mime = String(info?.mime || '').toLowerCase();
+      const mediaUrl = String(info?.thumburl || info?.url || '').trim();
+      if (!mediaUrl.startsWith('https://')) continue;
+      if (!['image/jpeg', 'image/png', 'image/webp', 'image/gif'].includes(mime)) continue;
+      if (Number(info?.width || 0) < 400) continue;
+      out.push({
+        id: `wm-${page.pageid || out.length + 1}`,
+        url: mediaUrl,
+        previewUrl: mediaUrl,
+        title: String(page.title || query).replace(/^File:/i, '').replace(/\.[^.]+$/, '').slice(0, 60),
+      });
+      if (out.length >= limit) break;
+    }
+    return out;
+  } catch {
+    return [];
+  }
+}
+
+/**
+ * Searches topic visuals for Scrolly Creator Studio: uses live GIPHY first (under 90/hr guard),
+ * falls back to Wikimedia Commons visuals + curated HTTPS GIFs when offline/unconfigured.
+ */
+export async function searchStudioGifs(
+  rawQuery = '',
+  limit = 8
+): Promise<StudioGifSearchResult> {
+  const safeLimit = Math.max(1, Math.min(8, Math.floor(Number.isFinite(limit) ? limit : 8)));
+  const cleanQuery = sanitizeReactionQuery(rawQuery);
+  const cacheKey = `studio:${cleanQuery || '__default__'}::${safeLimit}`;
+  const now = Date.now();
+  const cached = studioQueryCache.get(cacheKey);
+  if (cached && cached.expiresAt > now) {
+    return { gifs: cached.gifs, provider: 'giphy', cached: true };
+  }
+
+  const giphyKey = process.env.GIPHY_API_KEY?.trim() || '';
+  if (giphyKey) {
+    const quotaStatus = await getHourlyGifQuotaStatusServer();
+    if (!quotaStatus.exhausted && (await consumeHourlyGifQuotaServer())) {
+      try {
+        const endpoint = cleanQuery
+          ? 'https://api.giphy.com/v1/gifs/search'
+          : 'https://api.giphy.com/v1/gifs/trending';
+        const params = new URLSearchParams({
+          api_key: giphyKey,
+          limit: '16',
+          offset: '0',
+          rating: 'pg',
+          ...(cleanQuery ? { q: cleanQuery, lang: 'en' } : {}),
+        });
+        const res = await fetch(`${endpoint}?${params.toString()}`, {
+          signal: AbortSignal.timeout(4000),
+          headers: { Accept: 'application/json' },
+        });
+        if (res.status === 429) {
+          await markGifHourlyQuotaExhaustedServer();
+        } else if (res.ok) {
+          const json = (await res.json()) as {
+            data?: Array<{
+              id?: string;
+              title?: string;
+              is_sticker?: number | boolean;
+              images?: GiphyImageVariants;
+            }>;
+          };
+          const items: StudioGifItem[] = [];
+          const seen = new Set<string>();
+          for (const row of json.data || []) {
+            if (!row || row.is_sticker) continue;
+            const url = pickBestGiphyImageUrl(row.images);
+            if (!url || seen.has(url) || !isRenderableGifImageUrl(url)) continue;
+            if (BANNED_REACTION_GIF_PATTERN.test(row.title || '')) continue;
+            seen.add(url);
+            items.push({
+              id: String(row.id || `giphy-${items.length + 1}`),
+              url,
+              previewUrl: pickGiphyReactionPreviewUrl(row.images, url),
+              title: String(row.title || cleanQuery || 'Scene GIF').trim().slice(0, 70),
+            });
+            if (items.length >= safeLimit) break;
+          }
+          if (items.length > 0) {
+            if (studioQueryCache.size >= MAX_CACHE_ENTRIES) {
+              const firstKey = studioQueryCache.keys().next().value;
+              if (firstKey) studioQueryCache.delete(firstKey);
+            }
+            studioQueryCache.set(cacheKey, { gifs: items, expiresAt: now + REACTION_CACHE_TTL_MS });
+            return { gifs: items, provider: 'giphy', cached: false };
+          }
+        }
+      } catch {
+        // Fall through cleanly to Wikimedia/curated visuals
+      }
+    }
+  }
+
+  if (cleanQuery) {
+    const wikimedia = await searchWikimediaStudioFallback(cleanQuery, safeLimit);
+    if (wikimedia.length > 0) {
+      const combined = [...wikimedia, ...pickCuratedStudioGifs(cleanQuery, 2)].slice(0, safeLimit);
+      return { gifs: combined, provider: 'wikimedia', cached: false };
+    }
+  }
+
+  return {
+    gifs: pickCuratedStudioGifs(cleanQuery, safeLimit),
+    provider: 'curated',
+    cached: false,
+  };
+}

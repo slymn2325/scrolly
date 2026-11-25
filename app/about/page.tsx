@@ -210,31 +210,31 @@ export default async function AboutPage({ searchParams }: PageProps) {
       breadcrumbLabel={isEn ? 'About Us' : 'Hakkımızda'}
       jsonLd={jsonLd}
     >
-      <p className="text-sm leading-relaxed text-ink/85 dark:text-violet-100/90 sm:text-base">
+      <p className="text-sm leading-relaxed text-cik-text sm:text-base">
         {isEn
           ? 'Scrolly (https://scrolly.live) is an independent bilingual (Turkish and English) educational knowledge platform designed to turn short daily screen moments into verifiable scientific curiosity. Across seven core disciplines — Space, Nature, Science, History, Human Body, Weird Records, and Statistics — plus B1–C2 Word Lab, every card distills complex research into concise summaries, interactive diagrams, and instant memory checkpoints.'
           : 'Scrolly (https://scrolly.live), günlük kısa dijital anları doğrulanabilir bilimsel meraka dönüştürmek amacıyla geliştirilmiş bağımsız, iki dilli (Türkçe ve İngilizce) bir eğitim ve bilgi platformudur. Uzay, Doğa, Bilim, Tarih, İnsan Vücudu, Garip Rekorlar ve İstatistik alanlarının yanı sıra Word Lab ile her kart; kapsamlı araştırmaları net özetlere, etkileşimli diyagramlara ve anlık hafıza sorularına dönüştürür.'}
       </p>
 
       <div className="grid gap-3 sm:grid-cols-2">
-        <div className="rounded-2xl border border-emerald-200/80 bg-emerald-50/70 p-4 dark:border-emerald-700/40 dark:bg-emerald-950/30">
-          <div className="flex items-center gap-2 text-xs font-extrabold uppercase tracking-wider text-emerald-800 dark:text-emerald-300">
+        <div className="rounded-2xl border border-cik-line bg-cik-mint p-4 text-cik-mint-text">
+          <div className="flex items-center gap-2 text-xs font-extrabold uppercase tracking-wider text-cik-mint-text">
             <ShieldCheck className="h-4 w-4" />
             <span>{isEn ? 'Primary Source Policy' : 'Birincil Kaynak İlkesi'}</span>
           </div>
-          <p className="mt-2 text-xs leading-relaxed text-ink/80 dark:text-violet-100/85">
+          <p className="mt-2 text-xs leading-relaxed text-cik-mint-text">
             {isEn
               ? 'Each card cites institutional archives such as NASA, ESA, Nature, PubMed/NIH, Smithsonian Magazine, and Encyclopaedia Britannica with direct outbound reference links.'
               : 'Her bilgi kartı; NASA, ESA, Nature, PubMed/NIH, Smithsonian Magazine ve Encyclopaedia Britannica gibi kurumsal referanslarla ve doğrudan kaynak bağlantılarıyla yayımlanır.'}
           </p>
         </div>
 
-        <div className="rounded-2xl border border-violet-200/80 bg-violet-50/70 p-4 dark:border-violet-700/40 dark:bg-violet-950/30">
-          <div className="flex items-center gap-2 text-xs font-extrabold uppercase tracking-wider text-violet-800 dark:text-violet-300">
+        <div className="rounded-2xl border border-cik-line bg-cik-pink p-4 text-cik-text">
+          <div className="flex items-center gap-2 text-xs font-extrabold uppercase tracking-wider text-cik-cta">
             <Cpu className="h-4 w-4" />
             <span>{isEn ? 'Interactive Visual Learning' : 'Etkileşimli Görsel Anlatım'}</span>
           </div>
-          <p className="mt-2 text-xs leading-relaxed text-ink/80 dark:text-violet-100/85">
+          <p className="mt-2 text-xs leading-relaxed text-cik-text-2">
             {isEn
               ? 'Hands-on Quick Guess challenges, interactive SVG sketch simulations, and 5-card Memory Sprints reinforce retention rather than passive scrolling. Card media comes from the provider actually used on that card: Pexels, Pixabay, Giphy, Wikimedia Commons, Unsplash, or NASA.'
               : 'Pasif tüketim yerine Hızlı Tahmin meydan okumaları, etkileşimli SVG bilimsel eskizler ve 5 kartlık Hafıza Quizleri ile kalıcı öğrenme sağlanır. Kart görseli, o kartta gerçekten kullanılan sağlayıcıdan gelir: Pexels, Pixabay, Giphy, Wikimedia Commons, Unsplash veya NASA.'}
@@ -243,13 +243,13 @@ export default async function AboutPage({ searchParams }: PageProps) {
       </div>
 
       <section className="space-y-2">
-        <h2 className="flex items-center gap-2 font-display text-lg font-bold text-ink dark:text-white">
-          <BookOpen className="h-5 w-5 text-violet-600" />
+        <h2 className="flex items-center gap-2 font-display text-lg font-bold text-cik-text">
+          <BookOpen className="h-5 w-5 text-cik-cta" />
           <span>
             {isEn ? '1. Fact Curation & Editorial Review Process' : '1. İçerik Üretimi ve Doğrulama Süreci'}
           </span>
         </h2>
-        <p className="text-sm leading-relaxed text-ink/80 dark:text-violet-100/80">
+        <p className="text-sm leading-relaxed text-cik-text-2">
           {isEn
             ? 'Every discovery card goes through structured editorial verification before publication: (a) cross-checking numeric claims, units, and measurements against primary scientific literature; (b) drafting a 40–60 word direct summary anchor paired with a deeper "Why / How?" mechanism breakdown; and (c) validating Turkish and English terminology separately rather than relying on blind literal translation.'
             : 'Yayımlanan her bilgi kartı üç aşamalı bir doğrulama sürecinden geçer: (a) sayısal veriler, ölçüm birimleri ve tarihsel kayıtların birincil akademik veya kurumsal kaynaklarla karşılaştırılması; (b) konunun özünü veren 40–60 kelimelik net özet ile derinlemesine "Neden / Nasıl?" bilimsel açıklamasının ayrılması; (c) Türkçe ve İngilizce bilimsel terminolojinin birbirinden bağımsız biçimde kontrol edilmesi.'}
@@ -257,13 +257,13 @@ export default async function AboutPage({ searchParams }: PageProps) {
       </section>
 
       <section className="space-y-2">
-        <h2 className="flex items-center gap-2 font-display text-lg font-bold text-ink dark:text-white">
-          <Compass className="h-5 w-5 text-amber-600" />
+        <h2 className="flex items-center gap-2 font-display text-lg font-bold text-cik-text">
+          <Compass className="h-5 w-5 text-cik-butter-text" />
           <span>
             {isEn ? '2. How to Explore Scrolly' : '2. Scrolly Nasıl Kullanılır?'}
           </span>
         </h2>
-        <p className="text-sm leading-relaxed text-ink/80 dark:text-violet-100/80">
+        <p className="text-sm leading-relaxed text-cik-text-2">
           {isEn
             ? 'You can browse our full vertical discovery stream on the home page, jump directly into topic hubs such as Space or Human Body, open standalone detail pages (/fact/[slug]) with verified references, or install Scrolly as an offline-ready Progressive Web App.'
             : 'Ana sayfada dikey kaydırma akışıyla yeni kartlar keşfedebilir, Uzay veya İnsan Vücudu gibi konu merkezlerinden arşivlere erişebilir, her kartın kaynaklı detay sayfasını (/fact/[slug]) inceleyebilir ya da Scrolly’yi çevrimdışı PWA uygulaması olarak kullanabilirsiniz.'}
@@ -271,13 +271,13 @@ export default async function AboutPage({ searchParams }: PageProps) {
       </section>
 
       <section className="space-y-2">
-        <h2 className="flex items-center gap-2 font-display text-lg font-bold text-ink dark:text-white">
-          <Sparkles className="h-5 w-5 text-rose-500" />
+        <h2 className="flex items-center gap-2 font-display text-lg font-bold text-cik-text">
+          <Sparkles className="h-5 w-5 text-cik-cta" />
           <span>
             {isEn ? '3. Transparency, Corrections & Feedback' : '3. Şeffaflık ve Kaynak Düzeltme Politikası'}
           </span>
         </h2>
-        <p className="text-sm leading-relaxed text-ink/80 dark:text-violet-100/80">
+        <p className="text-sm leading-relaxed text-cik-text-2">
           {isEn
             ? 'Scientific consensus evolves as new measurements arrive. If you spot an outdated statistic, broken source URL, or translation nuance on any Scrolly card, please contact our editorial verification team exclusively at contact@scrolly.live or via our Contact page so our editorial pipeline can review and update the record.'
             : 'Bilimsel veriler yeni ölçümlerle güncellenebilir. Herhangi bir bilgi kartında güncel olmayan bir istatistik, çalışmayan kaynak bağlantısı veya çeviri hatası fark ederseniz editöryal ekibimiz ve kaynak doğrulama masamız için tek resmi iletişim adresimiz olan contact@scrolly.live üzerinden ya da İletişim sayfamızdan bize ulaşabilirsiniz.'}
@@ -285,21 +285,21 @@ export default async function AboutPage({ searchParams }: PageProps) {
         <div className="flex flex-wrap items-center gap-3 pt-2">
           <Link
             href={buildContactHref(lang, returnToProfile)}
-            className="inline-flex items-center gap-1.5 rounded-full bg-ink px-4 py-2 text-xs font-extrabold text-white transition hover:opacity-90 dark:bg-violet-600"
+            className="inline-flex items-center gap-1.5 rounded-full bg-cik-cta px-4 py-2 text-xs font-extrabold text-cik-on-cta shadow-sticker transition hover:brightness-105"
           >
             <span>{isEn ? 'Report a Source Correction →' : 'Kaynak Düzeltmesi Bildir →'}</span>
           </Link>
           <a
             href="mailto:contact@scrolly.live"
-            className="inline-flex items-center gap-1.5 rounded-full border border-violet-200 bg-violet-50 px-4 py-2 text-xs font-extrabold text-violet-800 transition hover:bg-violet-100 dark:border-violet-700/50 dark:bg-violet-950/50 dark:text-violet-200"
+            className="inline-flex items-center gap-1.5 rounded-full border border-cik-line bg-cik-pink px-4 py-2 text-xs font-extrabold text-cik-cta transition hover:brightness-95"
           >
             contact@scrolly.live
           </a>
         </div>
       </section>
       <section className="space-y-3 border-t border-cik-line pt-5">
-        <h2 className="flex items-center gap-2 font-display text-lg font-bold text-ink dark:text-white">
-          <HelpCircle className="h-5 w-5 text-violet-600" />
+        <h2 className="flex items-center gap-2 font-display text-lg font-bold text-cik-text">
+          <HelpCircle className="h-5 w-5 text-cik-cta" />
           <span>
             {isEn ? '4. Frequently Asked Questions (FAQ)' : '4. Sıkça Sorulan Sorular (FAQ)'}
           </span>
@@ -310,10 +310,10 @@ export default async function AboutPage({ searchParams }: PageProps) {
               key={item.question}
               className="rounded-2xl border border-cik-line bg-cik-surface-2 p-4"
             >
-              <h3 className="font-display text-sm font-extrabold text-ink dark:text-white sm:text-base">
+              <h3 className="font-display text-sm font-extrabold text-cik-text sm:text-base">
                 {item.question}
               </h3>
-              <p className="mt-1.5 text-sm leading-relaxed text-ink/80 dark:text-violet-100/85">
+              <p className="mt-1.5 text-sm leading-relaxed text-cik-text-2">
                 {item.answer}
               </p>
             </div>

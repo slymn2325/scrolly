@@ -37,22 +37,22 @@ export default function DailySprintLanding({ rawDate, lang }: DailySprintLanding
   const cta = isEn ? 'Play too' : 'Sen de oyna';
 
   return (
-    <main className="flex h-full min-h-0 flex-col overflow-y-auto bg-[#FFFDF9] text-[#1E1B2E]">
+    <main className="flex h-full min-h-0 flex-col overflow-y-auto bg-cik-bg text-cik-text">
       <div className="mx-auto flex w-full max-w-lg flex-1 flex-col justify-center px-5 py-16">
-        <p className="text-xs font-black uppercase tracking-[0.16em] text-violet-700">
+        <p className="text-xs font-black uppercase tracking-[0.16em] text-cik-cta">
           {isEn ? 'Daily sprint' : 'Günlük sprint'}
         </p>
-        <h1 className="mt-2 font-display text-4xl font-black tracking-tight">{title}</h1>
-        <p className="mt-4 text-base font-medium leading-relaxed text-[#1E1B2E]/80">{intro}</p>
-        <p className="mt-2 text-sm font-semibold text-[#1E1B2E]/60">{when}</p>
+        <h1 className="mt-2 font-display text-4xl font-black tracking-tight text-cik-text">{title}</h1>
+        <p className="mt-4 text-base font-medium leading-relaxed text-cik-text-2">{intro}</p>
+        <p className="mt-2 text-sm font-semibold text-cik-text-3">{when}</p>
         <Link
           href={playHref}
           data-testid="daily-play-cta"
-          className="mt-8 inline-flex h-12 items-center justify-center rounded-full bg-violet-600 px-6 text-sm font-black text-white shadow-lg shadow-violet-500/25"
+          className="mt-8 inline-flex h-12 items-center justify-center rounded-full bg-cik-cta px-6 text-sm font-black text-cik-on-cta shadow-sticker"
         >
           {cta}
         </Link>
-        <p className="mt-6 text-xs font-bold text-[#1E1B2E]/45">scrolly.live</p>
+        <p className="mt-6 text-xs font-bold text-cik-text-3">scrolly.live</p>
       </div>
     </main>
   );

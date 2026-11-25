@@ -629,7 +629,8 @@ html.dark .scrolly-glass-pill {
 }
 
 .story-player-shell {
-  --story-accent: #7C3AED;
+  --story-accent: #C44569;
+  --story-overlay: 0.58;
 }
 
 .story-player-shell[data-story-mode='dark'] {
@@ -638,12 +639,12 @@ html.dark .scrolly-glass-pill {
   --cik-surface: #231D31;
   --cik-surface-2: #2A223A;
   --cik-text: #FAF7FF;
-  --cik-text-2: #CFC6DF;
-  --cik-text-3: #998DB0;
-  --cik-line: rgb(255 255 255 / 0.12);
+  --cik-text-2: #D8D0E6;
+  --cik-text-3: #A69BBF;
+  --cik-line: rgb(255 255 255 / 0.14);
   --cik-cta: var(--story-accent);
   --cik-on-cta: #FFFFFF;
-  --cik-pink: color-mix(in srgb, var(--story-accent) 22%, transparent);
+  --cik-pink: color-mix(in srgb, var(--story-accent) 24%, transparent);
   --cik-mint: #143D33;
   --cik-mint-text: #C3F7E4;
   --cik-rose: #411824;
@@ -655,14 +656,14 @@ html.dark .scrolly-glass-pill {
 }
 
 .story-player-shell[data-story-mode='light'] {
-  --cik-bg: #FAF7FC;
+  --cik-bg: #FFF9FB;
   --cik-bg-elevated: #FFFFFF;
   --cik-surface: #FFFFFF;
-  --cik-surface-2: #F4EFFA;
-  --cik-text: #1C1730;
-  --cik-text-2: #584D6E;
-  --cik-text-3: #84789B;
-  --cik-line: rgb(28 23 48 / 0.12);
+  --cik-surface-2: #F9EFF4;
+  --cik-text: #271522;
+  --cik-text-2: #5A3B4E;
+  --cik-text-3: #7D5D70;
+  --cik-line: rgb(63 29 48 / 0.14);
   --cik-cta: var(--story-accent);
   --cik-on-cta: #FFFFFF;
   --cik-pink: color-mix(in srgb, var(--story-accent) 14%, transparent);
@@ -684,8 +685,54 @@ html.dark .scrolly-glass-pill {
   color: var(--story-accent, var(--cik-cta));
 }
 
+.story-stage-scrim {
+  background: linear-gradient(
+    to bottom,
+    rgb(12 10 18 / calc(var(--story-overlay, 0.58) * 0.45)) 0%,
+    rgb(12 10 18 / calc(var(--story-overlay, 0.58) * 0.72)) 52%,
+    rgb(12 10 18 / calc(min(0.94, var(--story-overlay, 0.58) + 0.16))) 100%
+  );
+}
+
+.story-surface-glass {
+  background: color-mix(in srgb, var(--cik-bg-elevated) 78%, transparent);
+  border: 1px solid var(--cik-line);
+  -webkit-backdrop-filter: saturate(180%) blur(20px);
+  backdrop-filter: saturate(180%) blur(20px);
+  box-shadow: var(--cik-e3);
+}
+
+.story-surface-solid {
+  background: var(--cik-bg-elevated);
+  border: 1px solid var(--cik-line);
+  box-shadow: var(--cik-e3);
+}
+
+.story-surface-editorial {
+  background: color-mix(in srgb, var(--cik-bg) 88%, transparent);
+  border-top: 3px solid var(--story-accent, var(--cik-cta));
+  border-left: 1px solid var(--cik-line);
+  border-right: 1px solid var(--cik-line);
+  border-bottom: 1px solid var(--cik-line);
+  -webkit-backdrop-filter: blur(16px);
+  backdrop-filter: blur(16px);
+  box-shadow: var(--cik-e2);
+}
+
+.story-font-modern {
+  font-family: var(--font-text);
+}
+
+.story-font-editorial {
+  font-family: Georgia, Cambria, "Times New Roman", Times, serif;
+}
+
+.story-font-rounded {
+  font-family: var(--font-display);
+}
+
 .story-hero-glow {
   background:
-    radial-gradient(circle at 22% 18%, color-mix(in srgb, var(--story-accent, #7C3AED) 30%, transparent), transparent 62%),
-    radial-gradient(circle at 82% 76%, color-mix(in srgb, var(--story-accent, #7C3AED) 18%, transparent), transparent 56%);
+    radial-gradient(circle at 22% 18%, color-mix(in srgb, var(--story-accent, #C44569) 24%, transparent), transparent 60%),
+    radial-gradient(circle at 82% 76%, color-mix(in srgb, var(--story-accent, #C44569) 14%, transparent), transparent 56%);
 }

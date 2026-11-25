@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
+import { getSessionUserFromRequest } from '@/lib/auth';
 import { checkRateLimit, extractClientIp } from '@/lib/rateLimit';
 import { enforceSameOrigin, readJsonBodyWithLimit } from '@/lib/requestSecurity';
+import { checkAiGenerationAllowed, consumeAiGenerationCredit } from '@/lib/stories';
 import { generateStoryDraft } from '@/lib/storyGenerator';
 
 export const dynamic = 'force-dynamic';
@@ -24,12 +26,39 @@ export async function POST(request: Request) {
   const originErr = enforceSameOrigin(request);
   if (originErr) return originErr;
 
+  const user = await getSessionUserFromRequest(request);
+  if (!user) {
+    return NextResponse.json(
+      { ok: false, error: 'unauthorized' },
+      { status: 401, headers: NO_STORE_HEADERS }
+    );
+  }
+
   const ip = extractClientIp(request);
-  const rl = checkRateLimit(`stories_generate:${ip}`, 10, 60_000);
+  const rl = checkRateLimit(`stories_generate:${user.id}:${ip}`, 10, 60_000);
   if (!rl.allowed) {
     return NextResponse.json(
       { ok: false, error: 'rate_limited' },
       { status: 429, headers: { ...NO_STORE_HEADERS, 'Retry-After': String(rl.retryAfterSec) } }
+    );
+  }
+
+  const quotaCheck = await checkAiGenerationAllowed(user.id);
+  if (!quotaCheck.ok) {
+    const isCircuitBreaker = quotaCheck.error === 'daily_circuit_breaker';
+    return NextResponse.json(
+      {
+        ok: false,
+        error: quotaCheck.error,
+        quota: quotaCheck.quota,
+        messageTr: isCircuitBreaker
+          ? 'Günlük AI kapasitesi doldu, manuel editörle devam edebilirsin.'
+          : 'Starter plan aylık 2 AI üretim hakkın doldu. Manuel kart ekleyerek ücretsiz devam edebilirsin.',
+        messageEn: isCircuitBreaker
+          ? 'Daily AI capacity is full — you can continue creating cards manually.'
+          : 'Monthly Starter limit (2 AI generations) reached. Continue creating cards manually for free.',
+      },
+      { status: 429, headers: NO_STORE_HEADERS }
     );
   }
 
@@ -69,11 +98,13 @@ export async function POST(request: Request) {
       language,
       cardCount,
     });
+    const updatedQuota = await consumeAiGenerationCredit(user.id);
     return NextResponse.json(
       {
         ok: true,
         mode: generated.mode,
         draft: generated.draft,
+        quota: updatedQuota,
       },
       { headers: NO_STORE_HEADERS }
     );

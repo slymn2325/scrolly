@@ -879,7 +879,7 @@ export default function DuelModal({
                         onButtonPop();
                         setTopicMenuOpen((prev) => !prev);
                       }}
-                      className="flex h-11 w-full items-center justify-between rounded-xl border border-black/10 bg-white px-3.5 text-sm font-semibold text-neutral-900 shadow-sm transition-colors hover:bg-neutral-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C83E6B] dark:border-white/15 dark:bg-[#1C1B22] dark:text-white"
+                      className="flex h-11 w-full items-center justify-between rounded-xl border border-cik-line bg-cik-bg-elevated px-3.5 text-sm font-semibold text-cik-text shadow-sm transition-colors hover:bg-cik-surface-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cik-focus"
                     >
                       <span className="flex min-w-0 items-center gap-2">
                         <img
@@ -903,7 +903,7 @@ export default function DuelModal({
                         role="menu"
                         aria-label={lang === 'tr' ? 'Konu Seç' : 'Arena Topic'}
                         data-testid="duel-category-menu"
-                        className="absolute left-0 top-full z-40 mt-2 max-h-64 w-full overflow-y-auto rounded-2xl border border-black/10 bg-white/95 p-1.5 shadow-xl backdrop-blur-md dark:border-white/10 dark:bg-[#1C1B22]/95"
+                        className="absolute left-0 top-full z-40 mt-2 max-h-64 w-full overflow-y-auto rounded-2xl border border-cik-line bg-cik-bg-elevated/95 p-1.5 shadow-e3 backdrop-blur-md"
                       >
                         {CATEGORY_SELECTOR_OPTIONS.map((cat) => {
                           const active = category === cat.id;
@@ -920,10 +920,10 @@ export default function DuelModal({
                                 setTopicMenuOpen(false);
                                 topicBtnRef.current?.focus();
                               }}
-                              className={`flex w-full items-center justify-between gap-2 rounded-xl px-3 py-2.5 text-left text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C83E6B] ${
+                              className={`flex w-full items-center justify-between gap-2 rounded-xl px-3 py-2.5 text-left text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cik-focus ${
                                 active
-                                  ? 'bg-[#C83E6B] text-white'
-                                  : 'text-neutral-800 hover:bg-neutral-100 dark:text-white/90 dark:hover:bg-white/10'
+                                  ? 'bg-cik-cta text-cik-on-cta'
+                                  : 'text-cik-text hover:bg-cik-pink/50'
                               }`}
                             >
                               <span className="flex min-w-0 items-center gap-2.5">
@@ -960,10 +960,10 @@ export default function DuelModal({
                             onButtonPop();
                             setQuestionCount(count);
                           }}
-                          className={`inline-flex h-10 w-full items-center justify-center rounded-xl border text-xs font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C83E6B] ${
+                          className={`inline-flex h-10 w-full items-center justify-center rounded-xl border text-xs font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cik-focus ${
                             active
-                              ? 'border-[#C83E6B] bg-[#C83E6B] text-white'
-                              : 'border-black/10 bg-white text-neutral-700 dark:border-white/15 dark:bg-[#1C1B22] dark:text-white/90'
+                              ? 'border-cik-cta bg-cik-cta text-cik-on-cta'
+                              : 'border-cik-line bg-cik-bg-elevated text-cik-text'
                           }`}
                         >
                           {count}
@@ -980,7 +980,7 @@ export default function DuelModal({
                     disabled={busyAction === 'create'}
                     onClick={() => void handleCreateRoom()}
                     data-testid="duel-create-lobby-btn"
-                    className="flex h-11 w-full items-center justify-center gap-2 rounded-2xl bg-[#C83E6B] px-4 text-sm font-semibold text-white shadow-sm disabled:opacity-60"
+                    className="flex h-11 w-full items-center justify-center gap-2 rounded-2xl bg-cik-cta px-4 text-sm font-semibold text-cik-on-cta shadow-sticker disabled:opacity-60"
                   >
                     <Swords className="h-4 w-4 shrink-0" />
                     <span>
@@ -1016,7 +1016,7 @@ export default function DuelModal({
                       maxLength={200}
                       data-testid="duel-join-code-input"
                       aria-label={t.duelJoinTitle}
-                      className="h-11 min-w-0 flex-1 rounded-2xl border border-black/10 bg-white px-4 font-mono text-sm font-semibold tracking-widest text-neutral-900 uppercase focus-visible:outline focus-visible:outline-[3px] focus-visible:outline-offset-2 focus-visible:outline-cik-focus dark:border-white/15 dark:bg-[#1C1B22] dark:text-white"
+                      className="h-11 min-w-0 flex-1 rounded-2xl border border-cik-line bg-cik-bg-elevated px-4 font-mono text-sm font-semibold tracking-widest text-cik-text uppercase focus-visible:outline focus-visible:outline-[3px] focus-visible:outline-offset-2 focus-visible:outline-cik-focus"
                     />
                     <button
                       type="button"
@@ -1027,8 +1027,8 @@ export default function DuelModal({
                       }}
                       className={`flex h-11 shrink-0 items-center justify-center gap-2 rounded-2xl px-4 text-sm font-semibold ${
                         normalizeRoomCode(joinCodeInput).length === 6
-                          ? 'bg-[#C83E6B] text-white shadow-sm'
-                          : 'border border-black/10 bg-white text-neutral-800 shadow-sm dark:border-white/15 dark:bg-[#1C1B22] dark:text-white'
+                          ? 'bg-cik-cta text-cik-on-cta shadow-sticker'
+                          : 'border border-cik-line bg-cik-bg-elevated text-cik-text shadow-sm'
                       }`}
                     >
                       <LogIn size={20} strokeWidth={2} aria-hidden="true" />
@@ -1101,9 +1101,9 @@ export default function DuelModal({
                     initial={{ scale: 0.92, opacity: 0 }}
                     animate={{ scale: 1, opacity: 1 }}
                     data-testid="duel-countdown-banner"
-                    className="flex flex-col items-center justify-center rounded-2xl border-2 border-cik-berry bg-gradient-to-r from-violet-600 via-indigo-600 to-violet-700 px-4 py-4 text-center text-cik-on-cta shadow-lg"
+                    className="flex flex-col items-center justify-center rounded-2xl border-2 border-cik-line bg-cik-cta px-4 py-4 text-center text-cik-on-cta shadow-sticker"
                   >
-                    <p className="inline-flex items-center gap-1.5 cik-caption-2 font-black uppercase tracking-widest text-amber-100">
+                    <p className="inline-flex items-center gap-1.5 cik-caption-2 font-black uppercase tracking-widest text-cik-on-cta">
                       <Sparkles className="h-3.5 w-3.5" />
                       <span>{lang === 'tr' ? 'Arena Başlıyor' : 'Arena Starting'}</span>
                     </p>

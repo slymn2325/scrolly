@@ -155,7 +155,7 @@ export default function CategoryMotionArt({
             style={{
               boxShadow: `0 6px 18px -4px ${accentColor}40`,
             }}
-            className="flex h-14 w-14 items-center justify-center rounded-2xl bg-white/95 p-1.5 dark:bg-slate-900/95"
+            className="flex h-14 w-14 items-center justify-center rounded-2xl bg-cik-surface/95 p-1.5"
           >
             <img
               src={heroIllustration}

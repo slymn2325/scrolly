@@ -138,17 +138,17 @@ export default function GiphyReactionPicker({
   return (
     <div
       data-testid="giphy-reaction-picker"
-      className={`rounded-2xl border border-violet-200/80 bg-violet-50/70 dark:border-white/15 dark:bg-[#12121C]/95 ${
+      className={`rounded-2xl border border-cik-line bg-cik-surface-2 ${
         compact ? 'p-2.5' : 'p-3.5'
       }`}
     >
       <div className="flex items-center justify-between gap-2">
-        <p className="inline-flex items-center gap-1.5 text-xs font-black tracking-tight text-ink dark:text-white">
-          <Film className="h-3.5 w-3.5 shrink-0 text-violet-600 dark:text-violet-300" aria-hidden="true" />
+        <p className="inline-flex items-center gap-1.5 text-xs font-black tracking-tight text-cik-text">
+          <Film className="h-3.5 w-3.5 shrink-0 text-cik-cta" aria-hidden="true" />
           <span>{heading}</span>
         </p>
         {sending && (
-          <span className="inline-flex items-center gap-1 text-[10px] font-bold text-violet-600 dark:text-violet-300">
+          <span className="inline-flex items-center gap-1 text-[10px] font-bold text-cik-cta">
             <Loader2 className="h-3 w-3 animate-spin" />
             <span>{lang === 'tr' ? 'Gönderiliyor' : 'Sending'}</span>
           </span>
@@ -158,7 +158,7 @@ export default function GiphyReactionPicker({
       {/* Search Form */}
       <form onSubmit={handleSearchSubmit} className="mt-2 flex items-center gap-1.5">
         <div className="relative flex-1">
-          <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-ink/45 dark:text-white/45" />
+          <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-cik-text-3" />
           <input
             type="search"
             value={queryInput}
@@ -166,14 +166,14 @@ export default function GiphyReactionPicker({
             placeholder={placeholder}
             aria-label={placeholder}
             data-testid="giphy-reaction-search-input"
-            className="w-full rounded-xl border border-violet-200/90 bg-white py-1.5 pl-8 pr-2.5 text-xs font-semibold text-ink placeholder:text-ink/60 focus:border-violet-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-400 dark:border-white/15 dark:bg-[#1A1A28] dark:text-white dark:placeholder:text-white/60"
+            className="w-full rounded-xl border border-cik-line bg-cik-bg-elevated py-1.5 pl-8 pr-2.5 text-xs font-semibold text-cik-text placeholder:text-cik-text-3 focus:border-cik-cta focus:outline-none focus-visible:ring-2 focus-visible:ring-cik-focus"
           />
         </div>
         <button
           type="submit"
           data-testid="giphy-reaction-search-btn"
           aria-label={lang === 'tr' ? 'GIF Ara' : 'Search GIFs'}
-          className="inline-flex h-8 shrink-0 items-center justify-center rounded-xl bg-violet-600 px-2.5 text-xs font-extrabold text-white transition hover:bg-violet-500"
+          className="inline-flex h-8 shrink-0 items-center justify-center rounded-xl bg-cik-cta px-2.5 text-xs font-extrabold text-cik-on-cta transition hover:brightness-105"
         >
           <Send className="h-3.5 w-3.5" />
         </button>
@@ -201,10 +201,10 @@ export default function GiphyReactionPicker({
               type="button"
               onClick={() => handleMoodClick(chip)}
               data-testid={`giphy-mood-chip-${chip.id}`}
-              className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[10px] font-extrabold transition-[background-color,color,border-color,box-shadow] duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400 ${
+              className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[10px] font-extrabold transition-[background-color,color,border-color,box-shadow] duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cik-focus ${
                 active
-                  ? 'bg-violet-600 text-white shadow-sm'
-                  : 'border border-violet-200/80 bg-white/90 text-ink/80 hover:border-violet-400 dark:border-white/15 dark:bg-white/10 dark:text-violet-100'
+                  ? 'bg-cik-cta text-cik-on-cta shadow-sm'
+                  : 'border border-cik-line bg-cik-bg-elevated text-cik-text hover:bg-cik-pink'
               }`}
             >
               {chipIcon}
@@ -221,7 +221,7 @@ export default function GiphyReactionPicker({
             {Array.from({ length: 6 }).map((_, idx) => (
               <div
                 key={idx}
-                className="aspect-[4/3] animate-pulse rounded-xl bg-violet-200/60 dark:bg-white/10"
+                className="aspect-[4/3] animate-pulse rounded-xl bg-cik-pink"
               />
             ))}
           </div>
@@ -240,11 +240,11 @@ export default function GiphyReactionPicker({
                   onClick={() => handlePickGif(gif)}
                   title={gif.title}
                   data-testid={`giphy-reaction-tile-${idx}`}
-                  className={`group relative aspect-[4/3] overflow-hidden rounded-xl border transition-[border-color,transform,box-shadow] duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-400 ${
+                  className={`group relative aspect-[4/3] overflow-hidden rounded-xl border bg-cik-bg transition-[border-color,transform,box-shadow] duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-cik-focus ${
                     isSelected
-                      ? 'border-emerald-400 ring-2 ring-emerald-400/60'
-                      : 'border-white/20 hover:border-violet-400'
-                  } bg-[#0A0A0E]`}
+                      ? 'border-cik-mint-text ring-2 ring-cik-mint-text/60'
+                      : 'border-cik-line hover:border-cik-cta'
+                  }`}
                 >
                   <img
                     src={gif.previewUrl || gif.url}
@@ -252,7 +252,7 @@ export default function GiphyReactionPicker({
                     loading="lazy"
                     className="h-full w-full object-cover transition-transform duration-200 group-hover:scale-105"
                   />
-                  <span className="pointer-events-none absolute inset-x-0 bottom-0 truncate bg-black/70 px-1.5 py-0.5 text-[9px] font-bold text-white/90">
+                  <span className="pointer-events-none absolute inset-x-0 bottom-0 truncate bg-cik-bg/85 px-1.5 py-0.5 text-[9px] font-bold text-cik-text">
                     {gif.title}
                   </span>
                 </button>
@@ -260,7 +260,7 @@ export default function GiphyReactionPicker({
             })}
           </div>
         ) : (
-          <p className="rounded-xl border border-dashed border-violet-300/60 py-3 text-center text-[11px] font-semibold text-ink/60 dark:border-white/15 dark:text-white/60">
+          <p className="rounded-xl border border-dashed border-cik-line py-3 text-center text-[11px] font-semibold text-cik-text-2">
             {lang === 'tr'
               ? 'Şu an uygun tepki GIF’i bulunamadı.'
               : 'No reaction GIFs found right now.'}
@@ -272,28 +272,28 @@ export default function GiphyReactionPicker({
       {recentReactions.length > 0 && (
         <div
           data-testid="giphy-recent-reactions"
-          className="mt-2.5 flex flex-wrap gap-2 border-t border-violet-200/60 pt-2 dark:border-white/10"
+          className="mt-2.5 flex flex-wrap gap-2 border-t border-cik-line pt-2"
         >
           {recentReactions.map((reaction, idx) => (
             <div
               key={`${reaction.senderName}-${reaction.url}-${idx}`}
               className={`flex items-center gap-2 rounded-xl border px-2 py-1 ${
                 reaction.isSelf
-                  ? 'border-violet-400/60 bg-violet-100/80 dark:border-violet-500/50 dark:bg-violet-950/60'
-                  : 'border-amber-300/70 bg-amber-50/80 dark:border-amber-500/40 dark:bg-amber-950/40'
+                  ? 'border-cik-line bg-cik-pink'
+                  : 'border-cik-line bg-cik-butter'
               }`}
             >
               <img
                 src={reaction.url}
                 alt={reaction.title || reaction.senderName}
-                className="h-9 w-12 shrink-0 rounded-lg object-cover bg-[#0A0A0E]"
+                className="h-9 w-12 shrink-0 rounded-lg bg-cik-bg object-cover"
               />
               <div className="min-w-0 pr-1">
-                <p className="truncate text-[10px] font-black text-ink dark:text-white">
+                <p className="truncate text-[10px] font-black text-cik-text">
                   {reaction.senderName}
                 </p>
                 {reaction.title && (
-                  <p className="max-w-[110px] truncate text-[9px] font-semibold text-ink/65 dark:text-white/70">
+                  <p className="max-w-[110px] truncate text-[9px] font-semibold text-cik-text-2">
                     {reaction.title}
                   </p>
                 )}

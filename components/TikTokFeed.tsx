@@ -875,7 +875,7 @@ const TikTokFeed = forwardRef<TikTokFeedHandle, TikTokFeedProps>(function TikTok
             aria-haspopup="menu"
             aria-expanded={isCategoryDrawerOpen}
             data-testid="choose-category-btn"
-            className={`scrolly-tactile inline-flex h-9 min-w-0 max-w-[44vw] shrink items-center gap-1.5 overflow-hidden rounded-pill border border-black/10 bg-cik-surface/90 px-3 py-1.5 text-xs font-semibold leading-none text-cik-text shadow-e1 backdrop-blur-md dark:border-white/10 lg:h-10 lg:max-w-[40vw] lg:gap-2 lg:px-3.5 lg:text-sm ${
+            className={`scrolly-tactile inline-flex h-9 min-w-0 max-w-[44vw] shrink items-center gap-1.5 overflow-hidden rounded-pill border border-cik-line bg-cik-surface/95 px-3 py-1.5 text-xs font-semibold leading-none text-cik-text shadow-e1 backdrop-blur-md lg:h-10 lg:max-w-[40vw] lg:gap-2 lg:px-3.5 lg:text-sm ${
               chromeBlocked ? 'pointer-events-none' : 'pointer-events-auto'
             }`}
           >
@@ -898,7 +898,7 @@ const TikTokFeed = forwardRef<TikTokFeedHandle, TikTokFeedProps>(function TikTok
               data-testid="category-drawer"
               data-presentation="dropdown"
               data-scroll-contain="true"
-              className="pointer-events-auto absolute left-0 top-full z-40 mt-2 max-h-[65dvh] w-60 overflow-y-auto rounded-2xl border border-black/10 bg-white/95 p-1.5 shadow-xl backdrop-blur-md outline-none ring-0 focus:outline-none focus:ring-0 dark:border-white/10 dark:bg-[#1C1B22]/95"
+              className="pointer-events-auto absolute left-0 top-full z-40 mt-2 max-h-[65dvh] w-60 overflow-y-auto rounded-2xl border border-cik-line bg-cik-bg-elevated/95 p-1.5 shadow-e3 backdrop-blur-md outline-none ring-0 focus:outline-none focus:ring-0"
             >
               <div className="flex flex-col gap-0.5">
                 {CATEGORY_SELECTOR_OPTIONS.map((cat) => {
@@ -921,8 +921,8 @@ const TikTokFeed = forwardRef<TikTokFeedHandle, TikTokFeedProps>(function TikTok
                       }}
                       className={`flex w-full items-center gap-2.5 rounded-xl px-2.5 py-2 text-left text-sm font-medium transition-colors ${
                         isActive
-                          ? 'bg-cik-pink text-cik-cta dark:bg-white/10 dark:text-cik-cta'
-                          : 'text-neutral-800 hover:bg-black/5 dark:text-white/90 dark:hover:bg-white/10'
+                          ? 'bg-cik-pink text-cik-cta'
+                          : 'text-cik-text hover:bg-cik-surface-2'
                       }`}
                     >
                       <CategoryIcon id={cat.id} size={18} />
@@ -944,11 +944,11 @@ const TikTokFeed = forwardRef<TikTokFeedHandle, TikTokFeedProps>(function TikTok
           }`}
         >
           <Link
-            href="/create"
+            href="/studio"
             data-testid="hud-create-studio-link"
             aria-label={lang === 'tr' ? 'Hikâye Stüdyosu' : 'Creator Studio'}
             title={lang === 'tr' ? 'Hikâye Stüdyosu' : 'Creator Studio'}
-            className="scrolly-tactile inline-flex h-9 shrink-0 items-center gap-1.5 rounded-pill border border-black/10 bg-cik-surface/90 px-2.5 text-xs font-bold text-cik-cta shadow-e1 backdrop-blur-md hover:bg-cik-pink dark:border-white/10 lg:hidden"
+            className="scrolly-tactile inline-flex h-9 shrink-0 items-center gap-1.5 rounded-pill border border-cik-line bg-cik-surface/95 px-2.5 text-xs font-bold text-cik-cta shadow-e1 backdrop-blur-md hover:bg-cik-pink lg:hidden"
           >
             <Sparkles className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
             <span>{lang === 'tr' ? 'Stüdyo' : 'Studio'}</span>
@@ -1142,7 +1142,7 @@ function LanguageMenu({
         aria-haspopup="menu"
         aria-expanded={open}
         onClick={() => setOpen((prev) => !prev)}
-        className="relative flex h-9 w-9 items-center justify-center rounded-full border border-black/5 bg-white/95 text-neutral-900 shadow-sm backdrop-blur-md hover:bg-white lg:h-10 lg:w-10"
+        className="relative flex h-9 w-9 items-center justify-center rounded-full border border-cik-line bg-cik-surface/95 text-cik-text shadow-e1 backdrop-blur-md hover:bg-cik-pink lg:h-10 lg:w-10"
       >
         <Globe size={18} strokeWidth={2} aria-hidden="true" className="h-[18px] w-[18px] lg:h-5 lg:w-5" />
       </button>
@@ -1151,7 +1151,7 @@ function LanguageMenu({
           role="menu"
           aria-label={label}
           data-testid="lang-menu"
-          className="absolute right-0 top-[calc(100%+8px)] z-hud flex w-max min-w-16 flex-col gap-0.5 rounded-2xl border border-black/10 bg-white/95 p-1.5 shadow-xl backdrop-blur-md dark:border-white/10 dark:bg-[#1C1B22]/95"
+          className="absolute right-0 top-[calc(100%+8px)] z-hud flex w-max min-w-16 flex-col gap-0.5 rounded-2xl border border-cik-line bg-cik-bg-elevated/95 p-1.5 shadow-e3 backdrop-blur-md"
         >
           {(['tr', 'en'] as const).map((code) => {
             const selected = lang === code;
@@ -1165,8 +1165,8 @@ function LanguageMenu({
                 onClick={() => pick(code)}
                 className={`cik-footnote flex h-11 items-center justify-between gap-3 rounded-xl px-3 transition-colors ${
                   selected
-                    ? 'bg-cik-pink text-cik-cta dark:bg-white/10 dark:text-cik-cta'
-                    : 'text-neutral-800 hover:bg-black/5 dark:text-white/90 dark:hover:bg-white/10'
+                    ? 'bg-cik-pink text-cik-cta'
+                    : 'text-cik-text hover:bg-cik-surface-2'
                 }`}
               >
                 <span>{code === 'tr' ? 'TR' : 'EN'}</span>

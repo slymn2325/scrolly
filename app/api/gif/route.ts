@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { getSessionUserFromRequest } from '@/lib/auth';
 import {
   getFactGifUrlDb,
   getVocabularyGifUrlDb,
@@ -9,6 +10,7 @@ import {
   sanitizeReactionQuery,
   sanitizeVisualQuery,
   searchReactionGifs,
+  searchStudioGifs,
   searchTopicGif,
 } from '@/lib/gifService';
 import { checkRateLimit, extractClientIp } from '@/lib/rateLimit';
@@ -34,6 +36,32 @@ export async function GET(request: Request) {
     const url = new URL(request.url);
     const mode = (url.searchParams.get('mode') || '').trim().toLowerCase();
     const rawQuery = url.searchParams.get('query') || '';
+
+    if (mode === 'studio') {
+      const sessionUser = await getSessionUserFromRequest(request);
+      if (!sessionUser) {
+        return NextResponse.json(
+          { ok: false, error: 'unauthorized' },
+          { status: 401, headers: NO_STORE_HEADERS }
+        );
+      }
+      const rawLimit = Number(url.searchParams.get('limit') || '8');
+      const limit = Number.isFinite(rawLimit) ? Math.max(1, Math.min(8, Math.floor(rawLimit))) : 8;
+      const cleanStudioQuery = sanitizeReactionQuery(rawQuery);
+      const result = await searchStudioGifs(rawQuery, limit);
+      return NextResponse.json(
+        {
+          ok: true,
+          mode: 'studio',
+          query: cleanStudioQuery,
+          gifs: result.gifs,
+          provider: result.provider,
+          cached: result.cached,
+          quotaExhausted: Boolean(result.quotaExhausted),
+        },
+        { headers: NO_STORE_HEADERS }
+      );
+    }
 
     if (mode === 'reactions') {
       const rawLimit = Number(url.searchParams.get('limit') || '6');

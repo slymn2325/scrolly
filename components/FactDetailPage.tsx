@@ -242,8 +242,7 @@ export default function FactDetailPage({
               <div className="min-w-0 flex-1">
                 <div className="flex flex-wrap items-center gap-2">
                   <span
-                    className="inline-flex items-center gap-1.5 rounded-pill px-2.5 py-0.5 cik-caption-2 font-black uppercase tracking-wider text-cik-text"
-                    style={{ backgroundColor: fact.accentColor || 'var(--cik-cta)' }}
+                    className="inline-flex items-center gap-1.5 rounded-pill bg-cik-cta px-2.5 py-0.5 cik-caption-2 font-black uppercase tracking-wider text-cik-on-cta"
                   >
                     <span>{fact.emoji || catMeta.emoji}</span>
                     <span>{detailHighlights.topicTag}</span>
@@ -477,10 +476,8 @@ export default function FactDetailPage({
                 <span
                   className={`rounded-pill px-2 py-0.5 cik-caption-2 font-black ${
                     miniQuizChoice !== null && miniQuizChoice === localized.quiz.correctIndex
-                      ? 'bg-cik-mint text-cik-text'
-                      : darkMode
-                        ? 'bg-cik-butter text-cik-butter-text'
-                        : 'bg-cik-butter text-cik-butter-text'
+                      ? 'bg-cik-mint text-cik-mint-text'
+                      : 'bg-cik-butter text-cik-butter-text'
                   }`}
                 >
                   {miniQuizChoice !== null && miniQuizChoice === localized.quiz.correctIndex
@@ -665,13 +662,13 @@ export default function FactDetailPage({
             onNextCard();
           }}
           data-testid="next-card-btn"
-          className={`flex min-h-[46px] flex-1 items-center justify-center gap-2 rounded-2xl px-4 text-xs font-extrabold ${
-            darkMode
-              ? 'bg-cik-surface text-cik-text'
-              : 'bg-cik-bg text-cik-text'
-          }`}
+          className="flex min-h-[46px] flex-1 items-center justify-center gap-2 rounded-2xl bg-cik-cta px-4 text-xs font-extrabold text-cik-on-cta shadow-sticker"
         >
-          <span>{lang === 'tr' ? 'Sonraki Bilgiye Kaydır' : t.tiktokNextSlideBtn}</span>
+          <span>
+            {lang === 'tr'
+              ? 'Sonraki Bilgiye Kaydır'
+              : t.tiktokNextSlideBtn.replace(/\s*↓\s*$/, '')}
+          </span>
           <ArrowDown className="h-4 w-4 shrink-0" />
         </motion.button>
       </div>

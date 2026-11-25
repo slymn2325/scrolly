@@ -182,9 +182,9 @@ export default function CardMediaStage({
       {showFallback ? (
         <div
           data-testid="card-media-fallback"
-          className="absolute inset-0 z-[2] flex items-end bg-gradient-to-br from-indigo-700 via-violet-700 to-indigo-950 p-5"
+          className="absolute inset-0 z-[2] flex items-end bg-gradient-to-br from-cik-pink/90 via-cik-surface-2/85 to-cik-bg/95 p-5"
         >
-          <p className="font-display text-2xl font-semibold leading-tight text-white line-clamp-3">{title}</p>
+          <p className="font-display text-2xl font-semibold leading-tight text-cik-text line-clamp-3">{title}</p>
         </div>
       ) : null}
     </div>

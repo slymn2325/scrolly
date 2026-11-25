@@ -1,8 +1,15 @@
 import dns from 'node:dns/promises';
+import { sanitizeVisualQuery, searchStudioGifs } from '@/lib/gifService';
 import { isBlockedMediaHost } from '@/lib/mediaProxyPolicy';
 import { sanitizeDisplayText } from '@/lib/originPolicy';
+import { buildSpecificGifQuery, resolveServerGifForQuery } from '@/lib/serverGifMatcher';
 import { sanitizeStoryCards } from '@/lib/stories';
-import type { StoryCardItem, StoryDraft, StoryLanguage } from '@/types/story';
+import {
+  STORY_GRADIENT_PRESETS,
+  type StoryCardItem,
+  type StoryDraft,
+  type StoryLanguage,
+} from '@/types/story';
 
 const MAX_FETCH_BYTES = 512 * 1024;
 const MAX_REDIRECT_HOPS = 3;
@@ -218,7 +225,7 @@ async function callConfiguredLlm(params: {
   sourceLabel: string;
   language: StoryLanguage;
   cardCount: number;
-}): Promise<{ title: string; cards: StoryCardItem[] } | null> {
+}): Promise<{ title: string; cards: StoryCardItem[]; visualQueries?: string[] } | null> {
   const token =
     process.env.GEMINI_API_KEY?.trim() ||
     process.env.AI_API_KEY?.trim() ||
@@ -241,7 +248,8 @@ async function callConfiguredLlm(params: {
     '      "question": "1 crisp Quick Guess comprehension question based strictly on this card",',
     '      "options": ["Option A", "Option B", "Option C"],',
     '      "correctIndex": 0,',
-    '      "sourceLabel": "short source attribution"',
+    '      "sourceLabel": "short source attribution",',
+    '      "visualQuery": "2-4 English visual keywords for GIF background"',
     '    }',
     '  ]',
     '}',
@@ -287,11 +295,18 @@ async function callConfiguredLlm(params: {
       const rawContent = data?.choices?.[0]?.message?.content || '';
       const parsed = extractJsonObjectFromText(rawContent);
       if (!parsed) return null;
+      const rawCards = Array.isArray(parsed.cards) ? parsed.cards : [];
+      const visualQueries = rawCards.map((c) =>
+        c && typeof c === 'object' && 'visualQuery' in c
+          ? sanitizeVisualQuery(String((c as { visualQuery?: unknown }).visualQuery || '')) || ''
+          : ''
+      );
       const cards = sanitizeStoryCards(parsed.cards, params.language);
       if (cards.length < 2) return null;
       return {
         title: sanitizeDisplayText(parsed.title, 120) || params.pageTitle || params.sourceLabel,
         cards,
+        visualQueries,
       };
     } catch {
       return null;
@@ -332,11 +347,18 @@ async function callConfiguredLlm(params: {
         .join('\n');
       const parsed = extractJsonObjectFromText(rawText);
       if (!parsed) continue;
+      const rawCards = Array.isArray(parsed.cards) ? parsed.cards : [];
+      const visualQueries = rawCards.map((c) =>
+        c && typeof c === 'object' && 'visualQuery' in c
+          ? sanitizeVisualQuery(String((c as { visualQuery?: unknown }).visualQuery || '')) || ''
+          : ''
+      );
       const cards = sanitizeStoryCards(parsed.cards, params.language);
       if (cards.length < 2) continue;
       return {
         title: sanitizeDisplayText(parsed.title, 120) || params.pageTitle || params.sourceLabel,
         cards,
+        visualQueries,
       };
     } catch {
       // Try next fallback model or deterministic synthesizer
@@ -483,6 +505,81 @@ function synthesizeDeterministicDraft(params: {
   return { title: derivedTitle, cards };
 }
 
+async function attachAutoMediaToCards(
+  cards: StoryCardItem[],
+  visualQueries: string[],
+  language: StoryLanguage
+): Promise<StoryCardItem[]> {
+  const usedUrls = new Set<string>();
+  const enriched: StoryCardItem[] = [];
+
+  for (let idx = 0; idx < cards.length; idx += 1) {
+    const card = cards[idx];
+    const gradientId =
+      card.gradientId ||
+      STORY_GRADIENT_PRESETS[idx % STORY_GRADIENT_PRESETS.length].id;
+
+    if (card.mediaUrl) {
+      usedUrls.add(card.mediaUrl);
+      enriched.push({
+        ...card,
+        gradientId,
+        quizEnabled: card.quizEnabled !== false,
+      });
+      continue;
+    }
+
+    const rawQuery =
+      visualQueries[idx] ||
+      buildSpecificGifQuery({
+        id: card.id,
+        title: card.headline,
+        factText: card.body,
+        titleEn: language === 'en' ? card.headline : undefined,
+        summaryEn: language === 'en' ? card.body : undefined,
+      }) ||
+      'science discovery cosmos';
+
+    let mediaUrl = '';
+
+    try {
+      const direct = await resolveServerGifForQuery(rawQuery);
+      if (direct?.gifUrl && !usedUrls.has(direct.gifUrl)) {
+        mediaUrl = direct.gifUrl;
+      }
+    } catch {
+      // Ignore single-card GIF error and try studio visual fallback
+    }
+
+    if (!mediaUrl) {
+      try {
+        const studioFallback = await searchStudioGifs(rawQuery, 8);
+        const uniqueCandidate = studioFallback.gifs.find(
+          (item) => item?.url && !usedUrls.has(item.url)
+        );
+        if (uniqueCandidate?.url) {
+          mediaUrl = uniqueCandidate.url;
+        }
+      } catch {
+        // Card falls back cleanly to curated gradient background
+      }
+    }
+
+    if (mediaUrl) {
+      usedUrls.add(mediaUrl);
+    }
+
+    enriched.push({
+      ...card,
+      mediaUrl,
+      gradientId,
+      quizEnabled: card.quizEnabled !== false,
+    });
+  }
+
+  return enriched;
+}
+
 export async function generateStoryDraft(input: {
   inputType: 'url' | 'text';
   content: string;
@@ -522,13 +619,19 @@ export async function generateStoryDraft(input: {
   });
 
   if (llmResult && llmResult.cards.length > 0) {
+    const sliced = llmResult.cards.slice(0, 7);
+    const enrichedCards = await attachAutoMediaToCards(
+      sliced,
+      llmResult.visualQueries || [],
+      language
+    );
     return {
       mode: 'llm',
       draft: {
         title: llmResult.title,
         sourceUrl,
         language,
-        cards: llmResult.cards.slice(0, 7),
+        cards: enrichedCards,
       },
     };
   }
@@ -541,13 +644,19 @@ export async function generateStoryDraft(input: {
     cardCount,
   });
 
+  const enrichedFallback = await attachAutoMediaToCards(
+    fallback.cards,
+    [],
+    language
+  );
+
   return {
     mode: 'structured_fallback',
     draft: {
       title: fallback.title,
       sourceUrl,
       language,
-      cards: fallback.cards,
+      cards: enrichedFallback,
     },
   };
 }

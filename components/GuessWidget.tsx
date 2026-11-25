@@ -210,7 +210,7 @@ export default function GuessWidget({
       onDoubleClick={stop}
       onPointerDown={stop}
       onTouchStart={stop}
-      className="pointer-events-auto rounded-cik-md border border-black/10 bg-cik-surface-2/90 p-3 text-cik-text shadow-e1 backdrop-blur-md transition-colors dark:border-white/10"
+      className="pointer-events-auto rounded-cik-md border border-cik-line bg-cik-surface-2/95 p-3 text-cik-text shadow-e1 backdrop-blur-md transition-colors"
     >
       <style>{`
         .guess-range {
@@ -342,7 +342,7 @@ export default function GuessWidget({
                 data-testid={`guess-binary-${idx}`}
                 onClick={(e) => handleBinaryPick(e, idx)}
                 onDoubleClick={stop}
-                className="cik-headline flex min-h-11 items-center justify-center rounded-cik-md border border-black/10 bg-cik-bg-elevated/95 px-3 py-2 text-center text-cik-text shadow-e1 transition hover:border-cik-cta/50 hover:bg-cik-surface dark:border-white/10"
+                className="cik-headline flex min-h-11 items-center justify-center rounded-cik-md border border-cik-line bg-cik-bg-elevated/95 px-3 py-2 text-center text-cik-text shadow-e1 transition hover:border-cik-cta/50 hover:bg-cik-surface"
               >
                 <span>{opt}</span>
               </motion.button>
@@ -384,21 +384,20 @@ export default function GuessWidget({
           </div>
 
           {!hideFlipCta && (
-            <motion.button
+            <button
               type="button"
-              whileTap={reduced ? undefined : { scale: 0.96 }}
-              transition={pressTransition(reduced)}
               data-testid="guess-flip-cta-btn"
               onClick={(e) => {
                 e.stopPropagation();
                 onRequestFlip();
               }}
+              onPointerDown={(e) => e.stopPropagation()}
               onDoubleClick={stop}
-              className="cik-footnote inline-flex min-h-11 shrink-0 items-center gap-2 rounded-pill border border-black/10 bg-cik-bg-elevated px-3 text-cik-text shadow-e1 transition hover:bg-cik-surface dark:border-white/10"
+              className="cik-footnote inline-flex min-h-11 shrink-0 items-center gap-2 rounded-pill border border-cik-line bg-cik-bg-elevated px-3 text-cik-text shadow-e1 transition hover:bg-cik-surface active:scale-[0.97]"
             >
               <RotateCw className="h-4 w-4 shrink-0" aria-hidden="true" />
               <span>{t.guessFlipCta}</span>
-            </motion.button>
+            </button>
           )}
         </motion.div>
       )}

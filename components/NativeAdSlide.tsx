@@ -138,19 +138,19 @@ export default function NativeAdSlide({
       data-ad-render-state={isAdFilled ? 'filled' : 'pro-tip'}
       onClick={(e) => e.stopPropagation()}
       onDoubleClick={(e) => e.stopPropagation()}
-      className={`reels-slide relative flex h-full w-full shrink-0 flex-col justify-between overflow-hidden bg-slate-100 px-5 pt-[calc(6.25rem+env(safe-area-inset-top))] select-none dark:bg-[#0B0F17] ${
+      className={`reels-slide relative flex h-full w-full shrink-0 flex-col justify-between overflow-hidden bg-cik-bg px-5 pt-[calc(6.25rem+env(safe-area-inset-top))] text-cik-text select-none ${
         cookieBannerVisible
           ? 'pb-[calc(204px+env(safe-area-inset-bottom))] lg:pb-8'
           : 'pb-[calc(94px+env(safe-area-inset-bottom))] lg:pb-8'
       }`}
     >
-      <div className="relative z-10 m-0 mx-auto flex h-full w-full max-w-none flex-col justify-between rounded-none border-0 bg-white/95 p-4 shadow-none dark:bg-[#121826]/95 lg:max-w-xl lg:rounded-[28px] lg:border-2 lg:border-slate-300/90 lg:shadow-md dark:lg:border-slate-700/90">
+      <div className="relative z-10 m-0 mx-auto flex h-full w-full max-w-none flex-col justify-between rounded-none border-0 bg-cik-surface p-4 shadow-none lg:max-w-xl lg:rounded-[28px] lg:border-2 lg:border-cik-line lg:shadow-e2">
         {/* Top Disclosure Badge — Show "Advertisement • Reklam" ONLY when data-ad-status="filled" */}
         <div className="flex items-center justify-between gap-2">
           {isAdFilled ? (
             <span
               data-testid="ad-filled-badge"
-              className="inline-flex items-center gap-1.5 rounded-full border border-slate-300 bg-slate-100 px-3 py-1 text-xs font-extrabold uppercase tracking-wider text-slate-800 shadow-sm dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
+              className="inline-flex items-center gap-1.5 rounded-full border border-cik-line bg-cik-surface-2 px-3 py-1 text-xs font-extrabold uppercase tracking-wider text-cik-text shadow-sm"
             >
               <Megaphone className="h-3.5 w-3.5" />
               <span>Advertisement • Reklam</span>
@@ -158,14 +158,14 @@ export default function NativeAdSlide({
           ) : (
             <span
               data-testid="pro-tip-badge"
-              className="inline-flex items-center gap-1.5 rounded-full border border-violet-200 bg-violet-100/90 px-3 py-1 text-xs font-extrabold uppercase tracking-wider text-violet-900 shadow-sm dark:border-violet-500/40 dark:bg-violet-900/50 dark:text-violet-200"
+              className="inline-flex items-center gap-1.5 rounded-full border border-cik-line bg-cik-pink px-3 py-1 text-xs font-extrabold uppercase tracking-wider text-cik-cta shadow-sm"
             >
               <Compass className="h-3.5 w-3.5" />
               <span>{tip.badge}</span>
             </span>
           )}
 
-          <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-bold text-slate-600 dark:bg-slate-800 dark:text-slate-300">
+          <span className="rounded-full bg-cik-surface-2 px-3 py-1 text-xs font-bold text-cik-text-2">
             {isAdFilled ? 'Google AdSense' : 'scrolly.live'}
           </span>
         </div>
@@ -177,7 +177,7 @@ export default function NativeAdSlide({
               data-testid="adsense-safe-zone"
               className={`${
                 isAdFilled ? 'relative opacity-100' : 'pointer-events-none absolute inset-0 opacity-0'
-              } w-full rounded-2xl border border-slate-200 bg-slate-50 px-6 py-8 transition-opacity duration-200 dark:border-slate-700 dark:bg-[#0D1320]`}
+              } w-full rounded-2xl border border-cik-line bg-cik-surface-2 px-6 py-8 transition-opacity duration-200`}
             >
               <div
                 data-testid="adsense-slot-container"
@@ -199,34 +199,34 @@ export default function NativeAdSlide({
           {!isAdFilled && (
             <div
               data-testid="scrolly-discovery-tip-fallback"
-              className="flex flex-col items-start rounded-2xl border border-slate-200 bg-slate-50/90 p-5 sm:p-6 dark:border-slate-700/80 dark:bg-slate-900/80"
+              className="flex flex-col items-start rounded-2xl border border-cik-line bg-cik-surface-2 p-5 sm:p-6"
             >
-              <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-violet-600 to-indigo-600 text-white shadow-md">
+              <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-cik-cta text-cik-on-cta shadow-sticker">
                 <Compass className="h-6 w-6" />
               </div>
 
-              <p className="inline-flex items-center gap-1 text-xs font-black uppercase tracking-wider text-violet-700 dark:text-violet-300">
+              <p className="inline-flex items-center gap-1 text-xs font-black uppercase tracking-wider text-cik-cta">
                 <Sparkles className="h-3.5 w-3.5" />
                 <span>{tip.brand}</span>
               </p>
-              <h2 className="mt-2 font-display text-xl sm:text-2xl font-bold leading-tight text-ink dark:text-white">
+              <h2 className="mt-2 font-display text-xl sm:text-2xl font-bold leading-tight text-cik-text">
                 {tip.title}
               </h2>
-              <p className="mt-2.5 text-sm leading-relaxed text-ink/80 dark:text-slate-200/90">
+              <p className="mt-2.5 text-sm leading-relaxed text-cik-text-2">
                 {tip.body}
               </p>
 
               <div className="mt-4 flex flex-wrap items-center gap-2">
                 <Link
                   href="/about"
-                  className="inline-flex min-h-[44px] items-center gap-1.5 rounded-full border border-violet-200 bg-white px-3.5 py-1.5 text-xs font-extrabold text-violet-800 hover:bg-violet-50 dark:border-violet-700/50 dark:bg-slate-800 dark:text-violet-200"
+                  className="inline-flex min-h-[44px] items-center gap-1.5 rounded-full border border-cik-line bg-cik-surface px-3.5 py-1.5 text-xs font-extrabold text-cik-cta hover:bg-cik-pink"
                 >
                   <Info className="h-3.5 w-3.5" />
                   <span>{lang === 'tr' ? 'Yayın İlkeleri' : 'Editorial Standards'}</span>
                 </Link>
                 <Link
                   href={lang === 'en' ? '/en/category/science' : '/category/science'}
-                  className="inline-flex min-h-[44px] items-center gap-1.5 rounded-full border border-amber-200 bg-amber-50 px-3.5 py-1.5 text-xs font-extrabold text-amber-900 hover:bg-amber-100 dark:border-amber-700/40 dark:bg-amber-900/30 dark:text-amber-200"
+                  className="inline-flex min-h-[44px] items-center gap-1.5 rounded-full border border-cik-line bg-cik-butter px-3.5 py-1.5 text-xs font-extrabold text-cik-butter-text hover:brightness-95"
                 >
                   <BookOpen className="h-3.5 w-3.5" />
                   <span>{lang === 'tr' ? 'Bilim Arşivi' : 'Science Hub'}</span>

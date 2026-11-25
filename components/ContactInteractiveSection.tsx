@@ -170,11 +170,11 @@ export default function ContactInteractiveSection({ lang }: ContactInteractiveSe
     <div lang={isEn ? 'en-US' : 'tr-TR'} className="space-y-6">
       {/* Official Email Card & Editorial Guidance */}
       <div className="grid gap-4 sm:grid-cols-2">
-        <div className="rounded-2xl border-2 border-violet-200/90 bg-gradient-to-br from-violet-50 via-white to-amber-50/50 p-4 shadow-sm dark:border-violet-700/50 dark:from-violet-950/50 dark:via-[#1B1530] dark:to-violet-950/20">
+        <div className="rounded-2xl border border-cik-line bg-cik-surface-2 p-4 shadow-e1">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <div
               lang={isEn ? 'en-US' : 'tr-TR'}
-              className="flex min-w-0 items-center gap-1.5 text-[11px] font-extrabold tracking-wide text-violet-800 dark:text-violet-300"
+              className="flex min-w-0 items-center gap-1.5 text-[11px] font-extrabold tracking-wide text-cik-cta"
             >
               <Mail className="h-3.5 w-3.5 shrink-0" />
               <span className="min-w-0">
@@ -183,16 +183,16 @@ export default function ContactInteractiveSection({ lang }: ContactInteractiveSe
                 )}
               </span>
             </div>
-            <span className="shrink-0 whitespace-nowrap rounded-full bg-emerald-100 px-2.5 py-0.5 text-[10px] font-extrabold text-emerald-800 dark:bg-emerald-900/50 dark:text-emerald-200">
+            <span className="shrink-0 whitespace-nowrap rounded-full bg-cik-mint px-2.5 py-0.5 text-[10px] font-extrabold text-cik-mint-text">
               {isEn ? '24–48h Reply' : '24–48 Saat Yanıt'}
             </span>
           </div>
 
-          <div className="mt-3 flex flex-wrap items-center justify-between gap-2 rounded-xl border border-violet-200/80 bg-white px-3 py-2.5 dark:border-white/10 dark:bg-white/5">
+          <div className="mt-3 flex flex-wrap items-center justify-between gap-2 rounded-xl border border-cik-line bg-cik-bg-elevated px-3 py-2.5">
             <a
               href={`mailto:${OFFICIAL_EMAIL}`}
               data-testid="contact-email-link"
-              className="text-sm font-extrabold text-violet-700 underline underline-offset-4 transition hover:text-violet-900 dark:text-violet-200"
+              className="text-sm font-extrabold text-cik-cta underline underline-offset-4 transition hover:opacity-80"
             >
               {OFFICIAL_EMAIL}
             </a>
@@ -200,11 +200,11 @@ export default function ContactInteractiveSection({ lang }: ContactInteractiveSe
               type="button"
               onClick={handleCopyEmail}
               data-testid="contact-copy-email-btn"
-              className="inline-flex items-center gap-1.5 rounded-lg border border-violet-200 bg-violet-50 px-2.5 py-1.5 text-xs font-extrabold text-violet-800 transition hover:bg-violet-100 dark:border-violet-500/40 dark:bg-violet-900/50 dark:text-violet-100"
+              className="inline-flex items-center gap-1.5 rounded-lg border border-cik-line bg-cik-pink px-2.5 py-1.5 text-xs font-extrabold text-cik-cta transition hover:brightness-95"
             >
               {copied ? (
                 <>
-                  <Check className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-300" />
+                  <Check className="h-3.5 w-3.5 text-cik-mint-text" />
                   <span>{isEn ? 'Copied!' : 'Kopyalandı!'}</span>
                 </>
               ) : (
@@ -216,17 +216,17 @@ export default function ContactInteractiveSection({ lang }: ContactInteractiveSe
             </button>
           </div>
 
-          <p className="mt-2.5 text-xs leading-relaxed text-ink/75 dark:text-violet-100/75">
+          <p className="mt-2.5 text-xs leading-relaxed text-cik-text-2">
             {isEn
               ? 'Single official contact channel for editorial review, scientific source updates, AdSense/advertising compliance, privacy requests, and legal notices.'
               : 'Editöryal geri bildirimler, bilimsel kaynak güncellemeleri, reklam ve iş birlikleri, gizlilik talepleri ve yasal bildirimler için tek resmi iletişim adresimizdir.'}
           </p>
         </div>
 
-        <div className="rounded-2xl border border-amber-200/80 bg-amber-50/70 p-4 dark:border-amber-700/40 dark:bg-amber-950/25">
+        <div className="rounded-2xl border border-cik-line bg-cik-butter p-4">
           <div
             lang={isEn ? 'en-US' : 'tr-TR'}
-            className="flex items-center gap-2 text-xs font-extrabold tracking-wider text-amber-800 dark:text-amber-300"
+            className="flex items-center gap-2 text-xs font-extrabold tracking-wider text-cik-butter-text"
           >
             <BookCheck className="h-4 w-4 shrink-0" />
             <span>
@@ -235,7 +235,7 @@ export default function ContactInteractiveSection({ lang }: ContactInteractiveSe
               )}
             </span>
           </div>
-          <p className="mt-2 text-xs leading-relaxed text-ink/80 dark:text-violet-100/85">
+          <p className="mt-2 text-xs leading-relaxed text-cik-butter-text">
             {isEn
               ? 'When reporting a factual issue, please include the card URL (e.g., https://scrolly.live/fact/...) and a link to the updated peer-reviewed paper or official agency source.'
               : 'Bir bilgi kartında düzeltme önerirken lütfen kart bağlantısını (ör. https://scrolly.live/fact/...) ve güncel akademik veya kurumsal referans bağlantısını paylaşın.'}
@@ -244,7 +244,7 @@ export default function ContactInteractiveSection({ lang }: ContactInteractiveSe
             href={`mailto:${OFFICIAL_EMAIL}?subject=${encodeURIComponent(
               isEn ? '[Scrolly] Scientific Source Correction' : '[Scrolly] Bilimsel Kaynak Düzeltmesi'
             )}`}
-            className="mt-3 inline-flex items-center gap-1 text-xs font-extrabold text-amber-800 underline underline-offset-4 hover:text-amber-950 dark:text-amber-200"
+            className="mt-3 inline-flex items-center gap-1 text-xs font-extrabold text-cik-butter-text underline underline-offset-4 hover:opacity-80"
           >
             <span>
               {isEn ? 'Open Email Client for Source Report' : 'Kaynak Bildirimi İçin E-posta Aç'}
@@ -255,12 +255,12 @@ export default function ContactInteractiveSection({ lang }: ContactInteractiveSe
       </div>
 
       {/* Interactive Contact Form */}
-      <section className="rounded-2xl border border-slate-200/90 bg-[#FFFDF9] p-5 dark:border-white/10 dark:bg-white/[0.03]">
+      <section className="rounded-2xl border border-cik-line bg-cik-surface-2 p-5">
         <div className="mb-4 space-y-1">
-          <h2 className="font-display text-lg font-bold text-ink dark:text-white">
+          <h2 className="font-display text-lg font-bold text-cik-text">
             {isEn ? 'Send a Direct Message' : 'Doğrudan Mesaj Gönderin'}
           </h2>
-          <p className="text-xs text-ink/70 dark:text-violet-200/75">
+          <p className="text-xs text-cik-text-2">
             {isEn
               ? 'Messages submitted below are routed to our editorial desk and replied to via contact@scrolly.live.'
               : 'Aşağıdaki form üzerinden gönderilen tüm mesajlar editöryal ekibimize ulaşır ve contact@scrolly.live üzerinden yanıtlanır.'}
@@ -271,10 +271,10 @@ export default function ContactInteractiveSection({ lang }: ContactInteractiveSe
           <div
             role="status"
             data-testid="contact-success-banner"
-            className="mb-4 rounded-2xl border border-emerald-300 bg-emerald-50 p-4 text-xs text-emerald-950 dark:border-emerald-700/60 dark:bg-emerald-950/50 dark:text-emerald-100"
+            className="mb-4 rounded-2xl border border-cik-line bg-cik-mint p-4 text-xs text-cik-mint-text"
           >
             <div className="flex items-start gap-2.5">
-              <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600 dark:text-emerald-300" />
+              <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-cik-mint-text" />
               <div className="space-y-1.5">
                 <p className="font-extrabold leading-relaxed">
                   {isEn
@@ -283,7 +283,7 @@ export default function ContactInteractiveSection({ lang }: ContactInteractiveSe
                 </p>
                 <a
                   href={submittedInfo.mailtoHref}
-                  className="inline-flex items-center gap-1 font-bold text-emerald-800 underline underline-offset-4 dark:text-emerald-200"
+                  className="inline-flex items-center gap-1 font-bold text-cik-mint-text underline underline-offset-4"
                 >
                   <span>
                     {isEn
@@ -301,7 +301,7 @@ export default function ContactInteractiveSection({ lang }: ContactInteractiveSe
           <div
             role="alert"
             data-testid="contact-error-banner"
-            className="mb-4 flex items-center gap-2 rounded-xl border border-rose-300 bg-rose-50 px-3.5 py-2.5 text-xs font-bold text-rose-800 dark:border-rose-700/60 dark:bg-rose-950/40 dark:text-rose-200"
+            className="mb-4 flex items-center gap-2 rounded-xl border border-cik-line bg-cik-rose px-3.5 py-2.5 text-xs font-bold text-cik-rose-text"
           >
             <AlertCircle className="h-4 w-4 shrink-0" />
             <span>{errorMsg}</span>
@@ -321,7 +321,7 @@ export default function ContactInteractiveSection({ lang }: ContactInteractiveSe
           />
           <div className="grid gap-4 sm:grid-cols-2">
             <label className="block space-y-1.5">
-              <span className="text-xs font-extrabold text-ink/85 dark:text-violet-100">
+              <span className="text-xs font-extrabold text-cik-text">
                 {isEn ? 'Full Name' : 'Ad / Soyad'}
               </span>
               <input
@@ -332,12 +332,12 @@ export default function ContactInteractiveSection({ lang }: ContactInteractiveSe
                 onChange={(e) => setName(e.target.value)}
                 data-testid="contact-name-input"
                 placeholder={isEn ? 'e.g. Alex Taylor' : 'Örn. Deniz Yılmaz'}
-                className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-ink transition-colors duration-150 focus:border-violet-500 focus:outline-none focus:ring-2 focus:ring-violet-300 dark:border-white/15 dark:bg-[#171228] dark:text-white dark:focus:ring-violet-700"
+                className="w-full rounded-xl border border-cik-line bg-cik-bg-elevated px-3.5 py-2.5 text-sm text-cik-text transition-colors duration-150 focus:border-cik-cta focus:outline-none focus:ring-2 focus:ring-cik-focus"
               />
             </label>
 
             <label className="block space-y-1.5">
-              <span className="text-xs font-extrabold text-ink/85 dark:text-violet-100">
+              <span className="text-xs font-extrabold text-cik-text">
                 {isEn ? 'Your Email Address' : 'E-posta Adresiniz'}
               </span>
               <input
@@ -348,13 +348,13 @@ export default function ContactInteractiveSection({ lang }: ContactInteractiveSe
                 onChange={(e) => setEmail(e.target.value)}
                 data-testid="contact-email-input"
                 placeholder="name@example.com"
-                className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-ink transition-colors duration-150 focus:border-violet-500 focus:outline-none focus:ring-2 focus:ring-violet-300 dark:border-white/15 dark:bg-[#171228] dark:text-white dark:focus:ring-violet-700"
+                className="w-full rounded-xl border border-cik-line bg-cik-bg-elevated px-3.5 py-2.5 text-sm text-cik-text transition-colors duration-150 focus:border-cik-cta focus:outline-none focus:ring-2 focus:ring-cik-focus"
               />
             </label>
           </div>
 
           <label className="block space-y-1.5">
-            <span className="text-xs font-extrabold text-ink/85 dark:text-violet-100">
+            <span className="text-xs font-extrabold text-cik-text">
               {isEn ? 'Topic' : 'Konu'}
             </span>
             <select
@@ -362,7 +362,7 @@ export default function ContactInteractiveSection({ lang }: ContactInteractiveSe
               value={activeSubject}
               onChange={(e) => setSubject(e.target.value)}
               data-testid="contact-subject-select"
-              className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm font-semibold text-ink transition-colors duration-150 focus:border-violet-500 focus:outline-none focus:ring-2 focus:ring-violet-300 dark:border-white/15 dark:bg-[#171228] dark:text-white dark:focus:ring-violet-700"
+              className="w-full rounded-xl border border-cik-line bg-cik-bg-elevated px-3.5 py-2.5 text-sm font-semibold text-cik-text transition-colors duration-150 focus:border-cik-cta focus:outline-none focus:ring-2 focus:ring-cik-focus"
             >
               {subjects.map((opt) => (
                 <option key={opt} value={opt}>
@@ -373,7 +373,7 @@ export default function ContactInteractiveSection({ lang }: ContactInteractiveSe
           </label>
 
           <label className="block space-y-1.5">
-            <span className="text-xs font-extrabold text-ink/85 dark:text-violet-100">
+            <span className="text-xs font-extrabold text-cik-text">
               {isEn ? 'Message' : 'Mesajınız'}
             </span>
             <textarea
@@ -388,14 +388,14 @@ export default function ContactInteractiveSection({ lang }: ContactInteractiveSe
                   ? 'Write your question, source URL, or partnership details...'
                   : 'Sorunuzu, bilimsel kaynak bağlantısını veya iş birliği detaylarını yazın...'
               }
-              className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-ink transition-colors duration-150 focus:border-violet-500 focus:outline-none focus:ring-2 focus:ring-violet-300 dark:border-white/15 dark:bg-[#171228] dark:text-white dark:focus:ring-violet-700"
+              className="w-full rounded-xl border border-cik-line bg-cik-bg-elevated px-3.5 py-2.5 text-sm text-cik-text transition-colors duration-150 focus:border-cik-cta focus:outline-none focus:ring-2 focus:ring-cik-focus"
             />
           </label>
 
           <div className="flex flex-wrap items-center justify-between gap-3 pt-1">
             <a
               href={directMailtoHref}
-              className="inline-flex items-center gap-1.5 text-xs font-bold text-violet-700 underline underline-offset-4 hover:text-violet-900 dark:text-violet-300"
+              className="inline-flex items-center gap-1.5 text-xs font-bold text-cik-cta underline underline-offset-4 hover:opacity-80"
             >
               <Mail className="h-3.5 w-3.5" />
               <span>
@@ -409,7 +409,7 @@ export default function ContactInteractiveSection({ lang }: ContactInteractiveSe
               type="submit"
               disabled={isSubmitting}
               data-testid="contact-submit-btn"
-              className="inline-flex items-center gap-2 rounded-full bg-ink px-5 py-2.5 text-xs font-extrabold text-white shadow-sm transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-violet-600"
+              className="inline-flex items-center gap-2 rounded-full bg-cik-cta px-5 py-2.5 text-xs font-extrabold text-cik-on-cta shadow-sticker transition hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-60"
             >
               <Send className="h-3.5 w-3.5" />
               <span>

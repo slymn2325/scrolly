@@ -1,8 +1,14 @@
 import { NextResponse } from 'next/server';
+import { getSessionUserFromRequest } from '@/lib/auth';
 import { isLocalHostname } from '@/lib/originPolicy';
 import { checkRateLimit, extractClientIp } from '@/lib/rateLimit';
 import { enforceSameOrigin, readJsonBodyWithLimit } from '@/lib/requestSecurity';
-import { buildStoryEmbedArtifacts, createStory } from '@/lib/stories';
+import {
+  buildStoryEmbedArtifacts,
+  createStory,
+  getStoryQuotaSummary,
+  listStoriesByOwner,
+} from '@/lib/stories';
 
 export const dynamic = 'force-dynamic';
 
@@ -23,12 +29,53 @@ function resolveLocalStoryOrigin(request: Request): string | undefined {
   return undefined;
 }
 
+export async function GET(request: Request) {
+  const user = await getSessionUserFromRequest(request);
+  if (!user) {
+    return NextResponse.json(
+      { ok: false, error: 'unauthorized' },
+      { status: 401, headers: NO_STORE_HEADERS }
+    );
+  }
+
+  const ip = extractClientIp(request);
+  const rl = checkRateLimit(`stories_list:${user.id}:${ip}`, 60, 60_000);
+  if (!rl.allowed) {
+    return NextResponse.json(
+      { ok: false, error: 'rate_limited' },
+      { status: 429, headers: { ...NO_STORE_HEADERS, 'Retry-After': String(rl.retryAfterSec) } }
+    );
+  }
+
+  try {
+    const [stories, quota] = await Promise.all([
+      listStoriesByOwner(user.id),
+      getStoryQuotaSummary(user.id),
+    ]);
+    return NextResponse.json({ ok: true, stories, quota }, { headers: NO_STORE_HEADERS });
+  } catch (err) {
+    console.error('[GET /api/stories] Failed:', err);
+    return NextResponse.json(
+      { ok: false, error: 'stories_fetch_failed' },
+      { status: 500, headers: NO_STORE_HEADERS }
+    );
+  }
+}
+
 export async function POST(request: Request) {
   const originErr = enforceSameOrigin(request);
   if (originErr) return originErr;
 
+  const user = await getSessionUserFromRequest(request);
+  if (!user) {
+    return NextResponse.json(
+      { ok: false, error: 'unauthorized' },
+      { status: 401, headers: NO_STORE_HEADERS }
+    );
+  }
+
   const ip = extractClientIp(request);
-  const rl = checkRateLimit(`stories_create:${ip}`, 20, 60_000);
+  const rl = checkRateLimit(`stories_create:${user.id}:${ip}`, 20, 60_000);
   if (!rl.allowed) {
     return NextResponse.json(
       { ok: false, error: 'rate_limited' },
@@ -47,6 +94,7 @@ export async function POST(request: Request) {
   const body = parsed.data;
   try {
     const result = await createStory({
+      ownerUserId: user.id,
       title: body.title,
       sourceUrl: body.sourceUrl,
       language: body.language,
@@ -55,12 +103,15 @@ export async function POST(request: Request) {
     });
 
     if (!result.ok) {
+      const quota = await getStoryQuotaSummary(user.id);
+      const status = result.error === 'story_limit_reached' ? 403 : 400;
       return NextResponse.json(
-        { ok: false, error: result.error },
-        { status: 400, headers: NO_STORE_HEADERS }
+        { ok: false, error: result.error, quota },
+        { status, headers: NO_STORE_HEADERS }
       );
     }
 
+    const quota = await getStoryQuotaSummary(user.id);
     const { embedUrl, iframeCode } = buildStoryEmbedArtifacts(
       result.story.id,
       result.story.title,
@@ -74,6 +125,7 @@ export async function POST(request: Request) {
         embedUrl,
         iframeCode,
         story: result.story,
+        quota,
       },
       { status: 201, headers: NO_STORE_HEADERS }
     );

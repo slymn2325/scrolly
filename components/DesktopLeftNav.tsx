@@ -120,18 +120,18 @@ export default function DesktopLeftNav({
         })}
 
         <Link
-          href="/create"
+          href="/studio"
           data-testid="desktop-nav-create"
           title={lang === 'tr' ? 'Hikâye Stüdyosu' : 'Creator Studio'}
-          className="scrolly-glass-pill scrolly-tactile mt-2 flex min-h-[46px] items-center justify-between gap-2 rounded-pill bg-cik-surface px-3.5 text-sm font-extrabold text-cik-cta hover:bg-cik-pink"
+          className="scrolly-glass-pill scrolly-tactile mt-2 flex min-h-[46px] items-center justify-between gap-1.5 rounded-pill bg-cik-surface px-2.5 text-[13px] font-extrabold text-cik-cta hover:bg-cik-pink"
         >
-          <span className="flex min-w-0 items-center gap-2.5">
+          <span className="flex min-w-0 items-center gap-1.5">
             <Sparkles className="h-4 w-4 shrink-0" aria-hidden="true" />
             <span className="truncate">
               {lang === 'tr' ? 'Hikâye Stüdyosu' : 'Creator Studio'}
             </span>
           </span>
-          <span className="rounded-pill bg-cik-cta px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-wide text-cik-on-cta">
+          <span className="shrink-0 rounded-pill bg-cik-cta px-1.5 py-0.5 text-[9px] font-extrabold uppercase tracking-wide text-cik-on-cta">
             New
           </span>
         </Link>

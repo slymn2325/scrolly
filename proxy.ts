@@ -61,17 +61,25 @@ export function isSingleSegmentIpaPath(pathname: string): boolean {
   return looksLikeIpaPhonetic(`/${trimmed}`);
 }
 
+const PUBLIC_STORY_COMPLETE_POST_RE = /^\/api\/stories\/[a-zA-Z0-9_-]{4,40}$/u;
+
 export function proxy(request: NextRequest) {
   if (request.nextUrl.pathname.startsWith('/api/')) {
-    const verdict = verifySameOriginRequest(request);
-    if (!verdict.ok) {
-      return NextResponse.json(
-        { ok: false, error: 'forbidden_origin' },
-        {
-          status: 403,
-          headers: { 'Cache-Control': 'no-store, max-age=0' },
-        }
-      );
+    const isIframeCompletionPost =
+      request.method === 'POST' &&
+      PUBLIC_STORY_COMPLETE_POST_RE.test(request.nextUrl.pathname);
+
+    if (!isIframeCompletionPost) {
+      const verdict = verifySameOriginRequest(request);
+      if (!verdict.ok) {
+        return NextResponse.json(
+          { ok: false, error: 'forbidden_origin' },
+          {
+            status: 403,
+            headers: { 'Cache-Control': 'no-store, max-age=0' },
+          }
+        );
+      }
     }
     return NextResponse.next();
   }

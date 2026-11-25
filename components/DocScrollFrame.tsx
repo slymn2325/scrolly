@@ -3,12 +3,14 @@
 import React, { useEffect } from 'react';
 import { usePathname } from 'next/navigation';
 
-const DOCUMENT_SCROLL_ROUTES = new Set(['/contact', '/about', '/privacy', '/terms', '/create']);
+const DOCUMENT_SCROLL_ROUTES = new Set(['/contact', '/about', '/privacy', '/terms', '/create', '/studio']);
 
 export default function DocScrollFrame({ children }: { children: React.ReactNode }) {
   const pathname = usePathname() || '/';
   const documentScroll =
-    DOCUMENT_SCROLL_ROUTES.has(pathname) || pathname.startsWith('/create/');
+    DOCUMENT_SCROLL_ROUTES.has(pathname) ||
+    pathname.startsWith('/create/') ||
+    pathname.startsWith('/studio/');
 
   useEffect(() => {
     const root = document.documentElement;

@@ -401,7 +401,7 @@ export default function LeaderboardModal({
           </div>
         )}
 
-        <div data-testid="leaderboard-list" className="mt-3 min-h-0 flex-1 space-y-2 overflow-y-auto overflow-x-hidden pb-4">
+        <div data-testid="leaderboard-list" className="mt-3 min-h-0 flex-1 space-y-2 overflow-y-auto overflow-x-hidden px-1 pb-8">
           {isLoading ? (
             <div data-testid="leaderboard-loading" className="flex flex-col gap-2">
               {[0, 1, 2, 3, 4].map((skeletonIdx) => (

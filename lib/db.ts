@@ -903,6 +903,7 @@ export async function ensureSchema(): Promise<void> {
       await pool.query(`
         CREATE TABLE IF NOT EXISTS stories (
           id TEXT PRIMARY KEY,
+          owner_user_id TEXT,
           title TEXT NOT NULL,
           source_url TEXT,
           language TEXT NOT NULL DEFAULT 'tr' CHECK (language IN ('tr', 'en')),
@@ -910,12 +911,29 @@ export async function ensureSchema(): Promise<void> {
           cards JSONB NOT NULL DEFAULT '[]'::jsonb,
           views_count INT NOT NULL DEFAULT 0,
           completions_count INT NOT NULL DEFAULT 0,
-          created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+          created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+          updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
         );
       `);
+      await pool.query(`ALTER TABLE stories ADD COLUMN IF NOT EXISTS owner_user_id TEXT;`);
+      await pool.query(
+        `ALTER TABLE stories ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW();`
+      );
       await pool.query(`
         CREATE INDEX IF NOT EXISTS idx_stories_created_at
           ON stories (created_at DESC);
+      `);
+      await pool.query(`
+        CREATE INDEX IF NOT EXISTS idx_stories_owner_user_id
+          ON stories (owner_user_id, created_at DESC)
+          WHERE owner_user_id IS NOT NULL;
+      `);
+      await pool.query(`
+        CREATE TABLE IF NOT EXISTS story_usage (
+          bucket_key TEXT PRIMARY KEY,
+          count INT NOT NULL DEFAULT 0,
+          updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+        );
       `);
 
       // Auto-recover crashed dyno locks left behind after unexpected restarts

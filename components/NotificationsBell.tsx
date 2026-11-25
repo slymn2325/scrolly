@@ -109,11 +109,11 @@ export default function NotificationsBell({ lang }: { lang: Language }) {
           aria-haspopup="menu"
           aria-expanded={menuOpen}
           onClick={() => setMenuOpen((prev) => !prev)}
-          className="relative flex h-9 w-9 items-center justify-center rounded-full border border-black/5 bg-white/95 text-neutral-900 shadow-sm backdrop-blur-md hover:bg-white lg:h-10 lg:w-10"
+          className="relative flex h-9 w-9 items-center justify-center rounded-full border border-cik-line bg-cik-surface/95 text-cik-text shadow-e1 backdrop-blur-md hover:bg-cik-pink lg:h-10 lg:w-10"
         >
           <Bell size={18} strokeWidth={2} aria-hidden="true" className="h-[18px] w-[18px] lg:h-5 lg:w-5" />
           {unread > 0 && (
-            <span className="absolute -right-1 -top-1 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-semibold leading-none text-white">
+            <span className="absolute -right-1 -top-1 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-cik-cta px-1 text-[10px] font-semibold leading-none text-cik-on-cta">
               {unread > 9 ? '9+' : unread}
             </span>
           )}
@@ -125,16 +125,16 @@ export default function NotificationsBell({ lang }: { lang: Language }) {
             aria-label={lang === 'tr' ? 'Bildirimler' : 'Notifications'}
             data-testid="notifications-dropdown"
             data-scroll-contain="true"
-            className="pointer-events-auto absolute right-0 top-full z-40 mt-2 w-80 max-w-[calc(100vw-24px)] rounded-2xl border border-black/10 bg-white/95 p-2 text-neutral-900 shadow-xl backdrop-blur-md outline-none ring-0 focus:outline-none focus:ring-0 dark:border-white/10 dark:bg-[#1C1B22]/95 dark:text-white"
+            className="pointer-events-auto absolute right-0 top-full z-40 mt-2 w-80 max-w-[calc(100vw-24px)] rounded-2xl border border-cik-line bg-cik-bg-elevated/95 p-2 text-cik-text shadow-e3 backdrop-blur-md outline-none ring-0 focus:outline-none focus:ring-0"
           >
-            <div className="flex items-center justify-between gap-2 border-b border-black/10 px-2 pb-2 pt-1 dark:border-white/10">
+            <div className="flex items-center justify-between gap-2 border-b border-cik-line px-2 pb-2 pt-1">
               <span className="text-xs font-extrabold">
                 {lang === 'tr' ? 'Bildirimler' : 'Notifications'}
               </span>
               <button
                 type="button"
                 onClick={markAll}
-                className="text-[11px] font-bold text-[#C83E6B] hover:underline focus:outline-none"
+                className="text-[11px] font-bold text-cik-cta hover:underline focus:outline-none"
               >
                 {lang === 'tr' ? 'Tümünü okundu say' : 'Mark all read'}
               </button>
@@ -146,27 +146,27 @@ export default function NotificationsBell({ lang }: { lang: Language }) {
                   key={note.id}
                   className={`flex items-start gap-2.5 rounded-xl px-2 py-2 transition-colors ${
                     allRead
-                      ? 'opacity-75 hover:bg-black/5 dark:hover:bg-white/5'
-                      : 'bg-black/[0.03] hover:bg-black/[0.06] dark:bg-white/[0.05] dark:hover:bg-white/10'
+                      ? 'opacity-75 hover:bg-cik-surface-2'
+                      : 'bg-cik-surface-2 hover:bg-cik-pink/50'
                   }`}
                 >
-                  <span className="relative mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-black/5 dark:bg-white/10">
+                  <span className="relative mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-cik-pink">
                     <img src={note.icon} alt="" aria-hidden="true" className="h-4 w-4 object-contain" />
                     {!allRead ? (
                       <span
                         aria-hidden="true"
-                        className="absolute -right-0.5 -top-0.5 h-2 w-2 rounded-full bg-[#C83E6B]"
+                        className="absolute -right-0.5 -top-0.5 h-2 w-2 rounded-full bg-cik-cta"
                       />
                     ) : null}
                   </span>
                   <div className="min-w-0 flex-1">
                     <div className="flex items-baseline justify-between gap-2">
-                      <p className="min-w-0 truncate text-xs font-bold">{note.title}</p>
-                      <time className="shrink-0 text-[10px] font-semibold text-neutral-500 dark:text-white/55">
+                      <p className="min-w-0 truncate text-xs font-bold text-cik-text">{note.title}</p>
+                      <time className="shrink-0 text-[10px] font-semibold text-cik-text-3">
                         {note.when}
                       </time>
                     </div>
-                    <p className="mt-0.5 truncate text-[11px] text-neutral-600 dark:text-white/75">
+                    <p className="mt-0.5 truncate text-[11px] text-cik-text-2">
                       {note.body}
                     </p>
                   </div>
@@ -181,7 +181,7 @@ export default function NotificationsBell({ lang }: { lang: Language }) {
                 setMenuOpen(false);
                 setSheetOpen(true);
               }}
-              className="mt-1.5 flex w-full items-center justify-between rounded-xl border-t border-black/10 px-2.5 py-2.5 text-xs font-extrabold text-[#C83E6B] hover:bg-black/5 focus:outline-none dark:border-white/10 dark:hover:bg-white/10"
+              className="mt-1.5 flex w-full items-center justify-between rounded-xl border-t border-cik-line px-2.5 py-2.5 text-xs font-extrabold text-cik-cta hover:bg-cik-surface-2 focus:outline-none"
             >
               <span>{lang === 'tr' ? 'Tümünü gör / Daha fazla →' : 'See all / More →'}</span>
               <ChevronRight size={14} strokeWidth={2.5} aria-hidden="true" />

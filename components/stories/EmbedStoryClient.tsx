@@ -12,7 +12,7 @@ export default function EmbedStoryClient({ story }: EmbedStoryClientProps) {
   const handleCompleteStory = useCallback(() => {
     void fetch(`/api/stories/${encodeURIComponent(story.id)}`, {
       method: 'POST',
-      credentials: 'same-origin',
+      credentials: 'omit',
       headers: { 'Content-Type': 'application/json' },
       body: '{}',
     }).catch(() => {});

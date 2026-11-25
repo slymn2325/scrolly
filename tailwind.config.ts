@@ -1,5 +1,17 @@
 import type { Config } from 'tailwindcss';
 
+const cikColor = (cssVar: string): string =>
+  (({ opacityValue }: { opacityValue?: string }) => {
+    if (opacityValue !== undefined) {
+      const numeric = Number(opacityValue);
+      const alphaPct = Number.isFinite(numeric)
+        ? `${Math.round(numeric * 1000) / 10}%`
+        : `calc(${opacityValue} * 100%)`;
+      return `color-mix(in srgb, var(${cssVar}) ${alphaPct}, transparent)`;
+    }
+    return `var(${cssVar})`;
+  }) as unknown as string;
+
 const config: Config = {
   darkMode: 'class',
   content: [
@@ -12,28 +24,28 @@ const config: Config = {
     extend: {
       colors: {
         cik: {
-          bg: 'var(--cik-bg)',
-          'bg-elevated': 'var(--cik-bg-elevated)',
-          surface: 'var(--cik-surface)',
-          'surface-2': 'var(--cik-surface-2)',
-          text: 'var(--cik-text)',
-          'text-2': 'var(--cik-text-2)',
-          muted: 'var(--cik-muted)',
-          'text-3': 'var(--cik-text-3)',
-          line: 'var(--cik-line)',
-          pink: 'var(--cik-pink)',
-          berry: 'var(--cik-berry)',
-          cta: 'var(--cik-cta)',
-          'on-cta': 'var(--cik-on-cta)',
-          'on-berry': 'var(--cik-on-berry)',
-          mint: 'var(--cik-mint)',
-          'mint-text': 'var(--cik-mint-text)',
-          butter: 'var(--cik-butter)',
-          'butter-text': 'var(--cik-butter-text)',
-          rose: 'var(--cik-rose)',
-          'rose-text': 'var(--cik-rose-text)',
-          focus: 'var(--cik-focus)',
-          'sticker-rim': 'var(--cik-sticker-rim)',
+          bg: cikColor('--cik-bg'),
+          'bg-elevated': cikColor('--cik-bg-elevated'),
+          surface: cikColor('--cik-surface'),
+          'surface-2': cikColor('--cik-surface-2'),
+          text: cikColor('--cik-text'),
+          'text-2': cikColor('--cik-text-2'),
+          muted: cikColor('--cik-muted'),
+          'text-3': cikColor('--cik-text-3'),
+          line: cikColor('--cik-line'),
+          pink: cikColor('--cik-pink'),
+          berry: cikColor('--cik-berry'),
+          cta: cikColor('--cik-cta'),
+          'on-cta': cikColor('--cik-on-cta'),
+          'on-berry': cikColor('--cik-on-berry'),
+          mint: cikColor('--cik-mint'),
+          'mint-text': cikColor('--cik-mint-text'),
+          butter: cikColor('--cik-butter'),
+          'butter-text': cikColor('--cik-butter-text'),
+          rose: cikColor('--cik-rose'),
+          'rose-text': cikColor('--cik-rose-text'),
+          focus: cikColor('--cik-focus'),
+          'sticker-rim': cikColor('--cik-sticker-rim'),
         },
         cream: '#FFF6EC',
         midnight: '#14111C',

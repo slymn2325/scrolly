@@ -599,7 +599,7 @@ export default function SingleFactView({
               aria-label={soundEnabled ? t.soundOn : t.soundOff}
               className={`flex h-9 w-9 items-center justify-center rounded-pill border shadow-e1 ${
                 soundEnabled
-                  ? 'border-cik-line bg-cik-pink text-cik-mint-text'
+                  ? 'border-cik-line bg-cik-pink text-cik-cta'
                   : 'border-cik-line bg-cik-surface text-cik-text'
               }`}
             >
@@ -664,10 +664,7 @@ export default function SingleFactView({
                 <span>{catMeta.emoji}</span>
                 <span>{catMeta.label[lang]}</span>
               </Link>
-              <span
-                className="inline-flex items-center gap-1 rounded-pill px-3 py-1 text-xs font-extrabold text-cik-text shadow-sm"
-                style={{ backgroundColor: fact.accentColor || 'var(--cik-cta)' }}
-              >
+              <span className="inline-flex items-center gap-1 rounded-pill bg-cik-cta px-3 py-1 text-xs font-extrabold text-cik-on-cta shadow-sm">
                 <Sparkles className="h-3 w-3" />
                 <span>{detailHighlights.topicTag}</span>
               </span>
@@ -865,7 +862,7 @@ export default function SingleFactView({
                             key={opt}
                             type="button"
                             onClick={() => handleLockDetailGuess(bIdx)}
-                            className="rounded-xl border border-cik-line bg-cik-butter px-2.5 py-1.5 text-left text-xs font-bold text-cik-text transition hover:bg-cik-butter"
+                            className="rounded-xl border border-cik-line bg-cik-butter px-2.5 py-1.5 text-left text-xs font-bold text-cik-butter-text transition hover:brightness-95"
                           >
                             {opt}
                           </button>
@@ -889,13 +886,13 @@ export default function SingleFactView({
                           value={sliderGuessVal}
                           onChange={(e) => setSliderGuessVal(Number(e.target.value))}
                           aria-label={guessQaAnswer.prompt}
-                          className="w-full accent-violet-600"
+                          className="w-full accent-cik-cta"
                         />
                         <button
                           type="button"
                           onClick={() => handleLockDetailGuess()}
                           data-testid="detail-guess-reveal-btn"
-                          className="w-full rounded-xl bg-cik-butter px-3 py-1.5 text-xs font-extrabold text-cik-text shadow-sm hover:bg-cik-butter"
+                          className="w-full rounded-xl bg-cik-cta px-3 py-1.5 text-xs font-extrabold text-cik-on-cta shadow-sm hover:brightness-105"
                         >
                           {lang === 'tr' ? 'Tahmini Kilitle' : 'Lock Guess'}
                         </button>
