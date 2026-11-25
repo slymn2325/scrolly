@@ -19,6 +19,8 @@ interface GuessWidgetProps {
   factId: string;
   challenge: GuessChallenge;
   lang: Language;
+  hideFlipCta?: boolean;
+  hideXpBadge?: boolean;
   onGuessAnswered: (
     xpAwarded: number,
     isAccurate: boolean,
@@ -56,6 +58,8 @@ export default function GuessWidget({
   factId,
   challenge,
   lang,
+  hideFlipCta = false,
+  hideXpBadge = false,
   onGuessAnswered,
   onGuessLocked,
   onRequestFlip,
@@ -196,7 +200,7 @@ export default function GuessWidget({
     .replace(/\s*·?\s*\+\d+\s*XP/gi, '')
     .trim();
 
-  const binaryOptions = (challenge.options ?? []).slice(0, 2);
+  const binaryOptions = (challenge.options ?? []).slice(0, 4);
   const accurate = tier === 'spotOn' || tier === 'close';
 
   return (
@@ -206,7 +210,7 @@ export default function GuessWidget({
       onDoubleClick={stop}
       onPointerDown={stop}
       onTouchStart={stop}
-      className="pointer-events-auto rounded-cik-md bg-cik-surface-2 p-3 text-cik-text"
+      className="pointer-events-auto rounded-cik-md border border-black/10 bg-cik-surface-2/90 p-3 text-cik-text shadow-e1 backdrop-blur-md transition-colors dark:border-white/10"
     >
       <style>{`
         .guess-range {
@@ -322,7 +326,7 @@ export default function GuessWidget({
               data-testid="guess-submit-btn"
               onClick={handleSliderSubmit}
               onDoubleClick={stop}
-              className="cik-headline mx-auto mt-1 flex min-h-11 min-w-[160px] items-center justify-center rounded-pill bg-cik-cta px-5 text-cik-on-cta shadow-sticker"
+              className="cik-headline mx-auto mt-1 flex min-h-11 min-w-[160px] items-center justify-center rounded-pill border border-white/15 bg-cik-cta px-5 text-cik-on-cta shadow-sticker transition hover:brightness-105 active:shadow-sticker-press"
             >
               {lang === 'tr' ? 'Tahmini kilitle' : 'Lock guess'}
             </motion.button>
@@ -338,7 +342,7 @@ export default function GuessWidget({
                 data-testid={`guess-binary-${idx}`}
                 onClick={(e) => handleBinaryPick(e, idx)}
                 onDoubleClick={stop}
-                className="cik-headline flex min-h-11 items-center justify-center rounded-cik-md border border-cik-line bg-cik-bg-elevated px-3 py-2 text-center text-cik-text"
+                className="cik-headline flex min-h-11 items-center justify-center rounded-cik-md border border-black/10 bg-cik-bg-elevated/95 px-3 py-2 text-center text-cik-text shadow-e1 transition hover:border-cik-cta/50 hover:bg-cik-surface dark:border-white/10"
               >
                 <span>{opt}</span>
               </motion.button>
@@ -353,8 +357,10 @@ export default function GuessWidget({
           data-testid="guess-result-banner"
           role="status"
           aria-live="polite"
-          className={`flex flex-wrap items-center justify-between gap-2 rounded-cik-md px-3 py-2 ${
-            accurate ? 'bg-cik-mint text-cik-mint-text' : 'bg-cik-rose text-cik-rose-text'
+          className={`flex flex-wrap items-center justify-between gap-2 rounded-cik-md border px-3 py-2 backdrop-blur-sm ${
+            accurate
+              ? 'border-cik-mint-text/20 bg-cik-mint text-cik-mint-text'
+              : 'border-cik-rose-text/20 bg-cik-rose text-cik-rose-text'
           }`}
         >
           <div className="min-w-0 flex-1">
@@ -365,31 +371,35 @@ export default function GuessWidget({
                 <CheckCircle2 className="h-4 w-4 shrink-0" aria-hidden="true" />
               )}
               <span className="min-w-0 leading-snug">{tierMessage}</span>
-              <span className="cik-caption-2 cik-tabular inline-flex shrink-0 items-center gap-1 rounded-pill bg-cik-butter px-2 py-1 text-cik-butter-text">
-                <Sparkles className="h-3 w-3" aria-hidden="true" />+{earnedXp} XP
-                {isSlider ? ` · ${lang === 'en' ? `${accuracyPct}%` : `%${accuracyPct}`}` : ''}
-              </span>
+              {!hideXpBadge && (
+                <span className="cik-caption-2 cik-tabular inline-flex shrink-0 items-center gap-1 rounded-pill bg-cik-butter px-2 py-1 text-cik-butter-text">
+                  <Sparkles className="h-3 w-3" aria-hidden="true" />+{earnedXp} XP
+                  {isSlider ? ` · ${lang === 'en' ? `${accuracyPct}%` : `%${accuracyPct}`}` : ''}
+                </span>
+              )}
             </div>
             <p className="cik-footnote mt-1">
               {t.guessReveal}: <span className="font-extrabold">{correctDisplay}</span>
             </p>
           </div>
 
-          <motion.button
-            type="button"
-            whileTap={reduced ? undefined : { scale: 0.96 }}
-            transition={pressTransition(reduced)}
-            data-testid="guess-flip-cta-btn"
-            onClick={(e) => {
-              e.stopPropagation();
-              onRequestFlip();
-            }}
-            onDoubleClick={stop}
-            className="cik-footnote inline-flex min-h-11 shrink-0 items-center gap-2 rounded-pill bg-cik-bg-elevated px-3 text-cik-text"
-          >
-            <RotateCw className="h-4 w-4 shrink-0" aria-hidden="true" />
-            <span>{t.guessFlipCta}</span>
-          </motion.button>
+          {!hideFlipCta && (
+            <motion.button
+              type="button"
+              whileTap={reduced ? undefined : { scale: 0.96 }}
+              transition={pressTransition(reduced)}
+              data-testid="guess-flip-cta-btn"
+              onClick={(e) => {
+                e.stopPropagation();
+                onRequestFlip();
+              }}
+              onDoubleClick={stop}
+              className="cik-footnote inline-flex min-h-11 shrink-0 items-center gap-2 rounded-pill border border-black/10 bg-cik-bg-elevated px-3 text-cik-text shadow-e1 transition hover:bg-cik-surface dark:border-white/10"
+            >
+              <RotateCw className="h-4 w-4 shrink-0" aria-hidden="true" />
+              <span>{t.guessFlipCta}</span>
+            </motion.button>
+          )}
         </motion.div>
       )}
     </div>

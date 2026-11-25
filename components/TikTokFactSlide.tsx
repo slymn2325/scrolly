@@ -738,7 +738,7 @@ export default function TikTokFactSlide({
                 void trackEvent(factSlug, fact.category, 'expand', { surface: 'bottom_sheet' });
               }
             }}
-            className={`pointer-events-auto flex min-h-0 flex-col gap-2 rounded-t-3xl bg-cik-bg pl-4 pr-14 pt-2.5 shadow-[0_-8px_28px_rgba(0,0,0,0.14)] transition-all duration-300 ease-out lg:pr-4 lg:pt-3 ${
+            className={`pointer-events-auto flex min-h-0 flex-col gap-2 rounded-t-3xl border-t border-black/10 bg-cik-bg/95 pl-4 pr-14 pt-2.5 shadow-[0_-12px_36px_rgba(0,0,0,0.16)] backdrop-blur-xl transition-all duration-300 ease-out dark:border-white/10 lg:pr-4 lg:pt-3 ${
               cookieBannerVisible
                 ? 'pb-[calc(5rem+env(safe-area-inset-bottom)+68px)] lg:pb-4'
                 : 'pb-[calc(5rem+env(safe-area-inset-bottom))] lg:pb-4'
@@ -1018,7 +1018,7 @@ export default function TikTokFactSlide({
               aria-modal="true"
               aria-label={lang === 'tr' ? 'Kaynak' : 'Source'}
               data-testid="source-modal"
-              className="relative w-full max-w-[420px] rounded-sheet bg-cik-bg-elevated p-4 pb-[max(1rem,env(safe-area-inset-bottom))] text-cik-text shadow-e3"
+              className="relative w-full max-w-[420px] rounded-sheet border border-black/10 bg-cik-bg-elevated/95 p-4 pb-[max(1rem,env(safe-area-inset-bottom))] text-cik-text shadow-e3 backdrop-blur-xl dark:border-white/10"
               onClick={(e) => e.stopPropagation()}
             >
               <button

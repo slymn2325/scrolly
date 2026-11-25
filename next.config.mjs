@@ -139,6 +139,36 @@ const contentSecurityPolicy = [
   ...(process.env.NODE_ENV === 'production' ? ['upgrade-insecure-requests'] : []),
 ].join('; ');
 
+const embedContentSecurityPolicy = [
+  "default-src 'self'",
+  "base-uri 'self'",
+  "object-src 'none'",
+  'frame-ancestors *',
+  "form-action 'self'",
+  "font-src 'self' data:",
+  "style-src 'self' 'unsafe-inline'",
+  `script-src 'self' 'unsafe-inline'${process.env.NODE_ENV !== 'production' ? " 'unsafe-eval'" : ''} https://static.cloudflareinsights.com https://www.googletagmanager.com https://www.google-analytics.com https://www.clarity.ms https://scripts.clarity.ms`,
+  "img-src 'self' data: blob: https:",
+  "media-src 'self' blob: data: https:",
+  "connect-src 'self' https://cloudflareinsights.com https://static.cloudflareinsights.com https://*.google-analytics.com https://analytics.google.com https://*.analytics.google.com https://*.googletagmanager.com https://*.clarity.ms https://c.bing.com",
+  ...(process.env.NODE_ENV === 'production' ? ['upgrade-insecure-requests'] : []),
+].join('; ');
+
+const NON_EMBED_SECURITY_HEADERS = [
+  {
+    key: 'X-Frame-Options',
+    value: 'DENY',
+  },
+  {
+    key: 'Cross-Origin-Opener-Policy',
+    value: 'same-origin-allow-popups',
+  },
+  {
+    key: 'Content-Security-Policy',
+    value: contentSecurityPolicy,
+  },
+];
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   poweredByHeader: false,
@@ -172,10 +202,6 @@ const nextConfig = {
             value: 'strict-origin-when-cross-origin',
           },
           {
-            key: 'X-Frame-Options',
-            value: 'DENY',
-          },
-          {
             key: 'Strict-Transport-Security',
             value: 'max-age=31536000; includeSubDomains',
           },
@@ -183,13 +209,22 @@ const nextConfig = {
             key: 'Permissions-Policy',
             value: 'camera=(), microphone=(), geolocation=(), payment=(), usb=()',
           },
-          {
-            key: 'Cross-Origin-Opener-Policy',
-            value: 'same-origin-allow-popups',
-          },
+        ],
+      },
+      {
+        source: '/',
+        headers: NON_EMBED_SECURITY_HEADERS,
+      },
+      {
+        source: '/:path((?!embed(?:/|$)).+)',
+        headers: NON_EMBED_SECURITY_HEADERS,
+      },
+      {
+        source: '/embed/:path*',
+        headers: [
           {
             key: 'Content-Security-Policy',
-            value: contentSecurityPolicy,
+            value: embedContentSecurityPolicy,
           },
         ],
       },

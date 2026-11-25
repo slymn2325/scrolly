@@ -2236,7 +2236,7 @@ export default function HomeClient({ initialFacts, initialVocabulary, initialLan
         `}</style>
         <div
           data-testid="reels-phone-frame"
-          className="stage-card relative z-10 m-0 my-0 mt-0 mb-0 flex h-[100dvh] w-full min-w-0 shrink-0 flex-col overflow-hidden rounded-none border-0 bg-cik-bg p-0 text-cik-text shadow-none lg:h-[min(86vh,760px)] lg:max-h-[min(86vh,760px)] lg:self-stretch lg:rounded-[28px] lg:border lg:border-black/10 lg:p-0 lg:shadow-sticker"
+          className="stage-card relative z-10 m-0 my-0 mt-0 mb-0 flex h-[100dvh] w-full min-w-0 shrink-0 flex-col overflow-hidden rounded-none border-0 bg-cik-bg p-0 text-cik-text shadow-none lg:h-[min(86vh,760px)] lg:max-h-[min(86vh,760px)] lg:self-stretch lg:rounded-[28px] lg:border lg:border-black/10 lg:p-0 lg:shadow-sticker dark:lg:border-white/10"
         >
         <DeferredAdSense />
         <OfflineManager lang={lang} />

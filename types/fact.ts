@@ -15,8 +15,8 @@ export interface GuessChallenge {
   step?: number;
   unit?: string;
   correctValue?: number;
-  options?: [string, string];
-  correctOptionIndex?: 0 | 1;
+  options?: string[];
+  correctOptionIndex?: number;
 }
 
 export interface FactQuizContent {

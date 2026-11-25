@@ -1,7 +1,8 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { Mail, WifiOff } from 'lucide-react';
+import Link from 'next/link';
+import { Mail, Sparkles, WifiOff } from 'lucide-react';
 import { type Language } from '@/i18n/translations';
 import type { DockTabId } from '@/utils/fluentAssets';
 import BrandLogo from '@/components/BrandLogo';
@@ -101,8 +102,10 @@ export default function DesktopLeftNav({
               aria-current={active ? 'page' : undefined}
               title={label}
               onClick={() => onSelectTab(item.id)}
-              className={`relative flex min-h-[52px] items-center justify-start gap-3 rounded-pill px-3 cik-headline ${
-                active ? 'bg-cik-pink text-cik-cta' : 'text-cik-text'
+              className={`scrolly-tactile relative flex min-h-[48px] items-center justify-start gap-3 rounded-pill px-3.5 cik-headline ${
+                active
+                  ? 'scrolly-glass-pill bg-cik-pink text-cik-cta'
+                  : 'text-cik-text hover:bg-cik-surface'
               }`}
             >
               <span className="relative flex h-6 w-6 items-center justify-center">
@@ -115,6 +118,23 @@ export default function DesktopLeftNav({
             </button>
           );
         })}
+
+        <Link
+          href="/create"
+          data-testid="desktop-nav-create"
+          title={lang === 'tr' ? 'Hikâye Stüdyosu' : 'Creator Studio'}
+          className="scrolly-glass-pill scrolly-tactile mt-2 flex min-h-[46px] items-center justify-between gap-2 rounded-pill bg-cik-surface px-3.5 text-sm font-extrabold text-cik-cta hover:bg-cik-pink"
+        >
+          <span className="flex min-w-0 items-center gap-2.5">
+            <Sparkles className="h-4 w-4 shrink-0" aria-hidden="true" />
+            <span className="truncate">
+              {lang === 'tr' ? 'Hikâye Stüdyosu' : 'Creator Studio'}
+            </span>
+          </span>
+          <span className="rounded-pill bg-cik-cta px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-wide text-cik-on-cta">
+            New
+          </span>
+        </Link>
       </nav>
 
       <div className="mt-auto space-y-3 border-t border-cik-line px-1 pt-4">
@@ -131,7 +151,7 @@ export default function DesktopLeftNav({
         ) : null}
         <div
           data-testid="desktop-session-box"
-          className="rounded-2xl border border-cik-line bg-cik-surface p-3.5 shadow-e1"
+          className="scrolly-glass-surface rounded-2xl p-3.5"
         >
           <p className="text-[11px] font-medium uppercase tracking-wider text-cik-text-2">
             {lang === 'tr' ? 'Oturum' : 'Session'}

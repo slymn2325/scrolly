@@ -1,6 +1,7 @@
 'use client';
 
 import React, { forwardRef, useCallback, useEffect, useImperativeHandle, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import Link from 'next/link';
 import { motion } from 'framer-motion';
 import {
   Atom,
@@ -874,7 +875,7 @@ const TikTokFeed = forwardRef<TikTokFeedHandle, TikTokFeedProps>(function TikTok
             aria-haspopup="menu"
             aria-expanded={isCategoryDrawerOpen}
             data-testid="choose-category-btn"
-            className={`inline-flex h-9 min-w-0 max-w-[48vw] shrink items-center gap-1.5 overflow-hidden rounded-pill bg-cik-surface px-3 py-1.5 text-xs font-semibold leading-none text-cik-text shadow-e1 lg:h-10 lg:max-w-[44vw] lg:gap-2 lg:px-3.5 lg:text-sm ${
+            className={`scrolly-tactile inline-flex h-9 min-w-0 max-w-[44vw] shrink items-center gap-1.5 overflow-hidden rounded-pill border border-black/10 bg-cik-surface/90 px-3 py-1.5 text-xs font-semibold leading-none text-cik-text shadow-e1 backdrop-blur-md dark:border-white/10 lg:h-10 lg:max-w-[40vw] lg:gap-2 lg:px-3.5 lg:text-sm ${
               chromeBlocked ? 'pointer-events-none' : 'pointer-events-auto'
             }`}
           >
@@ -938,10 +939,20 @@ const TikTokFeed = forwardRef<TikTokFeedHandle, TikTokFeedProps>(function TikTok
         </div>
 
         <div
-          className={`ml-auto flex shrink-0 items-center gap-2 ${
+          className={`ml-auto flex shrink-0 items-center gap-1.5 sm:gap-2 ${
             chromeBlocked ? 'pointer-events-none' : 'pointer-events-auto'
           }`}
         >
+          <Link
+            href="/create"
+            data-testid="hud-create-studio-link"
+            aria-label={lang === 'tr' ? 'Hikâye Stüdyosu' : 'Creator Studio'}
+            title={lang === 'tr' ? 'Hikâye Stüdyosu' : 'Creator Studio'}
+            className="scrolly-tactile inline-flex h-9 shrink-0 items-center gap-1.5 rounded-pill border border-black/10 bg-cik-surface/90 px-2.5 text-xs font-bold text-cik-cta shadow-e1 backdrop-blur-md hover:bg-cik-pink dark:border-white/10 lg:hidden"
+          >
+            <Sparkles className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+            <span>{lang === 'tr' ? 'Stüdyo' : 'Studio'}</span>
+          </Link>
           <LanguageMenu lang={lang} blocked={chromeBlocked} onChangeLang={onChangeLang} />
           <NotificationsBell lang={lang} />
         </div>

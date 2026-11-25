@@ -55,7 +55,7 @@ export default function IosFloatingIslandDock({
         data-testid="ios-floating-dock"
         className={`${
           chromeBlocked ? 'pointer-events-none' : 'pointer-events-auto'
-        } material-thin flex w-full items-end justify-between gap-0.5 rounded-pill px-1.5 py-1 text-cik-text shadow-e1`}
+        } scrolly-glass-surface flex w-full items-end justify-between gap-0.5 rounded-pill px-1.5 py-1 text-cik-text`}
       >
         {TABS.map((tab) => {
           const isActive = highlightedTab === tab.id;
