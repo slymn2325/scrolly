@@ -8,6 +8,7 @@
  */
 
 const CANONICAL_ORIGIN = 'https://scrolly.live';
+const CANONICAL_URL = new URL(CANONICAL_ORIGIN);
 const BOT_UA =
   'Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)';
 const TIMEOUT_MS = 20000;
@@ -31,14 +32,19 @@ function record(section, check, status, detail) {
 }
 
 function mapTargetUrl(urlOrPath) {
-  if (urlOrPath.startsWith('http://') || urlOrPath.startsWith('https://')) {
-    if (urlOrPath.startsWith(CANONICAL_ORIGIN)) {
-      return `${BASE_URL}${urlOrPath.slice(CANONICAL_ORIGIN.length) || '/'}`;
+  if (/^https?:\/\//i.test(urlOrPath)) {
+    try {
+      const parsed = new URL(urlOrPath);
+      if (parsed.origin === CANONICAL_URL.origin) {
+        return new URL(`${parsed.pathname}${parsed.search}`, BASE_URL).toString();
+      }
+    } catch {
+      return urlOrPath;
     }
     return urlOrPath;
   }
   const normalizedPath = urlOrPath.startsWith('/') ? urlOrPath : `/${urlOrPath}`;
-  return `${BASE_URL}${normalizedPath}`;
+  return new URL(normalizedPath, BASE_URL).toString();
 }
 
 async function fetchUrl(urlOrPath, opts = {}) {
@@ -83,23 +89,34 @@ async function fetchUrl(urlOrPath, opts = {}) {
   }
 }
 
+const NAMED_HTML_ENTITIES = {
+  amp: '&',
+  quot: '"',
+  apos: "'",
+  lt: '<',
+  gt: '>',
+  nbsp: ' ',
+};
+
 function decodeHtmlEntities(input) {
   if (!input) return '';
-  return input
-    .replace(/&#x([0-9a-f]+);/gi, (_, hex) => {
-      const code = Number.parseInt(hex, 16);
-      return Number.isNaN(code) ? _ : String.fromCodePoint(code);
-    })
-    .replace(/&#(\d+);/g, (_, dec) => {
-      const code = Number.parseInt(dec, 10);
-      return Number.isNaN(code) ? _ : String.fromCodePoint(code);
-    })
-    .replace(/&amp;/g, '&')
-    .replace(/&quot;/g, '"')
-    .replace(/&apos;/g, "'")
-    .replace(/&lt;/g, '<')
-    .replace(/&gt;/g, '>')
-    .replace(/&nbsp;/g, ' ');
+  return input.replace(
+    /&(?:#x([0-9a-f]+)|#(\d+)|(amp|quot|apos|lt|gt|nbsp));/gi,
+    (match, hex, dec, named) => {
+      if (hex) {
+        const code = Number.parseInt(hex, 16);
+        return code >= 0 && code <= 0x10ffff ? String.fromCodePoint(code) : match;
+      }
+      if (dec) {
+        const code = Number.parseInt(dec, 10);
+        return code >= 0 && code <= 0x10ffff ? String.fromCodePoint(code) : match;
+      }
+      if (named) {
+        return NAMED_HTML_ENTITIES[named.toLowerCase()] ?? match;
+      }
+      return match;
+    }
+  );
 }
 
 function getAttr(tag, attrName) {
@@ -373,15 +390,24 @@ async function runAudit() {
     ...sitemapRes.text.matchAll(/<loc>\s*([^<]+?)\s*<\/loc>/gi),
   ].map((m) => decodeHtmlEntities(m[1].trim()));
   const uniqueSitemapLocs = [...new Set(sitemapLocs)];
-  const trFactLocs = uniqueSitemapLocs.filter((u) =>
-    u.startsWith(`${CANONICAL_ORIGIN}/fact/`)
-  );
+  const canonicalFactSlug = (u, prefix) => {
+    try {
+      const parsed = new URL(u);
+      if (parsed.origin === CANONICAL_URL.origin && parsed.pathname.startsWith(prefix)) {
+        return parsed.pathname.slice(prefix.length);
+      }
+    } catch {
+      return null;
+    }
+    return null;
+  };
+  const trFactLocs = uniqueSitemapLocs.filter((u) => canonicalFactSlug(u, '/fact/') !== null);
   const enFactSet = new Set(
-    uniqueSitemapLocs.filter((u) => u.startsWith(`${CANONICAL_ORIGIN}/en/fact/`))
+    uniqueSitemapLocs.filter((u) => canonicalFactSlug(u, '/en/fact/') !== null)
   );
   const pairedSlugs = trFactLocs
-    .map((u) => u.slice(`${CANONICAL_ORIGIN}/fact/`.length))
-    .filter((slug) => enFactSet.has(`${CANONICAL_ORIGIN}/en/fact/${slug}`));
+    .map((u) => canonicalFactSlug(u, '/fact/'))
+    .filter((slug) => Boolean(slug) && enFactSet.has(`${CANONICAL_ORIGIN}/en/fact/${slug}`));
 
   const factPairsToCheck = pairedSlugs.slice(0, 2);
 
@@ -773,8 +799,16 @@ async function runAudit() {
   for (const ipaPath of ipaTests) {
     const res = await fetchUrl(ipaPath, { skipBody: true });
     const loc = res.headers.location || '';
-    const locOk =
-      loc === '/?category=vocabulary' || loc.endsWith('/?category=vocabulary');
+    let locOk = false;
+    if (loc) {
+      try {
+        const parsedLoc = new URL(loc, BASE_URL);
+        locOk =
+          parsedLoc.pathname === '/' && parsedLoc.search === '?category=vocabulary';
+      } catch {
+        locOk = false;
+      }
+    }
     if (res.ok && res.status === 301 && locOk) {
       record('Links & IPA 301', `IPA 301 ${ipaPath}`, 'PASS', `301 -> ${loc}`);
     } else {
@@ -788,6 +822,17 @@ async function runAudit() {
   }
 
   // 5) OG & Favicon
+  const formatAssetLabel = (assetUrl) => {
+    try {
+      const parsed = new URL(assetUrl);
+      if (parsed.origin === CANONICAL_URL.origin) {
+        return `${parsed.pathname}${parsed.search}`;
+      }
+    } catch {
+      return assetUrl;
+    }
+    return assetUrl;
+  };
   const assetUrls = [
     ...ogImagesToCheck,
     `${CANONICAL_ORIGIN}/favicon.ico`,
@@ -796,17 +841,18 @@ async function runAudit() {
   for (const assetUrl of [...new Set(assetUrls)]) {
     const res = await fetchUrl(assetUrl, { skipBody: true });
     const contentType = res.headers['content-type'] || '';
+    const label = formatAssetLabel(assetUrl);
     if (res.ok && res.status === 200 && contentType.startsWith('image/')) {
       record(
         'OG & Favicon',
-        assetUrl.replace(CANONICAL_ORIGIN, ''),
+        label,
         'PASS',
         `200 OK (${contentType})`
       );
     } else {
       record(
         'OG & Favicon',
-        assetUrl.replace(CANONICAL_ORIGIN, ''),
+        label,
         'FAIL',
         `status=${res.status}, content-type="${contentType}"`
       );
