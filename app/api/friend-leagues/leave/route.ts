@@ -51,23 +51,11 @@ export async function POST(request: Request) {
   }
 
   const boundDevice = readSignedDeviceIdFromRequest(request);
-  const requestedDevice = typeof body.deviceId === 'string' ? body.deviceId.trim() : '';
+  const rawRequested = typeof body.deviceId === 'string' ? body.deviceId.trim() : '';
+  const cleanRequested = isValidDeviceId(rawRequested) ? rawRequested.slice(0, 128) : '';
   const sessionUser = await getSessionUserFromRequest(request).catch(() => null);
 
-  if (
-    boundDevice &&
-    requestedDevice &&
-    requestedDevice !== boundDevice &&
-    !(sessionUser && sessionUser.linkedDeviceIds.includes(requestedDevice))
-  ) {
-    return NextResponse.json(
-      { ok: false, error: 'forbidden' },
-      { status: 403, headers: NO_STORE_HEADERS }
-    );
-  }
-
-  const deviceId =
-    boundDevice ?? (isValidDeviceId(requestedDevice) ? requestedDevice.slice(0, 128) : '');
+  const deviceId = boundDevice || cleanRequested;
   if (!deviceId) {
     return NextResponse.json(
       { ok: false, error: 'invalid_device_id' },
@@ -87,11 +75,29 @@ export async function POST(request: Request) {
       );
     }
 
+    let includeRequested = false;
+    if (cleanRequested && cleanRequested !== deviceId) {
+      const reqProf = await getProfileByDeviceId(cleanRequested).catch(() => ({
+        persisted: false,
+        profile: null,
+      }));
+      if (!reqProf.profile?.userId || reqProf.profile.userId === sessionUser?.id) {
+        includeRequested = true;
+      }
+    }
+
+    const effectiveLinkedDevices = Array.from(
+      new Set([
+        ...(sessionUser?.linkedDeviceIds ?? []),
+        ...(includeRequested ? [cleanRequested] : []),
+      ])
+    );
+
     const result = await leaveFriendLeague({
       code: rawCode,
       deviceId,
       userId: sessionUser?.id ?? null,
-      linkedDeviceIds: sessionUser?.linkedDeviceIds ?? [],
+      linkedDeviceIds: effectiveLinkedDevices,
     });
 
     if (!result.ok) {
@@ -104,7 +110,7 @@ export async function POST(request: Request) {
     const leagues = await listUserFriendLeagues({
       deviceId,
       userId: sessionUser?.id ?? null,
-      linkedDeviceIds: sessionUser?.linkedDeviceIds ?? [],
+      linkedDeviceIds: effectiveLinkedDevices,
     }).catch(() => []);
 
     const response = NextResponse.json(

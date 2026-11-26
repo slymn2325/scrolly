@@ -247,12 +247,12 @@ export default function TopicRadarChart({
 
       {/* DataMB Style Card: Percentile Comparison Header + 7-Axis Radar SVG */}
       <div className="overflow-x-hidden rounded-sticker border border-cik-line bg-cik-surface p-4 shadow-e1">
-        {/* 1. Compact DataMB Comparison Row */}
+        {/* 1. Compact DataMB Comparison Row (scrollable horizontally on mobile) */}
         <div
           data-testid="radar-percentile-table"
-          className="no-scrollbar overflow-x-auto rounded-cik-lg border border-cik-line bg-cik-surface-2 px-2 py-2"
+          className="w-full overflow-x-auto overscroll-x-contain touch-pan-x rounded-cik-lg border border-cik-line bg-cik-surface-2 px-2 py-2.5"
         >
-          <div className="grid min-w-max grid-cols-[minmax(60px,1fr)_repeat(7,minmax(36px,1fr))_minmax(36px,0.7fr)] items-center gap-1 text-center">
+          <div className="grid min-w-[460px] grid-cols-[minmax(76px,1.1fr)_repeat(7,minmax(44px,1fr))_minmax(44px,0.8fr)] items-center gap-1 text-center">
             {/* Header Row */}
             <div className="cik-caption-2 pl-1 text-left text-cik-text-3">
               {hasAnyPersonalAccuracy ? 'LIVE' : 'DATA'}
@@ -350,9 +350,10 @@ export default function TopicRadarChart({
         </div>
 
         {/* 2. Interactive 7-Axis Heptagon SVG Radar */}
+        <div className="mt-2 mb-6 w-full overflow-x-auto overscroll-x-contain">
         <div
           data-testid="topic-radar-svg-wrap"
-          className="relative mx-auto mt-2 mb-6 aspect-[380/312] w-full max-w-[min(100%,440px)] overflow-hidden pb-3"
+          className="relative mx-auto aspect-[380/312] w-full min-w-[290px] max-w-[min(100%,440px)] overflow-visible pb-3"
         >
           <svg
             viewBox={`0 0 ${SVG_WIDTH} ${SVG_HEIGHT}`}
@@ -531,6 +532,7 @@ export default function TopicRadarChart({
               </motion.button>
             );
           })}
+        </div>
         </div>
       </div>
 

@@ -259,7 +259,7 @@ export default function GuessWidget({
       `}</style>
       <p className="cik-callout mb-2 flex items-start gap-2 text-cik-text">
         <HelpCircle className="mt-0.5 h-4 w-4 shrink-0 text-cik-text-2" aria-hidden="true" />
-        <span className="line-clamp-2 min-w-0 flex-1">{challenge.prompt}</span>
+        <span className="min-w-0 flex-1 leading-snug">{challenge.prompt}</span>
       </p>
 
       {!submitted ? (

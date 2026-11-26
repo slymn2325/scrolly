@@ -73,6 +73,8 @@ export default function LeaderboardModal({
   const [hasError, setHasError] = useState(false);
   const [inviteCopied, setInviteCopied] = useState(false);
   const [authEmail, setAuthEmail] = useState<string | null>(null);
+  const [isUserRowVisible, setIsUserRowVisible] = useState(false);
+  const listRef = useRef<HTMLDivElement | null>(null);
   const userRowRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
@@ -181,6 +183,28 @@ export default function LeaderboardModal({
   }, [league, userXp]);
 
   const myEntry = useMemo(() => entries.find((e) => e.isUser) ?? null, [entries]);
+
+  useEffect(() => {
+    if (!open || activeTab === 'friends' || isLoading || !myEntry || entries.length === 0) {
+      setIsUserRowVisible(false);
+      return;
+    }
+    const rowEl = userRowRef.current;
+    const containerEl = listRef.current;
+    if (!rowEl || typeof IntersectionObserver === 'undefined') {
+      setIsUserRowVisible(Boolean(myEntry && entries.length <= 5));
+      return;
+    }
+    const observer = new IntersectionObserver(
+      (observed) => {
+        const first = observed[0];
+        if (first) setIsUserRowVisible(first.isIntersecting);
+      },
+      { root: containerEl, threshold: 0.55 }
+    );
+    observer.observe(rowEl);
+    return () => observer.disconnect();
+  }, [open, activeTab, isLoading, myEntry, entries]);
   const myRank = myEntry?.rank ?? 1;
   const activeTabScore =
     myEntry?.score ??
@@ -401,7 +425,11 @@ export default function LeaderboardModal({
           </div>
         )}
 
-        <div data-testid="leaderboard-list" className="mt-3 min-h-0 flex-1 space-y-2 overflow-y-auto overflow-x-hidden px-1 pb-8">
+        <div
+          ref={listRef}
+          data-testid="leaderboard-list"
+          className="mt-3 min-h-0 flex-1 space-y-2 overflow-y-auto overflow-x-hidden px-1 pb-24 sm:pb-16"
+        >
           {isLoading ? (
             <div data-testid="leaderboard-loading" className="flex flex-col gap-2">
               {[0, 1, 2, 3, 4].map((skeletonIdx) => (
@@ -541,7 +569,8 @@ export default function LeaderboardModal({
           )}
         </div>
 
-        {/* Dedicated pinned user footer outside the scrolling list so it never overlaps rows */}
+        {/* Dedicated pinned user footer shown only when user's row is not currently visible in scroll viewport */}
+        {!isLoading && (!myEntry || !isUserRowVisible) && (
         <div
           data-testid="leaderboard-pinned-user-footer"
           onClick={scrollToMyRank}
@@ -578,6 +607,7 @@ export default function LeaderboardModal({
             </span>
           </div>
         </div>
+        )}
           </>
         )}
       </motion.div>

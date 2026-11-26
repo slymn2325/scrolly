@@ -532,7 +532,7 @@ export default function DiplomaProfileModal({
         }}
         onNavigate={() => {
           onButtonPop();
-          setSettingsOpen(false);
+          window.setTimeout(() => setSettingsOpen(false), 120);
         }}
       />
 

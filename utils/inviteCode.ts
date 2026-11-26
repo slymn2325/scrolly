@@ -75,13 +75,13 @@ export function extractInviteCode(raw: string, mode: 'league' | 'duel'): string 
 
   const looksLikeUrlOrInvite =
     /https?:\/\//i.test(trimmed) ||
-    /scrolly\.live/i.test(trimmed) ||
+    /(?:^|\s)scrolly\.live(?:[/?#]|$)/i.test(trimmed) ||
     /(?:league|duel|room|code)=/i.test(trimmed) ||
     /(?:\/duello\/|\/duel\/|\/league\/|[/?=])/.test(trimmed);
 
   if (looksLikeUrlOrInvite) {
     const embeddedUrlMatch =
-      /(?:https?:\/\/|scrolly\.live)[^\s"'<>]+/i.exec(trimmed);
+      /https?:\/\/[^\s"'<>]+|scrolly\.live[^\s"'<>]*/i.exec(trimmed);
     if (embeddedUrlMatch?.[0]) {
       const extracted = tryExtractFromUrlCandidate(embeddedUrlMatch[0], mode, maxLen);
       if (extracted) return extracted;
@@ -89,6 +89,14 @@ export function extractInviteCode(raw: string, mode: 'league' | 'duel'): string 
 
     const directExtracted = tryExtractFromUrlCandidate(trimmed, mode, maxLen);
     if (directExtracted) return directExtracted;
+
+    const labeledCodeMatch =
+      /(?:room\s*code|oda\s*kodu|invite\s*code|davet\s*kodu|code|kod)\s*[:#]\s*([A-Za-z0-9]{4,12})\b/i.exec(
+        trimmed
+      );
+    if (labeledCodeMatch?.[1]) {
+      return cleanCodeToken(labeledCodeMatch[1], maxLen);
+    }
 
     const paramMatch = /(?:^|[?&\s])(?:league|room|duel|code)=([A-Za-z0-9]{4,12})/i.exec(trimmed);
     if (paramMatch?.[1]) {
@@ -101,6 +109,14 @@ export function extractInviteCode(raw: string, mode: 'league' | 'duel'): string 
     }
 
     return '';
+  }
+
+  const labeledCodeOnly =
+    /(?:room\s*code|oda\s*kodu|invite\s*code|davet\s*kodu|code|kod)\s*[:#]\s*([A-Za-z0-9]{4,12})\b/i.exec(
+      trimmed
+    );
+  if (labeledCodeOnly?.[1]) {
+    return cleanCodeToken(labeledCodeOnly[1], maxLen);
   }
 
   return cleanCodeToken(trimmed, maxLen);

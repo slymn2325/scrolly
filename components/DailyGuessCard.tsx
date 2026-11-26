@@ -1,7 +1,20 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
-import { Check, Copy, MessageCircle, Share2, Target, Users } from 'lucide-react';
+import React, { useEffect, useRef, useState } from 'react';
+import Link from 'next/link';
+import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
+import {
+  ArrowRight,
+  BookOpen,
+  Check,
+  ChevronUp,
+  Copy,
+  MessageCircle,
+  RotateCw,
+  Share2,
+  Target,
+  Users,
+} from 'lucide-react';
 import GuessWidget, { type GuessAnswerDetails } from '@/components/GuessWidget';
 import { getCategoryMeta, type CategoryId, type Language } from '@/i18n/translations';
 import {
@@ -12,7 +25,7 @@ import {
 } from '@/lib/dailyGuess';
 import { getOrCreateDeviceId, trackEvent } from '@/lib/telemetry';
 import type { FactCard } from '@/types/fact';
-import { getFactPrimarySlug } from '@/utils/factsData';
+import { buildFactHref, getFactPrimarySlug } from '@/utils/factsData';
 
 interface DailyGuessCardProps {
   fact: FactCard;
@@ -93,9 +106,12 @@ export default function DailyGuessCard({
   const [totalParticipants, setTotalParticipants] = useState<number>(0);
   const [showFactReveal, setShowFactReveal] = useState(false);
   const [copied, setCopied] = useState(false);
+  const revealRef = useRef<HTMLDivElement | null>(null);
+  const reduced = useReducedMotion() === true;
 
   useEffect(() => {
     setSavedAttempt(readStoredDailyGuess(dateIso, fact.id));
+    setShowFactReveal(false);
   }, [dateIso, fact.id]);
 
   useEffect(() => {
@@ -155,7 +171,6 @@ export default function DailyGuessCard({
     };
     writeStoredDailyGuess(localRecord);
     setSavedAttempt(localRecord);
-    setShowFactReveal(true);
 
     onGuessReward(xpAwarded, isAccurate, fact.category, details.accuracyPct);
     void trackEvent(getFactPrimarySlug(fact), fact.category, 'quick_guess', {
@@ -279,7 +294,18 @@ export default function DailyGuessCard({
           challenge={challenge}
           lang={lang}
           onGuessAnswered={handleAnswered}
-          onRequestFlip={() => setShowFactReveal((prev) => !prev)}
+          onRequestFlip={() => {
+            onButtonPop();
+            setShowFactReveal((prev) => {
+              const next = !prev;
+              if (next) {
+                window.requestAnimationFrame(() => {
+                  revealRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                });
+              }
+              return next;
+            });
+          }}
           onButtonPop={onButtonPop}
           initialAnsweredState={
             savedAttempt
@@ -292,6 +318,61 @@ export default function DailyGuessCard({
           }
         />
       </div>
+
+      <AnimatePresence initial={false}>
+        {showFactReveal && (
+          <motion.div
+            ref={revealRef}
+            data-testid="daily-guess-why-card"
+            initial={reduced ? { opacity: 0 } : { opacity: 0, rotateX: -12, y: 6 }}
+            animate={{ opacity: 1, rotateX: 0, y: 0 }}
+            exit={reduced ? { opacity: 0 } : { opacity: 0, y: -4 }}
+            transition={{ duration: 0.22 }}
+            className="mt-3 rounded-cik-md border border-cik-cta/30 bg-cik-pink p-4 text-cik-text shadow-e1"
+          >
+            <div className="flex items-center justify-between gap-2">
+              <span className="cik-caption-1 inline-flex items-center gap-1.5 rounded-pill bg-cik-surface px-2.5 py-1 text-cik-cta">
+                <RotateCw size={13} strokeWidth={2.2} aria-hidden="true" />
+                <span>{isEn ? "Why It's True" : 'Neden Böyle?'}</span>
+              </span>
+              <button
+                type="button"
+                onClick={() => setShowFactReveal(false)}
+                className="cik-caption-1 inline-flex min-h-8 items-center gap-1 rounded-pill px-2.5 text-cik-text-2 hover:bg-cik-surface"
+              >
+                <ChevronUp size={15} strokeWidth={2} aria-hidden="true" />
+                <span>{isEn ? 'Hide' : 'Gizle'}</span>
+              </button>
+            </div>
+            <p className="cik-callout mt-2.5 text-cik-text">{localized.factText}</p>
+            {(localized.deepDiveDetail || localized.quiz?.explanation) &&
+              (localized.deepDiveDetail || localized.quiz?.explanation)?.trim() !==
+                localized.factText.trim() && (
+                <p className="cik-footnote mt-2 text-cik-text-2">
+                  {localized.deepDiveDetail || localized.quiz?.explanation}
+                </p>
+              )}
+            <div className="mt-3 flex flex-wrap items-center justify-between gap-2 border-t border-cik-line pt-2.5">
+              {fact.sourceName || localized.sourceHint ? (
+                <span className="cik-caption-2 inline-flex items-center gap-1.5 text-cik-text-2">
+                  <BookOpen size={14} strokeWidth={2} aria-hidden="true" />
+                  <span>{fact.sourceName || localized.sourceHint}</span>
+                </span>
+              ) : (
+                <span />
+              )}
+              <Link
+                href={buildFactHref(getFactPrimarySlug(fact), lang)}
+                onClick={onButtonPop}
+                className="cik-caption-1 inline-flex min-h-9 items-center gap-1 rounded-pill bg-cik-cta px-3 text-cik-on-cta"
+              >
+                <span>{isEn ? 'Read Full Fact' : 'Tam Kartı İncele'}</span>
+                <ArrowRight size={14} strokeWidth={2.2} aria-hidden="true" />
+              </Link>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {savedAttempt && (
         <div
@@ -311,10 +392,6 @@ export default function DailyGuessCard({
               {isEn ? `Top ${savedAttempt.topPct}%` : `Top %${savedAttempt.topPct}`}
             </span>
           </div>
-
-          {showFactReveal && (
-            <p className="cik-footnote text-cik-text-2">{localized.factText}</p>
-          )}
 
           <p
             data-testid="daily-guess-share-preview"

@@ -33,6 +33,8 @@ import {
 } from 'lucide-react';
 import ScrollyStoryPlayer from '@/components/stories/ScrollyStoryPlayer';
 import { logoutSession } from '@/lib/authClient';
+import { writeLanguageCookie } from '@/lib/locale';
+import { loadUserMemory, saveUserMemory } from '@/utils/userMemory';
 import {
   DEFAULT_STORY_THEME,
   getStoryGradientCss,
@@ -97,12 +99,14 @@ function makeEmptyCard(lang: StoryLanguage, idx: number): StoryCardItem {
 interface StoryStudioClientProps {
   user: AuthUserDto;
   initialLanguage?: StoryLanguage;
+  onLanguageChange?: (nextLang: StoryLanguage) => void;
   onSignedOut?: () => void;
 }
 
 export default function StoryStudioClient({
   user,
   initialLanguage = 'tr',
+  onLanguageChange,
   onSignedOut,
 }: StoryStudioClientProps) {
   const [language, setLanguage] = useState<StoryLanguage>(initialLanguage);
@@ -207,6 +211,15 @@ export default function StoryStudioClient({
 
   const handleLanguageSwitch = (nextLang: StoryLanguage) => {
     setLanguage(nextLang);
+    writeLanguageCookie(nextLang);
+    if (typeof document !== 'undefined') {
+      document.documentElement.lang = nextLang;
+    }
+    const mem = loadUserMemory();
+    if (mem.lang !== nextLang) {
+      saveUserMemory({ ...mem, lang: nextLang });
+    }
+    onLanguageChange?.(nextLang);
     if (!editingStoryId && cards.length === 2 && cards[0]?.id === 'demo-1') {
       setCards(LANDING_DEMO_CARDS[nextLang].slice(0, 2));
       setTitle(

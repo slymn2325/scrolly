@@ -105,6 +105,50 @@ function estimateTargetTime(questionCount: number): number {
 }
 
 const BOT_PLAYER_ID = 'scrolla-local-bot';
+const DUEL_LOBBY_SESSION_KEY = 'scrolly_duel_lobby_state_v1';
+
+interface PersistedDuelLobbyState {
+  code: string;
+  isBotPractice: boolean;
+  botLocalRoom: ScrollaRoom | null;
+  playerId: string;
+}
+
+function readPersistedDuelLobby(): PersistedDuelLobbyState | null {
+  if (typeof window === 'undefined') return null;
+  try {
+    const raw = window.sessionStorage.getItem(DUEL_LOBBY_SESSION_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as Partial<PersistedDuelLobbyState>;
+    if (!parsed || typeof parsed.code !== 'string' || !parsed.code) return null;
+    return {
+      code: parsed.code,
+      isBotPractice: Boolean(parsed.isBotPractice),
+      botLocalRoom: parsed.botLocalRoom ?? null,
+      playerId: typeof parsed.playerId === 'string' ? parsed.playerId : '',
+    };
+  } catch {
+    return null;
+  }
+}
+
+function writePersistedDuelLobby(state: PersistedDuelLobbyState): void {
+  if (typeof window === 'undefined') return;
+  try {
+    window.sessionStorage.setItem(DUEL_LOBBY_SESSION_KEY, JSON.stringify(state));
+  } catch {
+    // Ignore sessionStorage errors
+  }
+}
+
+function clearPersistedDuelLobby(): void {
+  if (typeof window === 'undefined') return;
+  try {
+    window.sessionStorage.removeItem(DUEL_LOBBY_SESSION_KEY);
+  } catch {
+    // Ignore sessionStorage errors
+  }
+}
 
 function createSimulatedBotPlayer(lang: Language): ScrollaPlayer {
   return {
@@ -137,7 +181,6 @@ export default function DuelModal({
 }: DuelModalProps) {
   const t = translations[lang];
   const isPage = presentation === 'page';
-  const myPlayerId = useMemo(() => getOrCreateScrollaPlayerId(propPlayerId), [propPlayerId]);
 
   const [nickname, setNickname] = useState<string>(defaultNickname || t.duelDefaultName);
   const [category, setCategory] = useState<CategoryFilter>(
@@ -149,6 +192,9 @@ export default function DuelModal({
   const [room, setRoom] = useState<ScrollaRoom | null>(null);
   const [isBotPractice, setIsBotPractice] = useState(false);
   const [botLocalRoom, setBotLocalRoom] = useState<ScrollaRoom | null>(null);
+  const [basePlayerId, setBasePlayerId] = useState<string>(() =>
+    getOrCreateScrollaPlayerId(propPlayerId)
+  );
   const [copied, setCopied] = useState(false);
   const [codeCopied, setCodeCopied] = useState(false);
   const [busyAction, setBusyAction] = useState<string | null>(null);
@@ -158,11 +204,33 @@ export default function DuelModal({
   const [sendingReaction, setSendingReaction] = useState(false);
   const [topicMenuOpen, setTopicMenuOpen] = useState(false);
 
+  const busyActionRef = useRef<string | null>(null);
+  busyActionRef.current = busyAction;
+  const mutationSeqRef = useRef(0);
+  const lastServerUpdatedMsRef = useRef(0);
   const serverOffsetMsRef = useRef<number>(0);
   const matchLaunchedRef = useRef<string | null>(null);
   const autoJoinedCodeRef = useRef<string | null>(null);
+  const restoredLobbyRef = useRef(false);
   const topicDropdownRef = useRef<HTMLDivElement>(null);
   const topicBtnRef = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    if (room || botLocalRoom || !propPlayerId) return;
+    const nextId = getOrCreateScrollaPlayerId(propPlayerId);
+    if (nextId && nextId !== basePlayerId) {
+      setBasePlayerId(nextId);
+    }
+  }, [propPlayerId, room, botLocalRoom, basePlayerId]);
+
+  const myPlayerId = useMemo(() => {
+    const active = botLocalRoom ?? room;
+    if (active) {
+      if (active.players.some((p) => p.id === basePlayerId)) return basePlayerId;
+      if (propPlayerId && active.players.some((p) => p.id === propPlayerId)) return propPlayerId;
+    }
+    return basePlayerId;
+  }, [basePlayerId, botLocalRoom, propPlayerId, room]);
 
   const selectedCategoryMeta =
     CATEGORY_SELECTOR_OPTIONS.find((cat) => cat.id === category) ?? CATEGORY_SELECTOR_OPTIONS[0];
@@ -221,29 +289,48 @@ export default function DuelModal({
     return room;
   }, [botLocalRoom, isBotPractice, lang, room]);
 
-  const applyRoomSync = useCallback((nextRoom: ScrollaRoom, serverNowMs?: number) => {
-    if (typeof serverNowMs === 'number' && Number.isFinite(serverNowMs)) {
-      serverOffsetMsRef.current = serverNowMs - Date.now();
-    }
-    if (nextRoom.players.length >= 2) {
-      setIsBotPractice(false);
-      setBotLocalRoom(null);
-    }
-    setRoom(nextRoom);
-  }, []);
+  const applyRoomSync = useCallback(
+    (nextRoom: ScrollaRoom, serverNowMs?: number, options?: { fromMutation?: boolean }) => {
+      if (typeof serverNowMs === 'number' && Number.isFinite(serverNowMs)) {
+        serverOffsetMsRef.current = serverNowMs - Date.now();
+      }
+      const nextUpdatedMs = nextRoom.updatedAt ? Date.parse(nextRoom.updatedAt) : 0;
+      if (
+        !options?.fromMutation &&
+        Number.isFinite(nextUpdatedMs) &&
+        nextUpdatedMs > 0 &&
+        nextUpdatedMs < lastServerUpdatedMsRef.current
+      ) {
+        return;
+      }
+      if (Number.isFinite(nextUpdatedMs) && nextUpdatedMs > 0) {
+        lastServerUpdatedMsRef.current = Math.max(lastServerUpdatedMsRef.current, nextUpdatedMs);
+      }
+      if (nextRoom.players.length >= 2) {
+        setIsBotPractice(false);
+        setBotLocalRoom(null);
+      }
+      setRoom(nextRoom);
+    },
+    []
+  );
 
   const joinRoomByCode = useCallback(
     async (rawCode: string) => {
-      const code = normalizeRoomCode(rawCode);
+      const extracted = extractInviteCode(rawCode, 'duel');
+      const code = normalizeRoomCode(extracted || rawCode);
       if (!isShortRoomCode(code)) {
         setErrorMsg(
           lang === 'tr'
-            ? 'Geçerli 6 haneli bir oda kodu gir (ör. K8M2P9).'
-            : 'Enter a valid 6-character room code (e.g. K8M2P9).'
+            ? 'Geçerli 6 haneli bir oda kodu veya davet linki gir (ör. K8M2P9).'
+            : 'Enter a valid 6-character room code or invite URL (e.g. K8M2P9).'
         );
         return;
       }
 
+      setJoinCodeInput(code);
+      mutationSeqRef.current += 1;
+      lastServerUpdatedMsRef.current = 0;
       setBusyAction('join');
       setErrorMsg(null);
       const res = await joinScrollaRoom(code, {
@@ -280,17 +367,18 @@ export default function DuelModal({
       matchLaunchedRef.current = null;
       setIsBotPractice(false);
       setBotLocalRoom(null);
-      applyRoomSync(res.room, res.serverNowMs);
+      applyRoomSync(res.room, res.serverNowMs, { fromMutation: true });
       setPhase('lobby');
     },
     [applyRoomSync, cleanName, lang, myPlayerId]
   );
 
-  // Initialize modal fields strictly when opening (never reset nickname while user types or polling ticks)
+  // Initialize modal fields strictly when opening (never reset nickname or active lobby while polling/re-rendering)
   useEffect(() => {
     if (!open) {
       wasOpenRef.current = false;
       autoJoinedCodeRef.current = null;
+      restoredLobbyRef.current = false;
       return;
     }
     if (!wasOpenRef.current) {
@@ -298,8 +386,6 @@ export default function DuelModal({
       setNickname(defaultNickname || t.duelDefaultName);
       setCopied(false);
       setErrorMsg(null);
-      setIsBotPractice(false);
-      setBotLocalRoom(null);
       setShowReactionDrawer(false);
       setSendingReaction(false);
     }
@@ -311,6 +397,54 @@ export default function DuelModal({
       isGenericDefaultNickname(current) ? defaultNickname : current
     );
   }, [defaultNickname, open]);
+
+  // Restore active lobby from sessionStorage across accidental remounts
+  useEffect(() => {
+    if (!open || phase !== 'setup' || room || botLocalRoom || initialRoomCode || incomingDuel) return;
+    if (restoredLobbyRef.current) return;
+    restoredLobbyRef.current = true;
+    const saved = readPersistedDuelLobby();
+    if (!saved) return;
+    if (saved.botLocalRoom) {
+      if (saved.playerId) setBasePlayerId(saved.playerId);
+      setIsBotPractice(saved.isBotPractice);
+      setBotLocalRoom(saved.botLocalRoom);
+      setPhase('lobby');
+      return;
+    }
+    const actor = saved.playerId || myPlayerId;
+    if (saved.code && isShortRoomCode(saved.code)) {
+      let active = true;
+      void fetchScrollaRoom(saved.code, actor).then((res) => {
+        if (!active || !res.ok || !res.room) {
+          clearPersistedDuelLobby();
+          return;
+        }
+        const inRoom = res.room.players.some((p) => p.id === actor);
+        if (!inRoom || res.room.status === 'started') {
+          clearPersistedDuelLobby();
+          return;
+        }
+        if (saved.playerId) setBasePlayerId(saved.playerId);
+        applyRoomSync(res.room, res.serverNowMs, { fromMutation: true });
+        setPhase('lobby');
+      });
+      return () => {
+        active = false;
+      };
+    }
+  }, [open, phase, room, botLocalRoom, initialRoomCode, incomingDuel, myPlayerId, applyRoomSync]);
+
+  // Persist active lobby while seated in lobby/countdown
+  useEffect(() => {
+    if (!open || phase !== 'lobby' || !activeRoom || activeRoom.status === 'started') return;
+    writePersistedDuelLobby({
+      code: activeRoom.code,
+      isBotPractice,
+      botLocalRoom,
+      playerId: myPlayerId,
+    });
+  }, [open, phase, activeRoom, isBotPractice, botLocalRoom, myPlayerId]);
 
   // Sync incoming room code (?duel=K8M2P9) or legacy base64 payload once per open/code
   useEffect(() => {
@@ -337,7 +471,7 @@ export default function DuelModal({
         cardIds: incomingDuel.cardIds,
       }).then((res) => {
         if (res.ok && res.room) {
-          applyRoomSync(res.room, res.serverNowMs);
+          applyRoomSync(res.room, res.serverNowMs, { fromMutation: true });
           setPhase('lobby');
         }
       });
@@ -352,16 +486,19 @@ export default function DuelModal({
     applyRoomSync,
   ]);
 
-  // Real-time room polling every 850ms while inside server lobby/countdown
+  // Real-time room polling every 850ms while inside server lobby/countdown (ignores stale pre-mutation responses)
   useEffect(() => {
     if (!open || phase !== 'lobby' || !room?.code || botLocalRoom) return;
     let active = true;
 
     const poll = async () => {
+      if (busyActionRef.current === 'ready' || busyActionRef.current === 'start') return;
+      const seqAtStart = mutationSeqRef.current;
       const res = await fetchScrollaRoom(room.code, myPlayerId);
-      if (!active) return;
+      if (!active || seqAtStart !== mutationSeqRef.current) return;
 
       if (res.kicked) {
+        clearPersistedDuelLobby();
         setRoom(null);
         setIsBotPractice(false);
         setBotLocalRoom(null);
@@ -402,6 +539,7 @@ export default function DuelModal({
     const launchMatch = () => {
       if (matchLaunchedRef.current === activeRoom.code) return;
       matchLaunchedRef.current = activeRoom.code;
+      clearPersistedDuelLobby();
       const opponent = activeRoom.players.find((p) => p.id !== myPlayerId);
       const isBotMatch = Boolean(
         botLocalRoom ||
@@ -529,8 +667,10 @@ export default function DuelModal({
 
     matchLaunchedRef.current = null;
     autoJoinedCodeRef.current = res.room.code;
+    mutationSeqRef.current += 1;
+    lastServerUpdatedMsRef.current = 0;
     setBotLocalRoom(null);
-    applyRoomSync(res.room, res.serverNowMs);
+    applyRoomSync(res.room, res.serverNowMs, { fromMutation: true });
     setPhase('lobby');
   };
 
@@ -539,6 +679,7 @@ export default function DuelModal({
     onButtonPop();
     const self = activeRoom.players.find((p) => p.id === myPlayerId);
     if (!self) return;
+    const nextReady = !self.ready;
 
     if (botLocalRoom) {
       setBotLocalRoom((prev) =>
@@ -546,7 +687,7 @@ export default function DuelModal({
           ? {
               ...prev,
               players: prev.players.map((p) =>
-                p.id === myPlayerId ? { ...p, ready: !p.ready } : p
+                p.id === myPlayerId ? { ...p, ready: nextReady } : p
               ),
               updatedAt: new Date().toISOString(),
             }
@@ -556,13 +697,34 @@ export default function DuelModal({
     }
 
     if (!room) return;
+    mutationSeqRef.current += 1;
+    setRoom((prev) =>
+      prev
+        ? {
+            ...prev,
+            players: prev.players.map((p) =>
+              p.id === myPlayerId ? { ...p, ready: nextReady } : p
+            ),
+          }
+        : prev
+    );
     setBusyAction('ready');
-    const res = await setSelfScrollaReady(room.code, myPlayerId, !self.ready);
+    const res = await setSelfScrollaReady(room.code, myPlayerId, nextReady);
     setBusyAction(null);
     if (res.ok && res.room) {
-      applyRoomSync(res.room, res.serverNowMs);
-    } else if (res.error) {
-      setErrorMsg(res.error);
+      applyRoomSync(res.room, res.serverNowMs, { fromMutation: true });
+    } else {
+      setRoom((prev) =>
+        prev
+          ? {
+              ...prev,
+              players: prev.players.map((p) =>
+                p.id === myPlayerId ? { ...p, ready: !nextReady } : p
+              ),
+            }
+          : prev
+      );
+      if (res.error) setErrorMsg(res.error);
     }
   };
 
@@ -623,11 +785,12 @@ export default function DuelModal({
     }
 
     if (!room) return;
+    mutationSeqRef.current += 1;
     setBusyAction('start');
     const res = await startScrollaRoom(room.code, myPlayerId);
     setBusyAction(null);
     if (res.ok && res.room) {
-      applyRoomSync(res.room, res.serverNowMs);
+      applyRoomSync(res.room, res.serverNowMs, { fromMutation: true });
     } else if (res.error) {
       setErrorMsg(
         res.error === 'players_not_ready'
@@ -693,6 +856,8 @@ export default function DuelModal({
 
   const handleLeaveLobby = async () => {
     onButtonPop();
+    clearPersistedDuelLobby();
+    lastServerUpdatedMsRef.current = 0;
     const code = room?.code;
     setPhase('setup');
     setRoom(null);
@@ -996,37 +1161,61 @@ export default function DuelModal({
                 </div>
                 </section>
 
-                {/* Join existing room by 6-char code */}
+                {/* Join existing room by code or invite link */}
                 <section className="space-y-4 rounded-cik-lg bg-cik-surface p-5 shadow-e1">
                   <p className="cik-title-3 text-cik-text">{t.duelJoinTitle}</p>
-                  <div className="flex items-center gap-2">
+                  <div className="flex flex-wrap items-stretch gap-2 sm:flex-nowrap">
                     <input
                       type="text"
                       value={joinCodeInput}
-                      onChange={(e) => setJoinCodeInput(extractInviteCode(e.target.value, 'duel'))}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        if (/[/:?=.\s]/.test(val)) {
+                          const extracted = extractInviteCode(val, 'duel');
+                          if (isShortRoomCode(extracted)) {
+                            setJoinCodeInput(extracted);
+                            return;
+                          }
+                          setJoinCodeInput(val.slice(0, 300));
+                          return;
+                        }
+                        setJoinCodeInput(val.slice(0, 300));
+                      }}
                       onPaste={(e) => {
                         const pasted = e.clipboardData?.getData('text');
                         if (!pasted) return;
+                        const extracted = extractInviteCode(pasted, 'duel');
                         e.preventDefault();
-                        setJoinCodeInput(extractInviteCode(pasted, 'duel'));
+                        setJoinCodeInput(
+                          isShortRoomCode(extracted) ? extracted : pasted.trim().slice(0, 300)
+                        );
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                          if (busyAction !== 'join' && joinCodeInput.trim().length > 0) {
+                            void joinRoomByCode(joinCodeInput);
+                          }
+                        }
                       }}
                       placeholder={
                         lang === 'tr' ? 'Kod veya davet linki (ör. K8M2P9)' : 'Code or invite link (e.g. K8M2P9)'
                       }
-                      maxLength={200}
+                      maxLength={300}
                       data-testid="duel-join-code-input"
                       aria-label={t.duelJoinTitle}
-                      className="h-11 min-w-0 flex-1 rounded-2xl border border-cik-line bg-cik-bg-elevated px-4 font-mono text-sm font-semibold tracking-widest text-cik-text uppercase focus-visible:outline focus-visible:outline-[3px] focus-visible:outline-offset-2 focus-visible:outline-cik-focus"
+                      className="h-11 min-w-0 flex-1 basis-[12rem] rounded-2xl border border-cik-line bg-cik-bg-elevated px-4 font-mono text-sm font-semibold text-cik-text focus-visible:outline focus-visible:outline-[3px] focus-visible:outline-offset-2 focus-visible:outline-cik-focus"
                     />
                     <button
                       type="button"
+                      disabled={busyAction === 'join' || !joinCodeInput.trim()}
                       data-testid="duel-join-code-btn"
                       onClick={() => {
-                        if (busyAction === 'join' || normalizeRoomCode(joinCodeInput).length !== 6) return;
+                        if (busyAction === 'join') return;
                         void joinRoomByCode(joinCodeInput);
                       }}
-                      className={`flex h-11 shrink-0 items-center justify-center gap-2 rounded-2xl px-4 text-sm font-semibold ${
-                        normalizeRoomCode(joinCodeInput).length === 6
+                      className={`flex h-11 w-full shrink-0 items-center justify-center gap-2 rounded-2xl px-4 text-sm font-semibold disabled:opacity-60 sm:w-auto ${
+                        isShortRoomCode(extractInviteCode(joinCodeInput, 'duel') || joinCodeInput)
                           ? 'bg-cik-cta text-cik-on-cta shadow-sticker'
                           : 'border border-cik-line bg-cik-bg-elevated text-cik-text shadow-sm'
                       }`}
@@ -1199,8 +1388,8 @@ export default function DuelModal({
                               onClick={() => void handleToggleSelfReady()}
                               className={`min-h-11 rounded-full px-3.5 text-xs font-black transition ${
                                 player.ready
-                                  ? 'bg-cik-mint text-cik-on-cta shadow-sm'
-                                  : 'bg-ink text-cik-on-cta hover:bg-cik-cta'
+                                  ? 'border border-cik-mint-text/30 bg-cik-mint text-cik-mint-text shadow-sm'
+                                  : 'bg-cik-cta text-cik-on-cta shadow-sticker hover:brightness-105'
                               }`}
                             >
                               {player.ready
@@ -1394,7 +1583,7 @@ export default function DuelModal({
                       data-testid="copy-duel-link-btn"
                       className={`flex w-full min-h-12 items-center justify-center gap-2 rounded-2xl px-4 py-2.5 text-sm font-extrabold transition-colors ${
                         copied
-                          ? 'bg-cik-mint text-cik-on-cta'
+                          ? 'bg-cik-mint text-cik-mint-text'
                           : 'border-2 border-cik-line bg-cik-bg-elevated text-cik-text hover:bg-cik-surface'
                       }`}
                     >
@@ -1420,7 +1609,7 @@ export default function DuelModal({
                         rel="noopener noreferrer"
                         whileTap={{ scale: 0.94 }}
                         onClick={onButtonPop}
-                        className="flex min-h-12 items-center justify-center gap-1.5 rounded-2xl bg-cik-text px-3 py-2.5 text-center text-xs font-extrabold text-cik-on-cta"
+                        className="flex min-h-12 items-center justify-center gap-1.5 rounded-2xl bg-cik-text px-3 py-2.5 text-center text-xs font-extrabold text-cik-bg"
                       >
                         <Share2 className="h-4 w-4 shrink-0" />
                         <span>{t.duelShareX}</span>

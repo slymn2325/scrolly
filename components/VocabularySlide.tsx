@@ -5,6 +5,7 @@ import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import {
   Bookmark,
   BookMarked,
+  CheckCircle2,
   ChevronDown,
   ChevronUp,
   Heart,
@@ -23,10 +24,12 @@ import { isFactLiked, toggleLikedFact } from '@/utils/likedFacts';
 import { formatPhoneticForDisplay } from '@/utils/phoneticDisplay';
 import { fisherYatesShuffle } from '@/utils/recommendation';
 import {
+  isVocabMastered,
   isVocabWordSaved,
   loadSavedVocabNotebook,
   speakVocabularyText,
   toggleSaveVocabularyCard,
+  toggleVocabMastered,
 } from '@/utils/vocabNotebook';
 
 const VOCAB_QUIZ_SESSION_KEY = 'scrolly_vocab_quiz_state_v1';
@@ -226,6 +229,7 @@ export default function VocabularySlide({
 
   const [saved, setSaved] = useState(false);
   const [liked, setLiked] = useState(false);
+  const [mastered, setMastered] = useState(false);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
   const [wrongOptions, setWrongOptions] = useState<string[]>([]);
   const [solved, setSolved] = useState(false);
@@ -241,6 +245,7 @@ export default function VocabularySlide({
   useEffect(() => {
     setSaved(isVocabWordSaved(card.word));
     setLiked(isFactLiked(card.id));
+    setMastered(isVocabMastered(card.id) || isVocabMastered(card.word));
     const persisted = readVocabQuizProgress(card.id);
     setSolved(Boolean(persisted?.solved));
     setXpAwarded(Boolean(persisted?.xpAwarded));
@@ -264,7 +269,10 @@ export default function VocabularySlide({
   }, []);
 
   useEffect(() => {
-    const sync = () => setSaved(isVocabWordSaved(card.word));
+    const sync = () => {
+      setSaved(isVocabWordSaved(card.word));
+      setMastered(isVocabMastered(card.id) || isVocabMastered(card.word));
+    };
     const syncLiked = () => setLiked(isFactLiked(card.id));
     window.addEventListener('scrolly-vocab-updated', sync);
     window.addEventListener('scrolly-liked-facts-updated', syncLiked);
@@ -597,6 +605,43 @@ export default function VocabularySlide({
                       : 'Slow'}
                 </span>
               </button>
+              <button
+                type="button"
+                aria-pressed={mastered}
+                data-testid="vocab-mastery-btn"
+                onClick={(event) => {
+                  event.stopPropagation();
+                  vibrateTap(14);
+                  onButtonPop();
+                  const next = toggleVocabMastered(card.id);
+                  setMastered(next);
+                  toast(
+                    next
+                      ? lang === 'tr'
+                        ? `"${card.word}" öğrenildi olarak işaretlendi ✓`
+                        : `"${card.word}" marked as mastered ✓`
+                      : lang === 'tr'
+                        ? 'Öğrenildi işareti kaldırıldı'
+                        : 'Mastered mark removed'
+                  );
+                }}
+                className={`cik-footnote inline-flex h-10 min-w-11 items-center justify-center gap-1.5 rounded-pill border px-3.5 transition ${
+                  mastered
+                    ? 'border-cik-mint bg-cik-mint text-cik-mint-text'
+                    : 'border-cik-line bg-cik-surface text-cik-text hover:bg-cik-surface-2'
+                }`}
+              >
+                <CheckCircle2 className="h-4 w-4 shrink-0" aria-hidden="true" />
+                <span>
+                  {mastered
+                    ? lang === 'tr'
+                      ? 'Öğrendim ✓'
+                      : 'Mastered ✓'
+                    : lang === 'tr'
+                      ? 'Öğrendim'
+                      : 'Master'}
+                </span>
+              </button>
             </div>
 
             {audioUnavailable ? (
@@ -724,7 +769,14 @@ export default function VocabularySlide({
                       ))}
                     </div>
                   ) : null}
-                  <p className="cik-footnote mt-2 text-cik-text">{card.exampleTr}</p>
+                  <p className="cik-footnote mt-2 text-cik-text">
+                    {lang === 'en'
+                      ? `${card.definitionEn} — TR: ${card.meaningTr}`
+                      : card.exampleTr}
+                  </p>
+                  {lang === 'en' && card.exampleTr ? (
+                    <p className="cik-caption-1 mt-1 text-cik-text-2">{card.exampleTr}</p>
+                  ) : null}
                   <button
                     type="button"
                     aria-busy={playingTarget === 'example'}

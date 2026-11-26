@@ -870,7 +870,8 @@ export function completeMemoryQuiz(
   earnedXp = 0,
   quizMode: 'memory' | 'daily' | 'weekly' | 'duel' = 'memory',
   results?: boolean[],
-  sourceCategories?: string[]
+  sourceCategories?: string[],
+  scoreForDailyBest?: number
 ): UserMemoryState {
   const normalizedBadge = earnedBadgeId === 'weird_records' ? 'records' : earnedBadgeId;
   const badges = state.badges.includes(normalizedBadge)
@@ -894,6 +895,8 @@ export function completeMemoryQuiz(
       : base.highestLeagueId;
 
   const today = getTodayDateString();
+  const recordedDailyBest =
+    typeof scoreForDailyBest === 'number' ? Math.max(earnedXp, scoreForDailyBest) : earnedXp;
   const nextState: UserMemoryState = {
     ...base,
     xp: nextXp,
@@ -902,8 +905,8 @@ export function completeMemoryQuiz(
     dailyBestScore:
       quizMode === 'daily'
         ? base.lastDailyQuizDate === today
-          ? Math.max(base.dailyBestScore, earnedXp)
-          : earnedXp
+          ? Math.max(base.dailyBestScore, recordedDailyBest)
+          : recordedDailyBest
         : base.dailyBestScore,
     lastDailyQuizDate: quizMode === 'daily' ? today : base.lastDailyQuizDate,
     cardsSinceLastQuiz: 0,

@@ -1766,7 +1766,8 @@ export default function HomeClient({ initialFacts, initialVocabulary, initialLan
     earnedXp: number,
     elapsedSec: number,
     usedQuestionIds: string[],
-    usedSnapshots?: ChallengeQuestionSnapshot[]
+    usedSnapshots?: ChallengeQuestionSnapshot[],
+    alreadyAwardedStepXp = 0
   ) => {
     vibrateSuccess();
 
@@ -1795,13 +1796,15 @@ export default function HomeClient({ initialFacts, initialVocabulary, initialLan
     const currentMem = memoryRef.current;
     const oldTier = getLeagueInfo(currentMem.xp, lang).id;
     const totalBonusXp = earnedXp + (isDuelWin ? 150 : 0);
+    const remainingXpToAdd = Math.max(0, totalBonusXp - Math.max(0, alreadyAwardedStepXp));
     const updated = completeMemoryQuiz(
       currentMem,
       bestQuizCategory,
-      totalBonusXp,
+      remainingXpToAdd,
       storageQuizMode,
       results,
-      sourceCategories
+      sourceCategories,
+      totalBonusXp
     );
     const newTier = getLeagueInfo(updated.xp, lang).id;
 
@@ -2477,7 +2480,7 @@ export default function HomeClient({ initialFacts, initialVocabulary, initialLan
         {(activeQuiz || quizLoading) && (
           <div
             data-testid="active-quiz-page"
-            className="absolute inset-0 z-30 flex h-full w-full flex-col overflow-hidden bg-cik-bg text-cik-text px-3 pt-[calc(env(safe-area-inset-top,20px)+16px)] pb-[calc(env(safe-area-inset-bottom,16px)+92px)] lg:pt-6 lg:pb-6"
+            className="absolute inset-0 z-modal flex h-full w-full flex-col overflow-hidden bg-cik-bg text-cik-text px-3 pt-[calc(env(safe-area-inset-top,16px)+12px)] pb-[max(1rem,env(safe-area-inset-bottom,16px))] lg:pt-6 lg:pb-6"
           >
             {activeQuiz ? (
               <MemoryQuizCard
@@ -2492,6 +2495,11 @@ export default function HomeClient({ initialFacts, initialVocabulary, initialLan
                 }
                 onTickSound={(urgent) => playTick(soundEnabled, urgent)}
                 onButtonPop={() => playPop(soundEnabled)}
+                onStepXp={(xpDelta, sourceCat) => {
+                  setMemory((prev) =>
+                    addUserXp(prev, xpDelta, sourceCat ? `quiz_step:${sourceCat}` : 'quiz_step')
+                  );
+                }}
                 onComplete={handleQuizComplete}
                 onSkip={() => {
                   vibrateTap(12);

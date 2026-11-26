@@ -123,6 +123,7 @@ export default function PrivacyPolicyView({
           <div className="mx-auto flex max-w-[42.5rem] items-center justify-between gap-3 px-4 py-3">
             <ProfileReturnControl
               returnToProfile={returnToProfile}
+              href={isEn ? '/en' : '/'}
               testId="privacy-back-link"
               className="cik-footnote inline-flex h-11 items-center gap-2 rounded-pill border border-cik-line bg-cik-surface px-4 text-cik-text"
             >

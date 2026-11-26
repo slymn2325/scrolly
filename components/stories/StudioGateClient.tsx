@@ -6,14 +6,42 @@ import LazyAuthPrompt from '@/components/LazyAuthPrompt';
 import StoryStudioClient from '@/components/stories/StoryStudioClient';
 import StudioLandingView from '@/components/stories/StudioLandingView';
 import { AUTH_CHANGED_EVENT, fetchSession } from '@/lib/authClient';
+import { readLanguageCookie, writeLanguageCookie } from '@/lib/locale';
 import type { AuthUserDto } from '@/types/auth';
 import type { StoryLanguage } from '@/types/story';
+import { loadUserMemory, saveUserMemory } from '@/utils/userMemory';
 
 export default function StudioGateClient() {
   const [language, setLanguage] = useState<StoryLanguage>('tr');
   const [checkingSession, setCheckingSession] = useState<boolean>(true);
   const [sessionUser, setSessionUser] = useState<AuthUserDto | null>(null);
   const [authModalOpen, setAuthModalOpen] = useState<boolean>(false);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const queryLang = new URLSearchParams(window.location.search).get('lang');
+    const cookieLang = readLanguageCookie();
+    const memLang = loadUserMemory().lang;
+    const docLang = document.documentElement.lang === 'en' ? 'en' : 'tr';
+    const resolved: StoryLanguage =
+      queryLang === 'en' || queryLang === 'tr'
+        ? queryLang
+        : cookieLang || memLang || docLang || 'tr';
+    setLanguage(resolved);
+    document.documentElement.lang = resolved;
+  }, []);
+
+  const handleLanguageChange = useCallback((nextLang: StoryLanguage) => {
+    setLanguage(nextLang);
+    writeLanguageCookie(nextLang);
+    if (typeof document !== 'undefined') {
+      document.documentElement.lang = nextLang;
+    }
+    const currentMem = loadUserMemory();
+    if (currentMem.lang !== nextLang) {
+      saveUserMemory({ ...currentMem, lang: nextLang });
+    }
+  }, []);
 
   const refreshSession = useCallback(async () => {
     const res = await fetchSession();
@@ -52,12 +80,13 @@ export default function StudioGateClient() {
         <StoryStudioClient
           user={sessionUser}
           initialLanguage={language}
+          onLanguageChange={handleLanguageChange}
           onSignedOut={() => setSessionUser(null)}
         />
       ) : (
         <StudioLandingView
           language={language}
-          onChangeLanguage={setLanguage}
+          onChangeLanguage={handleLanguageChange}
           onOpenAuthModal={() => setAuthModalOpen(true)}
         />
       )}

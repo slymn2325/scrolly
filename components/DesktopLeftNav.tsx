@@ -102,7 +102,7 @@ export default function DesktopLeftNav({
         })}
 
         <Link
-          href="/studio"
+          href={lang === 'en' ? '/studio?lang=en' : '/studio'}
           data-testid="desktop-nav-create"
           title={lang === 'tr' ? 'Hikâye Stüdyosu' : 'Creator Studio'}
           className="scrolly-glass-pill scrolly-tactile mt-2 flex min-h-[46px] items-center justify-between gap-1.5 rounded-pill bg-cik-surface px-2.5 text-[13px] font-extrabold text-cik-cta hover:bg-cik-pink"

@@ -1,6 +1,8 @@
+import { getVocabularyFacts } from '@/data/vocabularyFacts';
 import type { SavedVocabularyEntry, VocabularyCard } from '@/types/vocabulary';
 
 const VOCAB_NOTEBOOK_KEY = 'scrolly_vocab_notebook_v1';
+const VOCAB_MASTERY_KEY = 'scrolly_vocab_mastery_v1';
 let activeSpeechResetTimer: ReturnType<typeof setTimeout> | null = null;
 
 export interface SpeakVocabularyHandlers {
@@ -114,6 +116,9 @@ export function toggleSaveVocabularyCard(card: VocabularyCard): {
           phonetic: card.phonetic,
           partOfSpeech: card.partOfSpeech,
           meaningTr: card.meaningTr,
+          definitionEn: card.definitionEn,
+          cefrLevel: card.cefrLevel,
+          synonyms: card.synonyms,
           exampleEn: card.exampleEn,
           exampleTr: card.exampleTr,
           savedAt: new Date().toISOString(),
@@ -150,10 +155,66 @@ export function clearVocabNotebook(): void {
   if (typeof window === 'undefined') return;
   try {
     window.localStorage.removeItem(VOCAB_NOTEBOOK_KEY);
+    window.localStorage.removeItem(VOCAB_MASTERY_KEY);
     window.dispatchEvent(new Event('scrolly-vocab-updated'));
   } catch {
     // Ignore storage quota errors
   }
+}
+
+export function loadMasteredVocabIds(): string[] {
+  if (typeof window === 'undefined') return [];
+  try {
+    const raw = window.localStorage.getItem(VOCAB_MASTERY_KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed)
+      ? parsed.filter((v): v is string => typeof v === 'string' && v.trim().length > 0)
+      : [];
+  } catch {
+    return [];
+  }
+}
+
+export function isVocabMastered(idOrWord: string): boolean {
+  const key = idOrWord.trim().toLowerCase();
+  if (!key) return false;
+  return loadMasteredVocabIds().some((item) => item.trim().toLowerCase() === key);
+}
+
+export function toggleVocabMastered(idOrWord: string): boolean {
+  if (typeof window === 'undefined') return false;
+  const clean = idOrWord.trim();
+  if (!clean) return false;
+  const lower = clean.toLowerCase();
+  const current = loadMasteredVocabIds();
+  const exists = current.some((item) => item.trim().toLowerCase() === lower);
+  const next = exists
+    ? current.filter((item) => item.trim().toLowerCase() !== lower)
+    : [clean, ...current].slice(0, 200);
+  try {
+    window.localStorage.setItem(VOCAB_MASTERY_KEY, JSON.stringify(next));
+    window.dispatchEvent(new Event('scrolly-vocab-updated'));
+  } catch {
+    // Ignore storage quota errors
+  }
+  return !exists;
+}
+
+export function enrichSavedVocabEntry(entry: SavedVocabularyEntry): SavedVocabularyEntry {
+  const needsEnrich = !entry.definitionEn || !entry.cefrLevel || !entry.synonyms;
+  if (!needsEnrich) return entry;
+  const match = getVocabularyFacts().find(
+    (item) =>
+      item.id === entry.id || item.word.trim().toLowerCase() === entry.word.trim().toLowerCase()
+  );
+  if (!match) return entry;
+  return {
+    ...entry,
+    definitionEn: entry.definitionEn || match.definitionEn,
+    cefrLevel: entry.cefrLevel || match.cefrLevel,
+    synonyms: entry.synonyms && entry.synonyms.length > 0 ? entry.synonyms : match.synonyms,
+  };
 }
 
 export function mergeSavedVocabNotebook(entries: SavedVocabularyEntry[]): SavedVocabularyEntry[] {

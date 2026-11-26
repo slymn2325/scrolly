@@ -29,6 +29,9 @@ export interface SavedVocabularyEntry {
   phonetic: string;
   partOfSpeech: VocabPartOfSpeech;
   meaningTr: string;
+  definitionEn?: string;
+  cefrLevel?: string;
+  synonyms?: string[];
   exampleEn: string;
   exampleTr: string;
   savedAt: string;

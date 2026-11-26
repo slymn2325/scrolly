@@ -84,21 +84,119 @@ export async function GET(
   }
 }
 
-export async function POST(
-  request: Request,
-  context: { params: Promise<{ code: string }> }
-) {
-  const originErr = enforceSameOrigin(request);
-  if (originErr) return originErr;
-
+async function handleDeleteLeagueRequest(params: {
+  request: Request;
+  code: string;
+  requestedDevice: string;
+}): Promise<NextResponse> {
+  const { request, code, requestedDevice } = params;
   const ip = extractClientIp(request);
-  const rl = checkRateLimit(`friend_league_join:${ip}`, 30, 60_000);
+  const rl = checkRateLimit(`friend_league_delete:${ip}`, 20, 60_000);
   if (!rl.allowed) {
     return NextResponse.json(
       { ok: false, error: 'rate_limited' },
       { status: 429, headers: { ...NO_STORE_HEADERS, 'Retry-After': String(rl.retryAfterSec) } }
     );
   }
+
+  const boundDevice = readSignedDeviceIdFromRequest(request);
+  const cleanRequested = isValidDeviceId(requestedDevice)
+    ? requestedDevice.trim().slice(0, 128)
+    : '';
+  const deviceId = boundDevice || cleanRequested;
+  if (!deviceId) {
+    return NextResponse.json(
+      { ok: false, error: 'invalid_device_id' },
+      { status: 400, headers: NO_STORE_HEADERS }
+    );
+  }
+
+  const sessionUser = await getSessionUserFromRequest(request).catch(() => null);
+
+  try {
+    const profileCheck = await getProfileByDeviceId(deviceId).catch(() => ({
+      persisted: false,
+      profile: null,
+    }));
+    if (profileCheck.profile?.userId && profileCheck.profile.userId !== sessionUser?.id) {
+      return NextResponse.json(
+        { ok: false, error: 'forbidden' },
+        { status: 403, headers: NO_STORE_HEADERS }
+      );
+    }
+
+    let includeRequested = false;
+    if (cleanRequested && cleanRequested !== deviceId) {
+      const reqProf = await getProfileByDeviceId(cleanRequested).catch(() => ({
+        persisted: false,
+        profile: null,
+      }));
+      if (!reqProf.profile?.userId || reqProf.profile.userId === sessionUser?.id) {
+        includeRequested = true;
+      }
+    }
+
+    const effectiveLinkedDevices = Array.from(
+      new Set([
+        ...(sessionUser?.linkedDeviceIds ?? []),
+        ...(includeRequested ? [cleanRequested] : []),
+      ])
+    );
+
+    const result = await deleteFriendLeagueByCreator({
+      code,
+      deviceId,
+      userId: sessionUser?.id ?? null,
+      linkedDeviceIds: effectiveLinkedDevices,
+    });
+
+    if (!result.ok) {
+      const status =
+        result.error === 'not_found'
+          ? 404
+          : result.error === 'forbidden_not_creator'
+            ? 403
+            : 400;
+      return NextResponse.json(
+        { ok: false, error: result.error },
+        { status, headers: NO_STORE_HEADERS }
+      );
+    }
+
+    const leagues = await listUserFriendLeagues({
+      deviceId,
+      userId: sessionUser?.id ?? null,
+      linkedDeviceIds: effectiveLinkedDevices,
+    }).catch(() => []);
+
+    const response = NextResponse.json(
+      {
+        ok: true,
+        deleted: true,
+        code: result.code,
+        leagues,
+      },
+      { headers: NO_STORE_HEADERS }
+    );
+    if (!boundDevice && isValidDeviceId(deviceId)) {
+      setSignedDeviceCookie(response, deviceId, request);
+    }
+    return response;
+  } catch (err) {
+    console.error('[DELETE /api/friend-leagues/[code]] Failed:', err);
+    return NextResponse.json(
+      { ok: false, error: 'league_delete_failed' },
+      { status: 500, headers: NO_STORE_HEADERS }
+    );
+  }
+}
+
+export async function POST(
+  request: Request,
+  context: { params: Promise<{ code: string }> }
+) {
+  const originErr = enforceSameOrigin(request);
+  if (originErr) return originErr;
 
   const { code } = await context.params;
   if (!isValidLeagueCode(code)) {
@@ -118,9 +216,27 @@ export async function POST(
     );
   }
   const body = parsed.data;
+  const action = typeof body.action === 'string' ? body.action.trim().toLowerCase() : 'join';
+  const rawDeviceId = typeof body.deviceId === 'string' ? body.deviceId.trim() : '';
+
+  if (action === 'delete') {
+    return handleDeleteLeagueRequest({
+      request,
+      code,
+      requestedDevice: rawDeviceId,
+    });
+  }
+
+  const ip = extractClientIp(request);
+  const rl = checkRateLimit(`friend_league_join:${ip}`, 30, 60_000);
+  if (!rl.allowed) {
+    return NextResponse.json(
+      { ok: false, error: 'rate_limited' },
+      { status: 429, headers: { ...NO_STORE_HEADERS, 'Retry-After': String(rl.retryAfterSec) } }
+    );
+  }
 
   const boundDevice = readSignedDeviceIdFromRequest(request);
-  const rawDeviceId = typeof body.deviceId === 'string' ? body.deviceId.trim() : '';
   const deviceId = boundDevice ?? (isValidDeviceId(rawDeviceId) ? rawDeviceId.slice(0, 128) : '');
   if (!deviceId) {
     return NextResponse.json(
@@ -197,15 +313,6 @@ export async function DELETE(
   const originErr = enforceSameOrigin(request);
   if (originErr) return originErr;
 
-  const ip = extractClientIp(request);
-  const rl = checkRateLimit(`friend_league_delete:${ip}`, 20, 60_000);
-  if (!rl.allowed) {
-    return NextResponse.json(
-      { ok: false, error: 'rate_limited' },
-      { status: 429, headers: { ...NO_STORE_HEADERS, 'Retry-After': String(rl.retryAfterSec) } }
-    );
-  }
-
   const { code } = await context.params;
   if (!isValidLeagueCode(code)) {
     return NextResponse.json(
@@ -225,90 +332,14 @@ export async function DELETE(
   }
 
   const url = new URL(request.url);
-  const boundDevice = readSignedDeviceIdFromRequest(request);
   const rawBodyDevice =
     typeof parsed.data.deviceId === 'string' ? parsed.data.deviceId.trim() : '';
   const rawQueryDevice = (url.searchParams.get('deviceId') || '').trim();
-  const requestedDevice = rawBodyDevice || rawQueryDevice;
-  const sessionUser = await getSessionUserFromRequest(request).catch(() => null);
+  const requestedDevice = rawQueryDevice || rawBodyDevice;
 
-  if (
-    boundDevice &&
-    requestedDevice &&
-    requestedDevice !== boundDevice &&
-    !(sessionUser && sessionUser.linkedDeviceIds.includes(requestedDevice))
-  ) {
-    return NextResponse.json(
-      { ok: false, error: 'forbidden' },
-      { status: 403, headers: NO_STORE_HEADERS }
-    );
-  }
-
-  const deviceId =
-    boundDevice ?? (isValidDeviceId(requestedDevice) ? requestedDevice.slice(0, 128) : '');
-  if (!deviceId) {
-    return NextResponse.json(
-      { ok: false, error: 'invalid_device_id' },
-      { status: 400, headers: NO_STORE_HEADERS }
-    );
-  }
-
-  try {
-    const profileCheck = await getProfileByDeviceId(deviceId).catch(() => ({
-      persisted: false,
-      profile: null,
-    }));
-    if (profileCheck.profile?.userId && profileCheck.profile.userId !== sessionUser?.id) {
-      return NextResponse.json(
-        { ok: false, error: 'forbidden' },
-        { status: 403, headers: NO_STORE_HEADERS }
-      );
-    }
-
-    const result = await deleteFriendLeagueByCreator({
-      code,
-      deviceId,
-      userId: sessionUser?.id ?? null,
-      linkedDeviceIds: sessionUser?.linkedDeviceIds ?? [],
-    });
-
-    if (!result.ok) {
-      const status =
-        result.error === 'not_found'
-          ? 404
-          : result.error === 'forbidden_not_creator'
-            ? 403
-            : 400;
-      return NextResponse.json(
-        { ok: false, error: result.error },
-        { status, headers: NO_STORE_HEADERS }
-      );
-    }
-
-    const leagues = await listUserFriendLeagues({
-      deviceId,
-      userId: sessionUser?.id ?? null,
-      linkedDeviceIds: sessionUser?.linkedDeviceIds ?? [],
-    }).catch(() => []);
-
-    const response = NextResponse.json(
-      {
-        ok: true,
-        deleted: true,
-        code: result.code,
-        leagues,
-      },
-      { headers: NO_STORE_HEADERS }
-    );
-    if (!boundDevice && isValidDeviceId(deviceId)) {
-      setSignedDeviceCookie(response, deviceId, request);
-    }
-    return response;
-  } catch (err) {
-    console.error('[DELETE /api/friend-leagues/[code]] Failed:', err);
-    return NextResponse.json(
-      { ok: false, error: 'league_delete_failed' },
-      { status: 500, headers: NO_STORE_HEADERS }
-    );
-  }
+  return handleDeleteLeagueRequest({
+    request,
+    code,
+    requestedDevice,
+  });
 }

@@ -48,13 +48,15 @@ interface MemoryQuizCardProps {
   onAnswerSound: (isCorrect: boolean) => void;
   onTickSound: (urgent: boolean) => void;
   onButtonPop: () => void;
+  onStepXp?: (xpDelta: number, category: string) => void;
   onComplete: (
     results: boolean[],
     sourceCategories: string[],
     earnedXp: number,
     elapsedSec: number,
     usedQuestionIds: string[],
-    usedSnapshots?: ChallengeQuestionSnapshot[]
+    usedSnapshots?: ChallengeQuestionSnapshot[],
+    awardedStepXp?: number
   ) => void;
   onSkip: () => void;
 }
@@ -284,6 +286,7 @@ export default function MemoryQuizCard({
   onAnswerSound,
   onTickSound,
   onButtonPop,
+  onStepXp,
   onComplete,
   onSkip,
 }: MemoryQuizCardProps) {
@@ -302,6 +305,9 @@ export default function MemoryQuizCard({
   const [rewardWatching, setRewardWatching] = useState(false);
 
   const rewardTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const scrollBodyRef = useRef<HTMLDivElement | null>(null);
+  const explanationRef = useRef<HTMLDivElement | null>(null);
+  const awardedStepXpRef = useRef<number>(0);
 
   const effectiveQuestions = useMemo<EffectiveQuizEntry[]>(() => {
     const staticVocab = getVocabularyFacts();
@@ -413,6 +419,18 @@ export default function MemoryQuizCard({
 
   useEscapeClose(!rewardWatching, onSkip);
 
+  useEffect(() => {
+    scrollBodyRef.current?.scrollTo({ top: 0 });
+  }, [currentIndex]);
+
+  useEffect(() => {
+    if (!hasAnswered) return;
+    const rafId = window.requestAnimationFrame(() => {
+      explanationRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    });
+    return () => window.cancelAnimationFrame(rafId);
+  }, [hasAnswered]);
+
   // Continuous quiz-wide countdown timer with last-10s red pulse + tick sound
   useEffect(() => {
     if (timedOut || rewardWatching || !currentEntry) return;
@@ -460,13 +478,24 @@ export default function MemoryQuizCard({
         setComboStreak(nextStreak);
         setLastGainedXp(gained);
         setTotalScore((prev) => prev + gained);
+        awardedStepXpRef.current += gained;
+        onStepXp?.(gained, currentEntry.sourceCategory);
       } else {
         setComboStreak(0);
         setLastGainedXp(0);
       }
       onAnswerSound(correct);
     },
-    [hasAnswered, rewardWatching, currentEntry, prepared.correctIndex, comboStreak, onAnswerSound, quizMode]
+    [
+      hasAnswered,
+      rewardWatching,
+      currentEntry,
+      prepared.correctIndex,
+      comboStreak,
+      onAnswerSound,
+      onStepXp,
+      quizMode,
+    ]
   );
 
   const handleWatchRewardTime = () => {
@@ -518,7 +547,15 @@ export default function MemoryQuizCard({
           quiz: q.en.quiz,
         },
       }));
-      onComplete(finalResults, categories, finalScore, elapsedSec, usedIds, usedSnapshots);
+      onComplete(
+        finalResults,
+        categories,
+        finalScore,
+        elapsedSec,
+        usedIds,
+        usedSnapshots,
+        awardedStepXpRef.current
+      );
     },
     [timeLeft, totalScore, totalBudgetUsed, effectiveQuestions, onComplete]
   );
@@ -633,6 +670,9 @@ export default function MemoryQuizCard({
     return 'bg-cik-surface text-cik-text-3';
   };
 
+  const totalCount = effectiveQuestions.length;
+  const solvedCount = Math.min(totalCount, results.length + (hasAnswered ? 1 : 0));
+
   return (
     <motion.div
       initial={reduced ? { opacity: 1 } : { opacity: 0, y: 8 }}
@@ -642,8 +682,9 @@ export default function MemoryQuizCard({
       className="mx-auto flex max-h-full min-h-0 w-full max-w-xl flex-col overflow-hidden rounded-sticker bg-cik-surface text-cik-text shadow-sticker"
     >
       <div
+        ref={scrollBodyRef}
         data-scroll-contain="true"
-        className="min-h-0 flex-1 overflow-y-auto overscroll-y-contain p-5 pb-8"
+        className="min-h-0 flex-1 overflow-y-auto overscroll-y-contain p-5 pb-12"
       >
       {isDuelMode && (
         <div
@@ -689,9 +730,9 @@ export default function MemoryQuizCard({
           <span
             key={question.id}
             className={`h-1 flex-1 rounded-pill ${
-              segmentIndex < currentIndex
+              segmentIndex < solvedCount
                 ? 'bg-cik-cta'
-                : segmentIndex === currentIndex
+                : segmentIndex === currentIndex && !hasAnswered
                   ? 'bg-cik-berry'
                   : 'bg-cik-pink'
             }`}
@@ -741,9 +782,19 @@ export default function MemoryQuizCard({
       </div>
 
       <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
-        <span className="cik-footnote cik-tabular inline-flex items-center gap-1 rounded-pill bg-cik-butter px-3 py-1 text-cik-butter-text">
-          +{totalScore} XP
-        </span>
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="cik-footnote cik-tabular inline-flex items-center gap-1 rounded-pill bg-cik-butter px-3 py-1 text-cik-butter-text">
+            +{totalScore} XP
+          </span>
+          <span
+            data-testid="quiz-progress-counter"
+            className="cik-caption-2 cik-tabular inline-flex items-center rounded-pill bg-cik-surface-2 px-2.5 py-1 text-cik-text-2"
+          >
+            {lang === 'tr'
+              ? `Çözülen: ${solvedCount}/${totalCount} · Soru ${currentIndex + 1}/${totalCount}`
+              : `Solved: ${solvedCount}/${totalCount} · Q ${currentIndex + 1}/${totalCount}`}
+          </span>
+        </div>
         <span className="cik-footnote inline-flex items-center gap-2 text-cik-text-2">
           <img
             src={catMeta.iconPath}
@@ -852,6 +903,7 @@ export default function MemoryQuizCard({
       <AnimatePresence>
         {hasAnswered && (
           <motion.div
+            ref={explanationRef}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             aria-live="polite"

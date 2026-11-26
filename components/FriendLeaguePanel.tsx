@@ -89,7 +89,11 @@ export default function FriendLeaguePanel({
   const [boardLoadingCode, setBoardLoadingCode] = useState<string | null>(null);
   const [busyAction, setBusyAction] = useState(false);
   const [copiedInvite, setCopiedInvite] = useState(false);
-  const [pendingConfirm, setPendingConfirm] = useState<'leave' | 'delete' | null>(null);
+  const [pendingConfirm, setPendingConfirm] = useState<{
+    code: string;
+    name: string;
+    mode: 'leave' | 'delete';
+  } | null>(null);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
@@ -383,9 +387,10 @@ export default function FriendLeaguePanel({
   );
 
   const handleConfirmLeave = async () => {
-    const targetCode = expandedCode || activeLeague?.code;
+    const targetCode = pendingConfirm?.code || expandedCode || activeLeague?.code;
     if (!targetCode || busyAction) return;
     const targetName =
+      pendingConfirm?.name ||
       myLeagues.find((l) => l.code === targetCode)?.name ||
       activeLeague?.name ||
       targetCode;
@@ -419,14 +424,16 @@ export default function FriendLeaguePanel({
         isEn ? 'Could not leave league.' : 'Ligden ayrılırken bağlantı hatası oluştu.'
       );
     } finally {
+      setPendingConfirm(null);
       setBusyAction(false);
     }
   };
 
   const handleConfirmDelete = async () => {
-    const targetCode = expandedCode || activeLeague?.code;
+    const targetCode = pendingConfirm?.code || expandedCode || activeLeague?.code;
     if (!targetCode || busyAction) return;
     const targetName =
+      pendingConfirm?.name ||
       myLeagues.find((l) => l.code === targetCode)?.name ||
       activeLeague?.name ||
       targetCode;
@@ -434,15 +441,24 @@ export default function FriendLeaguePanel({
     setErrorMessage(null);
     try {
       const deviceId = getOrCreateDeviceId();
-      const res = await fetch(
-        `/api/friend-leagues/${encodeURIComponent(targetCode)}`,
+      let res = await fetch(
+        `/api/friend-leagues/${encodeURIComponent(targetCode)}?deviceId=${encodeURIComponent(deviceId)}`,
         {
           method: 'DELETE',
           credentials: 'same-origin',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ deviceId }),
         }
       );
+      if (res.status === 405 || res.status === 400) {
+        res = await fetch(
+          `/api/friend-leagues/${encodeURIComponent(targetCode)}`,
+          {
+            method: 'POST',
+            credentials: 'same-origin',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action: 'delete', deviceId }),
+          }
+        );
+      }
       const data = (await res.json().catch(() => null)) as {
         ok?: boolean;
         error?: string;
@@ -470,6 +486,7 @@ export default function FriendLeaguePanel({
         isEn ? 'Could not delete league.' : 'Lig silinirken bağlantı hatası oluştu.'
       );
     } finally {
+      setPendingConfirm(null);
       setBusyAction(false);
     }
   };
@@ -510,13 +527,13 @@ export default function FriendLeaguePanel({
   };
 
   return (
-    <div data-testid="friend-league-panel" className="mt-3 flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto pb-4">
-      {/* Compact single-row / 2-column Create & Join bar */}
-      <div className="grid grid-cols-1 gap-2 rounded-cik-lg border border-cik-line bg-cik-surface p-3 shadow-e1 sm:grid-cols-2">
+    <div data-testid="friend-league-panel" className="mt-3 flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto pb-20 sm:pb-8">
+      {/* Responsive Create & Join bar */}
+      <div className="grid grid-cols-1 gap-2.5 rounded-cik-lg border border-cik-line bg-cik-surface p-3 shadow-e1 xl:grid-cols-2">
         <form
           onSubmit={handleCreateLeague}
           data-testid="friend-league-create-form"
-          className="flex items-center gap-1.5"
+          className="flex flex-wrap items-stretch gap-2 sm:flex-nowrap"
         >
           <input
             type="text"
@@ -525,31 +542,44 @@ export default function FriendLeaguePanel({
             value={leagueName}
             onChange={(e) => setLeagueName(e.target.value)}
             placeholder={isEn ? 'New league name (e.g. 11-A)' : 'Yeni lig adı (ör. Sınıf 11-A)'}
-            className="min-w-0 flex-1 rounded-cik-md border border-cik-line bg-cik-surface-2 px-3 py-2 text-[16px] font-semibold text-cik-text placeholder:text-cik-text-3"
+            className="min-w-0 flex-1 basis-[11rem] rounded-cik-md border border-cik-line bg-cik-surface-2 px-3 py-2 text-[16px] font-semibold text-cik-text placeholder:text-cik-text-3"
           />
           <Button
             type="submit"
             disabled={busyAction}
             data-testid="friend-league-create-btn"
-            className="shrink-0"
+            className="w-full shrink-0 justify-center sm:w-auto"
           >
             <Plus size={16} strokeWidth={2} aria-hidden="true" />
             <span>{isEn ? 'Create' : 'Lig Kur'}</span>
           </Button>
         </form>
 
-        <div className="flex items-center gap-1.5">
+        <div className="flex flex-wrap items-stretch gap-2 sm:flex-nowrap">
           <input
             type="text"
-            maxLength={200}
+            maxLength={240}
             data-testid="friend-league-join-input"
             value={joinCodeInput}
-            onChange={(e) => setJoinCodeInput(extractInviteCode(e.target.value, 'league'))}
+            onChange={(e) => {
+              const val = e.target.value;
+              if (/[/:?=.\s]/.test(val)) {
+                const extracted = extractInviteCode(val, 'league');
+                if (/^[A-Z0-9]{6,8}$/.test(extracted)) {
+                  setJoinCodeInput(extracted);
+                  return;
+                }
+                setJoinCodeInput(val.slice(0, 240));
+                return;
+              }
+              setJoinCodeInput(val.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 8));
+            }}
             onPaste={(e) => {
               const pasted = e.clipboardData?.getData('text');
               if (!pasted) return;
+              const extracted = extractInviteCode(pasted, 'league');
               e.preventDefault();
-              setJoinCodeInput(extractInviteCode(pasted, 'league'));
+              setJoinCodeInput(extracted || pasted.trim().slice(0, 240));
             }}
             onKeyDown={(e) => {
               if (e.key === 'Enter') {
@@ -560,14 +590,14 @@ export default function FriendLeaguePanel({
             placeholder={
               isEn ? 'Code or invite link (K7M2P9)' : 'Kod veya davet linki (K7M2P9)'
             }
-            className="min-w-0 flex-1 rounded-cik-md border border-cik-line bg-cik-surface-2 px-3 py-2 text-[16px] font-semibold uppercase tracking-wider text-cik-text placeholder:text-cik-text-3"
+            className="min-w-0 flex-1 basis-[11rem] rounded-cik-md border border-cik-line bg-cik-surface-2 px-3 py-2 text-[16px] font-semibold tracking-wider text-cik-text placeholder:tracking-normal placeholder:text-cik-text-3"
           />
           <Button
             tone="ghost"
             disabled={busyAction}
             data-testid="friend-league-join-btn"
             onClick={() => void joinLeagueByCode(joinCodeInput, true)}
-            className="shrink-0"
+            className="w-full shrink-0 justify-center border border-cik-line sm:w-auto"
           >
             {isEn ? 'Join' : 'Katıl'}
           </Button>
@@ -742,7 +772,11 @@ export default function FriendLeaguePanel({
                           disabled={busyAction}
                           data-testid="friend-league-leave-btn"
                           onClick={() =>
-                            setPendingConfirm((prev) => (prev === 'leave' ? null : 'leave'))
+                            setPendingConfirm((prev) =>
+                              prev?.code === item.code && prev.mode === 'leave'
+                                ? null
+                                : { code: item.code, name: item.name, mode: 'leave' }
+                            )
                           }
                           aria-label={isEn ? 'Leave league' : 'Ligden ayrıl'}
                           className="cik-footnote inline-flex min-h-10 items-center gap-1.5 rounded-pill border border-cik-line bg-cik-surface-2 px-3 text-cik-text"
@@ -756,7 +790,11 @@ export default function FriendLeaguePanel({
                             disabled={busyAction}
                             data-testid="friend-league-delete-btn"
                             onClick={() =>
-                              setPendingConfirm((prev) => (prev === 'delete' ? null : 'delete'))
+                              setPendingConfirm((prev) =>
+                                prev?.code === item.code && prev.mode === 'delete'
+                                  ? null
+                                  : { code: item.code, name: item.name, mode: 'delete' }
+                              )
                             }
                             aria-label={isEn ? 'Delete league' : 'Ligi sil'}
                             className="cik-footnote inline-flex min-h-10 items-center gap-1.5 rounded-pill bg-cik-rose px-3 text-cik-rose-text"
@@ -767,59 +805,6 @@ export default function FriendLeaguePanel({
                         )}
                       </div>
                     </div>
-
-                    {pendingConfirm && (
-                      <div
-                        data-testid="friend-league-confirm-bar"
-                        className="flex flex-wrap items-center justify-between gap-2 rounded-cik-md bg-cik-rose px-3.5 py-2.5 text-cik-rose-text"
-                      >
-                        <p className="cik-footnote">
-                          {pendingConfirm === 'delete'
-                            ? isEn
-                              ? `Delete "${item.name}" permanently for all members?`
-                              : `"${item.name}" ligini tüm üyeler için kalıcı olarak silmek istediğine emin misin?`
-                            : isEn
-                              ? `Leave "${item.name}"? Your XP and other leagues stay intact.`
-                              : `"${item.name}" liginden ayrılmak istediğine emin misin? (XP puanın ve diğer liglerin korunur.)`}
-                        </p>
-                        <div className="flex items-center gap-2">
-                          <button
-                            type="button"
-                            disabled={busyAction}
-                            data-testid={
-                              pendingConfirm === 'delete'
-                                ? 'friend-league-confirm-delete-btn'
-                                : 'friend-league-confirm-leave-btn'
-                            }
-                            onClick={() =>
-                              void (pendingConfirm === 'delete'
-                                ? handleConfirmDelete()
-                                : handleConfirmLeave())
-                            }
-                            className="cik-caption-1 inline-flex min-h-9 items-center gap-1 rounded-pill bg-cik-cta px-3.5 py-1.5 text-cik-on-cta"
-                          >
-                            <span>
-                              {pendingConfirm === 'delete'
-                                ? isEn
-                                  ? 'Yes, Delete'
-                                  : 'Evet, Ligi Sil'
-                                : isEn
-                                  ? 'Yes, Leave'
-                                  : 'Evet, Ayrıl'}
-                            </span>
-                          </button>
-                          <button
-                            type="button"
-                            disabled={busyAction}
-                            data-testid="friend-league-cancel-confirm-btn"
-                            onClick={() => setPendingConfirm(null)}
-                            className="cik-caption-1 inline-flex min-h-9 items-center rounded-pill bg-cik-surface px-3 py-1.5 text-cik-text"
-                          >
-                            <span>{isEn ? 'Cancel' : 'Vazgeç'}</span>
-                          </button>
-                        </div>
-                      </div>
-                    )}
 
                     {isThisLoading && !isLoadedBoard ? (
                       <div className="flex flex-col gap-2">
@@ -906,6 +891,78 @@ export default function FriendLeaguePanel({
           }
           imageSrc={UI_ICON_PATHS.explorer}
         />
+      )}
+
+      {pendingConfirm && (
+        <div
+          role="alertdialog"
+          aria-modal="true"
+          data-testid="friend-league-confirm-bar"
+          onClick={() => !busyAction && setPendingConfirm(null)}
+          className="cik-scrim fixed inset-0 z-modal flex items-center justify-center p-4"
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="w-full max-w-sm rounded-sticker border border-cik-line bg-cik-bg-elevated p-5 text-cik-text shadow-e3"
+          >
+            <h3 className="cik-title-3 text-cik-text">
+              {pendingConfirm.mode === 'delete'
+                ? isEn
+                  ? 'Delete League?'
+                  : 'Ligi Sil?'
+                : isEn
+                  ? 'Leave League?'
+                  : 'Ligden Ayrıl?'}
+            </h3>
+            <p className="cik-body mt-2 text-cik-text-2">
+              {pendingConfirm.mode === 'delete'
+                ? isEn
+                  ? `Delete "${pendingConfirm.name}" permanently for all members?`
+                  : `"${pendingConfirm.name}" ligini tüm üyeler için kalıcı olarak silmek istediğine emin misin?`
+                : isEn
+                  ? `Leave "${pendingConfirm.name}"? Your XP and other leagues stay intact.`
+                  : `"${pendingConfirm.name}" liginden ayrılmak istediğine emin misin? XP puanın ve diğer liglerin korunur.`}
+            </p>
+            <div className="mt-5 flex flex-col gap-2 sm:flex-row-reverse">
+              <button
+                type="button"
+                disabled={busyAction}
+                data-testid={
+                  pendingConfirm.mode === 'delete'
+                    ? 'friend-league-confirm-delete-btn'
+                    : 'friend-league-confirm-leave-btn'
+                }
+                onClick={() =>
+                  void (pendingConfirm.mode === 'delete'
+                    ? handleConfirmDelete()
+                    : handleConfirmLeave())
+                }
+                className="cik-headline inline-flex min-h-11 flex-1 items-center justify-center rounded-pill bg-cik-rose px-4 text-cik-rose-text disabled:opacity-60"
+              >
+                {busyAction
+                  ? isEn
+                    ? 'Working...'
+                    : 'İşleniyor...'
+                  : pendingConfirm.mode === 'delete'
+                    ? isEn
+                      ? 'Yes, Delete'
+                      : 'Evet, Ligi Sil'
+                    : isEn
+                      ? 'Yes, Leave'
+                      : 'Evet, Ayrıl'}
+              </button>
+              <button
+                type="button"
+                disabled={busyAction}
+                data-testid="friend-league-cancel-confirm-btn"
+                onClick={() => setPendingConfirm(null)}
+                className="cik-headline inline-flex min-h-11 flex-1 items-center justify-center rounded-pill border border-cik-line bg-cik-surface-2 px-4 text-cik-text disabled:opacity-60"
+              >
+                {isEn ? 'Cancel' : 'Vazgeç'}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

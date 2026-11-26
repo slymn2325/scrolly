@@ -19,7 +19,9 @@ export default function ProfileReturnControl({
   testId,
   children,
 }: ProfileReturnControlProps) {
-  const targetHref = returnToProfile ? '/?tab=profile' : sanitizeInternalRedirectPath(href, '/');
+  const sanitizedHref = sanitizeInternalRedirectPath(href, '/');
+  const profileTarget = sanitizedHref.startsWith('/en') ? '/en?tab=profile' : '/?tab=profile';
+  const targetHref = returnToProfile ? profileTarget : sanitizedHref;
 
   return (
     <Link href={targetHref} className={className} data-testid={testId}>
