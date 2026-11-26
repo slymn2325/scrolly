@@ -2695,6 +2695,7 @@ export default function HomeClient({ initialFacts, initialVocabulary, initialLan
               activeFact={activeFact}
               activeSlide={activeSlide}
               isGuessLocked={activeFact ? Boolean(lockedFactIds[activeFact.id]) : false}
+              isDetailOpen={Boolean(activeDetailCard)}
               isLiked={activeSlideLiked}
               isSaved={isCurrentSlideSaved}
               likesCount={activeSlideLikesCount}
@@ -2756,7 +2757,15 @@ export default function HomeClient({ initialFacts, initialVocabulary, initialLan
                 }
               }}
               onDetail={() => {
+                if (activeDetailCard) {
+                  vibrateFlip(12);
+                  playWhoosh(soundEnabled);
+                  setActiveDetailCard(null);
+                  return;
+                }
                 if (activeFact) {
+                  vibrateFlip(12);
+                  playWhoosh(soundEnabled);
                   setActiveDetailCard({ fact: activeFact, resolvedGifUrl: activeFact.gifUrl ?? null });
                   return;
                 }

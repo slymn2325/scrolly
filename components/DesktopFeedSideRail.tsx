@@ -46,6 +46,7 @@ interface DesktopFeedSideRailProps {
   onSave?: () => void;
   onDetail?: () => void;
   onShare?: () => void;
+  isDetailOpen?: boolean;
   mode?: DesktopRailMode;
 }
 
@@ -68,6 +69,7 @@ export default function DesktopFeedSideRail({
   onSave,
   onDetail,
   onShare,
+  isDetailOpen = false,
   mode = 'cluster',
 }: DesktopFeedSideRailProps) {
   const [shortcutsOpen, setShortcutsOpen] = useState(false);
@@ -217,11 +219,20 @@ export default function DesktopFeedSideRail({
         )}
         {onDetail && (
           <IconButton
-            label={lang === 'tr' ? 'Detay' : 'Detail'}
+            label={
+              isDetailOpen
+                ? lang === 'tr'
+                  ? 'Karta dön'
+                  : 'Back to card'
+                : lang === 'tr'
+                  ? 'Detay'
+                  : 'Detail'
+            }
             data-testid="desktop-action-detail"
             onClick={onDetail}
             disabled={!canDetail}
-            className="disabled:opacity-40"
+            aria-pressed={isDetailOpen}
+            className={isDetailOpen && canDetail ? 'bg-cik-pink text-cik-cta' : 'disabled:opacity-40'}
           >
             <RotateCw size={24} strokeWidth={2} />
           </IconButton>
