@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import Link from 'next/link';
 import { Mail, Sparkles, WifiOff } from 'lucide-react';
 import { type Language } from '@/i18n/translations';
@@ -8,6 +8,8 @@ import type { DockTabId } from '@/utils/fluentAssets';
 import BrandLogo from '@/components/BrandLogo';
 import Icon from '@/components/cikartma/Icon';
 import type { IconName } from '@/lib/iconMap';
+import { useVerifiedOfflineStatus } from '@/utils/networkStatus';
+import { localizeDisplayNickname } from '@/utils/userMemory';
 
 interface DesktopLeftNavProps {
   activeTab: DockTabId;
@@ -47,31 +49,11 @@ export default function DesktopLeftNav({
   onSelectTab,
   onBindEmail,
 }: DesktopLeftNavProps) {
-  const [isOffline, setIsOffline] = useState(
-    () =>
-      typeof window !== 'undefined' &&
-      typeof navigator !== 'undefined' &&
-      navigator.onLine === false
-  );
+  const isOffline = useVerifiedOfflineStatus();
   const isGuest = !accountEmail;
   const highlightedTab = activeTab === 'language' ? 'explore' : activeTab;
   const locale = lang === 'en' ? 'en' : 'tr';
-
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-    const syncNetwork = () => {
-      setIsOffline(typeof navigator !== 'undefined' && navigator.onLine === false);
-    };
-    syncNetwork();
-    window.addEventListener('online', syncNetwork);
-    window.addEventListener('offline', syncNetwork);
-    window.addEventListener('focus', syncNetwork);
-    return () => {
-      window.removeEventListener('online', syncNetwork);
-      window.removeEventListener('offline', syncNetwork);
-      window.removeEventListener('focus', syncNetwork);
-    };
-  }, []);
+  const displayAccountLabel = accountLabel ? localizeDisplayNickname(accountLabel, lang) : null;
 
   return (
     <aside
@@ -164,10 +146,10 @@ export default function DesktopLeftNav({
           <p
             data-testid="desktop-account-status"
             className="mt-2 truncate text-xs font-medium text-cik-text"
-            title={accountEmail || accountLabel || undefined}
+            title={accountEmail || displayAccountLabel || undefined}
           >
-            {accountEmail || accountLabel
-              ? accountLabel || accountEmail
+            {accountEmail || displayAccountLabel
+              ? displayAccountLabel || accountEmail
               : lang === 'tr'
                 ? 'Misafir oturum'
                 : 'Guest session'}

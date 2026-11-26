@@ -4,7 +4,11 @@ import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useSta
 import dynamic from 'next/dynamic';
 import { useRouter } from 'next/navigation';
 import { AnimatePresence, motion } from 'framer-motion';
+import { Loader2 } from 'lucide-react';
 import CookieBanner from '@/components/CookieBanner';
+import Skeleton from '@/components/cikartma/Skeleton';
+import { getVocabularyFacts } from '@/data/vocabularyFacts';
+import { vocabCardToFactCard } from '@/utils/duelLobby';
 import DeferredAdSense from '@/components/DeferredAdSense';
 import ErrorBoundary from '@/components/ErrorBoundary';
 import { applyGoogleConsentChoice } from '@/utils/consent';
@@ -110,6 +114,7 @@ import {
   getTotalCardsViewed,
   isGenericDefaultNickname,
   loadUserMemory,
+  localizeDisplayNickname,
   markFactIdSeen,
   mergeRemoteProfileIntoMemory,
   recordCardRead,
@@ -122,11 +127,54 @@ import {
   type UserMemoryState,
 } from '@/utils/userMemory';
 
-const MemoryQuizCard = dynamic(() => import('@/components/MemoryQuizCard'), { ssr: false });
-const LeaderboardModal = dynamic(() => import('@/components/LeaderboardModal'), { ssr: false });
-const QuizHubModal = dynamic(() => import('@/components/QuizHubModal'), { ssr: false });
-const DuelModal = dynamic(() => import('@/components/DuelModal'), { ssr: false });
-const DiplomaProfileModal = dynamic(() => import('@/components/DiplomaProfileModal'), { ssr: false });
+function StageLoadingSkeleton() {
+  return (
+    <div
+      data-testid="stage-loading-skeleton"
+      className="flex h-full w-full flex-col gap-4 bg-cik-bg p-4 text-cik-text lg:p-6"
+    >
+      <div className="mx-auto flex w-full max-w-xl flex-1 flex-col gap-4 rounded-sticker bg-cik-surface p-5 shadow-sticker">
+        <div className="flex items-center justify-between gap-3">
+          <Skeleton className="h-7 w-40 rounded-pill" />
+          <Loader2
+            size={18}
+            strokeWidth={2}
+            className="animate-spin text-cik-accent"
+            aria-hidden="true"
+          />
+        </div>
+        <Skeleton className="h-3 w-full rounded-pill" />
+        <Skeleton className="h-28 w-full rounded-cik-md" />
+        <div className="mt-2 flex flex-col gap-2.5">
+          <Skeleton className="h-12 w-full rounded-cik-md" />
+          <Skeleton className="h-12 w-full rounded-cik-md" />
+          <Skeleton className="h-12 w-full rounded-cik-md" />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+const MemoryQuizCard = dynamic(() => import('@/components/MemoryQuizCard'), {
+  ssr: false,
+  loading: () => <StageLoadingSkeleton />,
+});
+const LeaderboardModal = dynamic(() => import('@/components/LeaderboardModal'), {
+  ssr: false,
+  loading: () => <StageLoadingSkeleton />,
+});
+const QuizHubModal = dynamic(() => import('@/components/QuizHubModal'), {
+  ssr: false,
+  loading: () => <StageLoadingSkeleton />,
+});
+const DuelModal = dynamic(() => import('@/components/DuelModal'), {
+  ssr: false,
+  loading: () => <StageLoadingSkeleton />,
+});
+const DiplomaProfileModal = dynamic(() => import('@/components/DiplomaProfileModal'), {
+  ssr: false,
+  loading: () => <StageLoadingSkeleton />,
+});
 const StoryShareModal = dynamic(() => import('@/components/StoryShareModal'), { ssr: false });
 const ShareResultModal = dynamic(() => import('@/components/ShareResultModal'), { ssr: false });
 const WelcomeExploreModal = dynamic(() => import('@/components/WelcomeExploreModal'), { ssr: false });
@@ -508,6 +556,7 @@ export default function HomeClient({ initialFacts, initialVocabulary, initialLan
   const [chromeBlocked, setChromeBlocked] = useState(false);
   const [suppressInitialFactSync, setSuppressInitialFactSync] = useState(false);
   const [activeQuiz, setActiveQuiz] = useState<ActiveQuizSession | null>(null);
+  const [quizLoading, setQuizLoading] = useState(false);
   const [incomingDuel, setIncomingDuel] = useState<DuelPayload | null>(null);
   const [incomingRoomCode, setIncomingRoomCode] = useState<string | null>(null);
   const [incomingLeagueCode, setIncomingLeagueCode] = useState<string | null>(null);
@@ -583,6 +632,26 @@ export default function HomeClient({ initialFacts, initialVocabulary, initialLan
     window.addEventListener('scrolly-chrome-block', onChromeBlock as EventListener);
     return () => window.removeEventListener('scrolly-chrome-block', onChromeBlock as EventListener);
   }, []);
+
+  useEffect(() => {
+    if (!activeDetailCard) return;
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.code !== 'Space' && e.key !== ' ') return;
+      const target = e.target as HTMLElement | null;
+      if (
+        target &&
+        (['INPUT', 'TEXTAREA', 'SELECT', 'BUTTON', 'A'].includes(target.tagName) ||
+          target.closest('button, a, input, textarea, select, [role="button"]'))
+      ) {
+        return;
+      }
+      e.preventDefault();
+      e.stopPropagation();
+      setActiveDetailCard(null);
+    };
+    window.addEventListener('keydown', onKeyDown, true);
+    return () => window.removeEventListener('keydown', onKeyDown, true);
+  }, [activeDetailCard]);
 
   // Resolve local state + ?tab= / ?category= / ?vocab= / ?fact= / ?room= synchronously before first paint
   useIsomorphicLayoutEffect(() => {
@@ -684,26 +753,23 @@ export default function HomeClient({ initialFacts, initialVocabulary, initialLan
       setActiveCategory('vocabulary');
       setDeckFacts([]);
       setActiveFact(null);
-      const placeVocab = (vocabBase: VocabularyCard[]) => {
-        const targetIdx = requestedVocabId
-          ? Math.max(
-              0,
-              vocabBase.findIndex(
-                (c) =>
-                  c.id === requestedVocabId ||
-                  c.word.toLowerCase() === requestedVocabId.toLowerCase()
-              )
+      const vocabBase =
+        initialVocabulary && initialVocabulary.length > 0
+          ? initialVocabulary
+          : getVocabularyFacts();
+      const targetIdx = requestedVocabId
+        ? Math.max(
+            0,
+            vocabBase.findIndex(
+              (c) =>
+                c.id === requestedVocabId ||
+                c.word.toLowerCase() === requestedVocabId.toLowerCase()
             )
-          : 0;
-        activeSlideIndexRef.current = targetIdx;
-        setExploreSlideIndex(targetIdx);
-        setSuppressInitialFactSync(false);
-      };
-      if (initialVocabulary && initialVocabulary.length > 0) {
-        placeVocab(initialVocabulary);
-      } else {
-        void import('@/data/vocabularyFacts').then((mod) => placeVocab(mod.getVocabularyFacts()));
-      }
+          )
+        : 0;
+      activeSlideIndexRef.current = targetIdx;
+      setExploreSlideIndex(targetIdx);
+      setSuppressInitialFactSync(false);
       return;
     }
 
@@ -1254,7 +1320,11 @@ export default function HomeClient({ initialFacts, initialVocabulary, initialLan
       document.documentElement.lang = nextLang === 'en' ? 'en' : 'tr';
     }
     setMemory((prev) => {
-      const updated = { ...prev, lang: nextLang };
+      const updated = {
+        ...prev,
+        lang: nextLang,
+        nickname: localizeDisplayNickname(prev.nickname, nextLang),
+      };
       saveUserMemory(updated);
       return updated;
     });
@@ -1268,6 +1338,10 @@ export default function HomeClient({ initialFacts, initialVocabulary, initialLan
     url.pathname = nextLang === 'en' ? '/en' : '/';
     url.searchParams.delete('fact');
     url.searchParams.delete('lang');
+    if (activeCategoryRef.current === 'vocabulary' && activeSlide?.type === 'vocabulary') {
+      url.searchParams.set('category', 'vocabulary');
+      url.searchParams.set('vocab', activeSlide.card.id);
+    }
     router.push(`${url.pathname}${url.search}${url.hash}`);
   };
 
@@ -1562,59 +1636,61 @@ export default function HomeClient({ initialFacts, initialVocabulary, initialLan
   const handleStartQuizMode = (choice: QuizModeChoice) => {
     vibrateTap(12);
     setActiveTab('quiz');
+    setQuizLoading(true);
     const pool = allFactsRef.current;
     const recentIds = memory.recentFiveIds;
     const seed = seedFact;
     const vocabAlreadyLoaded = mergedVocabulary;
     void (async () => {
-      const seeded = await import('@/utils/seededRandom');
-      if (choice === 'daily') {
-        const quizDate = getTodayDateString();
-        const dailyFacts = seeded.pickSeededFacts(pool, 5, `daily-${quizDate}`);
+      try {
+        const seeded = await import('@/utils/seededRandom');
+        if (choice === 'daily') {
+          const quizDate = getTodayDateString();
+          const dailyFacts = seeded.pickSeededFacts(pool, 5, `daily-${quizDate}`);
+          setActiveQuiz({
+            key: `daily-${quizDate}-${Date.now()}`,
+            mode: 'daily',
+            questions: dailyFacts.map((fact) => ({ fact })),
+            quizDate,
+          });
+          return;
+        }
+        if (choice === 'weekly') {
+          const weeklyFacts = seeded.pickSeededFacts(pool, 10, seeded.getWeeklySeedKey());
+          setActiveQuiz({
+            key: `weekly-${Date.now()}`,
+            mode: 'weekly',
+            questions: weeklyFacts.map((fact) => ({ fact })),
+          });
+          return;
+        }
+        if (choice === 'vocabulary') {
+          const vocabPool =
+            vocabAlreadyLoaded.length > 0 ? vocabAlreadyLoaded : getVocabularyFacts();
+          const pickedVocab = seeded.pickSeededFacts(
+            vocabPool,
+            5,
+            `${seeded.getDailySeedKey()}-vocab-${Date.now()}`
+          );
+          setActiveQuiz({
+            key: `vocabulary-${Date.now()}`,
+            mode: 'vocabulary',
+            questions: pickedVocab.map((card) => ({
+              fact: vocabCardToFactCard(card, vocabPool),
+            })),
+          });
+          return;
+        }
+        const { generateMemoryQuizFromRecent } = await import('@/utils/recommendation');
+        const memQuestions = generateMemoryQuizFromRecent(recentIds, pool, seed);
         setActiveQuiz({
-          key: `daily-${quizDate}-${Date.now()}`,
-          mode: 'daily',
-          questions: dailyFacts.map((fact) => ({ fact })),
-          quizDate,
+          key: `memory-${Date.now()}`,
+          mode: 'memory',
+          questions: memQuestions,
         });
-        return;
+      } finally {
+        setQuizLoading(false);
       }
-      if (choice === 'weekly') {
-        const weeklyFacts = seeded.pickSeededFacts(pool, 10, seeded.getWeeklySeedKey());
-        setActiveQuiz({
-          key: `weekly-${Date.now()}`,
-          mode: 'weekly',
-          questions: weeklyFacts.map((fact) => ({ fact })),
-        });
-        return;
-      }
-      if (choice === 'vocabulary') {
-        const vocabMod =
-          vocabAlreadyLoaded.length > 0 ? null : await import('@/data/vocabularyFacts');
-        const vocabPool =
-          vocabAlreadyLoaded.length > 0 ? vocabAlreadyLoaded : vocabMod!.getVocabularyFacts();
-        const { vocabCardToFactCard } = await import('@/utils/duelLobby');
-        const pickedVocab = seeded.pickSeededFacts(
-          vocabPool,
-          5,
-          `${seeded.getDailySeedKey()}-vocab-${Date.now()}`
-        );
-        setActiveQuiz({
-          key: `vocabulary-${Date.now()}`,
-          mode: 'vocabulary',
-          questions: pickedVocab.map((card) => ({
-            fact: vocabCardToFactCard(card, vocabPool),
-          })),
-        });
-        return;
-      }
-      const { generateMemoryQuizFromRecent } = await import('@/utils/recommendation');
-      const memQuestions = generateMemoryQuizFromRecent(recentIds, pool, seed);
-      setActiveQuiz({
-        key: `memory-${Date.now()}`,
-        mode: 'memory',
-        questions: memQuestions,
-      });
     })();
   };
   const startQuizModeRef = useRef(handleStartQuizMode);
@@ -1655,27 +1731,33 @@ export default function HomeClient({ initialFacts, initialVocabulary, initialLan
 
   const handleStartDuel = (config: DuelChallengeConfig) => {
     vibrateTap(12);
-    const activePool = allFactsRef.current;
-    const questionCount = Math.max(1, config.questionCount || config.factIds.length || 5);
-    void import('@/utils/duelLobby').then(({ resolveFactsByIds }) => {
-    let duelFacts = resolveFactsByIds(activePool, config.factIds);
-    if (duelFacts.length < questionCount) {
-      for (const candidate of activePool) {
-        if (!duelFacts.some((f) => f.id === candidate.id)) duelFacts.push(candidate);
-        if (duelFacts.length >= questionCount) break;
-      }
-    }
-    duelFacts = duelFacts.slice(0, questionCount);
-
     setIncomingDuel(null);
     setActiveTab('duel');
-    setActiveQuiz({
-      key: `duel-${config.duelId || Date.now()}`,
-      mode: 'duel',
-      questions: duelFacts.map((fact) => ({ fact })),
-      duelConfig: config,
-    });
-    });
+    setQuizLoading(true);
+    const activePool = allFactsRef.current;
+    const questionCount = Math.max(1, config.questionCount || config.factIds.length || 5);
+    void (async () => {
+      try {
+        const { resolveFactsByIds } = await import('@/utils/duelLobby');
+        let duelFacts = resolveFactsByIds(activePool, config.factIds);
+        if (duelFacts.length < questionCount) {
+          for (const candidate of activePool) {
+            if (!duelFacts.some((f) => f.id === candidate.id)) duelFacts.push(candidate);
+            if (duelFacts.length >= questionCount) break;
+          }
+        }
+        duelFacts = duelFacts.slice(0, questionCount);
+
+        setActiveQuiz({
+          key: `duel-${config.duelId || Date.now()}`,
+          mode: 'duel',
+          questions: duelFacts.map((fact) => ({ fact })),
+          duelConfig: config,
+        });
+      } finally {
+        setQuizLoading(false);
+      }
+    })();
   };
 
   const handleQuizComplete = (
@@ -1739,6 +1821,7 @@ export default function HomeClient({ initialFacts, initialVocabulary, initialLan
       durationSec: elapsedSec,
       correctCount: results.filter(Boolean).length,
       questionCount: results.length,
+      answers: results,
     };
     void import('@/utils/supabaseLeaderboard').then(({ submitQuizScoreToLeaderboard }) => {
       submitQuizScoreToLeaderboard(scorePayload);
@@ -1906,6 +1989,7 @@ export default function HomeClient({ initialFacts, initialVocabulary, initialLan
     clearCelebrationFlags();
     try {
       window.localStorage.removeItem(DIAGRAM_INTERACTED_STORAGE_KEY);
+      window.sessionStorage.removeItem('scrolly_vocab_quiz_state_v1');
     } catch {
       // Ignore private-mode storage failures
     }
@@ -2110,18 +2194,30 @@ export default function HomeClient({ initialFacts, initialVocabulary, initialLan
       ? savedVocabWords.includes(activeSlide.card.word.toLowerCase()) ||
         isVocabWordSaved(activeSlide.card.word)
       : false;
-  const activeFactLiked = activeFact ? (likedRevision >= 0 && isFactLiked(activeFact.id)) : false;
-  const activeFactLikesCount = activeFact
+  const activeSlideId =
+    activeFact?.id ?? (activeSlide?.type === 'vocabulary' ? activeSlide.card.id : null);
+  const activeSlideLiked = activeSlideId
+    ? likedRevision >= 0 && isFactLiked(activeSlideId)
+    : false;
+  const activeSlideLikesCount = activeFact
     ? typeof activeFact.likesCount === 'number'
-      ? Math.max(0, activeFact.likesCount) + (activeFactLiked ? 1 : 0)
+      ? Math.max(0, activeFact.likesCount) + (activeSlideLiked ? 1 : 0)
       : (() => {
           let sum = 120;
           for (let i = 0; i < activeFact.id.length; i += 1) {
             sum += activeFact.id.charCodeAt(i) * 19;
           }
-          return 400 + (sum % 890) + (activeFactLiked ? 1 : 0);
+          return 400 + (sum % 890) + (activeSlideLiked ? 1 : 0);
         })()
-    : 0;
+    : activeSlide?.type === 'vocabulary'
+      ? (() => {
+          let sum = 140;
+          for (let i = 0; i < activeSlide.card.id.length; i += 1) {
+            sum += activeSlide.card.id.charCodeAt(i) * 17;
+          }
+          return 240 + (sum % 520) + (activeSlideLiked ? 1 : 0);
+        })()
+      : 0;
 
   return (
     <ErrorBoundary
@@ -2313,6 +2409,14 @@ export default function HomeClient({ initialFacts, initialVocabulary, initialLan
             }}
             onOpenDuelFromCard={handleOpenDuelFromCard}
             onOpenStoryShare={handleOpenStoryShare}
+            onOpenShareVocab={(card) =>
+              handleOpenStoryShare(
+                vocabCardToFactCard(
+                  card,
+                  mergedVocabulary.length > 0 ? mergedVocabulary : getVocabularyFacts()
+                )
+              )
+            }
             onGuessReward={handleGuessReward}
             onGuessLocked={handleGuessLocked}
             lockedFactIds={lockedFactIds}
@@ -2370,40 +2474,44 @@ export default function HomeClient({ initialFacts, initialVocabulary, initialLan
           </div>
         )}
 
-        {activeQuiz && (
+        {(activeQuiz || quizLoading) && (
           <div
             data-testid="active-quiz-page"
-            className="absolute inset-0 z-30 flex h-full w-full flex-col overflow-y-auto bg-cik-bg text-cik-text px-3 pt-[calc(env(safe-area-inset-top,20px)+16px)] pb-[calc(env(safe-area-inset-bottom,16px)+100px)] lg:pt-6 lg:pb-6"
+            className="absolute inset-0 z-30 flex h-full w-full flex-col overflow-hidden bg-cik-bg text-cik-text px-3 pt-[calc(env(safe-area-inset-top,20px)+16px)] pb-[calc(env(safe-area-inset-bottom,16px)+92px)] lg:pt-6 lg:pb-6"
           >
-            <MemoryQuizCard
-              key={activeQuiz.key}
-              questions={activeQuiz.questions}
-              lang={lang}
-              quizMode={activeQuiz.mode}
-              duelConfig={activeQuiz.duelConfig}
-              vocabularyPool={mergedVocabulary}
-              onAnswerSound={(isCorrect) =>
-                isCorrect ? playDing(soundEnabled) : playWrong(soundEnabled)
-              }
-              onTickSound={(urgent) => playTick(soundEnabled, urgent)}
-              onButtonPop={() => playPop(soundEnabled)}
-              onComplete={handleQuizComplete}
-              onSkip={() => {
-                vibrateTap(12);
-                playPop(soundEnabled);
-                setActiveQuiz(null);
-                setActiveTab(activeQuiz.mode === 'duel' ? 'duel' : 'quiz');
-                setMemory((prev) => {
-                  const updated = { ...prev, cardsSinceLastQuiz: 0 };
-                  saveUserMemory(updated);
-                  return updated;
-                });
-              }}
-            />
+            {activeQuiz ? (
+              <MemoryQuizCard
+                key={activeQuiz.key}
+                questions={activeQuiz.questions}
+                lang={lang}
+                quizMode={activeQuiz.mode}
+                duelConfig={activeQuiz.duelConfig}
+                vocabularyPool={mergedVocabulary}
+                onAnswerSound={(isCorrect) =>
+                  isCorrect ? playDing(soundEnabled) : playWrong(soundEnabled)
+                }
+                onTickSound={(urgent) => playTick(soundEnabled, urgent)}
+                onButtonPop={() => playPop(soundEnabled)}
+                onComplete={handleQuizComplete}
+                onSkip={() => {
+                  vibrateTap(12);
+                  playPop(soundEnabled);
+                  setActiveQuiz(null);
+                  setActiveTab(activeQuiz.mode === 'duel' ? 'duel' : 'quiz');
+                  setMemory((prev) => {
+                    const updated = { ...prev, cardsSinceLastQuiz: 0 };
+                    saveUserMemory(updated);
+                    return updated;
+                  });
+                }}
+              />
+            ) : (
+              <StageLoadingSkeleton />
+            )}
           </div>
         )}
 
-        {activeTab === 'leaderboard' && !activeQuiz && (
+        {activeTab === 'leaderboard' && !activeQuiz && !quizLoading && (
           <LeaderboardModal
             open
             presentation="page"
@@ -2425,7 +2533,7 @@ export default function HomeClient({ initialFacts, initialVocabulary, initialLan
           />
         )}
 
-        {activeTab === 'quiz' && !activeQuiz && (
+        {activeTab === 'quiz' && !activeQuiz && !quizLoading && (
           <QuizHubModal
             open
             presentation="page"
@@ -2441,7 +2549,7 @@ export default function HomeClient({ initialFacts, initialVocabulary, initialLan
           />
         )}
 
-        {activeTab === 'duel' && !activeQuiz && (
+        {activeTab === 'duel' && !activeQuiz && !quizLoading && (
           <DuelModal
             open
             presentation="page"
@@ -2459,7 +2567,7 @@ export default function HomeClient({ initialFacts, initialVocabulary, initialLan
           />
         )}
 
-        {activeTab === 'diploma' && !activeQuiz && (
+        {activeTab === 'diploma' && !activeQuiz && !quizLoading && (
           <DiplomaProfileModal
             open
             presentation="page"
@@ -2579,16 +2687,25 @@ export default function HomeClient({ initialFacts, initialVocabulary, initialLan
               activeFact={activeFact}
               activeSlide={activeSlide}
               isGuessLocked={activeFact ? Boolean(lockedFactIds[activeFact.id]) : false}
-              isLiked={activeFactLiked}
+              isLiked={activeSlideLiked}
               isSaved={isCurrentSlideSaved}
-              likesCount={activeFactLikesCount}
+              likesCount={activeSlideLikesCount}
               onLike={() => {
-                if (!activeFact) return;
-                window.dispatchEvent(
-                  new CustomEvent('scrolly-card-action', {
-                    detail: { factId: activeFact.id, action: 'like' },
-                  })
-                );
+                if (activeFact) {
+                  window.dispatchEvent(
+                    new CustomEvent('scrolly-card-action', {
+                      detail: { factId: activeFact.id, action: 'like' },
+                    })
+                  );
+                  return;
+                }
+                if (activeSlide?.type === 'vocabulary') {
+                  window.dispatchEvent(
+                    new CustomEvent('scrolly-card-action', {
+                      detail: { vocabId: activeSlide.card.id, action: 'like' },
+                    })
+                  );
+                }
               }}
               onSave={() => {
                 if (activeFact) {
@@ -2644,8 +2761,17 @@ export default function HomeClient({ initialFacts, initialVocabulary, initialLan
                 }
               }}
               onShare={() => {
-                if (!activeFact) return;
-                setStoryShareFact(activeFact);
+                if (activeFact) {
+                  setStoryShareFact(activeFact);
+                  return;
+                }
+                if (activeSlide?.type === 'vocabulary') {
+                  window.dispatchEvent(
+                    new CustomEvent('scrolly-card-action', {
+                      detail: { vocabId: activeSlide.card.id, action: 'share' },
+                    })
+                  );
+                }
               }}
               onPrev={() => {
                 vibrateTap(10);
@@ -2669,9 +2795,9 @@ export default function HomeClient({ initialFacts, initialVocabulary, initialLan
                 activeFact={activeFact}
                 activeSlide={activeSlide}
                 isGuessLocked={activeFact ? Boolean(lockedFactIds[activeFact.id]) : false}
-                isLiked={activeFactLiked}
+                isLiked={activeSlideLiked}
                 isSaved={isCurrentSlideSaved}
-                likesCount={activeFactLikesCount}
+                likesCount={activeSlideLikesCount}
                 onPrev={() => {
                   vibrateTap(10);
                   dismissCardOverlays();

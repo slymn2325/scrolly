@@ -361,6 +361,7 @@ export async function submitQuizScoreToLeaderboard(params: {
   correctCount: number;
   questionCount?: number;
   totalQuestions?: number;
+  answers?: boolean[];
 }): Promise<void> {
   if (typeof window === 'undefined') return;
   try {
@@ -380,6 +381,8 @@ export async function submitQuizScoreToLeaderboard(params: {
         score: params.score,
         correctCount: params.correctCount,
         totalQuestions: params.totalQuestions || params.questionCount || 1,
+        ...(typeof params.durationSec === 'number' ? { durationSec: params.durationSec } : {}),
+        ...(Array.isArray(params.answers) ? { answers: params.answers } : {}),
       }),
     });
   } catch {

@@ -1,4 +1,4 @@
-const CACHE_VERSION = '20261119';
+const CACHE_VERSION = '20261126';
 const CACHE_NAME = `scrolly-v${CACHE_VERSION}`;
 const MAX_RUNTIME_ENTRIES = 60;
 
@@ -153,12 +153,39 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // NetworkFirst for explicit HTML navigations with root shell fallback when offline
+  // NetworkFirst for explicit public HTML navigations with root shell fallback when offline; never cache private/session routes
   if (event.request.mode === 'navigate') {
+    const isUncacheablePage =
+      url.pathname.startsWith('/studio') ||
+      url.pathname.startsWith('/create') ||
+      url.pathname.startsWith('/embed/') ||
+      url.pathname.startsWith('/duello') ||
+      url.pathname.startsWith('/en/duel') ||
+      url.pathname.startsWith('/challenge') ||
+      url.searchParams.has('tab') ||
+      url.searchParams.has('room') ||
+      url.searchParams.has('duel') ||
+      url.searchParams.has('league');
+
+    if (isUncacheablePage) {
+      event.respondWith(
+        fetch(event.request).catch(() => caches.match('/'))
+      );
+      return;
+    }
+
     event.respondWith(
       fetch(event.request)
         .then((response) => {
-          if (response && response.status === 200) {
+          const cacheControl = response.headers.get('Cache-Control') || '';
+          const hasSetCookie = Boolean(response.headers.get('Set-Cookie'));
+          if (
+            response &&
+            response.status === 200 &&
+            !hasSetCookie &&
+            !cacheControl.includes('private') &&
+            !cacheControl.includes('no-store')
+          ) {
             const cloned = response.clone();
             caches.open(CACHE_NAME).then((cache) =>
               cache.put(event.request, cloned).then(() => {

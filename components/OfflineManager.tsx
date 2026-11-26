@@ -6,6 +6,7 @@ import { X } from 'lucide-react';
 import { type Language, translations } from '@/i18n/translations';
 import { STATE_ILLUSTRATION_PATHS } from '@/utils/fluentAssets';
 import { motionTiming } from '@/lib/motion';
+import { useVerifiedOfflineStatus } from '@/utils/networkStatus';
 
 interface OfflineManagerProps {
   lang: Language;
@@ -23,27 +24,17 @@ const PREFETCH_FACT_SHARDS = [
 ];
 
 export default function OfflineManager({ lang }: OfflineManagerProps) {
-  const [isOffline, setIsOffline] = useState(false);
+  const isOffline = useVerifiedOfflineStatus();
   const [dismissed, setDismissed] = useState(false);
   const reduced = useReducedMotion() === true;
   const t = translations[lang];
 
   useEffect(() => {
+    setDismissed(false);
+  }, [isOffline]);
+
+  useEffect(() => {
     if (typeof window === 'undefined') return;
-
-    setIsOffline(navigator.onLine === false);
-
-    const handleOnline = () => {
-      setIsOffline(false);
-      setDismissed(false);
-    };
-    const handleOffline = () => {
-      setDismissed(false);
-      setIsOffline(true);
-    };
-
-    window.addEventListener('online', handleOnline);
-    window.addEventListener('offline', handleOffline);
 
     if ('caches' in window) {
       caches
@@ -51,7 +42,7 @@ export default function OfflineManager({ lang }: OfflineManagerProps) {
         .then((keys) =>
           Promise.all(
             keys
-              .filter((k) => k !== 'scrolly-v20261119')
+              .filter((k) => k !== 'scrolly-v20261126')
               .map((oldKey) => caches.delete(oldKey))
           )
         )
@@ -62,7 +53,7 @@ export default function OfflineManager({ lang }: OfflineManagerProps) {
     if ('serviceWorker' in navigator) {
       const hadController = Boolean(navigator.serviceWorker.controller);
       let isRefreshing = false;
-      const reloadGuardKey = 'scrolly_sw_reloaded_v20261119';
+      const reloadGuardKey = 'scrolly_sw_reloaded_v20261126';
 
       handleControllerChange = () => {
         if (!hadController || isRefreshing) return;
@@ -119,8 +110,6 @@ export default function OfflineManager({ lang }: OfflineManagerProps) {
     }
 
     return () => {
-      window.removeEventListener('online', handleOnline);
-      window.removeEventListener('offline', handleOffline);
       if (handleControllerChange && 'serviceWorker' in navigator) {
         navigator.serviceWorker.removeEventListener('controllerchange', handleControllerChange);
       }

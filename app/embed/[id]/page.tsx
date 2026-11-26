@@ -11,7 +11,7 @@ interface EmbedPageProps {
 
 export async function generateMetadata({ params }: EmbedPageProps): Promise<Metadata> {
   const { id } = await params;
-  const story = await getStoryById(id, { incrementViews: false });
+  const story = await getStoryById(id, { incrementViews: false, publicOnly: true });
   if (!story) {
     return {
       title: 'Story Not Found | Scrolly',
@@ -26,7 +26,7 @@ export async function generateMetadata({ params }: EmbedPageProps): Promise<Meta
 
 export default async function EmbedStoryPage({ params }: EmbedPageProps) {
   const { id } = await params;
-  const story = await getStoryById(id, { incrementViews: true });
+  const story = await getStoryById(id, { incrementViews: true, publicOnly: true });
   if (!story) {
     notFound();
   }

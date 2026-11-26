@@ -7,7 +7,7 @@ import { type Language } from '@/i18n/translations';
 import BrandLogo from '@/components/BrandLogo';
 import Button from '@/components/cikartma/Button';
 import { motionTiming } from '@/lib/motion';
-import { isGenericDefaultNickname } from '@/utils/userMemory';
+import { isGenericDefaultNickname, localizeDisplayNickname } from '@/utils/userMemory';
 
 export const WELCOME_DISMISS_KEY = 'scrolly_welcome_dismissed_v1';
 export const NICKNAME_ASKED_KEY = 'scrolly_nickname_asked_v1';
@@ -82,7 +82,12 @@ export default function WelcomeExploreModal({
       setNicknameInput((prev) => prev || custom);
       return;
     }
-    setSystemSuggested((prev) => prev || generateSystemNickname(lang));
+    setSystemSuggested((prev) =>
+      prev ? localizeDisplayNickname(prev, lang) : generateSystemNickname(lang)
+    );
+    setNicknameInput((prev) =>
+      prev && isGenericDefaultNickname(prev) ? localizeDisplayNickname(prev, lang) : prev
+    );
   }, [open, initialNickname, lang]);
 
   const title = lang === 'tr' ? 'Skoruna bir ad koy' : 'Put a name on your score';

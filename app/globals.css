@@ -688,9 +688,11 @@ html.dark .scrolly-glass-pill {
 .story-stage-scrim {
   background: linear-gradient(
     to bottom,
-    rgb(12 10 18 / calc(var(--story-overlay, 0.58) * 0.45)) 0%,
-    rgb(12 10 18 / calc(var(--story-overlay, 0.58) * 0.72)) 52%,
-    rgb(12 10 18 / calc(min(0.94, var(--story-overlay, 0.58) + 0.16))) 100%
+    rgb(12 10 18 / calc(var(--story-overlay, 0.58) * 0.22)) 0%,
+    transparent 24%,
+    transparent 48%,
+    rgb(12 10 18 / calc(var(--story-overlay, 0.58) * 0.64)) 72%,
+    rgb(12 10 18 / calc(min(0.92, var(--story-overlay, 0.58) + 0.14))) 100%
   );
 }
 

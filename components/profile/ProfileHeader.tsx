@@ -10,7 +10,7 @@ import type { Language } from '@/i18n/translations';
 import { translations } from '@/i18n/translations';
 import { motionSpring, motionTiming } from '@/lib/motion';
 import { UI_ICON_PATHS } from '@/utils/icons8Assets';
-import { getLeagueInfo, type UserMemoryState } from '@/utils/userMemory';
+import { getLeagueInfo, localizeDisplayNickname, type UserMemoryState } from '@/utils/userMemory';
 
 interface ProfileHeaderProps {
   lang: Language;
@@ -58,11 +58,11 @@ export default function ProfileHeader({ lang, memory, focusNonce, onUpdateNickna
   const league = getLeagueInfo(memory.xp, lang);
   const inputId = useId();
   const inputRef = useRef<HTMLInputElement>(null);
-  const [draft, setDraft] = useState(memory.nickname);
+  const [draft, setDraft] = useState(() => localizeDisplayNickname(memory.nickname, lang));
 
   useEffect(() => {
-    setDraft(memory.nickname);
-  }, [memory.nickname]);
+    setDraft(localizeDisplayNickname(memory.nickname, lang));
+  }, [memory.nickname, lang]);
 
   useEffect(() => {
     if (focusNonce === 0) return;

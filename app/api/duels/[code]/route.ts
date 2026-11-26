@@ -315,28 +315,41 @@ export async function POST(request: Request, context: RouteContext) {
 
         const boundedQuestionCount = Math.min(15, Math.max(1, room.questionCount));
         const cleanAnswers = sanitizeAnswersArray(body.answers);
-        const correctCount = cleanAnswers
-          ? cleanAnswers.filter(Boolean).length
-          : boundedQuestionCount;
-        const maxCombo =
-          correctCount * 100 + 25 * ((correctCount * (correctCount + 1)) / 2);
-        const maxSpeed =
-          correctCount > 0 ? (boundedQuestionCount * 15 + 30) * 5 : 0;
-        const maxAllowedScore =
-          correctCount === 0 ? 0 : Math.min(5000, maxCombo + maxSpeed);
-
-        const rawScore = Number(body.score || 0);
-        self.score =
-          correctCount === 0 || !Number.isFinite(rawScore) || rawScore < 0
-            ? 0
-            : Math.min(maxAllowedScore, Math.floor(rawScore));
-
         const cleanElapsed = sanitizeElapsedSec(body.elapsedSec);
-        if (cleanElapsed !== null) {
-          self.elapsedSec = cleanElapsed;
-        }
-        if (cleanAnswers !== null) {
-          self.answers = cleanAnswers.slice(0, boundedQuestionCount);
+
+        if (!cleanAnswers || cleanAnswers.length === 0) {
+          self.score = 0;
+          self.answers = [];
+          if (cleanElapsed !== null) {
+            self.elapsedSec = cleanElapsed;
+          }
+        } else {
+          const boundedAnswers = cleanAnswers.slice(0, boundedQuestionCount);
+          let correctCount = 0;
+          let streak = 0;
+          let comboScore = 0;
+          for (const ans of boundedAnswers) {
+            if (ans) {
+              correctCount += 1;
+              streak += 1;
+              comboScore += 100 + 25 * streak;
+            } else {
+              streak = 0;
+            }
+          }
+
+          const serverElapsedSec = room.startsAt
+            ? Math.max(2, Math.floor((Date.parse(nowIso) - Date.parse(room.startsAt)) / 1000))
+            : 60;
+          const effectiveElapsedSec =
+            cleanElapsed !== null
+              ? Math.max(Math.max(2, serverElapsedSec - 2), cleanElapsed)
+              : serverElapsedSec;
+          const speedBonus = correctCount > 0 ? Math.max(0, 60 - effectiveElapsedSec) * 5 : 0;
+
+          self.score = correctCount === 0 ? 0 : Math.min(5000, comboScore + speedBonus);
+          self.elapsedSec = effectiveElapsedSec;
+          self.answers = boundedAnswers;
         }
         self.finishedAt = nowIso;
         room.status = 'started';

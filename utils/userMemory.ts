@@ -243,6 +243,43 @@ export function deriveExplorerTagFromId(playerId: string): number {
   return 100 + ((hash >>> 0) % 900);
 }
 
+export const SYSTEM_NICKNAME_PAIRS: ReadonlyArray<{ tr: string; en: string }> = [
+  { tr: 'Merak Kaşifi', en: 'Curiosity Explorer' },
+  { tr: 'Merak Kâşifi', en: 'Curiosity Explorer' },
+  { tr: 'Meraklı Kaşif', en: 'Curiosity Explorer' },
+  { tr: 'Meraklı Kâşif', en: 'Curiosity Explorer' },
+  { tr: 'Kozmik Tilki', en: 'Cosmic Fox' },
+  { tr: 'Veri Kâşifi', en: 'Data Explorer' },
+  { tr: 'Veri Kaşifi', en: 'Data Explorer' },
+  { tr: 'Kuantum Baykuş', en: 'Quantum Owl' },
+  { tr: 'Merak Avcısı', en: 'Wonder Hunter' },
+  { tr: 'Yıldız Gezgini', en: 'Star Voyager' },
+  { tr: 'Süpernova Zihin', en: 'Nova Mind' },
+  { tr: 'Bilgi Kartalı', en: 'Fact Falcon' },
+  { tr: 'Zaman Yolcusu', en: 'Time Traveler' },
+  { tr: 'Kaşif', en: 'Explorer' },
+  { tr: 'Kâşif', en: 'Explorer' },
+];
+
+export function localizeDisplayNickname(
+  name: string | undefined | null,
+  lang: Language
+): string {
+  const trimmed = (name || '').trim();
+  if (!trimmed) return '';
+  const match = trimmed.match(/^(.+?)(\s*#\d+)?$/);
+  if (!match) return trimmed;
+  const base = match[1].trim();
+  const suffix = match[2] ? ` #${match[2].replace(/\D/g, '')}` : '';
+  const pair = SYSTEM_NICKNAME_PAIRS.find(
+    (p) =>
+      p.tr.toLocaleLowerCase('tr-TR') === base.toLocaleLowerCase('tr-TR') ||
+      p.en.toLowerCase() === base.toLowerCase()
+  );
+  if (!pair) return trimmed;
+  return `${lang === 'en' ? pair.en : pair.tr}${suffix}`;
+}
+
 export function getDefaultNickname(lang: Language, tagNumber: number): string {
   return lang === 'tr'
     ? `Merak Kaşifi #${tagNumber}`
@@ -457,7 +494,7 @@ export function loadUserMemory(): UserMemoryState {
     typeof parsed?.nickname === 'string' ? parsed.nickname.trim().slice(0, 24) : '';
   const resolvedNickname =
     parsedNickname && !isLegacyUntaggedOrTag42Nickname(parsedNickname)
-      ? parsedNickname
+      ? localizeDisplayNickname(parsedNickname, resolvedLang)
       : getDefaultNickname(resolvedLang, deriveExplorerTagFromId(resolvedPlayerId));
 
   const appearance = isAppearanceMode(parsed?.appearance) ? parsed.appearance : undefined;
@@ -931,7 +968,17 @@ export function isGenericDefaultNickname(name: string | undefined | null): boole
   if (/^(Merak Kaşifi|Merak Kâşifi|Meraklı Kaşif|Meraklı Kâşif|Curiosity Explorer)(\s*#\d+)?$/i.test(trimmed)) {
     return true;
   }
-  return /^(Kaşif|Kâşif|Explorer)(\s*#\d+)?$/i.test(trimmed);
+  if (/^(Kaşif|Kâşif|Explorer)(\s*#\d+)?$/i.test(trimmed)) {
+    return true;
+  }
+  const match = trimmed.match(/^(.+?)(\s*#\d+)?$/);
+  if (!match) return false;
+  const base = match[1].trim();
+  return SYSTEM_NICKNAME_PAIRS.some(
+    (p) =>
+      p.tr.toLocaleLowerCase('tr-TR') === base.toLocaleLowerCase('tr-TR') ||
+      p.en.toLowerCase() === base.toLowerCase()
+  );
 }
 
 export function mergeRemoteProfileIntoMemory(

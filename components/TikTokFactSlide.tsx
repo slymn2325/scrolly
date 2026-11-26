@@ -744,7 +744,7 @@ export default function TikTokFactSlide({
                 : 'pb-[calc(5rem+env(safe-area-inset-bottom))] lg:pb-4'
             } ${
               isExpanded
-                ? 'max-h-[82dvh] overflow-y-auto overscroll-y-contain lg:max-h-[82%]'
+                ? 'max-h-[calc(100dvh-76px)] overflow-y-auto overscroll-y-contain lg:max-h-[calc(100%-74px)]'
                 : 'cursor-pointer overflow-hidden'
             }`}
           >

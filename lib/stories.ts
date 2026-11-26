@@ -21,7 +21,40 @@ export const STARTER_ACTIVE_STORIES_LIMIT = 3;
 const STORY_ID_ALPHABET = 'abcdefghjkmnpqrstuvwxyz23456789';
 const STORY_ID_REGEX = /^[a-zA-Z0-9_-]{4,40}$/;
 const HEX_COLOR_REGEX = /^#[0-9A-Fa-f]{6}$/;
+const DOMAIN_HOSTNAME_REGEX =
+  /^(?:\*\.)?[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?(?:\.[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?)+$/i;
 const VALID_GRADIENT_IDS = new Set(STORY_GRADIENT_PRESETS.map((g) => g.id));
+
+export function sanitizeAllowedEmbedDomains(raw: unknown): string[] {
+  let entries: string[] = [];
+  if (Array.isArray(raw)) {
+    entries = raw.filter((v): v is string => typeof v === 'string');
+  } else if (typeof raw === 'string') {
+    entries = raw.split(/[\s,;]+/);
+  }
+  const out: string[] = [];
+  const seen = new Set<string>();
+  for (const item of entries) {
+    const trimmed = item.trim().toLowerCase();
+    if (!trimmed) continue;
+    let candidate = trimmed;
+    if (candidate.includes('://')) {
+      try {
+        candidate = new URL(candidate).hostname.toLowerCase();
+      } catch {
+        continue;
+      }
+    }
+    candidate = candidate.replace(/\/.*$/, '').replace(/:\d+$/, '');
+    if (!DOMAIN_HOSTNAME_REGEX.test(candidate)) continue;
+    if (!seen.has(candidate)) {
+      seen.add(candidate);
+      out.push(candidate);
+    }
+    if (out.length >= 20) break;
+  }
+  return out;
+}
 
 declare global {
   var __scrollyMemoryStories: Map<string, StoryRecord> | undefined;
@@ -242,6 +275,9 @@ interface StoryDbRow {
   language: string | null;
   theme: unknown;
   cards: unknown;
+  is_public?: boolean | null;
+  allow_embed?: boolean | null;
+  allowed_embed_domains?: unknown;
   views_count: number | null;
   completions_count: number | null;
   created_at: Date | string | null;
@@ -258,6 +294,9 @@ function rowToStoryRecord(row: StoryDbRow): StoryRecord {
     language,
     theme: sanitizeStoryTheme(row.theme),
     cards: sanitizeStoryCards(row.cards, language),
+    isPublic: row.is_public !== false,
+    allowEmbed: row.allow_embed !== false,
+    allowedEmbedDomains: sanitizeAllowedEmbedDomains(row.allowed_embed_domains),
     viewsCount: Math.max(0, Number(row.views_count) || 0),
     completionsCount: Math.max(0, Number(row.completions_count) || 0),
     createdAt:
@@ -383,6 +422,7 @@ export async function listStoriesByOwner(ownerUserId: string): Promise<StoryReco
   const pool = getPool();
   const res = await pool.query<StoryDbRow>(
     `SELECT id, owner_user_id, title, source_url, language, theme, cards,
+            is_public, allow_embed, allowed_embed_domains,
             views_count, completions_count, created_at, updated_at
      FROM stories
      WHERE owner_user_id = $1
@@ -400,6 +440,9 @@ export async function createStory(input: {
   language?: unknown;
   theme?: unknown;
   cards?: unknown;
+  isPublic?: unknown;
+  allowEmbed?: unknown;
+  allowedEmbedDomains?: unknown;
 }): Promise<
   | { ok: true; story: StoryRecord }
   | { ok: false; error: 'invalid_title' | 'invalid_cards' | 'story_limit_reached' }
@@ -423,6 +466,9 @@ export async function createStory(input: {
 
   const sourceUrl = sanitizeStoryHttpUrl(input.sourceUrl);
   const theme = sanitizeStoryTheme(input.theme);
+  const isPublic = input.isPublic === false ? false : true;
+  const allowEmbed = input.allowEmbed === false ? false : true;
+  const allowedEmbedDomains = sanitizeAllowedEmbedDomains(input.allowedEmbedDomains);
   const nowIso = new Date().toISOString();
 
   if (!hasDatabaseUrl()) {
@@ -439,6 +485,9 @@ export async function createStory(input: {
       language,
       theme,
       cards,
+      isPublic,
+      allowEmbed,
+      allowedEmbedDomains,
       viewsCount: 0,
       completionsCount: 0,
       createdAt: nowIso,
@@ -454,12 +503,27 @@ export async function createStory(input: {
   for (let attempt = 0; attempt < 5; attempt += 1) {
     const id = generateStoryId(8);
     const res = await pool.query<StoryDbRow>(
-      `INSERT INTO stories (id, owner_user_id, title, source_url, language, theme, cards, updated_at)
-       VALUES ($1, $2, $3, $4, $5, $6::jsonb, $7::jsonb, NOW())
+      `INSERT INTO stories (
+         id, owner_user_id, title, source_url, language, theme, cards,
+         is_public, allow_embed, allowed_embed_domains, updated_at
+       )
+       VALUES ($1, $2, $3, $4, $5, $6::jsonb, $7::jsonb, $8, $9, $10::jsonb, NOW())
        ON CONFLICT (id) DO NOTHING
        RETURNING id, owner_user_id, title, source_url, language, theme, cards,
+                 is_public, allow_embed, allowed_embed_domains,
                  views_count, completions_count, created_at, updated_at`,
-      [id, ownerUserId, title, sourceUrl, language, JSON.stringify(theme), JSON.stringify(cards)]
+      [
+        id,
+        ownerUserId,
+        title,
+        sourceUrl,
+        language,
+        JSON.stringify(theme),
+        JSON.stringify(cards),
+        isPublic,
+        allowEmbed,
+        JSON.stringify(allowedEmbedDomains),
+      ]
     );
     const row = res.rows[0];
     if (row) {
@@ -479,6 +543,9 @@ export async function updateStory(
     language?: unknown;
     theme?: unknown;
     cards?: unknown;
+    isPublic?: unknown;
+    allowEmbed?: unknown;
+    allowedEmbedDomains?: unknown;
   }
 ): Promise<
   | { ok: true; story: StoryRecord }
@@ -498,6 +565,9 @@ export async function updateStory(
   }
   const sourceUrl = sanitizeStoryHttpUrl(patch.sourceUrl);
   const theme = sanitizeStoryTheme(patch.theme);
+  const hasIsPublicPatch = typeof patch.isPublic === 'boolean';
+  const hasAllowEmbedPatch = typeof patch.allowEmbed === 'boolean';
+  const hasAllowedDomainsPatch = patch.allowedEmbedDomains !== undefined;
 
   if (!hasDatabaseUrl()) {
     const map = getMemoryStoriesMap();
@@ -511,6 +581,11 @@ export async function updateStory(
       language,
       theme,
       cards,
+      isPublic: hasIsPublicPatch ? Boolean(patch.isPublic) : existing.isPublic !== false,
+      allowEmbed: hasAllowEmbedPatch ? Boolean(patch.allowEmbed) : existing.allowEmbed !== false,
+      allowedEmbedDomains: hasAllowedDomainsPatch
+        ? sanitizeAllowedEmbedDomains(patch.allowedEmbedDomains)
+        : existing.allowedEmbedDomains ?? [],
       updatedAt: new Date().toISOString(),
     };
     map.set(id, updated);
@@ -519,8 +594,13 @@ export async function updateStory(
 
   await ensureSchema();
   const pool = getPool();
-  const existingRes = await pool.query<{ owner_user_id: string | null }>(
-    `SELECT owner_user_id FROM stories WHERE id = $1 LIMIT 1`,
+  const existingRes = await pool.query<{
+    owner_user_id: string | null;
+    is_public: boolean | null;
+    allow_embed: boolean | null;
+    allowed_embed_domains: unknown;
+  }>(
+    `SELECT owner_user_id, is_public, allow_embed, allowed_embed_domains FROM stories WHERE id = $1 LIMIT 1`,
     [id]
   );
   if (existingRes.rowCount === 0) {
@@ -530,6 +610,16 @@ export async function updateStory(
     return { ok: false, error: 'forbidden' };
   }
 
+  const nextIsPublic = hasIsPublicPatch
+    ? Boolean(patch.isPublic)
+    : existingRes.rows[0].is_public !== false;
+  const nextAllowEmbed = hasAllowEmbedPatch
+    ? Boolean(patch.allowEmbed)
+    : existingRes.rows[0].allow_embed !== false;
+  const nextAllowedDomains = hasAllowedDomainsPatch
+    ? sanitizeAllowedEmbedDomains(patch.allowedEmbedDomains)
+    : sanitizeAllowedEmbedDomains(existingRes.rows[0].allowed_embed_domains);
+
   const res = await pool.query<StoryDbRow>(
     `UPDATE stories
      SET title = $2,
@@ -537,11 +627,26 @@ export async function updateStory(
          language = $4,
          theme = $5::jsonb,
          cards = $6::jsonb,
+         is_public = $8,
+         allow_embed = $9,
+         allowed_embed_domains = $10::jsonb,
          updated_at = NOW()
      WHERE id = $1 AND owner_user_id = $7
      RETURNING id, owner_user_id, title, source_url, language, theme, cards,
+               is_public, allow_embed, allowed_embed_domains,
                views_count, completions_count, created_at, updated_at`,
-    [id, title, sourceUrl, language, JSON.stringify(theme), JSON.stringify(cards), ownerUserId]
+    [
+      id,
+      title,
+      sourceUrl,
+      language,
+      JSON.stringify(theme),
+      JSON.stringify(cards),
+      ownerUserId,
+      nextIsPublic,
+      nextAllowEmbed,
+      JSON.stringify(nextAllowedDomains),
+    ]
   );
   const row = res.rows[0];
   if (!row) return { ok: false, error: 'forbidden' };
@@ -583,7 +688,7 @@ export async function deleteStory(
 
 export async function getStoryById(
   rawId: string,
-  options?: { incrementViews?: boolean }
+  options?: { incrementViews?: boolean; publicOnly?: boolean }
 ): Promise<StoryRecord | null> {
   const id = String(rawId || '').trim();
   if (!isValidStoryId(id)) return null;
@@ -592,6 +697,7 @@ export async function getStoryById(
     const map = getMemoryStoriesMap();
     const existing = map.get(id);
     if (!existing) return null;
+    if (options?.publicOnly && existing.isPublic === false) return null;
     if (options?.incrementViews) {
       existing.viewsCount += 1;
     }
@@ -600,21 +706,93 @@ export async function getStoryById(
 
   await ensureSchema();
   const pool = getPool();
+  const publicClause = options?.publicOnly ? ' AND is_public = TRUE' : '';
   const queryText = options?.incrementViews
     ? `UPDATE stories
        SET views_count = views_count + 1
-       WHERE id = $1
+       WHERE id = $1${publicClause}
        RETURNING id, owner_user_id, title, source_url, language, theme, cards,
+                 is_public, allow_embed, allowed_embed_domains,
                  views_count, completions_count, created_at, updated_at`
     : `SELECT id, owner_user_id, title, source_url, language, theme, cards,
+              is_public, allow_embed, allowed_embed_domains,
               views_count, completions_count, created_at, updated_at
        FROM stories
-       WHERE id = $1
+       WHERE id = $1${publicClause}
        LIMIT 1`;
 
   const res = await pool.query<StoryDbRow>(queryText, [id]);
   const row = res.rows[0];
   return row ? rowToStoryRecord(row) : null;
+}
+
+export async function getStoryEmbedPolicy(rawId: string): Promise<{
+  isPublic: boolean;
+  allowEmbed: boolean;
+  allowedEmbedDomains: string[];
+} | null> {
+  const id = String(rawId || '').trim();
+  if (!isValidStoryId(id)) return null;
+
+  if (!hasDatabaseUrl()) {
+    const existing = getMemoryStoriesMap().get(id);
+    if (!existing) return null;
+    return {
+      isPublic: existing.isPublic !== false,
+      allowEmbed: existing.allowEmbed !== false,
+      allowedEmbedDomains: sanitizeAllowedEmbedDomains(existing.allowedEmbedDomains),
+    };
+  }
+
+  await ensureSchema();
+  const pool = getPool();
+  const res = await pool.query<{
+    is_public: boolean | null;
+    allow_embed: boolean | null;
+    allowed_embed_domains: unknown;
+  }>(
+    `SELECT is_public, allow_embed, allowed_embed_domains FROM stories WHERE id = $1 LIMIT 1`,
+    [id]
+  );
+  const row = res.rows[0];
+  if (!row) return null;
+  return {
+    isPublic: row.is_public !== false,
+    allowEmbed: row.allow_embed !== false,
+    allowedEmbedDomains: sanitizeAllowedEmbedDomains(row.allowed_embed_domains),
+  };
+}
+
+export function buildEmbedContentSecurityPolicy(
+  policy: {
+    isPublic: boolean;
+    allowEmbed: boolean;
+    allowedEmbedDomains: string[];
+  } | null
+): string {
+  const allowedDomains = policy ? sanitizeAllowedEmbedDomains(policy.allowedEmbedDomains) : [];
+  let frameAncestors = "frame-ancestors 'self'";
+  if (policy && policy.isPublic && policy.allowEmbed) {
+    frameAncestors =
+      allowedDomains.length > 0
+        ? `frame-ancestors 'self' ${allowedDomains.map((d) => `https://${d}`).join(' ')}`
+        : 'frame-ancestors *';
+  }
+
+  return [
+    "default-src 'self'",
+    "base-uri 'self'",
+    "object-src 'none'",
+    frameAncestors,
+    "form-action 'self'",
+    "font-src 'self' data:",
+    "style-src 'self' 'unsafe-inline'",
+    `script-src 'self' 'unsafe-inline'${process.env.NODE_ENV !== 'production' ? " 'unsafe-eval'" : ''} https://static.cloudflareinsights.com https://www.googletagmanager.com https://www.google-analytics.com https://www.clarity.ms https://scripts.clarity.ms`,
+    "img-src 'self' data: blob: https:",
+    "media-src 'self' blob: data: https:",
+    "connect-src 'self' https://cloudflareinsights.com https://static.cloudflareinsights.com https://*.google-analytics.com https://analytics.google.com https://*.analytics.google.com https://*.googletagmanager.com https://*.clarity.ms https://c.bing.com",
+    ...(process.env.NODE_ENV === 'production' ? ['upgrade-insecure-requests'] : []),
+  ].join('; ');
 }
 
 export async function incrementStoryCompletions(rawId: string): Promise<boolean> {
@@ -623,7 +801,7 @@ export async function incrementStoryCompletions(rawId: string): Promise<boolean>
 
   if (!hasDatabaseUrl()) {
     const existing = getMemoryStoriesMap().get(id);
-    if (!existing) return false;
+    if (!existing || existing.isPublic === false) return false;
     existing.completionsCount += 1;
     return true;
   }
@@ -633,7 +811,7 @@ export async function incrementStoryCompletions(rawId: string): Promise<boolean>
   const res = await pool.query(
     `UPDATE stories
      SET completions_count = completions_count + 1
-     WHERE id = $1`,
+     WHERE id = $1 AND is_public = TRUE`,
     [id]
   );
   return (res.rowCount ?? 0) > 0;

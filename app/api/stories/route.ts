@@ -100,6 +100,9 @@ export async function POST(request: Request) {
       language: body.language,
       theme: body.theme,
       cards: body.cards,
+      isPublic: body.isPublic,
+      allowEmbed: body.allowEmbed,
+      allowedEmbedDomains: body.allowedEmbedDomains,
     });
 
     if (!result.ok) {

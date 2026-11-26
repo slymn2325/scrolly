@@ -46,6 +46,7 @@ export default function ScrollyStoryPlayer({
   className = '',
 }: ScrollyStoryPlayerProps) {
   const [internalIndex, setInternalIndex] = useState(0);
+  const [expandedCardId, setExpandedCardId] = useState<string | null>(null);
   const [answersByCardId, setAnswersByCardId] = useState<
     Record<
       string,
@@ -70,11 +71,17 @@ export default function ScrollyStoryPlayer({
   useEffect(() => {
     setAnswersByCardId({});
     setFailedMediaIds({});
+    setExpandedCardId(null);
     hasReportedCompletionRef.current = false;
   }, [storyId]);
 
+  useEffect(() => {
+    setExpandedCardId(null);
+  }, [currentIndex]);
+
   const setActiveSlide = (nextIdx: number) => {
     const clamped = Math.max(0, Math.min(Math.max(0, cards.length - 1), nextIdx));
+    setExpandedCardId(null);
     if (!controlled) {
       setInternalIndex(clamped);
     }
@@ -135,12 +142,12 @@ export default function ScrollyStoryPlayer({
     0.2,
     Math.min(0.85, Number(theme.overlayOpacity ?? 58) / 100)
   );
-  const surfaceClass =
+  const sheetSurfaceClass =
     theme.surfaceStyle === 'solid'
-      ? 'story-surface-solid rounded-2xl p-3.5'
+      ? 'story-surface-solid'
       : theme.surfaceStyle === 'editorial'
-        ? 'story-surface-editorial rounded-2xl p-3.5'
-        : 'story-surface-glass rounded-2xl p-3.5';
+        ? 'story-surface-editorial'
+        : 'story-surface-glass';
   const alignClass = theme.textAlign === 'center' ? 'text-center items-center' : 'text-left items-start';
   const fontClass =
     theme.fontStyle === 'editorial'
@@ -162,8 +169,8 @@ export default function ScrollyStoryPlayer({
       className={`story-player-shell relative flex h-full w-full flex-col overflow-hidden rounded-[26px] border border-cik-line shadow-e3 ${fontClass} ${className}`}
     >
       {/* Top Progress & Deck Header */}
-      <header className="relative z-hud shrink-0 border-b border-cik-line bg-cik-bg/90 px-3.5 pb-2.5 pt-3 backdrop-blur-md">
-        <div className="mb-2 flex items-center gap-1" aria-label="Story progress">
+      <header className="relative z-hud shrink-0 border-b border-cik-line bg-cik-bg/90 px-3.5 pb-2 pt-2.5 backdrop-blur-md">
+        <div className="mb-1.5 flex items-center gap-1" aria-label="Story progress">
           {cards.map((card, idx) => {
             const answered = Boolean(answersByCardId[card.id]);
             const active = idx === currentIndex;
@@ -241,6 +248,7 @@ export default function ScrollyStoryPlayer({
             const isVideo = mediaOk && /\.(mp4|webm|mov)(?:$|[?#])/i.test(card.mediaUrl);
             const gradientBg = getStoryGradientCss(card.gradientId, idx);
             const quizActive = card.quizEnabled !== false;
+            const isExpanded = expandedCardId === card.id;
             const challenge: GuessChallenge = {
               type: 'binary',
               prompt: card.question,
@@ -284,15 +292,20 @@ export default function ScrollyStoryPlayer({
                   )
                 ) : null}
 
-                {/* Layer 2: Adjustable Dark/Readability Gradient Scrim */}
+                {/* Layer 2: Soft Top + Bottom Scrim Keeping Upper 45-50% Media Open */}
                 <div
                   aria-hidden="true"
                   className="story-stage-scrim pointer-events-none absolute inset-0"
                 />
 
-                {/* Layer 3: Foreground Top Pills & Editorial / Quick Guess Card */}
-                <div className="relative z-content flex h-full min-h-0 flex-col justify-between overflow-y-auto p-3.5">
-                  <div className="flex flex-wrap items-center justify-between gap-2">
+                {/* Layer 3: Foreground Top Badges & Unified Bottom-Sheet Drawer */}
+                <div
+                  onClick={() => {
+                    if (isExpanded) setExpandedCardId(null);
+                  }}
+                  className="relative z-content flex h-full min-h-0 flex-col justify-between overflow-hidden"
+                >
+                  <div className="flex shrink-0 flex-wrap items-center justify-between gap-2 p-3">
                     <span className="inline-flex items-center gap-1.5 rounded-pill border border-cik-line bg-cik-bg/85 px-2.5 py-1 text-[11px] font-extrabold text-cik-cta backdrop-blur-md">
                       <Sparkles className="h-3 w-3 shrink-0" aria-hidden="true" />
                       <span>
@@ -304,111 +317,195 @@ export default function ScrollyStoryPlayer({
                     </span>
                   </div>
 
-                  <div className="mt-auto space-y-2.5 pt-3">
-                    <div className={`flex flex-col gap-2 ${alignClass} ${surfaceClass}`}>
-                      <h2 className="w-full text-lg font-extrabold leading-snug text-cik-text">
+                  {/* Open Media Viewport Window (top 45-50%) */}
+                  <div className="min-h-0 flex-1" aria-hidden="true" />
+
+                  {/* Single Unified Bottom-Sheet Drawer (matches fact-bottom-sheet) */}
+                  <div
+                    data-testid="story-bottom-sheet"
+                    data-expanded={isExpanded ? 'true' : 'false'}
+                    data-scroll-contain={isExpanded ? 'true' : undefined}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (!isExpanded) setExpandedCardId(card.id);
+                    }}
+                    className={`pointer-events-auto mt-auto flex min-h-0 w-full flex-col gap-2 rounded-t-3xl border-t border-cik-line px-4 pt-2 backdrop-blur-xl transition-all duration-300 ease-out ${sheetSurfaceClass} ${alignClass} ${
+                      isExpanded
+                        ? 'max-h-[72%] overflow-y-auto overscroll-y-contain pb-3.5'
+                        : 'max-h-[42%] cursor-pointer overflow-hidden pb-3'
+                    }`}
+                  >
+                    <button
+                      type="button"
+                      aria-label={
+                        isExpanded
+                          ? language === 'tr'
+                            ? 'Çekmeceyi daralt'
+                            : 'Collapse drawer'
+                          : language === 'tr'
+                            ? 'Çekmeceyi genişlet'
+                            : 'Expand drawer'
+                      }
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setExpandedCardId((prev) => (prev === card.id ? null : card.id));
+                      }}
+                      className="mx-auto flex w-full shrink-0 items-center justify-center py-1"
+                    >
+                      <span
+                        aria-hidden="true"
+                        className="h-1 w-10 rounded-full bg-cik-text/25"
+                      />
+                    </button>
+
+                    <div className="flex w-full shrink-0 items-start justify-between gap-2">
+                      <h2
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setExpandedCardId((prev) => (prev === card.id ? null : card.id));
+                        }}
+                        className={`flex-1 cursor-pointer text-base font-extrabold leading-snug text-cik-text sm:text-lg ${
+                          isExpanded ? '' : 'line-clamp-2'
+                        }`}
+                      >
                         {card.headline}
                       </h2>
-                      <p className="w-full text-[13px] font-semibold leading-relaxed text-cik-text-2">
-                        {card.body}
-                      </p>
-
-                      {card.ctaLabel && safeCtaUrl ? (
-                        <a
-                          href={safeCtaUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="scrolly-tactile story-accent-bg mt-1 inline-flex min-h-9 items-center gap-1.5 rounded-pill px-3.5 py-1.5 text-xs font-extrabold text-cik-on-cta shadow-e1"
+                      {isExpanded ? (
+                        <button
+                          type="button"
+                          data-testid="story-sheet-collapse-btn"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setExpandedCardId(null);
+                          }}
+                          className="shrink-0 rounded-pill border border-cik-line bg-cik-surface px-2.5 py-1 text-[11px] font-extrabold text-cik-cta hover:bg-cik-pink"
                         >
-                          <span>{card.ctaLabel}</span>
-                          <ArrowUpRight className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
-                        </a>
+                          {language === 'tr' ? 'Daralt ▾' : 'Collapse ▾'}
+                        </button>
                       ) : null}
                     </div>
 
-                    {quizActive ? (
-                      <GuessWidget
-                        factId={`${storyId || 'preview'}-${card.id}`}
-                        challenge={challenge}
-                        lang={language}
-                        hideFlipCta
-                        hideXpBadge
-                        initialAnsweredState={
-                          existingAnswer
-                            ? {
-                                tier: existingAnswer.tier,
-                                earnedXp: existingAnswer.earnedXp,
-                                accuracyPct: existingAnswer.accuracyPct,
-                              }
-                            : null
-                        }
-                        onGuessAnswered={(xpAwarded, isAccurate, details) => {
-                          const tier: 'spotOn' | 'close' | 'participated' = isAccurate
-                            ? 'spotOn'
-                            : 'participated';
-                          setAnswersByCardId((prev) => ({
-                            ...prev,
-                            [card.id]: {
-                              tier,
-                              earnedXp: xpAwarded,
-                              accuracyPct: details.accuracyPct,
-                              correct: isAccurate,
-                            },
-                          }));
-                        }}
-                        onRequestFlip={() => {}}
-                        onButtonPop={() => {}}
-                      />
+                    <p
+                      className={`w-full text-xs font-semibold leading-relaxed text-cik-text-2 sm:text-[13px] ${
+                        isExpanded ? '' : 'line-clamp-2'
+                      }`}
+                    >
+                      {card.body}
+                    </p>
+
+                    {!isExpanded ? (
+                      <div className="flex w-full items-center pt-0.5">
+                        <button
+                          type="button"
+                          data-testid="story-sheet-expand-btn"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setExpandedCardId(card.id);
+                          }}
+                          className="scrolly-tactile inline-flex min-h-8 items-center gap-1 rounded-pill border border-cik-line bg-cik-surface px-3 py-1 text-xs font-extrabold text-cik-cta shadow-e1 hover:bg-cik-pink"
+                        >
+                          <span>
+                            {quizActive
+                              ? language === 'tr'
+                                ? 'Tahmin Et / Genişlet ▴'
+                                : 'Guess / Expand ▴'
+                              : language === 'tr'
+                                ? 'Genişlet ▴'
+                                : 'Expand ▴'}
+                          </span>
+                        </button>
+                      </div>
                     ) : null}
 
-                    {allCompleted && idx === cards.length - 1 ? (
-                      <div
-                        data-testid="story-completion-banner"
-                        className="flex items-center justify-between gap-2 rounded-2xl border border-cik-line bg-cik-mint px-3.5 py-2.5 text-cik-mint-text shadow-e1"
-                      >
-                        <span className="flex items-center gap-2 text-xs font-extrabold">
-                          <CheckCircle2 className="h-4 w-4 shrink-0" aria-hidden="true" />
-                          <span>
-                            {quizCards.length > 0
-                              ? language === 'tr'
-                                ? `Tamamlandı: ${correctCount}/${quizCards.length} doğru`
-                                : `Completed: ${correctCount}/${quizCards.length} correct`
-                              : language === 'tr'
-                                ? 'Hikâye tamamlandı'
-                                : 'Story completed'}
-                          </span>
-                        </span>
-                        <button
-                          type="button"
-                          onClick={resetReplay}
-                          className="scrolly-tactile inline-flex items-center gap-1 rounded-pill bg-cik-bg-elevated px-2.5 py-1 text-[11px] font-extrabold text-cik-text"
-                        >
-                          <RotateCcw className="h-3 w-3" aria-hidden="true" />
-                          <span>{language === 'tr' ? 'Tekrar' : 'Replay'}</span>
-                        </button>
+                    {/* Expanded Region: Optional CTA + Quick Guess + Completion */}
+                    <div
+                      className={`grid w-full transition-all duration-300 ease-out ${
+                        isExpanded
+                          ? 'grid-rows-[1fr] opacity-100'
+                          : 'pointer-events-none grid-rows-[0fr] opacity-0'
+                      }`}
+                    >
+                      <div className="min-h-0 overflow-hidden">
+                        <div className="flex flex-col gap-2.5 pt-1 text-left">
+                          {card.ctaLabel && safeCtaUrl ? (
+                            <div className={`flex w-full ${theme.textAlign === 'center' ? 'justify-center' : 'justify-start'}`}>
+                              <a
+                                href={safeCtaUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="scrolly-tactile story-accent-bg inline-flex min-h-9 items-center gap-1.5 rounded-pill px-3.5 py-1.5 text-xs font-extrabold text-cik-on-cta shadow-e1"
+                              >
+                                <span>{card.ctaLabel}</span>
+                                <ArrowUpRight className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+                              </a>
+                            </div>
+                          ) : null}
+
+                          {quizActive ? (
+                            <GuessWidget
+                              factId={`${storyId || 'preview'}-${card.id}`}
+                              challenge={challenge}
+                              lang={language}
+                              hideFlipCta
+                              hideXpBadge
+                              initialAnsweredState={
+                                existingAnswer
+                                  ? {
+                                      tier: existingAnswer.tier,
+                                      earnedXp: existingAnswer.earnedXp,
+                                      accuracyPct: existingAnswer.accuracyPct,
+                                    }
+                                  : null
+                              }
+                              onGuessAnswered={(xpAwarded, isAccurate, details) => {
+                                const tier: 'spotOn' | 'close' | 'participated' = isAccurate
+                                  ? 'spotOn'
+                                  : 'participated';
+                                setAnswersByCardId((prev) => ({
+                                  ...prev,
+                                  [card.id]: {
+                                    tier,
+                                    earnedXp: xpAwarded,
+                                    accuracyPct: details.accuracyPct,
+                                    correct: isAccurate,
+                                  },
+                                }));
+                              }}
+                              onRequestFlip={() => {}}
+                              onButtonPop={() => {}}
+                            />
+                          ) : null}
+
+                          {allCompleted && idx === cards.length - 1 ? (
+                            <div
+                              data-testid="story-completion-banner"
+                              className="flex items-center justify-between gap-2 rounded-2xl border border-cik-line bg-cik-mint px-3.5 py-2.5 text-cik-mint-text shadow-e1"
+                            >
+                              <span className="flex items-center gap-2 text-xs font-extrabold">
+                                <CheckCircle2 className="h-4 w-4 shrink-0" aria-hidden="true" />
+                                <span>
+                                  {quizCards.length > 0
+                                    ? language === 'tr'
+                                      ? `Tamamlandı: ${correctCount}/${quizCards.length} doğru`
+                                      : `Completed: ${correctCount}/${quizCards.length} correct`
+                                    : language === 'tr'
+                                      ? 'Hikâye tamamlandı'
+                                      : 'Story completed'}
+                                </span>
+                              </span>
+                              <button
+                                type="button"
+                                onClick={resetReplay}
+                                className="scrolly-tactile inline-flex items-center gap-1 rounded-pill bg-cik-bg-elevated px-2.5 py-1 text-[11px] font-extrabold text-cik-text"
+                              >
+                                <RotateCcw className="h-3 w-3" aria-hidden="true" />
+                                <span>{language === 'tr' ? 'Tekrar' : 'Replay'}</span>
+                              </button>
+                            </div>
+                          ) : null}
+                        </div>
                       </div>
-                    ) : (
-                      <div className="flex items-center justify-between pt-0.5">
-                        <button
-                          type="button"
-                          disabled={idx === 0}
-                          onClick={() => setActiveSlide(idx - 1)}
-                          className="scrolly-tactile inline-flex min-h-9 items-center gap-1 rounded-pill border border-cik-line bg-cik-bg/90 px-3 text-xs font-bold text-cik-text backdrop-blur-md disabled:cursor-not-allowed disabled:bg-cik-bg/80 disabled:text-cik-muted"
-                        >
-                          <ChevronUp className="h-3.5 w-3.5" aria-hidden="true" />
-                          <span>{language === 'tr' ? 'Önceki' : 'Prev'}</span>
-                        </button>
-                        <button
-                          type="button"
-                          disabled={idx >= cards.length - 1}
-                          onClick={() => setActiveSlide(idx + 1)}
-                          className="scrolly-tactile inline-flex min-h-9 items-center gap-1 rounded-pill border border-cik-line bg-cik-bg/90 px-3 text-xs font-bold text-cik-text backdrop-blur-md disabled:cursor-not-allowed disabled:bg-cik-bg/80 disabled:text-cik-muted"
-                        >
-                          <span>{language === 'tr' ? 'Sonraki' : 'Next'}</span>
-                          <ChevronDown className="h-3.5 w-3.5" aria-hidden="true" />
-                        </button>
-                      </div>
-                    )}
+                    </div>
                   </div>
                 </div>
               </section>
@@ -417,17 +514,51 @@ export default function ScrollyStoryPlayer({
         )}
       </div>
 
-      {/* Mandatory Starter Attribution Bar */}
-      <footer className="relative z-hud flex shrink-0 items-center justify-center border-t border-cik-line bg-cik-bg/95 px-3 py-2 backdrop-blur-md">
+      {/* Fixed Bottom Controls Strip: Prev · Powered by Scrolly.live · Next/Replay */}
+      <footer className="relative z-hud flex shrink-0 items-center justify-between gap-2 border-t border-cik-line bg-cik-bg/95 px-3 py-2 backdrop-blur-md">
+        <button
+          type="button"
+          disabled={cards.length === 0 || currentIndex === 0}
+          onClick={() => setActiveSlide(currentIndex - 1)}
+          data-testid="story-prev-btn"
+          className="scrolly-tactile inline-flex min-h-8 shrink-0 items-center gap-1 rounded-pill border border-cik-line bg-cik-surface px-2.5 text-[11px] font-bold text-cik-text disabled:cursor-not-allowed disabled:bg-cik-bg/80 disabled:text-cik-muted"
+        >
+          <ChevronUp className="h-3.5 w-3.5" aria-hidden="true" />
+          <span>{language === 'tr' ? 'Önceki' : 'Prev'}</span>
+        </button>
+
         <a
           href="https://scrolly.live"
           target="_blank"
           rel="noopener noreferrer"
-          className="inline-flex items-center gap-1.5 text-[11px] font-bold tracking-tight text-cik-text-2 transition-colors hover:text-cik-cta"
+          className="inline-flex min-w-0 items-center gap-1 truncate text-[11px] font-bold tracking-tight text-cik-text-2 transition-colors hover:text-cik-cta"
         >
-          <span>Powered by Scrolly.live</span>
-          <ExternalLink className="h-3 w-3" aria-hidden="true" />
+          <span className="truncate">Powered by Scrolly.live</span>
+          <ExternalLink className="h-3 w-3 shrink-0" aria-hidden="true" />
         </a>
+
+        {allCompleted && currentIndex >= cards.length - 1 ? (
+          <button
+            type="button"
+            onClick={resetReplay}
+            data-testid="story-replay-btn"
+            className="scrolly-tactile story-accent-bg inline-flex min-h-8 shrink-0 items-center gap-1 rounded-pill px-2.5 text-[11px] font-extrabold text-cik-on-cta shadow-e1"
+          >
+            <RotateCcw className="h-3 w-3" aria-hidden="true" />
+            <span>{language === 'tr' ? 'Tekrar' : 'Replay'}</span>
+          </button>
+        ) : (
+          <button
+            type="button"
+            disabled={cards.length === 0 || currentIndex >= cards.length - 1}
+            onClick={() => setActiveSlide(currentIndex + 1)}
+            data-testid="story-next-btn"
+            className="scrolly-tactile inline-flex min-h-8 shrink-0 items-center gap-1 rounded-pill border border-cik-line bg-cik-surface px-2.5 text-[11px] font-bold text-cik-text disabled:cursor-not-allowed disabled:bg-cik-bg/80 disabled:text-cik-muted"
+          >
+            <span>{language === 'tr' ? 'Sonraki' : 'Next'}</span>
+            <ChevronDown className="h-3.5 w-3.5" aria-hidden="true" />
+          </button>
+        )}
       </footer>
     </div>
   );

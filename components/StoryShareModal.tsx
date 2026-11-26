@@ -3,7 +3,7 @@
 import React, { useEffect, useId, useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { AnimatePresence, motion, useDragControls, useReducedMotion } from 'framer-motion';
-import { Check, Copy, Download, Film, MessageCircle, Share2, X } from 'lucide-react';
+import { Check, Copy, Download, Film, Loader2, MessageCircle, Share2, X } from 'lucide-react';
 import BrandLogo from '@/components/BrandLogo';
 import IconButton from '@/components/cikartma/IconButton';
 import Skeleton from '@/components/cikartma/Skeleton';
@@ -291,7 +291,10 @@ export default function StoryShareModal({
     const localized = targetFact[lang];
     const origin =
       typeof window !== 'undefined' ? window.location.origin : 'https://scrolly.live';
-    const shareUrl = `${origin}${getFactUrl(targetFact, lang)}`;
+    const isVocabFact = targetFact.sketchType === 'vocabulary';
+    const shareUrl = isVocabFact
+      ? `${origin}${lang === 'en' ? '/en' : ''}/?category=vocabulary&vocab=${encodeURIComponent(targetFact.id)}`
+      : `${origin}${getFactUrl(targetFact, lang)}`;
     const shareText = `${localized.title} · ${t.brandName}`;
     return { localized, shareUrl, shareText };
   };
@@ -385,7 +388,9 @@ export default function StoryShareModal({
   };
 
   const canonicalCopyUrl = fact
-    ? canonicalFactShareUrl(getFactPrimarySlug(fact), lang === 'en' ? 'en' : 'tr')
+    ? fact.sketchType === 'vocabulary'
+      ? `${typeof window !== 'undefined' ? window.location.origin : 'https://scrolly.live'}${lang === 'en' ? '/en' : ''}/?category=vocabulary&vocab=${encodeURIComponent(fact.id)}`
+      : canonicalFactShareUrl(getFactPrimarySlug(fact), lang === 'en' ? 'en' : 'tr')
     : '';
 
   const handleCopyLink = async () => {
@@ -516,6 +521,15 @@ export default function StoryShareModal({
             <div className="relative mx-auto mt-4 aspect-[9/16] w-40 overflow-hidden rounded-cik-lg bg-cik-pink">
               {previewSrc ? <StoryPreviewMedia src={previewSrc} onReady={markPreview} /> : null}
               {!previewHasImage && <Skeleton className="absolute inset-0 h-full w-full rounded-cik-lg" />}
+              {generating && (
+                <div
+                  data-testid="story-share-loading-indicator"
+                  className="pointer-events-none absolute inset-0 z-10 flex flex-col items-center justify-center gap-1.5 bg-cik-bg/70 px-2 text-center backdrop-blur-sm"
+                >
+                  <Loader2 className="h-5 w-5 animate-spin text-cik-cta" aria-hidden="true" />
+                  <span className="cik-caption-2 font-bold text-cik-text">{t.storyGenerating}</span>
+                </div>
+              )}
               {previewHasImage && (
                 <div className="absolute inset-x-0 bottom-0 bg-cik-text px-3 py-3">
                   <p className="cik-caption-2 line-clamp-4 text-cik-bg">{fact[lang].title}</p>
@@ -543,13 +557,24 @@ export default function StoryShareModal({
               <motion.button
                 type="button"
                 whileTap={reduced ? undefined : { scale: 0.96 }}
-                disabled={!asset}
+                disabled={!asset || generating}
+                aria-busy={generating}
                 onClick={handleNativeShare}
                 data-testid="story-share-native-btn"
-                className="cik-headline flex h-11 w-full items-center justify-center gap-2 rounded-pill bg-cik-cta px-4 text-cik-on-cta disabled:opacity-40"
+                className="cik-headline flex h-11 w-full items-center justify-center gap-2 rounded-pill bg-cik-cta px-4 text-cik-on-cta disabled:opacity-60"
               >
-                <Share2 size={16} strokeWidth={2} aria-hidden="true" />
-                <span>{t.storyShareNativeBtn}</span>
+                {generating && !asset ? (
+                  <Loader2 size={16} className="animate-spin" aria-hidden="true" />
+                ) : (
+                  <Share2 size={16} strokeWidth={2} aria-hidden="true" />
+                )}
+                <span>
+                  {generating && !asset
+                    ? lang === 'tr'
+                      ? 'Kart hazırlanıyor...'
+                      : 'Preparing card...'
+                    : t.storyShareNativeBtn}
+                </span>
               </motion.button>
 
               {fact.gifUrl && (
@@ -570,13 +595,23 @@ export default function StoryShareModal({
                 <motion.button
                   type="button"
                   whileTap={reduced ? undefined : { scale: 0.96 }}
-                  disabled={!asset}
+                  disabled={!asset || generating}
                   onClick={handleDownloadPng}
                   data-testid="story-download-btn"
-                  className="cik-footnote flex h-11 items-center justify-center gap-2 rounded-pill border border-cik-line bg-cik-surface px-3 text-cik-text disabled:opacity-40"
+                  className="cik-footnote flex h-11 items-center justify-center gap-2 rounded-pill border border-cik-line bg-cik-surface px-3 text-cik-text disabled:opacity-50"
                 >
-                  <Download size={16} strokeWidth={2} aria-hidden="true" />
-                  <span>{t.storyDownloadBtn}</span>
+                  {generating && !asset ? (
+                    <Loader2 size={16} className="animate-spin" aria-hidden="true" />
+                  ) : (
+                    <Download size={16} strokeWidth={2} aria-hidden="true" />
+                  )}
+                  <span>
+                    {generating && !asset
+                      ? lang === 'tr'
+                        ? 'Hazırlanıyor'
+                        : 'Preparing'
+                      : t.storyDownloadBtn}
+                  </span>
                 </motion.button>
 
                 <motion.button

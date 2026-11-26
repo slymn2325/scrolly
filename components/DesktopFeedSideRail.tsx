@@ -76,8 +76,10 @@ export default function DesktopFeedSideRail({
 
   const hasFact = Boolean(activeFact);
   const isVocab = activeSlide?.type === 'vocabulary';
+  const canLike = Boolean(hasFact || isVocab);
   const canSave = Boolean(hasFact || isVocab);
   const canDetail = Boolean(hasFact || isVocab);
+  const canShare = Boolean(hasFact || isVocab);
   const catMeta = activeFact ? getCategoryMeta(activeFact.category) : null;
   const localized = activeFact ? activeFact[lang] : null;
   const sourceName =
@@ -126,8 +128,8 @@ export default function DesktopFeedSideRail({
         synonyms,
         note:
           lang === 'tr'
-            ? 'Bağlam cümlesini ve İngilizce tanımı incele; karttaki başlığa veya Detay butonuna dokunarak anlam testini aç.'
-            : 'Review the English definition and context sentence, then tap the word header or Detail to open the meaning quiz.',
+            ? 'Bağlam cümlesini ve İngilizce tanımı incele; kart üzerindeki anlam testini çöz, eş anlamlılar için Biraz daha veya Döndür (Space) ikonuna dokun.'
+            : 'Review the English definition and context sentence, solve the quick quiz on the card, or press Space / Flip for synonyms and examples.',
         xpLabel: '+15 XP',
       };
     }
@@ -194,11 +196,11 @@ export default function DesktopFeedSideRail({
             }
             data-testid="desktop-action-like"
             onClick={onLike}
-            disabled={!hasFact}
+            disabled={!canLike}
             aria-pressed={isLiked}
-            className={isLiked && hasFact ? 'bg-cik-cta text-cik-on-cta' : 'disabled:opacity-40'}
+            className={isLiked && canLike ? 'bg-cik-cta text-cik-on-cta' : 'disabled:opacity-40'}
           >
-            <Heart size={24} strokeWidth={2} className={isLiked && hasFact ? 'fill-current' : ''} />
+            <Heart size={24} strokeWidth={2} className={isLiked && canLike ? 'fill-current' : ''} />
           </IconButton>
         )}
         {onSave && (
@@ -229,7 +231,7 @@ export default function DesktopFeedSideRail({
             label={lang === 'tr' ? 'Paylaş' : 'Share'}
             data-testid="desktop-action-share"
             onClick={onShare}
-            disabled={!hasFact}
+            disabled={!canShare}
             className="disabled:opacity-40"
           >
             <Share size={24} strokeWidth={2} />
@@ -361,7 +363,7 @@ export default function DesktopFeedSideRail({
                   <kbd className="rounded-cik-sm bg-cik-bg-elevated px-2 py-1 font-mono text-cik-text">↑ K</kbd>
                 </li>
                 <li className="flex items-center justify-between gap-2">
-                  <span>{lang === 'tr' ? 'İleri / geri' : 'Forward / back'}</span>
+                  <span>{lang === 'tr' ? 'Kartı çevir / Detay' : 'Flip / Detail'}</span>
                   <kbd className="rounded-cik-sm bg-cik-bg-elevated px-2 py-1 font-mono text-cik-text">Space</kbd>
                 </li>
               </ul>

@@ -40,6 +40,7 @@ import type { FactCard } from '@/utils/factsData';
 import { loadLikedFactIds, removeLikedFact } from '@/utils/likedFacts';
 import { loadSavedFactIds, removeSavedFact, SAVED_FACTS_UPDATED_EVENT } from '@/utils/savedFacts';
 import { getLeagueInfo, saveUserMemory, type UserMemoryState } from '@/utils/userMemory';
+import { useVerifiedOfflineStatus } from '@/utils/networkStatus';
 import type { SavedVocabularyEntry } from '@/types/vocabulary';
 import { loadSavedVocabNotebook, removeSavedVocabWord } from '@/utils/vocabNotebook';
 
@@ -104,7 +105,7 @@ export default function DiplomaProfileModal({
   const [likedIds, setLikedIds] = useState<string[]>([]);
   const [authEmail, setAuthEmail] = useState<string | null>(null);
   const [signingOut, setSigningOut] = useState(false);
-  const [offline, setOffline] = useState(false);
+  const offline = useVerifiedOfflineStatus();
   const [nickFocus, setNickFocus] = useState(0);
   const [paintedDark, setPaintedDark] = useState(false);
   const scrollBodyRef = useRef<HTMLDivElement>(null);
@@ -190,17 +191,6 @@ export default function DiplomaProfileModal({
       window.removeEventListener('scrolly-liked-facts-updated', syncLikes);
     };
   }, [open]);
-
-  useEffect(() => {
-    const sync = () => setOffline(typeof navigator !== 'undefined' && navigator.onLine === false);
-    sync();
-    window.addEventListener('online', sync);
-    window.addEventListener('offline', sync);
-    return () => {
-      window.removeEventListener('online', sync);
-      window.removeEventListener('offline', sync);
-    };
-  }, []);
 
   useEscapeClose(open && !isPage && !settingsOpen, onClose);
 

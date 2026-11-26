@@ -36,6 +36,9 @@ export interface StoryRecord {
   language: StoryLanguage;
   theme: StoryTheme;
   cards: StoryCardItem[];
+  isPublic?: boolean;
+  allowEmbed?: boolean;
+  allowedEmbedDomains?: string[];
   viewsCount: number;
   completionsCount: number;
   createdAt: string;

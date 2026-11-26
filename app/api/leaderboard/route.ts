@@ -155,6 +155,10 @@ export async function POST(request: Request) {
     const score = Number(body.score || 0);
     const correctCount = Number(body.correctCount || 0);
     const totalQuestions = Number(body.totalQuestions || 1);
+    const answers = Array.isArray(body.answers)
+      ? body.answers.slice(0, 15).map(Boolean)
+      : undefined;
+    const durationSec = typeof body.durationSec === 'number' ? body.durationSec : undefined;
 
     const result = await recordQuizSubmission({
       deviceId,
@@ -164,6 +168,8 @@ export async function POST(request: Request) {
       score,
       correctCount,
       totalQuestions,
+      answers,
+      durationSec,
       clientDate,
     });
 

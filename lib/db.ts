@@ -909,6 +909,9 @@ export async function ensureSchema(): Promise<void> {
           language TEXT NOT NULL DEFAULT 'tr' CHECK (language IN ('tr', 'en')),
           theme JSONB NOT NULL DEFAULT '{"mode":"dark","accent":"#7C3AED"}'::jsonb,
           cards JSONB NOT NULL DEFAULT '[]'::jsonb,
+          is_public BOOLEAN NOT NULL DEFAULT TRUE,
+          allow_embed BOOLEAN NOT NULL DEFAULT TRUE,
+          allowed_embed_domains JSONB NOT NULL DEFAULT '[]'::jsonb,
           views_count INT NOT NULL DEFAULT 0,
           completions_count INT NOT NULL DEFAULT 0,
           created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
@@ -918,6 +921,15 @@ export async function ensureSchema(): Promise<void> {
       await pool.query(`ALTER TABLE stories ADD COLUMN IF NOT EXISTS owner_user_id TEXT;`);
       await pool.query(
         `ALTER TABLE stories ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW();`
+      );
+      await pool.query(
+        `ALTER TABLE stories ADD COLUMN IF NOT EXISTS is_public BOOLEAN NOT NULL DEFAULT TRUE;`
+      );
+      await pool.query(
+        `ALTER TABLE stories ADD COLUMN IF NOT EXISTS allow_embed BOOLEAN NOT NULL DEFAULT TRUE;`
+      );
+      await pool.query(
+        `ALTER TABLE stories ADD COLUMN IF NOT EXISTS allowed_embed_domains JSONB NOT NULL DEFAULT '[]'::jsonb;`
       );
       await pool.query(`
         CREATE INDEX IF NOT EXISTS idx_stories_created_at

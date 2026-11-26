@@ -34,7 +34,7 @@ export default function StickerSlap({ label, onDone }: StickerSlapProps) {
       }
       transition={reduced ? motionTiming.reducedFade : motionSpring.stickerSlap}
       className="pointer-events-none fixed left-1/2 z-toast flex flex-col items-center gap-2 rounded-pill bg-cik-surface px-4 py-2 shadow-e1"
-      style={{ bottom: 'calc(env(safe-area-inset-bottom) + 64px)' }}
+      style={{ top: 'calc(env(safe-area-inset-top, 0px) + 72px)' }}
     >
       <img src="/assets/fluent/glowing-star.png" alt="" width={40} height={40} className="h-10 w-10 object-contain" />
       <span className="cik-footnote text-cik-text">{label}</span>

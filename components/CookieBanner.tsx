@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useLayoutEffect, useState } from 'react';
+import Link from 'next/link';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { type Language, translations } from '@/i18n/translations';
 import { motionTiming } from '@/lib/motion';
@@ -51,9 +52,11 @@ export default function CookieBanner({
       frame = 0;
       const view = window.innerHeight;
       const dock = document.querySelector('[data-testid="ios-floating-dock"]');
-      const dockTop = dock?.getBoundingClientRect().top ?? view - 72;
-      const stripBottom = dockTop - 8;
-      const next = Math.max(16, Math.round(view - stripBottom));
+      const dockRect = dock?.getBoundingClientRect();
+      const hasVisibleDock = Boolean(dockRect && dockRect.height > 0 && dockRect.top > 0);
+      const next = hasVisibleDock
+        ? Math.max(16, Math.round(view - (dockRect!.top - 8)))
+        : 20;
       setBottomPx((prev) => (prev === next ? prev : next));
     };
     const schedule = () => {
@@ -85,9 +88,16 @@ export default function CookieBanner({
             transition={motionTiming.reducedFade}
             aria-label={lang === 'tr' ? 'Çerez bildirimi' : 'Cookie notice'}
             data-testid="cookie-banner"
-            className="material-thick pointer-events-auto mx-auto flex h-11 w-full max-w-lg items-center gap-2 rounded-pill px-2 shadow-e1"
+            className="material-thick pointer-events-auto mx-auto flex min-h-11 w-full max-w-lg flex-wrap items-center gap-2 rounded-pill px-3 py-1.5 shadow-e1 sm:flex-nowrap"
           >
-            <p className="cik-caption-1 min-w-0 flex-1 truncate pl-2 text-cik-text">{t.cookieText}</p>
+            <p className="cik-caption-1 min-w-0 flex-1 truncate pl-1 text-cik-text">{t.cookieText}</p>
+            <Link
+              href={lang === 'en' ? '/privacy?lang=en' : '/privacy'}
+              data-testid="cookie-privacy-link"
+              className="cik-caption-1 shrink-0 px-1.5 text-cik-text-2 underline"
+            >
+              {lang === 'tr' ? 'Gizlilik' : 'Privacy'}
+            </Link>
             <button
               type="button"
               onClick={onAccept}

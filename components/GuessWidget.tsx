@@ -357,7 +357,7 @@ export default function GuessWidget({
           data-testid="guess-result-banner"
           role="status"
           aria-live="polite"
-          className={`flex flex-wrap items-center justify-between gap-2 rounded-cik-md border px-3 py-2 backdrop-blur-sm ${
+          className={`flex flex-col gap-2.5 sm:flex-row sm:items-center sm:justify-between rounded-cik-md border px-3 py-2 backdrop-blur-sm ${
             accurate
               ? 'border-cik-mint-text/20 bg-cik-mint text-cik-mint-text'
               : 'border-cik-rose-text/20 bg-cik-rose text-cik-rose-text'
@@ -393,7 +393,7 @@ export default function GuessWidget({
               }}
               onPointerDown={(e) => e.stopPropagation()}
               onDoubleClick={stop}
-              className="cik-footnote inline-flex min-h-11 shrink-0 items-center gap-2 rounded-pill border border-cik-line bg-cik-bg-elevated px-3 text-cik-text shadow-e1 transition hover:bg-cik-surface active:scale-[0.97]"
+              className="cik-footnote inline-flex min-h-11 w-full shrink-0 items-center justify-center gap-2 rounded-pill border border-cik-line bg-cik-bg-elevated px-3 text-cik-text shadow-e1 transition hover:bg-cik-surface active:scale-[0.97] sm:w-auto"
             >
               <RotateCw className="h-4 w-4 shrink-0" aria-hidden="true" />
               <span>{t.guessFlipCta}</span>

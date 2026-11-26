@@ -1,12 +1,33 @@
 import type { SavedVocabularyEntry, VocabularyCard } from '@/types/vocabulary';
 
 const VOCAB_NOTEBOOK_KEY = 'scrolly_vocab_notebook_v1';
+let activeSpeechResetTimer: ReturnType<typeof setTimeout> | null = null;
 
-export function speakVocabularyText(text: string, locale: 'en-US' | 'tr-TR', rate = 1): boolean {
-  if (typeof window === 'undefined' || !('speechSynthesis' in window)) {
+export interface SpeakVocabularyHandlers {
+  onStart?: () => void;
+  onEnd?: () => void;
+  onError?: () => void;
+}
+
+export function speakVocabularyText(
+  text: string,
+  locale: 'en-US' | 'tr-TR',
+  rate = 1,
+  handlers?: SpeakVocabularyHandlers
+): boolean {
+  if (
+    typeof window === 'undefined' ||
+    !('speechSynthesis' in window) ||
+    typeof SpeechSynthesisUtterance === 'undefined'
+  ) {
+    handlers?.onError?.();
     return false;
   }
   try {
+    if (activeSpeechResetTimer) {
+      clearTimeout(activeSpeechResetTimer);
+      activeSpeechResetTimer = null;
+    }
     window.speechSynthesis.cancel();
     const utterance = new SpeechSynthesisUtterance(text);
     utterance.lang = locale;
@@ -19,9 +40,41 @@ export function speakVocabularyText(text: string, locale: 'en-US' | 'tr-TR', rat
     if (matchedVoice) {
       utterance.voice = matchedVoice;
     }
+    let finished = false;
+    const finishCleanly = () => {
+      if (finished) return;
+      finished = true;
+      if (activeSpeechResetTimer) {
+        clearTimeout(activeSpeechResetTimer);
+        activeSpeechResetTimer = null;
+      }
+      handlers?.onEnd?.();
+    };
+    utterance.onstart = () => {
+      handlers?.onStart?.();
+    };
+    utterance.onend = finishCleanly;
+    utterance.onerror = (event) => {
+      if (finished) return;
+      finished = true;
+      if (activeSpeechResetTimer) {
+        clearTimeout(activeSpeechResetTimer);
+        activeSpeechResetTimer = null;
+      }
+      const errCode = (event as { error?: string }).error;
+      if (errCode === 'interrupted' || errCode === 'canceled') {
+        handlers?.onEnd?.();
+      } else {
+        handlers?.onError?.();
+      }
+    };
+    handlers?.onStart?.();
+    const estimatedMs = Math.max(1600, Math.round((text.length * 95) / Math.max(0.5, rate)));
+    activeSpeechResetTimer = setTimeout(finishCleanly, estimatedMs);
     window.speechSynthesis.speak(utterance);
     return true;
   } catch {
+    handlers?.onError?.();
     return false;
   }
 }

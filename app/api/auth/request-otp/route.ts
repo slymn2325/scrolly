@@ -95,6 +95,24 @@ export async function POST(request: Request) {
       });
     }
 
+    const pairLimit = checkRateLimit(`auth_request_otp_pair:${clientIp}:${canonical}`, 3, 10 * 60_000);
+    if (!pairLimit.allowed) {
+      const errPayload: RequestOtpResponse = {
+        ok: false,
+        cooldownSec: pairLimit.retryAfterSec,
+        expiresInSec: OTP_TTL_SECONDS,
+        delivery: 'resend',
+        error:
+          lang === 'en'
+            ? 'Too many verification code requests from this device. Please wait a few minutes.'
+            : 'Bu cihazdan bu e-posta için çok fazla doğrulama kodu istendi. Lütfen birkaç dakika bekleyin.',
+      };
+      return NextResponse.json(errPayload, {
+        status: 429,
+        headers: { ...NO_STORE_HEADERS, 'Retry-After': String(pairLimit.retryAfterSec) },
+      });
+    }
+
     const globalLimit = checkRateLimit('auth_request_otp_global', 100, 60 * 60_000);
     if (!globalLimit.allowed) {
       const errPayload: RequestOtpResponse = {

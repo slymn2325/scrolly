@@ -563,7 +563,10 @@ export default function MemoryQuizCard({
     const onKeyDown = (e: KeyboardEvent) => {
       const target = e.target as HTMLElement | null;
       if (target && ['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName)) return;
-      if (!hasAnswered && (e.key === '1' || e.key === '2' || e.key === '3')) {
+      if (
+        !hasAnswered &&
+        (e.key === '1' || e.key === '2' || e.key === '3' || e.key === '4')
+      ) {
         const idx = Number(e.key) - 1;
         if (idx >= 0 && idx < prepared.options.length) {
           e.preventDefault();
@@ -603,7 +606,7 @@ export default function MemoryQuizCard({
         : quizMode === 'vocabulary'
           ? t.wordLabTitle
           : t.quizBadge;
-  const optionLetters = ['A', 'B', 'C'] as const;
+  const optionLetters = ['A', 'B', 'C', 'D'] as const;
   const multiplierLabel = formatComboMultiplier(comboStreak);
   const topicExplanation =
     localized.quiz.explanation?.trim() ||
@@ -636,8 +639,12 @@ export default function MemoryQuizCard({
       animate={{ opacity: 1, y: 0 }}
       transition={reduced ? { duration: 0.15 } : motionSpring.sheetOpen}
       data-testid="memory-quiz-card"
-      className="mx-auto flex max-h-full w-full max-w-xl flex-col overflow-y-auto rounded-sticker bg-cik-surface p-5 pb-6 text-cik-text shadow-sticker"
+      className="mx-auto flex max-h-full min-h-0 w-full max-w-xl flex-col overflow-hidden rounded-sticker bg-cik-surface text-cik-text shadow-sticker"
     >
+      <div
+        data-scroll-contain="true"
+        className="min-h-0 flex-1 overflow-y-auto overscroll-y-contain p-5 pb-8"
+      >
       {isDuelMode && (
         <div
           data-testid="duel-active-banner"
@@ -874,8 +881,9 @@ export default function MemoryQuizCard({
           </motion.div>
         )}
       </AnimatePresence>
+      </div>
 
-      <div className="sticky bottom-0 z-10 -mx-5 -mb-6 mt-3 flex shrink-0 flex-col gap-2 border-t border-cik-line bg-cik-surface px-5 pt-3 pb-4">
+      <div className="flex shrink-0 flex-col gap-2 border-t border-cik-line bg-cik-surface px-5 pt-3 pb-[max(1rem,env(safe-area-inset-bottom))]">
         {hasAnswered && (
           <Button data-testid="quiz-next-btn" className="w-full" onClick={handleContinue}>
             {isLastQuestion || timedOut ? t.quizFinish : t.quizNextQ}

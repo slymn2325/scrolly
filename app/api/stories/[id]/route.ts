@@ -56,14 +56,27 @@ export async function GET(
   const viewDedupe = checkRateLimit(`stories_view:${ip}:${id.trim()}`, 1, 5 * 60_000);
 
   try {
-    const story = await getStoryById(id, { incrementViews: viewDedupe.allowed });
+    const story = await getStoryById(id, { incrementViews: false });
     if (!story) {
       return NextResponse.json(
         { ok: false, error: 'not_found' },
         { status: 404, headers: NO_STORE_HEADERS }
       );
     }
-    return NextResponse.json({ ok: true, story }, { headers: NO_STORE_HEADERS });
+    if (story.isPublic === false) {
+      const sessionUser = await getSessionUserFromRequest(request).catch(() => null);
+      if (!sessionUser || sessionUser.id !== story.ownerUserId) {
+        return NextResponse.json(
+          { ok: false, error: 'not_found' },
+          { status: 404, headers: NO_STORE_HEADERS }
+        );
+      }
+      return NextResponse.json({ ok: true, story }, { headers: NO_STORE_HEADERS });
+    }
+    const publishedStory = viewDedupe.allowed
+      ? (await getStoryById(id, { incrementViews: true, publicOnly: true })) ?? story
+      : story;
+    return NextResponse.json({ ok: true, story: publishedStory }, { headers: NO_STORE_HEADERS });
   } catch (err) {
     console.error('[GET /api/stories/[id]] Failed:', err);
     return NextResponse.json(
@@ -164,6 +177,9 @@ export async function PUT(
       language: body.language,
       theme: body.theme,
       cards: body.cards,
+      isPublic: body.isPublic,
+      allowEmbed: body.allowEmbed,
+      allowedEmbedDomains: body.allowedEmbedDomains,
     });
 
     if (!result.ok) {

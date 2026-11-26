@@ -71,6 +71,30 @@ function CategoryIcon({
   );
 }
 
+export type VocabLevelFilter = 'all' | 'B1' | 'B2' | 'C1' | 'C2';
+
+const VOCAB_LEVEL_OPTIONS: ReadonlyArray<{ id: VocabLevelFilter; labelTr: string; labelEn: string }> = [
+  { id: 'all', labelTr: 'Tümü', labelEn: 'All' },
+  { id: 'B1', labelTr: 'B1', labelEn: 'B1' },
+  { id: 'B2', labelTr: 'B2', labelEn: 'B2' },
+  { id: 'C1', labelTr: 'C1', labelEn: 'C1' },
+  { id: 'C2', labelTr: 'C2', labelEn: 'C2' },
+];
+
+function normalizeVocabLevelParam(raw: string | null): VocabLevelFilter {
+  const clean = (raw || '').trim().toUpperCase();
+  if (clean === 'B1' || clean === 'B2' || clean === 'C1' || clean === 'C2') {
+    return clean;
+  }
+  return 'all';
+}
+
+function matchesVocabLevel(cefrLevel: string | undefined, filter: VocabLevelFilter): boolean {
+  if (filter === 'all') return true;
+  const tokens = (cefrLevel || 'B2').toUpperCase().split(/[^A-Z0-9]+/);
+  return tokens.includes(filter);
+}
+
 const GESTURE_LOCK_MS = 450;
 const WHEEL_THRESHOLD_PX = 50;
 
@@ -121,6 +145,7 @@ interface TikTokFeedProps {
   onMarkFactSeen?: (fact: FactCard) => void;
   onOpenDuelFromCard: (fact: FactCard) => void;
   onOpenStoryShare: (fact: FactCard) => void;
+  onOpenShareVocab?: (card: VocabularyCard) => void;
   onGuessReward: (xp: number, accurate: boolean, category?: CategoryId, accuracyPct?: number) => void;
   onGuessLocked?: (factId: string) => void;
   lockedFactIds?: Record<string, boolean>;
@@ -160,6 +185,7 @@ const TikTokFeed = forwardRef<TikTokFeedHandle, TikTokFeedProps>(function TikTok
     onMarkFactSeen,
     onOpenDuelFromCard,
     onOpenStoryShare,
+    onOpenShareVocab,
     onGuessReward,
     onGuessLocked,
     lockedFactIds,
@@ -180,6 +206,7 @@ const TikTokFeed = forwardRef<TikTokFeedHandle, TikTokFeedProps>(function TikTok
   const settleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const safeInitialIndex = Math.max(0, initialSlideIndex);
   const activeIndexRef = useRef<number>(safeInitialIndex);
+  const prevSafeInitialIndexRef = useRef<number>(safeInitialIndex);
   const hasRestoredInitialScrollRef = useRef<boolean>(false);
   const prevTrackedSlideIdxRef = useRef<number | null>(null);
   const lastProgrammaticStepRef = useRef<{ index: number; at: number } | null>(null);
@@ -211,6 +238,7 @@ const TikTokFeed = forwardRef<TikTokFeedHandle, TikTokFeedProps>(function TikTok
   const onBeforeSlideNavigateRef = useRef(onBeforeSlideNavigate);
   onBeforeSlideNavigateRef.current = onBeforeSlideNavigate;
   const [activeIndex, setActiveIndex] = useState<number>(safeInitialIndex);
+  const [vocabLevelFilter, setVocabLevelFilter] = useState<VocabLevelFilter>('all');
   const [isCategoryDrawerOpen, setIsCategoryDrawerOpen] = useState<boolean>(false);
   const [showCategorySkeleton, setShowCategorySkeleton] = useState(false);
   const categoryMenuRef = useRef<HTMLDivElement>(null);
@@ -240,6 +268,22 @@ const TikTokFeed = forwardRef<TikTokFeedHandle, TikTokFeedProps>(function TikTok
     return merged;
   }, [vocabularyCards]);
 
+  const filteredVocabPool = useMemo(() => {
+    if (vocabLevelFilter === 'all') return vocabPool;
+    const filtered = vocabPool.filter((card) => matchesVocabLevel(card.cefrLevel, vocabLevelFilter));
+    return filtered.length > 0 ? filtered : vocabPool;
+  }, [vocabPool, vocabLevelFilter]);
+
+  useIsomorphicLayoutEffect(() => {
+    if (typeof window === 'undefined') return;
+    const levelParam = normalizeVocabLevelParam(
+      new URLSearchParams(window.location.search).get('level')
+    );
+    if (levelParam !== 'all') {
+      setVocabLevelFilter(levelParam);
+    }
+  }, []);
+
   // Dil Ogrenme = vocab-only. Genel = facts only. Category = filtered facts.
   const slides: FeedSlideItem[] = useMemo(() => {
     const items: FeedSlideItem[] = [];
@@ -247,7 +291,7 @@ const TikTokFeed = forwardRef<TikTokFeedHandle, TikTokFeedProps>(function TikTok
     let ctaCount = 0;
 
     if (activeCategory === 'vocabulary') {
-      return vocabPool.map((card, idx) => ({
+      return filteredVocabPool.map((card, idx) => ({
         type: 'vocabulary' as const,
         key: `vocab-${card.id}-${idx}`,
         card,
@@ -275,9 +319,13 @@ const TikTokFeed = forwardRef<TikTokFeedHandle, TikTokFeedProps>(function TikTok
     return items;
   }, [deckFacts, activeCategory, vocabPool]);
 
-  // Synchronously restore exact scrollTop when returning to Explore tab before first paint
+  // Synchronously restore exact scrollTop when returning or resolving deep-linked ?vocab= / ?slide index
   useIsomorphicLayoutEffect(() => {
-    if (hasRestoredInitialScrollRef.current) return;
+    const initialChanged = prevSafeInitialIndexRef.current !== safeInitialIndex;
+    prevSafeInitialIndexRef.current = safeInitialIndex;
+    if (hasRestoredInitialScrollRef.current && !(initialChanged && safeInitialIndex > 0 && activeIndexRef.current === 0)) {
+      return;
+    }
     const container = scrollRef.current;
     if (!container || slides.length === 0) return;
     hasRestoredInitialScrollRef.current = true;
@@ -350,13 +398,20 @@ const TikTokFeed = forwardRef<TikTokFeedHandle, TikTokFeedProps>(function TikTok
         if (settledSlide?.type === 'fact') {
           // The open card stays in component state. The homepage URL is not a fact permalink.
           currentUrl.searchParams.delete('vocab');
+          currentUrl.searchParams.delete('level');
           currentUrl.searchParams.delete('fact');
         } else if (settledSlide?.type === 'vocabulary') {
           currentUrl.searchParams.delete('fact');
           currentUrl.searchParams.set('vocab', settledSlide.card.id);
+          if (vocabLevelFilter === 'all') {
+            currentUrl.searchParams.delete('level');
+          } else {
+            currentUrl.searchParams.set('level', vocabLevelFilter);
+          }
         } else {
           currentUrl.searchParams.delete('fact');
           currentUrl.searchParams.delete('vocab');
+          currentUrl.searchParams.delete('level');
         }
 
         const after = `${currentUrl.pathname}${currentUrl.search}${currentUrl.hash}`;
@@ -367,7 +422,7 @@ const TikTokFeed = forwardRef<TikTokFeedHandle, TikTokFeedProps>(function TikTok
         // Ignore history API errors in restricted webviews
       }
     },
-    [activeCategory, slides]
+    [activeCategory, slides, vocabLevelFilter]
   );
 
   const scheduleSlideSettle = useCallback(
@@ -531,7 +586,10 @@ const TikTokFeed = forwardRef<TikTokFeedHandle, TikTokFeedProps>(function TikTok
     [getStepAnchorIndex, scrollToSlide]
   );
 
-  // One key gesture = one card. ↓/J/PageDown/Space forward, ↑/K/PageUp/Shift+Space back.
+  const slidesRef = useRef<FeedSlideItem[]>(slides);
+  slidesRef.current = slides;
+
+  // One key gesture = one card (arrows / J / K / PageUp / PageDown). Space flips or opens card details.
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (!isExploreVisibleRef.current) return;
@@ -556,9 +614,28 @@ const TikTokFeed = forwardRef<TikTokFeedHandle, TikTokFeedProps>(function TikTok
         return;
       }
 
-      const forward = key === 'arrowdown' || key === 'pagedown' || key === 'j' || (key === ' ' && !e.shiftKey);
-      const backward =
-        key === 'arrowup' || key === 'pageup' || key === 'k' || (key === ' ' && e.shiftKey);
+      if (key === ' ' && !e.shiftKey) {
+        const currentSlide = slidesRef.current[activeIndexRef.current];
+        if (currentSlide?.type === 'fact') {
+          e.preventDefault();
+          window.dispatchEvent(
+            new CustomEvent('scrolly-card-action', {
+              detail: { factId: currentSlide.fact.id, action: 'flip' },
+            })
+          );
+        } else if (currentSlide?.type === 'vocabulary') {
+          e.preventDefault();
+          window.dispatchEvent(
+            new CustomEvent('scrolly-card-action', {
+              detail: { vocabId: currentSlide.card.id, action: 'detail' },
+            })
+          );
+        }
+        return;
+      }
+
+      const forward = key === 'arrowdown' || key === 'pagedown' || key === 'j';
+      const backward = key === 'arrowup' || key === 'pageup' || key === 'k' || (key === ' ' && e.shiftKey);
       if (!forward && !backward) return;
       e.preventDefault();
       stepOneCard(forward ? 1 : -1);
@@ -599,6 +676,19 @@ const TikTokFeed = forwardRef<TikTokFeedHandle, TikTokFeedProps>(function TikTok
       }
       if (targetEl.closest('input, textarea, select, [contenteditable="true"]')) return;
       if (targetEl.closest('[data-testid="language-lab-overlay"], [data-testid="fact-card-back"]')) return;
+
+      const vocabScroll = targetEl.closest('[data-vocab-scroll="true"]') as HTMLElement | null;
+      if (vocabScroll && vocabScroll.scrollHeight > vocabScroll.clientHeight + 2) {
+        const d = normalizeWheelDelta(e);
+        const canInnerDown =
+          d > 0 && vocabScroll.scrollTop + vocabScroll.clientHeight < vocabScroll.scrollHeight - 2;
+        const canInnerUp = d < 0 && vocabScroll.scrollTop > 2;
+        if (!canInnerDown && !canInnerUp) {
+          e.preventDefault();
+          e.stopPropagation();
+        }
+        return;
+      }
 
       const nested = targetEl.closest(
         '[data-scroll-contain="true"], [data-choice-scroll="true"]'
@@ -800,28 +890,58 @@ const TikTokFeed = forwardRef<TikTokFeedHandle, TikTokFeedProps>(function TikTok
     return () => window.removeEventListener('scrolly-chrome-block', onChromeBlock as EventListener);
   }, []);
 
-  // Deference: while a card is between snaps, the HUD lifts 4px and drops to 92% opacity.
+  // Deference + snap-settle safety + instant right-rail sync on manual scroll
   useEffect(() => {
     const el = scrollRef.current;
     if (!el) return;
     let frame = 0;
+    let settleSnapTimer: ReturnType<typeof setTimeout> | null = null;
     const update = () => {
       frame = 0;
       const height = el.clientHeight || 1;
       const offset = el.scrollTop % height;
       const traveling = offset > 8 && height - offset > 8;
       setHudTraveling((prev) => (prev === traveling ? prev : traveling));
+
+      const count = slidesRef.current.length;
+      if (count > 0) {
+        const nearest = Math.max(0, Math.min(count - 1, Math.round(el.scrollTop / height)));
+        if (nearest !== activeIndexRef.current) {
+          activeIndexRef.current = nearest;
+          setActiveIndex((prev) => (prev === nearest ? prev : nearest));
+          scheduleSlideSettle(nearest);
+        }
+      }
     };
     const onScroll = () => {
-      if (frame) return;
-      frame = window.requestAnimationFrame(update);
+      if (!frame) {
+        frame = window.requestAnimationFrame(update);
+      }
+      if (settleSnapTimer) clearTimeout(settleSnapTimer);
+      settleSnapTimer = setTimeout(() => {
+        settleSnapTimer = null;
+        const height = el.clientHeight || 1;
+        const count = slidesRef.current.length;
+        if (count === 0) return;
+        const nearest = Math.max(0, Math.min(count - 1, Math.round(el.scrollTop / height)));
+        const targetTop = nearest * height;
+        if (Math.abs(el.scrollTop - targetTop) > 4) {
+          el.scrollTo({ top: targetTop, behavior: 'smooth' });
+        }
+        if (nearest !== activeIndexRef.current) {
+          activeIndexRef.current = nearest;
+          setActiveIndex(nearest);
+          scheduleSlideSettle(nearest);
+        }
+      }, 130);
     };
     el.addEventListener('scroll', onScroll, { passive: true });
     return () => {
       el.removeEventListener('scroll', onScroll);
       if (frame) window.cancelAnimationFrame(frame);
+      if (settleSnapTimer) clearTimeout(settleSnapTimer);
     };
-  }, []);
+  }, [scheduleSlideSettle]);
 
   // Ambient accent + active fact/slide notification for desktop stage & side panel
   useEffect(() => {
@@ -958,6 +1078,41 @@ const TikTokFeed = forwardRef<TikTokFeedHandle, TikTokFeedProps>(function TikTok
         </div>
       </header>
 
+      {activeCategory === 'vocabulary' && !chromeBlocked ? (
+        <nav
+          data-testid="vocab-level-filter-bar"
+          aria-label={lang === 'tr' ? 'Kelime seviye filtresi' : 'Vocabulary level filter'}
+          className="pointer-events-auto absolute left-3 right-3 top-[calc(max(env(safe-area-inset-top),12px)+46px)] z-hud flex items-center justify-center gap-1.5 lg:top-[58px]"
+        >
+          {VOCAB_LEVEL_OPTIONS.map((opt) => {
+            const active = vocabLevelFilter === opt.id;
+            return (
+              <button
+                key={opt.id}
+                type="button"
+                aria-pressed={active}
+                data-testid={`vocab-level-${opt.id}`}
+                onClick={() => {
+                  onButtonPop();
+                  setVocabLevelFilter(opt.id);
+                  activeIndexRef.current = 0;
+                  setActiveIndex(0);
+                  const container = scrollRef.current;
+                  if (container) container.scrollTo({ top: 0, behavior: 'auto' });
+                }}
+                className={`scrolly-tactile rounded-pill border px-3 py-1 text-xs font-extrabold shadow-e1 backdrop-blur-md transition ${
+                  active
+                    ? 'border-cik-cta bg-cik-cta text-cik-on-cta'
+                    : 'border-cik-line bg-cik-surface/95 text-cik-text hover:bg-cik-pink'
+                }`}
+              >
+                {lang === 'tr' ? opt.labelTr : opt.labelEn}
+              </button>
+            );
+          })}
+        </nav>
+      ) : null}
+
       {showCategorySkeleton ? (
         <div
           className="pointer-events-none absolute inset-0 z-content flex items-center justify-center bg-cik-bg px-4"
@@ -1043,6 +1198,7 @@ const TikTokFeed = forwardRef<TikTokFeedHandle, TikTokFeedProps>(function TikTok
               ) : slide.type === 'vocabulary' ? (
                 <VocabularySlide
                   card={slide.card}
+                  vocabPool={vocabPool}
                   lang={lang}
                   darkMode={darkMode}
                   isActive={effectiveSlideActive}
@@ -1050,6 +1206,7 @@ const TikTokFeed = forwardRef<TikTokFeedHandle, TikTokFeedProps>(function TikTok
                   cookieBannerVisible={cookieBannerVisible}
                   onButtonPop={onButtonPop}
                   onEarnXp={onEarnXp}
+                  onOpenShare={onOpenShareVocab}
                   onSuccessSound={onSuccessSound}
                   onWrongSound={onWrongSound}
                 />

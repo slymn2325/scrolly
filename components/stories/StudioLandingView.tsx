@@ -48,8 +48,12 @@ export default function StudioLandingView({
 
   const handleSubmitWaitlist = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!waitlistName.trim()) {
+      setWaitlistError(isTr ? 'Lütfen adını gir.' : 'Please enter your name.');
+      return;
+    }
     const email = waitlistEmail.trim().toLowerCase();
-    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) {
       setWaitlistError(isTr ? 'Geçerli bir e-posta adresi girin.' : 'Enter a valid email address.');
       return;
     }
@@ -560,25 +564,32 @@ export default function StudioLandingView({
                 </button>
               </div>
             ) : (
-              <form onSubmit={handleSubmitWaitlist} className="mt-4 space-y-3">
+              <form noValidate onSubmit={handleSubmitWaitlist} className="mt-4 space-y-3">
                 {waitlistError ? (
-                  <p className="rounded-xl bg-cik-rose px-3 py-2 text-xs font-bold text-cik-rose-text">
+                  <p
+                    role="alert"
+                    className="rounded-xl border border-cik-rose-text/25 bg-cik-rose px-3 py-2 text-xs font-bold text-cik-rose-text"
+                  >
                     {waitlistError}
                   </p>
                 ) : null}
                 <input
                   type="text"
-                  required
                   value={waitlistName}
-                  onChange={(e) => setWaitlistName(e.target.value)}
+                  onChange={(e) => {
+                    setWaitlistName(e.target.value);
+                    if (waitlistError) setWaitlistError(null);
+                  }}
                   placeholder={isTr ? 'Adınız' : 'Your name'}
                   className="w-full rounded-xl border border-cik-line bg-cik-surface-2 px-3.5 py-2.5 text-sm font-semibold text-cik-text placeholder:text-cik-text-3"
                 />
                 <input
                   type="email"
-                  required
                   value={waitlistEmail}
-                  onChange={(e) => setWaitlistEmail(e.target.value)}
+                  onChange={(e) => {
+                    setWaitlistEmail(e.target.value);
+                    if (waitlistError) setWaitlistError(null);
+                  }}
                   placeholder="name@company.com"
                   className="w-full rounded-xl border border-cik-line bg-cik-surface-2 px-3.5 py-2.5 text-sm font-semibold text-cik-text placeholder:text-cik-text-3"
                 />

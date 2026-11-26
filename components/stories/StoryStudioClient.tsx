@@ -115,6 +115,9 @@ export default function StoryStudioClient({
   );
   const [sourceUrl, setSourceUrl] = useState<string>('');
   const [theme, setTheme] = useState<StoryTheme>({ ...DEFAULT_STORY_THEME });
+  const [isPublic, setIsPublic] = useState<boolean>(true);
+  const [allowEmbed, setAllowEmbed] = useState<boolean>(true);
+  const [allowedDomainsInput, setAllowedDomainsInput] = useState<string>('');
   const [cards, setCards] = useState<StoryCardItem[]>(
     LANDING_DEMO_CARDS[initialLanguage].slice(0, 2)
   );
@@ -318,6 +321,11 @@ export default function StoryStudioClient({
         : '/api/stories';
       const method = editingStoryId ? 'PUT' : 'POST';
 
+      const allowedEmbedDomains = allowedDomainsInput
+        .split(/[\s,;]+/)
+        .map((d) => d.trim())
+        .filter(Boolean);
+
       const res = await fetch(targetUrl, {
         method,
         credentials: 'same-origin',
@@ -328,6 +336,9 @@ export default function StoryStudioClient({
           language,
           theme,
           cards,
+          isPublic,
+          allowEmbed,
+          allowedEmbedDomains,
         }),
       });
       const data = (await res.json()) as {
@@ -388,6 +399,9 @@ export default function StoryStudioClient({
     setTitle(story.title);
     setSourceUrl(story.sourceUrl || '');
     setTheme({ ...DEFAULT_STORY_THEME, ...story.theme });
+    setIsPublic(story.isPublic !== false);
+    setAllowEmbed(story.allowEmbed !== false);
+    setAllowedDomainsInput((story.allowedEmbedDomains || []).join(', '));
     setCards(story.cards);
     setActivePreviewIndex(0);
     setInspectorTab('content');
@@ -442,6 +456,9 @@ export default function StoryStudioClient({
     setPublishedResult(null);
     setTitle(isTr ? 'Yeni Etkileşimli Hikâye' : 'New Interactive Story');
     setSourceUrl('');
+    setIsPublic(true);
+    setAllowEmbed(true);
+    setAllowedDomainsInput('');
     setCards([makeEmptyCard(language, 0)]);
     setActivePreviewIndex(0);
     setInspectorTab('content');
@@ -1589,6 +1606,110 @@ export default function StoryStudioClient({
                     })}
                   </div>
                 </div>
+
+                {/* Publish Visibility & Iframe Embed Access Control */}
+                <div className="space-y-3 border-t border-cik-line pt-3">
+                  <span className="cik-caption-1 block text-cik-text-2">
+                    {isTr ? 'Yayın & Embed Güvenliği' : 'Publish & Embed Access'}
+                  </span>
+
+                  <div className="flex items-center justify-between gap-2 rounded-2xl border border-cik-line bg-cik-surface-2 px-3 py-2">
+                    <div className="min-w-0">
+                      <p className="text-xs font-extrabold text-cik-text">
+                        {isTr ? 'Yayın Durumu' : 'Visibility'}
+                      </p>
+                      <p className="text-[11px] font-semibold text-cik-text-2">
+                        {isPublic
+                          ? isTr
+                            ? 'Herkese açık (/embed erişilebilir)'
+                            : 'Public (/embed reachable)'
+                          : isTr
+                            ? 'Taslak (/embed 404 döner)'
+                            : 'Draft (/embed returns 404)'}
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      role="switch"
+                      aria-checked={isPublic}
+                      data-testid="studio-public-toggle"
+                      onClick={() => setIsPublic((v) => !v)}
+                      className={`shrink-0 rounded-pill px-3 py-1 text-[11px] font-extrabold transition ${
+                        isPublic
+                          ? 'bg-cik-mint text-cik-mint-text'
+                          : 'bg-cik-butter text-cik-butter-text'
+                      }`}
+                    >
+                      {isPublic
+                        ? isTr
+                          ? 'Yayında'
+                          : 'Public'
+                        : isTr
+                          ? 'Taslak'
+                          : 'Draft'}
+                    </button>
+                  </div>
+
+                  <div className="flex items-center justify-between gap-2 rounded-2xl border border-cik-line bg-cik-surface-2 px-3 py-2">
+                    <div className="min-w-0">
+                      <p className="text-xs font-extrabold text-cik-text">
+                        {isTr ? 'Harici Sitelerde Embed' : 'External Iframe Embed'}
+                      </p>
+                      <p className="text-[11px] font-semibold text-cik-text-2">
+                        {allowEmbed
+                          ? isTr
+                            ? 'İzin verilen domainlerde çalışır'
+                            : 'Allowed for external frames'
+                          : isTr
+                            ? 'Yalnızca Scrolly içinde (frame-ancestors self)'
+                            : 'Restricted to self only'}
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      role="switch"
+                      aria-checked={allowEmbed}
+                      data-testid="studio-allow-embed-toggle"
+                      onClick={() => setAllowEmbed((v) => !v)}
+                      className={`shrink-0 rounded-pill px-3 py-1 text-[11px] font-extrabold transition ${
+                        allowEmbed
+                          ? 'bg-cik-mint text-cik-mint-text'
+                          : 'bg-cik-rose text-cik-rose-text'
+                      }`}
+                    >
+                      {allowEmbed
+                        ? isTr
+                          ? 'Açık'
+                          : 'Allowed'
+                        : isTr
+                          ? 'Kapalı'
+                          : 'Blocked'}
+                    </button>
+                  </div>
+
+                  {allowEmbed ? (
+                    <label className="block space-y-1">
+                      <span className="text-[11px] font-bold text-cik-text-2">
+                        {isTr
+                          ? 'İzinli Embed Domainleri (opsiyonel)'
+                          : 'Allowed Embed Domains (optional)'}
+                      </span>
+                      <input
+                        type="text"
+                        data-testid="studio-allowed-domains-input"
+                        value={allowedDomainsInput}
+                        onChange={(e) => setAllowedDomainsInput(e.target.value)}
+                        placeholder="ornek.com, blog.ornek.com"
+                        className="w-full rounded-xl border border-cik-line bg-cik-bg-elevated px-3 py-2 text-xs font-semibold text-cik-text placeholder:text-cik-text-3"
+                      />
+                      <span className="block text-[10px] font-semibold text-cik-text-3">
+                        {isTr
+                          ? 'Boş bırakılırsa tüm domainlere (*), doldurulursa yalnızca self ve yazılı domainlere izin verilir.'
+                          : 'Leave empty for any site (*), or comma-separate domains to restrict frame-ancestors.'}
+                      </span>
+                    </label>
+                  ) : null}
+                </div>
               </div>
             ) : null}
 
@@ -1650,9 +1771,25 @@ export default function StoryStudioClient({
                                 </span>
                               </p>
                             </div>
-                            <span className="rounded-pill bg-cik-surface px-2 py-0.5 font-mono text-[10px] font-bold text-cik-text-2">
-                              {story.cards.length} {isTr ? 'kart' : 'cards'}
-                            </span>
+                            <div className="flex shrink-0 flex-wrap items-center justify-end gap-1">
+                              {story.isPublic === false ? (
+                                <span className="rounded-pill bg-cik-butter px-2 py-0.5 text-[10px] font-extrabold text-cik-butter-text">
+                                  {isTr ? 'Taslak' : 'Draft'}
+                                </span>
+                              ) : null}
+                              {story.allowEmbed === false ? (
+                                <span className="rounded-pill bg-cik-rose px-2 py-0.5 text-[10px] font-extrabold text-cik-rose-text">
+                                  {isTr ? 'Embed Kapalı' : 'No Embed'}
+                                </span>
+                              ) : story.allowedEmbedDomains && story.allowedEmbedDomains.length > 0 ? (
+                                <span className="rounded-pill bg-cik-pink px-2 py-0.5 text-[10px] font-extrabold text-cik-cta">
+                                  {story.allowedEmbedDomains.length} domain
+                                </span>
+                              ) : null}
+                              <span className="rounded-pill bg-cik-surface px-2 py-0.5 font-mono text-[10px] font-bold text-cik-text-2">
+                                {story.cards.length} {isTr ? 'kart' : 'cards'}
+                              </span>
+                            </div>
                           </div>
 
                           <div className="flex flex-wrap gap-1.5">

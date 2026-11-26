@@ -32,7 +32,7 @@ import type { SavedVocabularyEntry } from '@/types/vocabulary';
 
 export const SESSION_COOKIE_NAME = 'scrolly_session';
 export const SESSION_MAX_AGE_SECONDS = 60 * 60 * 24 * 30; // 30 days
-export const OTP_TTL_SECONDS = 600; // 10 minutes
+export const OTP_TTL_SECONDS = 480; // 8 minutes
 export const OTP_COOLDOWN_SECONDS = 60;
 export const OTP_HOURLY_EMAIL_LIMIT = 5;
 export const OTP_HOURLY_IP_LIMIT = 12;
@@ -1307,8 +1307,8 @@ export async function requestOtpChallenge(params: {
 
   await pool.query(
     `INSERT INTO auth_otps (id, email, canonical_email, code_hash, expires_at, attempts, ip_hash)
-     VALUES ($1, $2, $3, $4, NOW() + INTERVAL '10 minutes', 0, $5)`,
-    [otpId, email, canonical, codeHash, ipHash]
+     VALUES ($1, $2, $3, $4, NOW() + ($6::int * INTERVAL '1 second'), 0, $5)`,
+    [otpId, email, canonical, codeHash, ipHash, OTP_TTL_SECONDS]
   );
 
   const mailResult = await sendOtpEmail({

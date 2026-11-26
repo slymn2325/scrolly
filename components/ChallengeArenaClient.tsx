@@ -256,10 +256,10 @@ export default function ChallengeArenaClient({
     return (
       <main
         data-testid="challenge-playing-stage"
-        className="h-[100dvh] w-full overflow-y-auto bg-cik-bg px-3 py-5 text-cik-text"
+        className="flex h-[100dvh] w-full flex-col overflow-hidden bg-cik-bg px-3 py-4 text-cik-text"
       >
-        <div className="mx-auto flex w-full max-w-xl flex-col gap-3">
-          <div className="flex items-center justify-between gap-2 rounded-cik-lg border border-cik-line bg-cik-surface px-4 py-2.5 shadow-e1">
+        <div className="mx-auto flex min-h-0 w-full max-w-xl flex-1 flex-col gap-3">
+          <div className="flex shrink-0 items-center justify-between gap-2 rounded-cik-lg border border-cik-line bg-cik-surface px-4 py-2.5 shadow-e1">
             <span className="cik-footnote inline-flex items-center gap-2 text-cik-cta">
               <Swords size={16} strokeWidth={2} aria-hidden="true" />
               <span>
@@ -273,19 +273,21 @@ export default function ChallengeArenaClient({
             </span>
           </div>
 
-          <MemoryQuizCard
-            questions={questions}
-            lang={lang}
-            quizMode={quizModeForChallenge}
-            vocabularyPool={vocabularyPool}
-            onAnswerSound={(isCorrect) =>
-              isCorrect ? playDing(soundEnabled) : playWrong(soundEnabled)
-            }
-            onTickSound={(urgent) => playTick(soundEnabled, urgent)}
-            onButtonPop={() => playPop(soundEnabled)}
-            onComplete={handleComplete}
-            onSkip={() => setStage('intro')}
-          />
+          <div className="flex min-h-0 flex-1 flex-col">
+            <MemoryQuizCard
+              questions={questions}
+              lang={lang}
+              quizMode={quizModeForChallenge}
+              vocabularyPool={vocabularyPool}
+              onAnswerSound={(isCorrect) =>
+                isCorrect ? playDing(soundEnabled) : playWrong(soundEnabled)
+              }
+              onTickSound={(urgent) => playTick(soundEnabled, urgent)}
+              onButtonPop={() => playPop(soundEnabled)}
+              onComplete={handleComplete}
+              onSkip={() => setStage('intro')}
+            />
+          </div>
         </div>
       </main>
     );

@@ -492,7 +492,7 @@ export default function LazyAuthPrompt({
                 <div
                   role="alert"
                   data-testid="lazy-auth-error"
-                  className="cik-footnote mt-3 flex items-start gap-2 rounded-cik-md bg-cik-rose px-3 py-3 text-cik-rose-text"
+                  className="cik-footnote mt-3 flex items-start gap-2 rounded-cik-md border border-cik-rose-text/25 bg-cik-rose px-3 py-3 text-cik-rose-text"
                 >
                   <AlertCircle size={16} strokeWidth={2} aria-hidden="true" className="mt-1 shrink-0" />
                   <span>{errorMsg}</span>
@@ -586,7 +586,7 @@ export default function LazyAuthPrompt({
                   </div>
                 </div>
               ) : step === 'email' ? (
-                <form onSubmit={handleRequestOtp} className="mt-4 flex flex-col gap-3">
+                <form noValidate onSubmit={handleRequestOtp} className="mt-4 flex flex-col gap-3">
                   <div>
                     <label htmlFor="lazy-auth-email" className="cik-caption-2 mb-2 block text-cik-text-2">
                       {lang === 'tr' ? 'E-posta Adresi' : 'Email Address'}
@@ -600,9 +600,12 @@ export default function LazyAuthPrompt({
                       autoCapitalize="none"
                       autoCorrect="off"
                       spellCheck={false}
-                      required
+                      aria-invalid={Boolean(errorMsg)}
                       value={email}
-                      onChange={(e) => setEmail(e.target.value)}
+                      onChange={(e) => {
+                        setEmail(e.target.value);
+                        if (errorMsg) setErrorMsg(null);
+                      }}
                       placeholder={lang === 'tr' ? 'ornek@eposta.com' : 'you@example.com'}
                       className={`pointer-events-auto relative z-10 w-full touch-manipulation rounded-cik-md px-4 py-3 text-[16px] font-semibold leading-6 ${inputClass}`}
                     />
@@ -625,7 +628,7 @@ export default function LazyAuthPrompt({
                   </p>
                 </form>
               ) : (
-                <form onSubmit={handleVerifyOtp} className="mt-4 flex flex-col gap-3">
+                <form noValidate onSubmit={handleVerifyOtp} className="mt-4 flex flex-col gap-3">
                   {devOtpCode && (
                     <button
                       type="button"

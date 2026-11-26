@@ -8,6 +8,7 @@ import {
   type SupportedLocale,
 } from '@/lib/locale';
 import { sanitizeInternalRedirectPath, verifySameOriginRequest } from '@/lib/originPolicy';
+import { buildEmbedContentSecurityPolicy, getStoryEmbedPolicy } from '@/lib/stories';
 import { looksLikeIpaPhonetic } from '@/utils/phoneticDisplay';
 
 function languageForRequest(request: NextRequest): SupportedLocale | null {
@@ -62,8 +63,9 @@ export function isSingleSegmentIpaPath(pathname: string): boolean {
 }
 
 const PUBLIC_STORY_COMPLETE_POST_RE = /^\/api\/stories\/[a-zA-Z0-9_-]{4,40}$/u;
+const EMBED_STORY_PATH_RE = /^\/embed\/([^/]+)$/u;
 
-export function proxy(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   if (request.nextUrl.pathname.startsWith('/api/')) {
     const isIframeCompletionPost =
       request.method === 'POST' &&
@@ -133,6 +135,15 @@ export function proxy(request: NextRequest) {
   response.headers.set('Content-Language', lang);
   if (isPrivateDuelPath(pathname)) {
     response.headers.set('X-Robots-Tag', 'noindex, follow');
+  }
+  if (pathname === '/embed' || pathname.startsWith('/embed/')) {
+    const embedMatch = EMBED_STORY_PATH_RE.exec(pathname);
+    const storyId = embedMatch?.[1] ? decodeURIComponent(embedMatch[1]) : '';
+    const policy = storyId ? await getStoryEmbedPolicy(storyId).catch(() => null) : null;
+    response.headers.set('Content-Security-Policy', buildEmbedContentSecurityPolicy(policy));
+    if (!policy || !policy.isPublic || !policy.allowEmbed) {
+      response.headers.set('X-Frame-Options', 'SAMEORIGIN');
+    }
   }
   return response;
 }

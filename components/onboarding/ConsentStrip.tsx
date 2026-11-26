@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useId, useState } from 'react';
+import Link from 'next/link';
 import type { Language } from '@/i18n/translations';
 import { translations } from '@/i18n/translations';
 import type { ConsentChoice } from '@/utils/consent';
@@ -48,7 +49,16 @@ export default function ConsentStrip({ lang, accepted, onChoice }: ConsentStripP
       </div>
       {open ? (
         <div id={detailsId} className="flex flex-col gap-2 px-2 pb-2">
-          <p className="cik-caption-1 text-pretty text-cik-text-2">{copy.cookieText}</p>
+          <p className="cik-caption-1 text-pretty text-cik-text-2">
+            {copy.cookieText}{' '}
+            <Link
+              href={lang === 'en' ? '/privacy?lang=en' : '/privacy'}
+              data-testid="onboarding-consent-privacy-link"
+              className="cik-caption-1 text-cik-cta underline"
+            >
+              {lang === 'tr' ? 'Gizlilik Politikası' : 'Privacy Policy'}
+            </Link>
+          </p>
           <button
             type="button"
             data-testid="onboarding-consent-decline"

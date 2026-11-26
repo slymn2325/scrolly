@@ -1153,6 +1153,8 @@ export async function recordQuizSubmission(input: {
   score: number;
   correctCount: number;
   totalQuestions: number;
+  answers?: boolean[];
+  durationSec?: number;
   clientDate?: string;
 }): Promise<{ persisted: boolean; xpAwarded: number; safeScore: number }> {
   if (!isValidDeviceId(input.deviceId)) {
@@ -1162,17 +1164,40 @@ export async function recordQuizSubmission(input: {
 
   const username = sanitizeUsername(input.username);
   const handle = sanitizeHandle(input.handle);
-  // Cap client-reported quiz score and correct answers against realistic combo+speed formula before XP award.
+  // Compute server-verified quiz cap from answer streak + timing when answers are sent, otherwise cap strictly.
   const safeTotal = sanitizeNonNegInt(input.totalQuestions, 1, 15);
-  const safeCorrect = Math.min(safeTotal, sanitizeNonNegInt(input.correctCount, 0, 15));
-  const maxCombo = safeCorrect * 100 + 25 * ((safeCorrect * (safeCorrect + 1)) / 2);
-  const maxSpeed = safeCorrect > 0 ? (safeTotal * 15 + 30) * 5 : 0;
-  const maxAllowedScore = safeCorrect === 0 ? 0 : Math.min(3500, maxCombo + maxSpeed);
+  let safeCorrect: number;
+  let maxAllowedScore: number;
+  if (Array.isArray(input.answers)) {
+    const boundedAnswers = input.answers.slice(0, safeTotal).map(Boolean);
+    safeCorrect = boundedAnswers.filter(Boolean).length;
+    let streak = 0;
+    let comboScore = 0;
+    for (const ans of boundedAnswers) {
+      if (ans) {
+        streak += 1;
+        comboScore += 100 + 25 * streak;
+      } else {
+        streak = 0;
+      }
+    }
+    const budgetSec =
+      input.mode === 'weekly' ? 105 : input.mode === 'daily' || input.mode === 'duel' ? 75 : 60;
+    const effectiveDuration = sanitizeNonNegInt(input.durationSec ?? budgetSec, 2, 600);
+    const speedBonus = safeCorrect > 0 ? Math.max(0, budgetSec - effectiveDuration) * 5 : 0;
+    const duelBonus = input.mode === 'duel' && safeCorrect > 0 ? 150 : 0;
+    maxAllowedScore =
+      safeCorrect === 0 ? 0 : Math.min(3500, comboScore + speedBonus + duelBonus);
+  } else {
+    safeCorrect = Math.min(safeTotal, sanitizeNonNegInt(input.correctCount, 0, 15));
+    maxAllowedScore = safeCorrect === 0 ? 0 : safeCorrect * 125;
+  }
+
   const safeScore = safeCorrect === 0 ? 0 : sanitizeNonNegInt(input.score, 0, maxAllowedScore);
   let xpAward =
     safeCorrect === 0
       ? 0
-      : consumeXpBudget(cleanId, Math.min(safeScore, safeCorrect * 250));
+      : consumeXpBudget(cleanId, Math.min(safeScore, maxAllowedScore, safeCorrect * 250));
   const cleanClientDate = sanitizeDateStr(input.clientDate);
   const quizDate =
     cleanClientDate && isDateNearUtc(cleanClientDate)
